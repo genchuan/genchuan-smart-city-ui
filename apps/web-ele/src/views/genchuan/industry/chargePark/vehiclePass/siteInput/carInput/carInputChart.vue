@@ -11,7 +11,7 @@ const props = defineProps({
 
 const cards = reactive([
   {
-    title: '今日录入量',
+    title: '录入量',
     value: 0,
     desc: '累计录入车辆',
     color: '#4A90E2',
@@ -45,9 +45,9 @@ async function loadChartData() {
     startTime.setDate(startTime.getDate() - 7);
 
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
-      stationId: props.parkId,
+      startTime: Math.floor(startTime.getTime() / 1000).toString(),
+      endTime: Math.floor(endTime.getTime() / 1000).toString(),
+      areaId: props.parkId,
     };
 
     const res = await carInputApi.getChart(params);
@@ -91,10 +91,16 @@ function initPieChart() {
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
     },
-    tooltip: { trigger: 'axis' },
+    tooltip: {
+      trigger: 'axis',
+      formatter: '{b}<br/>录入量: {c}',
+    },
     xAxis: {
       type: 'category',
       data: state.chartData.trend.map((item) => item.date),
+      axisLabel: {
+        rotate: 45,
+      },
     },
     yAxis: { type: 'value', name: '录入量' },
     series: [
@@ -111,6 +117,16 @@ function initPieChart() {
     ],
   };
   pieChartInstance.setOption(option);
+
+  // 添加点击事件，支持钻取
+  pieChartInstance.on('click', (params) => {
+    if (params.componentType === 'series') {
+      const date = params.name;
+      window.dispatchEvent(
+        new CustomEvent('filterByDate', { detail: { date } }),
+      );
+    }
+  });
 }
 
 function initBarChart() {
@@ -123,8 +139,14 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
+  let status = '';
+  if (key === 'inputCount') {
+    status = ''; // 全部录入记录
+  } else if (key === 'auditPassRate') {
+    status = '已通过'; // 已通过的录入记录
+  }
   window.dispatchEvent(
-    new CustomEvent('filterByStatus', { detail: { status: key } }),
+    new CustomEvent('filterByChart', { detail: { status } }),
   );
 }
 

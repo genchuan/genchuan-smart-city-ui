@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
@@ -15,6 +15,7 @@ import {
   claimInspectTask,
   dispatchInspectTask,
   exportInspectTask,
+  getInspectTask,
   getInspectTaskPage,
   transferInspectTask,
   updateInspectTaskProgress,
@@ -238,20 +239,20 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '待派发': {
-        statusMatch = v.status === '待派发';
-        break;
-      }
-      case '待认领': {
-        statusMatch = v.status === '待认领';
-        break;
-      }
       case '处理中': {
         statusMatch = v.status === '处理中';
         break;
       }
       case '已完成': {
         statusMatch = v.status === '已完成';
+        break;
+      }
+      case '待派发': {
+        statusMatch = v.status === '待派发';
+        break;
+      }
+      case '待认领': {
+        statusMatch = v.status === '待认领';
         break;
       }
     }
@@ -337,9 +338,23 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 const activeName = ref('全部');
 
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerRef.value.open();
+const handleOpenDetail = async (row) => {
+  try {
+    const loadingInstance = ElLoading.service({ text: '加载详情中...' });
+    try {
+      const data = await getInspectTask(row.id);
+      dataObj.detailObj = data;
+      detailDrawerRef.value.open();
+    } finally {
+      loadingInstance.close();
+    }
+  } catch (error) {
+    console.error('获取详情失败:', error);
+    ElMessage.error('获取详情失败');
+    // 失败时使用行数据兜底
+    dataObj.detailObj = row;
+    detailDrawerRef.value.open();
+  }
 };
 
 const tabsData = ref([
@@ -358,20 +373,20 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '待派发': {
-      count = dataObj.apilist.filter((v) => v.status === '待派发').length;
-      break;
-    }
-    case '待认领': {
-      count = dataObj.apilist.filter((v) => v.status === '待认领').length;
-      break;
-    }
     case '处理中': {
       count = dataObj.apilist.filter((v) => v.status === '处理中').length;
       break;
     }
     case '已完成': {
       count = dataObj.apilist.filter((v) => v.status === '已完成').length;
+      break;
+    }
+    case '待派发': {
+      count = dataObj.apilist.filter((v) => v.status === '待派发').length;
+      break;
+    }
+    case '待认领': {
+      count = dataObj.apilist.filter((v) => v.status === '待认领').length;
       break;
     }
   }
@@ -390,6 +405,22 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 处理图表卡片点击筛选
+const handleFilterByChart = (event) => {
+  const filterParams = event.detail;
+  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+  handleRefresh();
+  ElMessage.success('已应用图表筛选');
+};
+
+onMounted(() => {
+  window.addEventListener('filterByChart', handleFilterByChart);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('filterByChart', handleFilterByChart);
+});
 
 // 派发任务
 const handleDispatch = async (row) => {
@@ -625,35 +656,74 @@ const getActionButtons = (row) => {
   const buttons = [];
 
   switch (row.status) {
-    case '待派发':
+    case '处理中': {
       buttons.push(
-        { content: '派发', iconName: 'Send', onClick: () => handleDispatch(row) },
-        { content: '查看', iconName: 'View', onClick: () => handleOpenDetail(row) }
+        {
+          content: '更新进度',
+          iconName: 'Edit',
+          onClick: () => handleUpdateProgress(row),
+        },
+        {
+          content: '转派',
+          iconName: 'Switch',
+          onClick: () => handleTransfer(row),
+        },
+        {
+          content: '查看',
+          iconName: 'View',
+          onClick: () => handleOpenDetail(row),
+        },
       );
       break;
-    case '待认领':
+    }
+    case '已完成': {
+      buttons.push(
+        {
+          content: '查看',
+          iconName: 'View',
+          onClick: () => handleOpenDetail(row),
+        },
+        {
+          content: '归档',
+          iconName: 'FolderOpened',
+          onClick: () => handleArchive(row),
+        },
+      );
+      break;
+    }
+    case '待派发': {
+      buttons.push(
+        {
+          content: '派发',
+          iconName: 'Send',
+          onClick: () => handleDispatch(row),
+        },
+        {
+          content: '查看',
+          iconName: 'View',
+          onClick: () => handleOpenDetail(row),
+        },
+      );
+      break;
+    }
+    case '待认领': {
       buttons.push(
         { content: '认领', iconName: 'Check', onClick: () => handleClaim(row) },
-        { content: '查看', iconName: 'View', onClick: () => handleOpenDetail(row) }
+        {
+          content: '查看',
+          iconName: 'View',
+          onClick: () => handleOpenDetail(row),
+        },
       );
       break;
-    case '处理中':
-      buttons.push(
-        { content: '更新进度', iconName: 'Edit', onClick: () => handleUpdateProgress(row) },
-        { content: '转派', iconName: 'Switch', onClick: () => handleTransfer(row) },
-        { content: '查看', iconName: 'View', onClick: () => handleOpenDetail(row) }
-      );
-      break;
-    case '已完成':
-      buttons.push(
-        { content: '查看', iconName: 'View', onClick: () => handleOpenDetail(row) },
-        { content: '归档', iconName: 'FolderOpened', onClick: () => handleArchive(row) }
-      );
-      break;
-    default:
-      buttons.push(
-        { content: '查看', iconName: 'View', onClick: () => handleOpenDetail(row) }
-      );
+    }
+    default: {
+      buttons.push({
+        content: '查看',
+        iconName: 'View',
+        onClick: () => handleOpenDetail(row),
+      });
+    }
   }
 
   return buttons;
@@ -738,12 +808,12 @@ const getActionButtons = (row) => {
             row.status === '待派发'
               ? 'info'
               : row.status === '待认领'
-              ? 'warning'
-              : row.status === '处理中'
-              ? 'primary'
-              : row.status === '已完成'
-              ? 'success'
-              : 'info'
+                ? 'warning'
+                : row.status === '处理中'
+                  ? 'primary'
+                  : row.status === '已完成'
+                    ? 'success'
+                    : 'info'
           "
         >
           {{ row.status }}

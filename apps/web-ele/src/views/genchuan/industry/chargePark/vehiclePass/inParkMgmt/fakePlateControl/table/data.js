@@ -1,10 +1,12 @@
+import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+
 /** 套牌管控表格初始数据 */
 export const dataList = () => {
   return [
     {
       id: 1,
       plateNo: '闽C12345',
-      identifyTime: Date.now() - 2 * 60 * 60 * 1000,
+      identifyTime: '2026-04-26 08:30:15',
       matchScene: '同牌多停',
       status: '未处理',
       stationId: 1,
@@ -16,44 +18,44 @@ export const dataList = () => {
       ignoreReason: null,
       remark: '',
       creator: 'admin',
-      createTime: Date.now() - 2 * 60 * 60 * 1000,
-      updateTime: Date.now() - 2 * 60 * 60 * 1000,
+      createTime: '2026-04-26 08:30:15',
+      updateTime: '2026-04-26 08:30:15',
     },
     {
       id: 2,
       plateNo: '闽C67890',
-      identifyTime: Date.now() - 5 * 60 * 60 * 1000,
+      identifyTime: '2026-04-26 05:30:15',
       matchScene: '车牌车型不匹配',
       status: '处理中',
       stationId: 2,
       stationName: '充电站2',
       handleUserId: 1,
       handleUserName: '张三',
-      handleTime: Date.now() - 1 * 60 * 60 * 1000,
+      handleTime: '2026-04-26 09:30:15',
       handleProgress: '已联系车主，等待核实',
       ignoreReason: null,
       remark: '',
       creator: 'admin',
-      createTime: Date.now() - 5 * 60 * 60 * 1000,
-      updateTime: Date.now() - 1 * 60 * 60 * 1000,
+      createTime: '2026-04-26 05:30:15',
+      updateTime: '2026-04-26 09:30:15',
     },
     {
       id: 3,
       plateNo: '闽C11111',
-      identifyTime: Date.now() - 24 * 60 * 60 * 1000,
+      identifyTime: '2026-04-25 10:30:15',
       matchScene: '同牌多停',
       status: '已关闭',
       stationId: 3,
       stationName: '充电站3',
       handleUserId: 2,
       handleUserName: '李四',
-      handleTime: Date.now() - 12 * 60 * 60 * 1000,
+      handleTime: '2026-04-25 22:30:15',
       handleProgress: '已核实，确认套牌',
       ignoreReason: null,
       remark: '已处理完成',
       creator: 'admin',
-      createTime: Date.now() - 24 * 60 * 60 * 1000,
-      updateTime: Date.now() - 12 * 60 * 60 * 1000,
+      createTime: '2026-04-25 10:30:15',
+      updateTime: '2026-04-25 22:30:15',
     },
   ];
 };
@@ -110,7 +112,7 @@ export function useSearchFormSchema() {
         placeholder: '请选择识别时间',
         type: 'datetimerange',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'X',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
     },
   ];
@@ -187,10 +189,7 @@ export function useGridColumns() {
       title: '识别时间',
       minWidth: 180,
       sortable: true,
-      formatter: ({ cellValue }) => {
-        if (!cellValue) return '';
-        return new Date(cellValue).toLocaleString('zh-CN');
-      },
+      formatter: createTimeFormatter(),
     },
     {
       field: 'matchScene',
@@ -225,10 +224,7 @@ export function useGridColumns() {
       title: '处置时间',
       minWidth: 180,
       sortable: true,
-      formatter: ({ cellValue }) => {
-        if (!cellValue) return '-';
-        return new Date(cellValue).toLocaleString('zh-CN');
-      },
+      formatter: createTimeFormatter(),
     },
     {
       field: 'handleProgress',
@@ -270,32 +266,16 @@ export const matchSceneTypeMap = {
 export const detailFields = [
   { key: 'id', label: '管控ID' },
   { key: 'plateNo', label: '车牌号' },
-  {
-    key: 'identifyTime',
-    label: '识别时间',
-    formatter: (val) => (val ? new Date(val).toLocaleString('zh-CN') : ''),
-  },
+  { key: 'identifyTime', label: '识别时间', formatter: formatTime },
   { key: 'matchScene', label: '匹配场景' },
   { key: 'status', label: '处置状态' },
   { key: 'stationName', label: '场站' },
   { key: 'handleUserName', label: '处置人' },
-  {
-    key: 'handleTime',
-    label: '处置时间',
-    formatter: (val) => (val ? new Date(val).toLocaleString('zh-CN') : '-'),
-  },
+  { key: 'handleTime', label: '处置时间', formatter: formatTime },
   { key: 'handleProgress', label: '处置进度' },
   { key: 'ignoreReason', label: '忽略理由' },
   { key: 'remark', label: '备注' },
   { key: 'creator', label: '创建者' },
-  {
-    key: 'createTime',
-    label: '创建时间',
-    formatter: (val) => (val ? new Date(val).toLocaleString('zh-CN') : ''),
-  },
-  {
-    key: 'updateTime',
-    label: '更新时间',
-    formatter: (val) => (val ? new Date(val).toLocaleString('zh-CN') : ''),
-  },
+  { key: 'createTime', label: '创建时间', formatter: formatTime },
+  { key: 'updateTime', label: '更新时间', formatter: formatTime },
 ];

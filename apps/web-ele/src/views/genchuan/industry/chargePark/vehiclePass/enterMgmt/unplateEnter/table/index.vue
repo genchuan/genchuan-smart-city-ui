@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue';
+import { onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 
@@ -14,6 +14,7 @@ import {
   correctUnplateEnter,
   createUnplateEnter,
   exportUnplateEnter,
+  getUnplateEnter,
   getUnplateEnterPage,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/enterMgmt/unplateEnter';
 import IconButton from '#/components/common/IconButton.vue';
@@ -146,9 +147,13 @@ const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
   async onConfirm() {
     try {
       const values = correctFormApi.form.values;
+      const formData = correctFormDrawerApi.getData();
       const loadingInstance = ElLoading.service({ text: '提交中...' });
       try {
-        await correctUnplateEnter({ id: values.id, ...values });
+        await correctUnplateEnter({
+          id: formData.id,
+          ...values,
+        });
         ElMessage.success('修正成功');
         handleRefresh();
         correctFormDrawerApi.close();
@@ -180,9 +185,13 @@ const [AuditFormDrawer, auditFormDrawerApi] = useVbenDrawer({
     try {
       await auditFormApi.validate();
       const values = auditFormApi.form.values;
+      const formData = auditFormDrawerApi.getData();
       const loadingInstance = ElLoading.service({ text: '提交中...' });
       try {
-        await auditUnplateEnter(values);
+        await auditUnplateEnter({
+          id: formData.id,
+          ...values,
+        });
         ElMessage.success('审核成功');
         handleRefresh();
         auditFormDrawerApi.close();
@@ -196,10 +205,7 @@ const [AuditFormDrawer, auditFormDrawerApi] = useVbenDrawer({
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      const formData = auditFormDrawerApi.getData();
-      if (formData?.id) {
-        await auditFormApi.setValues({ id: formData.id });
-      }
+      auditFormApi.resetForm();
     }
   },
 });
@@ -256,7 +262,7 @@ async function handleConfirm(row) {
     });
     const loadingInstance = ElLoading.service({ text: '确认中...' });
     try {
-      await confirmUnplateEnter(row.id);
+      await confirmUnplateEnter({ id: row.id });
       ElMessage.success('确认成功');
       handleRefresh();
     } finally {
@@ -438,9 +444,23 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 const activeName = ref('全部');
 
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerRef.value.open();
+const handleOpenDetail = async (row) => {
+  try {
+    const loading = ElLoading.service({
+      lock: true,
+      text: '加载中...',
+      background: 'rgba(0, 0, 0, 0.7)',
+    });
+
+    const res = await getUnplateEnter(row.id);
+    dataObj.detailObj = res || row;
+    detailDrawerRef.value.open();
+
+    loading.close();
+  } catch (error) {
+    ElMessage.error('获取详情失败');
+    console.error(error);
+  }
 };
 
 const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
@@ -477,6 +497,25 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 处理图表卡片点击筛选
+const handleFilterByChart = (event) => {
+  const filterParams = event.detail;
+  // 去除 status 字段，只保留图表相关的筛选字段
+  // eslint-disable-next-line unused-imports/no-unused-vars
+  const { status, ...validParams } = filterParams;
+  dataObj.searchParams = { ...dataObj.searchParams, ...validParams };
+  handleRefresh();
+  ElMessage.success('已应用图表筛选');
+};
+
+onMounted(() => {
+  window.addEventListener('filterByChart', handleFilterByChart);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('filterByChart', handleFilterByChart);
+});
 </script>
 
 <template>

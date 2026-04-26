@@ -7,19 +7,17 @@ export namespace EndParkApi {
   export interface EndPark {
     id?: number | string;
     plateNo?: string;
-    plateColor?: string;
-    enterTime?: string;
+    spaceId?: number;
     endTime?: string;
-    stationId?: number;
-    stationName?: string;
-    parkSpaceNo?: string;
-    parkDuration?: number;
-    parkFee?: number;
-    payStatus?: string;
-    payTime?: string;
-    payMethod?: string;
     status?: string;
+    areaId?: number;
+    areaName?: string;
+    operatorId?: number;
+    operatorName?: string;
+    orderNo?: string;
     remark?: string;
+    reserve1?: string;
+    reserve2?: string;
     creator?: string;
     updater?: string;
     createTime?: string;
@@ -29,18 +27,18 @@ export namespace EndParkApi {
   /** 结束停车分页查询参数 */
   export interface PageReqVO extends PageParam {
     plateNo?: string;
-    plateColor?: string;
-    stationId?: number;
-    parkSpaceNo?: string;
-    payStatus?: string;
+    spaceId?: number;
+    endTime?: string[];
     status?: string;
+    areaId?: number;
+    operatorId?: number;
+    orderNo?: string;
+    remark?: string;
   }
 
   /** 结束停车缴费参数 */
   export interface PayReqVO {
     id: number | string;
-    payMethod: string;
-    payAmount: number;
   }
 
   /** 结束停车确认参数 */
@@ -51,23 +49,22 @@ export namespace EndParkApi {
   /** 结束停车取消参数 */
   export interface CancelReqVO {
     id: number | string;
-    cancelReason?: string;
+    cancelReason: string;
   }
 
   /** 结束停车图表查询参数 */
   export interface ChartReqVO {
     startTime: string;
     endTime: string;
-    stationId?: number;
+    areaId?: number;
   }
 
   /** 结束停车图表数据 */
   export interface ChartVO {
-    endParkTrend: Array<{ count: number; date: string }>;
-    payMethodCount: Array<{ count: number; method: string }>;
+    endCountTrend: Array<{ count: number; date: string }>;
     cardData: {
-      totalEndPark: number;
-      totalFee: number;
+      endCount: number;
+      paySuccessRate: number;
     };
   }
 }
@@ -94,7 +91,7 @@ export function exportEndPark(params?: EndParkApi.PageReqVO) {
 
 /** 缴费结束停车 */
 export function payEndPark(data: EndParkApi.PayReqVO) {
-  return requestClient.post<boolean>('/vehiclepass/end-park/pay', data);
+  return requestClient.put<boolean>('/vehiclepass/end-park/pay', data);
 }
 
 /** 确认结束停车 */

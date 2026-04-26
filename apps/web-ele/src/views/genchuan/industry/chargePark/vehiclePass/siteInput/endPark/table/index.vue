@@ -1,10 +1,10 @@
-﻿<script setup>
-import { computed, reactive, ref } from 'vue';
+<script setup>
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -12,6 +12,10 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   exportEndPark,
   getEndParkPage,
+  getEndPark,
+  payEndPark,
+  confirmEndPark,
+  cancelEndPark,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/siteInput/endPark';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
@@ -25,6 +29,8 @@ import {
   useSearchFormSchema,
   useCreateFormSchema,
   useGridColumns,
+  usePayFormSchema,
+  useCancelFormSchema,
 } from './data';
 
 const props = defineProps({
@@ -152,6 +158,7 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
   searchParams: {},
+  currentRow: null,
 });
 
 const changeTotalShow = () => {
@@ -185,12 +192,16 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '异常': {
-        statusMatch = v.status === '异常';
+      case '待支付': {
+        statusMatch = v.status === '待支付';
         break;
       }
-      case '正常': {
-        statusMatch = v.status === '正常';
+      case '已支付': {
+        statusMatch = v.status === '已支付';
+        break;
+      }
+      case '已取消': {
+        statusMatch = v.status === '已取消';
         break;
       }
     }
@@ -228,7 +239,12 @@ const [QueryForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: useSearchFormSchema().map((v) => {
+    delete v.rules;
+    return {
+      ...v,
+    };
+  }),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -271,12 +287,28 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 const activeName = ref('全部');
 
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerRef.value.open();
+const handleOpenDetail = async (row) => {
+  if (USE_REAL_API) {
+    try {
+      const res = await getEndPark(row.id);
+      dataObj.detailObj = res;
+      detailDrawerRef.value.open();
+    } catch (error) {
+      ElMessage.error('获取详情失败');
+      console.error(error);
+    }
+  } else {
+    dataObj.detailObj = row;
+    detailDrawerRef.value.open();
+  }
 };
 
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '待支付' },
+  { label: '已支付' },
+  { label: '已取消' },
+]);
 
 const createLabel = (item) => {
   let count = 0;
@@ -286,12 +318,16 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '异常': {
-      count = dataObj.apilist.filter((v) => v.status === '异常').length;
+    case '待支付': {
+      count = dataObj.apilist.filter((v) => v.status === '待支付').length;
       break;
     }
-    case '正常': {
-      count = dataObj.apilist.filter((v) => v.status === '正常').length;
+    case '已支付': {
+      count = dataObj.apilist.filter((v) => v.status === '已支付').length;
+      break;
+    }
+    case '已取消': {
+      count = dataObj.apilist.filter((v) => v.status === '已取消').length;
       break;
     }
   }
@@ -310,13 +346,254 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 处理图表卡片点击筛选
+const handleFilterByChart = (event) => {
+  const filterParams = event.detail;
+  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+  handleRefresh();
+  ElMessage.success('已应用图表筛选');
+};
+
+onMounted(() => {
+  window.addEventListener('filterByChart', handleFilterByChart);
+  // 监听图表钻取事件
+  window.addEventListener('filterEndPark', handleChartFilter);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('filterByChart', handleFilterByChart);
+  window.removeEventListener('filterEndPark', handleChartFilter);
+});
+
+// 支付表单
+const [PayForm, payFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: usePayFormSchema(),
+  showDefaultActions: false,
+});
+
+const [PayFormDrawer, payFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    payFormDrawerApi.close();
+  },
+  async onConfirm() {
+    if (USE_REAL_API) {
+      try {
+        await payEndPark({
+          id: dataObj.currentRow.id,
+        });
+        ElMessage.success('支付成功');
+        handleRefresh();
+        payFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('支付失败');
+        console.error(error);
+      }
+    } else {
+      const index = dataObj.apilist.findIndex(
+        (v) => v.id === dataObj.currentRow.id,
+      );
+      if (index !== -1) {
+        dataObj.apilist[index].status = '已支付';
+      }
+      handleRefresh();
+      payFormDrawerApi.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      payFormApi.resetForm();
+    }
+  },
+});
+
+// 取消表单
+const [CancelForm, cancelFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useCancelFormSchema(),
+  showDefaultActions: false,
+});
+
+const [CancelFormDrawer, cancelFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    cancelFormDrawerApi.close();
+  },
+  async onConfirm() {
+    if (USE_REAL_API) {
+      try {
+        const values = cancelFormApi.form.values;
+        await cancelEndPark({
+          id: dataObj.currentRow.id,
+          cancelReason: values.cancelReason,
+        });
+        ElMessage.success('取消成功');
+        handleRefresh();
+        cancelFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('取消失败');
+        console.error(error);
+      }
+    } else {
+      const values = cancelFormApi.form.values;
+      const index = dataObj.apilist.findIndex(
+        (v) => v.id === dataObj.currentRow.id,
+      );
+      if (index !== -1) {
+        dataObj.apilist[index].status = '已取消';
+        dataObj.apilist[index].remark = values.cancelReason;
+      }
+      handleRefresh();
+      cancelFormDrawerApi.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      cancelFormApi.resetForm();
+    }
+  },
+});
+
+// 支付操作
+const handlePay = (row) => {
+  dataObj.currentRow = row;
+  payFormDrawerApi
+    .setData({
+      title: '支付结束停车',
+    })
+    .open();
+};
+
+// 确认操作
+const handleConfirm = async (row) => {
+  await confirm('确定确认该结束停车记录吗？');
+  if (USE_REAL_API) {
+    try {
+      await confirmEndPark({ id: row.id });
+      ElMessage.success('确认成功');
+      handleRefresh();
+    } catch (error) {
+      ElMessage.error('确认失败');
+      console.error(error);
+    }
+  } else {
+    const index = dataObj.apilist.findIndex((v) => v.id === row.id);
+    if (index !== -1) {
+      dataObj.apilist[index].status = '已完成';
+    }
+    handleRefresh();
+  }
+};
+
+// 取消操作
+const handleCancel = (row) => {
+  dataObj.currentRow = row;
+  cancelFormDrawerApi
+    .setData({
+      title: '取消结束停车',
+    })
+    .open();
+};
+
+// 点击车牌跳转车辆详情
+const handlePlateNoClick = (row) => {
+  ElMessage.info(`跳转到车辆详情：${row.plateNo}`);
+  // TODO: 实现跳转到车辆详情弹窗
+};
+
+// 点击车位跳转车位详情
+const handleSpaceIdClick = (row) => {
+  ElMessage.info(`跳转到车位详情：${row.spaceId}`);
+  // TODO: 实现跳转到车位详情弹窗
+};
+
+// 点击缴费状态筛选同状态记录
+const handleStatusClick = (row) => {
+  dataObj.searchParams = { status: row.status };
+  handleRefresh();
+  ElMessage.success(`已筛选状态：${row.status}`);
+};
+
+// 点击片区筛选同片区记录
+const handleAreaClick = (row) => {
+  dataObj.searchParams = { areaId: row.areaId };
+  handleRefresh();
+  ElMessage.success(`已筛选片区：${row.areaName}`);
+};
+
+// 点击操作人筛选同操作人记录
+const handleOperatorClick = (row) => {
+  dataObj.searchParams = { operatorId: row.operatorId };
+  handleRefresh();
+  ElMessage.success(`已筛选操作人：${row.operatorName}`);
+};
+
+// 监听图表钻取事件
+onMounted(() => {
+  // 监听图表卡片和折线图的钻取事件
+  window.addEventListener('filterEndPark', handleChartFilter);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('filterEndPark', handleChartFilter);
+});
+
+// 处理图表钻取筛选
+const handleChartFilter = (event) => {
+  const { status, date } = event.detail;
+
+  if (status !== undefined) {
+    // 卡片钻取：按状态筛选
+    if (status === null) {
+      // 结束量卡片：显示所有记录
+      dataObj.searchParams = {};
+    } else {
+      // 支付成功率卡片：显示已支付记录
+      dataObj.searchParams = { status };
+      activeName.value = status;
+    }
+  } else if (date) {
+    // 折线图钻取：按日期筛选
+    const timestamp = new Date(date).getTime() / 1000;
+    const nextDayTimestamp = timestamp + 86400;
+    dataObj.searchParams = {
+      endTime: [timestamp.toString(), nextDayTimestamp.toString()],
+    };
+  }
+
+  handleRefresh();
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <FormDrawer :title="getTitle">
-      <Form />
-    </FormDrawer>
+    <CreateFormDrawer :title="textObj.addText">
+      <CreateForm />
+    </CreateFormDrawer>
+    <PayFormDrawer title="支付结束停车">
+      <PayForm />
+    </PayFormDrawer>
+    <CancelFormDrawer title="取消结束停车">
+      <CancelForm />
+    </CancelFormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.plateNo}详情`"
@@ -347,23 +624,15 @@ const handleFullShow = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="筛选"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
           />
           <IconButton
             content="全屏"
@@ -381,23 +650,82 @@ const handleFullShow = () => {
           {{ row.id }}
         </el-text>
       </template>
+      <template #plateNo="{ row }">
+        <el-text
+          @click="handlePlateNoClick(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.plateNo }}
+        </el-text>
+      </template>
+      <template #spaceId="{ row }">
+        <el-text
+          @click="handleSpaceIdClick(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.spaceId }}
+        </el-text>
+      </template>
+      <template #status="{ row }">
+        <el-tag
+          @click="handleStatusClick(row)"
+          :type="
+            row.status === '已支付'
+              ? 'success'
+              : row.status === '待支付'
+                ? 'warning'
+                : 'info'
+          "
+          style="cursor: pointer"
+        >
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #areaName="{ row }">
+        <el-text
+          @click="handleAreaClick(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.areaName }}
+        </el-text>
+      </template>
+      <template #operatorName="{ row }">
+        <el-text
+          @click="handleOperatorClick(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.operatorName }}
+        </el-text>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
+            v-if="row.status === '待支付'"
+            content="支付"
+            icon-name="Wallet"
+            @click="handlePay(row)"
+          />
+          <IconButton
+            v-if="row.status === '已支付'"
+            content="确认"
+            icon-name="Select"
+            @click="handleConfirm(row)"
+          />
+          <IconButton
+            v-if="row.status === '待支付'"
+            content="取消"
+            icon-name="CircleClose"
+            color="#F56C6C"
+            @click="handleCancel(row)"
+          />
+          <IconButton
+            content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
           />
         </div>
       </template>
@@ -410,7 +738,7 @@ const handleFullShow = () => {
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：入场记录数量: {{ dataObj.list.length }}; 已选择:
+            本页统计：结束停车记录数量: {{ dataObj.list.length }}; 已选择:
             {{ checkedIds.length }}
           </span>
         </div>

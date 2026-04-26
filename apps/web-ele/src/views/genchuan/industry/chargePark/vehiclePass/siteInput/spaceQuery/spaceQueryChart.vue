@@ -11,7 +11,7 @@ const props = defineProps({
 
 const cards = reactive([
   {
-    title: '今日查询量',
+    title: '查询量',
     value: 0,
     desc: '累计查询次数',
     color: '#4A90E2',
@@ -40,14 +40,8 @@ let barChartInstance = null;
 
 async function loadChartData() {
   try {
-    const endTime = new Date();
-    const startTime = new Date();
-    startTime.setDate(startTime.getDate() - 7);
-
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
-      stationId: props.parkId,
+      areaId: props.parkId,
     };
 
     const res = await spaceQueryApi.getChart(params);
@@ -84,7 +78,7 @@ function initPieChart() {
   if (pieChartInstance) pieChartInstance.dispose();
   pieChartInstance = echarts.init(pieChartRef.value);
 
-  // 泊位位置分布地图 - 这里简化为散点图展示
+  // 泊位位置分布地图 - 使用散点图展示
   const option = {
     backgroundColor: 'transparent',
     title: {
@@ -97,11 +91,32 @@ function initPieChart() {
       trigger: 'item',
       formatter: (params) => {
         const data = state.chartData.spaceLocationList[params.dataIndex];
-        return `${data.spaceNo}<br/>状态: ${data.spaceStatus}`;
+        return `${data.spaceNo}<br/>状态: ${data.spaceStatus}<br/>经度: ${data.lon}<br/>纬度: ${data.lat}`;
       },
     },
-    xAxis: { type: 'value', name: '经度' },
-    yAxis: { type: 'value', name: '纬度' },
+    grid: {
+      left: '10%',
+      right: '10%',
+      bottom: '15%',
+      top: '15%',
+      containLabel: true,
+    },
+    xAxis: {
+      type: 'value',
+      name: '经度',
+      scale: true,
+      axisLabel: {
+        formatter: '{value}°',
+      },
+    },
+    yAxis: {
+      type: 'value',
+      name: '纬度',
+      scale: true,
+      axisLabel: {
+        formatter: '{value}°',
+      },
+    },
     series: [
       {
         type: 'scatter',
@@ -109,12 +124,38 @@ function initPieChart() {
           item.lon,
           item.lat,
         ]),
-        symbolSize: 10,
-        itemStyle: { color: '#4A90E2' },
+        symbolSize: 15,
+        itemStyle: {
+          color: (params) => {
+            const item = state.chartData.spaceLocationList[params.dataIndex];
+            return item.spaceStatus === '空闲' ? '#67C23A' : '#E6A23C';
+          },
+        },
+        label: {
+          show: true,
+          formatter: (params) => {
+            const data = state.chartData.spaceLocationList[params.dataIndex];
+            return data.spaceNo;
+          },
+          position: 'top',
+          fontSize: 10,
+        },
       },
     ],
   };
   pieChartInstance.setOption(option);
+
+  // 添加点击事件，支持钻取
+  pieChartInstance.on('click', (params) => {
+    if (params.componentType === 'series') {
+      const spaceData = state.chartData.spaceLocationList[params.dataIndex];
+      window.dispatchEvent(
+        new CustomEvent('filterBySpace', {
+          detail: { spaceNo: spaceData.spaceNo },
+        }),
+      );
+    }
+  });
 }
 
 function initBarChart() {
@@ -127,8 +168,14 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
+  let status = '';
+  if (key === 'queryCount') {
+    status = ''; // 全部查询记录
+  } else if (key === 'querySuccessRate') {
+    status = 'success'; // 查询成功的记录
+  }
   window.dispatchEvent(
-    new CustomEvent('filterByStatus', { detail: { status: key } }),
+    new CustomEvent('filterByChart', { detail: { status } }),
   );
 }
 

@@ -116,8 +116,8 @@ function initPieChart() {
   // 添加点击事件
   pieChartInstance.on('click', (params) => {
     window.dispatchEvent(
-      new CustomEvent('filterByStatus', {
-        detail: { status: 'taskHandleTrend', date: params.name },
+      new CustomEvent('filterByChart', {
+        detail: { date: params.name },
       }),
     );
   });
@@ -155,8 +155,8 @@ function initBarChart() {
   // 添加点击事件
   barChartInstance.on('click', (params) => {
     window.dispatchEvent(
-      new CustomEvent('filterByStatus', {
-        detail: { status: 'taskType', taskType: params.name },
+      new CustomEvent('filterByChart', {
+        detail: { taskType: params.name },
       }),
     );
   });
@@ -168,9 +168,17 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
-  window.dispatchEvent(
-    new CustomEvent('filterByStatus', { detail: { status: key } }),
-  );
+  const filterMap = {
+    waitHandleTaskCount: { taskStatus: '待处理' },
+    finishedTaskCount: { taskStatus: '已完成' },
+  };
+
+  const filterParams = filterMap[key];
+  if (filterParams) {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart', { detail: filterParams }),
+    );
+  }
 }
 
 onMounted(() => {

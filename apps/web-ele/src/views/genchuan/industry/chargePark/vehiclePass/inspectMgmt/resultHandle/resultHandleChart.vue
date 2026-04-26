@@ -93,11 +93,11 @@ function initPieChart() {
     },
     tooltip: {
       trigger: 'item',
-      formatter: '{b}: {c} ({d}%)'
+      formatter: '{b}: {c} ({d}%)',
     },
     legend: {
       bottom: 10,
-      left: 'center'
+      left: 'center',
     },
     series: [
       {
@@ -110,7 +110,7 @@ function initPieChart() {
         })),
         label: {
           show: true,
-          formatter: '{b}: {d}%'
+          formatter: '{b}: {d}%',
         },
         emphasis: {
           itemStyle: {
@@ -148,8 +148,8 @@ function handlePieClick(name) {
   }
 
   window.dispatchEvent(
-    new CustomEvent('filterByStatus', {
-      detail: { status, filterKey: status }
+    new CustomEvent('filterByChart', {
+      detail: { status, filterKey: status },
     }),
   );
 }
@@ -166,8 +166,8 @@ function handleCardClick(key) {
   }
 
   window.dispatchEvent(
-    new CustomEvent('filterByStatus', {
-      detail: { status, filterKey: key }
+    new CustomEvent('filterByChart', {
+      detail: { status, filterKey: key },
     }),
   );
 }

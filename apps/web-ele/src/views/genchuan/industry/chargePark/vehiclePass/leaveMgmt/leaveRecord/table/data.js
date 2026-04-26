@@ -1,3 +1,5 @@
+import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+
 /** 记录状态类型映射 */
 export const statusTypeMap = {
   正常记录: 'success',
@@ -362,12 +364,14 @@ export function useGridColumns() {
       title: '入场时间',
       minWidth: 160,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       field: 'leaveTime',
       title: '离场时间',
       minWidth: 160,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       field: 'parkDuration',
@@ -408,6 +412,7 @@ export function useGridColumns() {
       title: '创建时间',
       minWidth: 160,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       title: '操作',
@@ -431,8 +436,8 @@ export const textObj = {
 export const detailFields = [
   { key: 'id', label: '记录ID' },
   { key: 'plateNo', label: '车牌' },
-  { key: 'enterTime', label: '入场时间' },
-  { key: 'leaveTime', label: '离场时间' },
+  { key: 'enterTime', label: '入场时间', formatter: formatTime },
+  { key: 'leaveTime', label: '离场时间', formatter: formatTime },
   { key: 'parkDuration', label: '停车时长（分钟）' },
   { key: 'status', label: '记录状态' },
   { key: 'stationName', label: '场站' },
@@ -440,7 +445,7 @@ export const detailFields = [
   { key: 'proofImage', label: '佐证图片' },
   { key: 'isCorrected', label: '修正日志标记' },
   { key: 'creator', label: '创建人' },
-  { key: 'createTime', label: '创建时间' },
+  { key: 'createTime', label: '创建时间', formatter: formatTime },
   { key: 'updater', label: '更新人' },
-  { key: 'updateTime', label: '更新时间' },
+  { key: 'updateTime', label: '更新时间', formatter: formatTime },
 ];

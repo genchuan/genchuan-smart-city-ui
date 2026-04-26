@@ -60,8 +60,17 @@ export namespace CarInputApi {
   /** 车辆录入审核参数 */
   export interface AuditReqVO {
     id: number | string;
-    auditStatus: string;
-    auditRemark?: string;
+    auditResult: string;
+    auditComment?: string;
+  }
+
+  /** 车辆录入修正参数 */
+  export interface CorrectReqVO {
+    id: number | string;
+    plateNo: string;
+    spaceId: number;
+    areaId: number;
+    remark?: string;
   }
 
   /** 车辆录入确认参数 */
@@ -125,6 +134,11 @@ export function auditCarInput(data: CarInputApi.AuditReqVO) {
 /** 确认车辆录入 */
 export function confirmCarInput(data: CarInputApi.ConfirmReqVO) {
   return requestClient.put<boolean>('/vehiclepass/car-input/confirm', data);
+}
+
+/** 修正车辆录入 */
+export function correctCarInput(data: CarInputApi.CorrectReqVO) {
+  return requestClient.put<boolean>('/vehiclepass/car-input/correct', data);
 }
 
 /** 查询车辆录入图表 */

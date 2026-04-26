@@ -1,3 +1,5 @@
+import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+
 /** 模块表格初始数据 */
 export const dataList = () => {
   return [
@@ -122,7 +124,7 @@ export function useSearchFormSchema() {
         placeholder: '请选择登记时间',
         type: 'datetimerange',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'X',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
     },
   ];
@@ -302,6 +304,7 @@ export function useGridColumns() {
       title: '登记时间',
       minWidth: 180,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       field: 'status',
@@ -326,6 +329,7 @@ export function useGridColumns() {
       title: '审核时间',
       minWidth: 180,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       field: 'remark',
@@ -356,14 +360,14 @@ export const detailFields = [
   { key: 'carType', label: '车辆类型' },
   { key: 'carColor', label: '车辆颜色' },
   { key: 'phone', label: '联系电话' },
-  { key: 'registerTime', label: '登记时间' },
+  { key: 'registerTime', label: '登记时间', formatter: formatTime },
   { key: 'status', label: '审核状态' },
   { key: 'stationId', label: '场站ID' },
   { key: 'auditUserId', label: '审核人ID' },
-  { key: 'auditTime', label: '审核时间' },
+  { key: 'auditTime', label: '审核时间', formatter: formatTime },
   { key: 'auditComment', label: '审核意见' },
   { key: 'remark', label: '备注' },
   { key: 'creator', label: '创建人' },
-  { key: 'createTime', label: '创建时间' },
-  { key: 'updateTime', label: '更新时间' },
+  { key: 'createTime', label: '创建时间', formatter: formatTime },
+  { key: 'updateTime', label: '更新时间', formatter: formatTime },
 ];

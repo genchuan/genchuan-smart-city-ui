@@ -59,8 +59,7 @@ async function loadChartData() {
     }
 
     // 检查是否有图表数据
-    const hasChartData =
-      res && res.passCountTrend?.length > 0;
+    const hasChartData = res && res.passCountTrend?.length > 0;
 
     if (hasChartData) {
       state.chartData = {
@@ -92,7 +91,7 @@ function initTrendChart() {
     },
     tooltip: {
       trigger: 'axis',
-      formatter: '{b}<br/>{a}: {c}次'
+      formatter: '{b}<br/>{a}: {c}次',
     },
     xAxis: {
       type: 'category',
@@ -125,11 +124,11 @@ function initTrendChart() {
   trendChartInstance.on('click', (params) => {
     const date = params.name;
     window.dispatchEvent(
-      new CustomEvent('filterByStatus', {
+      new CustomEvent('filterByChart', {
         detail: {
           status: 'trendDate',
-          date: date
-        }
+          date: date,
+        },
       }),
     );
   });
@@ -153,7 +152,7 @@ function handleCardClick(key) {
   }
 
   window.dispatchEvent(
-    new CustomEvent('filterByStatus', { detail: filterParams }),
+    new CustomEvent('filterByChart', { detail: filterParams }),
   );
 }
 

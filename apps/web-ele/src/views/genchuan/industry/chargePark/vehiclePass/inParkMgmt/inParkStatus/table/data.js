@@ -1,3 +1,5 @@
+import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+
 /** 模块表格初始数据 */
 export const dataList = () => {
   return [
@@ -6,27 +8,27 @@ export const dataList = () => {
       carNo: '闽C12345',
       spaceName: 'A-01',
       stationName: '充电站1',
-      inTime: Date.now() - 30 * 60 * 1000, // 30分钟前
+      inTime: '2026-04-26 10:00:15',
       status: '正常在停',
-      createTime: Date.now() - 30 * 60 * 1000,
+      createTime: '2026-04-26 10:00:15',
     },
     {
       id: '002',
       carNo: '闽C67890',
       spaceName: 'A-02',
       stationName: '充电站1',
-      inTime: Date.now() - 180 * 60 * 1000, // 3小时前
+      inTime: '2026-04-26 07:30:15',
       status: '超时长在停',
-      createTime: Date.now() - 180 * 60 * 1000,
+      createTime: '2026-04-26 07:30:15',
     },
     {
       id: '003',
       carNo: '闽C11111',
       spaceName: 'A-03',
       stationName: '充电站1',
-      inTime: Date.now() - 360 * 60 * 1000, // 6小时前
+      inTime: '2026-04-26 04:30:15',
       status: '异常状态',
-      createTime: Date.now() - 360 * 60 * 1000,
+      createTime: '2026-04-26 04:30:15',
     },
   ];
 };
@@ -111,10 +113,7 @@ export function useGridColumns() {
       title: '入场时间',
       minWidth: 160,
       sortable: true,
-      formatter: ({ cellValue }) => {
-        if (!cellValue) return '';
-        return new Date(cellValue).toLocaleString('zh-CN');
-      },
+      formatter: createTimeFormatter(),
     },
     {
       field: 'parkDuration',
@@ -169,25 +168,13 @@ export const detailFields = [
   { key: 'carNo', label: '车牌号' },
   { key: 'spaceName', label: '车位名称' },
   { key: 'stationName', label: '场站名称' },
-  {
-    key: 'inTime',
-    label: '入场时间',
-    formatter: (val) => (val ? new Date(val).toLocaleString('zh-CN') : ''),
-  },
+  { key: 'inTime', label: '入场时间', formatter: formatTime },
   { key: 'status', label: '状态' },
   { key: 'remark', label: '备注' },
   { key: 'creator', label: '创建者' },
-  {
-    key: 'createTime',
-    label: '创建时间',
-    formatter: (val) => (val ? new Date(val).toLocaleString('zh-CN') : ''),
-  },
+  { key: 'createTime', label: '创建时间', formatter: formatTime },
   { key: 'updater', label: '更新者' },
-  {
-    key: 'updateTime',
-    label: '更新时间',
-    formatter: (val) => (val ? new Date(val).toLocaleString('zh-CN') : ''),
-  },
+  { key: 'updateTime', label: '更新时间', formatter: formatTime },
 ];
 
 /** 告警表单配置 */

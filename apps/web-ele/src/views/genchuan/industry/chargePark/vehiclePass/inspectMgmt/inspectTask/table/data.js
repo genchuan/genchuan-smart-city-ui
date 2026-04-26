@@ -1,3 +1,5 @@
+import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+
 /** 模块表格初始数据 */
 export const dataList = () => {
   return [
@@ -182,12 +184,14 @@ export function useGridColumns() {
       title: '派发时间',
       minWidth: 160,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       field: 'deadlineTime',
       title: '截止时间',
       minWidth: 160,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       field: 'status',
@@ -215,6 +219,7 @@ export function useGridColumns() {
       title: '完成时间',
       minWidth: 160,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       field: 'taskProgress',
@@ -243,13 +248,13 @@ export const textObj = {
 export const detailFields = [
   { key: 'id', label: '任务ID' },
   { key: 'taskType', label: '任务类型' },
-  { key: 'dispatchTime', label: '派发时间' },
-  { key: 'deadlineTime', label: '截止时间' },
+  { key: 'dispatchTime', label: '派发时间', formatter: formatTime },
+  { key: 'deadlineTime', label: '截止时间', formatter: formatTime },
   { key: 'status', label: '状态' },
   { key: 'areaName', label: '片区' },
   { key: 'executeUserName', label: '执行人' },
-  { key: 'finishTime', label: '完成时间' },
+  { key: 'finishTime', label: '完成时间', formatter: formatTime },
   { key: 'taskProgress', label: '任务进度' },
   { key: 'remark', label: '备注' },
-  { key: 'createTime', label: '创建时间' },
+  { key: 'createTime', label: '创建时间', formatter: formatTime },
 ];

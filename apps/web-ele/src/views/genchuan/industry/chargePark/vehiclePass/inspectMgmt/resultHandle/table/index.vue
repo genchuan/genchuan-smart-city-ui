@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
@@ -49,7 +49,11 @@ watch(
   (newFilter) => {
     if (newFilter?.filterKey) {
       // 根据下钻参数设置筛选条件
-      if (newFilter.filterKey === '已完成' || newFilter.filterKey === '待处置' || newFilter.filterKey === '待审核') {
+      if (
+        newFilter.filterKey === '已完成' ||
+        newFilter.filterKey === '待处置' ||
+        newFilter.filterKey === '待审核'
+      ) {
         activeName.value = newFilter.filterKey;
         dataObj.searchParams = { status: newFilter.filterKey };
       } else if (newFilter.filterKey === 'handleCompleteRate') {
@@ -62,7 +66,7 @@ watch(
       handleRefresh();
     }
   },
-  { deep: true }
+  { deep: true },
 );
 
 // 是否使用真实API
@@ -465,6 +469,22 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 
+// 处理图表卡片点击筛选
+const handleFilterByChart = (event) => {
+  const filterParams = event.detail;
+  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+  handleRefresh();
+  ElMessage.success('已应用图表筛选');
+};
+
+onMounted(() => {
+  window.addEventListener('filterByChart', handleFilterByChart);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('filterByChart', handleFilterByChart);
+});
+
 // 根据状态显示操作按钮
 const getActionButtons = (row) => {
   const buttons = [];
@@ -474,24 +494,28 @@ const getActionButtons = (row) => {
       buttons.push(
         { label: '通过', handler: handleApprove, color: '#67C23A' },
         { label: '驳回', handler: handleReject, color: '#F56C6C' },
-        { label: '查看', handler: handleOpenDetail, color: '#409EFF' }
+        { label: '查看', handler: handleOpenDetail, color: '#409EFF' },
       );
       break;
     case '待处置':
       buttons.push(
         { label: '执行', handler: handleExecute, color: '#409EFF' },
-        { label: '查看', handler: handleOpenDetail, color: '#409EFF' }
+        { label: '查看', handler: handleOpenDetail, color: '#409EFF' },
       );
       break;
     case '已完成':
-      buttons.push(
-        { label: '查看', handler: handleOpenDetail, color: '#409EFF' }
-      );
+      buttons.push({
+        label: '查看',
+        handler: handleOpenDetail,
+        color: '#409EFF',
+      });
       break;
     default:
-      buttons.push(
-        { label: '查看', handler: handleOpenDetail, color: '#409EFF' }
-      );
+      buttons.push({
+        label: '查看',
+        handler: handleOpenDetail,
+        color: '#409EFF',
+      });
   }
 
   return buttons;
@@ -514,11 +538,7 @@ const getActionButtons = (row) => {
     </ExecuteDrawer>
 
     <!-- 驳回弹窗 -->
-    <el-dialog
-      v-model="rejectDialogVisible"
-      title="驳回处置"
-      width="500px"
-    >
+    <el-dialog v-model="rejectDialogVisible" title="驳回处置" width="500px">
       <el-form label-width="100px">
         <el-form-item label="驳回理由" required>
           <el-input
@@ -592,16 +612,19 @@ const getActionButtons = (row) => {
         </el-text>
       </template>
       <template #taskId="{ row }">
-        <el-text
-          class="common-align"
-          type="primary"
-        >
+        <el-text class="common-align" type="primary">
           {{ row.taskId }}
         </el-text>
       </template>
       <template #violationType="{ row }">
         <el-tag
-          :type="row.violationType === '违规通行' ? 'danger' : row.violationType === '欠费逃费' ? 'warning' : 'info'"
+          :type="
+            row.violationType === '违规通行'
+              ? 'danger'
+              : row.violationType === '欠费逃费'
+                ? 'warning'
+                : 'info'
+          "
         >
           {{ row.violationType }}
         </el-tag>
@@ -613,7 +636,15 @@ const getActionButtons = (row) => {
       </template>
       <template #status="{ row }">
         <el-tag
-          :type="row.status === '待审核' ? 'warning' : row.status === '待处置' ? 'primary' : row.status === '已完成' ? 'success' : 'info'"
+          :type="
+            row.status === '待审核'
+              ? 'warning'
+              : row.status === '待处置'
+                ? 'primary'
+                : row.status === '已完成'
+                  ? 'success'
+                  : 'info'
+          "
         >
           {{ row.status }}
         </el-tag>
@@ -634,7 +665,15 @@ const getActionButtons = (row) => {
             v-for="btn in getActionButtons(row)"
             :key="btn.label"
             :content="btn.label"
-            :icon-name="btn.label === '通过' ? 'Check' : btn.label === '驳回' ? 'Close' : btn.label === '执行' ? 'Setting' : 'View'"
+            :icon-name="
+              btn.label === '通过'
+                ? 'Check'
+                : btn.label === '驳回'
+                  ? 'Close'
+                  : btn.label === '执行'
+                    ? 'Setting'
+                    : 'View'
+            "
             :color="btn.color"
             @click="btn.handler(row)"
           />
