@@ -107,6 +107,15 @@ function initLineChart() {
     ],
   };
   lineChartInstance.setOption(option);
+
+  // 添加点击事件
+  lineChartInstance.on('click', (params) => {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart', {
+        detail: { enterTime: params.name },
+      }),
+    );
+  });
 }
 
 function initBarChart() {
@@ -141,6 +150,19 @@ function initBarChart() {
     ],
   };
   barChartInstance.setOption(option);
+
+  // 添加点击事件
+  barChartInstance.on('click', (params) => {
+    const today = new Date().toISOString().split('T')[0];
+    window.dispatchEvent(
+      new CustomEvent('filterByChart', {
+        detail: {
+          enterTime: today,
+          hour: params.name,
+        },
+      }),
+    );
+  });
 }
 
 function initCharts() {
@@ -149,9 +171,23 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
-  window.dispatchEvent(
-    new CustomEvent('filterByStatus', { detail: { status: key } }),
-  );
+  const today = new Date();
+  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime();
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime();
+
+  const filterMap = {
+    todayEnterCount: { startTime: todayStart, endTime: todayEnd },
+    normal: { status: '正常记录' },
+    abnormal: { status: '异常记录' },
+    enterPeak: { startTime: todayStart, endTime: todayEnd },
+  };
+
+  const filterParams = filterMap[key];
+  if (filterParams) {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart', { detail: filterParams }),
+    );
+  }
 }
 
 onMounted(() => {

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 
 import Table from './table/index.vue';
 import unplateEnterChart from './unplateEnterChart.vue';
@@ -23,6 +23,32 @@ const arrowChange = () => {
   });
 };
 const activeName = ref('无牌入场');
+
+const tableRef = ref(null);
+
+// 处理图表下钻事件
+const handleFilterByStatus = (params) => {
+  // 滚动到表格区域
+  nextTick(() => {
+    const tableElement = document.querySelector('.park-lot-table-new');
+    if (tableElement) {
+      tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+
+  // 传递筛选参数到表格组件
+  tableRef.value?.handleDrillDown?.(params);
+};
+
+onMounted(() => {
+  // 监听图表下钻事件
+  window.addEventListener('unplateEnterDrillDown', handleFilterByStatus);
+});
+
+onBeforeUnmount(() => {
+  // 移除事件监听
+  window.removeEventListener('unplateEnterDrillDown', handleFilterByStatus);
+});
 </script>
 
 <template>
@@ -41,6 +67,7 @@ const activeName = ref('无牌入场');
         </template>
         <component
           :is="item.components"
+          ref="tableRef"
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"

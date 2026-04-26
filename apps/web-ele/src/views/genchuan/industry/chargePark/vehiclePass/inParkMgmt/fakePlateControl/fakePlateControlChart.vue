@@ -153,9 +153,17 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
-  window.dispatchEvent(
-    new CustomEvent('filterByStatus', { detail: { status: key } }),
-  );
+  const filterMap = {
+    fakePlateCount: { plateType: '套牌车' },
+    controlRate: { controlStatus: '已管控' },
+  };
+
+  const filterParams = filterMap[key];
+  if (filterParams) {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart', { detail: filterParams }),
+    );
+  }
 }
 
 onMounted(() => {

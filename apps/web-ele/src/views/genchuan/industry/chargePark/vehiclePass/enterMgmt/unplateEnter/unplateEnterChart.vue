@@ -40,7 +40,6 @@ const state = reactive({
   hasData: false,
 });
 
-const pieChartRef = ref(null);
 const barChartRef = ref(null);
 let barChartInstance = null;
 
@@ -103,8 +102,6 @@ async function loadChartData() {
 }
 
 function initBarChart() {
-  console.log(state.chartData);
-
   if (!barChartRef.value) return;
   if (barChartInstance) barChartInstance.dispose();
   barChartInstance = echarts.init(barChartRef.value);
@@ -132,6 +129,15 @@ function initBarChart() {
     ],
   };
   barChartInstance.setOption(option);
+
+  // 添加点击事件
+  barChartInstance.on('click', (params) => {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart', {
+        detail: { stationName: params.name },
+      }),
+    );
+  });
 }
 
 function initCharts() {
@@ -139,9 +145,22 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
-  window.dispatchEvent(
-    new CustomEvent('filterByStatus', { detail: { status: key } }),
-  );
+  const today = new Date();
+  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime();
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime();
+
+  const filterMap = {
+    total: { startTime: todayStart, endTime: todayEnd },
+    passRate: { auditStatus: '已通过' },
+    pending: { auditStatus: '待审核' },
+  };
+
+  const filterParams = filterMap[key];
+  if (filterParams) {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart', { detail: filterParams }),
+    );
+  }
 }
 
 onMounted(() => {

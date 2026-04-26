@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
@@ -13,6 +13,7 @@ import {
   correctPlateIdentify,
   createPlateIdentify,
   exportPlateIdentify,
+  getPlateIdentify,
   getPlateIdentifyPage,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/enterMgmt/plateIdentify';
 import IconButton from '#/components/common/IconButton.vue';
@@ -423,9 +424,25 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 const activeName = ref('全部');
 
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerRef.value.open();
+const handleOpenDetail = async (row) => {
+  if (USE_REAL_API) {
+    const loadingInstance = ElLoading.service({
+      text: '加载详情中...',
+    });
+    try {
+      const res = await getPlateIdentify(row.id);
+      dataObj.detailObj = res;
+      detailDrawerRef.value.open();
+    } catch (error) {
+      ElMessage.error('获取详情失败');
+      console.error(error);
+    } finally {
+      loadingInstance.close();
+    }
+  } else {
+    dataObj.detailObj = row;
+    detailDrawerRef.value.open();
+  }
 };
 
 const tabsData = ref([
@@ -531,6 +548,22 @@ const getConfidenceColor = (confidence) => {
   if (confidence >= 70) return 'warning';
   return 'danger';
 };
+
+// 处理图表卡片点击筛选
+const handleFilterByChart = (event) => {
+  const filterParams = event.detail;
+  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+  handleRefresh();
+  ElMessage.success('已应用图表筛选');
+};
+
+onMounted(() => {
+  window.addEventListener('filterByChart', handleFilterByChart);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('filterByChart', handleFilterByChart);
+});
 </script>
 
 <template>

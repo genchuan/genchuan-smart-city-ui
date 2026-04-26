@@ -1,3 +1,5 @@
+import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+
 /** 入场记录表格初始数据 */
 export const dataList = () => {
   return [
@@ -140,7 +142,7 @@ export function useSearchFormSchema() {
         placeholder: '请选择入场时间',
         type: 'datetimerange',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'X',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
     },
   ];
@@ -188,7 +190,7 @@ export function useCreateFormSchema() {
       componentProps: {
         placeholder: '请选择入场时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'X',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
         showTime: true,
       },
       rules: 'required',
@@ -288,7 +290,7 @@ export function useUpdateFormSchema() {
       componentProps: {
         placeholder: '请选择入场时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'X',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
         showTime: true,
       },
       rules: 'required',
@@ -390,7 +392,7 @@ export function useCorrectFormSchema() {
       componentProps: {
         placeholder: '请选择入场时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'X',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
         showTime: true,
       },
       rules: 'required',
@@ -474,6 +476,7 @@ export function useGridColumns() {
       title: '入场时间',
       minWidth: 180,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       field: 'recordType',
@@ -552,11 +555,11 @@ export const detailFields = [
   { key: 'plateNo', label: '车牌号' },
   { key: 'plateColor', label: '车牌颜色' },
   { key: 'spaceNo', label: '车位编号' },
-  { key: 'enterTime', label: '入场时间' },
+  { key: 'enterTime', label: '入场时间', formatter: formatTime },
   { key: 'recordType', label: '记录类型' },
   { key: 'status', label: '记录状态' },
   { key: 'stationName', label: '场站' },
-  { key: 'proofImage', label: '佐证图片' },
+  { key: 'proofImage', label: '佐证图片', type: 'image' },
   {
     key: 'isCorrected',
     label: '是否已修正',
@@ -564,6 +567,6 @@ export const detailFields = [
   },
   { key: 'remark', label: '备注' },
   { key: 'creator', label: '创建人' },
-  { key: 'createTime', label: '创建时间' },
-  { key: 'updateTime', label: '更新时间' },
+  { key: 'createTime', label: '创建时间', formatter: formatTime },
+  { key: 'updateTime', label: '更新时间', formatter: formatTime },
 ];

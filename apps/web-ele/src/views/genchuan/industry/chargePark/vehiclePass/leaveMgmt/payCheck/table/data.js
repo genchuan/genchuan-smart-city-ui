@@ -1,3 +1,5 @@
+import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+
 /** 缴费状态类型映射 */
 export const statusTypeMap = {
   已缴清: 'success',
@@ -157,6 +159,7 @@ export function useGridColumns() {
       title: '核验时间',
       minWidth: 180,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       field: 'stationName',
@@ -201,11 +204,11 @@ export const detailFields = [
   { key: 'plateNo', label: '车牌' },
   { key: 'parkFee', label: '停车费用(元)' },
   { key: 'status', label: '缴费状态' },
-  { key: 'checkTime', label: '核验时间' },
+  { key: 'checkTime', label: '核验时间', formatter: formatTime },
   { key: 'stationName', label: '场站' },
   { key: 'checkUserName', label: '核验人' },
   { key: 'checkResult', label: '核验结果' },
   { key: 'remark', label: '备注' },
-  { key: 'createTime', label: '创建时间' },
-  { key: 'updateTime', label: '更新时间' },
+  { key: 'createTime', label: '创建时间', formatter: formatTime },
+  { key: 'updateTime', label: '更新时间', formatter: formatTime },
 ];

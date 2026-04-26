@@ -1,3 +1,5 @@
+import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+
 /** 模块表格初始数据 */
 export const dataList = () => {
   return [
@@ -120,7 +122,7 @@ export function useSearchFormSchema() {
       componentProps: {
         type: 'daterange',
         placeholder: '请选择处置时间',
-        valueFormat: 'X',
+        valueFormat: 'YYYY-MM-DD',
       },
     },
   ];
@@ -184,6 +186,7 @@ export function useGridColumns() {
       title: '处置时间',
       minWidth: 160,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       field: 'rectifyStatus',
@@ -217,9 +220,9 @@ export const detailFields = [
   { key: 'status', label: '状态' },
   { key: 'areaName', label: '片区' },
   { key: 'handleUserName', label: '处置人' },
-  { key: 'handleTime', label: '处置时间' },
+  { key: 'handleTime', label: '处置时间', formatter: formatTime },
   { key: 'rectifyStatus', label: '整改状态' },
   { key: 'rejectReason', label: '驳回理由' },
   { key: 'remark', label: '备注' },
-  { key: 'createTime', label: '创建时间' },
+  { key: 'createTime', label: '创建时间', formatter: formatTime },
 ];

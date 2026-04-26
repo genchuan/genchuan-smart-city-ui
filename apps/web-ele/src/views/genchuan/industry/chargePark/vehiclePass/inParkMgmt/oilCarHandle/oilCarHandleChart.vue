@@ -154,9 +154,17 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
-  window.dispatchEvent(
-    new CustomEvent('filterByStatus', { detail: { status: key } }),
-  );
+  const filterMap = {
+    waitHandleCount: { handleStatus: '待处置' },
+    handleCompleteRate: { handleStatus: '已完成' },
+  };
+
+  const filterParams = filterMap[key];
+  if (filterParams) {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart', { detail: filterParams }),
+    );
+  }
 }
 
 onMounted(() => {

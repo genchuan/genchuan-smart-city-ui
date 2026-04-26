@@ -3,7 +3,7 @@ import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { endParkApi } from '#/api/genchuan/industry/chargePark/vehiclePass/api-map';
+import { getEndParkChart } from '#/api/genchuan/industry/chargePark/vehiclePass/siteInput/endPark';
 
 const props = defineProps({
   parkId: { type: Number, default: null },
@@ -11,7 +11,7 @@ const props = defineProps({
 
 const cards = reactive([
   {
-    title: '今日结束量',
+    title: '结束量',
     value: 0,
     desc: '累计结束停车',
     color: '#4A90E2',
@@ -45,12 +45,12 @@ async function loadChartData() {
     startTime.setDate(startTime.getDate() - 7);
 
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
-      stationId: props.parkId,
+      startTime: Math.floor(startTime.getTime() / 1000).toString(),
+      endTime: Math.floor(endTime.getTime() / 1000).toString(),
+      areaId: props.parkId,
     };
 
-    const res = await endParkApi.getChart(params);
+    const res = await getEndParkChart(params);
 
     // Always update card values
     if (res?.cardData) {
@@ -91,7 +91,10 @@ function initPieChart() {
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
     },
-    tooltip: { trigger: 'axis' },
+    tooltip: {
+      trigger: 'axis',
+      formatter: '{b}<br/>{a}: {c}',
+    },
     xAxis: {
       type: 'category',
       data: state.chartData.trend.map((item) => item.date),
@@ -111,6 +114,16 @@ function initPieChart() {
     ],
   };
   pieChartInstance.setOption(option);
+
+  // 添加点击事件：点击折线数据点钻取筛选对应日期的结束停车记录列表
+  pieChartInstance.on('click', (params) => {
+    if (params.componentType === 'series') {
+      const date = params.name;
+      window.dispatchEvent(
+        new CustomEvent('filterEndPark', { detail: { date } }),
+      );
+    }
+  });
 }
 
 function initBarChart() {
@@ -123,9 +136,18 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
-  window.dispatchEvent(
-    new CustomEvent('filterByStatus', { detail: { status: key } }),
-  );
+  // 卡片点击钻取：跳转到对应筛选的列表
+  if (key === 'endCount') {
+    // 结束量：跳转所有结束停车记录列表
+    window.dispatchEvent(
+      new CustomEvent('filterEndPark', { detail: { status: null } }),
+    );
+  } else if (key === 'paySuccessRate') {
+    // 支付成功率：跳转已支付状态的结束停车记录列表
+    window.dispatchEvent(
+      new CustomEvent('filterEndPark', { detail: { status: '已支付' } }),
+    );
+  }
 }
 
 onMounted(() => {

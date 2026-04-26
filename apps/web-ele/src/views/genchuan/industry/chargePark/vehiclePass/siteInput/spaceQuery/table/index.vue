@@ -1,5 +1,5 @@
 ﻿<script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
@@ -9,11 +9,16 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getSpaceQueryPage } from '#/api/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery';
+import {
+  getSpaceQueryPage,
+  getSpaceQueryLocation,
+  getSpaceQuery,
+} from '#/api/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import IconButton from '#/components/common/IconButton.vue';
 import { exportToExcel } from '#/utils/excel.js';
+import SpaceLocationMap from '../components/SpaceLocationMap.vue';
 
 import {
   dataList,
@@ -197,18 +202,6 @@ const getTableData = async (pageObj) => {
 
   // 使用模拟数据
   const filteredList = dataObj.apilist.filter((v) => {
-    let statusMatch = true;
-    switch (activeName.value) {
-      case '异常': {
-        statusMatch = v.status === '异常';
-        break;
-      }
-      case '正常': {
-        statusMatch = v.status === '正常';
-        break;
-      }
-    }
-
     let searchMatch = true;
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
@@ -220,7 +213,7 @@ const getTableData = async (pageObj) => {
       }
     });
 
-    return statusMatch && searchMatch;
+    return searchMatch;
   });
 
   dataObj.total = filteredList.length;
@@ -286,11 +279,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const activeName = ref('全部');
 
 const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerRef.value.open();
+  handleView(row);
 };
 
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
+const tabsData = ref([{ label: '全部' }]);
 
 const createLabel = (item) => {
   let count = 0;
@@ -298,14 +290,6 @@ const createLabel = (item) => {
   switch (item.label) {
     case '全部': {
       count = dataObj.apilist.length;
-      break;
-    }
-    case '异常': {
-      count = dataObj.apilist.filter((v) => v.status === '异常').length;
-      break;
-    }
-    case '正常': {
-      count = dataObj.apilist.filter((v) => v.status === '正常').length;
       break;
     }
   }
@@ -324,6 +308,139 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 地图弹窗
+const [MapDrawer, mapDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  footer: false,
+  class: 'map-drawer',
+  contentClass: 'map-drawer-content',
+  onCancel() {
+    mapDrawerApi.close();
+  },
+  onConfirm() {},
+  async onOpenChange() {},
+});
+
+const mapData = ref({
+  lon: 0,
+  lat: 0,
+  spaceName: '',
+  areaName: '',
+});
+
+// 定位操作
+const handleLocation = async (row) => {
+  if (USE_REAL_API) {
+    try {
+      const res = await getSpaceQueryLocation({ id: row.id });
+      mapData.value = res;
+      mapDrawerApi
+        .setData({
+          title: `泊位定位 - ${res.spaceName}`,
+        })
+        .open();
+    } catch (error) {
+      ElMessage.error('获取位置信息失败');
+      console.error(error);
+    }
+  } else {
+    // 模拟数据
+    mapData.value = {
+      lon: 118.555527,
+      lat: 24.896373,
+      spaceName: row.spaceNo,
+      areaName: row.areaName || '泉州丰泽片区',
+    };
+    mapDrawerApi
+      .setData({
+        title: `泊位定位 - ${row.spaceNo}`,
+      })
+      .open();
+  }
+};
+
+// 查看详情
+const handleView = async (row) => {
+  if (USE_REAL_API) {
+    try {
+      const detail = await getSpaceQuery(row.id);
+      dataObj.detailObj = detail;
+      detailDrawerRef.value?.open();
+    } catch (error) {
+      ElMessage.error('获取详情失败');
+      console.error(error);
+    }
+  } else {
+    dataObj.detailObj = row;
+    detailDrawerRef.value?.open();
+  }
+};
+
+// 下钻筛选 - 点击泊位编号
+const handleSpaceNoClick = (row) => {
+  // 跳转到泊位详情页面
+  handleView(row);
+};
+
+// 下钻筛选 - 点击查询人
+const handleQueryUserClick = (row) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    queryUserId: row.queryUserId,
+  };
+  handleRefresh();
+  ElMessage.success(`已筛选查询人：${row.queryUserName}`);
+};
+
+// 下钻筛选 - 点击片区
+const handleAreaClick = (row) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    areaId: row.areaId,
+  };
+  handleRefresh();
+  ElMessage.success(`已筛选片区：${row.areaName}`);
+};
+
+// 监听图表下钻事件
+onMounted(() => {
+  // 监听卡片点击事件 - 下钻到列表
+  const handleFilterByStatus = (e) => {
+    const { status } = e.detail;
+    if (status === '') {
+      // 查询量卡片 - 清空筛选显示全部
+      dataObj.searchParams = {};
+      ElMessage.success('已显示全部查询记录');
+    } else if (status === 'success') {
+      // 查询成功率卡片 - 筛选查询成功的记录
+      dataObj.searchParams = {
+        querySuccess: true,
+      };
+      ElMessage.success('已筛选查询成功的记录');
+    }
+    handleRefresh();
+  };
+
+  // 监听地图点击事件 - 下钻到列表
+  const handleFilterBySpace = (e) => {
+    const { spaceNo } = e.detail;
+    dataObj.searchParams = {
+      spaceNo: spaceNo,
+    };
+    handleRefresh();
+    ElMessage.success(`已筛选泊位：${spaceNo}`);
+  };
+
+  window.addEventListener('filterByChart', handleFilterByStatus);
+  window.addEventListener('filterBySpace', handleFilterBySpace);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('filterByChart', () => {});
+  window.removeEventListener('filterBySpace', () => {});
+});
 </script>
 
 <template>
@@ -331,9 +448,17 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+    <MapDrawer title="泊位定位">
+      <SpaceLocationMap
+        :lon="mapData.lon"
+        :lat="mapData.lat"
+        :space-name="mapData.spaceName"
+        :area-name="mapData.areaName"
+      />
+    </MapDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.plateNo}详情`"
+      :title="`${dataObj.detailObj.spaceNo}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
@@ -361,23 +486,15 @@ const handleFullShow = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
           <IconButton
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
           />
           <IconButton
             content="全屏"
@@ -395,23 +512,52 @@ const handleFullShow = () => {
           {{ row.id }}
         </el-text>
       </template>
+      <template #spaceNo="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleSpaceNoClick(row)"
+        >
+          {{ row.spaceNo }}
+        </el-text>
+      </template>
+      <template #queryUserName="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleQueryUserClick(row)"
+        >
+          {{ row.queryUserName }}
+        </el-text>
+      </template>
+      <template #areaName="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleAreaClick(row)"
+        >
+          {{ row.areaName }}
+        </el-text>
+      </template>
+      <template #spaceStatus="{ row }">
+        <el-tag :type="row.spaceStatus === '空闲' ? 'success' : 'warning'">
+          {{ row.spaceStatus }}
+        </el-tag>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
+            content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
+            content="定位"
+            icon-name="Location"
+            @click="handleLocation(row)"
           />
         </div>
       </template>
@@ -424,7 +570,7 @@ const handleFullShow = () => {
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：入场记录数量: {{ dataObj.list.length }}; 已选择:
+            本页统计：查询记录数量: {{ dataObj.list.length }}; 已选择:
             {{ checkedIds.length }}
           </span>
         </div>
@@ -436,3 +582,11 @@ const handleFullShow = () => {
   </div>
 </template>
 
+<style scoped lang="scss">
+:deep(.map-drawer) {
+  .map-drawer-content {
+    height: calc(100vh - 120px);
+    padding: 0;
+  }
+}
+</style>

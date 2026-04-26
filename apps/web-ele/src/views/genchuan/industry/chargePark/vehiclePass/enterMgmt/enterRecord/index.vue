@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 
 import enterRecordChart from './enterRecordChart.vue';
 import Table from './table/index.vue';
@@ -23,6 +23,34 @@ const arrowChange = () => {
   });
 };
 const activeName = ref('入场记录');
+
+// 下钻筛选参数
+const drillDownFilter = ref(null);
+const tableRef = ref(null);
+
+// 监听图表下钻事件
+const handleFilterByStatus = (event) => {
+  const { status } = event.detail;
+
+  // 设置筛选条件（不收起图表）
+  drillDownFilter.value = { filterKey: status };
+
+  // 滚动到表格区域
+  setTimeout(() => {
+    const tableElement = document.querySelector('.common-tabs');
+    if (tableElement) {
+      tableElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 100);
+};
+
+onMounted(() => {
+  window.addEventListener('filterByStatus', handleFilterByStatus);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('filterByStatus', handleFilterByStatus);
+});
 </script>
 
 <template>
@@ -41,9 +69,11 @@ const activeName = ref('入场记录');
         </template>
         <component
           :is="item.components"
+          ref="tableRef"
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
+          :drill-down-filter="drillDownFilter"
           @arrow-change="arrowChange"
         />
       </el-tab-pane>

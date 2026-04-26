@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue';
+import { onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 
@@ -11,6 +11,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   batchHandleOilCar,
   exportOilCarHandle,
+  getOilCarHandle,
   getOilCarHandlePage,
   handleOilCar,
   ignoreOilCarHandle,
@@ -411,9 +412,23 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 const activeName = ref('全部');
 
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerRef.value.open();
+const handleOpenDetail = async (row) => {
+  try {
+    const loadingInstance = ElLoading.service({ text: '加载详情中...' });
+    try {
+      const data = await getOilCarHandle(row.id);
+      dataObj.detailObj = data;
+      detailDrawerRef.value.open();
+    } finally {
+      loadingInstance.close();
+    }
+  } catch (error) {
+    console.error('获取详情失败:', error);
+    ElMessage.error('获取详情失败');
+    // 失败时使用行数据兜底
+    dataObj.detailObj = row;
+    detailDrawerRef.value.open();
+  }
 };
 
 const handlePlateNoClick = (row) => {
@@ -503,6 +518,22 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 处理图表卡片点击筛选
+const handleFilterByChart = (event) => {
+  const filterParams = event.detail;
+  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+  handleRefresh();
+  ElMessage.success('已应用图表筛选');
+};
+
+onMounted(() => {
+  window.addEventListener('filterByChart', handleFilterByChart);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('filterByChart', handleFilterByChart);
+});
 </script>
 
 <template>

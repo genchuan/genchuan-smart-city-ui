@@ -69,6 +69,18 @@ const formatValue = (field, value) => {
   return value;
 };
 
+// 获取完整图片URL
+const getFullImageUrl = (url) => {
+  if (!url) return '';
+  // 如果已经是完整URL，直接返回
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  // 如果是相对路径，拼接BASE_URL
+  const baseUrl = import.meta.env.VITE_BASE_URL || '';
+  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
 defineExpose({
   open,
   close,
@@ -154,6 +166,23 @@ defineExpose({
                   </el-tag>
                 </div>
               </template>
+              <template v-else-if="field.type === 'image'">
+                <el-image
+                  v-if="item[field.key]"
+                  :src="getFullImageUrl(item[field.key])"
+                  :preview-src-list="[getFullImageUrl(item[field.key])]"
+                  style="width: 100px; height: 100px; cursor: pointer"
+                  fit="cover"
+                >
+                  <template #error>
+                    <div class="image-error">
+                      <el-icon><Picture /></el-icon>
+                      <span>加载失败</span>
+                    </div>
+                  </template>
+                </el-image>
+                <span v-else class="text-placeholder">暂无图片</span>
+              </template>
               <template v-else>
                 {{ formatValue(field, item[field.key]) }}
               </template>
@@ -229,5 +258,25 @@ defineExpose({
   padding: 16px 0 0;
   margin-top: 20px;
   border-top: 1px solid var(--el-border-color-light, #ebeef5);
+}
+
+.image-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--el-text-color-secondary);
+  background-color: var(--el-fill-color-light);
+}
+
+.image-error span {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.text-placeholder {
+  color: var(--el-text-color-placeholder);
 }
 </style>

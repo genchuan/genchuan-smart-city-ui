@@ -1,3 +1,5 @@
+import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+
 /** 处置状态类型映射 */
 export const statusTypeMap = {
   未处理: 'danger',
@@ -250,6 +252,7 @@ export function useGridColumns() {
       title: '识别时间',
       minWidth: 180,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       field: 'status',
@@ -277,6 +280,7 @@ export function useGridColumns() {
       title: '处置时间',
       minWidth: 180,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       field: 'handleProgress',
@@ -307,14 +311,14 @@ export const detailFields = [
   { key: 'id', label: '离场ID' },
   { key: 'plateNo', label: '车牌' },
   { key: 'abnormalType', label: '异常类型' },
-  { key: 'identifyTime', label: '识别时间' },
+  { key: 'identifyTime', label: '识别时间', formatter: formatTime },
   { key: 'status', label: '处置状态' },
   { key: 'stationName', label: '场站' },
   { key: 'handleUserName', label: '处置人' },
-  { key: 'handleTime', label: '处置时间' },
+  { key: 'handleTime', label: '处置时间', formatter: formatTime },
   { key: 'handleProgress', label: '处置进度' },
   { key: 'ignoreReason', label: '忽略理由' },
   { key: 'remark', label: '备注' },
-  { key: 'createTime', label: '创建时间' },
-  { key: 'updateTime', label: '更新时间' },
+  { key: 'createTime', label: '创建时间', formatter: formatTime },
+  { key: 'updateTime', label: '更新时间', formatter: formatTime },
 ];

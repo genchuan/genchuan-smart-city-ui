@@ -1,3 +1,5 @@
+import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+
 /** 车牌识别表格初始数据 */
 export const dataList = () => {
   return [
@@ -338,6 +340,7 @@ export function useGridColumns() {
       title: '识别时间',
       minWidth: 180,
       sortable: true,
+      formatter: createTimeFormatter(),
     },
     {
       title: '操作',
@@ -386,6 +389,6 @@ export const detailFields = [
   },
   { key: 'remark', label: '备注' },
   { key: 'creator', label: '创建人' },
-  { key: 'createTime', label: '识别时间' },
-  { key: 'updateTime', label: '更新时间' },
+  { key: 'createTime', label: '识别时间', formatter: formatTime },
+  { key: 'updateTime', label: '更新时间', formatter: formatTime },
 ];

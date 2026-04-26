@@ -32,10 +32,7 @@ const tableRef = ref(null);
 const handleFilterByStatus = (event) => {
   const { status } = event.detail;
 
-  // 收起图表，展开表格
-  tabArray.value[0].arrowShow = false;
-
-  // 设置筛选条件
+  // 设置筛选条件（不收起图表）
   drillDownFilter.value = { filterKey: status };
 
   // 滚动到表格区域

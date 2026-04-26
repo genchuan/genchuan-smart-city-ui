@@ -122,9 +122,21 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
-  window.dispatchEvent(
-    new CustomEvent('filterByStatus', { detail: { status: key } }),
-  );
+  const today = new Date();
+  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime();
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime();
+
+  const filterMap = {
+    checkSuccessRate: { startTime: todayStart, endTime: todayEnd },
+    avgCheckDuration: { startTime: todayStart, endTime: todayEnd },
+  };
+
+  const filterParams = filterMap[key];
+  if (filterParams) {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart', { detail: filterParams }),
+    );
+  }
 }
 
 onMounted(() => {

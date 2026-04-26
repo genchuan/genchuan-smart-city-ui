@@ -1,5 +1,5 @@
 ﻿<script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
@@ -12,6 +12,11 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   exportCarInput,
   getCarInputPage,
+  getCarInput,
+  createCarInput,
+  auditCarInput,
+  confirmCarInput,
+  correctCarInput,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/siteInput/carInput';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
@@ -25,6 +30,8 @@ import {
   useSearchFormSchema,
   useCreateFormSchema,
   useGridColumns,
+  useAuditFormSchema,
+  useCorrectFormSchema,
 } from './data';
 
 const props = defineProps({
@@ -69,11 +76,24 @@ const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
   onCancel() {
     createFormDrawerApi.close();
   },
-  onConfirm() {
-    const obj = createFormApi.form.values;
-    dataObj.apilist.push(obj);
-    handleRefresh();
-    createFormDrawerApi.close();
+  async onConfirm() {
+    if (USE_REAL_API) {
+      try {
+        const values = createFormApi.form.values;
+        await createCarInput(values);
+        ElMessage.success('新增成功');
+        handleRefresh();
+        createFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('新增失败');
+        console.error(error);
+      }
+    } else {
+      const obj = createFormApi.form.values;
+      dataObj.apilist.push(obj);
+      handleRefresh();
+      createFormDrawerApi.close();
+    }
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
@@ -152,6 +172,7 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
   searchParams: {},
+  currentRow: null,
 });
 
 const changeTotalShow = () => {
@@ -185,12 +206,16 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '异常': {
-        statusMatch = v.status === '异常';
+      case '待审核': {
+        statusMatch = v.status === '待审核';
         break;
       }
-      case '正常': {
-        statusMatch = v.status === '正常';
+      case '已通过': {
+        statusMatch = v.status === '已通过';
+        break;
+      }
+      case '已驳回': {
+        statusMatch = v.status === '已驳回';
         break;
       }
     }
@@ -276,12 +301,31 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 const activeName = ref('全部');
 
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerRef.value.open();
+const handleOpenDetail = async (row) => {
+  try {
+    const loadingInstance = ElLoading.service({ text: '加载详情中...' });
+    try {
+      const data = await getCarInput(row.id);
+      dataObj.detailObj = data;
+      detailDrawerRef.value.open();
+    } finally {
+      loadingInstance.close();
+    }
+  } catch (error) {
+    console.error('获取详情失败:', error);
+    ElMessage.error('获取详情失败');
+    // 失败时使用行数据兜底
+    dataObj.detailObj = row;
+    detailDrawerRef.value.open();
+  }
 };
 
-const tabsData = ref([{ label: '全部' }, { label: '正常' }, { label: '异常' }]);
+const tabsData = ref([
+  { label: '全部' },
+  { label: '待审核' },
+  { label: '已通过' },
+  { label: '已驳回' },
+]);
 
 const createLabel = (item) => {
   let count = 0;
@@ -291,12 +335,16 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '异常': {
-      count = dataObj.apilist.filter((v) => v.status === '异常').length;
+    case '待审核': {
+      count = dataObj.apilist.filter((v) => v.status === '待审核').length;
       break;
     }
-    case '正常': {
-      count = dataObj.apilist.filter((v) => v.status === '正常').length;
+    case '已通过': {
+      count = dataObj.apilist.filter((v) => v.status === '已通过').length;
+      break;
+    }
+    case '已驳回': {
+      count = dataObj.apilist.filter((v) => v.status === '已驳回').length;
       break;
     }
   }
@@ -315,6 +363,179 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 处理图表卡片点击筛选
+const handleFilterByChart = (event) => {
+  const filterParams = event.detail;
+  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+  handleRefresh();
+  ElMessage.success('已应用图表筛选');
+};
+
+onMounted(() => {
+  window.addEventListener('filterByChart', handleFilterByChart);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('filterByChart', handleFilterByChart);
+});
+
+// 审核表单
+const [AuditForm, auditFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useAuditFormSchema(),
+  showDefaultActions: false,
+});
+
+const [AuditFormDrawer, auditFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    auditFormDrawerApi.close();
+  },
+  async onConfirm() {
+    if (USE_REAL_API) {
+      try {
+        const values = auditFormApi.form.values;
+        await auditCarInput({
+          id: dataObj.currentRow.id,
+          ...values,
+        });
+        ElMessage.success('审核成功');
+        handleRefresh();
+        auditFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('审核失败');
+        console.error(error);
+      }
+    } else {
+      const values = auditFormApi.form.values;
+      const index = dataObj.apilist.findIndex(
+        (v) => v.id === dataObj.currentRow.id,
+      );
+      if (index !== -1) {
+        dataObj.apilist[index].status =
+          values.auditResult === '通过' ? '已通过' : '已驳回';
+        dataObj.apilist[index].auditComment = values.auditComment;
+      }
+      handleRefresh();
+      auditFormDrawerApi.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      auditFormApi.resetForm();
+    }
+  },
+});
+
+// 修正表单
+const [CorrectForm, correctFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useCorrectFormSchema(),
+  showDefaultActions: false,
+});
+
+const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    correctFormDrawerApi.close();
+  },
+  async onConfirm() {
+    if (USE_REAL_API) {
+      try {
+        const values = correctFormApi.form.values;
+        await correctCarInput({
+          id: dataObj.currentRow.id,
+          ...values,
+        });
+        ElMessage.success('修正成功');
+        handleRefresh();
+        correctFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('修正失败');
+        console.error(error);
+      }
+    } else {
+      const values = correctFormApi.form.values;
+      const index = dataObj.apilist.findIndex(
+        (v) => v.id === dataObj.currentRow.id,
+      );
+      if (index !== -1) {
+        Object.assign(dataObj.apilist[index], values);
+        dataObj.apilist[index].status = '待审核';
+      }
+      handleRefresh();
+      correctFormDrawerApi.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen && dataObj.currentRow) {
+      correctFormApi.setValues({
+        plateNo: dataObj.currentRow.plateNo,
+        spaceId: dataObj.currentRow.spaceId,
+        areaId: dataObj.currentRow.areaId,
+        remark: dataObj.currentRow.remark,
+      });
+    }
+  },
+});
+
+// 审核操作
+const handleAudit = (row) => {
+  dataObj.currentRow = row;
+  auditFormDrawerApi
+    .setData({
+      title: '审核车辆录入',
+    })
+    .open();
+};
+
+// 确认操作
+const handleConfirm = async (row) => {
+  await confirm('确定确认该录入信息吗？');
+  if (USE_REAL_API) {
+    try {
+      await confirmCarInput({ id: row.id });
+      ElMessage.success('确认成功');
+      handleRefresh();
+    } catch (error) {
+      ElMessage.error('确认失败');
+      console.error(error);
+    }
+  } else {
+    const index = dataObj.apilist.findIndex((v) => v.id === row.id);
+    if (index !== -1) {
+      dataObj.apilist[index].status = '已确认';
+    }
+    handleRefresh();
+  }
+};
+
+// 修正操作
+const handleCorrect = (row) => {
+  dataObj.currentRow = row;
+  correctFormDrawerApi
+    .setData({
+      title: '修正车辆录入',
+    })
+    .open();
+};
 </script>
 
 <template>
@@ -322,6 +543,12 @@ const handleFullShow = () => {
     <CreateFormDrawer :title="textObj.addText">
       <CreateForm />
     </CreateFormDrawer>
+    <AuditFormDrawer title="审核车辆录入">
+      <AuditForm />
+    </AuditFormDrawer>
+    <CorrectFormDrawer title="修正车辆录入">
+      <CorrectForm />
+    </CorrectFormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.plateNo}详情`"
@@ -386,23 +613,63 @@ const handleFullShow = () => {
           {{ row.id }}
         </el-text>
       </template>
+      <template #plateNo="{ row }">
+        <el-text class="common-align" type="primary">
+          {{ row.plateNo }}
+        </el-text>
+      </template>
+      <template #spaceId="{ row }">
+        <el-text class="common-align" type="primary">
+          {{ row.spaceId }}
+        </el-text>
+      </template>
+      <template #status="{ row }">
+        <el-tag
+          :type="
+            row.status === '已通过'
+              ? 'success'
+              : row.status === '待审核'
+                ? 'warning'
+                : 'danger'
+          "
+        >
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #areaName="{ row }">
+        <el-text class="common-align" type="primary">
+          {{ row.areaName }}
+        </el-text>
+      </template>
+      <template #inputUserName="{ row }">
+        <el-text class="common-align" type="primary">
+          {{ row.inputUserName }}
+        </el-text>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
+            v-if="row.status === '待审核'"
+            content="审核"
+            icon-name="CircleCheck"
+            @click="handleAudit(row)"
+          />
+          <IconButton
+            v-if="row.status === '已通过'"
+            content="确认"
+            icon-name="Select"
+            @click="handleConfirm(row)"
+          />
+          <IconButton
+            v-if="row.status === '已驳回'"
+            content="修正"
+            icon-name="edit"
+            @click="handleCorrect(row)"
+          />
+          <IconButton
+            content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
           />
         </div>
       </template>

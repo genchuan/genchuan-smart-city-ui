@@ -29,12 +29,15 @@ const cards = reactive([
 const state = reactive({
   chartData: {
     trend: [],
+    locationList: [],
   },
   hasData: false,
 });
 
-const pieChartRef = ref(null);
-let pieChartInstance = null;
+const trendChartRef = ref(null);
+const mapChartRef = ref(null);
+let trendChartInstance = null;
+let mapChartInstance = null;
 
 async function loadChartData() {
   try {
@@ -57,11 +60,13 @@ async function loadChartData() {
     }
 
     // Check if there's chart data
-    const hasChartData = res?.carLocationList?.length > 0;
+    const hasTrendData = res?.inParkCountTrend?.length > 0;
+    const hasLocationData = res?.carLocationList?.length > 0;
 
-    if (hasChartData) {
+    if (hasTrendData || hasLocationData) {
       state.chartData = {
-        trend: res.carLocationList || [],
+        trend: res.inParkCountTrend || [],
+        locationList: res.carLocationList || [],
       };
       state.hasData = true;
       // 等待 DOM 更新后再初始化图表
@@ -76,10 +81,10 @@ async function loadChartData() {
   }
 }
 
-function initPieChart() {
-  if (!pieChartRef.value) return;
-  if (pieChartInstance) pieChartInstance.dispose();
-  pieChartInstance = echarts.init(pieChartRef.value);
+function initTrendChart() {
+  if (!trendChartRef.value || state.chartData.trend.length === 0) return;
+  if (trendChartInstance) trendChartInstance.dispose();
+  trendChartInstance = echarts.init(trendChartRef.value);
   const option = {
     backgroundColor: 'transparent',
     title: {
@@ -107,27 +112,97 @@ function initPieChart() {
       },
     ],
   };
-  pieChartInstance.setOption(option);
+  trendChartInstance.setOption(option);
+}
+
+function initMapChart() {
+  if (!mapChartRef.value || state.chartData.locationList.length === 0) return;
+  if (mapChartInstance) mapChartInstance.dispose();
+  mapChartInstance = echarts.init(mapChartRef.value);
+
+  const scatterData = state.chartData.locationList.map((item) => ({
+    value: [item.lon, item.lat],
+    name: item.plateNo,
+    spaceName: item.spaceName,
+  }));
+
+  const option = {
+    backgroundColor: 'transparent',
+    title: {
+      text: '在停车辆分布地图',
+      left: 'center',
+      top: 10,
+      textStyle: { fontSize: 14, fontWeight: 500 },
+    },
+    tooltip: {
+      trigger: 'item',
+      formatter: (params) => {
+        return `车牌: ${params.data.name}<br/>车位: ${params.data.spaceName}<br/>经纬度: (${params.data.value[0]}, ${params.data.value[1]})`;
+      },
+    },
+    xAxis: {
+      type: 'value',
+      name: '经度',
+      scale: true,
+    },
+    yAxis: {
+      type: 'value',
+      name: '纬度',
+      scale: true,
+    },
+    series: [
+      {
+        name: '车辆位置',
+        type: 'scatter',
+        data: scatterData,
+        symbolSize: 12,
+        itemStyle: {
+          color: '#FF6B8B',
+          shadowBlur: 10,
+          shadowColor: 'rgba(255, 107, 139, 0.5)',
+        },
+        emphasis: {
+          itemStyle: {
+            color: '#FF3860',
+            borderColor: '#fff',
+            borderWidth: 2,
+          },
+        },
+      },
+    ],
+  };
+  mapChartInstance.setOption(option);
 }
 
 function initCharts() {
-  initPieChart();
+  initTrendChart();
+  initMapChart();
 }
 
 function handleCardClick(key) {
-  window.dispatchEvent(
-    new CustomEvent('filterByStatus', { detail: { status: key } }),
-  );
+  const filterMap = {
+    inParkCarCount: {},
+    overTimeCarCount: { parkStatus: '超时在停' },
+  };
+
+  const filterParams = filterMap[key];
+  if (filterParams) {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart', { detail: filterParams }),
+    );
+  }
 }
 
 onMounted(() => {
   loadChartData();
   window.addEventListener('resize', () => {
-    pieChartInstance?.resize();
+    trendChartInstance?.resize();
+    mapChartInstance?.resize();
   });
 });
 onUnmounted(() => {
-  pieChartInstance?.dispose();
+  trendChartInstance?.dispose();
+  mapChartInstance?.dispose();
 });
 </script>
 
@@ -160,8 +235,14 @@ onUnmounted(() => {
 
     <!-- 右侧图表区域 -->
     <div v-if="state.hasData" class="chart-wrapper">
-      <div class="chart-container">
-        <div ref="pieChartRef" style="width: 100%; height: 100%"></div>
+      <div
+        v-if="state.chartData.locationList.length > 0"
+        class="chart-container"
+      >
+        <div ref="mapChartRef" style="width: 100%; height: 100%"></div>
+      </div>
+      <div v-if="state.chartData.trend.length > 0" class="chart-container">
+        <div ref="trendChartRef" style="width: 100%; height: 100%"></div>
       </div>
     </div>
   </div>

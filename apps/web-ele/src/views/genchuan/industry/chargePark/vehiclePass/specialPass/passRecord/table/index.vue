@@ -1,9 +1,9 @@
 <script setup>
-import { reactive, ref, watch } from 'vue';
+import { onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElLoading } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -12,6 +12,7 @@ import {
   checkPassRecord,
   exportPassRecord,
   getPassRecordPage,
+  getPassRecord,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/specialPass/passRecord';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import IconButton from '#/components/common/IconButton.vue';
@@ -257,9 +258,23 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 const activeName = ref('全部');
 
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerRef.value.open();
+const handleOpenDetail = async (row) => {
+  try {
+    const loadingInstance = ElLoading.service({ text: '加载详情中...' });
+    try {
+      const data = await getPassRecord(row.id);
+      dataObj.detailObj = data;
+      detailDrawerRef.value.open();
+    } finally {
+      loadingInstance.close();
+    }
+  } catch (error) {
+    console.error('获取详情失败:', error);
+    ElMessage.error('获取详情失败');
+    // 失败时使用行数据兜底
+    dataObj.detailObj = row;
+    detailDrawerRef.value.open();
+  }
 };
 
 const tabsData = ref([
@@ -279,6 +294,22 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 处理图表卡片点击筛选
+const handleFilterByChart = (event) => {
+  const filterParams = event.detail;
+  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+  handleRefresh();
+  ElMessage.success('已应用图表筛选');
+};
+
+onMounted(() => {
+  window.addEventListener('filterByChart', handleFilterByChart);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('filterByChart', handleFilterByChart);
+});
 
 // 监听图表下钻筛选参数
 watch(
@@ -309,7 +340,7 @@ watch(
       handleRefresh();
     }
   },
-  { deep: true }
+  { deep: true },
 );
 </script>
 

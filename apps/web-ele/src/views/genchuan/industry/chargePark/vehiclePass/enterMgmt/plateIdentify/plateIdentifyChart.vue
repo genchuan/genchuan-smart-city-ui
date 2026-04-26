@@ -16,12 +16,14 @@ const chartData = reactive({
       value: '0%',
       desc: '今日识别准确度',
       color: '#4A90E2',
+      key: 'successRate',
     },
     {
       title: '平均识别时长',
       value: '0s',
       desc: '识别响应速度',
       color: '#50E3C2',
+      key: 'avgDuration',
     },
   ],
   charts: [
@@ -115,7 +117,44 @@ function initCharts() {
 
     const option = getChartOption(chart);
     chartInstance.setOption(option);
+
+    // 添加点击事件
+    chartInstance.on('click', (params) => {
+      if (index === 0) {
+        // 识别成功率趋势 - 按日期筛选
+        window.dispatchEvent(
+          new CustomEvent('filterByChart', {
+            detail: { identifyTime: params.name },
+          }),
+        );
+      } else if (index === 1) {
+        // 各场站识别量 - 按场站筛选
+        window.dispatchEvent(
+          new CustomEvent('filterByChart', {
+            detail: { stationName: params.name },
+          }),
+        );
+      }
+    });
   });
+}
+
+function handleCardClick(key) {
+  const today = new Date();
+  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime();
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime();
+
+  const filterMap = {
+    successRate: { startTime: todayStart, endTime: todayEnd },
+    avgDuration: { startTime: todayStart, endTime: todayEnd },
+  };
+
+  const filterParams = filterMap[key];
+  if (filterParams) {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart', { detail: filterParams }),
+    );
+  }
 }
 
 function getChartOption(chart) {
@@ -222,6 +261,7 @@ onUnmounted(() => {
         :key="`card-${index}`"
         class="left-card"
         :style="{ borderLeftColor: card.color }"
+        @click="handleCardClick(card.key)"
       >
         <div class="card-header">
           <span class="card-title">{{ card.title }}</span>
