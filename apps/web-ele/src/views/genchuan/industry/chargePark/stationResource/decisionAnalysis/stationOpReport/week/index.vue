@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { computed, nextTick, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
@@ -11,16 +11,17 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import * as pageApi from '#/api/genchuan/industry/chargePark/stationResource/decisionAnalysis/stationOpReport/index.js';
 import IconButton from '#/genchuan-components/IconButton.vue';
-import '#/components/page/index.scss';
 
-import DetailDrawer from './detail.vue';
 import {
-  REPORT_TYPE,
   formFields,
   pageConfig,
+  REPORT_TYPE,
   searchFields,
   tableColumns,
 } from './data.js';
+import DetailDrawer from './detail.vue';
+
+import '#/components/page/index.scss';
 
 const primaryField =
   pageConfig.primaryField ||
@@ -71,14 +72,27 @@ function sanitizeParams(source = {}) {
 
 function createSchema(fields, isSearch = false) {
   return fields.map((field) => {
-    const component =
-      field.type === 'select'
-        ? 'Select'
-        : field.type === 'number'
-          ? 'InputNumber'
-          : field.type === 'date' || field.type === 'datetime'
-            ? 'DatePicker'
-            : 'Input';
+    let component;
+    switch (field.type) {
+      case 'date': {
+        component = 'DatePicker';
+
+        break;
+      }
+      case 'number': {
+        component = 'InputNumber';
+
+        break;
+      }
+      case 'select': {
+        component = 'Select';
+
+        break;
+      }
+      default: {
+        component = 'Input';
+      }
+    }
 
     const componentProps = {
       placeholder:
@@ -125,12 +139,12 @@ function createSchema(fields, isSearch = false) {
 }
 
 const drawerTitle = computed(
-  () => pageConfig.generateButtonText || '生成' + pageConfig.title,
+  () => pageConfig.generateButtonText || `生成${pageConfig.title}`,
 );
 
 function getCellSlotName(column) {
   if (column.drillType || column.field === primaryField) {
-    return 'cell_' + column.field;
+    return `cell_${column.field}`;
   }
   return '';
 }
@@ -403,8 +417,8 @@ function removeFilterTag(field) {
   appliedQuery.value = nextQuery;
   try {
     queryFormApi.setValues(nextQuery);
-  } catch (e) {
-    console.warn('Failed to set form values', e);
+  } catch (error) {
+    console.warn('Failed to set form values', error);
   }
   nextTick(() => {
     handleRefresh();
@@ -436,8 +450,8 @@ async function applySearchPatch(patch) {
   appliedQuery.value = nextQuery;
   try {
     await queryFormApi.setValues(nextQuery);
-  } catch (e) {
-    console.warn('Failed to set form values', e);
+  } catch (error) {
+    console.warn('Failed to set form values', error);
   }
   await nextTick();
   handleRefresh();
@@ -457,7 +471,7 @@ async function handleCellDrill(column, row) {
   if (drillType === 'dialog') {
     await handleOpenDetail(row);
     ElMessage.success(
-      (column.drillLabel || column.label || '明细') + '弹窗已打开',
+      `${column.drillLabel || column.label || '明细'}弹窗已打开`,
     );
   }
 }

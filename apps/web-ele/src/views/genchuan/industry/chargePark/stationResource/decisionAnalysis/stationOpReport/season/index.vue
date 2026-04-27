@@ -72,15 +72,27 @@ function sanitizeParams(source = {}) {
 
 function createSchema(fields, isSearch = false) {
   return fields.map((field) => {
-    const component =
-      field.type === 'select'
-        ? 'Select'
-        : field.type === 'number'
-          ? 'InputNumber'
-          : field.type === 'date' || field.type === 'datetime'
-            ? 'DatePicker'
-            : 'Input';
+    let component;
+    switch (field.type) {
+      case 'date': {
+        component = 'DatePicker';
 
+        break;
+      }
+      case 'number': {
+        component = 'InputNumber';
+
+        break;
+      }
+      case 'select': {
+        component = 'Select';
+
+        break;
+      }
+      default: {
+        component = 'Input';
+      }
+    }
     const componentProps = {
       placeholder:
         (field.type === 'select' ||
@@ -404,8 +416,8 @@ function removeFilterTag(field) {
   appliedQuery.value = nextQuery;
   try {
     queryFormApi.setValues(nextQuery);
-  } catch (e) {
-    console.warn('Failed to set form values', e);
+  } catch (error) {
+    console.warn('Failed to set form values', error);
   }
   nextTick(() => {
     handleRefresh();
@@ -437,8 +449,8 @@ async function applySearchPatch(patch) {
   appliedQuery.value = nextQuery;
   try {
     await queryFormApi.setValues(nextQuery);
-  } catch (e) {
-    console.warn('Failed to set form values', e);
+  } catch (error) {
+    console.warn('Failed to set form values', error);
   }
   await nextTick();
   handleRefresh();

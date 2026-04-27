@@ -150,15 +150,27 @@ function getPlaceholder(field) {
 
 function createSchema(fields, isSearch = false) {
   return fields.map((field) => {
-    const component =
-      field.type === 'select'
-        ? 'Select'
-        : field.type === 'number'
-          ? 'InputNumber'
-          : field.type === 'date'
-            ? 'DatePicker'
-            : 'Input';
+    let component;
+    switch (field.type) {
+      case 'date': {
+        component = 'DatePicker';
 
+        break;
+      }
+      case 'number': {
+        component = 'InputNumber';
+
+        break;
+      }
+      case 'select': {
+        component = 'Select';
+
+        break;
+      }
+      default: {
+        component = 'Input';
+      }
+    }
     const componentProps = {
       placeholder: getPlaceholder(field),
     };
@@ -263,16 +275,6 @@ const lineSeriesData = computed(() => {
     },
   ];
 });
-
-const mapData = computed(() =>
-  (chartData.value?.mapData || []).map((item) => ({
-    ...item,
-    coordinate:
-      item.coordinate || [item.lng, item.lat].filter(Boolean).join(','),
-    locationName: item.locationName || item.name,
-    statusName: item.statusName || item.status || '正常',
-  })),
-);
 
 function getCellSlotName(column) {
   if (column.drillType || column.field === primaryField) {
