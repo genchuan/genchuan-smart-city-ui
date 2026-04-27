@@ -1,4 +1,5 @@
 import { formatDate } from '#/utils/genchuan/formatTime';
+import { getRangePickerDefaultProps } from '#/utils';
 
 export const reportCycleOptions = [
   { label: '日报', value: '日报' },
@@ -444,11 +445,14 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'statTime',
+      fieldName: 'statTimeRange',
       label: '统计时段',
-      component: 'RangePicker',
+      component: 'DatePicker',
       componentProps: {
-        ...getRangePickerDefaultProps(),
+        placeholder: '请选择统计时段',
+        type: 'datetimerange',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
     },
   ];
