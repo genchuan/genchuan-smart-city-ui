@@ -51,6 +51,8 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['markerClick']);
+
 const mapRef = ref(null);
 let map = null;
 let markerLayers = {};
@@ -189,6 +191,7 @@ const onMarkerClick = (evt) => {
   infoWindow.setPosition(position);
   infoWindow.setContent(generateInfoWindowContent(properties));
   infoWindow.open();
+  emit('markerClick', properties);
 };
 
 const renderMarkers = () => {
@@ -252,7 +255,7 @@ const renderMarkers = () => {
     if (!item.coordinate) return;
 
     const [lng, lat] = item.coordinate.split(',').map(Number);
-    if (isNaN(lng) || isNaN(lat)) return;
+    if (Number.isNaN(lng) || Number.isNaN(lat)) return;
 
     const position = new TMapInstance.LatLng(lat, lng);
     bounds.extend(position);
@@ -296,7 +299,7 @@ const renderMarkers = () => {
     const firstItem = props.data[0];
     if (firstItem.coordinate) {
       const [lng, lat] = firstItem.coordinate.split(',').map(Number);
-      if (!isNaN(lng) && !isNaN(lat)) {
+      if (!Number.isNaN(lng) && !Number.isNaN(lat)) {
         const position = new TMapInstance.LatLng(lat, lng);
         map.setCenter(position);
         map.setZoom(15);
