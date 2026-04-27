@@ -168,24 +168,24 @@ function createSchema(fields, isSearch = false) {
   return fields.map((field) => {
     let component;
     switch (field.type) {
-    case 'select': {
-      component = 'Select';
+      case 'date': {
+        component = 'DatePicker';
 
-    break;
-    }
-    case 'number': {
-      component = 'InputNumber';
+        break;
+      }
+      case 'number': {
+        component = 'InputNumber';
 
-    break;
-    }
-    case 'date': {
-      component = 'DatePicker';
+        break;
+      }
+      case 'select': {
+        component = 'Select';
 
-    break;
-    }
-    default: {
-      component = 'Input';
-    }
+        break;
+      }
+      default: {
+        component = 'Input';
+      }
     }
 
     const componentProps = {
