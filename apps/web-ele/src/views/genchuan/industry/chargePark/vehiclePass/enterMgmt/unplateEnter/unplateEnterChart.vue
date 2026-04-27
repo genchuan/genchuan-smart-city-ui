@@ -45,13 +45,7 @@ let barChartInstance = null;
 
 async function loadChartData() {
   try {
-    const endTime = new Date();
-    const startTime = new Date();
-    startTime.setDate(startTime.getDate() - 7);
-
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
       stationId: props.parkId,
     };
 
@@ -133,7 +127,7 @@ function initBarChart() {
   // 添加点击事件
   barChartInstance.on('click', (params) => {
     window.dispatchEvent(
-      new CustomEvent('filterByChart', {
+      new CustomEvent('filterByChart:unplateEnter', {
         detail: { stationName: params.name },
       }),
     );
@@ -158,7 +152,7 @@ function handleCardClick(key) {
   const filterParams = filterMap[key];
   if (filterParams) {
     window.dispatchEvent(
-      new CustomEvent('filterByChart', { detail: filterParams }),
+      new CustomEvent('filterByChart:unplateEnter', { detail: filterParams }),
     );
   }
 }

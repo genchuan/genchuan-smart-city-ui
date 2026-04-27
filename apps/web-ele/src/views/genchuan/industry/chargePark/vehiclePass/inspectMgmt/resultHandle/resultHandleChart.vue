@@ -145,10 +145,12 @@ function handlePieClick(name) {
     status = '待处置';
   } else if (name === '待审核') {
     status = '待审核';
+  } else if (name === '已驳回') {
+    status = '已驳回';
   }
 
   window.dispatchEvent(
-    new CustomEvent('filterByChart', {
+    new CustomEvent('filterByChart:resultHandle', {
       detail: { status, filterKey: status },
     }),
   );
@@ -166,7 +168,7 @@ function handleCardClick(key) {
   }
 
   window.dispatchEvent(
-    new CustomEvent('filterByChart', {
+    new CustomEvent('filterByChart:resultHandle', {
       detail: { status, filterKey: key },
     }),
   );

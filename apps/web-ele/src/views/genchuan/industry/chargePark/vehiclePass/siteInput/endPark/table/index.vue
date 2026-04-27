@@ -356,7 +356,7 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
-  window.addEventListener('filterByChart', handleFilterByChart);
+  window.addEventListener('filterByChart:endPark', handleFilterByChart);
   // 监听图表钻取事件
   window.addEventListener('filterEndPark', handleChartFilter);
 });

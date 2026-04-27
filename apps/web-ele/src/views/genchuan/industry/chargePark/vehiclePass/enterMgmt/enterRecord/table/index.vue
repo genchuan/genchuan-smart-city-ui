@@ -598,11 +598,11 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
-  window.addEventListener('filterByChart', handleFilterByChart);
+  window.addEventListener('filterByChart:enterRecord', handleFilterByChart);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('filterByChart', handleFilterByChart);
+  window.removeEventListener('filterByChart:enterRecord', handleFilterByChart);
 });
 </script>
 

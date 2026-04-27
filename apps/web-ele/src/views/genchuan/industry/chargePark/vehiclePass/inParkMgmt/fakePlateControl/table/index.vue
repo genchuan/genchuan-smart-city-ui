@@ -500,11 +500,11 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
-  window.addEventListener('filterByChart', handleFilterByChart);
+  window.addEventListener('filterByChart:fakePlateControl', handleFilterByChart);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('filterByChart', handleFilterByChart);
+  window.removeEventListener('filterByChart:fakePlateControl', handleFilterByChart);
 });
 </script>
 

@@ -175,7 +175,7 @@ function handleCardClick(key) {
     status = 'success'; // 查询成功的记录
   }
   window.dispatchEvent(
-    new CustomEvent('filterByChart', { detail: { status } }),
+    new CustomEvent('filterByChart:spaceQuery', { detail: { status } }),
   );
 }
 
@@ -220,12 +220,9 @@ onUnmounted(() => {
     </div>
 
     <!-- 右侧图表区域 -->
-    <div v-if="state.hasData" class="chart-wrapper">
-      <div class="chart-container">
+    <div v-if="state.hasData" class="chart-wrapper-single">
+      <div class="chart-container-single">
         <div ref="pieChartRef" style="width: 100%; height: 100%"></div>
-      </div>
-      <div class="chart-container">
-        <div ref="barChartRef" style="width: 100%; height: 100%"></div>
       </div>
     </div>
   </div>
@@ -331,6 +328,24 @@ onUnmounted(() => {
     margin: 0 !important;
 
     .chart-container {
+      flex: 1;
+      min-width: 0;
+      height: 330px;
+      padding: 10px;
+      background-color: hsl(var(--card));
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+    }
+  }
+
+  .chart-wrapper-single {
+    display: flex !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+
+    .chart-container-single {
       flex: 1;
       min-width: 0;
       height: 330px;

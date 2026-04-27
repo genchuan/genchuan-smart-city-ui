@@ -373,11 +373,11 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
-  window.addEventListener('filterByChart', handleFilterByChart);
+  window.addEventListener('filterByChart:carInput', handleFilterByChart);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('filterByChart', handleFilterByChart);
+  window.removeEventListener('filterByChart:carInput', handleFilterByChart);
 });
 
 // 审核表单

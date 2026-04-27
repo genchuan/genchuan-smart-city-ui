@@ -552,11 +552,11 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
-  window.addEventListener('filterByChart', handleFilterByChart);
+  window.addEventListener('filterByChart:abnormalLeave', handleFilterByChart);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('filterByChart', handleFilterByChart);
+  window.removeEventListener('filterByChart:abnormalLeave', handleFilterByChart);
 });
 
 // 车辆详情弹窗

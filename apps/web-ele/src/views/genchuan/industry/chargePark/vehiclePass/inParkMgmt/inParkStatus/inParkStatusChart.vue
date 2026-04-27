@@ -41,17 +41,12 @@ let mapChartInstance = null;
 
 async function loadChartData() {
   try {
-    const endTime = new Date();
-    const startTime = new Date();
-    startTime.setDate(startTime.getDate() - 7);
-
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
       stationId: props.parkId,
     };
 
     const res = await getInParkStatusChart(params);
+    console.log('[inParkStatusChart] API Response:', res);
 
     // Always update card values
     if (res?.cardData) {
@@ -62,6 +57,10 @@ async function loadChartData() {
     // Check if there's chart data
     const hasTrendData = res?.inParkCountTrend?.length > 0;
     const hasLocationData = res?.carLocationList?.length > 0;
+
+    console.log('[inParkStatusChart] hasTrendData:', hasTrendData, 'hasLocationData:', hasLocationData);
+    console.log('[inParkStatusChart] trend data:', res?.inParkCountTrend);
+    console.log('[inParkStatusChart] location data:', res?.carLocationList);
 
     if (hasTrendData || hasLocationData) {
       state.chartData = {
@@ -82,6 +81,7 @@ async function loadChartData() {
 }
 
 function initTrendChart() {
+  console.log('[inParkStatusChart] initTrendChart called, ref:', trendChartRef.value, 'data length:', state.chartData.trend.length);
   if (!trendChartRef.value || state.chartData.trend.length === 0) return;
   if (trendChartInstance) trendChartInstance.dispose();
   trendChartInstance = echarts.init(trendChartRef.value);
@@ -112,10 +112,21 @@ function initTrendChart() {
       },
     ],
   };
+  console.log('[inParkStatusChart] Trend chart option:', option);
   trendChartInstance.setOption(option);
+
+  // 添加点击事件
+  trendChartInstance.on('click', (params) => {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:inParkStatus', {
+        detail: { time: params.name },
+      }),
+    );
+  });
 }
 
 function initMapChart() {
+  console.log('[inParkStatusChart] initMapChart called, ref:', mapChartRef.value, 'data length:', state.chartData.locationList.length);
   if (!mapChartRef.value || state.chartData.locationList.length === 0) return;
   if (mapChartInstance) mapChartInstance.dispose();
   mapChartInstance = echarts.init(mapChartRef.value);
@@ -172,6 +183,15 @@ function initMapChart() {
     ],
   };
   mapChartInstance.setOption(option);
+
+  // 添加点击事件
+  mapChartInstance.on('click', (params) => {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:inParkStatus', {
+        detail: { plateNo: params.data.name },
+      }),
+    );
+  });
 }
 
 function initCharts() {
@@ -188,7 +208,7 @@ function handleCardClick(key) {
   const filterParams = filterMap[key];
   if (filterParams) {
     window.dispatchEvent(
-      new CustomEvent('filterByChart', { detail: filterParams }),
+      new CustomEvent('filterByChart:inParkStatus', { detail: filterParams }),
     );
   }
 }

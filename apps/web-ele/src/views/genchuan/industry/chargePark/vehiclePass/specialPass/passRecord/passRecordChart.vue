@@ -38,13 +38,7 @@ let trendChartInstance = null;
 
 async function loadChartData() {
   try {
-    const endTime = new Date();
-    const startTime = new Date();
-    startTime.setDate(startTime.getDate() - 7);
-
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
       stationId: props.parkId,
     };
 
@@ -124,7 +118,7 @@ function initTrendChart() {
   trendChartInstance.on('click', (params) => {
     const date = params.name;
     window.dispatchEvent(
-      new CustomEvent('filterByChart', {
+      new CustomEvent('filterByChart:passRecord', {
         detail: {
           status: 'trendDate',
           date: date,
@@ -152,7 +146,7 @@ function handleCardClick(key) {
   }
 
   window.dispatchEvent(
-    new CustomEvent('filterByChart', { detail: filterParams }),
+    new CustomEvent('filterByChart:passRecord', { detail: filterParams }),
   );
 }
 
