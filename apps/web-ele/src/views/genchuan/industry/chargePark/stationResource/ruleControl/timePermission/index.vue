@@ -1,0 +1,1312 @@
+﻿<script setup>
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+
+import { useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+
+import { ElMessage, ElMessageBox } from 'element-plus';
+import screenfull from 'screenfull';
+
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import * as pageApi from '#/api/genchuan/industry/chargePark/stationResource/ruleControl/timePermission/index.js';
+import * as areaApi from '#/api/genchuan/industry/chargePark/stationResource/areaMgmt/areaInfo/index.js';
+import * as stationConfigApi from '#/api/genchuan/industry/chargePark/stationResource/stationMgmt/stationConfig/index.js';
+import * as stationInfoApi from '#/api/genchuan/industry/chargePark/stationResource/stationMgmt/stationInfo/index.js';
+import IconButton from '#/genchuan-components/IconButton.vue';
+import '#/components/page/index.scss';
+import CommonDetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+
+import DetailDrawer from './detail.vue';
+import gateChart from './gateChart.vue';
+import {
+  formFields,
+  pageConfig,
+  searchFields,
+  tableColumns,
+} from './table/data.js';
+
+const apiName = pageConfig.apiName;
+const activeName = ref(pageConfig.title);
+const primaryField =
+  pageConfig.primaryField ||
+  pageConfig.nameField ||
+  tableColumns[0]?.field ||
+  'id';
+const chartLoading = ref(false);
+const checkedIds = ref([]);
+const appliedQuery = ref({});
+const detailObj = ref({});
+const showOverview = ref(true);
+const formMode = ref('create');
+const formData = ref(null);
+
+const detailDrawerRef = ref(null);
+const drillDrawerRef = ref(null);
+const drillDetailObj = ref({});
+const drillDetailFields = ref([]);
+const drillDrawerTitle = ref('关联信息');
+const importDialogVisible = ref(false);
+const importFile = ref(null);
+const importLoading = ref(false);
+const importResult = ref(null);
+const importUpdateSupport = ref(false);
+const chartData = ref({});
+const selectOptionsMap = ref({});
+
+function normalizeOptions(options = []) {
+  return options.map((item) => {
+    if (typeof item === 'object' && item !== null) {
+      return {
+        label: item.label ?? item.value,
+        value: item.value ?? item.label,
+      };
+    }
+    return {
+      label: item,
+      value: item,
+    };
+  });
+}
+
+function getSelectFieldOptions(field) {
+  if (field.apiSource) {
+    return selectOptionsMap.value[field.apiSource] || [];
+  }
+  return normalizeOptions(field.options || []);
+}
+
+function extractPageList(result) {
+  if (Array.isArray(result)) {
+    return result;
+  }
+  return (
+    result?.list || result?.rows || result?.records || result?.data?.list || []
+  );
+}
+
+function buildOptionsBySource(source, result) {
+  const list = extractPageList(result);
+  if (source === 'AreaInfo') {
+    return list.map((item) => ({
+      label: item.areaNo
+        ? `${item.name || item.areaName} (${item.areaNo})`
+        : item.name || item.areaName || item.id || item.areaId,
+      value: item.id ?? item.areaId,
+    }));
+  }
+  if (source === 'StationInfo') {
+    return list.map((item) => ({
+      label: item.stationNo
+        ? `${item.name || item.stationName || item.stationNo} (${item.stationNo})`
+        : item.name || item.stationName || item.id || item.stationId,
+      value: item.id ?? item.stationId,
+    }));
+  }
+  if (source === 'StationConfig') {
+    return list.map((item) => ({
+      label:
+        item.stationNo || item.configKey
+          ? `${item.stationName || item.name || item.stationNo || item.configKey} (${item.stationNo || item.configKey})`
+          : item.stationName || item.name || item.id || item.stationId,
+      value: item.stationId ?? item.id,
+    }));
+  }
+  return [];
+}
+
+async function loadSelectOptions() {
+  const sources = [
+    ...new Set(
+      [...searchFields, ...formFields]
+        .map((field) => field.apiSource)
+        .filter(Boolean),
+    ),
+  ];
+  if (sources.length === 0) {
+    return;
+  }
+
+  const nextOptions = { ...selectOptionsMap.value };
+  await Promise.all(
+    sources.map(async (source) => {
+      try {
+        if (source === 'AreaInfo') {
+          const result = await areaApi.getAreaInfoPage({
+            pageNo: 1,
+            pageSize: 200,
+          });
+          nextOptions[source] = buildOptionsBySource(source, result);
+          return;
+        }
+        if (source === 'StationInfo') {
+          const result = await stationInfoApi.getStationInfoPage({
+            pageNo: 1,
+            pageSize: 200,
+          });
+          nextOptions[source] = buildOptionsBySource(source, result);
+          return;
+        }
+        if (source === 'StationConfig') {
+          const result = await stationConfigApi.getStationConfigPage({
+            pageNo: 1,
+            pageSize: 200,
+          });
+          nextOptions[source] = buildOptionsBySource(source, result);
+          return;
+        }
+      } catch (error) {
+        console.error(`加载${source}下拉选项失败:`, error);
+        nextOptions[source] = [];
+      }
+    }),
+  );
+  selectOptionsMap.value = nextOptions;
+  await refreshSelectSchemas();
+}
+function sanitizeParams(source = {}) {
+  return Object.fromEntries(
+    Object.entries(source).filter(([, value]) => {
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      return value !== undefined && value !== null && value !== '';
+    }),
+  );
+}
+
+function getPlaceholder(field) {
+  return (
+    (field.type === 'select' || field.type === 'date' ? '请选择' : '请输入') +
+    field.label
+  );
+}
+
+function createSchema(fields, isSearch = false) {
+  return fields.map((field) => {
+    const component =
+      field.type === 'select'
+        ? 'Select'
+        : field.type === 'number'
+          ? 'InputNumber'
+          : field.type === 'date'
+            ? 'DatePicker'
+            : 'Input';
+
+    const componentProps = {
+      placeholder: getPlaceholder(field),
+    };
+
+    if (field.type === 'select') {
+      Object.assign(componentProps, {
+        allowClear: true,
+        filterOption: true,
+        options: getSelectFieldOptions(field),
+        showSearch: true,
+      });
+    }
+
+    if (field.type === 'number') {
+      componentProps.controls = false;
+    }
+
+    if (field.type === 'date') {
+      Object.assign(componentProps, {
+        format: 'YYYY-MM-DD',
+        type: 'date',
+        valueFormat: 'YYYY-MM-DD',
+      });
+    }
+
+    if (field.type === 'textarea') {
+      Object.assign(componentProps, {
+        rows: 3,
+        type: 'textarea',
+      });
+    }
+
+    if (field.readonly) {
+      componentProps.disabled = true;
+    }
+
+    return {
+      component,
+      componentProps,
+      fieldName: field.field,
+      label: field.label,
+      labelWidth: isSearch ? 100 : 110,
+      rules: !isSearch && field.required ? 'required' : undefined,
+    };
+  });
+}
+
+const drawerTitle = computed(
+  () => (formMode.value === 'edit' ? '编辑' : '新增') + pageConfig.title,
+);
+const hasMap = computed(() => false);
+
+const chartCards = computed(() => {
+  const cardData = chartData.value?.cardData || {};
+  return (pageConfig.chart?.cards || []).map(([key, title, status], index) => ({
+    key,
+    title,
+    status,
+    value: cardData[key] ?? 0,
+    color: ['#13ce66', '#4ECDC4', '#FFB020', '#FF6B6B'][index % 4],
+  }));
+});
+
+const pieData = computed(() => {
+  const [dataKey, nameField, valueField] = pageConfig.chart?.pie || [];
+  return (chartData.value?.[dataKey] || []).map((item) => ({
+    name: item[nameField],
+    value: item[valueField] ?? 0,
+  }));
+});
+
+const barXData = computed(() => {
+  const [dataKey, nameField] = pageConfig.chart?.bar || [];
+  return (chartData.value?.[dataKey] || []).map((item) => item[nameField]);
+});
+
+const barSeriesData = computed(() => {
+  const [dataKey, , valueField, label] = pageConfig.chart?.bar || [];
+  return [
+    {
+      data: (chartData.value?.[dataKey] || []).map(
+        (item) => item[valueField] ?? 0,
+      ),
+      name: label || '数量',
+    },
+  ];
+});
+
+const lineXData = computed(() => {
+  const [dataKey, nameField] = pageConfig.chart?.line || [];
+  return (chartData.value?.[dataKey] || []).map((item) => item[nameField]);
+});
+
+const lineSeriesData = computed(() => {
+  const [dataKey, , valueField, label] = pageConfig.chart?.line || [];
+  return [
+    {
+      data: (chartData.value?.[dataKey] || []).map(
+        (item) => item[valueField] ?? 0,
+      ),
+      name: label || '数量',
+    },
+  ];
+});
+
+const mapData = computed(() =>
+  (chartData.value?.mapData || []).map((item) => ({
+    ...item,
+    coordinate:
+      item.coordinate || [item.lng, item.lat].filter(Boolean).join(','),
+    locationName: item.locationName || item.name,
+    statusName: item.statusName || item.status || '正常',
+  })),
+);
+
+function getCellSlotName(column) {
+  if (column.drillType || column.field === primaryField) {
+    return 'cell_' + column.field;
+  }
+  return '';
+}
+
+const interactiveColumns = computed(() =>
+  tableColumns
+    .map((column) => ({
+      ...column,
+      slotName: getCellSlotName(column),
+    }))
+    .filter((column) => column.slotName),
+);
+
+const dialogFieldCatalog = {
+  areaId: [
+    { key: 'areaId', label: '片区ID', section: '关联信息' },
+    { key: 'name', label: '名称', section: '当前记录' },
+    { key: 'province', label: '省份', section: '区域信息' },
+    { key: 'city', label: '城市', section: '区域信息' },
+    { key: 'district', label: '区县', section: '区域信息' },
+    { key: 'status', label: '状态', section: '区域信息' },
+  ],
+  parentId: [
+    { key: 'parentId', label: '上级片区ID', section: '关联信息' },
+    { key: 'name', label: '当前片区', section: '当前记录' },
+    { key: 'province', label: '省份', section: '区域信息' },
+    { key: 'city', label: '城市', section: '区域信息' },
+    { key: 'district', label: '区县', section: '区域信息' },
+    { key: 'status', label: '状态', section: '区域信息' },
+  ],
+  stationId: [
+    { key: 'stationId', label: '场站ID', section: '关联信息' },
+    { key: 'stationNo', label: '场站编号', section: '关联信息' },
+    { key: 'name', label: '名称', section: '当前记录' },
+    { key: 'areaId', label: '所属片区ID', section: '归属信息' },
+    { key: 'address', label: '地址', section: '归属信息' },
+    { key: 'status', label: '状态', section: '运营信息' },
+  ],
+  stationIds: [
+    { key: 'stationIds', label: '适用场站', section: '关联信息' },
+    { key: 'name', label: '规则名称', section: '当前记录' },
+    { key: 'status', label: '状态', section: '当前记录' },
+    { key: 'startTime', label: '开始时间', section: '规则配置' },
+    { key: 'endTime', label: '结束时间', section: '规则配置' },
+  ],
+  stationCount: [
+    { key: 'areaNo', label: '片区编号', section: '当前记录' },
+    { key: 'name', label: '片区名称', section: '当前记录' },
+    { key: 'stationCount', label: '覆盖场站数', section: '统计指标' },
+    { key: 'status', label: '状态', section: '统计指标' },
+  ],
+  totalSpace: [
+    { key: 'stationNo', label: '场站编号', section: '关联信息' },
+    { key: 'name', label: '场站名称', section: '关联信息' },
+    { key: 'totalSpace', label: '总车位数', section: '统计指标' },
+    { key: 'serviceType', label: '服务类型', section: '统计指标' },
+    { key: 'status', label: '状态', section: '统计指标' },
+  ],
+  deviceId: [
+    { key: 'deviceId', label: '设备ID', section: '关联信息' },
+    { key: 'spaceNo', label: '车位编号', section: '关联信息' },
+    { key: 'stationId', label: '所属场站ID', section: '关联信息' },
+    { key: 'status', label: '状态', section: '监控信息' },
+    { key: 'location', label: '定位信息', section: '监控信息' },
+    { key: 'lastReportTime', label: '最近上报时间', section: '监控信息' },
+  ],
+  location: [
+    { key: 'location', label: '定位信息', section: '地图定位' },
+    { key: 'spaceNo', label: '车位编号', section: '地图定位' },
+    { key: 'stationId', label: '所属场站ID', section: '地图定位' },
+    { key: 'deviceId', label: '设备ID', section: '地图定位' },
+    { key: 'status', label: '状态', section: '监控信息' },
+    { key: 'lastReportTime', label: '最近上报时间', section: '监控信息' },
+  ],
+  carNo: [
+    { key: 'carNo', label: '车牌号', section: '车辆信息' },
+    { key: 'type', label: '名单类型', section: '车辆信息' },
+    { key: 'reason', label: '细分类型', section: '车辆信息' },
+    { key: 'stationIds', label: '适用场站', section: '生效信息' },
+    { key: 'startTime', label: '生效时间', section: '生效信息' },
+    { key: 'endTime', label: '失效时间', section: '生效信息' },
+    { key: 'status', label: '状态', section: '生效信息' },
+  ],
+  expandStatus: [
+    { key: 'id', label: '拓场编号', section: '基础信息' },
+    { key: 'stationId', label: '合作场站ID', section: '基础信息' },
+    { key: 'expandStatus', label: '拓场进度', section: '进度明细' },
+    { key: 'debtRate', label: '追缴范围', section: '进度明细' },
+    { key: 'status', label: '状态', section: '进度明细' },
+    { key: 'updateTime', label: '更新时间', section: '进度明细' },
+  ],
+};
+
+const fallbackDialogFields = [
+  { key: primaryField, label: '主键编号', section: '当前记录' },
+  { key: pageConfig.nameField, label: '名称', section: '当前记录' },
+  { key: 'status', label: '状态', section: '当前记录' },
+  { key: 'creator', label: '创建人', section: '审计信息' },
+  { key: 'createTime', label: '创建时间', section: '审计信息' },
+  { key: 'updater', label: '更新人', section: '审计信息' },
+  { key: 'updateTime', label: '更新时间', section: '审计信息' },
+];
+
+function dedupeFields(fields = []) {
+  const seen = new Set();
+  return fields.filter((field) => {
+    if (!field?.key || seen.has(field.key)) {
+      return false;
+    }
+    seen.add(field.key);
+    return true;
+  });
+}
+
+function buildDialogFields(column, row) {
+  const fieldKey = column.drillValueField || column.field;
+  const dialogFields = [
+    {
+      key: fieldKey,
+      label: column.drillLabel || column.label || '关联信息',
+      section: '关联信息',
+    },
+    ...(dialogFieldCatalog[fieldKey] || []),
+    ...fallbackDialogFields,
+  ];
+
+  return dedupeFields(dialogFields).filter(
+    (field) => !isEmpty(row?.[field.key]),
+  );
+}
+
+async function handleOpenDrillDialog(column, row) {
+  drillDrawerTitle.value = column.drillLabel || column.label || '关联信息';
+  drillDetailObj.value = row;
+  drillDetailFields.value = buildDialogFields(column, row);
+  if (isEmpty(drillDetailFields.value)) {
+    drillDetailFields.value = [
+      {
+        key: column.drillValueField || column.field,
+        label: column.drillLabel || column.label || '关联信息',
+        section: '关联信息',
+      },
+    ];
+  }
+  await nextTick();
+  drillDrawerRef.value?.open();
+}
+
+const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  footer: false,
+  modal: false,
+  onCancel() {
+    searchDrawerApi.close();
+  },
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: handleQuerySubmit,
+  layout: 'horizontal',
+  schema: createSchema(searchFields, true),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+  resetButtonOptions: {
+    content: '重置',
+  },
+});
+
+const [Form, formApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 110,
+  },
+  layout: 'horizontal',
+  schema: createSchema(formFields, false),
+  showDefaultActions: false,
+});
+
+async function refreshSelectSchemas() {
+  await queryFormApi.updateSchema(createSchema(searchFields, true));
+  await formApi.updateSchema(createSchema(formFields, false));
+}
+
+async function handleFormConfirm() {
+  const values = sanitizeParams({
+    ...(formData.value || {}),
+    ...formApi.form.values,
+  });
+  const requiredField = formFields.find(
+    (field) => field.required && !values[field.field],
+  );
+  if (requiredField) {
+    ElMessage.warning('请填写' + requiredField.label);
+    return;
+  }
+
+  if (formMode.value === 'edit' && values.id) {
+    await pageApi['update' + apiName](values);
+    ElMessage.success('编辑成功');
+  } else {
+    await pageApi['create' + apiName](values);
+    ElMessage.success('新增成功');
+  }
+
+  formDrawerApi.close();
+  handleRefresh();
+}
+
+const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    formDrawerApi.close();
+  },
+  onConfirm: handleFormConfirm,
+  async onOpenChange(isOpen) {
+    if (!isOpen) return;
+    await loadSelectOptions();
+    formData.value = formDrawerApi.getData() || null;
+    if (formMode.value === 'edit' && formData.value) {
+      await formApi.setValues(formData.value);
+    } else {
+      formApi.resetForm();
+    }
+  },
+});
+
+function buildGridColumns() {
+  return [
+    { type: 'checkbox', width: 48 },
+    ...tableColumns.map((column) => {
+      const columnConfig = {
+        field: column.field,
+        minWidth: column.minWidth || 140,
+        showOverflow: true,
+        title: column.label,
+        sortable: true,
+      };
+      if (column.formatter) {
+        columnConfig.formatter = column.formatter;
+      }
+      const slotName = getCellSlotName(column);
+      if (slotName) {
+        columnConfig.slots = { default: slotName };
+      }
+      return columnConfig;
+    }),
+    {
+      fixed: 'right',
+      slots: { default: 'actions' },
+      title: '操作',
+      width: 220,
+    },
+  ];
+}
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: buildGridColumns(),
+    keepSource: true,
+    pagerConfig: {
+      pageSize: 10,
+    },
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => {
+          return await pageApi['get' + apiName + 'Page']({
+            pageNo: page.currentPage,
+            pageSize: page.pageSize,
+            ...appliedQuery.value,
+          });
+        },
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    showOverflow: true,
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+      search: true,
+    },
+  },
+  gridEvents: {
+    checkboxAll: handleCheckboxChange,
+    checkboxChange: handleCheckboxChange,
+  },
+  showSearchForm: false,
+});
+
+// 监听 appliedQuery 的变化，在某些情况下自动刷新列表
+watch(
+  () => appliedQuery.value,
+  () => {},
+  { deep: true },
+);
+
+function handleCheckboxChange({ records }) {
+  checkedIds.value = records.map((item) => item.id);
+}
+
+function handleRefresh() {
+  if (gridApi.reload) {
+    gridApi.reload();
+  } else {
+    gridApi.query();
+  }
+  loadChart();
+}
+
+async function loadChart() {
+  if (
+    !pageConfig.chart ||
+    typeof pageApi['get' + apiName + 'Chart'] !== 'function'
+  ) {
+    return;
+  }
+  chartLoading.value = true;
+  try {
+    chartData.value =
+      (await pageApi['get' + apiName + 'Chart'](appliedQuery.value)) || {};
+  } finally {
+    chartLoading.value = false;
+  }
+}
+
+async function handleQuerySubmit() {
+  appliedQuery.value = sanitizeParams(queryFormApi.form.values || {});
+  searchDrawerApi.close();
+  handleRefresh();
+}
+
+async function handleResetSearch() {
+  appliedQuery.value = {};
+  await queryFormApi.resetForm();
+  searchDrawerApi.close();
+  handleRefresh();
+}
+
+function handleCreate() {
+  formMode.value = 'create';
+  formDrawerApi.setData(null).open();
+}
+
+function handleEdit(row) {
+  formMode.value = 'edit';
+  formDrawerApi.setData(row).open();
+}
+
+async function handleOpenDetail(row) {
+  const detailApi = pageApi['get' + apiName + 'Detail'];
+  detailObj.value =
+    typeof detailApi === 'function' ? (await detailApi(row.id)) || row : row;
+  await nextTick();
+  detailDrawerRef.value?.open();
+}
+
+async function handleStatusChange(action, row) {
+  const label =
+    action === 'enable' ? (row.status === '已禁用' ? '启用' : '生效') : '禁用';
+  const actionApi = pageApi[action + apiName];
+
+  if (typeof actionApi !== 'function') {
+    ElMessage.error('未配置' + label + '接口：' + action + apiName);
+    return;
+  }
+  if (action === 'disable' || row.status === '已禁用') {
+    await ElMessageBox.confirm(
+      '确认' + label + '当前' + pageConfig.title + '吗？',
+      '操作提示',
+      {
+        type: 'warning',
+      },
+    );
+  }
+
+  try {
+    await actionApi({ ids: [row.id] });
+    ElMessage.success(label + '成功');
+    handleRefresh();
+  } catch (error) {
+    const code = error?.code;
+    if (code === 401) {
+      ElMessage.error('登录状态已失效，请重新登录后再试');
+      return;
+    }
+    ElMessage.error(error?.msg || error?.message || label + '失败');
+  }
+}
+
+async function handleBind(row) {
+  const { value } = await ElMessageBox.prompt('请输入关联设备ID', '绑定设备', {
+    inputErrorMessage: '设备ID必须为数字',
+    inputPattern: /^\d+$/,
+    inputValue: row.deviceId || '',
+  });
+  await pageApi['bind' + apiName]({
+    deviceId: Number(value),
+    id: row.id,
+  });
+  ElMessage.success('绑定成功');
+  handleRefresh();
+}
+
+async function handleSave() {
+  if (isEmpty(checkedIds.value)) {
+    ElMessage.warning('请至少选择一条记录');
+    return;
+  }
+  await pageApi['save' + apiName]({ ids: checkedIds.value });
+  ElMessage.success('保存成功');
+  handleRefresh();
+}
+
+async function handleResetConfig() {
+  const { value } = await ElMessageBox.prompt(
+    '请输入需要重置的场站ID',
+    '重置配置',
+    {
+      inputErrorMessage: '场站ID必须为数字',
+      inputPattern: /^\d+$/,
+    },
+  );
+  await pageApi['reset' + apiName]({ stationId: Number(value) });
+  ElMessage.success('重置成功');
+  handleRefresh();
+}
+
+async function handleBatchSync() {
+  if (isEmpty(checkedIds.value)) {
+    ElMessage.warning('请至少选择一条记录');
+    return;
+  }
+  await pageApi['batchSync' + apiName]({ ids: checkedIds.value });
+  ElMessage.success('批量同步成功');
+  handleRefresh();
+}
+
+async function handleExport(extraParams = {}) {
+  const exportApi = pageApi['export' + apiName];
+  if (typeof exportApi !== 'function') return;
+  const blob = await exportApi({
+    ...appliedQuery.value,
+    ...extraParams,
+  });
+  downloadFileFromBlobPart({
+    fileName: pageConfig.exportName,
+    source: blob,
+  });
+}
+
+function handleOpenImport() {
+  importFile.value = null;
+  importResult.value = null;
+  importUpdateSupport.value = false;
+  importDialogVisible.value = true;
+}
+
+function handleImportFileChange(uploadFile) {
+  importFile.value = uploadFile?.raw || uploadFile;
+  importResult.value = null;
+}
+
+function handleRemoveImportFile() {
+  importFile.value = null;
+}
+
+function normalizeImportResult(result) {
+  const data = result?.data || result || {};
+  const failureList = data.failureList || data.failures || [];
+  return {
+    failureCount: data.failureCount ?? failureList.length ?? 0,
+    failureList,
+    successCount: data.successCount ?? data.success ?? 0,
+  };
+}
+
+async function handleDownloadImportTemplate() {
+  const templateApi = pageApi['get' + apiName + 'ImportTemplate'];
+  if (typeof templateApi !== 'function') {
+    ElMessage.warning('接口文档未提供' + pageConfig.title + '导入模板下载接口');
+    return;
+  }
+  const blob = await templateApi();
+  downloadFileFromBlobPart({
+    fileName:
+      pageConfig.importTemplateName || pageConfig.title + '导入模板.xlsx',
+    source: blob,
+  });
+}
+
+async function handleImportConfirm() {
+  if (!importFile.value) {
+    ElMessage.warning('请先选择需要导入的 Excel 文件');
+    return;
+  }
+  const importApi = pageApi['import' + apiName];
+  if (typeof importApi !== 'function') {
+    ElMessage.warning('暂未配置' + pageConfig.title + '导入接口');
+    return;
+  }
+  importLoading.value = true;
+  try {
+    const result = await importApi(importFile.value, importUpdateSupport.value);
+    importResult.value = normalizeImportResult(result);
+    ElMessage.success('导入完成');
+    handleRefresh();
+    if (!importResult.value.failureCount) {
+      importDialogVisible.value = false;
+    }
+  } finally {
+    importLoading.value = false;
+  }
+}
+
+function rowActions(row) {
+  return (
+    pageConfig.rowActionMap?.[row.status] ||
+    pageConfig.rowActionMap?.default || ['detail']
+  );
+}
+
+function actionLabel(action, row) {
+  if (action === 'enable') {
+    return row.status === '已禁用' ? '启用' : '生效';
+  }
+  return (
+    {
+      alarm: '告警',
+      bind: '绑定',
+      detail: '查看',
+      disable: '禁用',
+      edit: '编辑',
+      exportRow: '导出',
+      locate: '定位',
+    }[action] || action
+  );
+}
+
+function actionIcon(action) {
+  return (
+    {
+      alarm: 'Warning',
+      bind: 'Link',
+      detail: 'View',
+      disable: 'CircleClose',
+      edit: 'Edit',
+      enable: 'CircleCheck',
+      exportRow: 'Download',
+      locate: 'Location',
+    }[action] || 'Operation'
+  );
+}
+
+function actionColor(action) {
+  return ['alarm', 'disable'].includes(action) ? '#F56C6C' : undefined;
+}
+
+function handleRowAction(action, row) {
+  if (action === 'detail') return handleOpenDetail(row);
+  if (action === 'edit') return handleEdit(row);
+  if (action === 'enable' || action === 'disable')
+    return handleStatusChange(action, row);
+  if (action === 'bind') return handleBind(row);
+  if (action === 'exportRow') return handleExport({ id: row.id });
+  if (action === 'locate')
+    return ElMessage.info('已定位到记录：' + (row[primaryField] || row.id));
+  if (action === 'alarm')
+    return ElMessage.warning('已触发告警：' + (row[primaryField] || row.id));
+}
+
+async function applySearchPatch(patch) {
+  const nextQuery = sanitizeParams({
+    ...appliedQuery.value,
+    ...patch,
+  });
+  appliedQuery.value = nextQuery;
+  try {
+    await queryFormApi.setValues(nextQuery);
+  } catch (e) {
+    console.warn('Failed to set form values', e);
+  }
+  await nextTick();
+  handleRefresh();
+}
+
+function getFieldLabel(field) {
+  const column =
+    tableColumns.find((c) => c.field === field) ||
+    searchFields.find((f) => f.field === field);
+  return column?.label || field;
+}
+
+function getTagDisplayText(field, value) {
+  if (field === 'status') {
+    if (value === 'enabled' || value === '已生效') return '已生效';
+    if (value === 'disabled' || value === '已禁用') return '已禁用';
+    if (value === 'wait' || value === '未生效') return '未生效';
+  }
+  return value;
+}
+
+function removeFilterTag(field) {
+  const nextQuery = { ...appliedQuery.value };
+  delete nextQuery[field];
+  appliedQuery.value = nextQuery;
+  try {
+    queryFormApi.setValues(nextQuery);
+  } catch (e) {
+    console.warn('Failed to set form values', e);
+  }
+  nextTick(() => {
+    handleRefresh();
+  });
+}
+
+function clearFilters() {
+  appliedQuery.value = {};
+  queryFormApi.resetForm();
+  handleRefresh();
+}
+
+function getCellDisplayText(column, row) {
+  const value = row?.[column.field];
+  if (!isEmpty(value)) {
+    return Array.isArray(value) ? value.join('、') : value;
+  }
+  if (column.field === primaryField) {
+    return row?.[pageConfig.nameField] || row?.id || '--';
+  }
+  return '--';
+}
+
+function isSearchField(field) {
+  return searchFields.some((item) => item.field === field);
+}
+
+function applyChartSearch(field, value) {
+  if (!field || isEmpty(value)) return;
+  if (!isSearchField(field)) {
+    ElMessage.info('当前图表未返回可筛选字段，已保留展示不发起筛选');
+    return;
+  }
+  applySearchPatch({ [field]: value });
+}
+
+function handleCardClick(item) {
+  if (!item.status) return;
+  applySearchPatch({ status: item.status });
+}
+
+function handleBarClick(name) {
+  const field = pageConfig.chart?.bar?.[4] || pageConfig.chart?.bar?.[1];
+  applyChartSearch(field, name);
+}
+
+function handleLineClick(payload) {
+  const field = pageConfig.chart?.line?.[4] || pageConfig.chart?.line?.[1];
+  applyChartSearch(field, payload?.categoryName || payload?.name);
+}
+
+function handlePieClick(payload) {
+  const field = pageConfig.chart?.pie?.[3] || pageConfig.chart?.pie?.[1];
+  applyChartSearch(field, payload?.name);
+}
+
+async function handleCellDrill(column, row) {
+  const drillType =
+    column.drillType || (column.field === primaryField ? 'detail' : '');
+  const rawValue = row?.[column.drillValueField || column.field];
+  if (drillType === 'detail') {
+    return handleOpenDetail(row);
+  }
+  if (drillType === 'filter') {
+    if (isEmpty(rawValue)) return;
+    return applySearchPatch({ [column.drillField || column.field]: rawValue });
+  }
+  if (drillType === 'download') {
+    if (typeof rawValue === 'string' && rawValue) {
+      globalThis.open?.(rawValue, '_blank');
+      return;
+    }
+    ElMessage.success((column.drillLabel || column.label) + '下载能力已预留');
+    return;
+  }
+  if (drillType === 'dialog') {
+    if (isEmpty(rawValue)) return;
+    return handleOpenDrillDialog(column, row);
+  }
+}
+
+function handleToggleOverview() {
+  showOverview.value = !showOverview.value;
+}
+
+function handleOpenSearch() {
+  searchDrawerApi.open();
+}
+
+function handleFullScreen() {
+  if (screenfull.isEnabled) {
+    screenfull.toggle();
+  }
+}
+
+onMounted(() => {
+  loadChart();
+  loadSelectOptions();
+});
+// 暴露方法给父组件，支持同名称片区筛选展示
+defineExpose({
+  handleFilterTagClick: (field, value) => {
+    applySearchPatch({ [field]: value });
+  },
+  clearFilters,
+});
+</script>
+
+<template>
+  <div class="common-index station-resource-leaf-page">
+    <div
+      v-if="showOverview && (pageConfig.chart || hasMap)"
+      class="station-overview"
+    >
+      <gateChart
+        v-if="pageConfig.chart"
+        :cards="chartCards"
+        :chart-config="pageConfig.chart"
+        :title="pageConfig.title"
+        :pie-data="pieData"
+        :bar-x-data="barXData"
+        :bar-series-data="barSeriesData"
+        :line-x-data="lineXData"
+        :line-series-data="lineSeriesData"
+        @card-click="handleCardClick"
+        @bar-click="handleBarClick"
+        @line-click="handleLineClick"
+        @pie-click="handlePieClick"
+      />
+    </div>
+
+    <div class="park-lot-table-new" v-loading="chartLoading">
+      <FormDrawer :title="drawerTitle">
+        <Form />
+      </FormDrawer>
+
+      <DetailDrawer ref="detailDrawerRef" :detail-obj="detailObj" />
+      <CommonDetailDrawer
+        ref="drillDrawerRef"
+        :title="drillDrawerTitle"
+        :data="drillDetailObj"
+        :fields="drillDetailFields"
+        width="38%"
+      />
+
+      <SearchDrawer title="筛选">
+        <QueryForm class="query-form" @reset="handleResetSearch" />
+      </SearchDrawer>
+
+      <el-tabs v-model="activeName" class="common-tabs" type="card">
+        <el-tab-pane :name="pageConfig.title">
+          <template #label>
+            <div class="table-first">
+              <span>{{ pageConfig.title }}</span>
+            </div>
+          </template>
+          <Grid>
+            <template #table-title>
+              <div
+                v-if="Object.keys(appliedQuery).length > 0"
+                class="filter-tags-container"
+                style="display: flex; flex-wrap: wrap; align-items: center"
+              >
+                <el-tag
+                  v-for="(val, key) in appliedQuery"
+                  :key="key"
+                  type="success"
+                  closable
+                  @close="removeFilterTag(key)"
+                  style="height: 32px; margin: 4px 8px 4px 0; line-height: 32px"
+                >
+                  {{ getFieldLabel(key) }}: {{ getTagDisplayText(key, val) }}
+                </el-tag>
+              </div>
+            </template>
+            <template #toolbar-tools>
+              <div class="common-toolbar-tools">
+                <IconButton
+                  v-if="pageConfig.toolbar?.includes('create')"
+                  content="新增"
+                  icon-name="Plus"
+                  @click="handleCreate"
+                />
+                <IconButton
+                  v-if="pageConfig.toolbar?.includes('import')"
+                  content="导入"
+                  icon-name="Upload"
+                  @click="handleOpenImport"
+                />
+                <IconButton
+                  v-if="pageConfig.toolbar?.includes('export')"
+                  content="导出"
+                  icon-name="download"
+                  @click="handleExport()"
+                />
+                <IconButton
+                  v-if="pageConfig.toolbar?.includes('save')"
+                  content="保存"
+                  icon-name="Check"
+                  :disabled="isEmpty(checkedIds)"
+                  @click="handleSave"
+                />
+                <IconButton
+                  v-if="pageConfig.toolbar?.includes('reset')"
+                  content="重置"
+                  icon-name="RefreshLeft"
+                  @click="handleResetConfig"
+                />
+                <IconButton
+                  v-if="pageConfig.toolbar?.includes('batchSync')"
+                  content="批量同步"
+                  icon-name="Refresh"
+                  :disabled="isEmpty(checkedIds)"
+                  @click="handleBatchSync"
+                />
+                <IconButton
+                  v-if="pageConfig.toolbar?.includes('refresh')"
+                  content="刷新"
+                  icon-name="Refresh"
+                  @click="handleRefresh"
+                />
+                <IconButton
+                  content="筛选"
+                  icon-name="search"
+                  @click="handleOpenSearch"
+                />
+                <IconButton
+                  :content="showOverview ? '收起' : '展开'"
+                  :icon-name="showOverview ? 'ArrowUp' : 'ArrowDown'"
+                  @click="handleToggleOverview"
+                />
+                <IconButton
+                  content="全屏"
+                  icon-name="FullScreen"
+                  @click="handleFullScreen"
+                />
+              </div>
+            </template>
+
+            <template
+              v-for="column in interactiveColumns"
+              :key="column.field"
+              #[column.slotName]="{ row }"
+            >
+              <el-text
+                class="common-align"
+                type="primary"
+                @click="handleCellDrill(column, row)"
+              >
+                {{ getCellDisplayText(column, row) }}
+              </el-text>
+            </template>
+
+            <template #actions="{ row }">
+              <div class="table-toolbar-tools">
+                <IconButton
+                  v-for="action in rowActions(row)"
+                  :key="action"
+                  :content="actionLabel(action, row)"
+                  :icon-name="actionIcon(action)"
+                  :color="actionColor(action)"
+                  @click="handleRowAction(action, row)"
+                />
+              </div>
+            </template>
+          </Grid>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+    <el-dialog
+      v-model="importDialogVisible"
+      :title="'导入' + pageConfig.title"
+      width="520px"
+      append-to-body
+    >
+      <div class="import-dialog-body">
+        <div class="import-dialog-actions">
+          <el-button type="primary" plain @click="handleDownloadImportTemplate">
+            下载标准模板
+          </el-button>
+          <el-checkbox v-model="importUpdateSupport">
+            覆盖已存在数据
+          </el-checkbox>
+        </div>
+        <el-upload
+          drag
+          :auto-upload="false"
+          :limit="1"
+          accept=".xls,.xlsx"
+          :on-change="handleImportFileChange"
+          :on-remove="handleRemoveImportFile"
+        >
+          <div class="import-upload-text">
+            <div>点击或拖拽 Excel 文件到此处</div>
+            <small>仅支持 .xls、.xlsx 文件</small>
+          </div>
+        </el-upload>
+        <div v-if="importResult" class="import-result">
+          <el-alert
+            :title="`导入完成：成功 ${importResult.successCount} 条，失败 ${importResult.failureCount} 条`"
+            :type="importResult.failureCount ? 'warning' : 'success'"
+            show-icon
+            :closable="false"
+          />
+          <el-table
+            v-if="importResult.failureList?.length"
+            :data="importResult.failureList"
+            border
+            max-height="180"
+          >
+            <el-table-column prop="row" label="行号" width="80" />
+            <el-table-column
+              prop="name"
+              :label="pageConfig.title + '名称'"
+              min-width="120"
+            />
+            <el-table-column prop="msg" label="错误原因" min-width="180" />
+          </el-table>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="importDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="importLoading"
+          @click="handleImportConfirm"
+        >
+          确认导入
+        </el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<style scoped lang="scss">
+.station-resource-leaf-page {
+  .station-overview {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 12px;
+  }
+
+  .station-map-wrap {
+    padding: 0 15px;
+  }
+}
+
+.import-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.import-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.import-upload-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--el-text-color-regular);
+  text-align: center;
+}
+
+.import-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+</style>

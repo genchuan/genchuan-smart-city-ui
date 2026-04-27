@@ -3,8 +3,8 @@ import { computed, ref } from 'vue';
 
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
-import { detailFields, pageConfig } from './data.js';
 import { formatDateTime } from '../table/data.js';
+import { detailFields, pageConfig } from './data.js';
 
 const props = defineProps({
   detailObj: {
@@ -14,7 +14,7 @@ const props = defineProps({
 });
 
 const drawerRef = ref(null);
-const drawerTitle = computed(() => pageConfig.title + '详情');
+const drawerTitle = computed(() => `${pageConfig.title}详情`);
 const detailData = computed(() => ({
   ...props.detailObj,
   generateTime: formatDateTime(props.detailObj.generateTime),
