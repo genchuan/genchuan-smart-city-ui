@@ -9,12 +9,11 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import * as pageApi from '#/api/genchuan/industry/chargePark/stationResource/stationMgmt/debtExpand/index.js';
 import * as areaApi from '#/api/genchuan/industry/chargePark/stationResource/areaMgmt/areaInfo/index.js';
+import * as pageApi from '#/api/genchuan/industry/chargePark/stationResource/stationMgmt/debtExpand/index.js';
 import * as stationInfoApi from '#/api/genchuan/industry/chargePark/stationResource/stationMgmt/stationInfo/index.js';
-import IconButton from '#/genchuan-components/IconButton.vue';
-import '#/components/page/index.scss';
 import CommonDetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import IconButton from '#/genchuan-components/IconButton.vue';
 
 import DetailDrawer from './detail.vue';
 import gateChart from './gateChart.vue';
@@ -24,6 +23,8 @@ import {
   searchFields,
   tableColumns,
 } from './table/data.js';
+
+import '#/components/page/index.scss';
 
 const apiName = pageConfig.apiName;
 const activeName = ref(pageConfig.title);
@@ -135,7 +136,6 @@ async function loadSelectOptions() {
             pageSize: 200,
           });
           nextOptions[source] = buildOptionsBySource(source, result);
-          return;
         }
       } catch (error) {
         console.error(`加载${source}下拉选项失败:`, error);
@@ -166,14 +166,27 @@ function getPlaceholder(field) {
 
 function createSchema(fields, isSearch = false) {
   return fields.map((field) => {
-    const component =
-      field.type === 'select'
-        ? 'Select'
-        : field.type === 'number'
-          ? 'InputNumber'
-          : field.type === 'date'
-            ? 'DatePicker'
-            : 'Input';
+    let component;
+    switch (field.type) {
+    case 'select': {
+      component = 'Select';
+
+    break;
+    }
+    case 'number': {
+      component = 'InputNumber';
+
+    break;
+    }
+    case 'date': {
+      component = 'DatePicker';
+
+    break;
+    }
+    default: {
+      component = 'Input';
+    }
+    }
 
     const componentProps = {
       placeholder: getPlaceholder(field),
@@ -280,19 +293,19 @@ const lineSeriesData = computed(() => {
   ];
 });
 
-const mapData = computed(() =>
-  (chartData.value?.mapData || []).map((item) => ({
-    ...item,
-    coordinate:
-      item.coordinate || [item.lng, item.lat].filter(Boolean).join(','),
-    locationName: item.locationName || item.name,
-    statusName: item.statusName || item.status || '正常',
-  })),
-);
+// const mapData = computed(() =>
+//   (chartData.value?.mapData || []).map((item) => ({
+//     ...item,
+//     coordinate:
+//       item.coordinate || [item.lng, item.lat].filter(Boolean).join(','),
+//     locationName: item.locationName || item.name,
+//     statusName: item.statusName || item.status || '正常',
+//   })),
+// );
 
 function getCellSlotName(column) {
   if (column.drillType || column.field === primaryField) {
-    return 'cell_' + column.field;
+    return `cell_${column.field}`;
   }
   return '';
 }
@@ -491,22 +504,22 @@ async function refreshSelectSchemas() {
 
 async function handleFormConfirm() {
   const values = sanitizeParams({
-    ...(formData.value || {}),
+    ...formData.value,
     ...formApi.form.values,
   });
   const requiredField = formFields.find(
     (field) => field.required && !values[field.field],
   );
   if (requiredField) {
-    ElMessage.warning('请填写' + requiredField.label);
+    ElMessage.warning(`请填写${requiredField.label}`);
     return;
   }
 
   if (formMode.value === 'edit' && values.id) {
-    await pageApi['update' + apiName](values);
+    await pageApi[`update${apiName}`](values);
     ElMessage.success('编辑成功');
   } else {
-    await pageApi['create' + apiName](values);
+    await pageApi[`create${apiName}`](values);
     ElMessage.success('新增成功');
   }
 
@@ -572,7 +585,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }) => {
-          return await pageApi['get' + apiName + 'Page']({
+          return await pageApi[`get${apiName}Page`]({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             ...appliedQuery.value,
@@ -621,14 +634,14 @@ function handleRefresh() {
 async function loadChart() {
   if (
     !pageConfig.chart ||
-    typeof pageApi['get' + apiName + 'Chart'] !== 'function'
+    typeof pageApi[`get${apiName}Chart`] !== 'function'
   ) {
     return;
   }
   chartLoading.value = true;
   try {
     chartData.value =
-      (await pageApi['get' + apiName + 'Chart'](appliedQuery.value)) || {};
+      (await pageApi[`get${apiName}Chart`](appliedQuery.value)) || {};
   } finally {
     chartLoading.value = false;
   }
@@ -658,7 +671,7 @@ function handleEdit(row) {
 }
 
 async function handleOpenDetail(row) {
-  const detailApi = pageApi['get' + apiName + 'Detail'];
+  const detailApi = pageApi[`get${apiName}Detail`];
   detailObj.value =
     typeof detailApi === 'function' ? (await detailApi(row.id)) || row : row;
   await nextTick();
@@ -671,12 +684,12 @@ async function handleStatusChange(action, row) {
   const actionApi = pageApi[action + apiName];
 
   if (typeof actionApi !== 'function') {
-    ElMessage.error('未配置' + label + '接口：' + action + apiName);
+    ElMessage.error(`未配置${label}接口：${action}${apiName}`);
     return;
   }
   if (action === 'disable' || row.status === '已禁用') {
     await ElMessageBox.confirm(
-      '确认' + label + '当前' + pageConfig.title + '吗？',
+      `确认${label}当前${pageConfig.title}吗？`,
       '操作提示',
       {
         type: 'warning',
@@ -686,7 +699,7 @@ async function handleStatusChange(action, row) {
 
   try {
     await actionApi({ ids: [row.id] });
-    ElMessage.success(label + '成功');
+    ElMessage.success(`${label}成功`);
     handleRefresh();
   } catch (error) {
     const code = error?.code;
@@ -694,7 +707,7 @@ async function handleStatusChange(action, row) {
       ElMessage.error('登录状态已失效，请重新登录后再试');
       return;
     }
-    ElMessage.error(error?.msg || error?.message || label + '失败');
+    ElMessage.error(error?.msg || error?.message || `${label}失败`);
   }
 }
 
@@ -704,7 +717,7 @@ async function handleBind(row) {
     inputPattern: /^\d+$/,
     inputValue: row.deviceId || '',
   });
-  await pageApi['bind' + apiName]({
+  await pageApi[`bind${apiName}`]({
     deviceId: Number(value),
     id: row.id,
   });
@@ -717,7 +730,7 @@ async function handleSave() {
     ElMessage.warning('请至少选择一条记录');
     return;
   }
-  await pageApi['save' + apiName]({ ids: checkedIds.value });
+  await pageApi[`save${apiName}`]({ ids: checkedIds.value });
   ElMessage.success('保存成功');
   handleRefresh();
 }
@@ -731,7 +744,7 @@ async function handleResetConfig() {
       inputPattern: /^\d+$/,
     },
   );
-  await pageApi['reset' + apiName]({ stationId: Number(value) });
+  await pageApi[`reset${apiName}`]({ stationId: Number(value) });
   ElMessage.success('重置成功');
   handleRefresh();
 }
@@ -741,13 +754,13 @@ async function handleBatchSync() {
     ElMessage.warning('请至少选择一条记录');
     return;
   }
-  await pageApi['batchSync' + apiName]({ ids: checkedIds.value });
+  await pageApi[`batchSync${apiName}`]({ ids: checkedIds.value });
   ElMessage.success('批量同步成功');
   handleRefresh();
 }
 
 async function handleExport(extraParams = {}) {
-  const exportApi = pageApi['export' + apiName];
+  const exportApi = pageApi[`export${apiName}`];
   if (typeof exportApi !== 'function') return;
   const blob = await exportApi({
     ...appliedQuery.value,
@@ -786,15 +799,15 @@ function normalizeImportResult(result) {
 }
 
 async function handleDownloadImportTemplate() {
-  const templateApi = pageApi['get' + apiName + 'ImportTemplate'];
+  const templateApi = pageApi[`get${apiName}ImportTemplate`];
   if (typeof templateApi !== 'function') {
-    ElMessage.warning('接口文档未提供' + pageConfig.title + '导入模板下载接口');
+    ElMessage.warning(`接口文档未提供${pageConfig.title}导入模板下载接口`);
     return;
   }
   const blob = await templateApi();
   downloadFileFromBlobPart({
     fileName:
-      pageConfig.importTemplateName || pageConfig.title + '导入模板.xlsx',
+      pageConfig.importTemplateName || `${pageConfig.title}导入模板.xlsx`,
     source: blob,
   });
 }
@@ -804,9 +817,9 @@ async function handleImportConfirm() {
     ElMessage.warning('请先选择需要导入的 Excel 文件');
     return;
   }
-  const importApi = pageApi['import' + apiName];
+  const importApi = pageApi[`import${apiName}`];
   if (typeof importApi !== 'function') {
-    ElMessage.warning('暂未配置' + pageConfig.title + '导入接口');
+    ElMessage.warning(`暂未配置${pageConfig.title}导入接口`);
     return;
   }
   importLoading.value = true;
@@ -874,9 +887,9 @@ function handleRowAction(action, row) {
   if (action === 'bind') return handleBind(row);
   if (action === 'exportRow') return handleExport({ id: row.id });
   if (action === 'locate')
-    return ElMessage.info('已定位到记录：' + (row[primaryField] || row.id));
+    return ElMessage.info(`已定位到记录：${row[primaryField] || row.id}`);
   if (action === 'alarm')
-    return ElMessage.warning('已触发告警：' + (row[primaryField] || row.id));
+    return ElMessage.warning(`已触发告警：${row[primaryField] || row.id}`);
 }
 
 async function applySearchPatch(patch) {
@@ -887,8 +900,8 @@ async function applySearchPatch(patch) {
   appliedQuery.value = nextQuery;
   try {
     await queryFormApi.setValues(nextQuery);
-  } catch (e) {
-    console.warn('Failed to set form values', e);
+  } catch (error) {
+    console.warn('Failed to set form values', error);
   }
   await nextTick();
   handleRefresh();
@@ -916,8 +929,8 @@ function removeFilterTag(field) {
   appliedQuery.value = nextQuery;
   try {
     queryFormApi.setValues(nextQuery);
-  } catch (e) {
-    console.warn('Failed to set form values', e);
+  } catch (error) {
+    console.warn('Failed to set form values', error);
   }
   nextTick(() => {
     handleRefresh();
@@ -990,7 +1003,7 @@ async function handleCellDrill(column, row) {
       globalThis.open?.(rawValue, '_blank');
       return;
     }
-    ElMessage.success((column.drillLabel || column.label) + '下载能力已预留');
+    ElMessage.success(`${column.drillLabel || column.label}下载能力已预留`);
     return;
   }
   if (drillType === 'dialog') {
@@ -1189,7 +1202,7 @@ defineExpose({
     </div>
     <el-dialog
       v-model="importDialogVisible"
-      :title="'导入' + pageConfig.title"
+      :title="`导入${pageConfig.title}`"
       width="520px"
       append-to-body
     >
@@ -1231,7 +1244,7 @@ defineExpose({
             <el-table-column prop="row" label="行号" width="80" />
             <el-table-column
               prop="name"
-              :label="pageConfig.title + '名称'"
+              :label="`${pageConfig.title}名称`"
               min-width="120"
             />
             <el-table-column prop="msg" label="错误原因" min-width="180" />
