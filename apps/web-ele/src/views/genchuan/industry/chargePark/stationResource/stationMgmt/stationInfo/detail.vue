@@ -14,7 +14,7 @@ const props = defineProps({
 });
 
 const activeTab = ref('base');
-const drawerTitle = computed(() => pageConfig.title + '详情');
+const drawerTitle = computed(() => `${pageConfig.title}详情`);
 
 const [DrawerComponent, drawerApi] = useVbenDrawer({
   appendToMain: true,
@@ -28,14 +28,15 @@ const [DrawerComponent, drawerApi] = useVbenDrawer({
 });
 
 const groupedFields = computed(() => {
-  return detailFields.reduce((groups, field) => {
+  const groups = {};
+  for (const field of detailFields) {
     const section = field.section || '基础信息';
     if (!groups[section]) {
       groups[section] = [];
     }
     groups[section].push(field);
-    return groups;
-  }, {});
+  }
+  return groups;
 });
 
 const deviceRows = computed(() => {
@@ -54,7 +55,8 @@ const deviceRows = computed(() => {
 });
 
 const spaceRows = computed(() => {
-  const list = props.detailObj.spaceList || props.detailObj.parkingSpaceList || [];
+  const list =
+    props.detailObj.spaceList || props.detailObj.parkingSpaceList || [];
   if (list.length > 0) return list;
   if (isEmpty(props.detailObj.spaceCount)) return [];
   return [
@@ -111,7 +113,11 @@ defineExpose({
             >
               <h4>{{ section }}</h4>
               <div class="detail-content">
-                <div class="detail-item" v-for="field in fields" :key="field.key">
+                <div
+                  class="detail-item"
+                  v-for="field in fields"
+                  :key="field.key"
+                >
                   <span class="detail-label">{{ field.label }}:</span>
                   <span class="detail-value">
                     {{ formatValue(props.detailObj[field.key]) }}
@@ -123,7 +129,7 @@ defineExpose({
         </div>
       </el-tab-pane>
       <el-tab-pane label="绑定设备列表" name="devices">
-        <el-table v-if="deviceRows.length" :data="deviceRows" border>
+        <el-table v-if="deviceRows.length > 0" :data="deviceRows" border>
           <el-table-column prop="deviceNo" label="设备编号" min-width="130" />
           <el-table-column prop="deviceName" label="设备名称" min-width="140" />
           <el-table-column prop="deviceType" label="设备类型" min-width="120" />
@@ -133,7 +139,7 @@ defineExpose({
         <el-empty v-else description="暂无绑定设备数据" />
       </el-tab-pane>
       <el-tab-pane label="车位列表" name="spaces">
-        <el-table v-if="spaceRows.length" :data="spaceRows" border>
+        <el-table v-if="spaceRows.length > 0" :data="spaceRows" border>
           <el-table-column prop="spaceNo" label="车位编号" min-width="130" />
           <el-table-column prop="garage" label="所属车库" min-width="120" />
           <el-table-column prop="location" label="车位位置" min-width="140" />
@@ -144,7 +150,7 @@ defineExpose({
         <el-empty v-else description="暂无车位数据" />
       </el-tab-pane>
       <el-tab-pane label="数据同步日志" name="sync">
-        <el-table v-if="syncLogRows.length" :data="syncLogRows" border>
+        <el-table v-if="syncLogRows.length > 0" :data="syncLogRows" border>
           <el-table-column prop="syncTime" label="同步时间" min-width="160" />
           <el-table-column prop="syncType" label="同步类型" min-width="120" />
           <el-table-column prop="status" label="状态" min-width="100" />
@@ -153,9 +159,13 @@ defineExpose({
         <el-empty v-else description="暂无数据同步日志" />
       </el-tab-pane>
       <el-tab-pane label="操作审计日志" name="audit">
-        <el-table v-if="auditLogRows.length" :data="auditLogRows" border>
+        <el-table v-if="auditLogRows.length > 0" :data="auditLogRows" border>
           <el-table-column prop="operator" label="操作人" min-width="120" />
-          <el-table-column prop="operateTime" label="操作时间" min-width="160" />
+          <el-table-column
+            prop="operateTime"
+            label="操作时间"
+            min-width="160"
+          />
           <el-table-column prop="content" label="操作内容" min-width="220" />
         </el-table>
         <el-empty v-else description="暂无操作审计日志" />
@@ -212,8 +222,8 @@ defineExpose({
 .detail-item {
   display: flex;
   gap: 12px;
-  min-width: 0;
   align-items: center;
+  min-width: 0;
   padding: 4px 0;
 }
 

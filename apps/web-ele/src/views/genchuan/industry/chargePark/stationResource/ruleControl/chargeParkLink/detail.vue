@@ -13,7 +13,7 @@ const props = defineProps({
 });
 
 const drawerRef = ref(null);
-const drawerTitle = computed(() => pageConfig.title + '详情');
+const drawerTitle = computed(() => `${pageConfig.title}详情`);
 
 function open() {
   drawerRef.value?.open();
