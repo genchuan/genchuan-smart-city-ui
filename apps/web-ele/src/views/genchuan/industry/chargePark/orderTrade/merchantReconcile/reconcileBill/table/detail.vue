@@ -2,7 +2,7 @@
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 发票配置详情
+// 商户对账详情
 const props = defineProps({
   detailObj: {
     type: Object,
@@ -19,16 +19,15 @@ const { detailObj, title } = toRefs(props);
 
 // 标题
 const drawerTitle = computed(() => {
-  const category = detailObj.value?.category || '发票配置';
-  const id = detailObj.value?.id || 0;
-  return title.value || (id > 0 ? `${category} 详情` : '发票配置详情');
+  const billNo = detailObj.value?.billNo || '商户对账';
+  return title.value || `${billNo} 详情`;
 });
 
-// 状态映射 - InvoiceConfigStatusEnum
+// 状态映射 - ReconcileBillStatusEnum
 const statusMap = {
-  pending: { label: '未生效', type: 'warning' },
-  enabled: { label: '已生效', type: 'success' },
-  disabled: { label: '已禁用', type: 'danger' },
+  pending: { label: '待对账', type: 'warning' },
+  reconciled: { label: '已对账', type: 'success' },
+  abnormal: { label: '异常', type: 'danger' },
 };
 
 // 获取状态标签
@@ -69,22 +68,42 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">开票类目:</div>
-        <div class="detail-row-right">{{ detailObj.category || '-' }}</div>
+        <div class="detail-row-left">对账单号:</div>
+        <div class="detail-row-right">{{ detailObj.billNo || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">税率(%):</div>
-        <div class="detail-row-right">{{ detailObj.taxRate || '-' }}</div>
+        <div class="detail-row-left">商户ID:</div>
+        <div class="detail-row-right">{{ detailObj.merchantId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">开票主体:</div>
-        <div class="detail-row-right">{{ detailObj.taxBody || '-' }}</div>
+        <div class="detail-row-left">商户名称:</div>
+        <div class="detail-row-right">{{ detailObj.merchantName || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">状态:</div>
+        <div class="detail-row-left">对账日期:</div>
+        <div class="detail-row-right">{{ detailObj.billDate || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">系统订单总金额:</div>
+        <div class="detail-row-right">{{ detailObj.sysAmount ? `¥${detailObj.sysAmount.toFixed(2)}` : '¥0.00' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">商户上报总金额:</div>
+        <div class="detail-row-right">{{ detailObj.merchantAmount ? `¥${detailObj.merchantAmount.toFixed(2)}` : '¥0.00' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">差异金额:</div>
+        <div class="detail-row-right">{{ detailObj.diffAmount ? `¥${detailObj.diffAmount.toFixed(2)}` : '¥0.00' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">对账状态:</div>
         <div class="detail-row-right">
           <el-tag :type="getStatusType(detailObj.status)">
             {{ getStatusLabel(detailObj.status) }}
@@ -93,18 +112,13 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">审核人ID:</div>
-        <div class="detail-row-right">{{ detailObj.auditorId || '-' }}</div>
+        <div class="detail-row-left">确认时间:</div>
+        <div class="detail-row-right">{{ detailObj.confirmTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">审核人名称:</div>
-        <div class="detail-row-right">{{ detailObj.auditorName || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">审核时间:</div>
-        <div class="detail-row-right">{{ detailObj.auditTime || '-' }}</div>
+        <div class="detail-row-left">操作人ID:</div>
+        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -113,28 +127,8 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">备用字段1:</div>
-        <div class="detail-row-right">{{ detailObj.reserve1 || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段2:</div>
-        <div class="detail-row-right">{{ detailObj.reserve2 || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">创建者:</div>
-        <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
         <div class="detail-row-left">创建时间:</div>
         <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新时间:</div>
-        <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>
