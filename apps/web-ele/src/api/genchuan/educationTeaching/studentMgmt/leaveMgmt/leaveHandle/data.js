@@ -67,9 +67,9 @@ export function getLeaveHandlePage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mock = convertList(getMockList());
-      return { list: mock, total: mock.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -117,10 +117,9 @@ export function getLeaveHandleDetail(params) {
   return requestClient.get('/studentmgmt/leave-handle/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -170,104 +169,3 @@ export function getLeaveHandleIndex(params) {
     });
   });
 }
-
-// 模拟数据（原始值使用英文）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      studentId: 1,
-      studentName: '张三',
-      leaveTime: 1767225600000,
-      leaveAddress: '回家',
-      parentConfirmTime: 1767312000000,
-      handleUser: '张老师',
-      handleTime: 1767398400000,
-      checkoutTime: 1767398400000,
-      checkoutStatus: 'checked_out',
-      finishRate: 100.0,
-      status: 'left',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 2,
-      studentId: 2,
-      studentName: '李四',
-      leaveTime: 1767225600000,
-      leaveAddress: '外出实习',
-      parentConfirmTime: null,
-      handleUser: null,
-      handleTime: null,
-      checkoutTime: null,
-      checkoutStatus: 'not_checked_out',
-      finishRate: null,
-      status: 'pending_confirm',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 3,
-      studentId: 3,
-      studentName: '王五',
-      leaveTime: 1769904000000,
-      leaveAddress: '就业',
-      parentConfirmTime: 1769990400000,
-      handleUser: null,
-      handleTime: null,
-      checkoutTime: null,
-      checkoutStatus: 'not_checked_out',
-      finishRate: null,
-      status: 'pending_handle',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 4,
-      studentId: 4,
-      studentName: '赵六',
-      leaveTime: 1769904000000,
-      leaveAddress: '回家',
-      parentConfirmTime: null,
-      handleUser: null,
-      handleTime: null,
-      checkoutTime: null,
-      checkoutStatus: 'not_checked_out',
-      finishRate: null,
-      status: 'pending_confirm',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 5,
-      studentId: 5,
-      studentName: '孙七',
-      leaveTime: 1775088000000,
-      leaveAddress: '升学',
-      parentConfirmTime: 1775174400000,
-      handleUser: '李老师',
-      handleTime: 1775260800000,
-      checkoutTime: 1775260800000,
-      checkoutStatus: 'checked_out',
-      finishRate: 100.0,
-      status: 'left',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775088000000,
-      updateTime: 1775088000000,
-    },
-  ];
-};

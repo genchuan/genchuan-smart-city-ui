@@ -1,12 +1,56 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+// 状态映射（后端英文 unallocated -> 前端中文 未分配）
+const statusMap = {
+  '未分配': 'unallocated',
+  '已分配': 'allocated'
+};
+const statusReverse = {
+  'unallocated': '未分配',
+  'allocated': '已分配'
+};
+
+// 通用转换函数：后端 → 前端（将英文转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
+  }
+  return result;
+}
+
+// 通用转换函数：前端 → 后端（将中文转为英文）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 床位管理接口 ====================
 export function getBedMgmtPage(params) {
-  return requestClient.get('/studentmgmt/bed-mgmt/page', { params }).catch(err => {
-    console.warn('分页接口失败', err);
-    // 分页接口已联调成功，不再使用模拟数据，返回空列表
-    return { list: [], total: 0 };
-  });
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/bed-mgmt/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败', err);
+      return { list: [], total: 0 };
+    });
 }
 
 // 分配床位（批量，bedIds 与 studentIds 一一对应）
@@ -27,7 +71,8 @@ export function adjustBedMgmt(data) {
 
 // 新增床位
 export function createBedMgmt(data) {
-  return requestClient.post('/studentmgmt/bed-mgmt/create', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/bed-mgmt/create', convertedData).catch(err => {
     console.warn('新增接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -35,7 +80,8 @@ export function createBedMgmt(data) {
 
 // 更新床位
 export function updateBedMgmt(data) {
-  return requestClient.put('/studentmgmt/bed-mgmt/update', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/bed-mgmt/update', convertedData).catch(err => {
     console.warn('更新接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -43,7 +89,8 @@ export function updateBedMgmt(data) {
 
 // 导出
 export function exportBedMgmt(params) {
-  return requestClient.download('/studentmgmt/bed-mgmt/export-excel', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/bed-mgmt/export-excel', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
@@ -51,11 +98,12 @@ export function exportBedMgmt(params) {
 
 // 详情
 export function getBedMgmtDetail(params) {
-  return requestClient.get('/studentmgmt/bed-mgmt/get', { params }).catch(err => {
-    console.warn('详情接口失败', err);
-    // 不再使用模拟数据，直接抛出错误让调用方处理
-    return Promise.reject(err);
-  });
+  return requestClient.get('/studentmgmt/bed-mgmt/get', { params })
+    .then(res => convertEnToZh(res))
+    .catch(err => {
+      console.warn('详情接口失败', err);
+      return Promise.reject(err);
+    });
 }
 
 // ==================== 图表接口 ====================

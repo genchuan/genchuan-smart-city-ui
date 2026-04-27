@@ -1,14 +1,13 @@
 <script setup>
-import { reactive, ref } from 'vue';
-import { useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {reactive, ref} from 'vue';
+import {useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import PromoteDetailDrawer from './components/promoteDetail.vue';
 import {
-  getMockList,
   getPromoteMgmtPage,
   createPromoteMgmt,
   executePromoteMgmt,
@@ -185,40 +184,10 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'site':
-            itemValue = item.site;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          case 'taskName':
-            itemValue = item.taskName;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据并提示用户
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取宣传任务列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }

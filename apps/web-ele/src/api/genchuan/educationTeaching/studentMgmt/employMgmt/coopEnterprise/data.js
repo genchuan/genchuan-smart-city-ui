@@ -64,9 +64,9 @@ export function getCoopEnterprisePage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mock = convertList(getMockList());
-      return { list: mock, total: mock.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -106,10 +106,9 @@ export function getCoopEnterpriseDetail(params) {
   return requestClient.get('/studentmgmt/coop-enterprise/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -166,89 +165,3 @@ export function getCoopEnterpriseDistribution(params) {
     });
   });
 }
-
-// 模拟数据（原始值使用英文）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      enterpriseName: '华为技术有限公司',
-      enterpriseType: 'private',
-      deptId: 2001,
-      contactUser: '张经理',
-      contactPhone: '13800001111',
-      coopStartTime: 1767225600000,
-      coopEndTime: 1798761600000,
-      status: 'cooperating',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 2,
-      enterpriseName: '中国中车',
-      enterpriseType: 'state_owned',
-      deptId: 2002,
-      contactUser: '李部长',
-      contactPhone: '13800002222',
-      coopStartTime: 1769904000000,
-      coopEndTime: null,
-      status: 'cooperating',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 3,
-      enterpriseName: '阿里巴巴',
-      enterpriseType: 'private',
-      deptId: 2001,
-      contactUser: '王总监',
-      contactPhone: '13800003333',
-      coopStartTime: 1775088000000,
-      coopEndTime: 1806624000000,
-      status: 'cooperating',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775088000000,
-      updateTime: 1775088000000,
-    },
-    {
-      id: 4,
-      enterpriseName: 'IBM',
-      enterpriseType: 'foreign',
-      deptId: 2001,
-      contactUser: '赵经理',
-      contactPhone: '13800004444',
-      coopStartTime: 1777680000000,
-      coopEndTime: 1809216000000,
-      status: 'ended',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1777680000000,
-      updateTime: 1777680000000,
-    },
-    {
-      id: 5,
-      enterpriseName: '海尔集团',
-      enterpriseType: 'private',
-      deptId: 2002,
-      contactUser: '孙经理',
-      contactPhone: '13800005555',
-      coopStartTime: 1782950400000,
-      coopEndTime: null,
-      status: 'cooperating',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1782950400000,
-      updateTime: 1782950400000,
-    },
-  ];
-};

@@ -3,9 +3,9 @@ import { requestClient } from '#/api/request';
 // ==================== 沟通管理接口 ====================
 export function getCommunicateMgmtPage(params) {
   return requestClient.get('/studentmgmt/communicate-mgmt/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    const mock = getMockList();
-    return { list: mock, total: mock.length };
+    console.warn('分页接口失败', err);
+    // 分页接口已联调成功，不再使用模拟数据，返回空列表
+    return { list: [], total: 0 };
   });
 }
 
@@ -60,10 +60,9 @@ export function exportCommunicateMgmt(params) {
 // 详情
 export function getCommunicateMgmtDetail(params) {
   return requestClient.get('/studentmgmt/communicate-mgmt/get', { params }).catch(err => {
-    console.warn('详情接口失败，使用模拟数据', err);
-    const mockList = getMockList();
-    const detail = mockList.find(item => item.id === params.id) || mockList[0];
-    return Promise.resolve(detail);
+    console.warn('详情接口失败', err);
+    // 不再使用模拟数据，直接抛出错误让调用方处理
+    return Promise.reject(err);
   });
 }
 
@@ -119,89 +118,3 @@ export function getCommunicateMgmtInteractIndex(params) {
     });
   });
 }
-
-// 模拟数据
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      title: '关于加强宿舍安全管理的通知',
-      content: '请各位同学注意宿舍用电安全，严禁使用违规电器...',
-      sendUser: '张老师',
-      sendTime: 1767225600000,
-      replyContent: '收到，已通知学生',
-      replyTime: 1767312000000,
-      interactRate: 92.5,
-      status: '已发布',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 2,
-      title: '周末留宿申请提醒',
-      content: '请有留宿需求的同学在本周五前完成申请...',
-      sendUser: '李老师',
-      sendTime: null,
-      replyContent: null,
-      replyTime: null,
-      interactRate: null,
-      status: '未发布',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 3,
-      title: '期中考试成绩反馈',
-      content: '请家长查看学生期中考试成绩，及时沟通...',
-      sendUser: '王老师',
-      sendTime: 1775088000000,
-      replyContent: '已查看，谢谢老师',
-      replyTime: 1775174400000,
-      interactRate: 88.0,
-      status: '已发布',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775088000000,
-      updateTime: 1775088000000,
-    },
-    {
-      id: 4,
-      title: '家长会通知',
-      content: '本周六上午9点召开家长会，请准时参加...',
-      sendUser: '赵老师',
-      sendTime: null,
-      replyContent: null,
-      replyTime: null,
-      interactRate: null,
-      status: '未发布',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1780358400000,
-      updateTime: 1780358400000,
-    },
-    {
-      id: 5,
-      title: '流感预防提示',
-      content: '近期流感多发，请提醒学生注意保暖...',
-      sendUser: '校医室',
-      sendTime: 1782950400000,
-      replyContent: '已叮嘱学生多喝水',
-      replyTime: 1783036800000,
-      interactRate: 85.0,
-      status: '已发布',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1782950400000,
-      updateTime: 1782950400000,
-    },
-  ];
-};

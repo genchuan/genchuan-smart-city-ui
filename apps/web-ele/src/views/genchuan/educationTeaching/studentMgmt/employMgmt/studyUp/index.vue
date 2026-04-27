@@ -8,7 +8,6 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { downloadFileFromBlobPart } from '@vben/utils';
 import StudyUpDetailDrawer from './components/studyUpDetail.vue';
 import {
-  getMockList,
   getStudyUpPage,
   selectStudyUp,
   planStudyUp,
@@ -114,7 +113,7 @@ const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -156,7 +155,7 @@ const getStatusType = (status) => {
   return map[status] || 'info';
 };
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -200,40 +199,10 @@ const getTableData = async ({ page }) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'schoolType':
-            itemValue = item.schoolType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          case 'studentId':
-            itemValue = item.studentId;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据并提示用户
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取升学记录失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -252,10 +221,10 @@ function handleReset() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportStudyUp(searchParams.value);
-      downloadFileFromBlobPart({ fileName: `${textObj.excelName}.xls`, source: data });
+      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -302,9 +271,9 @@ function handleRecord(row) {
 // 选择表单
 const [SelectForm, selectFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '保存中...' });
+    const loading = ElLoading.service({text: '保存中...'});
     try {
       const res = await selectStudyUp({
         id: currentSelectRow.value.id,
@@ -324,15 +293,15 @@ const [SelectForm, selectFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useSelectFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '确认' },
+  submitButtonOptions: {content: '确认'},
 });
 
 // 规划表单
 const [PlanForm, planFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '保存中...' });
+    const loading = ElLoading.service({text: '保存中...'});
     try {
       const res = await planStudyUp({
         id: currentPlanRow.value.id,
@@ -353,15 +322,15 @@ const [PlanForm, planFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: usePlanFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
 });
 
 // 跟踪记录表单
 const [RecordForm, recordFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '保存中...' });
+    const loading = ElLoading.service({text: '保存中...'});
     try {
       const res = await recordStudyUp({
         id: currentRecordRow.value.id,
@@ -382,7 +351,7 @@ const [RecordForm, recordFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useRecordFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
 });
 
 // 详情抽屉
@@ -395,9 +364,9 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -407,20 +376,20 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -428,23 +397,24 @@ const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <StudyUpDetailDrawer ref="studyUpDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <StudyUpDetailDrawer ref="studyUpDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                         @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <SelectDrawer title="选择目标院校">
-      <SelectForm />
+      <SelectForm/>
     </SelectDrawer>
     <PlanDrawer title="升学规划">
-      <PlanForm />
+      <PlanForm/>
     </PlanDrawer>
     <RecordDrawer title="跟踪记录">
-      <RecordForm />
+      <RecordForm/>
     </RecordDrawer>
     <Grid>
       <template #table-title>
@@ -461,11 +431,12 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
         </div>
       </template>
 
@@ -481,25 +452,32 @@ defineExpose({ handleFilterTagClick, clearFilters });
         </el-text>
       </template>
       <template #schoolType="{ row }">
-        <el-text @click="handleFilterTagClick('schoolType', row.schoolType)" type="primary" style="cursor: pointer;">
+        <el-text @click="handleFilterTagClick('schoolType', row.schoolType)" type="primary"
+                 style="cursor: pointer;">
           {{ row.schoolType || '-' }}
         </el-text>
       </template>
       <template #planContent="{ row }">
-        <el-text>{{ row.planContent?.substring(0, 50) || '-' }}{{ row.planContent?.length > 50 ? '...' : '' }}</el-text>
+        <el-text>{{
+            row.planContent?.substring(0, 50) || '-'
+          }}{{ row.planContent?.length > 50 ? '...' : '' }}
+        </el-text>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer">
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer">
           {{ row.status }}
         </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer">
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer">
           {{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer">
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
+                 type="primary" style="cursor: pointer">
           {{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
@@ -518,10 +496,13 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '待规划'" content="选择" icon-name="Select" @click="handleSelect(row)" />
-          <IconButton v-if="row.status === '待规划'" content="规划" icon-name="Edit" @click="handlePlan(row)" />
-          <IconButton v-if="row.status === '已规划'" content="记录" icon-name="Checked" @click="handleRecord(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
+          <IconButton v-if="row.status === '待规划'" content="选择" icon-name="Select"
+                      @click="handleSelect(row)"/>
+          <IconButton v-if="row.status === '待规划'" content="规划" icon-name="Edit"
+                      @click="handlePlan(row)"/>
+          <IconButton v-if="row.status === '已规划'" content="记录" icon-name="Checked"
+                      @click="handleRecord(row)"/>
         </div>
       </template>
     </Grid>

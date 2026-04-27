@@ -66,24 +66,15 @@ export function getColumns() {
   return allColumns;
 }
 
-// 编辑表单 schema（添加 status 字段）
+// 编辑表单 schema（宿舍改为 Input 且禁用，得分非必填，默认不设值）
 export function useEditFormSchema() {
   return [
     {
       fieldName: 'dormNum',
       label: '宿舍',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择宿舍',
-        disabled: true,
-        options: [
-          { label: '101', value: '101' },
-          { label: '201', value: '201' },
-          { label: '202', value: '202' },
-          { label: '301', value: '301' },
-          { label: '302', value: '302' },
-          { label: '401', value: '401' },
-        ],
+        placeholder: '宿舍号',
       },
       rules: 'required',
       labelWidth: '100',
@@ -94,7 +85,6 @@ export function useEditFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择评比周期',
-        disabled: true,
         options: [
           { label: '周', value: '周' },
           { label: '月', value: '月' },
@@ -108,12 +98,18 @@ export function useEditFormSchema() {
       fieldName: 'score',
       label: '得分',
       component: 'InputNumber',
-      componentProps: { placeholder: '请输入得分', min: 0, max: 100, precision: 2, step: 1, style: 'width: 100%' },
-      rules: 'required',
+      componentProps: {
+        placeholder: '请输入得分',
+        min: 0,
+        max: 100,
+        precision: 2,
+        step: 1,
+        style: 'width: 100%'
+      },
       labelWidth: '100',
     },
     {
-      fieldName: 'status',                     // 新增状态字段（只读，不可修改）
+      fieldName: 'status',
       label: '状态',
       component: 'Select',
       componentProps: {
@@ -137,10 +133,67 @@ export function useEditFormSchema() {
   ];
 }
 
+// 新增表单 schema（宿舍用 Input，得分非必填且无默认值）
+export function useAddFormSchema() {
+  return [
+    {
+      fieldName: 'dormNum',
+      label: '宿舍',
+      component: 'Input',
+      componentProps: { placeholder: '请输入宿舍号，例如 101' },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'cycle',
+      label: '评比周期',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择评比周期',
+        options: [
+          { label: '周', value: '周' },
+          { label: '月', value: '月' },
+          { label: '学期', value: '学期' },
+        ],
+      },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        options: [
+          { label: '打分中', value: '打分中' },
+          { label: '已汇总', value: '已汇总' },
+        ],
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'score',
+      label: '得分',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '得分',
+        min: 0,
+        max: 100,
+        precision: 2,
+        step: 1,
+        style: 'width: 100%'
+      },
+      defaultValue: 0,    // 默认为 0
+      labelWidth: '100',
+    },
+  ];
+}
+
 // 文本常量
 export const textObj = {
   editText: '编辑评比',
-  addText: '打分',
+  addText: '新增评比',
   summaryText: '汇总',
   pushText: '推送',
   excelName: '宿舍评比列表',

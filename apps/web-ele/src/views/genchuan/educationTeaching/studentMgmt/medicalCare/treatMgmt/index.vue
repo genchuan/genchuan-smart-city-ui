@@ -1,14 +1,13 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import TreatDetailDrawer from './components/treatDetail.vue';
 import {
-  getMockList,
   getTreatMgmtPage,
   appointTreatMgmt,
   auditTreatMgmt,
@@ -62,7 +61,7 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
@@ -152,7 +151,7 @@ const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -168,7 +167,7 @@ const feedbackVisible = ref(false);
 const feedbackContent = ref('');
 const currentFeedbackId = ref(null);
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -213,40 +212,10 @@ const getTableData = async ({ page }) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'treatType':
-            itemValue = item.treatType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          case 'studentId':
-            itemValue = item.studentId;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取就诊记录失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -265,10 +234,10 @@ function handleReset() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportTreatMgmt(searchParams.value);
-      downloadFileFromBlobPart({ fileName: `${textObj.excelName}.xls`, source: data });
+      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -296,10 +265,10 @@ async function handleBatchAudit() {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '审核中...' });
+    const loading = ElLoading.service({text: '审核中...'});
     try {
       const ids = pendingRows.map(row => row.id);
-      const res = await auditTreatMgmt({ ids, auditUser: '当前用户', auditTime: Date.now() });
+      const res = await auditTreatMgmt({ids, auditUser: '当前用户', auditTime: Date.now()});
       if (res && res !== false) {
         ElMessage.success('批量审核成功');
         handleRefresh();
@@ -309,7 +278,8 @@ async function handleBatchAudit() {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 批量登记
@@ -332,7 +302,7 @@ async function handleBatchRegister() {
 function handleCreate() {
   createAppointFormApi.resetForm();
   // 设置默认状态为“待审核”和当前预约时间
-  createAppointFormApi.setValues({ status: '待审核', applyTime: Date.now() });
+  createAppointFormApi.setValues({status: '待审核', applyTime: Date.now()});
   createAppointDrawerApi.open();
 }
 
@@ -341,7 +311,7 @@ async function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
   try {
-    const detail = await getTreatMgmtDetail({ id: row.id });
+    const detail = await getTreatMgmtDetail({id: row.id});
     // 如果原记录没有 registerTime，则设置一个默认值（当前时间），以满足后端要求
     const registerTime = detail.registerTime || Date.now();
     editAppointFormApi.setValues({
@@ -372,9 +342,13 @@ async function handleAudit(row) {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '审核中...' });
+    const loading = ElLoading.service({text: '审核中...'});
     try {
-      const res = await auditTreatMgmt({ ids: [row.id], auditUser: '当前用户', auditTime: Date.now() });
+      const res = await auditTreatMgmt({
+        ids: [row.id],
+        auditUser: '当前用户',
+        auditTime: Date.now()
+      });
       if (res && res !== false) {
         ElMessage.success('审核成功');
         handleRefresh();
@@ -384,7 +358,8 @@ async function handleAudit(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 单行反馈
@@ -403,7 +378,7 @@ async function submitFeedback() {
     ElMessage.warning('请填写反馈内容');
     return;
   }
-  const loading = ElLoading.service({ text: '提交反馈...' });
+  const loading = ElLoading.service({text: '提交反馈...'});
   try {
     const res = await feedbackTreatMgmt({
       id: currentFeedbackId.value,
@@ -425,12 +400,12 @@ async function submitFeedback() {
 // ----- 新增预约表单 -----
 const [CreateAppointForm, createAppointFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '预约中...' });
+    const loading = ElLoading.service({text: '预约中...'});
     try {
       // 新增时确保 status 字段存在（默认待审核）
-      const submitData = { ...values, status: values.status || '待审核' };
+      const submitData = {...values, status: values.status || '待审核'};
       const res = await appointTreatMgmt(submitData);
       if (res && res !== false) {
         ElMessage.success('预约成功');
@@ -446,17 +421,17 @@ const [CreateAppointForm, createAppointFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useCreateAppointFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
 });
 
 // ----- 编辑表单（含 registerTime）-----
 const [EditAppointForm, editAppointFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '保存中...' });
+    const loading = ElLoading.service({text: '保存中...'});
     try {
-      const res = await updateTreatMgmt({ ...values, id: currentEditId.value });
+      const res = await updateTreatMgmt({...values, id: currentEditId.value});
       if (res && res !== false) {
         ElMessage.success('编辑成功');
         editAppointDrawerApi.close();
@@ -471,17 +446,17 @@ const [EditAppointForm, editAppointFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useAppointFormSchema(true), // 编辑模式，含 registerTime
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
 });
 
 // ----- 登记表单 -----
 const [RegisterForm, registerFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '登记中...' });
+    const loading = ElLoading.service({text: '登记中...'});
     try {
-      const res = await registerTreatMgmt({ ids: registerIds.value, ...values });
+      const res = await registerTreatMgmt({ids: registerIds.value, ...values});
       if (res && res !== false) {
         ElMessage.success('登记成功');
         registerDrawerApi.close();
@@ -496,7 +471,7 @@ const [RegisterForm, registerFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useRegisterFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
 });
 
 // 动态注入学生选项
@@ -516,7 +491,7 @@ watch(createAppointFormApi, (api) => {
       studentField.componentProps.options = studentOptions.value;
     }
   }
-}, { immediate: true });
+}, {immediate: true});
 
 // 为编辑表单注入学生选项
 watch(editAppointFormApi, (api) => {
@@ -527,7 +502,7 @@ watch(editAppointFormApi, (api) => {
       studentField.componentProps.options = studentOptions.value;
     }
   }
-}, { immediate: true });
+}, {immediate: true});
 
 // 详情抽屉
 const treatDetailDrawerRef = ref(null);
@@ -539,9 +514,9 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -551,20 +526,20 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -577,26 +552,26 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 </script>
 
 <template>
   <div class="park-lot-table-new">
     <TreatDetailDrawer ref="treatDetailDrawerRef" :detail-obj="dataObj.detailObj"
-                       @refresh="handleRefresh" />
+                       @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <!-- 新增预约抽屉 -->
     <CreateAppointDrawer title="预约">
-      <CreateAppointForm />
+      <CreateAppointForm/>
     </CreateAppointDrawer>
     <!-- 编辑抽屉 -->
     <EditAppointDrawer title="编辑">
-      <EditAppointForm />
+      <EditAppointForm/>
     </EditAppointDrawer>
     <RegisterDrawer title="登记">
-      <RegisterForm />
+      <RegisterForm/>
     </RegisterDrawer>
 
     <!-- 反馈弹窗 -->
@@ -632,17 +607,17 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="预约" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="审核" icon-name="Check" @click="handleBatchAudit" />
-          <IconButton content="登记" icon-name="EditPen" @click="handleBatchRegister" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
+          <IconButton content="预约" icon-name="Plus" @click="handleCreate"/>
+          <IconButton content="审核" icon-name="Check" @click="handleBatchAudit"/>
+          <IconButton content="登记" icon-name="EditPen" @click="handleBatchRegister"/>
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
-                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
           <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart" />
+                      @click="toggleChart"/>
         </div>
       </template>
 
@@ -697,13 +672,13 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
           <IconButton content="编辑" icon-name="Edit"
-                      @click="handleEdit(row)" />
+                      @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check"
-                      @click="handleAudit(row)" />
+                      @click="handleAudit(row)"/>
           <IconButton v-if="row.status === '已就诊'" content="反馈" icon-name="ChatLineSquare"
-                      @click="handleFeedback(row)" />
+                      @click="handleFeedback(row)"/>
         </div>
       </template>
     </Grid>
