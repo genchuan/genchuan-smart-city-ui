@@ -367,7 +367,7 @@ const arrowChange = () => {
           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           <IconButton v-if="row.status === 'pending'" content="对账" icon-name="Check" @click="handleReconcile(row)" />
           <IconButton v-if="row.status === 'reconciled'" content="确认" icon-name="right" @click="handleConfirm(row)" />
-          <IconButto content="修复" icon-name="top" @click="handleFix(row)" />
+          <IconButton  content="修复" icon-name="top" @click="handleFix(row)" />
         </div>
       </template>
       <template #bottom>

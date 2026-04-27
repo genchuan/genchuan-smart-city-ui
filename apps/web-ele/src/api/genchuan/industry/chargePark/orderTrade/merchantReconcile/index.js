@@ -36,3 +36,24 @@ export function getReconcileBillChart(params) {
 export function reconcileBill(data) { 
   return requestClient.post('/ordertrade/reconcile-bill/reconcile', data);
 } 
+
+/** 对账单对账记录分页查询 */
+export function getReconcileRecordListPage(params) {
+  return requestClient.get('/ordertrade/reconcile-record/page', {
+    params,
+  });
+}
+/** 对账单对账记录导出 */
+export function exportReconcileRecord(data) {
+  return requestClient.download('/ordertrade/reconcile-record/export', data);
+}
+/** 对账单对账记录检查 */
+export function checkReconcileRecord(data) {
+  return requestClient.post('/ordertrade/reconcile-record/check', data);
+}
+/** 对账单对账记录图表数据 */
+export function getReconcileRecordChart(params) {
+  return requestClient.get('/ordertrade/reconcile-record/chart', {
+    params,
+  });
+}
