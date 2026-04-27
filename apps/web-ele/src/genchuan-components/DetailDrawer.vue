@@ -192,7 +192,6 @@ defineExpose({
 .detail-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
 .detail-item {

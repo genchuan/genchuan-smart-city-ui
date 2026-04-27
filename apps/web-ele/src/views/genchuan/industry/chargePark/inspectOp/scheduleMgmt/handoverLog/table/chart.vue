@@ -84,8 +84,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="handover-log-visualization">
-    <div class="cards-section">
+  <div class="park-chart-box">
+    <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
         :key="card.title"
@@ -98,40 +98,13 @@ onMounted(() => {
       />
     </div>
 
-    <div class="chart-wrapper">
       <LineChartClick
         title="日志量趋势"
+        class="simple-bar-chart"
         :series-data="trendSeriesData"
         :x-data="trendXData"
         y-name="日志数"
         @line-click="handleTrendClick"
       />
-    </div>
   </div>
 </template>
-
-<style scoped>
-.handover-log-visualization {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
-}
-
-.cards-section {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
-}
-
-.chart-wrapper {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 320px;
-}
-</style>

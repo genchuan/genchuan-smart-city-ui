@@ -2,13 +2,13 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getInspectTaskChart } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectTask';
-import BarClick from '#/genchuan-components/stats/barClick.vue';
+import Columnar from '#/components/stats/columnar.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData } from './data';
+import { getMockChartData, getPlanTypeLabel } from './data';
 
-const emit = defineEmits(['statusFilter', 'trendFilter', 'typeFilter']);
+const emit = defineEmits(['statusFilter', 'trendFilter']);
 
 const state = reactive({
   cardList: [
@@ -31,13 +31,6 @@ const state = reactive({
   trendData: [],
 });
 
-const typeXData = computed(() => state.typeData.map((item) => item.typeName));
-const typeSeriesData = computed(() => [
-  {
-    name: '任务数量',
-    data: state.typeData.map((item) => item.count),
-  },
-]);
 const trendXData = computed(() => state.trendData.map((item) => item.time));
 const trendSeriesData = computed(() => [
   {
@@ -65,7 +58,7 @@ function normalizeChartData(data) {
 async function fetchChartData() {
   try {
     const response = await getInspectTaskChart();
-    normalizeChartData(response);
+    normalizeChartData(response?.data || response);
   } catch (error) {
     console.error('获取巡检任务统计失败，使用静态数据:', error);
     normalizeChartData(getMockChartData());
@@ -74,10 +67,6 @@ async function fetchChartData() {
 
 function handleCardClick(card) {
   emit('statusFilter', card.status);
-}
-
-function handleTypeClick(typeName) {
-  emit('typeFilter', typeName);
 }
 
 function handleTrendClick(payload) {
@@ -92,8 +81,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="inspect-task-visualization">
-    <div class="cards-section">
+  <div class="park-chart-box">
+    <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
         :key="card.title"
@@ -106,59 +95,21 @@ onMounted(() => {
       />
     </div>
 
-    <div class="charts-section">
-      <div class="chart-wrapper">
-        <BarClick
-          title="任务类型分布"
-          :series-data="typeSeriesData"
-          :x-data="typeXData"
-          y-name="任务数"
-          @bar-click="handleTypeClick"
-        />
-      </div>
-      <div class="chart-wrapper">
-        <LineChartClick
-          title="任务处理时效"
-          :series-data="trendSeriesData"
-          :x-data="trendXData"
-          y-name="分钟"
-          @line-click="handleTrendClick"
-        />
-      </div>
-    </div>
+    <LineChartClick
+      class="simple-bar-chart"
+      title="任务处理时效"
+      :series-data="trendSeriesData"
+      :x-data="trendXData"
+      y-name="分钟"
+      @line-click="handleTrendClick"
+    />
+    <Columnar
+      class="park-type-chart"
+      title="任务类型分布"
+      :x-data="state.typeData.map((item) => getPlanTypeLabel(item.typeName))"
+      :series-data="[
+        { name: '任务数', data: state.typeData.map((item) => item.count) },
+      ]"
+    />
   </div>
 </template>
-
-<style scoped>
-.inspect-task-visualization {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
-}
-
-.cards-section {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
-}
-
-.charts-section {
-  display: grid;
-  flex: 1 1 0;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 20px;
-  min-width: 0;
-  height: 320px;
-}
-
-.chart-wrapper {
-  min-width: 0;
-  height: 100%;
-}
-</style>

@@ -80,9 +80,9 @@ export function getMoralActivityPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mock = getMockList();
-      return { list: convertList(mock), total: mock.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -136,10 +136,9 @@ export function getMoralActivityDetail(params) {
   return requestClient.get('/studentmgmt/moral-activity/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -211,99 +210,3 @@ export function getMoralActivityCount(params) {
       });
     });
 }
-
-// 模拟数据
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      activityName: '学雷锋志愿活动',
-      activityType: '志愿活动',
-      hostDept: '学生工作部',
-      startTime: 1767225600000,
-      endTime: 1767312000000,
-      joinNum: 45,
-      photo: 'https://picsum.photos/id/100/200/150',
-      content: '组织学生清扫校园',
-      publishTime: 1767139200000,
-      status: '进行中',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767139200000,
-      updateTime: 1767139200000,
-    },
-    {
-      id: 2,
-      activityName: '党史知识竞赛',
-      activityType: '党团活动',
-      hostDept: '团委',
-      startTime: 1769904000000,
-      endTime: 1769990400000,
-      joinNum: 80,
-      photo: '',
-      content: '',
-      publishTime: null,
-      status: '未发布',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 3,
-      activityName: '社区服务',
-      activityType: '志愿活动',
-      hostDept: '学生工作部',
-      startTime: 1775088000000,
-      endTime: 1775174400000,
-      joinNum: 120,
-      photo: 'https://picsum.photos/id/101/200/150',
-      content: '',
-      publishTime: 1775001600000,
-      status: '已结束',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775001600000,
-      updateTime: 1775001600000,
-    },
-    {
-      id: 4,
-      activityName: '环保讲座',
-      activityType: '其他',
-      hostDept: '教务处',
-      startTime: 1777680000000,
-      endTime: 1777766400000,
-      joinNum: 60,
-      photo: 'https://picsum.photos/id/102/200/150',
-      content: '',
-      publishTime: 1777593600000,
-      status: '进行中',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1777593600000,
-      updateTime: 1777593600000,
-    },
-    {
-      id: 5,
-      activityName: '植树活动',
-      activityType: '志愿活动',
-      hostDept: '团委',
-      startTime: 1780358400000,
-      endTime: 1780444800000,
-      joinNum: null,
-      photo: '',
-      content: '',
-      publishTime: null,
-      status: '未发布',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1780358400000,
-      updateTime: 1780358400000,
-    },
-  ];
-};

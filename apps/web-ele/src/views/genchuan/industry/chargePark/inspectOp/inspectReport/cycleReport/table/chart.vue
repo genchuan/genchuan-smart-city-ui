@@ -2,10 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getCycleReportChart } from '#/api/genchuan/industry/chargePark/inspectOp/inspectReport/cycleReport';
-import MapComponent from '#/genchuan-components/Map/index.vue';
-import BarClick from '#/genchuan-components/stats/barClick.vue';
-import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
-import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
+import StatsFourVisualization from '#/genchuan-components/stats/StatsFourVisualization.vue';
 
 import { formatRate, getMockChartData } from './data';
 
@@ -13,112 +10,57 @@ const emit = defineEmits(['metricFilter', 'stationFilter', 'trendFilter']);
 
 const state = reactive({
   cardList: [
-    {
-      title: '正常设备数',
-      value: 0,
-      desc: '设备状态',
-      status: 'normalDeviceNum',
-      color: '#2fbf71',
-    },
-    {
-      title: '异常设备数',
-      value: 0,
-      desc: '设备异常',
-      status: 'abnormalDeviceNum',
-      color: '#e95f5f',
-    },
-    {
-      title: '巡检任务数',
-      value: 0,
-      desc: '任务总量',
-      status: 'inspectTaskNum',
-      color: '#2f80ed',
-    },
-    {
-      title: '任务完成率',
-      value: '0%',
-      desc: '任务闭环',
-      status: 'taskCompleteRate',
-      color: '#27ae60',
-    },
-    {
-      title: '油车占位待处置数',
-      value: 0,
-      desc: '待处置占位',
-      status: 'oilWaitHandleNum',
-      color: '#f2994a',
-    },
-    {
-      title: '处置完成率',
-      value: '0%',
-      desc: '占位处置',
-      status: 'oilHandleCompleteRate',
-      color: '#9b51e0',
-    },
-    {
-      title: '巡检人员在岗数',
-      value: 0,
-      desc: '在岗人员',
-      status: 'inspectUserOnlineNum',
-      color: '#00a8cc',
-    },
-    {
-      title: '资产正常数',
-      value: 0,
-      desc: '正常资产',
-      status: 'assetNormalNum',
-      color: '#219653',
-    },
-    {
-      title: '库存预警数',
-      value: 0,
-      desc: '预警库存',
-      status: 'stockWarnNum',
-      color: '#eb5757',
-    },
+    { title: '正常设备数', value: 0, desc: '设备状态', status: 'normalDeviceNum', color: '#2fbf71' },
+    { title: '异常设备数', value: 0, desc: '设备异常', status: 'abnormalDeviceNum', color: '#e95f5f' },
+    { title: '巡检任务数', value: 0, desc: '任务总量', status: 'inspectTaskNum', color: '#2f80ed' },
+    { title: '任务完成率', value: '0%', desc: '任务闭环', status: 'taskCompleteRate', color: '#27ae60' },
+    { title: '油车占位待处置数', value: 0, desc: '待处置占位', status: 'oilWaitHandleNum', color: '#f2994a' },
+    { title: '处置完成率', value: '0%', desc: '占位处置', status: 'oilHandleCompleteRate', color: '#9b51e0' },
+    { title: '巡检人员在岗数', value: 0, desc: '在岗人员', status: 'inspectUserOnlineNum', color: '#00a8cc' },
+    { title: '资产正常数', value: 0, desc: '正常资产', status: 'assetNormalNum', color: '#219653' },
+    { title: '库存预警数', value: 0, desc: '预警库存', status: 'stockWarnNum', color: '#eb5757' },
   ],
   mapData: [],
   barData: [],
   lineData: [],
-  mapConfig: {
-    markerIcons: {
-      normal: '/static/imgs/dataHub/map/marker-blue.png',
-      yellow: '/static/imgs/dataHub/map/marker-yellow.png',
-      red: '/static/imgs/dataHub/map/marker-red.png',
-    },
-    statusIconMap: {
-      green: 'normal',
-      orange: 'yellow',
-      red: 'red',
-      blue: 'normal',
-      gray: 'normal',
-    },
-    statusKeyMap: {
-      正常设备: 'green',
-      异常设备: 'red',
-      人员在岗: 'orange',
-    },
-    infoWindowConfig: {
-      title: 'stationName',
-      fields: [
-        { key: 'regionName', label: '所属区域' },
-        { key: 'statusName', label: '当前状态', bold: true },
-        { key: 'abnormalDeviceNum', label: '异常设备数' },
-        { key: 'inspectUserOnlineNum', label: '在岗人数' },
-      ],
-    },
-  },
 });
 
+const mapConfig = {
+  markerIcons: {
+    normal: '/static/imgs/dataHub/map/marker-blue.png',
+    yellow: '/static/imgs/dataHub/map/marker-yellow.png',
+    red: '/static/imgs/dataHub/map/marker-red.png',
+  },
+  statusIconMap: {
+    green: 'normal',
+    orange: 'yellow',
+    red: 'red',
+    blue: 'normal',
+    gray: 'normal',
+  },
+  statusKeyMap: {
+    正常设备: 'green',
+    异常设备: 'red',
+    人员在岗: 'orange',
+  },
+  infoWindowConfig: {
+    title: 'stationName',
+    fields: [
+      { key: 'regionName', label: '所属区域' },
+      { key: 'statusName', label: '当前状态', bold: true },
+      { key: 'abnormalDeviceNum', label: '异常设备数' },
+      { key: 'inspectUserOnlineNum', label: '在岗人数' },
+    ],
+  },
+};
+
 function getMarkerStatusName(item) {
-  if (item.deviceStatus === '\u5F02\u5E38\u8BBE\u5907')
-    return '\u5F02\u5E38\u8BBE\u5907';
-  if (item.userOnlineStatus === '\u4EBA\u5458\u5728\u5C97')
-    return '\u4EBA\u5458\u5728\u5C97';
-  return '\u6B63\u5E38\u8BBE\u5907';
+  if (item.deviceStatus === '异常设备') return '异常设备';
+  if (item.userOnlineStatus === '人员在岗') return '人员在岗';
+  return '正常设备';
 }
 
-const mapData = computed(() =>
+const mapViewData = computed(() =>
   state.mapData.map((item) => ({
     id: item.id,
     stationName: item.stationName,
@@ -130,46 +72,50 @@ const mapData = computed(() =>
   })),
 );
 
-const barXData = computed(() => state.barData.map((item) => item.stationName));
-const barSeriesData = computed(() => [
+const pieChartOptions = computed(() => [
   {
-    name: '异常设备数',
-    data: state.barData.map((item) => item.abnormalDeviceNum),
+    label: '设备状态占比',
+    value: 'device-status',
+    data: [
+      { name: '正常设备', value: Number(state.cardList[0].value || 0) },
+      { name: '异常设备', value: Number(state.cardList[1].value || 0) },
+    ],
   },
   {
-    name: '巡检任务类型分布',
-    data: state.barData.map((item) => item.taskTypeNum),
-  },
-  {
-    name: '油车占位场站分布',
-    data: state.barData.map((item) => item.oilOccupyNum),
+    label: '任务处置占比',
+    value: 'task-handle',
+    data: [
+      { name: '巡检任务数', value: Number(state.cardList[2].value || 0) },
+      { name: '油车待处置', value: Number(state.cardList[4].value || 0) },
+      { name: '库存预警', value: Number(state.cardList[8].value || 0) },
+    ],
   },
 ]);
 
-const lineXData = computed(() => state.lineData.map((item) => item.date));
-const lineSeriesData = computed(() => [
+const barLineChartOptions = computed(() => [
   {
-    name: '设备状态更新趋势',
-    data: state.lineData.map((item) => item.deviceUpdateNum),
-    color: '#2f80ed',
+    label: '各场站异常/任务/占位',
+    value: 'station-compare',
+    type: 'bar',
+    data: {
+      xAxis: state.barData.map((item) => item.stationName),
+      series: state.barData.map((item) => item.abnormalDeviceNum),
+    },
   },
   {
-    name: '巡检任务处理时效趋势',
-    data: state.lineData.map((item) => item.taskHandleTime),
-    color: '#27ae60',
-  },
-  {
-    name: '上报量趋势',
-    data: state.lineData.map((item) => item.reportNum),
-    color: '#eb5757',
+    label: '设备更新趋势',
+    value: 'device-trend',
+    type: 'line',
+    data: {
+      xAxis: state.lineData.map((item) => item.date),
+      series: state.lineData.map((item) => item.deviceUpdateNum),
+    },
   },
 ]);
 
 function normalizeChartData(data) {
   const chartData =
-    data?.cardData || data?.mapData || data?.barData || data?.lineData
-      ? data
-      : getMockChartData();
+    data?.cardData || data?.mapData || data?.barData || data?.lineData ? data : getMockChartData();
   const cardData = chartData.cardData || {};
 
   state.cardList[0].value = cardData.normalDeviceNum ?? 0;
@@ -197,128 +143,80 @@ async function fetchChartData() {
 }
 
 function handleCardClick(card) {
-  emit('metricFilter', card.status);
+  if (card?.status) emit('metricFilter', card.status);
 }
 
-function handleBarClick(stationName) {
-  emit('stationFilter', stationName);
-}
-
-function handleLineClick(payload) {
-  if (payload?.categoryName) {
-    emit('trendFilter', payload.categoryName);
+function handleBarLineClick(payload) {
+  if (payload?.chartType === 'bar' && payload?.data?.name) {
+    emit('stationFilter', payload.data.name);
+  }
+  if (payload?.chartType === 'line' && payload?.data?.name) {
+    emit('trendFilter', payload.data.name);
   }
 }
 
-onMounted(() => {
-  fetchChartData();
-});
+onMounted(fetchChartData);
 </script>
 
 <template>
-  <div class="cycle-report-visualization">
-    <div class="cards-section">
-      <IndicatorClick
-        v-for="card in state.cardList"
-        :key="card.title"
-        :color="card.color"
-        :desc="card.desc"
-        :status="card.status"
-        :title="card.title"
-        :value="card.value"
-        @click="handleCardClick"
-      />
-    </div>
-
-    <div class="charts-section">
-      <div class="map-wrapper">
-        <MapComponent
-          :data="mapData"
-          :info-window-config="state.mapConfig.infoWindowConfig"
-          :marker-icons="state.mapConfig.markerIcons"
-          :status-icon-map="state.mapConfig.statusIconMap"
-          :status-key-map="state.mapConfig.statusKeyMap"
-        />
-      </div>
-
-      <div class="chart-wrapper">
-        <BarClick
-          title="各场站设备异常/任务/占位分布"
-          :series-data="barSeriesData"
-          :x-data="barXData"
-          y-name="数量"
-          class="chart-fill"
-          @bar-click="handleBarClick"
-        />
-      </div>
-
-      <div class="chart-wrapper chart-line">
-        <LineChartClick
-          title="设备更新/任务时效/上报量趋势"
-          :series-data="lineSeriesData"
-          :x-data="lineXData"
-          y-name="趋势值"
-          class="chart-fill"
-          @line-click="handleLineClick"
-        />
-      </div>
-    </div>
-  </div>
+  <StatsFourVisualization
+    :cards="state.cardList"
+    :show-map-toggle="true"
+    :map-data="mapViewData"
+    :map-config="mapConfig"
+    :pie-chart-options="pieChartOptions"
+    :bar-line-chart-options="barLineChartOptions"
+    @card-click="handleCardClick"
+    @bar-line-click="handleBarLineClick"
+  />
 </template>
 
 <style scoped>
-.cycle-report-visualization {
-  display: flex;
-  align-items: stretch;
-  gap: 20px;
-  width: 100%;
-  min-height: 540px;
-}
-
-.cards-section {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: repeat(3, minmax(0, 1fr));
+:deep(.stats-four-visualization) {
+  min-height: 280px;
   gap: 12px;
-  width: 420px;
-  min-width: 0;
-  height: 540px;
 }
 
-.charts-section {
-  display: grid;
-  flex: 1 1 0;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  grid-template-rows: minmax(250px, 1fr) minmax(270px, 1fr);
-  gap: 20px;
-  min-width: 0;
-  min-height: 540px;
-  height: 540px;
-}
-
-.map-wrapper {
-  min-width: 0;
-  height: 100%;
+:deep(.cards-section) {
+  display: flex;
+  flex-shrink: 0;
+  flex-flow: row wrap;
+  gap: 8px;
+  align-content: stretch;
+  width: min(420px, 42%);
+  min-width: 360px;
+  height: 280px;
+  padding: 4px;
   overflow: hidden;
-  border-radius: 8px;
 }
 
-.chart-wrapper {
+:deep(.cards-section .stat-card) {
+  box-sizing: border-box;
+  flex: 1 1 calc(33.333% - 6px);
   min-width: 0;
   min-height: 0;
-  height: 100%;
-  overflow: hidden;
+  padding: 6px 10px;
 }
 
-.chart-line {
-  grid-column: 1 / span 2;
+:deep(.cards-section .card-value) {
+  font-size: 20px;
 }
 
-.chart-wrapper :deep(.chart-fill) {
-  width: 100%;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  height: 100% !important;
+:deep(.right-section) {
+  min-width: 0;
+}
+
+:deep(.charts-section) {
+  gap: 10px;
+}
+
+:deep(.pie-chart-area) {
+  flex: 0 0 24%;
+  min-width: 170px;
+}
+
+:deep(.bar-line-chart-area) {
+  flex: 1 1 0;
+  min-width: 260px;
 }
 </style>

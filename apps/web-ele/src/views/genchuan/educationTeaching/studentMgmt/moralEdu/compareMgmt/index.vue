@@ -8,7 +8,6 @@ import {useVbenVxeGrid} from '#/adapter/vxe-table';
 import {downloadFileFromBlobPart} from '@vben/utils';
 import CompareDetailDrawer from './components/compareDetail.vue';
 import {
-  getMockList,
   getCompareMgmtPage,
   createCompareMgmt,
   updateCompareMgmt,
@@ -195,38 +194,10 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'className':
-            itemValue = item.className;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    // 模拟数据时仍需要前端分页
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取评比列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -546,8 +517,7 @@ defineExpose({handleFilterTagClick, clearFilters});
 
       <!-- 钻取列 -->
       <template #className="{ row }">
-        <el-text @click="handleFilterTagClick('className', row.className)" type="primary"
-                 style="cursor: pointer;">
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
           {{ row.className }}
         </el-text>
       </template>

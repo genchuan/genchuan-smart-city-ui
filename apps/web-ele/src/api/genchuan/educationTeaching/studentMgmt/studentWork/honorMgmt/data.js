@@ -71,9 +71,9 @@ export function getHonorMgmtPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mockData = convertList(dataList());
-      return { list: mockData, total: mockData.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -132,10 +132,9 @@ export function getHonorMgmtDetail(params) {
   return requestClient.get('/studentmgmt/honor-mgmt/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = dataList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -190,117 +189,3 @@ export function getHonorCount(params) {
       return Promise.resolve(mockData[dimension] || []);
     });
 }
-
-// 模拟数据（原始值使用数字，通过转换函数对外提供中文）
-export const dataList = () => {
-  return [
-    {
-      id: 1,
-      studentId: 1,
-      studentName: '张三',
-      className: '计算机1班',
-      honorType: '1',
-      honorName: '校级优秀学生',
-      getTime: 1672531200000,
-      auditUser: 'admin',
-      auditTime: 1672617600000,
-      pushTime: null,
-      status: '1',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 2,
-      studentId: 2,
-      studentName: '李四',
-      className: '软件1班',
-      honorType: '2',
-      honorName: '国家励志奖学金',
-      getTime: 1672617600000,
-      auditUser: 'admin',
-      auditTime: 1672704000000,
-      pushTime: 1672790400000,
-      status: '3',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672617600000,
-      updateTime: 1672790400000,
-    },
-    {
-      id: 3,
-      studentId: 3,
-      studentName: '王五',
-      className: '计算机2班',
-      honorType: '3',
-      honorName: '全国大学生数学竞赛一等奖',
-      getTime: 1672704000000,
-      auditUser: null,
-      auditTime: null,
-      pushTime: null,
-      status: '1',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1672704000000,
-      updateTime: 1672704000000,
-    },
-    {
-      id: 4,
-      studentId: 4,
-      studentName: '赵六',
-      className: '电子1班',
-      honorType: '4',
-      honorName: '优秀志愿者',
-      getTime: 1672790400000,
-      auditUser: 'admin',
-      auditTime: 1672876800000,
-      pushTime: 1672963200000,
-      status: '3',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672790400000,
-      updateTime: 1672963200000,
-    },
-    {
-      id: 5,
-      studentId: 5,
-      studentName: '孙七',
-      className: '大数据1班',
-      honorType: '1',
-      honorName: '院级优秀学生干部',
-      getTime: 1672876800000,
-      auditUser: 'admin',
-      auditTime: 1672963200000,
-      pushTime: null,
-      status: '2',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1672876800000,
-      updateTime: 1672963200000,
-    },
-    {
-      id: 6,
-      studentId: 6,
-      studentName: '周八',
-      className: '软件2班',
-      honorType: '2',
-      honorName: '校级一等奖学金',
-      getTime: 1672963200000,
-      auditUser: null,
-      auditTime: null,
-      pushTime: null,
-      status: '1',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672963200000,
-      updateTime: 1672963200000,
-    },
-  ];
-};

@@ -1,16 +1,14 @@
 <script setup>
 import { computed, onMounted, reactive, shallowRef } from 'vue';
 
-import { ElTag } from 'element-plus';
-
 import { getFenceMgmtChart } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/fenceMgmt';
+import MapComponent from '#/genchuan-components/Map/index.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
-import FenceMapEditor from '../components/FenceMapEditor.vue';
 import {
-  getFenceStatusTagType,
   getMockChartData,
   normalizeFenceMgmtRow,
+  parseFenceArea,
 } from './data';
 
 const emit = defineEmits(['alarmFilter', 'mapFilter', 'statusFilter']);
@@ -34,9 +32,68 @@ const state = reactive({
     },
   ],
   mapData: [],
+  mapConfig: {
+    markerIcons: {
+      normal: '/static/imgs/dataHub/map/marker-blue.png',
+      yellow: '/static/imgs/dataHub/map/marker-yellow.png',
+      red: '/static/imgs/dataHub/map/marker-red.png',
+    },
+    statusIconMap: {
+      green: 'normal',
+      orange: 'yellow',
+      red: 'red',
+      blue: 'normal',
+      gray: 'normal',
+    },
+    statusKeyMap: {
+      已生效: 'green',
+      未生效: 'orange',
+      失效: 'red',
+    },
+    infoWindowConfig: {
+      title: 'fenceName',
+      fields: [
+        { key: 'statusName', label: '围栏状态', bold: true },
+        // { key: 'alarmCount', label: '告警触发数' },
+        { key: 'areaPointCount', label: '区域点位数' },
+      ],
+    },
+  },
 });
 
-const activeArea = computed(() => activeFence.value?.area || '[]');
+function getFenceCenterCoordinate(area) {
+  const points = parseFenceArea(area);
+  if (points.length === 0) return '';
+  const total = points.reduce(
+    (acc, point) => ({
+      lng: acc.lng + point.lng,
+      lat: acc.lat + point.lat,
+    }),
+    { lng: 0, lat: 0 },
+  );
+  const centerLng = total.lng / points.length;
+  const centerLat = total.lat / points.length;
+  return `${centerLng},${centerLat}`;
+}
+
+const mapMarkerData = computed(() =>
+  state.mapData
+    .map((item) => {
+      const points = parseFenceArea(item.area);
+      const coordinate = getFenceCenterCoordinate(item.area);
+      if (!coordinate) return null;
+      return {
+        id: item.id,
+        fenceName: item.name || `围栏${item.id}`,
+        statusName: item.status || '-',
+        alarmCount: item.alarmCount ?? 0,
+        areaPointCount: points.length,
+        areaPoints: points,
+        coordinate,
+      };
+    })
+    .filter(Boolean),
+);
 
 function normalizeMapData(mapData) {
   if (!Array.isArray(mapData)) return [];
@@ -61,7 +118,7 @@ function normalizeChartData(data) {
 async function fetchChartData() {
   try {
     const response = await getFenceMgmtChart();
-    normalizeChartData(response);
+    normalizeChartData(response?.data || response);
   } catch (error) {
     console.error('获取电子围栏统计失败，使用静态数据:', error);
     normalizeChartData(getMockChartData());
@@ -87,8 +144,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="fence-visualization">
-    <div class="cards-section">
+  <div class="park-chart-box">
+    <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
         :key="card.title"
@@ -101,58 +158,37 @@ onMounted(() => {
       />
     </div>
 
-    <div class="map-section">
+    <div class="fence-map-section">
       <div class="map-title">围栏区域分布</div>
-      <FenceMapEditor
-        :model-value="activeArea"
-        readonly
-        height="320px"
-        @area-click="handleFenceClick(activeFence)"
+      <MapComponent
+        :data="mapMarkerData"
+        :info-window-config="state.mapConfig.infoWindowConfig"
+        :marker-icons="state.mapConfig.markerIcons"
+        :status-icon-map="state.mapConfig.statusIconMap"
+        :status-key-map="state.mapConfig.statusKeyMap"
       />
-      <div class="map-fence-list">
-        <ElTag
-          v-for="item in state.mapData.slice(0, 6)"
-          :key="item.id"
-          class="fence-tag"
-          effect="plain"
-          :type="getFenceStatusTagType(item.status)"
-          @click="handleFenceClick(item)"
-        >
-          {{ item.name }} {{ item.status }}
-        </ElTag>
-      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.fence-visualization {
+.park-chart-box {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
+  flex-wrap: nowrap !important;
+  align-items: stretch;
 }
 
-.cards-section {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
-}
-
-.map-section {
+.fence-map-section {
   position: relative;
   flex: 1 1 0;
   min-width: 0;
   height: 320px;
   overflow: hidden;
-  background-color: hsl(var(--card));
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+}
+
+.fence-map-section :deep(.map-container) {
+  width: 100%;
+  height: 100%;
 }
 
 .map-title {
@@ -167,19 +203,4 @@ onMounted(() => {
   border-radius: 4px;
 }
 
-.map-fence-list {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  left: 12px;
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.fence-tag {
-  cursor: pointer;
-  background: rgb(255 255 255 / 90%);
-}
 </style>

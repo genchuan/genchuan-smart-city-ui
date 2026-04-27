@@ -76,7 +76,7 @@ export function getColumns() {
   return allColumns;
 }
 
-// 发布/编辑表单 schema
+// 发布/编辑表单 schema（已加入 photo 字段）
 export function useCreateFormSchema(isEdit = false) {
   return [
     {
@@ -167,6 +167,14 @@ export function useCreateFormSchema(isEdit = false) {
       label: '备注',
       component: 'Input',
       componentProps: { placeholder: '请输入备注', type: 'textarea', rows: 2 },
+      labelWidth: '100',
+    },
+    // 新增 photo 字段
+    {
+      fieldName: 'photo',
+      label: '活动照片地址',
+      component: 'Input',
+      componentProps: { placeholder: '请输入活动照片URL地址' },
       labelWidth: '100',
     },
   ];

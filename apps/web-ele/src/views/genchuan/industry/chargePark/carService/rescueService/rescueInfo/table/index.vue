@@ -23,7 +23,7 @@ import {
 import { useFormSchema, useGridColumns } from './data';
 import RescueDetailDrawer from './detail.vue';
 import { loadTMap } from '#/utils/genchuan/useTMap.ts';
-import { requestClient } from '#/api/request'; // 新增：用于用户详情接口
+import { requestClient } from '#/api/request';
 
 // 搜索抽屉
 const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
@@ -94,7 +94,7 @@ const [EvaluateDetailDrawer, evaluateDetailDrawerApi] = useVbenDrawer({
   onCancel: () => evaluateDetailDrawerApi.close(),
 });
 
-// 用户详情抽屉（新增）
+// 用户详情抽屉
 const [UserDetailDrawer, userDetailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -104,9 +104,18 @@ const [UserDetailDrawer, userDetailDrawerApi] = useVbenDrawer({
   onCancel: () => userDetailDrawerApi.close(),
 });
 
-const currentUserDetail = ref({}); // 存储用户详情数据
+const props = defineProps({
+  secondShow: { type: Boolean, default: false },
+  arrowShow: { type: Boolean, default: false },  // 新增
+});
+const emit = defineEmits(['arrow-change']);     // 新增
 
-// 获取用户详情
+const arrowChange = () => {
+  emit('arrow-change');
+};
+
+const currentUserDetail = ref({});
+
 async function getUserDetail(userId) {
   try {
     const res = await requestClient.get('/system/user/get', { params: { id: userId } });
@@ -117,7 +126,6 @@ async function getUserDetail(userId) {
   }
 }
 
-// 打开用户详情抽屉
 async function openUserDetail(userId) {
   if (!userId) return;
   try {
@@ -129,7 +137,6 @@ async function openUserDetail(userId) {
   }
 }
 
-const props = defineProps({ secondShow: Boolean });
 const checkedIds = ref([]);
 const handleRowCheckboxChange = ({ records }) => {
   checkedIds.value = records.map((item) => item.id);
@@ -143,11 +150,10 @@ const dataObj = reactive({
   pageSize: 10,
 });
 
-// ==================== 用户映射：用户名 -> 用户ID ====================
-const allUserMap = ref(new Map());      // userId -> userName
-const userNameToIdMap = ref(new Map()); // userName -> userId
+// 用户映射
+const allUserMap = ref(new Map());
+const userNameToIdMap = ref(new Map());
 
-// 获取所有用户（用于名称与ID互转）
 async function fetchAllUsers() {
   try {
     const users = await getRescueUserList();
@@ -178,7 +184,7 @@ function getUserNameById(userId) {
   return allUserMap.value.get(userId) || userId;
 }
 
-// ==================== 逆地理编码（坐标转地址） ====================
+// 逆地理编码
 const geocodeCache = new Map();
 
 async function reverseGeocode(lng, lat) {
@@ -219,7 +225,6 @@ async function enhanceListWithLocationName(list) {
   return Promise.all(promises);
 }
 
-// ==================== 获取表格数据 ====================
 const getTableData = async (pageObj) => {
   const params = {
     pageNo: pageObj.page.currentPage,
@@ -227,24 +232,19 @@ const getTableData = async (pageObj) => {
     ...dataObj.serachObj,
   };
 
-  // 处理创建时间区间
   if (dataObj.serachObj.createTime && Array.isArray(dataObj.serachObj.createTime)) {
     params.createTimeBegin = dataObj.serachObj.createTime[0];
     params.createTimeEnd = dataObj.serachObj.createTime[1];
     delete params.createTime;
   }
 
-  // 多状态筛选（来自图表卡片点击 statusList）
   if (dataObj.serachObj.statusList && Array.isArray(dataObj.serachObj.statusList)) {
     params.status = dataObj.serachObj.statusList.join(',');
     delete params.statusList;
-  }
-  // 单个状态筛选
-  else if (dataObj.serachObj.status) {
+  } else if (dataObj.serachObj.status) {
     params.status = dataObj.serachObj.status;
   }
 
-  // 派发时间区间（图表钻取）
   if (dataObj.serachObj.dispatchTimeRange && Array.isArray(dataObj.serachObj.dispatchTimeRange)) {
     const [startDate, endDate] = dataObj.serachObj.dispatchTimeRange;
     if (startDate && endDate) {
@@ -256,7 +256,6 @@ const getTableData = async (pageObj) => {
     delete params.dispatchTimeRange;
   }
 
-  // 区域筛选
   if (dataObj.serachObj.bounds) {
     params.north = dataObj.serachObj.bounds.north;
     params.south = dataObj.serachObj.bounds.south;
@@ -274,7 +273,6 @@ const getTableData = async (pageObj) => {
     finishTime: formatTimestamp(v.finishTime),
   }));
 
-  // 增强地址名称
   const enhancedList = await enhanceListWithLocationName(rawList);
 
   dataObj.total = res.total;
@@ -282,7 +280,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-// ==================== 搜索表单 ====================
+// 搜索表单
 const [QueryForm, QueryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
@@ -309,7 +307,6 @@ const [QueryForm, QueryFormApi] = useVbenForm({
   },
 });
 
-// 重置所有筛选条件
 const resetAllFilters = async () => {
   dataObj.serachObj = {};
   chartStatusListFilter.value = '';
@@ -327,7 +324,6 @@ const resetAllFilters = async () => {
   searchDrawerApi.close();
 };
 
-// 查询提交（关键：将 userName 转换为 userId）
 async function onSubmit(values, isReset = false) {
   if (isReset) {
     await resetAllFilters();
@@ -344,7 +340,6 @@ async function onSubmit(values, isReset = false) {
       delete formValues.userName;
     }
     dataObj.serachObj = { ...formValues };
-    // 清空图表钻取和快捷筛选的显示标签
     chartStatusListFilter.value = '';
     chartDateFilter.value = '';
     chartIdFilter.value = '';
@@ -360,12 +355,10 @@ async function onSubmit(values, isReset = false) {
   }
 }
 
-// 清除单个筛选字段（支持删除 statusList 中的单个状态）
 const handleClearField = async (fieldName, valueToRemove = null) => {
   const newSearchObj = { ...dataObj.serachObj };
 
   if (fieldName === 'statusList' && valueToRemove) {
-    // 删除状态列表中的某一个状态
     const currentList = newSearchObj.statusList || [];
     const filteredList = currentList.filter(s => s !== valueToRemove);
     if (filteredList.length === 0) {
@@ -373,17 +366,13 @@ const handleClearField = async (fieldName, valueToRemove = null) => {
     } else {
       newSearchObj.statusList = filteredList;
     }
-    // 如果 statusList 被清空，同时清理旧的单个 status（如果有）
     if (newSearchObj.status && !filteredList.length) delete newSearchObj.status;
   } else {
-    // 普通字段直接删除
     delete newSearchObj[fieldName];
-    // 如果删除的是 status 字段，同时清理 statusList 避免冲突
     if (fieldName === 'status') delete newSearchObj.statusList;
     if (fieldName === 'statusList') delete newSearchObj.status;
   }
 
-  // 同步清除对应的快捷筛选显示变量
   if (fieldName === 'rescueType') filterRescueType.value = '';
   if (fieldName === 'status' || fieldName === 'statusList') chartStatusListFilter.value = '';
   if (fieldName === 'archiveStatus') filterArchiveStatus.value = '';
@@ -395,7 +384,6 @@ const handleClearField = async (fieldName, valueToRemove = null) => {
 
   dataObj.serachObj = newSearchObj;
 
-  // 同步更新搜索表单的值（仅对非 statusList 字段）
   if (fieldName !== 'statusList') {
     const currentFormValues = await QueryFormApi.getValues();
     const newFormValues = { ...currentFormValues };
@@ -407,7 +395,6 @@ const handleClearField = async (fieldName, valueToRemove = null) => {
   gridApi.query();
 };
 
-// 获取搜索条件标签列表（将 statusList 拆分为独立标签）
 const activeFilters = computed(() => {
   const filters = [];
   const searchObj = dataObj.serachObj;
@@ -444,7 +431,6 @@ const activeFilters = computed(() => {
     filters.push({ label: '区域筛选（地图范围）', field: 'bounds', value: true });
   }
 
-  // 多状态列表拆分为独立标签
   if (searchObj.statusList && Array.isArray(searchObj.statusList)) {
     searchObj.statusList.forEach(status => {
       filters.push({
@@ -461,7 +447,7 @@ const activeFilters = computed(() => {
   return filters;
 });
 
-// ==================== 表格组件 ====================
+// 表格组件
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -546,7 +532,7 @@ const handleClaim = async (row) => {
   handleRefresh();
 };
 
-// 更新进度 - 增加 complete 字段
+// 更新进度
 const progressForm = reactive({
   progress: '',
   photo: null,
@@ -641,17 +627,15 @@ const filterByDuration = (duration) => {
   gridApi.query();
 };
 
-// 图表钻取筛选标签（兼容旧显示，现在主要用 activeFilters）
+// 图表钻取
 const chartStatusListFilter = ref('');
 const chartDateFilter = ref('');
 const chartIdFilter = ref('');
 const chartBoundsFilter = ref(false);
 
-// 处理图表刷新事件（来自 chart.vue）
 const handleChartRefresh = (filters) => {
   const newSearchObj = { ...dataObj.serachObj };
 
-  // 移除原有的状态相关字段，避免冲突
   delete newSearchObj.status;
   delete newSearchObj.statusList;
 
@@ -672,7 +656,6 @@ const handleChartRefresh = (filters) => {
     chartBoundsFilter.value = true;
   }
 
-  // 保留其他非图表筛选条件
   const preserveFields = ['userId', 'rescueType', 'archiveStatus', 'location', 'createTime', 'rescueUserId'];
   preserveFields.forEach(field => {
     if (dataObj.serachObj[field]) newSearchObj[field] = dataObj.serachObj[field];
@@ -695,7 +678,7 @@ onUnmounted(() => {
 const handleSerachShow = () => searchDrawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 
-// 快捷筛选标签（原有）
+// 快捷筛选
 const filterRescueType = ref('');
 const handleRescueTypeClick = (type) => {
   if (filterRescueType.value === type) {
@@ -729,9 +712,7 @@ const handleArchiveStatusClick = (archiveStatus) => {
   }
 };
 
-// 用户快捷筛选变量（保留，但不再用于点击）
 const filterUserId = ref('');
-// 原 handleUserClick 改为打开详情，不再设置筛选条件
 const handleUserClick = (userId) => {
   if (!userId) return;
   openUserDetail(userId);
@@ -749,13 +730,11 @@ const handleRescueUserClick = (userId) => {
   }
 };
 
-// 地址定位
 const handleLocationClick = (location) => {
   if (!location) return;
   window.dispatchEvent(new CustomEvent('locate-address', { detail: location }));
 };
 
-// 评价详情
 const currentEvaluateDetail = ref({});
 const handleEvaluateClick = (row) => {
   currentEvaluateDetail.value = row;
@@ -768,7 +747,6 @@ defineExpose({ handleRefresh, handleChartRefresh });
 <template>
   <div class="park-lot-table-new">
     <Grid>
-      <!-- 筛选标签栏 -->
       <template #table-title>
         <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
           <template v-for="filter in activeFilters" :key="filter.field + (filter.value || '')">
@@ -810,21 +788,25 @@ defineExpose({ handleRefresh, handleChartRefresh });
           />
           <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <!-- 新增展开/收缩按钮 -->
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
 
-      <!-- 自定义列模板 -->
+      <!-- 自定义列模板（保持原样） -->
       <template #id="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
       </template>
-      <!-- 用户名点击打开用户详情，不再设置筛选条件 -->
       <template #user_name="{ row }">
         <el-text @click="handleUserClick(row.userId)" type="primary" style="cursor: pointer">
           {{ row.userName || '-' }}
         </el-text>
       </template>
-      <!-- 修改后的救援位置列：优先显示 locationName，悬停显示完整地址，点击仍传原始坐标 -->
       <template #location="{ row }">
         <el-text
           @click="handleLocationClick(row.location)"
@@ -955,7 +937,6 @@ defineExpose({ handleRefresh, handleChartRefresh });
       </el-form>
     </BatchDispatchDrawer>
 
-    <!-- 更新进度抽屉（新增“标记为已完成”复选框） -->
     <ProgressDrawer>
       <el-form :model="progressForm" label-width="100px">
         <el-form-item label="救援进度" required>
@@ -977,7 +958,6 @@ defineExpose({ handleRefresh, handleChartRefresh });
             <el-button type="primary">上传照片</el-button>
           </el-upload>
         </el-form-item>
-        <!-- 新增：标记为已完成 -->
         <el-form-item label="标记为已完成">
           <el-checkbox v-model="progressForm.complete">本次更新同时收尾，将任务标记为已完成</el-checkbox>
           <div class="form-tip">勾选后系统将自动计算完成时间与处理时长</div>
@@ -1031,7 +1011,6 @@ defineExpose({ handleRefresh, handleChartRefresh });
       </div>
     </EvaluateDetailDrawer>
 
-    <!-- 新增：用户详情抽屉 -->
     <UserDetailDrawer>
       <div class="detail-card">
         <div class="detail-card-row">
@@ -1060,7 +1039,7 @@ defineExpose({ handleRefresh, handleChartRefresh });
         </div>
         <div class="detail-card-row">
           <div class="detail-row-left">创建时间：</div>
-          <div class="detail-row-right">{{ currentUserDetail.createTime || '-' }}</div>
+          <div class="detail-row-right">{{ formatTimestamp(currentUserDetail.createTime) || '-' }}</div>
         </div>
       </div>
     </UserDetailDrawer>

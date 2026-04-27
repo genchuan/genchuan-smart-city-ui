@@ -16,7 +16,17 @@ import {
 import { useFormSchema, useGridColumns } from './data';
 import SpaceLocationDetailDrawer from './detail.vue';
 
-const props = defineProps({ secondShow: Boolean });
+// 新增 props 和 emit
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: { type: Boolean, default: false },
+});
+const emit = defineEmits(['arrow-change']);
+
+const arrowChange = () => {
+  emit('arrow-change');
+};
+
 const dataObj = reactive({
   detailObj: {},
   total: 0,
@@ -221,6 +231,12 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
         <div class="common-toolbar-tools">
           <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <!-- 新增展开/收缩按钮 -->
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>

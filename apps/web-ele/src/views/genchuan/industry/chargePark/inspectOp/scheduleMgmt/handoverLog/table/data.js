@@ -1,6 +1,7 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -237,15 +238,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'handoverDateRange',
+      fieldName: 'handoverDate',
       label: '交接日期',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择交接日期',
-        format: 'YYYY-MM-DD',
-        valueFormat: 'timestamp',
-        type: 'daterange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     {
@@ -282,6 +279,17 @@ export function useFormSchema() {
         format: 'YYYY-MM-DD',
         valueFormat: 'YYYY-MM-DD',
         type: 'date',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'userId',
+      label: '交接人员',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择交接人员',
+        clearable: true,
+        options: userOptions,
       },
       rules: 'required',
     },

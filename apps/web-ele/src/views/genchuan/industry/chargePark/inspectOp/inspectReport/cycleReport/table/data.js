@@ -444,14 +444,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'statTimeRange',
+      fieldName: 'statTime',
       label: '统计时段',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
   ];

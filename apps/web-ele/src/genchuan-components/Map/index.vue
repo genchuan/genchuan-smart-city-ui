@@ -54,6 +54,8 @@ const props = defineProps({
 const mapRef = ref(null);
 let map = null;
 let markerLayers = {};
+let polygonLayer = null;
+let polylineLayer = null;
 let infoWindow = null;
 let TMapInstance = null;
 
@@ -77,6 +79,7 @@ const initMap = async () => {
     infoWindow.close();
 
     initMarkerLayer();
+    initAreaLayer();
     renderMarkers();
   } catch (error) {
     console.error('地图初始化失败:', error);
@@ -111,6 +114,44 @@ const initMarkerLayer = () => {
   });
 
   markerLayers = layers;
+};
+
+const initAreaLayer = () => {
+  if (!TMapInstance || !map) return;
+
+  if (TMapInstance.MultiPolygon && TMapInstance.PolygonStyle) {
+    polygonLayer = new TMapInstance.MultiPolygon({
+      id: 'area-layer',
+      map,
+      styles: {
+        area: new TMapInstance.PolygonStyle({
+          color: 'rgba(64, 158, 255, 0.16)',
+          borderColor: 'rgba(64, 158, 255, 0.9)',
+          borderWidth: 2,
+          borderDashArray: [],
+          showBorder: true,
+        }),
+      },
+      geometries: [],
+    });
+  }
+
+  if (TMapInstance.MultiPolyline && TMapInstance.PolylineStyle) {
+    polylineLayer = new TMapInstance.MultiPolyline({
+      id: 'area-line-layer',
+      map,
+      styles: {
+        line: new TMapInstance.PolylineStyle({
+          color: 'rgba(64, 158, 255, 0.95)',
+          width: 2,
+          borderWidth: 0,
+          lineCap: 'round',
+          lineJoin: 'round',
+        }),
+      },
+      geometries: [],
+    });
+  }
 };
 
 const generateInfoWindowContent = (properties) => {
@@ -151,16 +192,63 @@ const onMarkerClick = (evt) => {
 };
 
 const renderMarkers = () => {
-  if (!map || !props.data?.length || !TMapInstance) return;
+  if (!map || !TMapInstance) return;
+  if (!props.data?.length) {
+    Object.keys(markerLayers).forEach((k) => {
+      if (markerLayers[k]) {
+        markerLayers[k].setGeometries([]);
+      }
+    });
+    polygonLayer?.setGeometries?.([]);
+    polylineLayer?.setGeometries?.([]);
+    return;
+  }
 
   const buckets = {};
   Object.keys(props.statusIconMap).forEach((key) => {
     buckets[key] = [];
   });
+  const areaPolygons = [];
+  const areaLines = [];
 
   const bounds = new TMapInstance.LatLngBounds();
 
   props.data.forEach((item) => {
+    const areaPoints = Array.isArray(item.areaPoints) ? item.areaPoints : [];
+    if (areaPoints.length >= 3) {
+      const path = areaPoints
+        .map((point) => {
+          const lng = Number(point.lng ?? point.lon ?? point.longitude);
+          const lat = Number(point.lat ?? point.latitude);
+          if (isNaN(lng) || isNaN(lat)) return null;
+          const pointLatLng = new TMapInstance.LatLng(lat, lng);
+          bounds.extend(pointLatLng);
+          return pointLatLng;
+        })
+        .filter(Boolean);
+
+      if (path.length >= 3) {
+        if (polygonLayer) {
+          areaPolygons.push({
+            id: `polygon-${item.id}`,
+            styleId: 'area',
+            paths: [path],
+            properties: item,
+          });
+        }
+        if (polylineLayer) {
+          const closedPath =
+            path.length > 2 ? [...path, path[0]] : [...path];
+          areaLines.push({
+            id: `polyline-${item.id}`,
+            styleId: 'line',
+            paths: closedPath,
+            properties: item,
+          });
+        }
+      }
+    }
+
     if (!item.coordinate) return;
 
     const [lng, lat] = item.coordinate.split(',').map(Number);
@@ -194,22 +282,26 @@ const renderMarkers = () => {
       markerLayers[k].setGeometries(buckets[k] || []);
     }
   });
+  if (polygonLayer) {
+    polygonLayer.setGeometries(areaPolygons);
+  }
+  if (polylineLayer) {
+    polylineLayer.setGeometries(areaLines);
+  }
 
-  // 如果有数据，将地图中心点定位到第一个点
-  if (props.data.length > 0) {
+  if (!bounds.isEmpty()) {
+    map.fitBounds(bounds, { padding: 100 });
+  }
+  else if (props.data.length > 0) {
     const firstItem = props.data[0];
     if (firstItem.coordinate) {
       const [lng, lat] = firstItem.coordinate.split(',').map(Number);
       if (!isNaN(lng) && !isNaN(lat)) {
         const position = new TMapInstance.LatLng(lat, lng);
         map.setCenter(position);
-        map.setZoom(15); // 设置合适的缩放级别
+        map.setZoom(15);
       }
     }
-  }
-  // 否则使用默认的边界适配
-  else if (!bounds.isEmpty()) {
-    map.fitBounds(bounds, { padding: 100 });
   }
 };
 
@@ -229,6 +321,8 @@ onUnmounted(() => {
   Object.values(markerLayers).forEach(
     (layer) => layer.destroy && layer.destroy(),
   );
+  if (polygonLayer?.destroy) polygonLayer.destroy();
+  if (polylineLayer?.destroy) polylineLayer.destroy();
   if (infoWindow) infoWindow.destroy && infoWindow.destroy();
   if (map && map.destroy) map.destroy();
 });

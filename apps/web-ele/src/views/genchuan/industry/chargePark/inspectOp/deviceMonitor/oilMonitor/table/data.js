@@ -311,15 +311,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'timeRange',
+      fieldName: 'identifyTime',
       label: '识别时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择识别时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     // {

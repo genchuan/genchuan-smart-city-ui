@@ -2,10 +2,10 @@
 export function useFormSchema() {
   return [
     {
-      fieldName: 'studentName',
-      label: '学生姓名',
+      fieldName: 'studentId',
+      label: '学号',
       component: 'Input',
-      componentProps: { placeholder: '请输入学生姓名' },
+      componentProps: { placeholder: '请输入学号' },
       labelWidth: '100',
     },
     {
@@ -40,12 +40,12 @@ export function useFormSchema() {
   ];
 }
 
-// 表格列定义
+// 表格列定义（不变）
 export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentName', title: '学生姓名', minWidth: 100, slots: { default: 'studentName' } },
+    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
     { field: 'className', title: '班级', minWidth: 150 },
     { field: 'honorType', title: '荣誉类型', minWidth: 120, slots: { default: 'honorType' } },
     { field: 'honorName', title: '荣誉名称', minWidth: 180 },
@@ -69,27 +69,14 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 新增/编辑表单 schema
+// 新增/编辑表单 schema（学生姓名改为输入框）
 export function useCreateFormSchema(isEdit = false) {
   return [
     {
       fieldName: 'studentId',
-      label: '学生',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择学生',
-        filterable: true,
-        remote: true,
-        remoteMethod: () => {}, // 实际项目中可接入远程搜索
-        options: [
-          { label: '张三', value: 1 },
-          { label: '李四', value: 2 },
-          { label: '王五', value: 3 },
-          { label: '赵六', value: 4 },
-          { label: '孙七', value: 5 },
-          { label: '周八', value: 6 },
-        ],
-      },
+      label: '学号',
+      component: 'Input',
+      componentProps: { placeholder: '请输入学号' },
       rules: 'required',
       labelWidth: '100',
     },
@@ -140,7 +127,7 @@ export function useCreateFormSchema(isEdit = false) {
   ];
 }
 
-// 文本常量
+// 文本常量（不变）
 export const textObj = {
   editText: '编辑荣誉信息',
   addText: '新增荣誉',

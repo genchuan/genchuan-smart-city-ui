@@ -1,3 +1,4 @@
+import { getRangePickerDefaultProps } from '#/utils';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
 export const reportTypeOptions = [
@@ -265,14 +266,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'createTimeRange',
+      fieldName: 'createTime',
       label: '生成时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        format: 'YYYY-MM-DD',
-        valueFormat: 'timestamp',
-        type: 'daterange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
   ];
