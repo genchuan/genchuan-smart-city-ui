@@ -697,7 +697,7 @@ defineExpose({handleFilterTagClick, clearFilters});
         <div class="common-toolbar-tools">
           <IconButton content="排班" icon-name="Plus" @click="handleSchedule"/>
           <IconButton content="打卡" icon-name="Check" @click="handleBatchCheckin"/>
-          <IconButton content="调班" icon-name="Switch" @click="handleBatchShiftApply"/>
+          <IconButton content="调班申请" icon-name="Switch" @click="handleBatchShiftApply"/>
           <IconButton content="出车申请" icon-name="Van" @click="handleBatchVehicleApply"/>
           <IconButton content="导出" icon-name="download" @click="handleExport"/>
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>

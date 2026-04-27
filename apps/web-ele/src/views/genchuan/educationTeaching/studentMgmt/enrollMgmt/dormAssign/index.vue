@@ -8,7 +8,6 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { downloadFileFromBlobPart } from '@vben/utils';
 import DormAssignDetailDrawer from './components/dormAssignDetail.vue';
 import {
-  getMockList,
   getDormAssignPage,
   assignDormAssign,
   adjustDormAssign,
@@ -113,7 +112,7 @@ const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -153,7 +152,7 @@ const getStatusType = (status) => {
   return map[status] || 'info';
 };
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -197,40 +196,10 @@ const getTableData = async ({ page }) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'dormNum':
-            itemValue = item.dormNum;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          case 'studentId':
-            itemValue = item.studentId;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取宿舍分配记录失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -249,10 +218,10 @@ function handleReset() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportDormAssign(searchParams.value);
-      downloadFileFromBlobPart({ fileName: `${textObj.excelName}.xls`, source: data });
+      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -320,9 +289,9 @@ async function handleAdjust(row) {
 // 分配表单提交
 const [AssignForm, assignFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '分配中...' });
+    const loading = ElLoading.service({text: '分配中...'});
     try {
       // 生成床位ID数组（起始床位号 + 索引）
       const bedStartNum = values.bedStartNum;
@@ -349,15 +318,15 @@ const [AssignForm, assignFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useAssignFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '确认分配' },
+  submitButtonOptions: {content: '确认分配'},
 });
 
 // 调整表单提交
 const [AdjustForm, adjustFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '调整中...' });
+    const loading = ElLoading.service({text: '调整中...'});
     try {
       const bedStartNum = values.newBedStartNum;
       const newBedIds = batchIds.value.map((_, idx) => bedStartNum + idx);
@@ -383,14 +352,14 @@ const [AdjustForm, adjustFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useAdjustFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '确认调整' },
+  submitButtonOptions: {content: '确认调整'},
 });
 
 // 编辑
 async function handleEdit(row) {
   currentEditId.value = row.id;
   try {
-    const detail = await getDormAssignDetail({ id: row.id });
+    const detail = await getDormAssignDetail({id: row.id});
     editFormApi.setValues({
       studentId: detail.studentId,
       dormNum: detail.dormNum,
@@ -401,19 +370,19 @@ async function handleEdit(row) {
     editDrawerApi.open();
   } catch (error) {
     console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
+    ElMessage.error('加载详情失败，请检查网络或联系管理员');
   }
 }
 
 // 编辑表单
 const [EditForm, editFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '保存中...' });
+    const loading = ElLoading.service({text: '保存中...'});
     try {
       // 确保 status 字段被传递
-      const res = await updateDormAssign({ ...values, id: currentEditId.value });
+      const res = await updateDormAssign({...values, id: currentEditId.value});
       if (res && res !== false) {
         ElMessage.success('编辑成功');
         editDrawerApi.close();
@@ -428,7 +397,7 @@ const [EditForm, editFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useEditFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
 });
 
 // 详情抽屉
@@ -441,9 +410,9 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -453,20 +422,20 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -474,23 +443,24 @@ const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <DormAssignDetailDrawer ref="dormAssignDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <DormAssignDetailDrawer ref="dormAssignDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                            @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <AssignDrawer title="分配宿舍床位">
-      <AssignForm />
+      <AssignForm/>
     </AssignDrawer>
     <AdjustDrawer title="调整宿舍床位">
-      <AdjustForm />
+      <AdjustForm/>
     </AdjustDrawer>
     <EditDrawer title="编辑分配信息">
-      <EditForm />
+      <EditForm/>
     </EditDrawer>
     <Grid>
       <template #table-title>
@@ -507,13 +477,14 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton :content="textObj.assignText" icon-name="User" @click="handleBatchAssign" />
-          <IconButton :content="textObj.adjustText" icon-name="EditPen" @click="handleBatchAdjust" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton :content="textObj.assignText" icon-name="User" @click="handleBatchAssign"/>
+          <IconButton :content="textObj.adjustText" icon-name="EditPen" @click="handleBatchAdjust"/>
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
         </div>
       </template>
 
@@ -524,12 +495,14 @@ defineExpose({ handleFilterTagClick, clearFilters });
         </el-text>
       </template>
       <template #dormNum="{ row }">
-        <el-text @click="handleFilterTagClick('dormNum', row.dormNum)" type="primary" style="cursor: pointer;">
+        <el-text @click="handleFilterTagClick('dormNum', row.dormNum)" type="primary"
+                 style="cursor: pointer;">
           {{ row.dormNum || '-' }}
         </el-text>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer">
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer">
           {{ row.status }}
         </el-tag>
       </template>
@@ -537,12 +510,14 @@ defineExpose({ handleFilterTagClick, clearFilters });
         <el-text>{{ row.finishRate }}%</el-text>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer">
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer">
           {{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer">
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
+                 type="primary" style="cursor: pointer">
           {{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
@@ -561,10 +536,13 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '未分配'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
-          <IconButton v-if="row.status === '未分配'" content="分配" icon-name="User" @click="handleAssign(row)" />
-          <IconButton v-if="row.status === '已分配'" content="调整" icon-name="EditPen" @click="handleAdjust(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
+          <IconButton v-if="row.status === '未分配'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '未分配'" content="分配" icon-name="User"
+                      @click="handleAssign(row)"/>
+          <IconButton v-if="row.status === '已分配'" content="调整" icon-name="EditPen"
+                      @click="handleAdjust(row)"/>
         </div>
       </template>
     </Grid>

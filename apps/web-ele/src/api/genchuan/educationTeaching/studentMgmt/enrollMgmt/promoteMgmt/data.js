@@ -5,8 +5,9 @@ import { requestClient } from '#/api/request';
 // 分页查询
 export function getPromoteMgmtPage(params) {
   return requestClient.get('/studentmgmt/promote-mgmt/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    return { list: dataList(), total: dataList().length };
+    console.warn('分页接口失败', err);
+    // 分页接口已联调成功，不再使用模拟数据，返回空列表
+    return { list: [], total: 0 };
   });
 }
 
@@ -46,10 +47,9 @@ export function exportPromoteMgmt(params) {
 export function getPromoteMgmtDetail(params) {
   return requestClient.get('/studentmgmt/promote-mgmt/get', { params })
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(detail);
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -82,99 +82,3 @@ export function getPromoteMgmtSiteCount(params) {
     });
   });
 }
-
-// 模拟数据
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      taskName: '2025年春季招生宣讲会',
-      site: '泉州一中',
-      promoteNum: 320,
-      intentNum: 85,
-      executeUser: '张老师',
-      executeTime: 1735689600000,
-      status: '已执行',
-      remark: '效果良好',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1735603200000,
-      updateTime: 1735689600000,
-    },
-    {
-      id: 2,
-      taskName: '校园开放日宣传',
-      site: '泉州五中',
-      promoteNum: null,
-      intentNum: null,
-      executeUser: null,
-      executeTime: null,
-      status: '未执行',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1735603200000,
-      updateTime: 1735603200000,
-    },
-    {
-      id: 3,
-      taskName: '线上直播咨询会',
-      site: '厦门双十',
-      promoteNum: 450,
-      intentNum: 120,
-      executeUser: '王老师',
-      executeTime: 1738281600000,
-      status: '已执行',
-      remark: '互动积极',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1738195200000,
-      updateTime: 1738281600000,
-    },
-    {
-      id: 4,
-      taskName: '高考志愿填报指导',
-      site: '福州一中',
-      promoteNum: null,
-      intentNum: null,
-      executeUser: null,
-      executeTime: null,
-      status: '未执行',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1738195200000,
-      updateTime: 1738195200000,
-    },
-    {
-      id: 5,
-      taskName: '招生简章发放活动',
-      site: '泉州一中',
-      promoteNum: 280,
-      intentNum: 72,
-      executeUser: '李老师',
-      executeTime: 1738886400000,
-      status: '已执行',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1738800000000,
-      updateTime: 1738886400000,
-    },
-    {
-      id: 6,
-      taskName: '家长座谈会',
-      site: '泉州五中',
-      promoteNum: null,
-      intentNum: null,
-      executeUser: null,
-      executeTime: null,
-      status: '未执行',
-      remark: '',
-      creator: 'teacher_wang',
-      updater: 'teacher_wang',
-      createTime: 1738800000000,
-      updateTime: 1738800000000,
-    },
-  ];
-};

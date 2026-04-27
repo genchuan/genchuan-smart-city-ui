@@ -1,22 +1,69 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+// 状态映射（后端英文 online -> 前端中文 已上架）
+const statusMap = {
+  '未上架': 'offline',
+  '已上架': 'online'
+};
+const statusReverse = {
+  'offline':'未上架',
+  'online': '已上架'
+};
+
+// 通用转换函数：后端 → 前端（将英文 online 转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
+  }
+  return result;
+}
+
+// 通用转换函数：前端 → 后端（将中文转为英文）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 德育资源接口 ====================
 export function getMoralResourcePage(params) {
-  return requestClient.get('/studentmgmt/moral-resource/page', { params }).catch(err => {
-    console.warn('分页接口失败', err);
-    return { list: [], total: 0 };
-  });
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/moral-resource/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败', err);
+      return { list: [], total: 0 };
+    });
 }
 
 export function createMoralResource(data) {
-  return requestClient.post('/studentmgmt/moral-resource/create', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/moral-resource/create', convertedData).catch(err => {
     console.warn('上传接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function updateMoralResource(data) {
-  return requestClient.put('/studentmgmt/moral-resource/update', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/moral-resource/update', convertedData).catch(err => {
     console.warn('编辑接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -37,22 +84,26 @@ export function offlineMoralResource(ids) {
 }
 
 export function exportMoralResource(params) {
-  return requestClient.download('/studentmgmt/moral-resource/export-excel', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/moral-resource/export-excel', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
 }
 
 export function getMoralResourceDetail(params) {
-  return requestClient.get('/studentmgmt/moral-resource/get', { params }).catch(err => {
-    console.warn('详情接口失败', err);
-    return Promise.reject(err);
-  });
+  return requestClient.get('/studentmgmt/moral-resource/get', { params })
+    .then(res => convertEnToZh(res))
+    .catch(err => {
+      console.warn('详情接口失败', err);
+      return Promise.reject(err);
+    });
 }
 
 // ==================== 图表接口 ====================
 export function getMoralResourceChart(params) {
-  return requestClient.get('/studentmgmt/moral-resource/chart', { params }).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/moral-resource/chart', { params: convertedParams }).catch(err => {
     console.warn('图表总览接口失败，使用模拟数据', err);
     return Promise.resolve({
       statusCount: { unOnlineCount: 3, onlineCount: 17 },

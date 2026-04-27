@@ -1,14 +1,13 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import RepairDetailDrawer from './components/repairDetail.vue';
 import {
-  getMockList,
   getRepairMgmtPage,
   createRepairMgmt,
   assignRepairMgmt,
@@ -17,7 +16,6 @@ import {
   updateRepairMgmt,
   exportRepairMgmt,
   getRepairMgmtDetail,
-  getRepairUserOptions,
 } from '#/api/genchuan/educationTeaching/studentMgmt/dormMgmt/repairMgmt/data.js';
 import {
   textObj,
@@ -158,17 +156,9 @@ const currentEditId = ref(null);
 const assignIds = ref([]);      // 待派单的ID列表
 const feedbackIds = ref([]);    // 待反馈的ID列表
 
-// 获取维修人列表
-const repairUserOptions = ref([]);
-const loadRepairUserOptions = async () => {
-  const res = await getRepairUserOptions();
-  repairUserOptions.value = res;
-};
-loadRepairUserOptions();
-
 // 派单弹窗
 const assignVisible = ref(false);
-const assignRepairUser = ref('');
+const assignRepairUser = ref('');   // 改为输入框，直接存储维修人姓名
 const currentAssignIds = ref([]);
 
 // 反馈弹窗已由抽屉代替
@@ -218,40 +208,10 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'dormNum':
-            itemValue = item.dormNum;
-            break;
-          case 'repairType':
-            itemValue = item.repairType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取报修列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -301,15 +261,15 @@ async function handleBatchAssign() {
 }
 
 async function submitAssign() {
-  if (!assignRepairUser.value) {
-    ElMessage.warning('请选择维修人');
+  if (!assignRepairUser.value || !assignRepairUser.value.trim()) {
+    ElMessage.warning('请输入维修人姓名');
     return;
   }
   const loading = ElLoading.service({text: '派单中...'});
   try {
     const res = await assignRepairMgmt({
       ids: currentAssignIds.value,
-      repairUser: assignRepairUser.value
+      repairUser: assignRepairUser.value.trim()
     });
     if (res && res !== false) {
       ElMessage.success('派单成功');
@@ -569,19 +529,15 @@ defineExpose({handleFilterTagClick, clearFilters});
       <FeedbackForm/>
     </FeedbackDrawer>
 
-    <!-- 派单弹窗 -->
+    <!-- 派单弹窗 - 维修人改为输入框 -->
     <el-dialog v-model="assignVisible" title="派单" width="400px">
       <el-form label-width="80px">
         <el-form-item label="维修人">
-          <el-select v-model="assignRepairUser" filterable placeholder="请选择维修人"
-                     style="width: 100%">
-            <el-option
-              v-for="user in repairUserOptions"
-              :key="user.value"
-              :label="user.label"
-              :value="user.value"
-            />
-          </el-select>
+          <el-input
+            v-model="assignRepairUser"
+            placeholder="请输入维修人姓名"
+            clearable
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -678,7 +634,7 @@ defineExpose({handleFilterTagClick, clearFilters});
                       @click="handleAssign(row)"/>
           <IconButton v-if="row.status === '维修中'" content="反馈" icon-name="EditPen"
                       @click="handleFeedback(row)"/>
-          <IconButton v-if="row.status === '已维修' && row.checkStatus !== '已验收'" content="验收"
+          <IconButton v-if="row.status === '已维修'" content="验收"
                       icon-name="Check" @click="handleAccept(row)"/>
         </div>
       </template>

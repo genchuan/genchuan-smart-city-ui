@@ -1,4 +1,3 @@
-<!-- 文件5: 父组件 (包装所有 tabs，添加学工首页的联动) -->
 <script setup>
 import { ref, computed, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
@@ -331,11 +330,6 @@ const onAidWorkBarClick = async ({ type, value }) => {
 };
 
 // ==================== 值班管理图表事件 ====================
-const onDutyBarClick = async ({ type, value }) => {
-  await nextTick();
-  if (!dutyMgmtRef.value) { ElMessage.warning('值班管理列表组件未就绪'); return; }
-  if (type === 'status') dutyMgmtRef.value.handleFilterTagClick('status', value);
-};
 const onDutyLineClick = async ({ month }) => {
   await nextTick();
   if (!dutyMgmtRef.value) { ElMessage.warning('值班管理列表组件未就绪'); return; }
@@ -430,7 +424,6 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
     <component
       v-if="currentArrowShow && activeName === '值班管理'"
       :is="currentChartComponent"
-      @barClick="onDutyBarClick"
       @lineClick="onDutyLineClick"
     />
 

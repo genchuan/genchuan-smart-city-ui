@@ -84,9 +84,9 @@ export function getDormCheckPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mock = getMockList();
-      return { list: convertList(mock), total: mock.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -110,11 +110,7 @@ export function recheckDormCheck(data) {
 
 // 推送（批量）
 export function pushDormCheck(data) {
-  // 推送接口只传 ids，无需转换
-  return requestClient.put('/studentmgmt/dorm-check/push', data).catch(err => {
-    console.warn('推送接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/dorm-check/push', data);
 }
 
 // 导出
@@ -131,26 +127,10 @@ export function getDormCheckDetail(params) {
   return requestClient.get('/studentmgmt/dorm-check/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
-}
-
-// 获取学生列表（用于其他场景，打卡不再使用）
-export function getStudentOptions(params) {
-  return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
-    console.warn('获取学生列表失败，使用模拟数据', err);
-    return Promise.resolve([
-      { value: 10001, label: '张三' },
-      { value: 10002, label: '李四' },
-      { value: 10003, label: '王五' },
-      { value: 10004, label: '赵六' },
-      { value: 10005, label: '孙七' },
-      { value: 10006, label: '周八' },
-    ]);
-  });
 }
 
 // ==================== 图表接口 ====================
@@ -175,7 +155,7 @@ export function getDormCheckChart(params) {
 
 export function getDormCheckCount(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.get('/studentmgmt/dorm-check/chart/checkCount', { params: convertedParams }).catch(err => {
+  return requestClient.get('/studentmgmt/dorm-check/checkCount', { params: convertedParams }).catch(err => {
     console.warn('班级统计接口失败，使用模拟数据', err);
     return Promise.resolve({
       labels: ['高一1班', '高一2班', '高一3班', '高二1班'],
@@ -184,123 +164,3 @@ export function getDormCheckCount(params) {
     });
   });
 }
-
-// 模拟数据（原始值使用数字，通过转换函数对外提供中文）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      studentId: 2310001,
-      studentName: '张三',
-      className: '高一1班',
-      checkTime: 1767225600000,
-      checkStatus: '0',
-      abnormalType: '0',
-      repairTime: null,
-      repairUser: null,
-      pushTime: 1767312000000,
-      inRate: 95.5,
-      status: '0',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 2,
-      studentId: 2310002,
-      studentName: '李四',
-      className: '高一1班',
-      checkTime: 1767225600000,
-      checkStatus: '1',
-      abnormalType: '1',
-      repairTime: null,
-      repairUser: null,
-      pushTime: null,
-      inRate: 95.5,
-      status: '1',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 3,
-      studentId: 2410003,
-      studentName: '王五',
-      className: '高一2班',
-      checkTime: 1767225600000,
-      checkStatus: '2',
-      abnormalType: '2',
-      repairTime: null,
-      repairUser: null,
-      pushTime: null,
-      inRate: 95.5,
-      status: '1',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 4,
-      studentId: 2410004,
-      studentName: '赵六',
-      className: '高一2班',
-      checkTime: 1767225600000,
-      checkStatus: '0',
-      abnormalType: '0',
-      repairTime: null,
-      repairUser: null,
-      pushTime: 1767312000000,
-      inRate: 95.5,
-      status: '0',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 5,
-      studentId: 2510005,
-      studentName: '孙七',
-      className: '高一3班',
-      checkTime: 1769904000000,
-      checkStatus: '1',
-      abnormalType: '1',
-      repairTime: 1772496000000,
-      repairUser: '张老师',
-      pushTime: null,
-      inRate: 92.0,
-      status: '0',
-      remark: '已补卡',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1769904000000,
-      updateTime: 1772496000000,
-    },
-    {
-      id: 6,
-      studentId: 2510006,
-      studentName: '周八',
-      className: '高一3班',
-      checkTime: 1769904000000,
-      checkStatus: '2',
-      abnormalType: '1',
-      repairTime: null,
-      repairUser: null,
-      pushTime: null,
-      inRate: 92.0,
-      status: '1',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-  ];
-};

@@ -142,7 +142,6 @@ onMounted(() => {
 
 <template>
   <div v-loading="loading" class="chart-box">
-    <!-- 卡片区（4个卡片） -->
     <div class="box-left">
       <Indicator
         class="left-card"
@@ -153,8 +152,7 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 图表切换区域（折线图/柱状图） -->
-    <div class="chart-switch-area">
+    <div class="chart-area">
       <div class="chart-select-wrapper">
         <el-select
           v-model="activeChartIndex"
@@ -203,7 +201,6 @@ onMounted(() => {
   .box-left {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
     min-width: 280px;
     max-width: 320px;
     margin-top: 10px !important;
@@ -212,22 +209,19 @@ onMounted(() => {
       height: 150px !important;
     }
   }
-}
 
-/* 图表切换区域样式 */
-.chart-switch-area {
-  position: relative;
-  flex: 1;
-  min-width: 300px;
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-}
+  .chart-area {
+    position: relative;
+    flex: 1;
+    min-width: 280px;
+    height: 100%;
+  }
 
-.chart-select-wrapper {
-  position: absolute;
-  top: 8px;
-  right: 10px;
-  z-index: 10;
+  .chart-select-wrapper {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    z-index: 10;
+  }
 }
 </style>

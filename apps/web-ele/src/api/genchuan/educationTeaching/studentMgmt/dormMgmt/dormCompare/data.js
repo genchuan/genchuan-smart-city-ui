@@ -1,7 +1,6 @@
 import { requestClient } from '#/api/request';
 
 // ==================== 映射表 ====================
-// 评比周期映射
 const cycleMap = {
   '周': 'week',
   '月': 'month',
@@ -13,27 +12,39 @@ const cycleReverse = {
   'semester': '学期'
 };
 
-// 通用转换函数：后端 → 前端（将英文转为中文）
+const statusMap = {
+  '打分中': 'scoring',
+  '已汇总': 'summarized'
+};
+const statusReverse = {
+  'scoring': '打分中',
+  'summarized': '已汇总'
+};
+
 function convertEnToZh(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const result = { ...obj };
   if (result.cycle && cycleReverse[result.cycle]) {
     result.cycle = cycleReverse[result.cycle];
   }
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
+  }
   return result;
 }
 
-// 通用转换函数：前端 → 后端（将中文转为英文）
 function convertZhToEn(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const result = { ...obj };
   if (result.cycle && cycleMap[result.cycle]) {
     result.cycle = cycleMap[result.cycle];
   }
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
   return result;
 }
 
-// 转换列表数据
 function convertList(list) {
   if (!Array.isArray(list)) return list;
   return list.map(item => convertEnToZh(item));
@@ -50,40 +61,29 @@ export function getDormComparePage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mock = getMockList();
-      return { list: convertList(mock), total: mock.length };
+      console.warn('分页接口失败', err);
+      return { list: [], total: 0 };
     });
 }
 
-// 打分（批量）
+// 新增宿舍评比记录（状态默认为“打分中”）
+export function createDormCompare(data) {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/dorm-compare/create', convertedData);
+}
+
 export function scoreDormCompare(data) {
-  // 打分接口只传 ids 和 score，无需转换
-  return requestClient.put('/studentmgmt/dorm-compare/score', data).catch(err => {
-    console.warn('打分接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/dorm-compare/score', data);
 }
 
-// 汇总（批量，自动计算排名）
 export function summaryDormCompare(data) {
-  // 汇总接口只传 ids，无需转换
-  return requestClient.put('/studentmgmt/dorm-compare/summary', data).catch(err => {
-    console.warn('汇总接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/dorm-compare/summary', data);
 }
 
-// 推送（批量）
 export function pushDormCompare(data) {
-  // 推送接口只传 ids，无需转换
-  return requestClient.put('/studentmgmt/dorm-compare/push', data).catch(err => {
-    console.warn('推送接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/dorm-compare/push', data);
 }
 
-// 更新（编辑）
 export function updateDormCompare(data) {
   const convertedData = convertZhToEn(data);
   return requestClient.put('/studentmgmt/dorm-compare/update', convertedData).catch(err => {
@@ -92,7 +92,6 @@ export function updateDormCompare(data) {
   });
 }
 
-// 导出
 export function exportDormCompare(params) {
   const convertedParams = convertZhToEn(params);
   return requestClient.download('/studentmgmt/dorm-compare/export-excel', convertedParams).catch(err => {
@@ -101,20 +100,16 @@ export function exportDormCompare(params) {
   });
 }
 
-// 详情
 export function getDormCompareDetail(params) {
   return requestClient.get('/studentmgmt/dorm-compare/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      return Promise.reject(err);
     });
 }
 
 // ==================== 图表接口 ====================
-// 宿舍评比得分看板（卡片 + 柱状图数据）
 export function getDormCompareChart(params) {
   const convertedParams = convertZhToEn(params);
   return requestClient.get('/studentmgmt/dorm-compare/chart', { params: convertedParams }).catch(err => {
@@ -125,17 +120,16 @@ export function getDormCompareChart(params) {
       highScore: 98.5,
       lowScore: 62.0,
       dormStats: [
-        { dormNum: '302', score: 95.5, rankNo: 1 },
-        { dormNum: '301', score: 92.0, rankNo: 2 },
-        { dormNum: '201', score: 90.5, rankNo: 3 },
-        { dormNum: '202', score: 88.0, rankNo: 4 },
-        { dormNum: '101', score: 85.5, rankNo: 5 },
+        { dormNum: '302', score: 95.5, rank: 1 },
+        { dormNum: '301', score: 92.0, rank: 2 },
+        { dormNum: '201', score: 90.5, rank: 3 },
+        { dormNum: '202', score: 88.0, rank: 4 },
+        { dormNum: '101', score: 85.5, rank: 5 },
       ],
     });
   });
 }
 
-// 宿舍得分排名统计（柱状图专用）
 export function getDormCompareScoreRank(params) {
   const convertedParams = convertZhToEn(params);
   return requestClient.get('/studentmgmt/dorm-compare/chart/scoreRank', { params: convertedParams }).catch(err => {
@@ -146,111 +140,3 @@ export function getDormCompareScoreRank(params) {
     });
   });
 }
-
-// 模拟数据（原始值使用英文，通过转换函数对外提供中文）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      dormId: 101,
-      dormNum: '101',
-      cycle: 'month',
-      score: 85.5,
-      rankNo: 5,
-      scoreUser: '张老师',
-      sumTime: 1767225600000,
-      pushTime: null,
-      status: '已汇总',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 2,
-      dormId: 201,
-      dormNum: '201',
-      cycle: 'month',
-      score: 90.5,
-      rankNo: 3,
-      scoreUser: '李老师',
-      sumTime: 1769904000000,
-      pushTime: null,
-      status: '已汇总',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 3,
-      dormId: 202,
-      dormNum: '202',
-      cycle: 'month',
-      score: 88.0,
-      rankNo: 4,
-      scoreUser: '王老师',
-      sumTime: 1775088000000,
-      pushTime: null,
-      status: '已汇总',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775088000000,
-      updateTime: 1775088000000,
-    },
-    {
-      id: 4,
-      dormId: 301,
-      dormNum: '301',
-      cycle: 'month',
-      score: 92.0,
-      rankNo: 2,
-      scoreUser: null,
-      sumTime: null,
-      pushTime: null,
-      status: '打分中',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1777680000000,
-      updateTime: 1777680000000,
-    },
-    {
-      id: 5,
-      dormId: 302,
-      dormNum: '302',
-      cycle: 'month',
-      score: 95.5,
-      rankNo: 1,
-      scoreUser: '陈老师',
-      sumTime: 1780358400000,
-      pushTime: 1780444800000,
-      status: '已汇总',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1780358400000,
-      updateTime: 1780444800000,
-    },
-    {
-      id: 6,
-      dormId: 401,
-      dormNum: '401',
-      cycle: 'week',
-      score: 78.0,
-      rankNo: null,
-      scoreUser: null,
-      sumTime: null,
-      pushTime: null,
-      status: '打分中',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1782950400000,
-      updateTime: 1782950400000,
-    },
-  ];
-};
