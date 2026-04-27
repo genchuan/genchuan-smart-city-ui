@@ -1,24 +1,19 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { useVbenDrawer } from '@vben/common-ui';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  activatePackageConfig,
   createPackageConfig,
-  disablePackageConfig,
-  getPackageConfigDetail,
   getPackageConfigPage,
   updatePackageConfig,
 } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/packageConfig';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 import { formatDate } from '#/utils/genchuan/formatTime';
 import StatusConfirmDialog from '#/views/genchuan/industry/chargePark/marketOp/couponActivity/packageConfig/components/StatusConfirmDialog.vue';
@@ -228,7 +223,7 @@ const getTableData = async (pageObj) => {
       let searchMatch = true;
       Object.keys(dataObj.searchParams).forEach((key) => {
         const value = dataObj.searchParams[key];
-        if (value && !['createTime', 'auditTime', 'effectTime'].includes(key)) {
+        if (value && !['auditTime', 'createTime', 'effectTime'].includes(key)) {
           searchMatch =
             typeof value === 'string'
               ? searchMatch && v[key]?.toString().includes(value)
@@ -391,9 +386,9 @@ function handleStatsFilter(filterSource, filterValue) {
     // 点击柱状图 - 按券包类型筛选
     // 根据类型名称找到对应的类型值
     const typeMap = {
-      '新手包': '0',
-      '节日包': '1',
-      '日常包': '2',
+      新手包: '0',
+      节日包: '1',
+      日常包: '2',
     };
     filterType.value = typeMap[filterValue] || '';
     gridApi.query();
@@ -506,7 +501,7 @@ defineExpose({
           @click="handleOpenPackageDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.name }}
         </el-text>
@@ -515,7 +510,7 @@ defineExpose({
       <template #typeName="{ row }">
         <ElTag
           :type="getPackageConfigTypeTagType(row.type)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByType(row.type)"
         >
           {{ getPackageConfigTypeLabel(row.type) }}
@@ -527,7 +522,7 @@ defineExpose({
           @click="handleOpenCouponList(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.couponNames }}
         </el-text>
@@ -540,7 +535,7 @@ defineExpose({
       <template #scopeName="{ row }">
         <ElTag
           :type="getPackageConfigScopeTagType(row.scope)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByScope(row.scope)"
         >
           {{ getPackageConfigScopeLabel(row.scope) }}
@@ -550,7 +545,7 @@ defineExpose({
       <template #statusName="{ row }">
         <ElTag
           :type="getPackageConfigStatusTagType(row.status)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleFilterByStatus(row.status)"
         >
           {{ getPackageConfigStatusLabel(row.status) }}
@@ -558,7 +553,14 @@ defineExpose({
       </template>
       <!-- 创建时间 - 格式化显示 -->
       <template #createTime="{ row }">
-        <span>{{ row.createTime ? formatDate(new Date(Number(row.createTime)), 'YYYY-MM-DD HH:mm:ss') : '' }}</span>
+        <span>{{
+          row.createTime
+            ? formatDate(
+                new Date(Number(row.createTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : ''
+        }}</span>
       </template>
       <!-- 审核人 - 点击跳转操作人员详情 -->
       <template #auditorName="{ row }">
@@ -567,7 +569,7 @@ defineExpose({
           @click="handleOpenAuditorDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.auditorName }}
         </el-text>
@@ -575,7 +577,11 @@ defineExpose({
       </template>
       <!-- 审核时间 - 格式化显示 -->
       <template #auditTime="{ row }">
-        <span>{{ row.auditTime ? formatDate(new Date(Number(row.auditTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.auditTime
+            ? formatDate(new Date(Number(row.auditTime)), 'YYYY-MM-DD HH:mm:ss')
+            : '-'
+        }}</span>
       </template>
       <!-- 销量 - 点击跳转券包订单明细 -->
       <template #saleCount="{ row }">
@@ -583,14 +589,21 @@ defineExpose({
           @click="handleOpenOrderDetail(row)"
           class="common-align"
           type="primary"
-          style="cursor: pointer;"
+          style="cursor: pointer"
         >
           {{ row.saleCount }}
         </el-text>
       </template>
       <!-- 生效时间 - 格式化显示 -->
       <template #effectTime="{ row }">
-        <span>{{ row.effectTime ? formatDate(new Date(Number(row.effectTime)), 'YYYY-MM-DD HH:mm:ss') : '' }}</span>
+        <span>{{
+          row.effectTime
+            ? formatDate(
+                new Date(Number(row.effectTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : ''
+        }}</span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
@@ -627,7 +640,11 @@ defineExpose({
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：券包数量: {{ dataObj.list.length }}; 已生效: {{ dataObj.list.filter((v) => v.status === '1').length }}; 未生效: {{ dataObj.list.filter((v) => v.status === '0').length }} </span>
+          <span>
+            本页统计：券包数量: {{ dataObj.list.length }}; 已生效:
+            {{ dataObj.list.filter((v) => v.status === '1').length }}; 未生效:
+            {{ dataObj.list.filter((v) => v.status === '0').length }}
+          </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> {{ textObj.total }} </span>

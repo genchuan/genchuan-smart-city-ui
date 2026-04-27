@@ -3,9 +3,8 @@ import { requestClient } from '#/api/request';
 // ==================== 德育资源接口 ====================
 export function getMoralResourcePage(params) {
   return requestClient.get('/studentmgmt/moral-resource/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    const mock = getMockList();
-    return { list: mock, total: mock.length };
+    console.warn('分页接口失败', err);
+    return { list: [], total: 0 };
   });
 }
 
@@ -46,10 +45,8 @@ export function exportMoralResource(params) {
 
 export function getMoralResourceDetail(params) {
   return requestClient.get('/studentmgmt/moral-resource/get', { params }).catch(err => {
-    console.warn('详情接口失败，使用模拟数据', err);
-    const mockList = getMockList();
-    const detail = mockList.find(item => item.id === params.id) || mockList[0];
-    return Promise.resolve(detail);
+    console.warn('详情接口失败', err);
+    return Promise.reject(err);
   });
 }
 
@@ -61,15 +58,15 @@ export function getMoralResourceChart(params) {
       statusCount: { unOnlineCount: 3, onlineCount: 17 },
       resourceTypeCount: { courseCount: 10, bookCount: 6, packageCount: 4 },
       learnTrend: [
-        { month: '2025-01', count: 80 },
-        { month: '2025-02', count: 120 },
-        { month: '2025-03', count: 150 },
+        { date: '2025-07', count: 1 },
+        { date: '2025-08', count: 8 },
+        { date: '2025-09', count: 1 },
       ],
       rateTrend: [
-        { month: '2025-01', rate: 75.0 },
-        { month: '2025-02', rate: 80.0 },
-        { month: '2025-03', rate: 85.5 },
-      ],
+        { date: '2025-07', rate: 58.2 },
+        { date: '2025-08', rate: 81.53 },
+        { date: '2025-09', rate: 65.3 },
+      ]
     });
   });
 }
@@ -84,105 +81,3 @@ export function getMoralResourceCount(params) {
     });
   });
 }
-
-// 模拟数据（与接口响应结构一致）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      resourceName: '中华优秀传统文化课程',
-      resourceType: '课程',
-      resourceUrl: 'https://example.com/course/1',
-      learnNum: 320,
-      learnRate: 85.5,
-      publishTime: 1767225600000,
-      offTime: null,
-      status: '已上架',
-      remark: '传统文化系列课程',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 2,
-      resourceName: '雷锋故事图书',
-      resourceType: '图书',
-      resourceUrl: 'https://example.com/book/2',
-      learnNum: 156,
-      learnRate: 78.0,
-      publishTime: null,
-      offTime: null,
-      status: '未上架',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 3,
-      resourceName: '社会主义核心价值观专题包',
-      resourceType: '专题包',
-      resourceUrl: 'https://example.com/package/3',
-      learnNum: 280,
-      learnRate: 92.0,
-      publishTime: 1775088000000,
-      offTime: null,
-      status: '已上架',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775088000000,
-      updateTime: 1775088000000,
-    },
-    {
-      id: 4,
-      resourceName: '心理健康教育课程',
-      resourceType: '课程',
-      resourceUrl: 'https://example.com/course/4',
-      learnNum: 210,
-      learnRate: 79.5,
-      publishTime: 1777680000000,
-      offTime: 1777766400000,
-      status: '已上架',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1777680000000,
-      updateTime: 1777766400000,
-    },
-    {
-      id: 5,
-      resourceName: '红色家书图书',
-      resourceType: '图书',
-      resourceUrl: 'https://example.com/book/5',
-      learnNum: 98,
-      learnRate: 65.0,
-      publishTime: null,
-      offTime: null,
-      status: '未上架',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1780358400000,
-      updateTime: 1780358400000,
-    },
-    {
-      id: 6,
-      resourceName: '安全教育专题包',
-      resourceType: '专题包',
-      resourceUrl: 'https://example.com/package/6',
-      learnNum: 430,
-      learnRate: 88.0,
-      publishTime: 1782950400000,
-      offTime: null,
-      status: '已上架',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1782950400000,
-      updateTime: 1782950400000,
-    },
-  ];
-};

@@ -11,18 +11,42 @@ const checkInStatusReverse = {
   'checked_in': '已打卡'
 };
 
-// 值班状态映射
+// 值班状态映射（补充 pending_car）
 const dutyStatusMap = {
   '待打卡': 'pending_checkin',
   '待调班审批': 'pending_transfer',
-  '待出车审批': 'pending_vehicle',
+  '待出车审批': 'pending_car',      // 修正：后端使用 pending_car
   '已完成': 'completed'
 };
 const dutyStatusReverse = {
   'pending_checkin': '待打卡',
   'pending_transfer': '待调班审批',
-  'pending_vehicle': '待出车审批',
+  'pending_car': '待出车审批',
   'completed': '已完成'
+};
+
+// 调班状态映射（新增）
+const transferStatusMap = {
+  '无': null,
+  '待审批': 'pending',
+  '已通过': 'approved',
+  '已驳回': 'rejected'
+};
+const transferStatusReverse = {
+  'pending': '待审批',
+  'approved': '已通过',
+  'rejected': '已驳回'
+};
+
+// 出车状态映射（新增）
+const carStatusMap = {
+  '无': null,
+  '待审批': 'pending',
+  '已通过': 'approved'
+};
+const carStatusReverse = {
+  'pending': '待审批',
+  'approved': '已通过'
 };
 
 // 日期转换：后端数组 [2024,12,10] → 前端字符串 '2024-12-10'
@@ -50,6 +74,28 @@ function convertEnToZh(obj) {
   if (result.status && dutyStatusReverse[result.status]) {
     result.status = dutyStatusReverse[result.status];
   }
+  // 调班状态转换
+  if (result.transferStatus) {
+    if (transferStatusReverse[result.transferStatus]) {
+      result.transferStatus = transferStatusReverse[result.transferStatus];
+    } else if (result.transferStatus === '待审批') {
+      // 已经是中文，保持不变
+      result.transferStatus = '待审批';
+    }
+  } else if (result.transferStatus === null || result.transferStatus === undefined) {
+    result.transferStatus = '无';
+  }
+  // 出车状态转换
+  if (result.carStatus) {
+    if (carStatusReverse[result.carStatus]) {
+      result.carStatus = carStatusReverse[result.carStatus];
+    } else if (result.carStatus === '已通过') {
+      // 已经是中文，保持不变
+      result.carStatus = '已通过';
+    }
+  } else if (result.carStatus === null || result.carStatus === undefined) {
+    result.carStatus = '无';
+  }
   if (result.dutyDate) {
     result.dutyDate = formatDutyDate(result.dutyDate);
   }
@@ -65,6 +111,12 @@ function convertZhToEn(obj) {
   }
   if (result.status && dutyStatusMap[result.status]) {
     result.status = dutyStatusMap[result.status];
+  }
+  if (result.transferStatus && transferStatusMap[result.transferStatus] !== undefined) {
+    result.transferStatus = transferStatusMap[result.transferStatus];
+  }
+  if (result.carStatus && carStatusMap[result.carStatus] !== undefined) {
+    result.carStatus = carStatusMap[result.carStatus];
   }
   if (result.dutyDate && typeof result.dutyDate === 'string') {
     result.dutyDate = parseDutyDate(result.dutyDate);
@@ -95,14 +147,17 @@ export function getDutyMgmtPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mockData = convertList(dataList());
-      return { list: mockData, total: mockData.length };
+      console.warn('分页接口失败', err);
+      return { list: [], total: 0 };
     });
 }
 
 export function scheduleDutyMgmt(data) {
   const convertedData = convertZhToEn(data);
+  if (convertedData.dutyDateList) {
+    convertedData.dutyDate = convertedData.dutyDateList;
+    delete convertedData.dutyDateList;
+  }
   return requestClient.post('/studentmgmt/duty-mgmt/schedule', convertedData).catch(err => {
     console.warn('排班接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -110,7 +165,6 @@ export function scheduleDutyMgmt(data) {
 }
 
 export function checkinDutyMgmt(data) {
-  // 打卡接口只传 ids，无需转换
   return requestClient.put('/studentmgmt/duty-mgmt/checkin', data).catch(err => {
     console.warn('打卡接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -118,23 +172,20 @@ export function checkinDutyMgmt(data) {
 }
 
 export function shiftApplyDutyMgmt(data) {
-  // 调班申请接口只传 ids, transferReason, transferUser，无需转换
-  return requestClient.post('/studentmgmt/duty-mgmt/shiftApply', data).catch(err => {
+  return requestClient.put('/studentmgmt/duty-mgmt/shiftApply', data).catch(err => {
     console.warn('调班申请接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function vehicleApplyDutyMgmt(data) {
-  // 出车申请接口只传 ids, carReason, carDestination，无需转换
-  return requestClient.post('/studentmgmt/duty-mgmt/vehicleApply', data).catch(err => {
+  return requestClient.put('/studentmgmt/duty-mgmt/vehicleApply', data).catch(err => {
     console.warn('出车申请接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
 export function shiftAuditDutyMgmt(data) {
-  // 调班审批接口只传 id, auditResult, remark，无需转换（auditResult 为中文）
   return requestClient.put('/studentmgmt/duty-mgmt/shiftAudit', data).catch(err => {
     console.warn('调班审批接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -142,7 +193,6 @@ export function shiftAuditDutyMgmt(data) {
 }
 
 export function vehicleAuditDutyMgmt(data) {
-  // 出车审批接口只传 id, auditResult, remark，无需转换
   return requestClient.put('/studentmgmt/duty-mgmt/vehicleAudit', data).catch(err => {
     console.warn('出车审批接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -150,7 +200,6 @@ export function vehicleAuditDutyMgmt(data) {
 }
 
 export function uploadRecordDutyMgmt(data) {
-  // 上传记录接口只传 id, recordContent，无需转换
   return requestClient.put('/studentmgmt/duty-mgmt/uploadRecord', data).catch(err => {
     console.warn('上传记录接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -169,10 +218,8 @@ export function getDutyMgmtDetail(params) {
   return requestClient.get('/studentmgmt/duty-mgmt/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = dataList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      return Promise.reject(err);
     });
 }
 
@@ -181,19 +228,6 @@ export function updateDutyMgmt(data) {
   return requestClient.put('/studentmgmt/duty-mgmt/update', convertedData).catch(err => {
     console.warn('编辑接口失败，模拟成功', err);
     return Promise.resolve(true);
-  });
-}
-
-// 获取用户选项（无需转换）
-export function getUserOptions(params) {
-  return requestClient.get('/system/user/options', { params }).catch(err => {
-    console.warn('获取用户选项失败，使用模拟数据', err);
-    return Promise.resolve([
-      { label: '张三', value: '张三' },
-      { label: '李四', value: '李四' },
-      { label: '王五', value: '王五' },
-      { label: '赵六', value: '赵六' },
-    ]);
   });
 }
 
@@ -229,135 +263,3 @@ export function getDutyIndex(params) {
     });
   });
 }
-
-// 模拟数据（原始值使用英文/数组，通过转换函数对外提供中文）
-export const dataList = () => {
-  return [
-    {
-      id: 1,
-      dutyDate: [2025, 3, 25],
-      dutyUser: '张三',
-      checkInTime: null,
-      checkInStatus: 'not_checked_in',
-      transferReason: null,
-      transferUser: null,
-      transferStatus: null,
-      carReason: null,
-      carDestination: null,
-      carStatus: null,
-      recordContent: null,
-      recordUploadTime: null,
-      status: 'pending_checkin',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 2,
-      dutyDate: [2025, 3, 25],
-      dutyUser: '李四',
-      checkInTime: 1672531200000,
-      checkInStatus: 'checked_in',
-      transferReason: null,
-      transferUser: null,
-      transferStatus: null,
-      carReason: null,
-      carDestination: null,
-      carStatus: null,
-      recordContent: '正常值班，无异常',
-      recordUploadTime: 1672531200000,
-      status: 'completed',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 3,
-      dutyDate: [2025, 3, 26],
-      dutyUser: '王五',
-      checkInTime: null,
-      checkInStatus: 'not_checked_in',
-      transferReason: '家中有事',
-      transferUser: '赵六',
-      transferStatus: '待审批',
-      carReason: null,
-      carDestination: null,
-      carStatus: null,
-      recordContent: null,
-      recordUploadTime: null,
-      status: 'pending_transfer',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 4,
-      dutyDate: [2025, 3, 27],
-      dutyUser: '赵六',
-      checkInTime: null,
-      checkInStatus: 'not_checked_in',
-      transferReason: null,
-      transferUser: null,
-      transferStatus: null,
-      carReason: '紧急维修',
-      carDestination: '设备仓库',
-      carStatus: '待审批',
-      recordContent: null,
-      recordUploadTime: null,
-      status: 'pending_vehicle',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 5,
-      dutyDate: [2025, 3, 28],
-      dutyUser: '张三',
-      checkInTime: 1672531200000,
-      checkInStatus: 'checked_in',
-      transferReason: null,
-      transferUser: null,
-      transferStatus: null,
-      carReason: null,
-      carDestination: null,
-      carStatus: null,
-      recordContent: '完成设备巡检',
-      recordUploadTime: 1672531200000,
-      status: 'completed',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 6,
-      dutyDate: [2025, 3, 29],
-      dutyUser: '李四',
-      checkInTime: null,
-      checkInStatus: 'not_checked_in',
-      transferReason: null,
-      transferUser: null,
-      transferStatus: null,
-      carReason: null,
-      carDestination: null,
-      carStatus: null,
-      recordContent: null,
-      recordUploadTime: null,
-      status: 'pending_checkin',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-  ];
-};

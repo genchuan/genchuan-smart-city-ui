@@ -1,6 +1,6 @@
 <script setup>
-import { reactive, onMounted, ref, computed } from 'vue';
-import { ElMessage, ElSelect, ElOption } from 'element-plus';
+import {reactive, onMounted, ref, computed} from 'vue';
+import {ElMessage, ElSelect, ElOption} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
@@ -9,9 +9,17 @@ import {
   getApplyCount,
 } from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/aidWork/data.js';
 
+// 资助类型映射（后端 type 数字转中文）
+const aidTypeMap = {
+  '1': '奖学金',
+  '2': '助学金',
+  '3': '助学贷款',
+  '4': '勤工俭学'
+};
+
 const loading = ref(true);
 const chartData = ref({});
-const typeApplyData = ref([]);
+const typeApplyData = ref([]); // 存储后端返回的数组，每个元素有 type, applyCount, finishCount, finishRate
 
 // 卡片列表
 const cardList = computed(() => {
@@ -20,23 +28,23 @@ const cardList = computed(() => {
   const totalAmount = chartData.value.totalApplyAmount || 0;
   const totalGrant = chartData.value.totalGrantAmount || 0;
   return [
-    { title: '总申请数', value: totalCount, color: '#409EFF', status: 'total' },
-    { title: '总通过数', value: totalPass, color: '#67C23A', status: 'passed' },
-    { title: '总申请金额', value: `¥${totalAmount.toFixed(2)}`, color: '#E6A23C', status: 'amount' },
-    { title: '总发放金额', value: `¥${totalGrant.toFixed(2)}`, color: '#F56C6C', status: 'grant' },
+    {title: '总申请数', value: totalCount, color: '#409EFF', status: 'total'},
+    {title: '总通过数', value: totalPass, color: '#67C23A', status: 'passed'},
+    {title: '总申请金额', value: `¥${totalAmount.toFixed(2)}`, color: '#E6A23C', status: 'amount'},
+    {title: '总发放金额', value: `¥${totalGrant.toFixed(2)}`, color: '#F56C6C', status: 'grant'},
   ];
 });
 
 // 各状态申请数量饼图数据
 const statusPieData = computed(() => {
   const map = chartData.value.statusCountMap || {};
-  return Object.entries(map).map(([name, value]) => ({ name, value }));
+  return Object.entries(map).map(([name, value]) => ({name, value}));
 });
 
 // 各资助类型申请数量饼图数据
 const typePieData = computed(() => {
   const map = chartData.value.typeCountMap || {};
-  return Object.entries(map).map(([name, value]) => ({ name, value }));
+  return Object.entries(map).map(([name, value]) => ({name, value}));
 });
 
 // 饼图切换选项
@@ -56,13 +64,39 @@ const pieOptions = computed(() => [
 const activePieIndex = ref(0);
 const currentPieData = computed(() => pieOptions.value[activePieIndex.value] || pieOptions.value[0]);
 
-// 切换饼图
 const handlePieChange = (index) => {
   activePieIndex.value = index;
 };
 
-// 柱状图数据
-const barXData = computed(() => typeApplyData.value.map(item => item.name));
+// 处理 typeApplyData 转换为柱状图需要的格式
+// 需要将后端 type 数字转为中文名称，处理 null 值，finishRate 转为百分比
+const transformedApplyData = computed(() => {
+  return typeApplyData.value.map(item => {
+    const typeName = aidTypeMap[item.type] || item.type;
+    const finishCount = item.finishCount ?? 0;
+    const finishRate = item.finishRate != null ? (item.finishRate * 100).toFixed(1) : 0;
+    return {
+      name: typeName,
+      applyCount: item.applyCount,
+      finishCount: finishCount,
+      finishRate: parseFloat(finishRate),
+    };
+  });
+});
+
+const barXData = computed(() => transformedApplyData.value.map(item => item.name));
+const barApplySeries = computed(() => [{
+  name: '申请人数',
+  data: transformedApplyData.value.map(item => item.applyCount)
+}]);
+const barFinishSeries = computed(() => [{
+  name: '办理完成人数',
+  data: transformedApplyData.value.map(item => item.finishCount)
+}]);
+const barRateSeries = computed(() => [{
+  name: '办理完成率(%)',
+  data: transformedApplyData.value.map(item => item.finishRate)
+}]);
 
 // 柱状图切换选项
 const chartOptions = computed(() => [
@@ -70,21 +104,21 @@ const chartOptions = computed(() => [
     type: 'bar',
     title: '各类型申请人数',
     xData: barXData.value,
-    seriesData: [{ name: '申请人数', data: typeApplyData.value.map(item => item.applyCount) }],
+    seriesData: barApplySeries.value,
     yName: '人数',
   },
   {
     type: 'bar',
     title: '各类型办理完成人数',
     xData: barXData.value,
-    seriesData: [{ name: '办理完成人数', data: typeApplyData.value.map(item => item.finishCount) }],
+    seriesData: barFinishSeries.value,
     yName: '人数',
   },
   {
     type: 'bar',
     title: '各类型办理完成率',
     xData: barXData.value,
-    seriesData: [{ name: '办理完成率(%)', data: typeApplyData.value.map(item => item.finishRate) }],
+    seriesData: barRateSeries.value,
     yName: '完成率(%)',
   },
 ]);
@@ -92,7 +126,6 @@ const chartOptions = computed(() => [
 const activeChartIndex = ref(0);
 const currentChart = computed(() => chartOptions.value[activeChartIndex.value] || chartOptions.value[0]);
 
-// 切换柱状图
 const handleChartChange = (index) => {
   activeChartIndex.value = index;
 };
@@ -103,16 +136,15 @@ const handleCardClick = (cardInfo) => {
   emit('cardClick', cardInfo.status);
 };
 
-// 饼图点击：根据当前选中的饼图类型传递不同的筛选参数
 const handlePieClick = (item) => {
   const pieType = currentPieData.value.type;
-  emit('pieClick', { type: pieType, value: item.name });
+  emit('pieClick', {type: pieType, value: item.name});
 };
 
 const handleBarClick = (params) => {
   // 柱状图点击筛选对应类型
   const typeName = params.name;
-  emit('barClick', { type: 'aidType', value: typeName });
+  emit('barClick', {type: 'aidType', value: typeName});
 };
 
 const loadData = async () => {
@@ -130,22 +162,39 @@ const loadData = async () => {
         totalPassCount: 198,
         totalApplyAmount: 768000,
         totalGrantAmount: 594000,
-        statusCountMap: { '待审核': 32, '已通过': 198, '已完成': 26 },
-        typeCountMap: { '奖学金': 86, '助学金': 102, '助学贷款': 48, '勤工俭学': 20 },
+        statusCountMap: {'待审核': 32, '已通过': 198, '已完成': 26},
+        typeCountMap: {'奖学金': 86, '助学金': 102, '助学贷款': 48, '勤工俭学': 20},
       };
     }
     if (applyRes.status === 'fulfilled') {
-      typeApplyData.value = applyRes.value.list || [];
+      // 后端直接返回数组，赋值给 typeApplyData
+      typeApplyData.value = applyRes.value;
     } else {
+      // 模拟数据也要是数组格式，字段与后端一致
       typeApplyData.value = [
-        { name: '奖学金', applyCount: 86, finishCount: 78, finishRate: 90.70 },
-        { name: '助学金', applyCount: 102, finishCount: 92, finishRate: 90.20 },
-        { name: '助学贷款', applyCount: 48, finishCount: 42, finishRate: 87.50 },
-        { name: '勤工俭学', applyCount: 20, finishCount: 18, finishRate: 90.00 },
+        {type: "1", name: "", applyCount: 86, finishCount: 78, finishRate: 0.907},
+        {type: "2", name: "", applyCount: 102, finishCount: 92, finishRate: 0.902},
+        {type: "3", name: "", applyCount: 48, finishCount: 42, finishRate: 0.875},
+        {type: "4", name: "", applyCount: 20, finishCount: 18, finishRate: 0.90},
       ];
     }
   } catch (error) {
     console.error('加载图表数据失败', error);
+    // fallback
+    chartData.value = {
+      totalApplyCount: 256,
+      totalPassCount: 198,
+      totalApplyAmount: 768000,
+      totalGrantAmount: 594000,
+      statusCountMap: {'待审核': 32, '已通过': 198, '已完成': 26},
+      typeCountMap: {'奖学金': 86, '助学金': 102, '助学贷款': 48, '勤工俭学': 20},
+    };
+    typeApplyData.value = [
+      {type: "1", name: "", applyCount: 86, finishCount: 78, finishRate: 0.907},
+      {type: "2", name: "", applyCount: 102, finishCount: 92, finishRate: 0.902},
+      {type: "3", name: "", applyCount: 48, finishCount: 42, finishRate: 0.875},
+      {type: "4", name: "", applyCount: 20, finishCount: 18, finishRate: 0.90},
+    ];
   } finally {
     loading.value = false;
   }
@@ -242,7 +291,6 @@ onMounted(() => {
   }
 }
 
-/* 饼图切换区域样式 */
 .pie-chart-area {
   position: relative;
   flex: 1;
@@ -259,7 +307,6 @@ onMounted(() => {
   z-index: 10;
 }
 
-/* 柱状图切换区域样式 */
 .chart-area {
   position: relative;
   flex: 1.5;

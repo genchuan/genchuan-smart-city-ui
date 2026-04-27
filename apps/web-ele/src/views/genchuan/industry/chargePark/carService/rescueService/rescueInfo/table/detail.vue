@@ -104,7 +104,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">现场照片:</div>
         <div class="detail-row-right">
-          <el-image v-if="detailObj.photo" :src="detailObj.photo" style="width: 100px; height: 100px" />
+          <img v-if="detailObj.photo" :src="detailObj.photo" style="width: 100px; height: 100px" />
           <span v-else>-</span>
         </div>
       </div>

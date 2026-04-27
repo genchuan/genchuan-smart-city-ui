@@ -9,10 +9,31 @@ import {
   getClubDistribution,
 } from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/clubMgmt/data.js';
 
+// 社团类型映射（后端 type 数字转中文）
+const clubTypeMap = {
+  '1': '文体',
+  '2': '学术',
+  '3': '志愿',
+  '4': '其他'
+};
+
+// 默认 timeRange 参数（两个时间戳）
+const defaultTimeRange = [1704067200000, 1798732799000];
+
+// 格式化月份：将 "2024-09" 转为 "09月"
+const formatMonth = (monthStr) => {
+  if (!monthStr) return '';
+  const parts = monthStr.split('-');
+  if (parts.length === 2) {
+    return `${parts[1]}月`;
+  }
+  return monthStr;
+};
+
 const loading = ref(true);
 const overviewData = ref({});        // 看板数据（卡片 + 趋势）
 const clubData = ref([]);            // 各社团人数数据 { clubName, memberCount }
-const typeData = ref([]);            // 各类型成员分布数据 { name, value }
+const typeData = ref([]);            // 各类型成员分布数据 { name, count }
 
 // 卡片列表
 const cardList = computed(() => {
@@ -28,17 +49,36 @@ const cardList = computed(() => {
   ];
 });
 
-// 各社团人数占比饼图数据
+// 各社团人数占比饼图数据（来自 distribution 接口）
 const clubPieData = computed(() => clubData.value.map(item => ({
   name: item.clubName,
   value: item.memberCount,
 })));
 
-// 社团类型成员分布饼图数据
-const typePieData = computed(() => typeData.value);
+// 社团类型成员分布饼图数据（来自 distribution 接口）
+// 后端返回 { name, count }，需要转换为 { name, value }
+const typePieData = computed(() => {
+  return (typeData.value || []).map(item => ({
+    name: item.name || '未知类型',   // 如果 name 为空，显示占位文本
+    value: item.count
+  }));
+});
 
-// 每月申请趋势折线图数据
-const lineXData = computed(() => (overviewData.value.monthlyApplyTrend || []).map(item => item.month));
+// 社团类型数量分布饼图数据（来自 overview 接口的 clubTypeDistribution）
+// 将后端返回的 { count, type } 转换为 { name: 中文, value: count }
+const clubTypeDistributionPieData = computed(() => {
+  const distribution = overviewData.value.clubTypeDistribution || [];
+  return distribution.map(item => ({
+    name: clubTypeMap[item.type] || item.name || '未知',
+    value: item.count
+  }));
+});
+
+// 每月申请趋势折线图数据（格式化月份）
+const lineXData = computed(() => {
+  const trend = overviewData.value.monthlyApplyTrend || [];
+  return trend.map(item => formatMonth(item.month));
+});
 const lineSeriesData = computed(() => [
   { name: '申请人数', data: (overviewData.value.monthlyApplyTrend || []).map(item => item.count) },
 ]);
@@ -48,19 +88,23 @@ const pieOptions = computed(() => [
   {
     title: '各社团人数占比',
     data: clubPieData.value,
-    pieType: 'club',      // 自定义类型标识
+    pieType: 'club',
   },
   {
     title: '社团类型成员分布',
     data: typePieData.value,
     pieType: 'type',
   },
+  {
+    title: '社团类型数量分布',
+    data: clubTypeDistributionPieData.value,
+    pieType: 'clubTypeCount',
+  },
 ]);
 
 const activePieIndex = ref(0);
 const currentPieData = computed(() => pieOptions.value[activePieIndex.value] || pieOptions.value[0]);
 
-// 切换饼图
 const handlePieChange = (index) => {
   activePieIndex.value = index;
 };
@@ -71,12 +115,13 @@ const handleCardClick = (cardInfo) => {
   emit('cardSelect', cardInfo.status);
 };
 
-// 饼图点击包装：根据当前显示的饼图类型，传递不同的标识
 const handlePieClickWrapper = (item) => {
   const currentType = currentPieData.value.pieType;
   if (currentType === 'club') {
     emit('pieClick', { type: 'clubName', value: item.name });
   } else if (currentType === 'type') {
+    emit('pieClick', { type: 'clubType', value: item.name });
+  } else if (currentType === 'clubTypeCount') {
     emit('pieClick', { type: 'clubType', value: item.name });
   }
 };
@@ -88,29 +133,28 @@ const handleLineClick = (params) => {
 const loadData = async () => {
   loading.value = true;
   try {
+    // 保留默认 timeRange 参数
     const [overviewRes, distributionRes] = await Promise.allSettled([
-      getClubMgmtChart({ timeRange: '本学期' }),
-      getClubDistribution({ timeRange: '本学期' }),
+      getClubMgmtChart({ timeRange: defaultTimeRange }),
+      getClubDistribution({ timeRange: defaultTimeRange }),
     ]);
     if (overviewRes.status === 'fulfilled') {
       overviewData.value = overviewRes.value;
     } else {
       console.warn('看板接口失败，使用模拟数据');
       overviewData.value = {
-        totalClubCount: 28,
-        totalMemberCount: 896,
-        pendingAuditCount: 32,
-        venueApplyCount: 126,
+        totalClubCount: 9,
+        totalMemberCount: 9,
+        pendingAuditCount: 1,
+        venueApplyCount: 9,
         clubTypeDistribution: [
-          { name: '文体', value: 12 },
-          { name: '学术', value: 8 },
-          { name: '志愿', value: 5 },
-          { name: '其他', value: 3 },
+          { count: 4, type: "1" },
+          { count: 3, type: "2" },
+          { count: 2, type: "3" }
         ],
         monthlyApplyTrend: [
-          { month: '09月', count: 256 },
-          { month: '10月', count: 128 },
-          { month: '11月', count: 86 },
+          { month: "2024-09", count: 7 },
+          { month: "2026-04", count: 2 }
         ],
       };
     }
@@ -120,10 +164,10 @@ const loadData = async () => {
     } else {
       console.warn('分布接口失败，使用模拟数据');
       clubData.value = [
-        { clubName: '篮球社', memberCount: 68 },
-        { clubName: '文学社', memberCount: 42 },
-        { clubName: '志愿者协会', memberCount: 86 },
-        { clubName: '动漫社', memberCount: 35 },
+        { clubName: '篮球社', memberCount: 68, clubType: '文体' },
+        { clubName: '文学社', memberCount: 42, clubType: '学术' },
+        { clubName: '志愿者协会', memberCount: 86, clubType: '志愿' },
+        { clubName: '动漫社', memberCount: 35, clubType: '其他' },
       ];
       typeData.value = [
         { name: '文体', value: 426 },
@@ -134,23 +178,26 @@ const loadData = async () => {
     }
   } catch (error) {
     console.error('加载图表数据失败', error);
-    // 设置默认数据
     overviewData.value = {
-      totalClubCount: 28,
-      totalMemberCount: 896,
-      pendingAuditCount: 32,
-      venueApplyCount: 126,
+      totalClubCount: 9,
+      totalMemberCount: 9,
+      pendingAuditCount: 1,
+      venueApplyCount: 9,
+      clubTypeDistribution: [
+        { count: 4, type: "1" },
+        { count: 3, type: "2" },
+        { count: 2, type: "3" }
+      ],
       monthlyApplyTrend: [
-        { month: '09月', count: 256 },
-        { month: '10月', count: 128 },
-        { month: '11月', count: 86 },
+        { month: "2024-09", count: 7 },
+        { month: "2026-04", count: 2 }
       ],
     };
     clubData.value = [
-      { clubName: '篮球社', memberCount: 68 },
-      { clubName: '文学社', memberCount: 42 },
-      { clubName: '志愿者协会', memberCount: 86 },
-      { clubName: '动漫社', memberCount: 35 },
+      { clubName: '篮球社', memberCount: 68, clubType: '文体' },
+      { clubName: '文学社', memberCount: 42, clubType: '学术' },
+      { clubName: '志愿者协会', memberCount: 86, clubType: '志愿' },
+      { clubName: '动漫社', memberCount: 35, clubType: '其他' },
     ];
     typeData.value = [
       { name: '文体', value: 426 },
@@ -239,7 +286,6 @@ onMounted(() => {
   }
 }
 
-/* 饼图区域样式（带下拉选择器） */
 .pie-chart-area {
   position: relative;
   flex: 1;

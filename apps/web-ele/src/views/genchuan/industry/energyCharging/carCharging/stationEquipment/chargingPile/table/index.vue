@@ -46,9 +46,9 @@
           <el-tag v-if="searchParams.manufacturer" type="primary" closable @close="handleClearField('manufacturer')">
             生产厂家：{{ searchParams.manufacturer }}
           </el-tag>
-          <!-- 所属场站筛选标签 -->
-          <el-tag v-if="searchParams.stationName" type="primary" closable @close="handleClearField('stationName')">
-            所属场站：{{ searchParams.stationName }}
+          <!-- 所属场站筛选标签（显示场站名称） -->
+          <el-tag v-if="searchParams.stationId" type="primary" closable @close="handleClearField('stationId')">
+            所属场站：{{ stationMap.get(searchParams.stationId) || searchParams.stationId }}
           </el-tag>
           <!-- 充电模式筛选标签 -->
           <el-tag v-if="searchParams.chargeMode" type="primary" closable @close="handleClearField('chargeMode')">
@@ -70,7 +70,7 @@
           <el-tag v-if="searchParams.creator" type="primary" closable @close="handleClearField('creator')">
             创建人：{{ searchParams.creator }}
           </el-tag>
-          <!-- 运行时长筛选标签（图表钻取用） -->
+          <!-- 运行时长筛选标签 -->
           <el-tag v-if="searchParams.runTime !== undefined && searchParams.runTime !== null && searchParams.runTime !== ''" type="primary" closable @close="handleClearField('runTime')">
             运行时长：{{ searchParams.runTime }} 小时
           </el-tag>
@@ -112,8 +112,9 @@
       <template #manufacturer="{ row }">
         <el-text @click="handleFieldClick('manufacturer', row.manufacturer)" type="primary">{{ row.manufacturer }}</el-text>
       </template>
+      <!-- 所属场站点击时传递 stationId -->
       <template #stationName="{ row }">
-        <el-text @click="handleFieldClick('stationName', row.stationName)" type="primary">{{ row.stationName }}</el-text>
+        <el-text @click="handleFieldClick('stationId', row.stationId)" type="primary">{{ row.stationName }}</el-text>
       </template>
       <template #lotName="{ row }">
         <el-text @click="handleLotDetail(row)" type="primary">{{ row.lotName || '-' }}</el-text>
@@ -252,6 +253,7 @@ const dataObj = reactive({
 
 const chargeModeMap = ref(new Map());
 const pileStatusMap = ref(new Map());
+const stationMap = ref(new Map()); // stationId -> stationName
 const defaultStatusId = ref(null);
 
 // 二维码相关
@@ -271,12 +273,10 @@ const tabsData = ref([
   { label: '已停用', name: '已停用', count: 0 },
 ]);
 
-/** 获取各状态数量用于标签页计数 */
 async function fetchStatusCount() {
   try {
-    const res = await getStatusCount();   // 返回 [{ pileStatus, count }]
+    const res = await getStatusCount();
     const statusMap = new Map(res.map(item => [Number(item.pileStatus), item.count]));
-    // 根据实际字典：1=已启用，2=已停用，3=未调试，4=已调试
     const enableCount = statusMap.get(1) || 0;
     const disableCount = statusMap.get(2) || 0;
     const otherCount = (statusMap.get(3) || 0) + (statusMap.get(4) || 0);
@@ -288,13 +288,11 @@ async function fetchStatusCount() {
   }
 }
 
-/** 标签页切换时重新加载表格 */
 function handleTabChange() {
   dataObj.currentPage = 1;
   handleRefresh();
 }
 
-// ==================== 原有工具函数 ====================
 function formatList(list) {
   return (list || []).map(item => ({
     ...item,
@@ -307,7 +305,6 @@ function formatList(list) {
   }));
 }
 
-// 批量加载当前页二维码
 async function loadQrcodesForCurrentPage() {
   const pendingItems = dataObj.list.filter(item => !item.qrcodeUrl && item.qrcodeLoading === true);
   if (pendingItems.length === 0) return;
@@ -327,14 +324,12 @@ async function loadQrcodesForCurrentPage() {
   await Promise.allSettled(promises);
 }
 
-// 获取表格数据（根据 activeName 添加状态筛选）
 const getTableData = async ({ page }) => {
   const params = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...searchParams.value,
   };
-  // 根据标签页添加状态筛选（使用数字状态值）
   if (activeName.value === '已启用') {
     params.pileStatus = 1;
   } else if (activeName.value === '已停用') {
@@ -356,7 +351,6 @@ const getTableData = async ({ page }) => {
   }
 };
 
-// 工具函数：根据状态名称获取ID（数字）
 const getStatusIdByName = (name) => {
   for (let [id, label] of pileStatusMap.value.entries()) {
     if (label === name) return id;
@@ -364,7 +358,6 @@ const getStatusIdByName = (name) => {
   return null;
 };
 
-// 工具函数：根据充电模式名称获取ID（数字）
 const getChargeModeIdByName = (name) => {
   for (let [id, label] of chargeModeMap.value.entries()) {
     if (label === name) return id;
@@ -421,6 +414,10 @@ const handleFieldClick = (fieldName, value) => {
       searchParams.value = { ...searchParams.value, [fieldName]: numValue };
       queryFormApi.setValues({ [fieldName]: numValue }, false);
     }
+  } else if (fieldName === 'stationId') {
+    // value 已经是数字 ID，直接设置
+    searchParams.value = { ...searchParams.value, [fieldName]: value };
+    queryFormApi.setValues({ [fieldName]: value }, false);
   } else {
     searchParams.value = { ...searchParams.value, [fieldName]: value };
     queryFormApi.setValues({ [fieldName]: value }, false);
@@ -429,7 +426,6 @@ const handleFieldClick = (fieldName, value) => {
   handleRefresh();
 };
 
-// 重置所有筛选条件（保留标签页状态）
 function resetFilter() {
   searchParams.value = {};
   queryFormApi.resetForm();
@@ -437,7 +433,6 @@ function resetFilter() {
   handleRefresh();
 }
 
-// 设置筛选条件（供图表钻取调用）
 function setFilter(filters) {
   if (!filters || Object.keys(filters).length === 0) {
     resetFilter();
@@ -803,7 +798,11 @@ const loadFormOptions = async () => {
       getChargeModeDict(),
       getPileStatusDict(),
     ]);
-    // 将字典的 value 转为数字
+    // 填充 stationMap
+    stationMap.value.clear();
+    (stationList || []).forEach(item => {
+      stationMap.value.set(item.value, item.label);
+    });
     const formattedChargeModes = (chargeModes || []).map(item => ({
       value: Number(item.value),
       label: item.label
@@ -828,6 +827,7 @@ const loadFormOptions = async () => {
     ]);
 
     await queryFormApi.updateSchema([
+      { fieldName: 'stationId', componentProps: { options: stationList || [] } },
       { fieldName: 'chargeMode', componentProps: { options: formattedChargeModes } },
       { fieldName: 'pileStatus', componentProps: { options: formattedPileStatuses } },
     ]);
@@ -887,7 +887,6 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     const isEdit = !!id;
     const loadingInstance = ElLoading.service({ text: $t('ui.actionMessage.saving') });
     try {
-      // 确保关键字段类型正确
       if (values.power !== undefined && values.power !== null) values.power = Number(values.power);
       if (values.chargeMode !== undefined && values.chargeMode !== null) values.chargeMode = Number(values.chargeMode);
       if (values.stationId !== undefined && values.stationId !== null) values.stationId = Number(values.stationId);

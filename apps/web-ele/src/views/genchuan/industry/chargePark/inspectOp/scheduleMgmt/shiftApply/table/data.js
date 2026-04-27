@@ -1,6 +1,7 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -44,8 +45,8 @@ export const userOptions = [
 export const statusOptions = getDictOptions(SHIFT_APPLY_STATUS_DICT, 'string');
 
 export const auditResultOptions = [
-  { label: '通过', value: '通过' },
-  { label: '驳回', value: '驳回' },
+  { label: '通过', value: '2' },
+  { label: '驳回', value: '3' },
 ];
 
 const auditRemarks = [
@@ -280,27 +281,19 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'oldDateRange',
+      fieldName: 'oldDate',
       label: '原日期',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择原日期',
-        format: 'YYYY-MM-DD',
-        valueFormat: 'timestamp',
-        type: 'daterange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     {
-      fieldName: 'newDateRange',
+      fieldName: 'newDate',
       label: '新日期',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择新日期',
-        format: 'YYYY-MM-DD',
-        valueFormat: 'timestamp',
-        type: 'daterange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     {

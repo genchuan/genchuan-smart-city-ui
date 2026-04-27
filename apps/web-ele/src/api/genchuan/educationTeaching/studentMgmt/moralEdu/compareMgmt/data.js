@@ -50,9 +50,9 @@ export function getCompareMgmtPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mock = getMockList();
-      return { list: convertList(mock), total: mock.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -73,7 +73,6 @@ export function updateCompareMgmt(data) {
 }
 
 export function scoreCompareMgmt(data) {
-  // 打分接口不涉及 cycle 字段，无需转换
   return requestClient.put('/studentmgmt/compare-mgmt/score', data).catch(err => {
     console.warn('打分接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -81,7 +80,6 @@ export function scoreCompareMgmt(data) {
 }
 
 export function awardCompareMgmt(data) {
-  // 授予接口不涉及 cycle 字段，无需转换
   return requestClient.put('/studentmgmt/compare-mgmt/award', data).catch(err => {
     console.warn('授予接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -100,10 +98,9 @@ export function getCompareMgmtDetail(params) {
   return requestClient.get('/studentmgmt/compare-mgmt/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -123,132 +120,3 @@ export function getCompareMgmtChart(params) {
     });
   });
 }
-
-export function getCompareMgmtScoreRank(params) {
-  return requestClient.get('/studentmgmt/compare-mgmt/chart/scoreRank', { params }).catch(err => {
-    console.warn('得分排名接口失败，使用模拟数据', err);
-    return Promise.resolve({
-      classList: ['高一(1)班', '高一(2)班', '高一(3)班', '高二(1)班'],
-      scoreList: [92.5, 88.0, 90.0, 85.5],
-      rankList: [1, 3, 2, 4],
-    });
-  });
-}
-
-// 模拟数据（原始值使用中文，保持与前端一致）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      className: '高一(1)班',
-      cycle: '月',
-      totalScore: 92.5,
-      rankNo: 1,
-      awardName: '文明班级',
-      awardTime: 1767225600000,
-      scoreUser: '张老师',
-      status: '已汇总',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 2,
-      className: '高一(2)班',
-      cycle: '月',
-      totalScore: 88.0,
-      rankNo: 3,
-      awardName: null,
-      awardTime: null,
-      scoreUser: null,
-      status: '打分中',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 3,
-      className: '高一(3)班',
-      cycle: '月',
-      totalScore: 90.0,
-      rankNo: 2,
-      awardName: '文明班级',
-      awardTime: 1775088000000,
-      scoreUser: '王老师',
-      status: '已汇总',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775088000000,
-      updateTime: 1775088000000,
-    },
-    {
-      id: 4,
-      className: '高二(1)班',
-      cycle: '周',
-      totalScore: 85.5,
-      rankNo: 1,
-      awardName: '优秀班级',
-      awardTime: 1777680000000,
-      scoreUser: '李老师',
-      status: '已汇总',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1777680000000,
-      updateTime: 1777680000000,
-    },
-    {
-      id: 5,
-      className: '高二(2)班',
-      cycle: '周',
-      totalScore: null,
-      rankNo: null,
-      awardName: null,
-      awardTime: null,
-      scoreUser: null,
-      status: '打分中',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1780358400000,
-      updateTime: 1780358400000,
-    },
-    {
-      id: 6,
-      className: '高三(1)班',
-      cycle: '学期',
-      totalScore: 94.0,
-      rankNo: 1,
-      awardName: '文明班级',
-      awardTime: 1782950400000,
-      scoreUser: '陈老师',
-      status: '已汇总',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1782950400000,
-      updateTime: 1782950400000,
-    },
-    {
-      id: 7,
-      className: '高三(2)班',
-      cycle: '学期',
-      totalScore: 82.0,
-      rankNo: 2,
-      awardName: null,
-      awardTime: null,
-      scoreUser: null,
-      status: '打分中',
-      remark: '',
-      creator: 'teacher_wang',
-      updater: 'teacher_wang',
-      createTime: 1785628800000,
-      updateTime: 1785628800000,
-    },
-  ];
-};

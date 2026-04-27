@@ -3,8 +3,8 @@ import { computed, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
-import { getDictObj, getDictOptions } from '@vben/hooks';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { getDictObj } from '@vben/hooks';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -13,15 +13,11 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createPrizeMgmt,
-  disablePrizeMgmt,
-  enablePrizeMgmt,
   exportPrizeMgmt,
-  getPrizeMgmtDetail,
   getPrizeMgmtPage,
   updatePrizeMgmt,
 } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/prizeMgmt';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
 import ImportExcelDialog from '../components/ImportExcelDialog.vue';
@@ -242,7 +238,10 @@ const getTableData = async (pageObj) => {
     };
 
     // 处理创建时间范围
-    if (dataObj.searchParams.createTime && dataObj.searchParams.createTime.length === 2) {
+    if (
+      dataObj.searchParams.createTime &&
+      dataObj.searchParams.createTime.length === 2
+    ) {
       queryParams.createTimeStart = dataObj.searchParams.createTime[0];
       queryParams.createTimeEnd = dataObj.searchParams.createTime[1];
     }
@@ -424,10 +423,7 @@ defineExpose({
       :fields="detailFields"
     />
     <!-- 导入弹窗 -->
-    <ImportExcelDialog
-      ref="importExcelDialogRef"
-      @success="handleRefresh"
-    />
+    <ImportExcelDialog ref="importExcelDialogRef" @success="handleRefresh" />
     <!-- 状态确认弹窗 -->
     <StatusConfirmDialog
       ref="statusConfirmDialogRef"
@@ -469,11 +465,7 @@ defineExpose({
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导入"
-            icon-name="Upload"
-            @click="handleImport"
-          />
+          <IconButton content="导入" icon-name="Upload" @click="handleImport" />
           <IconButton
             content="导出"
             icon-name="download"
@@ -601,5 +593,4 @@ defineExpose({
   </div>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

@@ -1,7 +1,6 @@
 <template>
   <div class="park-lot-table-new">
     <Grid>
-      <!-- 筛选标签区 -->
       <template #table-title>
         <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
           <el-tag
@@ -16,31 +15,30 @@
         </div>
       </template>
 
-      <!-- 工具栏按钮 -->
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="生成" icon-name="Plus" @click="openCreateDrawer" />
-          <IconButton content="筛选" icon-name="search" @click="() => QueryFormApi.openDrawer?.()" />
+          <IconButton content="筛选" icon-name="search" @click="() => queryFormApi.openDrawer?.()" />
           <IconButton content="导出" icon-name="download" @click="handleExportList" />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
           <IconButton content="刷新" icon-name="refresh" @click="handleRefresh" />
         </div>
       </template>
 
-      <!-- 报表周期：点击筛选 -->
       <template #reportCycle="{ row }">
         <el-text @click="filterByField('reportCycle', row.reportCycle)" type="primary" style="cursor: pointer">
           {{ row.reportCycle }}
         </el-text>
       </template>
-
-      <!-- 统计时段：点击筛选 -->
       <template #statTime="{ row }">
         <el-text @click="filterByStatTime(row.statTime)" style="cursor: pointer">
           {{ row.statTime }}
         </el-text>
       </template>
-
-      <!-- 各指标列：点击打开维度明细抽屉 -->
       <template #rescueCompleteRate="{ row }">
         <el-text @click="openDimensionDetail(row.id, 'rescue')" type="primary">{{ row.rescueCompleteRate }}%</el-text>
       </template>
@@ -59,30 +57,23 @@
       <template #effectiveWordingCount="{ row }">
         <el-text @click="openDimensionDetail(row.id, 'wording')" type="primary">{{ row.effectiveWordingCount }}</el-text>
       </template>
-
-      <!-- 生成状态：点击筛选 -->
       <template #generateStatus="{ row }">
         <el-tag @click="filterByField('generateStatus', row.generateStatus)" style="cursor: pointer">
           {{ row.generateStatus }}
         </el-tag>
       </template>
-
-      <!-- 同比增长率 / 环比增长率：点击打开分析抽屉 -->
       <template #yearOnYearGrowthRate="{ row }">
         <el-text @click="handleCompare(row.id, 'yoy')" type="primary">{{ row.yearOnYearGrowthRate }}%</el-text>
       </template>
       <template #monthOnMonthGrowthRate="{ row }">
         <el-text @click="handleCompare(row.id, 'mom')" type="primary">{{ row.monthOnMonthGrowthRate }}%</el-text>
       </template>
-
-      <!-- 操作人：点击查看详情 -->
       <template #operator="{ row }">
         <el-text @click="showOperatorDetail(row.operatorUserId, row.operator)" type="primary">
           {{ row.operator }}
         </el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="查看" icon-name="View" @click="handleViewDetail(row)" />
@@ -91,7 +82,6 @@
       </template>
     </Grid>
 
-    <!-- 生成报表抽屉 -->
     <CreateDrawer>
       <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-width="100px">
         <el-form-item label="统计类型" prop="statType" required>
@@ -106,54 +96,37 @@
           </el-select>
         </el-form-item>
         <el-form-item label="统计开始时间" prop="statStartTime" required>
-          <el-date-picker
-            v-model="createForm.statStartTime"
-            type="datetime"
-            placeholder="选择开始时间"
-            value-format="YYYY-MM-DD HH:mm:ss"
-          />
+          <el-date-picker v-model="createForm.statStartTime" type="datetime" placeholder="选择开始时间" value-format="YYYY-MM-DD HH:mm:ss" />
         </el-form-item>
         <el-form-item label="统计结束时间" prop="statEndTime" required>
-          <el-date-picker
-            v-model="createForm.statEndTime"
-            type="datetime"
-            placeholder="选择结束时间"
-            value-format="YYYY-MM-DD HH:mm:ss"
-          />
+          <el-date-picker v-model="createForm.statEndTime" type="datetime" placeholder="选择结束时间" value-format="YYYY-MM-DD HH:mm:ss" />
         </el-form-item>
       </el-form>
     </CreateDrawer>
 
-    <!-- 报表明细抽屉 -->
     <CycleReportDetailDrawer ref="detailDrawerRef" :detail-data="currentDetail" />
 
-    <!-- 同比/环比分析抽屉 - 图表展示 -->
     <CompareDrawer :title="compareTitle">
       <div v-if="compareData" class="compare-chart-container">
         <div class="compare-period">
           <el-tag type="info">当前周期：{{ compareData.current?.statWindow || '-' }}</el-tag>
           <el-tag type="info" style="margin-left: 12px">对比周期：{{ compareData.previous?.statWindow || '-' }}</el-tag>
         </div>
-        <!-- 比率指标图表 -->
         <div class="chart-title">比率指标对比 (%)</div>
         <div ref="rateChartRef" class="compare-chart"></div>
-        <!-- 总量指标图表 -->
         <div class="chart-title" style="margin-top: 24px">总量指标对比</div>
         <div ref="totalChartRef" class="compare-chart"></div>
       </div>
       <el-empty v-else description="暂无数据" />
     </CompareDrawer>
 
-    <!-- 维度明细抽屉 -->
     <DimensionDetailDrawer ref="dimensionDrawerRef" />
 
-    <!-- 操作人详情弹窗 -->
     <el-dialog v-model="operatorDialogVisible" title="操作人详情" width="400px">
       <p>用户ID：{{ currentOperator.id }}</p>
       <p>用户名称：{{ currentOperator.name }}</p>
     </el-dialog>
 
-    <!-- 筛选抽屉 -->
     <QueryForm.Drawer title="筛选" />
   </div>
 </template>
@@ -180,9 +153,13 @@ import {
 import { useFormSchema, useGridColumns } from './data';
 import CycleReportDetailDrawer from './detail.vue';
 
-const props = defineProps({ secondShow: Boolean });
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: { type: Boolean, default: false },
+});
+const emit = defineEmits(['arrow-change']);
+const arrowChange = () => emit('arrow-change');
 
-// ---------- 数据状态 ----------
 const dataObj = reactive({
   total: 0,
   list: [],
@@ -197,14 +174,12 @@ const compareTitle = ref('增长率分析');
 const operatorDialogVisible = ref(false);
 const currentOperator = ref({ id: '', name: '' });
 
-// 图表引用
 const rateChartRef = ref(null);
 const totalChartRef = ref(null);
 let rateChart = null;
 let totalChart = null;
 
-// ---------- 搜索表单 ----------
-const [QueryForm, QueryFormApi] = useVbenForm({
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: onSubmit,
@@ -215,8 +190,8 @@ const [QueryForm, QueryFormApi] = useVbenForm({
   resetButtonOptions: {
     content: '重置',
     onClick: () => {
-      QueryFormApi.resetForm();
-      QueryFormApi.submitForm();
+      queryFormApi.resetForm();
+      queryFormApi.submitForm();
     }
   },
 });
@@ -227,7 +202,6 @@ async function onSubmit(values) {
   gridApi.query();
 }
 
-// 筛选标签相关
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchObj;
@@ -245,10 +219,10 @@ const handleClearField = async (fieldName) => {
   if (fieldName === 'statTime') {
     delete dataObj.searchObj.statStartTime;
     delete dataObj.searchObj.statEndTime;
-    await QueryFormApi.setValues({ statStartTime: null, statEndTime: null }, false);
+    await queryFormApi.setValues({ statStartTime: null, statEndTime: null }, false);
   } else {
     delete dataObj.searchObj[fieldName];
-    await QueryFormApi.setValues({ [fieldName]: null }, false);
+    await queryFormApi.setValues({ [fieldName]: null }, false);
   }
   dataObj.currentPage = 1;
   gridApi.query();
@@ -267,11 +241,7 @@ const filterByStatTime = (statTime) => {
     const month = match[2];
     const start = `${year}-${month}-01 00:00:00`;
     const end = `${year}-${month}-${new Date(year, month, 0).getDate()} 23:59:59`;
-    dataObj.searchObj = {
-      ...dataObj.searchObj,
-      statStartTime: start,
-      statEndTime: end,
-    };
+    dataObj.searchObj = { ...dataObj.searchObj, statStartTime: start, statEndTime: end };
     delete dataObj.searchObj.statTime;
   } else {
     ElMessage.warning('该统计时段格式暂不支持筛选');
@@ -281,7 +251,6 @@ const filterByStatTime = (statTime) => {
   gridApi.query();
 };
 
-// 表格数据加载
 const getTableData = async (pageObj) => {
   const params = {
     pageNo: pageObj.page.currentPage,
@@ -314,7 +283,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 const handleRefresh = () => gridApi.query();
 
-// 生成报表
 const createForm = reactive({ statType: '', statStartTime: '', statEndTime: '' });
 const createFormRef = ref(null);
 const createRules = {
@@ -335,18 +303,11 @@ const createRules = {
   ],
 };
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  width: 550,
-  title: '生成周期报表',
+  modal: false, appendToMain: true, width: 550, title: '生成周期报表',
   onConfirm: async () => {
     try {
       await createFormRef.value.validate();
-      await createCycleReport({
-        statType: createForm.statType,
-        statStartTime: createForm.statStartTime,
-        statEndTime: createForm.statEndTime,
-      });
+      await createCycleReport(createForm);
       ElMessage.success('报表生成成功');
       createDrawerApi.close();
       handleRefresh();
@@ -362,27 +323,19 @@ const openCreateDrawer = () => {
   createDrawerApi.open();
 };
 
-// 导出列表
 const handleExportList = async () => {
   await ElMessageBox.confirm('确认导出当前列表数据吗？', '提示', { type: 'info' });
   const params = { ...dataObj.searchObj, pageNo: 1, pageSize: 10000 };
   const blob = await exportCycleReport(params);
-  downloadFileFromBlobPart({
-    fileName: '周期报表列表.xlsx',
-    source: blob,
-  });
+  downloadFileFromBlobPart({ fileName: '周期报表列表.xlsx', source: blob });
   ElMessage.success('导出成功');
 };
 
-// 单条导出
 const handleRowExport = async (id) => {
   try {
     await ElMessageBox.confirm('确认导出该报表的完整明细数据吗？', '提示', { type: 'info' });
     const blob = await rowExportCycleReport(id);
-    downloadFileFromBlobPart({
-      fileName: `周期报表_${id}.xlsx`,
-      source: blob,
-    });
+    downloadFileFromBlobPart({ fileName: `周期报表_${id}.xlsx`, source: blob });
     ElMessage.success('导出成功');
   } catch (error) {
     if (error === 'cancel') return;
@@ -390,7 +343,6 @@ const handleRowExport = async (id) => {
   }
 };
 
-// 查看报表明细
 const detailDrawerRef = ref(null);
 const handleViewDetail = async (row) => {
   const res = await getCycleReportDetail({ id: row.id });
@@ -398,22 +350,16 @@ const handleViewDetail = async (row) => {
   detailDrawerRef.value.open();
 };
 
-// 同比/环比分析 - 图表渲染
 const [CompareDrawer, compareDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  width: 800,
-  title: compareTitle,
+  modal: false, appendToMain: true, width: 800, title: compareTitle,
   onCancel: () => compareDrawerApi.close(),
 });
 
-// 渲染对比图表
 const renderCompareCharts = () => {
   if (!compareData.value) return;
-  const { current, previous, compareType } = compareData.value;
+  const { current, previous } = compareData.value;
   if (!current || !previous) return;
 
-  // 比率指标 (百分比)
   const rateMetrics = [
     { key: 'rescueCompleteRate', name: '救援完成率' },
     { key: 'reserveSuccessRate', name: '预约成功率' },
@@ -421,7 +367,6 @@ const renderCompareCharts = () => {
     { key: 'findCarSuccessRate', name: '寻车定位成功率' },
     { key: 'spacePushSuccessRate', name: '空位推送成功率' },
   ];
-  // 总量指标
   const totalMetrics = [
     { key: 'rescueTotal', name: '救援总量' },
     { key: 'reserveTotal', name: '预约总量' },
@@ -429,17 +374,14 @@ const renderCompareCharts = () => {
     { key: 'spacePushTotal', name: '空位推送总量' },
   ];
 
-  // 比率图表数据
   const rateCategories = rateMetrics.map(m => m.name);
   const currentRateData = rateMetrics.map(m => current[m.key] ?? 0);
   const previousRateData = rateMetrics.map(m => previous[m.key] ?? 0);
 
-  // 总量图表数据
   const totalCategories = totalMetrics.map(m => m.name);
   const currentTotalData = totalMetrics.map(m => current[m.key] ?? 0);
   const previousTotalData = totalMetrics.map(m => previous[m.key] ?? 0);
 
-  // 初始化或更新比率图表
   if (rateChartRef.value) {
     if (rateChart) rateChart.dispose();
     rateChart = echarts.init(rateChartRef.value);
@@ -471,11 +413,8 @@ const renderCompareCharts = () => {
   }
 };
 
-// 监听 compareData 变化，重新渲染图表
 watch(compareData, () => {
-  nextTick(() => {
-    renderCompareCharts();
-  });
+  nextTick(() => renderCompareCharts());
 });
 
 const handleCompare = async (id, type) => {
@@ -485,7 +424,6 @@ const handleCompare = async (id, type) => {
   compareDrawerApi.open();
 };
 
-// 维度明细抽屉
 const dimensionDrawerRef = ref(null);
 const dimensionTitleMap = {
   rescue: '救援明细',
@@ -504,7 +442,6 @@ const openDimensionDetail = async (reportId, dimension) => {
   });
 };
 
-// 操作人详情
 const showOperatorDetail = async (userId, userName) => {
   if (!userId) {
     ElMessage.warning('无操作人信息');
@@ -519,22 +456,10 @@ const showOperatorDetail = async (userId, userName) => {
   operatorDialogVisible.value = true;
 };
 
-// ========== 图表钻取事件 - 仅保留地图钻取 ==========
 const handleChartDrill = async (event) => {
   const filters = event.detail;
-  // 仅处理地图位置钻取
   if (filters.location) {
-    // 可根据业务需要将 location 作为筛选条件，这里仅提示示例
     ElMessage.info(`地图钻取：位置 ${filters.location}`);
-    // 如果需要实际筛选列表，可以在这里设置筛选条件并刷新
-    // 例如：newSearchObj.location = filters.location; 但根据当前接口字段调整
-    // 由于接口可能不支持位置筛选，暂时仅提示，不刷新列表
-    // 如需刷新列表，可取消下面代码注释
-    // const newSearchObj = { ...dataObj.searchObj };
-    // newSearchObj.location = filters.location;
-    // dataObj.searchObj = newSearchObj;
-    // dataObj.currentPage = 1;
-    // gridApi.query();
   }
 };
 
@@ -549,7 +474,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* 原有样式保持不变，新增对比抽屉内样式 */
 .compare-chart-container {
   padding: 16px;
 }

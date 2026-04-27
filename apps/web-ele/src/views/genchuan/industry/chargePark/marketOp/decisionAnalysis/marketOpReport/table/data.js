@@ -1,20 +1,17 @@
 import { DICT_TYPE } from '@vben/constants';
-import { getDictObj, getDictOptions } from '@vben/hooks';
-
-import { formatDate } from '#/utils/genchuan/formatTime';
-import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { getDictObj } from '@vben/hooks';
 
 /** 获取报表周期Tag类型 */
 export const getReportCycleTagType = (cycle) => {
   // 根据报表周期返回对应的tag类型
   const cycleTypeMap = {
-    '日报': 'info',
-    '周报': 'success',
-    '月报': 'primary',
-    '季报': 'warning',
-    '半年报': 'danger',
-    '年报': 'danger',
-    '自定义报表': 'info',
+    日报: 'info',
+    周报: 'success',
+    月报: 'primary',
+    季报: 'warning',
+    半年报: 'danger',
+    年报: 'danger',
+    自定义报表: 'info',
   };
   return cycleTypeMap[cycle] || 'info';
 };
@@ -28,9 +25,9 @@ export const getReportCycleLabel = (cycle) => {
 /** 获取生成状态Tag类型 */
 export const getGenerateStatusTagType = (status) => {
   const statusMap = {
-    '已生成': 'success',
-    '生成中': 'warning',
-    '生成失败': 'danger',
+    已生成: 'success',
+    生成中: 'warning',
+    生成失败: 'danger',
   };
   return statusMap[status] || 'info';
 };
@@ -49,7 +46,7 @@ export const dataList = () => {
       couponSendCount: 5000,
       couponVerifyRate: '38.60%',
       cardOrderCount: 320,
-      revenue: 15600.80,
+      revenue: 15_600.8,
       exchangeCount: 890,
       totalStock: 1200,
       warnStockCount: 35,
@@ -74,7 +71,7 @@ export const dataList = () => {
       couponSendCount: 1800,
       couponVerifyRate: '42.30%',
       cardOrderCount: 95,
-      revenue: 5200.50,
+      revenue: 5200.5,
       exchangeCount: 280,
       totalStock: 1150,
       warnStockCount: 28,
@@ -99,7 +96,7 @@ export const dataList = () => {
       couponSendCount: 450,
       couponVerifyRate: '45.20%',
       cardOrderCount: 25,
-      revenue: 1200.80,
+      revenue: 1200.8,
       exchangeCount: 68,
       totalStock: 1120,
       warnStockCount: 22,
@@ -121,10 +118,10 @@ export const dataList = () => {
       joinUserCount: 3500,
       lotteryCount: 9800,
       winningRate: '14.80%',
-      couponSendCount: 14500,
+      couponSendCount: 14_500,
       couponVerifyRate: '40.50%',
       cardOrderCount: 850,
-      revenue: 42500.60,
+      revenue: 42_500.6,
       exchangeCount: 2450,
       totalStock: 1350,
       warnStockCount: 48,
@@ -149,7 +146,7 @@ export const dataList = () => {
       couponSendCount: 2800,
       couponVerifyRate: '41.80%',
       cardOrderCount: 165,
-      revenue: 8200.40,
+      revenue: 8200.4,
       exchangeCount: 520,
       totalStock: 1180,
       warnStockCount: 30,
@@ -168,14 +165,14 @@ export const dataList = () => {
       reportCycle: '年报',
       statTime: '2025-01-01 00:00:00-2025-12-31 23:59:59',
       activityCount: 280,
-      joinUserCount: 15800,
-      lotteryCount: 45000,
+      joinUserCount: 15_800,
+      lotteryCount: 45_000,
       winningRate: '13.50%',
-      couponSendCount: 68000,
+      couponSendCount: 68_000,
       couponVerifyRate: '39.20%',
       cardOrderCount: 3650,
-      revenue: 185000.80,
-      exchangeCount: 11200,
+      revenue: 185_000.8,
+      exchangeCount: 11_200,
       totalStock: 1580,
       warnStockCount: 85,
       generateStatus: '已生成',
@@ -194,12 +191,12 @@ export const dataList = () => {
       statTime: '2025-07-01 00:00:00-2025-12-31 23:59:59',
       activityCount: 145,
       joinUserCount: 8200,
-      lotteryCount: 23500,
+      lotteryCount: 23_500,
       winningRate: '14.20%',
-      couponSendCount: 35200,
+      couponSendCount: 35_200,
       couponVerifyRate: '40.80%',
       cardOrderCount: 1880,
-      revenue: 98500.60,
+      revenue: 98_500.6,
       exchangeCount: 5800,
       totalStock: 1480,
       warnStockCount: 65,
@@ -224,7 +221,7 @@ export const dataList = () => {
       couponSendCount: 4200,
       couponVerifyRate: '37.50%',
       cardOrderCount: 280,
-      revenue: 13800.40,
+      revenue: 13_800.4,
       exchangeCount: 780,
       totalStock: 1250,
       warnStockCount: 32,

@@ -189,9 +189,9 @@ async function getTableData({ page }) {
     const pageResult = response?.list ? response : response?.data || response;
     const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
 
-    if (list.length === 0 && !pageResult?.total) {
-      throw new Error('接口返回数据为空');
-    }
+    // if (list.length === 0 && !pageResult?.total) {
+    //   throw new Error('接口返回数据为空');
+    // }
 
     dataObj.useStaticData = false;
     dataObj.total = pageResult.total || 0;

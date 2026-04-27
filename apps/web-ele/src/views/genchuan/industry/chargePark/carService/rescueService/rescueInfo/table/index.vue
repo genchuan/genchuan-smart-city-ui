@@ -19,10 +19,11 @@ import {
   archiveRescue,
   getRescueUserList,
   uploadFile,
-  completeRescue,
 } from '#/api/genchuan/industry/chargePark/carService/rescueService/rescueInfo/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import RescueDetailDrawer from './detail.vue';
+import { loadTMap } from '#/utils/genchuan/useTMap.ts';
+import { requestClient } from '#/api/request';
 
 // 搜索抽屉
 const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
@@ -93,7 +94,49 @@ const [EvaluateDetailDrawer, evaluateDetailDrawerApi] = useVbenDrawer({
   onCancel: () => evaluateDetailDrawerApi.close(),
 });
 
-const props = defineProps({ secondShow: Boolean });
+// 用户详情抽屉
+const [UserDetailDrawer, userDetailDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  width: 500,
+  title: '用户详情',
+  onCancel: () => userDetailDrawerApi.close(),
+});
+
+const props = defineProps({
+  secondShow: { type: Boolean, default: false },
+  arrowShow: { type: Boolean, default: false },  // 新增
+});
+const emit = defineEmits(['arrow-change']);     // 新增
+
+const arrowChange = () => {
+  emit('arrow-change');
+};
+
+const currentUserDetail = ref({});
+
+async function getUserDetail(userId) {
+  try {
+    const res = await requestClient.get('/system/user/get', { params: { id: userId } });
+    return res;
+  } catch (error) {
+    console.error('获取用户详情失败', error);
+    throw error;
+  }
+}
+
+async function openUserDetail(userId) {
+  if (!userId) return;
+  try {
+    const detail = await getUserDetail(userId);
+    currentUserDetail.value = detail || {};
+    userDetailDrawerApi.open();
+  } catch (error) {
+    ElMessage.error('获取用户详情失败');
+  }
+}
+
 const checkedIds = ref([]);
 const handleRowCheckboxChange = ({ records }) => {
   checkedIds.value = records.map((item) => item.id);
@@ -107,11 +150,10 @@ const dataObj = reactive({
   pageSize: 10,
 });
 
-// ==================== 用户映射：用户名 -> 用户ID ====================
-const allUserMap = ref(new Map());      // userId -> userName
-const userNameToIdMap = ref(new Map()); // userName -> userId
+// 用户映射
+const allUserMap = ref(new Map());
+const userNameToIdMap = ref(new Map());
 
-// 获取所有用户（用于名称与ID互转）
 async function fetchAllUsers() {
   try {
     const users = await getRescueUserList();
@@ -142,7 +184,47 @@ function getUserNameById(userId) {
   return allUserMap.value.get(userId) || userId;
 }
 
-// ==================== 获取表格数据 ====================
+// 逆地理编码
+const geocodeCache = new Map();
+
+async function reverseGeocode(lng, lat) {
+  const key = `${lng},${lat}`;
+  if (geocodeCache.has(key)) return geocodeCache.get(key);
+  try {
+    const TMap = await loadTMap();
+    const geocoder = new TMap.service.Geocoder();
+    const result = await geocoder.reverse({ location: new TMap.LatLng(lat, lng) });
+    const address = result.result?.address || `${lat},${lng}`;
+    geocodeCache.set(key, address);
+    return address;
+  } catch (error) {
+    console.error('逆地理编码失败', error);
+    return `${lat},${lng}`;
+  }
+}
+
+async function enhanceListWithLocationName(list) {
+  if (!list || list.length === 0) return list;
+  const promises = list.map(async (item) => {
+    if (!item.location || item.locationName) return item;
+    const coords = item.location.split(',');
+    if (coords.length === 2) {
+      const lng = parseFloat(coords[0]);
+      const lat = parseFloat(coords[1]);
+      if (!isNaN(lng) && !isNaN(lat)) {
+        const address = await reverseGeocode(lng, lat);
+        item.locationName = address;
+      } else {
+        item.locationName = item.location;
+      }
+    } else {
+      item.locationName = item.location;
+    }
+    return item;
+  });
+  return Promise.all(promises);
+}
+
 const getTableData = async (pageObj) => {
   const params = {
     pageNo: pageObj.page.currentPage,
@@ -150,24 +232,19 @@ const getTableData = async (pageObj) => {
     ...dataObj.serachObj,
   };
 
-  // 处理创建时间区间
   if (dataObj.serachObj.createTime && Array.isArray(dataObj.serachObj.createTime)) {
     params.createTimeBegin = dataObj.serachObj.createTime[0];
     params.createTimeEnd = dataObj.serachObj.createTime[1];
     delete params.createTime;
   }
 
-  // 多状态筛选（来自图表卡片点击 statusList）
   if (dataObj.serachObj.statusList && Array.isArray(dataObj.serachObj.statusList)) {
     params.status = dataObj.serachObj.statusList.join(',');
     delete params.statusList;
-  }
-  // 单个状态筛选
-  else if (dataObj.serachObj.status) {
+  } else if (dataObj.serachObj.status) {
     params.status = dataObj.serachObj.status;
   }
 
-  // 派发时间区间（图表钻取）
   if (dataObj.serachObj.dispatchTimeRange && Array.isArray(dataObj.serachObj.dispatchTimeRange)) {
     const [startDate, endDate] = dataObj.serachObj.dispatchTimeRange;
     if (startDate && endDate) {
@@ -179,7 +256,6 @@ const getTableData = async (pageObj) => {
     delete params.dispatchTimeRange;
   }
 
-  // 区域筛选
   if (dataObj.serachObj.bounds) {
     params.north = dataObj.serachObj.bounds.north;
     params.south = dataObj.serachObj.bounds.south;
@@ -189,18 +265,22 @@ const getTableData = async (pageObj) => {
   }
 
   const res = await getRescueInfoPage(params);
-  dataObj.total = res.total;
-  dataObj.list = (res.list || []).map((v) => ({
+  const rawList = (res.list || []).map((v) => ({
     ...v,
     createTime: formatTimestamp(v.createTime),
     updateTime: formatTimestamp(v.updateTime),
     dispatchTime: formatTimestamp(v.dispatchTime),
     finishTime: formatTimestamp(v.finishTime),
   }));
+
+  const enhancedList = await enhanceListWithLocationName(rawList);
+
+  dataObj.total = res.total;
+  dataObj.list = enhancedList;
   return dataObj;
 };
 
-// ==================== 搜索表单 ====================
+// 搜索表单
 const [QueryForm, QueryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
@@ -227,7 +307,6 @@ const [QueryForm, QueryFormApi] = useVbenForm({
   },
 });
 
-// 重置所有筛选条件
 const resetAllFilters = async () => {
   dataObj.serachObj = {};
   chartStatusListFilter.value = '';
@@ -245,7 +324,6 @@ const resetAllFilters = async () => {
   searchDrawerApi.close();
 };
 
-// 查询提交（关键：将 userName 转换为 userId）
 async function onSubmit(values, isReset = false) {
   if (isReset) {
     await resetAllFilters();
@@ -262,7 +340,6 @@ async function onSubmit(values, isReset = false) {
       delete formValues.userName;
     }
     dataObj.serachObj = { ...formValues };
-    // 清空图表钻取和快捷筛选的显示标签
     chartStatusListFilter.value = '';
     chartDateFilter.value = '';
     chartIdFilter.value = '';
@@ -278,12 +355,10 @@ async function onSubmit(values, isReset = false) {
   }
 }
 
-// 清除单个筛选字段（支持删除 statusList 中的单个状态）
 const handleClearField = async (fieldName, valueToRemove = null) => {
   const newSearchObj = { ...dataObj.serachObj };
 
   if (fieldName === 'statusList' && valueToRemove) {
-    // 删除状态列表中的某一个状态
     const currentList = newSearchObj.statusList || [];
     const filteredList = currentList.filter(s => s !== valueToRemove);
     if (filteredList.length === 0) {
@@ -291,17 +366,13 @@ const handleClearField = async (fieldName, valueToRemove = null) => {
     } else {
       newSearchObj.statusList = filteredList;
     }
-    // 如果 statusList 被清空，同时清理旧的单个 status（如果有）
     if (newSearchObj.status && !filteredList.length) delete newSearchObj.status;
   } else {
-    // 普通字段直接删除
     delete newSearchObj[fieldName];
-    // 如果删除的是 status 字段，同时清理 statusList 避免冲突
     if (fieldName === 'status') delete newSearchObj.statusList;
     if (fieldName === 'statusList') delete newSearchObj.status;
   }
 
-  // 同步清除对应的快捷筛选显示变量
   if (fieldName === 'rescueType') filterRescueType.value = '';
   if (fieldName === 'status' || fieldName === 'statusList') chartStatusListFilter.value = '';
   if (fieldName === 'archiveStatus') filterArchiveStatus.value = '';
@@ -313,7 +384,6 @@ const handleClearField = async (fieldName, valueToRemove = null) => {
 
   dataObj.serachObj = newSearchObj;
 
-  // 同步更新搜索表单的值（仅对非 statusList 字段）
   if (fieldName !== 'statusList') {
     const currentFormValues = await QueryFormApi.getValues();
     const newFormValues = { ...currentFormValues };
@@ -325,7 +395,6 @@ const handleClearField = async (fieldName, valueToRemove = null) => {
   gridApi.query();
 };
 
-// 获取搜索条件标签列表（将 statusList 拆分为独立标签）
 const activeFilters = computed(() => {
   const filters = [];
   const searchObj = dataObj.serachObj;
@@ -362,7 +431,6 @@ const activeFilters = computed(() => {
     filters.push({ label: '区域筛选（地图范围）', field: 'bounds', value: true });
   }
 
-  // 多状态列表拆分为独立标签
   if (searchObj.statusList && Array.isArray(searchObj.statusList)) {
     searchObj.statusList.forEach(status => {
       filters.push({
@@ -379,7 +447,7 @@ const activeFilters = computed(() => {
   return filters;
 });
 
-// ==================== 表格组件 ====================
+// 表格组件
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -465,11 +533,16 @@ const handleClaim = async (row) => {
 };
 
 // 更新进度
-const progressForm = reactive({ progress: '', photo: null });
+const progressForm = reactive({
+  progress: '',
+  photo: null,
+  complete: false,
+});
 let currentProgressRow = null;
 const openProgressDrawer = (row) => {
   progressForm.progress = '';
   progressForm.photo = null;
+  progressForm.complete = false;
   currentProgressRow = row;
   progressDrawerApi.open();
 };
@@ -493,8 +566,9 @@ async function confirmProgress() {
     id: currentProgressRow.id,
     progress: progressForm.progress,
     photo: photoUrl,
+    complete: progressForm.complete,
   });
-  ElMessage.success('更新进度成功');
+  ElMessage.success(progressForm.complete ? '更新进度并完成救援' : '更新进度成功');
   progressDrawerApi.close();
   handleRefresh();
 }
@@ -542,15 +616,6 @@ const handleArchive = async (row) => {
   handleRefresh();
 };
 
-// 完成救援
-const handleComplete = async (row) => {
-  await confirm('确认完成该救援任务吗？');
-  await completeRescue(row.id);
-  ElMessage.success('救援任务已完成');
-  gridApi.reload();
-  window.dispatchEvent(new CustomEvent('rescue-data-changed'));
-};
-
 // 处理时长钻取
 const filterByDuration = (duration) => {
   if (!duration || typeof duration !== 'number') return;
@@ -562,17 +627,15 @@ const filterByDuration = (duration) => {
   gridApi.query();
 };
 
-// 图表钻取筛选标签（兼容旧显示，现在主要用 activeFilters）
+// 图表钻取
 const chartStatusListFilter = ref('');
 const chartDateFilter = ref('');
 const chartIdFilter = ref('');
 const chartBoundsFilter = ref(false);
 
-// 处理图表刷新事件（来自 chart.vue）
 const handleChartRefresh = (filters) => {
   const newSearchObj = { ...dataObj.serachObj };
 
-  // 移除原有的状态相关字段，避免冲突
   delete newSearchObj.status;
   delete newSearchObj.statusList;
 
@@ -593,7 +656,6 @@ const handleChartRefresh = (filters) => {
     chartBoundsFilter.value = true;
   }
 
-  // 保留其他非图表筛选条件
   const preserveFields = ['userId', 'rescueType', 'archiveStatus', 'location', 'createTime', 'rescueUserId'];
   preserveFields.forEach(field => {
     if (dataObj.serachObj[field]) newSearchObj[field] = dataObj.serachObj[field];
@@ -616,7 +678,7 @@ onUnmounted(() => {
 const handleSerachShow = () => searchDrawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 
-// 快捷筛选标签
+// 快捷筛选
 const filterRescueType = ref('');
 const handleRescueTypeClick = (type) => {
   if (filterRescueType.value === type) {
@@ -653,13 +715,7 @@ const handleArchiveStatusClick = (archiveStatus) => {
 const filterUserId = ref('');
 const handleUserClick = (userId) => {
   if (!userId) return;
-  if (filterUserId.value === userId) {
-    handleClearField('userId');
-  } else {
-    dataObj.serachObj.userId = userId;
-    filterUserId.value = userId;
-    gridApi.query();
-  }
+  openUserDetail(userId);
 };
 
 const filterRescueUserId = ref('');
@@ -674,13 +730,11 @@ const handleRescueUserClick = (userId) => {
   }
 };
 
-// 地址定位
 const handleLocationClick = (location) => {
   if (!location) return;
   window.dispatchEvent(new CustomEvent('locate-address', { detail: location }));
 };
 
-// 评价详情
 const currentEvaluateDetail = ref({});
 const handleEvaluateClick = (row) => {
   currentEvaluateDetail.value = row;
@@ -693,7 +747,6 @@ defineExpose({ handleRefresh, handleChartRefresh });
 <template>
   <div class="park-lot-table-new">
     <Grid>
-      <!-- 筛选标签栏 -->
       <template #table-title>
         <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
           <template v-for="filter in activeFilters" :key="filter.field + (filter.value || '')">
@@ -710,7 +763,6 @@ defineExpose({ handleRefresh, handleChartRefresh });
             </el-tag>
           </template>
 
-          <!-- 兼容旧版独立显示的图表钻取标签（如果未拆分到 activeFilters 中，可保留） -->
           <el-tag v-if="chartStatusListFilter && !activeFilters.some(f => f.field === 'statusList')" type="warning" closable @close="() => handleClearField('statusList')">
             状态筛选：{{ chartStatusListFilter }}
           </el-tag>
@@ -726,7 +778,6 @@ defineExpose({ handleRefresh, handleChartRefresh });
         </div>
       </template>
 
-      <!-- 工具栏按钮 -->
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton
@@ -737,11 +788,17 @@ defineExpose({ handleRefresh, handleChartRefresh });
           />
           <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <!-- 新增展开/收缩按钮 -->
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
 
-      <!-- 自定义列模板 -->
+      <!-- 自定义列模板（保持原样） -->
       <template #id="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
       </template>
@@ -751,8 +808,13 @@ defineExpose({ handleRefresh, handleChartRefresh });
         </el-text>
       </template>
       <template #location="{ row }">
-        <el-text @click="handleLocationClick(row.location)" type="primary" style="cursor: pointer">
-          {{ row.location || '-' }}
+        <el-text
+          @click="handleLocationClick(row.location)"
+          type="primary"
+          style="cursor: pointer"
+          :title="row.locationName || row.location"
+        >
+          {{ row.locationName || row.location || '-' }}
         </el-text>
       </template>
       <template #rescue_type="{ row }">
@@ -821,7 +883,6 @@ defineExpose({ handleRefresh, handleChartRefresh });
           <template v-else-if="row.status === '处理中'">
             <IconButton content="更新进度" icon-name="edit" @click="openProgressDrawer(row)" />
             <IconButton content="转派" icon-name="share" @click="openTransferDrawer(row)" />
-            <IconButton content="完成" icon-name="Check" @click="handleComplete(row)" />
             <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           </template>
           <template v-else-if="row.status === '已完成'">
@@ -897,6 +958,10 @@ defineExpose({ handleRefresh, handleChartRefresh });
             <el-button type="primary">上传照片</el-button>
           </el-upload>
         </el-form-item>
+        <el-form-item label="标记为已完成">
+          <el-checkbox v-model="progressForm.complete">本次更新同时收尾，将任务标记为已完成</el-checkbox>
+          <div class="form-tip">勾选后系统将自动计算完成时间与处理时长</div>
+        </el-form-item>
       </el-form>
     </ProgressDrawer>
 
@@ -945,6 +1010,39 @@ defineExpose({ handleRefresh, handleChartRefresh });
         </div>
       </div>
     </EvaluateDetailDrawer>
+
+    <UserDetailDrawer>
+      <div class="detail-card">
+        <div class="detail-card-row">
+          <div class="detail-row-left">用户ID：</div>
+          <div class="detail-row-right">{{ currentUserDetail.id || '-' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">用户名：</div>
+          <div class="detail-row-right">{{ currentUserDetail.userName || '-' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">昵称：</div>
+          <div class="detail-row-right">{{ currentUserDetail.nickname || '-' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">手机号：</div>
+          <div class="detail-row-right">{{ currentUserDetail.mobile || '-' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">邮箱：</div>
+          <div class="detail-row-right">{{ currentUserDetail.email || '-' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">状态：</div>
+          <div class="detail-row-right">{{ currentUserDetail.status === 0 ? '正常' : '禁用' }}</div>
+        </div>
+        <div class="detail-card-row">
+          <div class="detail-row-left">创建时间：</div>
+          <div class="detail-row-right">{{ formatTimestamp(currentUserDetail.createTime) || '-' }}</div>
+        </div>
+      </div>
+    </UserDetailDrawer>
   </div>
 </template>
 
@@ -971,5 +1069,10 @@ defineExpose({ handleRefresh, handleChartRefresh });
   flex: 1;
   color: #303133;
   word-break: break-all;
+}
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
 }
 </style>

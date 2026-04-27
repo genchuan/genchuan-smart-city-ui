@@ -50,15 +50,11 @@ defineExpose({open: () => detailDrawerApi.open(), close: () => detailDrawerApi.c
         <div class="detail-row-right">{{ detailObj.className || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">评比周期：</div>
-        <div class="detail-row-right">{{ detailObj.cycle || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
         <div class="detail-row-left">总得分：</div>
         <div class="detail-row-right">{{ detailObj.totalScore || '-' }}</div>
       </div>
       <div class="detail-card-row">
-        <div class="detail-row-left">排名：</div>
+        <div class="detail-row-left">当前排名：</div>
         <div class="detail-row-right">{{ detailObj.rankNo || '-' }}</div>
       </div>
       <div class="detail-card-row">
@@ -78,15 +74,12 @@ defineExpose({open: () => detailDrawerApi.open(), close: () => detailDrawerApi.c
         <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
       </div>
       <div class="detail-card-row">
+        <div class="detail-row-left">评比周期：</div>
+        <div class="detail-row-right">{{ detailObj.cycle || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
         <div class="detail-row-left">备注：</div>
         <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
-      </div>
-
-      <!-- 排名数据 -->
-      <div class="detail-section">📊 排名数据</div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">当前排名：</div>
-        <div class="detail-row-right">{{ detailObj.rankNo || '-' }}</div>
       </div>
 
       <!-- 操作日志 -->

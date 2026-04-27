@@ -524,18 +524,22 @@ onUnmounted(() => {
 .chart-box-left {
   display: flex;
   flex-shrink: 0;
-  flex-direction: row;
-  flex-wrap: wrap;
+  flex-flow: row wrap;
+  gap: 4px;
   align-content: stretch;
   width: 480px;
   height: 280px;
   padding: 4px;
-  gap: 4px;
   overflow: hidden;
 }
 
 .stat-card {
+  box-sizing: border-box;
+  display: flex;
   flex: 1 1 calc(33.333% - 3px);
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
   padding: 4px 8px;
   cursor: pointer;
   background-color: #fff;
@@ -543,11 +547,6 @@ onUnmounted(() => {
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
   transition: all 0.3s ease;
-  min-height: 0;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
 }
 
 .stat-card:hover {
@@ -583,7 +582,7 @@ onUnmounted(() => {
 .card-value {
   font-size: 20px;
   font-weight: 600;
-  color: #4A90E2;
+  color: #4a90e2;
 }
 
 .card-desc {

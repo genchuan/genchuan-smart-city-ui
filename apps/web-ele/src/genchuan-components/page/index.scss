@@ -4,11 +4,15 @@
   padding: 0.5rem;
   overflow: auto;
   background-color: hsl(var(--card));
-
+  .reviewStatus-cell {
+    background-color: #F56C6C;
+  }
+  .vxe-table--body-inner-wrapper{
+    min-height: 100px !important;
+  }
   .icon-first {
     margin-right: 5px;
-  }
-
+  } 
   .table-first {
     display: flex;
     align-items: center;
@@ -80,13 +84,13 @@
 
       .vxe-tools--wrapper {
         position: absolute;
-        top: -30px;
+        top: -35px;
         right: 77px;
       }
 
       .vxe-tools--operate {
         position: absolute;
-        top: -30px;
+        top: -33px;
         right: 0;
       }
     }
@@ -130,7 +134,7 @@
       .vxe-pager {
         position: relative;
         height: 65px;
-        margin-top: -10px;
+        margin-top: 0px;
       }
     }
 
@@ -244,7 +248,7 @@
 
       // 大屏样式：恢复原有左侧间距
       @media (min-width: 1200px) {
-        margin-left: 15px;
+        margin-left: 0;
       }
 
       // 平板/小屏适配：统计卡片占满宽度，横向滚动

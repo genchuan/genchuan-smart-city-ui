@@ -355,15 +355,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'timeRange',
+      fieldName: 'updateTime',
       label: '更新时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择更新时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     // {

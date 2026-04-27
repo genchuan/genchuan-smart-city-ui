@@ -30,7 +30,7 @@ export function importPointActivity(file) {
 }
 
 /** 导出积分活动数据
- * @param {Object} params - 导出参数
+ * @param {object} params - 导出参数
  * @param {number} params.pageNo - 页码，从1开始
  * @param {number} params.pageSize - 每页条数，最大值为200
  * @param {string} [params.name] - 活动名称
@@ -52,15 +52,17 @@ export function getPointActivityDetail(id) {
 }
 
 /** 生效积分活动
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {number} params.id - 活动ID
  */
 export function activatePointActivity(params) {
-  return requestClient.put('/marketop/point-activity/activate', null, { params });
+  return requestClient.put('/marketop/point-activity/activate', null, {
+    params,
+  });
 }
 
 /** 启用积分活动
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {number} params.id - 活动ID
  */
 export function enablePointActivity(params) {
@@ -68,7 +70,7 @@ export function enablePointActivity(params) {
 }
 
 /** 暂停积分活动
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {number} params.id - 活动ID
  */
 export function pausePointActivity(params) {
@@ -83,6 +85,6 @@ export function updatePointActivity(data) {
 // ==================== 数据可视化图表接口 ====================
 
 /** 积分活动统计图表 */
-export function getPointActivityChart(params) {
-  return requestClient.get('/marketop/point-activity/chart', { params });
+export function getPointActivityChart() {
+  return requestClient.get('/marketop/point-activity/chart');
 }

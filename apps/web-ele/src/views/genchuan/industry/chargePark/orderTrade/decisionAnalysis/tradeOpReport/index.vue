@@ -19,7 +19,7 @@ const arrowChange = () => {
 };
 const tabArray = ref([
   {
-    label: '金额核算',
+    label: '交易运营报表',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -27,7 +27,7 @@ const tabArray = ref([
     arrowState: false,
   },
 ]);
-const activeName = ref('金额核算');
+const activeName = ref('交易运营报表');
 const secondShow = ref(false);
 </script>
 <template>

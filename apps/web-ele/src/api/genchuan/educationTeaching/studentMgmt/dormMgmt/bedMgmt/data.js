@@ -3,9 +3,9 @@ import { requestClient } from '#/api/request';
 // ==================== 床位管理接口 ====================
 export function getBedMgmtPage(params) {
   return requestClient.get('/studentmgmt/bed-mgmt/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    const mock = getMockList();
-    return { list: mock, total: mock.length };
+    console.warn('分页接口失败', err);
+    // 分页接口已联调成功，不再使用模拟数据，返回空列表
+    return { list: [], total: 0 };
   });
 }
 
@@ -52,27 +52,9 @@ export function exportBedMgmt(params) {
 // 详情
 export function getBedMgmtDetail(params) {
   return requestClient.get('/studentmgmt/bed-mgmt/get', { params }).catch(err => {
-    console.warn('详情接口失败，使用模拟数据', err);
-    const mockList = getMockList();
-    const detail = mockList.find(item => item.id === params.id) || mockList[0];
-    return Promise.resolve(detail);
-  });
-}
-
-// 获取学生列表（用于分配/调整下拉框）
-export function getStudentOptions(params) {
-  return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
-    console.warn('获取学生列表失败，使用模拟数据', err);
-    return Promise.resolve([
-      { value: 1, label: '张三' },
-      { value: 2, label: '李四' },
-      { value: 3, label: '王五' },
-      { value: 4, label: '赵六' },
-      { value: 5, label: '孙七' },
-      { value: 6, label: '周八' },
-      { value: 7, label: '吴九' },
-      { value: 8, label: '郑十' },
-    ]);
+    console.warn('详情接口失败', err);
+    // 不再使用模拟数据，直接抛出错误让调用方处理
+    return Promise.reject(err);
   });
 }
 
@@ -124,179 +106,3 @@ export function getBedIndex(params) {
     });
   });
 }
-
-// 模拟数据（包含更多学生，便于展示学生信息详情）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      building: '1号楼',
-      floor: 1,
-      roomNum: '101',
-      bedNum: 'A',
-      studentId: 202301,
-      studentName: '张三',
-      assignTime: 1767225600000,
-      adjustTime: null,
-      status: '已分配',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 2,
-      building: '1号楼',
-      floor: 1,
-      roomNum: '101',
-      bedNum: 'B',
-      studentId: null,
-      studentName: null,
-      assignTime: null,
-      adjustTime: null,
-      status: '未分配',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 3,
-      building: '1号楼',
-      floor: 1,
-      roomNum: '102',
-      bedNum: 'C',
-      studentId: 202302,
-      studentName: '李四',
-      assignTime: 1769904000000,
-      adjustTime: null,
-      status: '已分配',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 4,
-      building: '1号楼',
-      floor: 1,
-      roomNum: '102',
-      bedNum: 'D',
-      studentId: null,
-      studentName: null,
-      assignTime: null,
-      adjustTime: null,
-      status: '未分配',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 5,
-      building: '2号楼',
-      floor: 2,
-      roomNum: '205',
-      bedNum: 'E',
-      studentId: 202403,
-      studentName: '王五',
-      assignTime: 1775088000000,
-      adjustTime: 1772496000000,
-      status: '已分配',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775088000000,
-      updateTime: 1772496000000,
-    },
-    {
-      id: 6,
-      building: '2号楼',
-      floor: 2,
-      roomNum: '205',
-      bedNum: 'F',
-      studentId: 202404,
-      studentName: '赵六',
-      assignTime: 1775088000000,
-      adjustTime: null,
-      status: '已分配',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775088000000,
-      updateTime: 1775088000000,
-    },
-    {
-      id: 7,
-      building: '2号楼',
-      floor: 2,
-      roomNum: '206',
-      bedNum: 'G',
-      studentId: null,
-      studentName: null,
-      assignTime: null,
-      adjustTime: null,
-      status: '未分配',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1780358400000,
-      updateTime: 1780358400000,
-    },
-    {
-      id: 8,
-      building: '3号楼',
-      floor: 3,
-      roomNum: '312',
-      bedNum: 'H',
-      studentId: 202505,
-      studentName: '孙七',
-      assignTime: 1782950400000,
-      adjustTime: 1782950400000,
-      status: '已分配',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1782950400000,
-      updateTime: 1782950400000,
-    },
-    {
-      id: 9,
-      building: '3号楼',
-      floor: 3,
-      roomNum: '312',
-      bedNum: 'I',
-      studentId: 202506,
-      studentName: '周八',
-      assignTime: 1782950400000,
-      adjustTime: null,
-      status: '已分配',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1782950400000,
-      updateTime: 1782950400000,
-    },
-    {
-      id: 10,
-      building: '3号楼',
-      floor: 3,
-      roomNum: '313',
-      bedNum: 'J',
-      studentId: null,
-      studentName: null,
-      assignTime: null,
-      adjustTime: null,
-      status: '未分配',
-      remark: '',
-      creator: 'teacher_wang',
-      updater: 'teacher_wang',
-      createTime: 1785628800000,
-      updateTime: 1785628800000,
-    },
-  ];
-};
