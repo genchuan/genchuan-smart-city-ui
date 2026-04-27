@@ -109,9 +109,12 @@ function initPieChart() {
 
   // 添加点击事件
   pieChartInstance.on('click', (params) => {
+    const clickDate = new Date(params.name);
+    const startTime = new Date(clickDate.setHours(0, 0, 0, 0)).getTime().toString();
+    const endTime = new Date(clickDate.setHours(23, 59, 59, 999)).getTime().toString();
     window.dispatchEvent(
       new CustomEvent('filterByChart:inspectTask', {
-        detail: { date: params.name },
+        detail: { startTime, endTime },
       }),
     );
   });

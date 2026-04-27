@@ -110,9 +110,12 @@ function initPieChart() {
 
   // 添加点击事件
   pieChartInstance.on('click', (params) => {
+    const clickDate = new Date(params.name);
+    const startTime = new Date(clickDate.setHours(0, 0, 0, 0)).getTime().toString();
+    const endTime = new Date(clickDate.setHours(23, 59, 59, 999)).getTime().toString();
     window.dispatchEvent(
       new CustomEvent('filterByChart:leaveRecord', {
-        detail: { leaveTime: params.name },
+        detail: { startTime, endTime },
       }),
     );
   });
@@ -149,11 +152,14 @@ function initBarChart() {
 
   // 添加点击事件
   barChartInstance.on('click', (params) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date();
+    const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
+    const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
     window.dispatchEvent(
       new CustomEvent('filterByChart:leaveRecord', {
         detail: {
-          leaveTime: today,
+          startTime: todayStart,
+          endTime: todayEnd,
           hour: params.name,
         },
       }),
@@ -168,8 +174,8 @@ function initCharts() {
 
 function handleCardClick(key) {
   const today = new Date();
-  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime();
+  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
 
   const filterMap = {
     todayLeaveCount: { startTime: todayStart, endTime: todayEnd },

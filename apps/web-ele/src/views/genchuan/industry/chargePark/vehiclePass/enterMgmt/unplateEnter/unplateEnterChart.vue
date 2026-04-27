@@ -140,8 +140,8 @@ function initCharts() {
 
 function handleCardClick(key) {
   const today = new Date();
-  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime();
+  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
 
   const filterMap = {
     total: { startTime: todayStart, endTime: todayEnd },

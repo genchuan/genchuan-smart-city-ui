@@ -38,8 +38,8 @@ let pieChartInstance = null;
 
 async function loadChartData() {
   try {
-    const endTime = Math.floor(Date.now() / 1000);
-    const startTime = endTime - 7 * 24 * 60 * 60;
+    const endTime = Date.now();
+    const startTime = endTime - 7 * 24 * 60 * 60 * 1000;
 
     const params = {
       startTime: startTime.toString(),

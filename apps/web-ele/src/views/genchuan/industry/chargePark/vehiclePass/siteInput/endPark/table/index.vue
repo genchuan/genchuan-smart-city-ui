@@ -572,8 +572,8 @@ const handleChartFilter = (event) => {
     }
   } else if (date) {
     // 折线图钻取：按日期筛选
-    const timestamp = new Date(date).getTime() / 1000;
-    const nextDayTimestamp = timestamp + 86400;
+    const timestamp = new Date(date).getTime();
+    const nextDayTimestamp = timestamp + 86400000;
     dataObj.searchParams = {
       endTime: [timestamp.toString(), nextDayTimestamp.toString()],
     };
