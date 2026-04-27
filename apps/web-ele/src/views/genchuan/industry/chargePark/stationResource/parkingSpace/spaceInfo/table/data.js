@@ -1,0 +1,194 @@
+export const pageConfig = {
+  apiName: 'ParkingSpaceInfo',
+  title: '车位信息',
+  exportName: '车位信息数据.xlsx',
+  nameField: 'spaceNo',
+  primaryField: 'spaceNo',
+  toolbar: ['create', 'import', 'export'],
+  rowActionMap: {
+    未绑定: ['bind', 'edit', 'detail', 'locate'],
+    已绑定: ['disable', 'edit', 'detail', 'locate'],
+    已禁用: ['enable', 'detail'],
+  },
+  chart: {
+    cards: [
+      ['totalSpaceCount', '总车位数'],
+      ['availableSpaceCount', '可用车位数', '空闲', 'realStatus'],
+      ['freeSpaceCount', '空闲车位数', '空闲', 'realStatus'],
+      ['faultSpaceCount', '故障车位数', '故障', 'realStatus'],
+    ],
+    pie: ['pieData', 'name', 'count', 'realStatus'],
+    map: true,
+  },
+};
+
+const spaceTypeOptions = ['普通车位', '充电车位'];
+const deviceTypeOptions = ['地锁', '充电桩', '摄像头'];
+const statusOptions = ['未绑定', '已绑定', '已禁用'];
+const realStatusOptions = ['空闲', '占用', '故障'];
+
+export const searchFields = [
+  { field: 'spaceNo', label: '车位编号', type: 'input', required: false },
+  {
+    field: 'stationId',
+    label: '所属场站',
+    type: 'select',
+    options: [],
+    required: false,
+    apiSource: 'StationInfo',
+  },
+  { field: 'garage', label: '所属车库', type: 'input', required: false },
+  {
+    field: 'type',
+    label: '车位类型',
+    type: 'select',
+    options: spaceTypeOptions,
+    required: false,
+  },
+  {
+    field: 'deviceType',
+    label: '设备类型',
+    type: 'select',
+    options: deviceTypeOptions,
+    required: false,
+  },
+  {
+    field: 'status',
+    label: '状态',
+    type: 'select',
+    options: statusOptions,
+    required: false,
+  },
+  {
+    field: 'realStatus',
+    label: '实时状态',
+    type: 'select',
+    options: realStatusOptions,
+    required: false,
+  },
+];
+
+export const formFields = [
+  { field: 'spaceNo', label: '车位编号', type: 'input', required: true },
+  {
+    field: 'stationId',
+    label: '所属场站',
+    type: 'select',
+    options: [],
+    required: true,
+    apiSource: 'StationInfo',
+  },
+  { field: 'garage', label: '所属车库', type: 'input', required: true },
+  { field: 'location', label: '车位位置', type: 'input', required: false },
+  {
+    field: 'type',
+    label: '车位类型',
+    type: 'select',
+    options: spaceTypeOptions,
+    required: true,
+  },
+  {
+    field: 'deviceType',
+    label: '设备类型',
+    type: 'select',
+    options: deviceTypeOptions,
+    required: false,
+  },
+  { field: 'remark', label: '备注', type: 'textarea', required: false },
+  { field: 'reserve1', label: '备用字段1', type: 'input', required: false },
+  { field: 'reserve2', label: '备用字段2', type: 'input', required: false },
+];
+
+export const tableColumns = [
+  { field: 'id', label: '车位ID', minWidth: 100 },
+  { field: 'spaceNo', label: '车位编号', minWidth: 150, drillType: 'detail' },
+  {
+    field: 'stationId',
+    label: '所属场站',
+    minWidth: 160,
+    drillType: 'dialog',
+    drillLabel: '场站详情',
+  },
+  { field: 'garage', label: '所属车库', minWidth: 140, drillType: 'filter' },
+  { field: 'location', label: '车位位置', minWidth: 140 },
+  { field: 'type', label: '车位类型', minWidth: 120, drillType: 'filter' },
+  {
+    field: 'deviceType',
+    label: '设备类型',
+    minWidth: 120,
+    drillType: 'filter',
+  },
+  {
+    field: 'qrcode',
+    label: '车位二维码',
+    minWidth: 140,
+    drillType: 'download',
+    drillLabel: '车位二维码',
+  },
+  { field: 'status', label: '状态', minWidth: 120, drillType: 'filter' },
+  {
+    field: 'realStatus',
+    label: '实时状态',
+    minWidth: 120,
+    drillType: 'filter',
+  },
+  {
+    field: 'bindTime',
+    label: '绑定时间',
+    minWidth: 180,
+    formatter: 'formatDateTime',
+  },
+  { field: 'bindUserId', label: '绑定人ID', minWidth: 120 },
+  {
+    field: 'deviceId',
+    label: '绑定设备ID',
+    minWidth: 120,
+    drillType: 'dialog',
+    drillLabel: '设备详情',
+  },
+  {
+    field: 'statusUpdateTime',
+    label: '状态更新时间',
+    minWidth: 180,
+    formatter: 'formatDateTime',
+  },
+  { field: 'remark', label: '备注', minWidth: 140 },
+  { field: 'creator', label: '创建者', minWidth: 120, drillType: 'filter' },
+  {
+    field: 'createTime',
+    label: '创建时间',
+    minWidth: 180,
+    formatter: 'formatDateTime',
+  },
+  { field: 'updater', label: '更新者', minWidth: 120, drillType: 'filter' },
+  {
+    field: 'updateTime',
+    label: '更新时间',
+    minWidth: 180,
+    formatter: 'formatDateTime',
+  },
+];
+
+export const detailFields = [
+  { key: 'id', label: '车位ID', section: '基础信息' },
+  { key: 'spaceNo', label: '车位编号', section: '基础信息' },
+  { key: 'stationId', label: '所属场站ID', section: '基础信息' },
+  { key: 'garage', label: '所属车库', section: '基础信息' },
+  { key: 'location', label: '车位位置', section: '基础信息' },
+  { key: 'type', label: '车位类型', section: '基础信息' },
+  { key: 'deviceType', label: '设备类型', section: '基础信息' },
+  { key: 'status', label: '状态', section: '基础信息' },
+  { key: 'realStatus', label: '实时状态', section: '基础信息' },
+  { key: 'deviceId', label: '绑定设备ID', section: '绑定信息' },
+  { key: 'bindUserId', label: '绑定人ID', section: '绑定信息' },
+  { key: 'bindTime', label: '绑定时间', section: '绑定信息' },
+  { key: 'qrcode', label: '车位二维码', section: '绑定信息' },
+  { key: 'statusUpdateTime', label: '状态更新时间', section: '运营信息' },
+  { key: 'remark', label: '备注', section: '运营信息' },
+  { key: 'reserve1', label: '备用字段1', section: '扩展信息' },
+  { key: 'reserve2', label: '备用字段2', section: '扩展信息' },
+  { key: 'creator', label: '创建者', section: '审计信息' },
+  { key: 'createTime', label: '创建时间', section: '审计信息' },
+  { key: 'updater', label: '更新者', section: '审计信息' },
+  { key: 'updateTime', label: '更新时间', section: '审计信息' },
+];
