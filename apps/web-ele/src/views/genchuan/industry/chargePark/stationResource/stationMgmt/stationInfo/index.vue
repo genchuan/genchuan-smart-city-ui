@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
@@ -125,14 +125,25 @@ function getPlaceholder(field) {
 function createSchema(fields, isSearch = false) {
   return fields.map((field) => {
     let component;
-    if (field.type === 'select') {
-      component = 'Select';
-    } else if (field.type === 'number') {
-      component = 'InputNumber';
-    } else if (field.type === 'date') {
-      component = 'DatePicker';
-    } else {
-      component = 'Input';
+    switch (field.type) {
+      case 'date': {
+        component = 'DatePicker';
+
+        break;
+      }
+      case 'number': {
+        component = 'InputNumber';
+
+        break;
+      }
+      case 'select': {
+        component = 'Select';
+
+        break;
+      }
+      default: {
+        component = 'Input';
+      }
     }
 
     const componentProps = {
