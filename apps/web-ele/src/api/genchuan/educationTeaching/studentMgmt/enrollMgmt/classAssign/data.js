@@ -49,9 +49,9 @@ export function getClassAssignPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mock = convertList(getMockList());
-      return { list: mock, total: mock.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -105,10 +105,9 @@ export function getClassAssignDetail(params) {
   return requestClient.get('/studentmgmt/class-assign/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -157,129 +156,3 @@ export function getClassAssignDistribution(params) {
     });
   });
 }
-
-// 模拟数据（原始值使用英文）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      ruleContent: '按成绩均衡分班，成绩前30%平均分配',
-      studentNum: 120,
-      assignTime: 1735689600000,
-      confirmUser: '张主任',
-      confirmTime: 1735776000000,
-      status: 'assigned',
-      remark: '',
-      className: '2025级计算机1班',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1735603200000,
-      updateTime: 1735689600000,
-    },
-    {
-      id: 2,
-      ruleContent: '按性别和生源地均衡分班',
-      studentNum: 98,
-      assignTime: null,
-      confirmUser: null,
-      confirmTime: null,
-      status: 'unassigned',
-      remark: '优先考虑本地生源',
-      className: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1735603200000,
-      updateTime: 1735603200000,
-    },
-    {
-      id: 3,
-      ruleContent: '按成绩分层分班，重点班选拔',
-      studentNum: 85,
-      assignTime: 1738281600000,
-      confirmUser: '王主任',
-      confirmTime: 1738368000000,
-      status: 'assigned',
-      remark: '',
-      className: '2025级计算机2班',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1738195200000,
-      updateTime: 1738281600000,
-    },
-    {
-      id: 4,
-      ruleContent: '随机分班，平衡班级人数',
-      studentNum: 105,
-      assignTime: null,
-      confirmUser: null,
-      confirmTime: null,
-      status: 'unassigned',
-      remark: '',
-      className: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1738195200000,
-      updateTime: 1738195200000,
-    },
-    {
-      id: 5,
-      ruleContent: '按成绩均衡分班，成绩前30%平均分配',
-      studentNum: 112,
-      assignTime: 1738886400000,
-      confirmUser: '李主任',
-      confirmTime: 1738972800000,
-      status: 'assigned',
-      remark: '含特长生',
-      className: '2025级会计1班',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1738800000000,
-      updateTime: 1738886400000,
-    },
-    {
-      id: 6,
-      ruleContent: '按性别和生源地均衡分班',
-      studentNum: 95,
-      assignTime: null,
-      confirmUser: null,
-      confirmTime: null,
-      status: 'unassigned',
-      remark: '',
-      className: '',
-      creator: 'teacher_wang',
-      updater: 'teacher_wang',
-      createTime: 1738800000000,
-      updateTime: 1738800000000,
-    },
-    {
-      id: 7,
-      ruleContent: '随机分班，平衡班级人数',
-      studentNum: 108,
-      assignTime: 1739491200000,
-      confirmUser: '赵主任',
-      confirmTime: 1739577600000,
-      status: 'assigned',
-      remark: '走读生优先',
-      className: '2025级计算机3班',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1739404800000,
-      updateTime: 1739491200000,
-    },
-    {
-      id: 8,
-      ruleContent: '按成绩分层分班，重点班选拔',
-      studentNum: 78,
-      assignTime: null,
-      confirmUser: null,
-      confirmTime: null,
-      status: 'unassigned',
-      remark: '',
-      className: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1739404800000,
-      updateTime: 1739404800000,
-    },
-  ];
-};

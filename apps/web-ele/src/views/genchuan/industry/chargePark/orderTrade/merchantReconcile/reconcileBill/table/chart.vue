@@ -3,62 +3,59 @@ import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getInvoiceConfigChart } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
+import { getReconcileBillChart } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
 import Card from '#/components/stats/card.vue';
 
 const state = reactive({
   cardList: [
-    { title: '已生效配置', value: 0, color: '#13ce66' },
-    { title: '总配置数', value: 0, color: '#4ECDC4' },
-    { title: '配置覆盖率', value: 0, color: '#FF6B6B', suffix: '%' },
+    { title: '待对账数', value: 0, color: '#FF6B6B' },
+    { title: '异常数', value: 0, color: '#E74C3C' },
+    { title: '已确认数', value: 0, color: '#13ce66' },
+    { title: '确认率', value: 0, color: '#4A90E2', suffix: '%' },
   ],
-  categoryData: [],
+  trendData: [],
 });
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取发票配置图表数据
-const fetchInvoiceConfigChartData = async () => {
+// 获取对账单图表数据
+const fetchReconcileBillChartData = async () => {
   try {
-    const res = await getInvoiceConfigChart();
-    state.cardList[0].value = res.enabledCount || 0;
-    const totalCount = res.categoryData?.reduce((sum, item) => sum + item.count, 0) || 0;
-    state.cardList[1].value = totalCount;
-    // 配置覆盖率 = (已生效配置数 / 总配置数) * 100
-    state.cardList[2].value = totalCount > 0 ? Math.round((state.cardList[0].value / totalCount) * 100) : 0;
-    // 如果categoryData为空，使用假数据
-    state.categoryData =
-      res.categoryData && res.categoryData.length > 0
-        ? res.categoryData
+    const res = await getReconcileBillChart();
+    state.cardList[0].value = res.pendingCount || 0;
+    state.cardList[1].value = res.disputedCount || 0;
+    state.cardList[2].value = res.confirmedCount || 0;
+    state.cardList[3].value = res.confirmRate || 0;
+    // 如果trendData为空，使用假数据
+    state.trendData =
+      res.trendData && res.trendData.length > 0
+        ? res.trendData
         : [
-            { category: '停车费', count: 1 },
-            { category: '充电服务费', count: 1 },
-            { category: '代付服务费', count: 1 },
-            { category: '会员服务费', count: 1 },
-            { category: '平台技术服务费', count: 1 },
+            { date: '2026-04-01', count: 2 },
+            { date: '2026-04-08', count: 1 },
+            { date: '2026-04-10', count: 1 },
           ];
-    // 更新柱状图
+    // 更新折线图
     updateChart();
   } catch (error) {
-    console.error('获取发票配置图表数据失败:', error);
+    console.error('获取对账单图表数据失败:', error);
     // 接口调用失败时使用假数据
-    state.cardList[0].value = 3;
-    state.cardList[1].value = 5;
-    state.cardList[2].value = 60;
-    state.categoryData = [
-      { category: '停车费', count: 1 },
-      { category: '充电服务费', count: 1 },
-      { category: '代付服务费', count: 1 },
-      { category: '会员服务费', count: 1 },
-      { category: '平台技术服务费', count: 1 },
+    state.cardList[0].value = 0;
+    state.cardList[1].value = 0;
+    state.cardList[2].value = 0;
+    state.cardList[3].value = 0;
+    state.trendData = [
+      { date: '2026-04-01', count: 2 },
+      { date: '2026-04-08', count: 1 },
+      { date: '2026-04-10', count: 1 },
     ];
-    // 更新柱状图
+    // 更新折线图
     updateChart();
   }
 };
 
-// 初始化柱状图
+// 初始化折线图
 const initChart = () => {
   if (!lineChartRef.value) return;
 
@@ -66,7 +63,7 @@ const initChart = () => {
 
   const option = {
     title: {
-      text: '开票类目统计',
+      text: '对账趋势',
       left: 'center',
       textStyle: {
         color: '#6E7E91',
@@ -89,7 +86,8 @@ const initChart = () => {
     },
     xAxis: {
       type: 'category',
-      data: state.categoryData.map((item) => item.category),
+      boundaryGap: false,
+      data: state.trendData.map((item) => item.date),
       axisLabel: { color: '#6E7E91', fontSize: 12 },
       axisLine: { lineStyle: { color: '#E5E7EB' } },
     },
@@ -101,16 +99,17 @@ const initChart = () => {
     },
     series: [
       {
-        name: '数量',
-        type: 'bar',
-        data: state.categoryData.map((item) => item.count),
-        barWidth: '50%',
-        itemStyle: {
+        name: '对账数',
+        type: 'line',
+        smooth: true,
+        data: state.trendData.map((item) => item.count),
+        lineStyle: { color: '#4A90E2', width: 2 },
+        itemStyle: { color: '#4A90E2' },
+        areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#4A90E2' },
-            { offset: 1, color: '#357ABD' },
+            { offset: 0, color: 'rgba(74, 144, 226, 0.3)' },
+            { offset: 1, color: 'rgba(74, 144, 226, 0.05)' },
           ]),
-          borderRadius: [4, 4, 0, 0],
         },
       },
     ],
@@ -119,24 +118,24 @@ const initChart = () => {
   lineChartInstance.setOption(option);
 };
 
-// 更新柱状图
+// 更新折线图
 const updateChart = () => {
   if (!lineChartInstance) return;
 
   lineChartInstance.setOption({
     xAxis: {
-      data: state.categoryData.map((item) => item.category),
+      data: state.trendData.map((item) => item.date),
     },
     series: [
       {
-        data: state.categoryData.map((item) => item.count),
+        data: state.trendData.map((item) => item.count),
       },
     ],
   });
 };
 
 onMounted(() => {
-  fetchInvoiceConfigChartData().then(() => {
+  fetchReconcileBillChartData().then(() => {
     initChart();
   });
 
@@ -159,3 +158,43 @@ onMounted(() => {
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
 </template>
+
+<style scoped lang="scss">
+.park-chart-box {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+}
+
+.chart-box-left {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  grid-template-rows: repeat(2, 1fr) !important;
+  gap: 16px !important;
+  flex-shrink: 0;
+  width: 40%;
+  max-width: 400px;
+}
+
+.chart-box-left :deep(.left-card) {
+  width: 100% !important;
+  flex-shrink: 0;
+}
+
+.chart-box-left :deep(.stat-card) {
+  width: 100% !important;
+  height: 150px !important;
+  min-width: unset !important;
+  max-width: unset !important;
+}
+
+.simple-bar-chart {
+  width: 100%;
+  height: 200px;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+}
+</style>

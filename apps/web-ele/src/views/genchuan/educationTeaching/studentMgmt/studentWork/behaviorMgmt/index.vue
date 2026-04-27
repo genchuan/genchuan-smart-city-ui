@@ -268,10 +268,11 @@ async function confirmAudit() {
   const loading = ElLoading.service({text: '审批中...'});
   try {
     const ids = currentAuditRows.value.map(row => row.id);
+    // 注意：接口字段名为 remark，不是 auditRemark
     const res = await auditBehaviorMgmt({
       ids,
       status: auditStatus.value,
-      auditRemark: auditRemark.value || '',
+      remark: auditRemark.value || '',   // 已修正
     });
     if (res && res !== false) {
       ElMessage.success('审批成功');

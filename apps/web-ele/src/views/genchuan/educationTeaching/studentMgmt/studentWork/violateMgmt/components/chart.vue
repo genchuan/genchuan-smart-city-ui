@@ -7,10 +7,12 @@ import Pie from '#/genchuan-components/stats/pieClick.vue';
 import {
   getViolateMgmtChart,
   getViolateCount,
-  getWarnIndex,
 } from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/violateMgmt/data.js';
 
-// 模拟数据
+// 默认时间范围参数（仅用于 getViolateCount）
+const DEFAULT_TIME_RANGE = [1704067200000, 1798732799000];
+
+// 模拟数据（字段与后端一致）
 const mockOverview = {
   totalCount: 32,
   pendingCount: 5,
@@ -21,31 +23,23 @@ const mockOverview = {
 
 const mockViolateCount = {
   classCountList: [
-    { className: '高一(1)班', count: 5 },
-    { className: '高一(2)班', count: 8 },
-    { className: '高一(3)班', count: 6 },
-    { className: '高二(1)班', count: 7 },
-    { className: '高二(2)班', count: 6 },
+    { class_name: '高一(1)班', count: 5 },
+    { class_name: '高一(2)班', count: 8 },
+    { class_name: '高一(3)班', count: 6 },
+    { class_name: '高二(1)班', count: 7 },
+    { class_name: '高二(2)班', count: 6 },
   ],
   typeCountList: [
-    { typeName: '仪容仪表', count: 10, percent: 31.25 },
-    { typeName: '行为违规', count: 18, percent: 56.25 },
-    { typeName: '其他', count: 4, percent: 12.5 },
+    { typeName: '仪容仪表', count: 10, percent: '31.25' },
+    { typeName: '行为违规', count: 18, percent: '56.25' },
+    { typeName: '其他', count: 4, percent: '12.5' },
   ],
 };
-
-const mockWarnIndex = [
-  { cycleName: '第1周', newViolateCount: 8, newWarnCount: 2, handleRate: 87.5 },
-  { cycleName: '第2周', newViolateCount: 10, newWarnCount: 3, handleRate: 90.0 },
-  { cycleName: '第3周', newViolateCount: 7, newWarnCount: 2, handleRate: 100.0 },
-  { cycleName: '第4周', newViolateCount: 7, newWarnCount: 1, handleRate: 100.0 },
-];
 
 const loading = ref(true);
 const overviewData = ref({});
 const classCountData = ref([]);
 const typeCountData = ref([]);
-const warnIndexData = ref([]);
 
 // 卡片列表
 const cardList = computed(() => {
@@ -61,25 +55,19 @@ const cardList = computed(() => {
   ];
 });
 
-// 各班级违纪次数柱状图
-const barXData = computed(() => classCountData.value.map(item => item.className));
+// 各班级违纪次数柱状图（适配后端字段 class_name）
+const barXData = computed(() => classCountData.value.map(item => item.class_name));
 const barSeriesData = computed(() => [
   { name: '违纪次数', data: classCountData.value.map(item => item.count) },
 ]);
 
-// 违纪类型分布饼图
-const pieData = computed(() => typeCountData.value.map(item => ({
-  name: item.typeName,
-  value: item.count,
-})));
-
-// 预警指标折线图数据
-const lineXData = computed(() => warnIndexData.value.map(item => item.cycleName));
-const lineSeriesData = computed(() => [
-  { name: '新增违纪数', data: warnIndexData.value.map(item => item.newViolateCount) },
-  { name: '新增预警数', data: warnIndexData.value.map(item => item.newWarnCount) },
-  { name: '处理率(%)', data: warnIndexData.value.map(item => item.handleRate) },
-]);
+// 违纪类型分布饼图（处理 typeName 为 null 的情况）
+const pieData = computed(() => {
+  return typeCountData.value.map((item, index) => ({
+    name: item.typeName || `类型${index + 1}`,
+    value: item.count,
+  }));
+});
 
 const emit = defineEmits(['barClick', 'pieClick', 'cardSelect']);
 
@@ -87,7 +75,6 @@ const handleCardClick = (cardInfo) => {
   emit('cardSelect', cardInfo.status);
 };
 
-// 修正：柱状图点击事件，直接接收班级名称字符串
 const handleBarClick = (className) => {
   emit('barClick', { type: 'class', value: className });
 };
@@ -99,10 +86,9 @@ const handlePieClick = (item) => {
 const loadChartData = async () => {
   loading.value = true;
   try {
-    const [overviewRes, violateCountRes, warnIndexRes] = await Promise.allSettled([
+    const [overviewRes, violateCountRes] = await Promise.allSettled([
       getViolateMgmtChart({}),
-      getViolateCount({}),
-      getWarnIndex({ cycle: 'month' }),
+      getViolateCount({timeRange: DEFAULT_TIME_RANGE}),
     ]);
     overviewData.value = overviewRes.status === 'fulfilled' ? overviewRes.value : mockOverview;
     if (violateCountRes.status === 'fulfilled') {
@@ -112,13 +98,11 @@ const loadChartData = async () => {
       classCountData.value = mockViolateCount.classCountList;
       typeCountData.value = mockViolateCount.typeCountList;
     }
-    warnIndexData.value = warnIndexRes.status === 'fulfilled' ? warnIndexRes.value : mockWarnIndex;
   } catch (error) {
     console.error('加载图表数据失败', error);
     overviewData.value = mockOverview;
     classCountData.value = mockViolateCount.classCountList;
     typeCountData.value = mockViolateCount.typeCountList;
-    warnIndexData.value = mockWarnIndex;
   } finally {
     loading.value = false;
   }
@@ -140,34 +124,20 @@ onMounted(() => {
         @click="handleCardClick"
       />
     </div>
-
-    <div class="chart-wrapper" style="flex: 1 !important;">
-      <Bar
-        :title="'各班级违纪次数'"
-        :x-data="barXData"
-        :series-data="barSeriesData"
-        y-name="违纪次数"
-        @bar-click="handleBarClick"
-      />
-    </div>
-
-    <div class="chart-wrapper" style="flex: 1 !important;">
-      <Pie
-        :title-text="'违纪类型分布'"
-        :data="pieData"
-        @pie-click="handlePieClick"
-      />
-    </div>
-
-    <div class="chart-wrapper" style="flex: 1 !important;">
-      <Bar
-        :title="'预警指标趋势'"
-        :x-data="lineXData"
-        :series-data="lineSeriesData"
-        y-name="数量/率"
-        @bar-click="(cycleName) => emit('barClick', { type: 'cycle', value: cycleName })"
-      />
-    </div>
+    <Bar
+      style="flex: 1.5 !important;"
+      :title="'各班级违纪次数'"
+      :x-data="barXData"
+      :series-data="barSeriesData"
+      y-name="违纪次数"
+      @bar-click="handleBarClick"
+    />
+    <Pie
+      style="flex: 1 !important;"
+      :title-text="'违纪类型分布'"
+      :data="pieData"
+      @pie-click="handlePieClick"
+    />
   </div>
 </template>
 
@@ -191,15 +161,6 @@ onMounted(() => {
     .left-card {
       height: 150px !important;
     }
-  }
-
-  .chart-wrapper {
-    display: flex;
-    flex-direction: column;
-    min-width: 300px;
-    flex: 1;
-    margin-left: 12px;
-    margin-bottom: 12px;
   }
 }
 </style>

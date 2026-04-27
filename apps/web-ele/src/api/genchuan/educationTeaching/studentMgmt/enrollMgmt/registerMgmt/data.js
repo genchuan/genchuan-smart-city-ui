@@ -48,9 +48,9 @@ export function getRegisterMgmtPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mock = getMockList();
-      return { list: convertList(mock), total: mock.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -102,10 +102,9 @@ export function getRegisterMgmtDetail(params) {
   return requestClient.get('/studentmgmt/register-mgmt/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -149,94 +148,3 @@ export function getRegisterMgmtEnrollCount(params) {
     });
   });
 }
-
-// 模拟数据（原始值使用英文，通过转换函数对外提供中文）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      studentName: '张三',
-      idCard: '41010119900307663X',
-      phone: '13800001111',
-      major: '计算机应用技术',
-      applyTime: 1767225600000,
-      auditUser: '张老师',
-      auditTime: 1767312000000,
-      confirmTime: 1767398400000,
-      status: 'admitted',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 2,
-      studentName: '李四',
-      idCard: '410101199003076641',
-      phone: '13800002222',
-      major: '电子商务',
-      applyTime: 1767225600000,
-      auditUser: null,
-      auditTime: null,
-      confirmTime: null,
-      status: 'pending',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 3,
-      studentName: '王五',
-      idCard: '410101199003076652',
-      phone: '13800003333',
-      major: '机电一体化',
-      applyTime: 1769904000000,
-      auditUser: '王老师',
-      auditTime: 1769990400000,
-      confirmTime: 1770076800000,
-      status: 'admitted',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 4,
-      studentName: '赵六',
-      idCard: '410101199003076663',
-      phone: '13800004444',
-      major: '会计电算化',
-      applyTime: 1769904000000,
-      auditUser: null,
-      auditTime: null,
-      confirmTime: null,
-      status: 'pending',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 5,
-      studentName: '孙七',
-      idCard: '410101199003076674',
-      phone: '13800005555',
-      major: '学前教育',
-      applyTime: 1775088000000,
-      auditUser: '李老师',
-      auditTime: 1775174400000,
-      confirmTime: 1775260800000,
-      status: 'admitted',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775088000000,
-      updateTime: 1775088000000,
-    },
-  ];
-};

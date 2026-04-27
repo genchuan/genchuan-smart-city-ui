@@ -2,7 +2,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { ElSelect, ElOption } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
-import Pie from '#/genchuan-components/stats/pieClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import {
   getDormCheckChart,
@@ -26,11 +25,6 @@ const cardList = computed(() => {
     { title: '整体在寝率', value: inRate, color: '#E6A23C', suffix: '%', status: 'inRate' },
     { title: '预警人数', value: warning, color: '#e63c3c', status: 'warning' },
   ];
-});
-
-const pieData = computed(() => {
-  const stats = chartData.value.abnormalStats || [];
-  return stats.map(item => ({ name: item.type, value: item.count }));
 });
 
 const barOptions = computed(() => [
@@ -63,14 +57,10 @@ const handleBarChange = (index) => {
   activeBarIndex.value = index;
 };
 
-const emit = defineEmits(['cardSelect', 'pieSelect', 'barSelect']);
+const emit = defineEmits(['cardSelect', 'barSelect']);
 
 const handleCardClick = (cardInfo) => {
   emit('cardSelect', cardInfo.status);
-};
-
-const handlePieClick = (item) => {
-  emit('pieSelect', { field: 'abnormalType', value: item.name });
 };
 
 const handleBarClick = (className) => {
@@ -132,13 +122,6 @@ onMounted(() => {
         @click="handleCardClick"
       />
     </div>
-
-    <Pie
-      style="flex: 1 !important;"
-      title-text="异常类型统计"
-      :data="pieData"
-      @pie-click="handlePieClick"
-    />
 
     <div class="chart-area">
       <div class="chart-select-wrapper">
