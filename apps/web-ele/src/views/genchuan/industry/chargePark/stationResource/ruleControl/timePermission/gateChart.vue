@@ -1,7 +1,8 @@
 <script setup>
 import { computed } from 'vue';
-import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
+
 import BarClick from '#/genchuan-components/stats/barClick.vue';
+import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 import PieClick from '#/genchuan-components/stats/pieClick.vue';
 
@@ -41,10 +42,10 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
-  'card-click',
-  'bar-click',
-  'line-click',
-  'pie-click',
+  'cardClick',
+  'barClick',
+  'lineClick',
+  'pieClick',
 ]);
 
 // 动态计算是否显示各个图表
@@ -79,35 +80,35 @@ const chartFlex = computed(() => {
         :value="item.value"
         :color="item.color"
         :status="item.status"
-        @click="emit('card-click', item)"
+        @click="emit('cardClick', item)"
       />
     </div>
     <div v-if="hasPie" class="chart-wrapper" :style="{ flex: chartFlex }">
       <PieClick
         class="chart-panel-inner"
         :data="props.pieData"
-        :title-text="props.title + '统计'"
-        @pie-click="emit('pie-click', $event)"
+        :title-text="`${props.title}统计`"
+        @pie-click="emit('pieClick', $event)"
       />
     </div>
     <div v-if="hasBar" class="chart-wrapper" :style="{ flex: chartFlex }">
       <BarClick
         class="chart-panel-inner"
-        :title="props.title + '分布'"
+        :title="`${props.title}分布`"
         :x-data="props.barXData"
         :series-data="props.barSeriesData"
         y-name="数量"
-        @bar-click="emit('bar-click', $event)"
+        @bar-click="emit('barClick', $event)"
       />
     </div>
     <div v-if="hasLine" class="chart-wrapper" :style="{ flex: chartFlex }">
       <LineChartClick
         class="chart-panel-inner"
-        :title="props.title + '趋势'"
+        :title="`${props.title}趋势`"
         :x-data="props.lineXData"
         :series-data="props.lineSeriesData"
         y-name="数量"
-        @line-click="emit('line-click', $event)"
+        @line-click="emit('lineClick', $event)"
       />
     </div>
   </div>
