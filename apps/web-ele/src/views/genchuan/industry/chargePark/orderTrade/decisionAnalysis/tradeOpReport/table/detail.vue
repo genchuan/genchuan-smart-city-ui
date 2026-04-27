@@ -2,7 +2,7 @@
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 核算记录详情
+// 交易运营报表详情
 const props = defineProps({
   detailObj: {
     type: Object,
@@ -19,41 +19,25 @@ const { detailObj, title } = toRefs(props);
 
 // 标题
 const drawerTitle = computed(() => {
-  const checkNo = detailObj.value?.checkNo || '核算记录';
-  return title.value || `${checkNo} 详情`;
+  const reportCycle = detailObj.value?.reportCycle || '交易运营报表';
+  return title.value || `${reportCycle} 详情`;
 });
 
-// 金额核算状态映射
-const statusMap = {
-  pending: { label: '待核算', type: 'warning' },
-  checked: { label: '已核算', type: 'info' },
-  confirmed: { label: '已确认', type: 'success' },
+// 报表生成状态映射
+const generateStatusMap = {
+  pending: { label: '生成中', type: 'warning' },
+  success: { label: '生成成功', type: 'success' },
+  failed: { label: '生成失败', type: 'danger' },
 };
 
 // 获取状态标签
 const getStatusLabel = (status) => {
-  return statusMap[status]?.label || status;
+  return generateStatusMap[status]?.label || status;
 };
 
 // 获取状态类型
 const getStatusType = (status) => {
-  return statusMap[status]?.type || 'default';
-};
-
-// 核算结果映射
-const checkResultMap = {
-  pass: { label: '通过', type: 'success' },
-  fail: { label: '不通过', type: 'danger' },
-};
-
-// 获取核算结果标签
-const getCheckResultLabel = (checkResult) => {
-  return checkResultMap[checkResult]?.label || checkResult;
-};
-
-// 获取核算结果类型
-const getCheckResultType = (checkResult) => {
-  return checkResultMap[checkResult]?.type || 'default';
+  return generateStatusMap[status]?.type || 'default';
 };
 
 // 抽屉
@@ -79,81 +63,102 @@ defineExpose({
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
       <div class="detail-card-row">
-        <div class="detail-row-left">主键ID:</div>
+        <div class="detail-row-left">报表记录ID:</div>
         <div class="detail-row-right">{{ detailObj.id || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">核算编号:</div>
-        <div class="detail-row-right">{{ detailObj.checkNo || '-' }}</div>
+        <div class="detail-row-left">报表周期:</div>
+        <div class="detail-row-right">{{ detailObj.reportCycle || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">关联订单ID:</div>
-        <div class="detail-row-right">{{ detailObj.orderId || '-' }}</div>
+        <div class="detail-row-left">统计时段:</div>
+        <div class="detail-row-right">{{ detailObj.statTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">申请金额:</div>
-        <div class="detail-row-right">{{ detailObj.applyAmount || '0.00' }} 元</div>
+        <div class="detail-row-left">周期订单数:</div>
+        <div class="detail-row-right">{{ detailObj.cycleOrderCount || 0 }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">核算结果:</div>
+        <div class="detail-row-left">周期营收(元):</div>
+        <div class="detail-row-right">{{ (detailObj.cycleRevenue || 0).toFixed(2) }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">支付率(%):</div>
+        <div class="detail-row-right">{{ (detailObj.payRate || 0).toFixed(2) }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">充电量(度):</div>
+        <div class="detail-row-right">{{ (detailObj.chargeQuantity || 0).toFixed(2) }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">借出量(次):</div>
+        <div class="detail-row-right">{{ detailObj.lendCount || 0 }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">退款金额(元):</div>
+        <div class="detail-row-right">{{ (detailObj.refundAmount || 0).toFixed(2) }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">待处置异常数:</div>
+        <div class="detail-row-right">{{ detailObj.waitHandleAbnormalCount || 0 }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">追缴完成率(%):</div>
+        <div class="detail-row-right">{{ (detailObj.collectCompleteRate || 0).toFixed(2) }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">审核完成率(%):</div>
+        <div class="detail-row-right">{{ (detailObj.checkCompleteRate || 0).toFixed(2) }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">核算准确率(%):</div>
+        <div class="detail-row-right">{{ (detailObj.checkAccuracyRate || 0).toFixed(2) }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">报表生成状态:</div>
         <div class="detail-row-right">
-          <el-tag :type="getCheckResultType(detailObj.checkResult)">
-            {{ getCheckResultLabel(detailObj.checkResult) }}
+          <el-tag :type="getStatusType(detailObj.generateStatus)">
+            {{ getStatusLabel(detailObj.generateStatus) }}
           </el-tag>
         </div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">核算明细:</div>
-        <div class="detail-row-right">{{ detailObj.checkDetail || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">状态:</div>
-        <div class="detail-row-right">
-          <el-tag :type="getStatusType(detailObj.status)">
-            {{ getStatusLabel(detailObj.status) }}
-          </el-tag>
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">操作人ID:</div>
-        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段1:</div>
-        <div class="detail-row-right">{{ detailObj.reserve1 || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段2:</div>
-        <div class="detail-row-right">{{ detailObj.reserve2 || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">创建者:</div>
-        <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新者:</div>
-        <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">创建时间:</div>
+        <div class="detail-row-left">报表生成时间:</div>
         <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">更新时间:</div>
-        <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
+        <div class="detail-row-left">操作人:</div>
+        <div class="detail-row-right">{{ detailObj.operator || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">同比:</div>
+        <div class="detail-row-right">{{ detailObj.yearOnYear || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">环比:</div>
+        <div class="detail-row-right">{{ detailObj.chainRatio || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">报表导出次数:</div>
+        <div class="detail-row-right">{{ detailObj.exportCount || 0 }}</div>
       </div>
     </div>
   </DetailDrawer>
