@@ -402,6 +402,12 @@ const handleRefund = (row) => {
 
 // 提交退款
 const handleRefundSubmit = async () => {
+  // 校验退款申请内容长度
+  if (refundForm.remark && refundForm.remark.length < 10) {
+    ElMessage.error('退款申请内容需要≥10个字符');
+    return;
+  }
+  
   try {
     await refundOrder(refundForm);
     ElMessage.success('退款申请已提交');
