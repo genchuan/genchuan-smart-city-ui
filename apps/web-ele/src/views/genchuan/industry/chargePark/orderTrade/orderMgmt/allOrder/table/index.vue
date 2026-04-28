@@ -723,7 +723,7 @@ const alarmColumns = [
             content="开票"
             icon-name="Document"
             @click="handleInvoice(row)"
-            v-if="row.status === 'completed'"
+            v-if="row.status === 'paid' || row.status === 'completed'"
           />
         </div>
       </template>
