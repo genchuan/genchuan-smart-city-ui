@@ -180,6 +180,7 @@ onMounted(() => {
 }
 
 .fence-map-section {
+  margin-left: 15px;
   position: relative;
   flex: 1 1 0;
   min-width: 0;
