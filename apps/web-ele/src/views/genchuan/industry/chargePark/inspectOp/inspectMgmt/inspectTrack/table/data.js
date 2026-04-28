@@ -1,6 +1,7 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getInspectUserPage } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectUser';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -33,12 +34,52 @@ export function getTrackStatusLabel(value) {
 export function isTrackStatusLabel(value, label) {
   return isDictLabel(INSPECT_TRACK_STATUS_DICT, value, label);
 }
-export const userOptions = [
+const DEFAULT_USER_OPTIONS = [
   { label: '张三', value: 1 },
   { label: '李四', value: 2 },
   { label: '王五', value: 3 },
   { label: '赵六', value: 4 },
 ];
+export const userOptions = [...DEFAULT_USER_OPTIONS];
+let userOptionsLoaded = false;
+let userOptionsLoadingPromise = null;
+
+export async function loadTrackUserOptions() {
+  if (userOptionsLoaded) return;
+  if (userOptionsLoadingPromise) {
+    await userOptionsLoadingPromise;
+    return;
+  }
+
+  userOptionsLoadingPromise = (async () => {
+    try {
+      const response = await getInspectUserPage({
+        pageNo: 1,
+        pageSize: 200,
+        status: '1',
+      });
+      const pageResult = response?.list ? response : response?.data || response;
+      const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
+      const options = list
+        .map((item) => ({
+          label: item.name || item.userName || `巡检人员${item.id ?? ''}`,
+          value: item.id ?? item.userId,
+        }))
+        .filter((item) => item.value !== undefined && item.value !== null);
+
+      if (options.length > 0) {
+        userOptions.splice(0, userOptions.length, ...options);
+        userOptionsLoaded = true;
+      }
+    } catch (error) {
+      console.error('加载巡检人员选项失败，使用默认数据:', error);
+    } finally {
+      userOptionsLoadingPromise = null;
+    }
+  })();
+
+  await userOptionsLoadingPromise;
+}
 
 export const areaOptions = [
   { label: '丰泽区', value: '丰泽区' },
@@ -256,7 +297,7 @@ function isTrendTimeMatched(item, trendTime) {
 
 export function dataList() {
   return Array.from({ length: 18 }, (_, index) => {
-    const user = userOptions[index % userOptions.length];
+    const user = DEFAULT_USER_OPTIONS[index % DEFAULT_USER_OPTIONS.length];
     const area = areaOptions[index % areaOptions.length].value;
     const status = index % 5 === 2 || index % 7 === 3 ? '异常' : '正常';
     const syncStatus =
@@ -493,15 +534,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'trackTimeRange',
+      fieldName: 'trackTime',
       label: '轨迹时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择轨迹时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
   ];

@@ -29,13 +29,13 @@ const rules = {
       trigger: 'blur',
     },
   ],
-  processUserId: [
-    {
-      required: true,
-      message: '请选择处置人',
-      trigger: 'change',
-    },
-  ],
+  // processUserId: [
+  //   {
+  //     required: true,
+  //     message: '请选择处置人',
+  //     trigger: 'change',
+  //   },
+  // ],
 };
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -76,7 +76,7 @@ async function submitProcess() {
     await processInspectReport({
       id: rowData.value.id,
       processMode: form.processMode,
-      processUserId: form.processUserId,
+      // processUserId: form.processUserId,
       processResult: form.processResult,
     });
     ElMessage.success('处置执行成功');
@@ -111,7 +111,7 @@ defineExpose({
           show-word-limit
         />
       </el-form-item>
-      <el-form-item label="处置人" prop="processUserId">
+      <!-- <el-form-item label="处置人" prop="processUserId">
         <el-select
           v-model="form.processUserId"
           clearable
@@ -125,7 +125,7 @@ defineExpose({
             :value="item.value"
           />
         </el-select>
-      </el-form-item>
+      </el-form-item> -->
       <el-form-item label="处置结果">
         <el-input
           v-model="form.processResult"

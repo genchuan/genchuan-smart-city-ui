@@ -4,7 +4,7 @@ import { computed, reactive, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj } from '@vben/hooks';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -99,19 +99,48 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       return;
     }
     const values = await formApi.getValues();
+
+    // 校验开始时间不得晚于结束时间
+    if (
+      values.startTime &&
+      values.endTime &&
+      values.startTime > values.endTime
+    ) {
+      ElMessage.error('开始时间不得晚于结束时间');
+      return;
+    }
+
+    // 处理提交数据
+    const submitData = {
+      ...values,
+      // 将stationIds数组转换为逗号分隔的字符串
+      stationIds: Array.isArray(values.stationIds)
+        ? values.stationIds.join(',')
+        : values.stationIds,
+    };
+
     try {
       if (formData.value?.id) {
-        await updatePointActivity({ ...values, id: formData.value.id });
+        // 将id转换为数字类型
+        await updatePointActivity({
+          ...submitData,
+          id: Number(formData.value.id),
+        });
         ElMessage.success($t('ui.actionMessage.editSuccess'));
       } else {
-        await createPointActivity(values);
+        await createPointActivity(submitData);
         ElMessage.success($t('ui.actionMessage.addSuccess'));
       }
       formDrawerApi.close();
       handleRefresh();
     } catch (error) {
       console.error(error);
-      ElMessage.error(formData.value?.id ? '编辑失败' : '新增失败');
+      // 显示接口返回的错误信息
+      const errorMsg =
+        error?.msg ||
+        error?.message ||
+        (formData.value?.id ? '编辑失败' : '新增失败');
+      ElMessage.error(errorMsg);
     }
   },
   async onOpenChange(isOpen) {
@@ -139,11 +168,23 @@ function handleRefresh() {
 /** 导出表格 */
 async function handleExport() {
   try {
-    const data = await exportPointActivity();
+    // 构建导出参数，包含当前筛选条件
+    const exportParams = {
+      pageNo: 1,
+      pageSize: 200, // 最大导出200条
+      name: dataObj.searchParams.name,
+      type: filterType.value || dataObj.searchParams.type,
+      status: filterStatus.value || dataObj.searchParams.status,
+      startTime: dataObj.searchParams.timeRange?.[0],
+      endTime: dataObj.searchParams.timeRange?.[1],
+    };
+
+    const data = await exportPointActivity(exportParams);
     downloadFileFromBlobPart({ fileName: '积分活动数据.xlsx', source: data });
     ElMessage.success('导出成功');
   } catch (error) {
-    ElMessage.error('导出失败');
+    const errorMsg = error?.msg || error?.message || '导出失败';
+    ElMessage.error(errorMsg);
     console.error(error);
   }
 }
@@ -215,6 +256,7 @@ const filterType = ref('');
 const filterStatus = ref('');
 const filterAuditorName = ref('');
 const filterStationId = ref('');
+const filterDate = ref(''); // 日期筛选（用于折线图钻取）
 
 const dataObj = reactive({
   totalShow: false,
@@ -248,8 +290,9 @@ const getTableData = async (pageObj) => {
       name: dataObj.searchParams.name,
       type: filterType.value || dataObj.searchParams.type,
       status: filterStatus.value || dataObj.searchParams.status,
-      startTime: dataObj.searchParams.timeRange?.[0],
-      endTime: dataObj.searchParams.timeRange?.[1],
+      date: filterDate.value || undefined, // 日期筛选（用于折线图钻取）
+      startTime: !filterDate.value ? dataObj.searchParams.timeRange?.[0] : undefined,
+      endTime: !filterDate.value ? dataObj.searchParams.timeRange?.[1] : undefined,
     };
 
     const response = await getPointActivityPage(queryParams);
@@ -425,6 +468,11 @@ const handleCancelStationFilter = () => {
   gridApi.query();
 };
 
+const handleCancelDateFilter = () => {
+  filterDate.value = '';
+  gridApi.query();
+};
+
 /** 获取活动状态标签文本 */
 function getStatusLabel(status) {
   const dict = getDictObj(DICT_TYPE.POINT_ACTIVITY_STATUS, String(status));
@@ -445,23 +493,31 @@ function getStationLabel(stationId) {
 
 // 处理统计组件的钻取筛选
 const handleStatsFilter = (type, value) => {
-  if (type === 'card') {
-    if (value === 'all') {
-      // 总活动数，清空所有筛选
-      filterType.value = '';
-      filterStatus.value = '';
-    } else if (value === 'users') {
-      // 累计参与用户数，可以跳转到用户明细页面
-      ElMessage.info('查看累计参与用户明细');
-      return;
+  switch (type) {
+    case 'card': {
+      if (value === 'all') {
+        // 总活动数，清空所有筛选
+        filterType.value = '';
+        filterStatus.value = '';
+      } else if (value === 'users') {
+        // 累计参与用户数，可以跳转到用户明细页面
+        ElMessage.info('查看累计参与用户明细');
+        return;
+      }
+
+      break;
     }
-  } else if (type === 'type') {
-    // 按活动类型筛选
-    filterType.value = value;
-  } else if (type === 'date') {
-    // 按日期筛选，可以跳转到该日期的参与用户明细
-    ElMessage.info(`查看 ${value} 的参与用户明细`);
-    return;
+    case 'date': {
+      // 按日期筛选 - 直接将统计接口返回的date值传入分页接口中查询
+      filterDate.value = value;
+      break;
+    }
+    case 'type': {
+      // 按活动类型筛选
+      filterType.value = value;
+      break;
+    }
+    // No default
   }
   gridApi.query();
 };
@@ -535,6 +591,16 @@ defineExpose({
           >
             活动覆盖场站：{{ getStationLabel(filterStationId) }}
           </ElTag>
+          <!-- 日期筛选标签 -->
+          <ElTag
+            v-if="filterDate"
+            type="danger"
+            closable
+            @close="handleCancelDateFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            日期：{{ filterDate }}
+          </ElTag>
         </div>
       </template>
       <template #toolbar-tools>
@@ -546,13 +612,13 @@ defineExpose({
             icon-name="download"
             @click="handleExport"
           />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
+          <!--          <IconButton-->
+          <!--            content="批量删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            :disabled="isEmpty(checkedIds)"-->
+          <!--            @click="handleDeleteBatch"-->
+          <!--          />-->
           <IconButton
             content="搜索"
             icon-name="search"
@@ -723,5 +789,4 @@ defineExpose({
     />
   </div>
 </template>
-<style scoped>
-</style>
+<style scoped></style>

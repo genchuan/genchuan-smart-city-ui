@@ -4,12 +4,13 @@ import { computed, reactive, ref, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
-import { ElMessage, ElTag } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  deleteInspectUser,
   exportInspectUser,
   getInspectUserDetail,
   getInspectUserPage,
@@ -128,9 +129,9 @@ async function getTableData({ page }) {
     const pageResult = response?.list ? response : response?.data || response;
     const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
 
-    if (list.length === 0 && !pageResult?.total) {
-      throw new Error('接口返回数据为空');
-    }
+    // if (list.length === 0 && !pageResult?.total) {
+    //   throw new Error('接口返回数据为空');
+    // }
 
     const normalizedList = list.map((item) => normalizeInspectUserRow(item));
     const visibleList =
@@ -272,6 +273,22 @@ function handleFullShow() {
 
 function changeTotalShow() {
   dataObj.totalShow = !dataObj.totalShow;
+}
+
+async function handleDelete(row) {
+  await ElMessageBox.confirm('确定删除该巡检人员吗？', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  });
+  const loadingInstance = ElLoading.service({ text: '删除中...' });
+  try {
+    await deleteInspectUser(row.id);
+    ElMessage.success('删除成功');
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
 }
 
 function handleAreaClick(area) {
@@ -484,6 +501,12 @@ watch(
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
+          <IconButton
+            content="删除"
+            icon-name="delete"
+            color="#F56C6C"
+            @click="handleDelete(row)"
+          />
         </div>
       </template>
 
@@ -523,7 +546,6 @@ watch(
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  min-height: 32px;
 }
 
 .inspect-user-filter-tags :deep(.el-tag) {

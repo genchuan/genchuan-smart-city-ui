@@ -4,11 +4,11 @@
     <div class="detail-card">
       <div class="detail-card-row"><div class="detail-row-left">告警编号：</div><div class="detail-row-right">{{ detailObj.alarmCode || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">模块名称：</div><div class="detail-row-right">{{ detailObj.moduleName || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">异常类型：</div><div class="detail-row-right">{{ abnormalTypeMap[detailObj.abnormalType] || detailObj.abnormalType || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">告警等级：</div><div class="detail-row-right">{{ alarmLevelMap[detailObj.alarmLevel] || detailObj.alarmLevel || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">异常类型：</div><div class="detail-row-right">{{ detailObj.abnormalName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">告警等级：</div><div class="detail-row-right">{{ detailObj.alarmLevelName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">告警时间：</div><div class="detail-row-right">{{ detailObj.alarmTime || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">服务器信息：</div><div class="detail-row-right">{{ detailObj.serverInfo || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">告警状态：</div><div class="detail-row-right">{{ alarmStatusMap[detailObj.alarmStatus] || detailObj.alarmStatus || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">告警状态：</div><div class="detail-row-right">{{ detailObj.alarmStatusName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">排查原因：</div><div class="detail-row-right">{{ detailObj.checkReason || '-' }}</div></div>
       <div class="detail-card-row">
         <div class="detail-row-left">修复凭证：</div>
@@ -18,7 +18,7 @@
         </div>
       </div>
       <div class="detail-card-row"><div class="detail-row-left">修复时间：</div><div class="detail-row-right">{{ detailObj.repairTime || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">操作人：</div><div class="detail-row-right">{{ detailObj.operator || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">操作人：</div><div class="detail-row-right">{{ detailObj.updaterName || detailObj.updater || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">备注：</div><div class="detail-row-right">{{ detailObj.remark || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ detailObj.createTime || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">更新时间：</div><div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div></div>
@@ -36,7 +36,6 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
-import { abnormalTypeMap, alarmLevelMap, alarmStatusMap } from './data.js';
 
 const props = defineProps({
   detailObj: { type: Object, required: true, default: () => ({}) },
@@ -69,7 +68,6 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
 </script>
 
 <style scoped lang="scss">
-/* 复用充电桩 detail 样式 */
 .detail-card {
   padding: 20px;
   background-color: #f9fafb;

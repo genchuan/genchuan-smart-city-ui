@@ -56,18 +56,15 @@ const statusReverse = {
 // 年级映射（将纯数字年份转为“XX级”）
 function formatGrade(grade) {
   if (!grade) return grade;
-  // 如果是纯数字（如"2024"），转为"2024级"
   if (/^\d{4}$/.test(grade)) {
     return `${grade}级`;
   }
-  // 如果已经是"2024级"格式，保持不变
   return grade;
 }
 
 // 逆向年级映射（将“2024级”转为"2024"）
 function parseGrade(grade) {
   if (!grade) return grade;
-  // 如果格式为"2024级"，去掉"级"
   if (grade.endsWith('级')) {
     return grade.slice(0, -1);
   }
@@ -135,9 +132,9 @@ export function getStudentInfoPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mockData = convertList(dataList());
-      return { list: mockData, total: mockData.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -158,7 +155,6 @@ export function updateStudentInfo(data) {
 }
 
 export function deleteStudentInfo(params) {
-  // 删除接口只传 id，无需转换
   return requestClient.delete('/studentmgmt/student-info/delete', { params }).catch(err => {
     console.warn('删除接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -166,7 +162,6 @@ export function deleteStudentInfo(params) {
 }
 
 export function deleteStudentInfoList(data) {
-  // 批量删除接口只传 ids，无需转换
   return requestClient.delete('/studentmgmt/student-info/delete-list', { params: data }).catch(err => {
     console.warn('批量删除接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -185,24 +180,25 @@ export function getStudentInfoDetail(params) {
   return requestClient.get('/studentmgmt/student-info/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = dataList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
 // ==================== 图表接口 ====================
-// 图表接口暂不处理映射（因未提供后端数据结构），如有需要可参照添加
 export function getStudentInfoChart(params) {
   return requestClient.get('/studentmgmt/student-info/chart', { params }).catch(err => {
     console.warn('图表总览接口失败，使用模拟数据', err);
     return Promise.resolve({
-      totalStudent: 1256,
-      inSchoolStudent: 1220,
-      suspendStudent: 15,
-      transferStudent: 12,
-      specialStudent: 9,
+      totalStudentCount: 1256,
+      inSchoolCount: 1220,
+      suspendCount: 15,
+      dropOutCount: 9,
+      transferCount: 12,
+      normalStudentCount: 1100,
+      specialStudentCount: 156,
+      transferStudentCount: 12
     });
   });
 }
@@ -247,147 +243,3 @@ export function getStudentInfoCoreIndex(params) {
     ]);
   });
 }
-
-// 模拟数据（原始值使用数字/代码，通过转换函数对外提供中文）
-export const dataList = () => {
-  return [
-    {
-      id: 1,
-      studentNo: '20210001',
-      name: '张三',
-      idCard: '41010119900307663X',
-      photo: '',
-      grade: '2021',
-      educationLevel: '3',
-      studyForm: '1',
-      major: '计算机科学与技术',
-      className: '计算机科学与技术1班',
-      studentType: '1',
-      status: '1',
-      phone: '13800138001',
-      parentPhone: '13800138000',
-      remark: '',
-      reserve1: '',
-      reserve2: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672531200000,
-      updateTime: 1672531200000,
-    },
-    {
-      id: 2,
-      studentNo: '20210002',
-      name: '李四',
-      idCard: '410101199003076631',
-      photo: '',
-      grade: '2021',
-      educationLevel: '3',
-      studyForm: '1',
-      major: '软件工程',
-      className: '软件工程1班',
-      studentType: '1',
-      status: '1',
-      phone: '13800138002',
-      parentPhone: '13800138001',
-      remark: '',
-      reserve1: '',
-      reserve2: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672617600000,
-      updateTime: 1672617600000,
-    },
-    {
-      id: 3,
-      studentNo: '20210003',
-      name: '王五',
-      idCard: '410101199003076632',
-      photo: '',
-      grade: '2021',
-      educationLevel: '3',
-      studyForm: '2',
-      major: '计算机科学与技术',
-      className: '计算机科学与技术2班',
-      studentType: '2',
-      status: '2',
-      phone: '13800138003',
-      parentPhone: '13800138002',
-      remark: '',
-      reserve1: '',
-      reserve2: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1672704000000,
-      updateTime: 1672704000000,
-    },
-    {
-      id: 4,
-      studentNo: '20210004',
-      name: '赵六',
-      idCard: '410101199003076633',
-      photo: '',
-      grade: '2021',
-      educationLevel: '2',
-      studyForm: '3',
-      major: '电子信息工程',
-      className: '电子信息工程1班',
-      studentType: '3',
-      status: '4',
-      phone: '13800138004',
-      parentPhone: '13800138003',
-      remark: '',
-      reserve1: '',
-      reserve2: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672790400000,
-      updateTime: 1672790400000,
-    },
-    {
-      id: 5,
-      studentNo: '20210005',
-      name: '孙七',
-      idCard: '410101199003076634',
-      photo: '',
-      grade: '2021',
-      educationLevel: '4',
-      studyForm: '1',
-      major: '数据科学与大数据技术',
-      className: '大数据1班',
-      studentType: '1',
-      status: '1',
-      phone: '13800138005',
-      parentPhone: '13800138004',
-      remark: '',
-      reserve1: '',
-      reserve2: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1672876800000,
-      updateTime: 1672876800000,
-    },
-    {
-      id: 6,
-      studentNo: '20210006',
-      name: '周八',
-      idCard: '410101199003076635',
-      photo: '',
-      grade: '2021',
-      educationLevel: '3',
-      studyForm: '1',
-      major: '软件工程',
-      className: '软件工程2班',
-      studentType: '2',
-      status: '1',
-      phone: '13800138006',
-      parentPhone: '13800138005',
-      remark: '',
-      reserve1: '',
-      reserve2: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1672963200000,
-      updateTime: 1672963200000,
-    },
-  ];
-};

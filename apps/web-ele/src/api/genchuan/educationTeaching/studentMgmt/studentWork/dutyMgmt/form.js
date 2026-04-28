@@ -70,7 +70,7 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 排班表单 schema
+// 排班表单
 export function useScheduleFormSchema() {
   return [
     {
@@ -89,11 +89,22 @@ export function useScheduleFormSchema() {
     {
       fieldName: 'dutyUser',
       label: '值班人',
+      component: 'Input',
+      componentProps: { placeholder: '请输入值班人姓名' },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择值班人',
-        filterable: true,
-        options: [], // 动态加载
+        placeholder: '请选择状态',
+        options: [
+          { label: '待打卡', value: '待打卡' },
+          { label: '已完成', value: '已完成' },
+        ],
+        defaultValue: '待打卡',
       },
       rules: 'required',
       labelWidth: '100',
@@ -108,7 +119,7 @@ export function useScheduleFormSchema() {
   ];
 }
 
-// 编辑值班记录表单 schema
+// 编辑值班记录表单
 export function useEditFormSchema() {
   return [
     {
@@ -127,12 +138,8 @@ export function useEditFormSchema() {
     {
       fieldName: 'dutyUser',
       label: '值班人',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择值班人',
-        filterable: true,
-        options: [], // 动态加载
-      },
+      component: 'Input',
+      componentProps: { placeholder: '请输入值班人姓名' },
       rules: 'required',
       labelWidth: '100',
     },
@@ -148,6 +155,7 @@ export function useEditFormSchema() {
           { label: '待出车审批', value: '待出车审批' },
           { label: '已完成', value: '已完成' },
         ],
+        disabled: true,
       },
       rules: 'required',
       labelWidth: '100',
@@ -162,7 +170,7 @@ export function useEditFormSchema() {
   ];
 }
 
-// 调班申请表单 schema
+// 调班申请表单
 export function useShiftApplyFormSchema() {
   return [
     {
@@ -184,7 +192,7 @@ export function useShiftApplyFormSchema() {
   ];
 }
 
-// 出车申请表单 schema
+// 出车申请表单
 export function useVehicleApplyFormSchema() {
   return [
     {
@@ -206,7 +214,7 @@ export function useVehicleApplyFormSchema() {
   ];
 }
 
-// 上传记录表单 schema
+// 上传记录表单
 export function useUploadRecordFormSchema() {
   return [
     {

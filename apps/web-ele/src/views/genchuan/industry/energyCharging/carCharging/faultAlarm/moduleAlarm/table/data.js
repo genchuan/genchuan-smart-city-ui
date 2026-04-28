@@ -1,6 +1,6 @@
 // module-alarm/table/data.js
 
-// 字典映射
+// 字典映射（用于显示和标签样式，仍保留以备需要）
 export const abnormalTypeMap = {
   '接口故障': '接口故障',
   '运行卡顿': '运行卡顿',
@@ -45,7 +45,7 @@ export function useQuerySchema() {
       componentProps: { placeholder: '请输入模块名称' },
     },
     {
-      fieldName: 'abnormalType',
+      fieldName: 'abnormalTypeId',
       label: '异常类型',
       component: 'Select',
       componentProps: {
@@ -54,7 +54,7 @@ export function useQuerySchema() {
       },
     },
     {
-      fieldName: 'alarmLevel',
+      fieldName: 'alarmLevelId',
       label: '告警等级',
       component: 'Select',
       componentProps: {
@@ -63,7 +63,7 @@ export function useQuerySchema() {
       },
     },
     {
-      fieldName: 'alarmStatus',
+      fieldName: 'alarmStatusId',
       label: '告警状态',
       component: 'Select',
       componentProps: {
@@ -104,13 +104,13 @@ export function useQuerySchema() {
   ];
 }
 
-/** 表格列配置（使用映射后的文本字段） */
+/** 表格列配置（使用后端返回的字段名） */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     { field: 'alarmCode', title: '告警编号', minWidth: 160, sortable: true, slots: { default: 'alarmCode' } },
     { field: 'moduleName', title: '模块名称', minWidth: 120, sortable: true, slots: { default: 'moduleName' } },
-    { field: 'abnormalTypeName', title: '异常类型', minWidth: 100, sortable: true, slots: { default: 'abnormalType' } },
+    { field: 'abnormalName', title: '异常类型', minWidth: 100, sortable: true, slots: { default: 'abnormalType' } },
     { field: 'alarmLevelName', title: '告警等级', minWidth: 100, sortable: true, slots: { default: 'alarmLevel' } },
     { field: 'alarmTime', title: '告警时间', minWidth: 160, sortable: true, slots: { default: 'alarmTime' } },
     { field: 'serverInfo', title: '服务器信息', minWidth: 180, showOverflow: true },
@@ -119,7 +119,7 @@ export function useGridColumns() {
     { field: 'repairVoucher', title: '修复凭证', minWidth: 100, slots: { default: 'repairVoucher' } },
     { field: 'remark', title: '备注', minWidth: 150, showOverflow: true },
     { field: 'repairTime', title: '修复时间', minWidth: 160, sortable: true, slots: { default: 'repairTime' } },
-    { field: 'operator', title: '操作人', minWidth: 100, sortable: true, slots: { default: 'operator' } },
+    { field: 'updaterName', title: '操作人', minWidth: 100, sortable: true, slots: { default: 'operator' } },
     { title: '操作', width: 300, fixed: 'right', align: 'center', slots: { default: 'actions' } },
   ];
 }

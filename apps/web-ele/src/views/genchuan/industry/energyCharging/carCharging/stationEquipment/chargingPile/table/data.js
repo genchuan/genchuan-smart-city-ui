@@ -97,10 +97,15 @@ export function useQuerySchema() {
       componentProps: { placeholder: '请输入生产厂家' },
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '所属场站',
-      component: 'Input',
-      componentProps: { placeholder: '请输入所属场站' },
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择所属场站',
+        options: [],
+        valueField: 'value',
+        labelField: 'label',
+      },
     },
     {
       fieldName: 'chargeMode',
@@ -159,14 +164,14 @@ export function useGridColumns() {
     { field: 'chargeModeName', title: '充电模式', minWidth: 100, sortable: true, slots: { default: 'chargeMode' } },
     { field: 'pileStatusName', title: '设备状态', minWidth: 100, sortable: true, slots: { default: 'pileStatus' } },
     { field: 'faultFlag', title: '故障标记', minWidth: 100, sortable: true, slots: { default: 'faultFlag' } },
-    { field: 'runTime', title: '运行时长(小时)', minWidth: 120, sortable: true },
+    { field: 'runTime', title: '运行时长(小时)', minWidth: 120, align: 'center', sortable: true },
     { field: 'qrcode', title: '充电枪二维码', minWidth: 120, slots: { default: 'qrcode' } },
     { field: 'remark', title: '备注', minWidth: 150, showOverflow: true },
     { field: 'creator', title: '创建人', minWidth: 100, sortable: true },
     { field: 'createTime', title: '创建时间', minWidth: 160, sortable: true },
     { field: 'updater', title: '更新人', minWidth: 100, sortable: true },
     { field: 'updateTime', title: '更新时间', minWidth: 160, sortable: true },
-    { title: '操作', width: 220, fixed: 'right', align: 'center',slots: { default: 'actions' } },
+    { title: '操作', width: 220, fixed: 'right', align: 'center', slots: { default: 'actions' } },
   ];
 }
 

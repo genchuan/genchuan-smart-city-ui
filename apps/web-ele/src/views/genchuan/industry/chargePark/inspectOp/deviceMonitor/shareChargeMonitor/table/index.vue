@@ -149,9 +149,9 @@ async function getTableData({ page }) {
     const response = await getShareChargeMonitorPage(queryParams);
     const list = Array.isArray(response?.list) ? response.list : [];
 
-    if (list.length === 0 && !response?.total) {
-      throw new Error('接口返回数据为空');
-    }
+    // if (list.length === 0 && !response?.total) {
+    //   throw new Error('接口返回数据为空');
+    // }
 
     dataObj.useStaticData = false;
     dataObj.total = response.total || 0;

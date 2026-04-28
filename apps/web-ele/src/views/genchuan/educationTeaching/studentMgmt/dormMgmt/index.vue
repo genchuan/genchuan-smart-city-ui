@@ -187,15 +187,6 @@ const onDormCheckCardSelect = async (status) => {
   }
 };
 
-const onDormCheckPieSelect = async ({field, value}) => {
-  await nextTick();
-  if (!dormCheckRef.value) {
-    ElMessage.warning('宿舍考勤列表组件未就绪');
-    return;
-  }
-  dormCheckRef.value.handleFilterTagClick('abnormalType', value);
-};
-
 const onDormCheckBarSelect = async ({field, value}) => {
   await nextTick();
   if (!dormCheckRef.value) {
@@ -332,7 +323,6 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
       v-if="currentArrowShow && activeName === '宿舍考勤'"
       :is="currentChartComponent"
       @cardSelect="onDormCheckCardSelect"
-      @pieSelect="onDormCheckPieSelect"
       @barSelect="onDormCheckBarSelect"
     />
     <component

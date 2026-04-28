@@ -1,14 +1,14 @@
 <script setup>
-import { computed, defineProps, toRefs } from 'vue';
-import { useVbenDrawer } from '@vben/common-ui';
+import {computed, defineProps, toRefs} from 'vue';
+import {useVbenDrawer} from '@vben/common-ui';
 
 const props = defineProps({
-  detailObj: { type: Object, required: true, default: () => ({}) },
-  title: { type: String, default: '' },
+  detailObj: {type: Object, required: true, default: () => ({})},
+  title: {type: String, default: ''},
 });
 const emit = defineEmits(['refresh']);
 
-const { detailObj, title } = toRefs(props);
+const {detailObj, title} = toRefs(props);
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
@@ -24,8 +24,8 @@ const formatTimestamp = (timestamp) => {
 };
 
 const drawerTitle = computed(() => {
-  const name = detailObj.value?.studentName || '心理档案';
-  return title.value || `${name}心理详情`;
+  const id = detailObj.value?.studentId || '心理档案';
+  return title.value || `学号${id} 心理详情`;
 });
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
@@ -36,34 +36,73 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   onCancel: () => detailDrawerApi.close(),
 });
 
-defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close() });
+defineExpose({open: () => detailDrawerApi.open(), close: () => detailDrawerApi.close()});
 </script>
 
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
       <div class="detail-section">🧠 心理档案基础信息</div>
-      <div class="detail-card-row"><div class="detail-row-left">学生姓名：</div><div class="detail-row-right">{{ detailObj.studentName || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">班级：</div><div class="detail-row-right">{{ detailObj.className || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">心理状态：</div><div class="detail-row-right">{{ detailObj.mentalStatus || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">风险等级：</div><div class="detail-row-right">{{ detailObj.riskLevel || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">评估时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.evaluateTime) }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">咨询预约时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.consultTime) }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">干预时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.interveneTime) }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">干预内容：</div><div class="detail-row-right">{{ detailObj.interveneContent || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.status || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">备注：</div><div class="detail-row-right">{{ detailObj.remark || '-' }}</div></div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">学号：</div>
+        <div class="detail-row-right">{{ detailObj.studentId || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">心理状态：</div>
+        <div class="detail-row-right">{{ detailObj.mentalStatus || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">风险等级：</div>
+        <div class="detail-row-right">{{ detailObj.riskLevel || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">评估时间：</div>
+        <div class="detail-row-right">{{ formatTimestamp(detailObj.evaluateTime) }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">咨询预约时间：</div>
+        <div class="detail-row-right">{{ formatTimestamp(detailObj.consultTime) }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">干预时间：</div>
+        <div class="detail-row-right">{{ formatTimestamp(detailObj.interveneTime) }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">干预内容：</div>
+        <div class="detail-row-right">{{ detailObj.interveneContent || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">状态：</div>
+        <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">备注：</div>
+        <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
+      </div>
 
       <div class="detail-section">📝 操作日志</div>
-      <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.creator || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.createTime) }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updater || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">更新时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.updateTime) }}</div></div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建人：</div>
+        <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建时间：</div>
+        <div class="detail-row-right">{{ formatTimestamp(detailObj.createTime) }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新人：</div>
+        <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新时间：</div>
+        <div class="detail-row-right">{{ formatTimestamp(detailObj.updateTime) }}</div>
+      </div>
     </div>
   </DetailDrawer>
 </template>
 
 <style scoped lang="scss">
+/* 样式保持不变，略 */
 .detail-card {
   min-height: 750px;
   max-height: 85vh;
@@ -72,12 +111,17 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   background-color: #f9fafb;
   border-radius: 8px;
 }
+
 .detail-card-row {
   display: flex;
   align-items: flex-start;
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0;
-  &:last-child { border-bottom: none; }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
   &:hover {
     padding-right: 8px;
     padding-left: 8px;
@@ -88,6 +132,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
     transition: all 0.2s ease;
   }
 }
+
 .detail-row-left {
   flex-shrink: 0;
   width: 200px;
@@ -96,6 +141,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   line-height: 18px;
   color: #606266;
 }
+
 .detail-row-right {
   flex: 1;
   padding-right: 10px;
@@ -104,6 +150,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   color: #303133;
   word-break: break-all;
 }
+
 .detail-section {
   font-weight: 600;
   font-size: 16px;
@@ -111,6 +158,9 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
   padding-bottom: 4px;
   border-bottom: 1px solid #e0e0e0;
   color: #6E7E91;
-  &:first-child { margin-top: 0; }
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 </style>

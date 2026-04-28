@@ -1,14 +1,13 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import HonorDetailDrawer from './components/honorDetail.vue';
 import {
-  dataList,
   getHonorMgmtPage,
   createHonorMgmt,
   updateHonorMgmt,
@@ -115,12 +114,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
-});
-
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -187,38 +180,9 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'honorType':
-            itemValue = item.honorType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    // 模拟数据时仍需要前端分页
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取荣誉列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -271,7 +235,7 @@ async function handleBatchAudit() {
     const loading = ElLoading.service({text: '审核中...'});
     try {
       const ids = selectedRows.map(row => row.id);
-      const res = await auditHonorMgmt({ids, auditRemark: '批量审核通过', status: '已通过' });
+      const res = await auditHonorMgmt({ids, auditRemark: '批量审核通过', status: '已通过'});
       if (res && res !== false) {
         ElMessage.success('批量审核成功');
         handleRefresh();
@@ -281,37 +245,24 @@ async function handleBatchAudit() {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createFormApi.resetForm();
   createDrawerApi.open();
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getHonorMgmtDetail({id: row.id});
-    createFormApi.setValues({
-      studentId: detail.studentId,
-      honorType: detail.honorType,
-      honorName: detail.honorName,
-      getTime: detail.getTime,
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败，请检查网络或联系管理员');
-  }
+  createDrawerApi.open();
 }
 
 async function handleDelete(row) {
-  // 荣誉管理没有删除按钮，但若需要可加，按需求不提供删除
+  // 暂无删除需求
 }
 
 // 单行审核
@@ -328,7 +279,7 @@ async function handleAudit(row) {
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
-      const res = await auditHonorMgmt({ids: [row.id], auditRemark: '', status: '已通过' });
+      const res = await auditHonorMgmt({ids: [row.id], auditRemark: '', status: '已通过'});
       if (res && res !== false) {
         ElMessage.success('审核成功');
         handleRefresh();
@@ -338,7 +289,8 @@ async function handleAudit(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 推送
@@ -365,7 +317,8 @@ async function handlePush(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 新增/编辑表单
@@ -376,10 +329,9 @@ const [CreateForm, createFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '保存中...'});
     try {
       let res;
-      // 新增或编辑时均携带 status 字段（后端要求必填）
-      const submitData = { ...values, status: '待审核' };
+      const submitData = {...values, status: '待审核'};
       if (isEditMode.value) {
-        res = await updateHonorMgmt({ ...submitData, id: currentEditId.value });
+        res = await updateHonorMgmt({...submitData, id: currentEditId.value});
       } else {
         res = await createHonorMgmt(submitData);
       }
@@ -398,6 +350,34 @@ const [CreateForm, createFormApi] = useVbenForm({
   schema: useCreateFormSchema(isEditMode.value),
   showCollapseButton: false,
   submitButtonOptions: {content: '保存'},
+});
+
+// 抽屉打开时重置表单并加载编辑数据
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      await createFormApi.resetForm();
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getHonorMgmtDetail({id: currentEditId.value});
+          await createFormApi.setValues({
+            studentId: detail.studentId,
+            honorType: detail.honorType,
+            honorName: detail.honorName,
+            getTime: detail.getTime,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          createDrawerApi.close();
+        }
+      }
+    }
+  },
 });
 
 // 查看详情
@@ -497,10 +477,9 @@ defineExpose({handleFilterTagClick, clearFilters});
         </div>
       </template>
 
-      <template #studentName="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{
-            row.studentName
-          }}
+      <template #studentId="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+          {{ row.studentId }}
         </el-text>
       </template>
       <template #honorType="{ row }">
@@ -540,9 +519,12 @@ defineExpose({handleFilterTagClick, clearFilters});
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
-          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check" @click="handleAudit(row)"/>
-          <IconButton v-if="row.status === '已通过'" content="推送" icon-name="Promotion" @click="handlePush(row)"/>
+          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check"
+                      @click="handleAudit(row)"/>
+          <IconButton v-if="row.status === '已通过'" content="推送" icon-name="Promotion"
+                      @click="handlePush(row)"/>
         </div>
       </template>
     </Grid>

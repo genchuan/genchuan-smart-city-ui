@@ -1,10 +1,12 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, nextTick, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
-import { getDictObj, getDictOptions } from '@vben/hooks';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { getDictObj } from '@vben/hooks';
+import { downloadFileFromBlobPart } from '@vben/utils';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 
 import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -15,12 +17,53 @@ import {
   exportPointLottery,
   getPointLotteryPage,
 } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointLottery';
+import { getPrizeMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/prizeMgmt';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
-import CheckDrawer from '../components/CheckDrawer.vue';
+// 奖品详情字段配置
+const prizeDetailFields = [
+  { key: 'id', label: '奖品ID' },
+  { key: 'name', label: '奖品名称' },
+  {
+    key: 'type',
+    label: '奖品类型',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_TYPE, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => {
+      const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_TYPE, String(value));
+      return getDictTagTypeFromDict(dict, 'primary');
+    },
+  },
+  { key: 'stock', label: '当前库存' },
+  {
+    key: 'status',
+    label: '奖品状态',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_STATUS, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => {
+      const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_STATUS, String(value));
+      return getDictTagTypeFromDict(dict, 'info');
+    },
+  },
+  { key: 'activityName', label: '绑定活动' },
+  { key: 'sendCount', label: '发放量' },
+  { key: 'warnThreshold', label: '预警阈值' },
+  { key: 'description', label: '奖品描述' },
+  { key: 'createTimeStr', label: '创建时间' },
+  { key: 'syncTimeStr', label: '同步时间' },
+  { key: 'creator', label: '创建者' },
+  { key: 'updater', label: '更新者' },
+  { key: 'updateTimeStr', label: '更新时间' },
+];
 
+import CheckDrawer from '../components/CheckDrawer.vue';
 import {
   dataList,
   detailFields,
@@ -63,7 +106,14 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
 const detailDrawerRef = ref(null);
 const checkDrawerRef = ref(null);
+const prizeDetailDrawerRef = ref(null);
 const formData = ref();
+const prizeDetailData = ref({ id: '' });
+
+// 奖品详情标题计算属性
+const prizeDetailTitle = computed(() => {
+  return prizeDetailData.value?.name ? `${prizeDetailData.value.name}详情` : '奖品详情';
+});
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -106,7 +156,10 @@ function handleRefresh() {
 async function handleExport() {
   try {
     const data = await exportPointLottery();
-    downloadFileFromBlobPart({ fileName: '积分抽奖记录数据.xlsx', source: data });
+    downloadFileFromBlobPart({
+      fileName: '积分抽奖记录数据.xlsx',
+      source: data,
+    });
     ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
@@ -117,6 +170,40 @@ async function handleExport() {
 /** 打开核查抽屉 */
 function handleCheck(row) {
   checkDrawerRef.value?.open(row);
+}
+
+/** 打开奖品详情抽屉 */
+async function handleOpenPrizeDetail(row) {
+  if (!row.prizeId) {
+    ElMessage.warning('奖品ID不存在');
+    return;
+  }
+  try {
+    const prizeDetail = await getPrizeMgmtDetail(Number(row.prizeId));
+    if (prizeDetail && prizeDetail.id) {
+      // 格式化时间字段（处理null值）
+      const formattedDetail = {
+        ...prizeDetail,
+        createTimeStr: prizeDetail.createTime ? formatDate(prizeDetail.createTime) : '-',
+        syncTimeStr: prizeDetail.syncTime ? formatDate(prizeDetail.syncTime) : '-',
+        updateTimeStr: prizeDetail.updateTime ? formatDate(prizeDetail.updateTime) : '-',
+      };
+      prizeDetailData.value = formattedDetail;
+      // 使用nextTick确保DOM更新后再打开抽屉
+      await nextTick();
+      if (prizeDetailDrawerRef.value) {
+        prizeDetailDrawerRef.value.open();
+      } else {
+        console.error('奖品详情抽屉组件未找到');
+        ElMessage.error('打开详情失败，请重试');
+      }
+    } else {
+      ElMessage.error('获取奖品详情失败');
+    }
+  } catch (error) {
+    console.error('获取奖品详情失败:', error);
+    ElMessage.error('获取奖品详情失败');
+  }
 }
 
 /** 删除 - 已屏蔽 */
@@ -195,8 +282,8 @@ const getTableData = async (pageObj) => {
       costPointMax: dataObj.searchParams.costPointMax,
       // 文本字段
       checkResult: dataObj.searchParams.checkResult,
-      // 统计组件钻取筛选字段
-      lotteryDate: filterLotteryDate.value || dataObj.searchParams.lotteryDate,
+      // 统计组件钻取筛选字段 - 折线图点击传入lotteryTime值
+      lotteryTime: filterLotteryDate.value || undefined,
       statsType: filterStatsType.value || dataObj.searchParams.statsType,
     };
 
@@ -334,7 +421,8 @@ const handleStatusClick = (status) => {
 
 // 处理同步状态点击
 const handleSyncStatusClick = (syncStatus) => {
-  filterSyncStatus.value = filterSyncStatus.value === syncStatus ? '' : syncStatus;
+  filterSyncStatus.value =
+    filterSyncStatus.value === syncStatus ? '' : syncStatus;
   gridApi.query();
 };
 
@@ -357,7 +445,10 @@ function getStatusLabel(status) {
 
 /** 获取同步状态标签文本 */
 function getSyncStatusLabel(syncStatus) {
-  const dict = getDictObj(DICT_TYPE.POINT_LOTTERY_SYNC_STATUS, String(syncStatus));
+  const dict = getDictObj(
+    DICT_TYPE.POINT_LOTTERY_SYNC_STATUS,
+    String(syncStatus),
+  );
   return dict ? dict.label : syncStatus;
 }
 
@@ -368,7 +459,9 @@ const handleStatsFilter = (type, subType, value) => {
   if (type === 'card') {
     // 卡片点击 - 总抽奖量或中奖率
     filterStatsType.value = subType;
-    ElMessage.info(`已筛选: ${subType === 'total' ? '总抽奖量' : '累计中奖率'}`);
+    ElMessage.info(
+      `已筛选: ${subType === 'total' ? '总抽奖量' : '累计中奖率'}`,
+    );
   } else if (type === 'date') {
     // 折线图节点点击 - 按日期筛选
     filterLotteryDate.value = value;
@@ -406,6 +499,13 @@ defineExpose({
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <!--   奖品详情抽屉-->
+    <DetailDrawer
+      ref="prizeDetailDrawerRef"
+      :title="prizeDetailTitle"
+      :data="prizeDetailData"
+      :fields="prizeDetailFields"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -430,7 +530,7 @@ defineExpose({
           <!-- 同步状态筛选标签 -->
           <ElTag
             v-if="filterSyncStatus"
-            type="info"
+            type="primary"
             closable
             @close="handleCancelSyncStatusFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
@@ -455,7 +555,9 @@ defineExpose({
             @close="handleCancelStatsTypeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            统计类型：{{ filterStatsType === 'total' ? '总抽奖量' : '累计中奖率' }}
+            统计类型：{{
+              filterStatsType === 'total' ? '总抽奖量' : '累计中奖率'
+            }}
           </ElTag>
         </div>
       </template>
@@ -466,13 +568,13 @@ defineExpose({
             icon-name="download"
             @click="handleExport"
           />
-<!--          <IconButton-->
-<!--            content="批量删除"-->
-<!--            icon-name="delete"-->
-<!--            color="#F56C6C"-->
-<!--            :disabled="isEmpty(checkedIds)"-->
-<!--            @click="handleDeleteBatch"-->
-<!--          />-->
+          <!--          <IconButton-->
+          <!--            content="批量删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            :disabled="isEmpty(checkedIds)"-->
+          <!--            @click="handleDeleteBatch"-->
+          <!--          />-->
           <IconButton
             content="搜索"
             icon-name="search"
@@ -512,13 +614,13 @@ defineExpose({
           {{ row.userName }}
         </el-text>
       </template>
-      <!-- 奖品名称插槽 - 点击跳转奖品详情弹窗 -->
+      <!-- 奖品名称插槽 - 点击打开奖品详情抽屉 -->
       <template #prizeName="{ row }">
         <el-text
           class="common-align"
           type="primary"
           style="cursor: pointer"
-          @click="ElMessage.info(`打开奖品详情弹窗: ${row.prizeName}`)"
+          @click="handleOpenPrizeDetail(row)"
         >
           {{ row.prizeName }}
         </el-text>
@@ -612,5 +714,4 @@ defineExpose({
     <CheckDrawer ref="checkDrawerRef" @success="handleRefresh" />
   </div>
 </template>
-<style scoped>
-</style>
+<style scoped></style>

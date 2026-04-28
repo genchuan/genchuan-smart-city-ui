@@ -67,13 +67,15 @@ const handleConfirm = async () => {
   });
 
   try {
-    await currentAction.value.api({ id: rowData.value.id });
+    // 将id转换为数字类型
+    await currentAction.value.api({ id: Number(rowData.value.id) });
     ElMessage.success(currentAction.value.successMessage);
     emit('success');
     modalApi.close();
   } catch (error) {
     console.error('操作失败:', error);
-    ElMessage.error('操作失败，请稍后重试');
+    const errorMsg = error?.msg || error?.message || '操作失败，请稍后重试';
+    ElMessage.error(errorMsg);
   } finally {
     loadingInstance.close();
   }

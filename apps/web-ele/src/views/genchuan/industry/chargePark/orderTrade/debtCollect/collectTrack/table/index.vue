@@ -750,14 +750,14 @@ const alarmColumns = [
         <el-tag :type="getStatusType(row.status)">
           {{ getStatusLabel(row.status) }}
         </el-tag>
-      </template>
-      <template #orderNo="{ row }">
+      </template> 
+      <template #trackNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.orderNo }}
+          {{ row.trackNo }}
         </el-text>
       </template>
       <template #payMethod="{ row }">

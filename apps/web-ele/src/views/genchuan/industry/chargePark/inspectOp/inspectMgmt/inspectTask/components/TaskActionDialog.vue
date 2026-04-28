@@ -103,7 +103,7 @@ async function submitAction() {
       ElMessage.success('批量派发成功');
     }
     if (actionType.value === 'dispatch') {
-      await dispatchInspectTask({ id: rowData.value.id, userId: form.userId });
+      await dispatchInspectTask({ ids: [rowData.value.id], userId: form.userId });
       ElMessage.success('任务派发成功');
     }
     if (actionType.value === 'progress') {

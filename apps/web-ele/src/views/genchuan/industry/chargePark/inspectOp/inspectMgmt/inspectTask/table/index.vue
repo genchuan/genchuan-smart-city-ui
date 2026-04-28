@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
@@ -35,6 +35,7 @@ import {
   getTaskTypeTagType,
   getUserName,
   isTaskStatusLabel,
+  loadTaskUserOptions,
   normalizeInspectTaskRow,
   textObj,
   useGridColumns,
@@ -68,6 +69,7 @@ const detailDrawerRef = ref(null);
 const planDetailDrawerRef = ref(null);
 const actionDialogRef = ref(null);
 const statusConfirmDialogRef = ref(null);
+const currentTransferRow = ref({});
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 const filterPlanId = ref('');
@@ -147,9 +149,9 @@ async function getTableData({ page }) {
     const pageResult = response?.list ? response : response?.data || response;
     const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
 
-    if (list.length === 0 && !pageResult?.total) {
-      throw new Error('接口返回数据为空');
-    }
+    // if (list.length === 0 && !pageResult?.total) {
+    //   throw new Error('接口返回数据为空');
+    // }
 
     dataObj.useStaticData = false;
     dataObj.total = pageResult.total || 0;
@@ -360,7 +362,10 @@ function onSubmit(values) {
 async function handleOpenDetail(row) {
   try {
     const response = await getInspectTaskDetail(row.id);
-    dataObj.detailObj = normalizeInspectTaskRow(response || row);
+    dataObj.detailObj = {
+      ...normalizeInspectTaskRow(response || row),
+      ...row,
+    };
   } catch (error) {
     console.error('获取巡检任务详情失败，使用行数据:', error);
     dataObj.detailObj = row;
@@ -457,12 +462,12 @@ watch(
   (filter) => {
     if (!filter) return;
     if (filter.type === 'status') {
-      if (filter.value === '待处理') {
-        filterStatus.value = '';
-        filterStatusGroup.value = '待处理';
+      if (filter.value === '处理中') {
+        filterStatus.value = '3';
+        filterStatusGroup.value = '处理中';
       } else {
-        filterStatus.value = filter.value;
-        filterStatusGroup.value = '';
+        filterStatus.value = '4';
+        filterStatusGroup.value = '已完成';
       }
       filterTrendTime.value = '';
     }
@@ -476,6 +481,10 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(() => {
+  loadTaskUserOptions();
+});
 </script>
 
 <template>
@@ -631,7 +640,9 @@ watch(
           :percentage="row.progress"
           :status="getProgressStatus(row.progress)"
           @click="handleProgressDetail(row)"
-        />
+        >
+          <span>{{ row.progressText }}</span>
+        </el-progress>
       </template>
 
       <template #archiveText="{ row }">
@@ -719,7 +730,6 @@ watch(
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  min-height: 32px;
 }
 
 .inspect-task-filter-tags :deep(.el-tag) {

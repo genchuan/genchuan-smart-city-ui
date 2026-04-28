@@ -363,7 +363,7 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择活动时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
+        valueFormat: 'x',
         type: 'datetimerange',
         clearable: true,
       },
@@ -404,7 +404,7 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择创建时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
+        valueFormat: 'x',
         type: 'datetimerange',
         clearable: true,
       },
@@ -416,7 +416,7 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择审核时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
+        valueFormat: 'x',
         type: 'datetimerange',
         clearable: true,
       },
@@ -453,7 +453,7 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择开始时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
+        valueFormat: 'x',
         type: 'datetime',
       },
       rules: 'required',
@@ -465,7 +465,7 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择结束时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
+        valueFormat: 'x',
         type: 'datetime',
       },
       rules: 'required',
@@ -539,7 +539,7 @@ export function useEditFormSchema() {
       componentProps: {
         placeholder: '请选择开始时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
+        valueFormat: 'x',
         type: 'datetime',
         disabled: true,
       },
@@ -551,7 +551,7 @@ export function useEditFormSchema() {
       componentProps: {
         placeholder: '请选择结束时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
+        valueFormat: 'x',
         type: 'datetime',
         disabled: true,
       },

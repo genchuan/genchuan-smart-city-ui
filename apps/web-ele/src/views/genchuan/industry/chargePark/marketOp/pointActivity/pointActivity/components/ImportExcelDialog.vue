@@ -2,11 +2,14 @@
 import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElButton, ElMessage, ElUpload } from 'element-plus';
-import * as XLSX from 'xlsx';
 
-import { importPointActivity } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
+import {
+  getPointActivityImportTemplate,
+  importPointActivity,
+} from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
 
 const emit = defineEmits(['success']);
 
@@ -27,58 +30,20 @@ const validating = ref(false);
 const validationResult = ref(null);
 
 // 下载导入模板
-const downloadTemplate = () => {
-  // 创建模板数据 - 包含积分活动表格的所有字段
-  const templateData = [
-    [
-      '活动名称',
-      '活动类型',
-      '开始时间',
-      '结束时间',
-      '积分规则',
-      '活动描述',
-      '适用场站',
-      '剩余积分额度',
-    ],
-    [
-      '示例-每日签到赠分活动',
-      '0',
-      '2025-04-01 00:00:00',
-      '2025-05-01 00:00:00',
-      '每日签到赠送10积分',
-      '用户每日签到可获积分奖励',
-      '1,2,3',
-      '10000',
-    ],
-    [
-      '示例-消费满额赠分活动',
-      '1',
-      '2025-04-02 00:00:00',
-      '2025-05-02 00:00:00',
-      '消费满100元赠送50积分',
-      '充电消费满额赠分活动',
-      '4,5',
-      '5000',
-    ],
-  ];
-
-  // 使用xlsx库创建Excel文件
-  const worksheet = XLSX.utils.aoa_to_sheet(templateData);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, '导入模板');
-
-  // 生成Excel文件并下载
-  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-  const blob = new Blob([excelBuffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = '积分活动导入模板.xlsx';
-  document.body.append(link);
-  link.click();
-  link.remove();
-  ElMessage.success('模板下载成功');
+const downloadTemplate = async () => {
+  try {
+    // 调用API下载导入模板
+    const data = await getPointActivityImportTemplate();
+    // 使用downloadFileFromBlobPart触发浏览器下载
+    downloadFileFromBlobPart({
+      fileName: '积分活动导入模板.xlsx',
+      source: data,
+    });
+    ElMessage.success('模板下载成功');
+  } catch (error) {
+    console.error('下载模板失败:', error);
+    ElMessage.error('下载模板失败，请稍后重试');
+  }
 };
 
 // 文件上传前校验
@@ -124,16 +89,28 @@ const handleImport = async () => {
     const response = await importPointActivity(file);
 
     // 根据接口返回结果处理
-    if (response) {
+    // 检查是否是错误响应格式 {code: xxx, msg: 'xxx', data: null}
+    if (response && response.code !== undefined && response.code !== 0) {
+      // 接口返回错误信息
+      validationResult.value = {
+        success: false,
+        message: response.msg || '导入失败',
+        total: 0,
+        successCount: 0,
+        failCount: 0,
+      };
+      ElMessage.error(response.msg || '导入失败');
+    } else if (response) {
+      // 导入成功
       validationResult.value = {
         success: true,
-        message: response.message || '导入成功',
+        message: response.msg || response.message || '导入成功',
         total: response.total || 0,
         successCount: response.successCount || 0,
         failCount: response.failCount || 0,
       };
 
-      ElMessage.success(response.message || '导入成功');
+      ElMessage.success(response.msg || response.message || '导入成功');
       emit('success');
       modalApi.close();
     } else {
@@ -148,14 +125,16 @@ const handleImport = async () => {
     }
   } catch (error) {
     console.error('导入失败:', error);
+    // 处理错误响应，支持 {code, msg, data} 格式
+    const errorMsg = error?.msg || error?.message || '导入失败，请检查文件格式';
     validationResult.value = {
       success: false,
-      message: error?.message || '导入失败，请检查文件格式',
+      message: errorMsg,
       total: 0,
       successCount: 0,
       failCount: 0,
     };
-    ElMessage.error(error?.message || '导入失败，请检查文件格式');
+    ElMessage.error(errorMsg);
   } finally {
     validating.value = false;
   }

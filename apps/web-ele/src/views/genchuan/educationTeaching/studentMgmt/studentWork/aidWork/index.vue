@@ -1,14 +1,14 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick, onMounted } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick, onMounted} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import AidWorkDetailDrawer from './components/aidWorkDetail.vue';
 import {
-  dataList,
+  // dataList 已删除，不再导入
   getAidWorkPage,
   createAidWork,
   updateAidWork,
@@ -76,7 +76,7 @@ const formatMoney = (amount) => {
   return `¥${parseFloat(amount).toFixed(2)}`;
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
@@ -129,12 +129,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => drawerApi.close(),
-});
-
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
 });
 
 // 跟进抽屉
@@ -228,37 +222,10 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'aidType':
-            itemValue = item.aidType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取奖助勤贷列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -360,34 +327,17 @@ function handleCreate() {
   try {
     isEditMode.value = false;
     currentEditId.value = null;
-    createFormApi.resetForm();
-    // 新增时设置默认状态为“待审核”
-    createFormApi.setValues({status: '待审核'});
-    createDrawerApi.open();
+    createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
   } catch (error) {
     console.error('打开申请抽屉失败:', error);
     ElMessage.error('打开申请表单失败，请刷新页面重试');
   }
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getAidWorkDetail({id: row.id});
-    createFormApi.setValues({
-      studentId: detail.studentId,
-      aidType: detail.aidType,
-      applyAmount: detail.applyAmount,
-      applyTime: detail.applyTime,
-      status: detail.status,     // 补充状态赋值
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 跟进
@@ -436,6 +386,40 @@ const [CreateForm, createFormApi] = useVbenForm({
   schema: createFormSchema,
   showCollapseButton: false,
   submitButtonOptions: {content: computed(() => isEditMode.value ? '保存' : '申报')},
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await createFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getAidWorkDetail({id: currentEditId.value});
+          await createFormApi.setValues({
+            studentId: detail.studentId,
+            aidType: detail.aidType,
+            applyAmount: detail.applyAmount,
+            applyTime: detail.applyTime,
+            status: detail.status,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          createDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式：设置默认状态为“待审核”
+        await createFormApi.setValues({status: '待审核'});
+      }
+    }
+  },
 });
 
 // 跟进表单

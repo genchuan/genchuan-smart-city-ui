@@ -8,7 +8,6 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { downloadFileFromBlobPart } from '@vben/utils';
 import LeaveDetailDrawer from './components/leaveDetail.vue';
 import {
-  getMockList,
   getLeaveHandlePage,
   createLeaveHandle,
   updateLeaveHandle,
@@ -60,7 +59,7 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
@@ -115,12 +114,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => applyDrawerApi.close(),
-});
-
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -135,7 +128,7 @@ const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -146,7 +139,7 @@ const currentEditId = ref(null);
 const confirmId = ref(null);      // 待确认的ID
 const handleId = ref(null);       // 待办理的ID
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -188,37 +181,10 @@ const getTableData = async ({ page }) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          case 'studentId':
-            itemValue = item.studentId;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据并提示用户
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取离校记录失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -237,10 +203,10 @@ function handleReset() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportLeaveHandle(searchParams.value);
-      downloadFileFromBlobPart({ fileName: `${textObj.excelName}.xls`, source: data });
+      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -255,29 +221,13 @@ async function handleExport() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  applyFormApi.resetForm();
-  // 设置默认状态为“待确认”
-  applyFormApi.setValues({ status: '待确认' });
-  applyDrawerApi.open();
+  applyDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getLeaveHandleDetail({ id: row.id });
-    applyFormApi.setValues({
-      studentId: detail.studentId,
-      leaveTime: detail.leaveTime,
-      leaveAddress: detail.leaveAddress,
-      status: detail.status,     // 补充状态赋值
-      remark: detail.remark,
-    });
-    applyDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  applyDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 单行确认
@@ -292,9 +242,9 @@ async function handleConfirm(row) {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '确认中...' });
+    const loading = ElLoading.service({text: '确认中...'});
     try {
-      const res = await confirmLeaveHandle({ id: row.id, parentConfirmTime: Date.now() });
+      const res = await confirmLeaveHandle({id: row.id, parentConfirmTime: Date.now()});
       if (res && res !== false) {
         ElMessage.success('确认成功');
         handleRefresh();
@@ -304,7 +254,8 @@ async function handleConfirm(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 单行办理
@@ -319,7 +270,7 @@ async function handleHandle(row) {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '办理中...' });
+    const loading = ElLoading.service({text: '办理中...'});
     try {
       const res = await handleLeaveHandle({
         id: row.id,
@@ -337,21 +288,22 @@ async function handleHandle(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 申请表单
 const [ApplyForm, applyFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: isEditMode.value ? '保存中...' : '申请中...' });
+    const loading = ElLoading.service({text: isEditMode.value ? '保存中...' : '申请中...'});
     try {
       let res;
       // 确保 status 字段存在（新增时默认为待确认）
-      const submitData = { ...values, status: values.status || '待确认' };
+      const submitData = {...values, status: values.status || '待确认'};
       if (isEditMode.value) {
-        res = await updateLeaveHandle({ ...submitData, id: currentEditId.value });
+        res = await updateLeaveHandle({...submitData, id: currentEditId.value});
       } else {
         res = await createLeaveHandle(submitData);
       }
@@ -369,7 +321,40 @@ const [ApplyForm, applyFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useApplyFormSchema(isEditMode.value),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => applyDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await applyFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getLeaveHandleDetail({id: currentEditId.value});
+          await applyFormApi.setValues({
+            studentId: detail.studentId,
+            leaveTime: detail.leaveTime,
+            leaveAddress: detail.leaveAddress,
+            status: detail.status,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          applyDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式：设置默认状态为“待确认”
+        await applyFormApi.setValues({status: '待确认'});
+      }
+    }
+  },
 });
 
 // 动态注入学生选项
@@ -388,10 +373,11 @@ watch(applyFormApi, (api) => {
       studentField.componentProps.options = studentOptions.value;
     }
   }
-}, { immediate: true });
+}, {immediate: true});
 
 // 详情抽屉
 const leaveDetailDrawerRef = ref(null);
+
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   leaveDetailDrawerRef.value.open();
@@ -399,9 +385,9 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -411,20 +397,20 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -437,17 +423,18 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <LeaveDetailDrawer ref="leaveDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <LeaveDetailDrawer ref="leaveDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                       @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <ApplyDrawer :title="isEditMode ? textObj.editText : textObj.applyText">
-      <ApplyForm />
+      <ApplyForm/>
     </ApplyDrawer>
     <Grid>
       <template #table-title>
@@ -464,13 +451,15 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="申请" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart" @click="toggleChart" />
+          <IconButton content="申请" icon-name="Plus" @click="handleCreate"/>
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
+          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
+                      @click="toggleChart"/>
         </div>
       </template>
 
@@ -481,17 +470,20 @@ defineExpose({ handleFilterTagClick, clearFilters });
         </el-text>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
           {{ row.status }}
         </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer;">
           {{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
+                 type="primary" style="cursor: pointer;">
           {{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
@@ -516,10 +508,13 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '待确认'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
-          <IconButton v-if="row.status === '待确认'" content="确认" icon-name="Check" @click="handleConfirm(row)" />
-          <IconButton v-if="row.status === '待办理'" content="办理" icon-name="EditPen" @click="handleHandle(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
+          <IconButton v-if="row.status === '待确认'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '待确认'" content="确认" icon-name="Check"
+                      @click="handleConfirm(row)"/>
+          <IconButton v-if="row.status === '待办理'" content="办理" icon-name="EditPen"
+                      @click="handleHandle(row)"/>
         </div>
       </template>
     </Grid>

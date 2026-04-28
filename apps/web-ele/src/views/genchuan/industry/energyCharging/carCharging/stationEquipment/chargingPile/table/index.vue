@@ -46,17 +46,17 @@
           <el-tag v-if="searchParams.manufacturer" type="primary" closable @close="handleClearField('manufacturer')">
             生产厂家：{{ searchParams.manufacturer }}
           </el-tag>
-          <!-- 所属场站筛选标签 -->
-          <el-tag v-if="searchParams.stationName" type="primary" closable @close="handleClearField('stationName')">
-            所属场站：{{ searchParams.stationName }}
+          <!-- 所属场站筛选标签（显示场站名称） -->
+          <el-tag v-if="searchParams.stationId" type="primary" closable @close="handleClearField('stationId')">
+            所属场站：{{ stationMap.get(searchParams.stationId) || searchParams.stationId }}
           </el-tag>
           <!-- 充电模式筛选标签 -->
           <el-tag v-if="searchParams.chargeMode" type="primary" closable @close="handleClearField('chargeMode')">
-            充电模式：{{ chargeModeMap.get(String(searchParams.chargeMode)) || searchParams.chargeMode }}
+            充电模式：{{ chargeModeMap.get(Number(searchParams.chargeMode)) || searchParams.chargeMode }}
           </el-tag>
           <!-- 设备状态筛选标签 -->
           <el-tag v-if="searchParams.pileStatus" type="primary" closable @close="handleClearField('pileStatus')">
-            设备状态：{{ pileStatusMap.get(String(searchParams.pileStatus)) || searchParams.pileStatus }}
+            设备状态：{{ pileStatusMap.get(Number(searchParams.pileStatus)) || searchParams.pileStatus }}
           </el-tag>
           <!-- 故障标记筛选标签 -->
           <el-tag v-if="searchParams.faultFlag !== undefined && searchParams.faultFlag !== null && searchParams.faultFlag !== ''" type="primary" closable @close="handleClearField('faultFlag')">
@@ -70,7 +70,7 @@
           <el-tag v-if="searchParams.creator" type="primary" closable @close="handleClearField('creator')">
             创建人：{{ searchParams.creator }}
           </el-tag>
-          <!-- 运行时长筛选标签（图表钻取用） -->
+          <!-- 运行时长筛选标签 -->
           <el-tag v-if="searchParams.runTime !== undefined && searchParams.runTime !== null && searchParams.runTime !== ''" type="primary" closable @close="handleClearField('runTime')">
             运行时长：{{ searchParams.runTime }} 小时
           </el-tag>
@@ -112,8 +112,9 @@
       <template #manufacturer="{ row }">
         <el-text @click="handleFieldClick('manufacturer', row.manufacturer)" type="primary">{{ row.manufacturer }}</el-text>
       </template>
+      <!-- 所属场站点击时传递 stationId -->
       <template #stationName="{ row }">
-        <el-text @click="handleFieldClick('stationName', row.stationName)" type="primary">{{ row.stationName }}</el-text>
+        <el-text @click="handleFieldClick('stationId', row.stationId)" type="primary">{{ row.stationName }}</el-text>
       </template>
       <template #lotName="{ row }">
         <el-text @click="handleLotDetail(row)" type="primary">{{ row.lotName || '-' }}</el-text>
@@ -130,18 +131,20 @@
         </el-text>
       </template>
 
-      <!-- 二维码列 -->
+      <!-- 二维码列（居中） -->
       <template #qrcode="{ row }">
-        <div v-if="row.qrcodeLoading" class="qrcode-loading">加载中...</div>
-        <img
-          v-else-if="row.qrcodeUrl"
-          :src="row.qrcodeUrl"
-          class="qrcode-img"
-          referrerpolicy="no-referrer"
-          @click="previewQrcode(row.id)"
-          @error="() => handleImageError(row)"
-        />
-        <span v-else class="qrcode-placeholder">暂无</span>
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <div v-if="row.qrcodeLoading" class="qrcode-loading">加载中...</div>
+          <img
+            v-else-if="row.qrcodeUrl"
+            :src="row.qrcodeUrl"
+            class="qrcode-img"
+            referrerpolicy="no-referrer"
+            @click="previewQrcode(row.id)"
+            @error="() => handleImageError(row)"
+          />
+          <span v-else class="qrcode-placeholder">暂无</span>
+        </div>
       </template>
 
       <template #createTime="{ row }">
@@ -152,7 +155,7 @@
       </template>
 
       <template #actions="{ row }">
-        <div class="table-toolbar-tools" style="display: flex; gap: 4px; flex-wrap: wrap;justify-content: center;">
+        <div class="table-toolbar-tools" style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: center;">
           <IconButton content="编辑" icon-name="edit" @click="handleEdit(row)" />
           <IconButton content="查看" icon-name="View" @click="handleGarageOpenDetail(row)" />
 
@@ -161,10 +164,10 @@
           </template>
           <template v-else-if="row.pileStatusName === '已调试'">
             <IconButton content="启用" icon-name="Check" @click="handleEnable(row)" />
-            <IconButton content="停用" icon-name="Close" @click="handleDisable(row)" />
+            <IconButton content="停用" icon-name="Close" :disabled="row.faultFlag" @click="handleDisable(row)" />
           </template>
           <template v-else-if="row.pileStatusName === '已启用'">
-            <IconButton content="停用" icon-name="Close" @click="handleDisable(row)" />
+            <IconButton content="停用" icon-name="Close" :disabled="row.faultFlag" @click="handleDisable(row)" />
             <IconButton content="重启" icon-name="Refresh" @click="handleRestart(row)" />
           </template>
           <template v-else-if="row.pileStatusName === '已停用'">
@@ -212,12 +215,11 @@ import {
   disablePile,
   restartPile,
   getQrcode,
-  exportPile,
   getStationSimpleList,
   getLotSimpleList,
   getChargeModeDict,
   getPileStatusDict,
-  getStatusCount,  // 新增：获取状态计数
+  getStatusCount,
 } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingPile/index.js';
 
 import PileDetailDrawer from './detail.vue';
@@ -251,6 +253,7 @@ const dataObj = reactive({
 
 const chargeModeMap = ref(new Map());
 const pileStatusMap = ref(new Map());
+const stationMap = ref(new Map()); // stationId -> stationName
 const defaultStatusId = ref(null);
 
 // 二维码相关
@@ -263,22 +266,20 @@ const lotDetailDrawerRef = ref(null);
 const debugDrawerRef = ref(null);
 
 // ==================== 状态标签页相关 ====================
-const activeName = ref('全部');   // '全部'、'已启用'、'已停用'
-// const tabsData = ref([
-//   { label: '全部', name: '全部', count: 0 },
-//   { label: '已启用', name: '已启用', count: 0 },
-//   { label: '已停用', name: '已停用', count: 0 },
-// ]);
+const activeName = ref('全部');
+const tabsData = ref([
+  { label: '全部', name: '全部', count: 0 },
+  { label: '已启用', name: '已启用', count: 0 },
+  { label: '已停用', name: '已停用', count: 0 },
+]);
 
-/** 获取各状态数量用于标签页计数 */
 async function fetchStatusCount() {
   try {
-    const res = await getStatusCount();   // 返回 [{ pileStatus, count }]
-    const statusMap = new Map(res.map(item => [item.pileStatus, item.count]));
-    // 根据实际状态值汇总
-    const enableCount = statusMap.get('已启用') || 0;
-    const disableCount = statusMap.get('已停用') || 0;
-    const otherCount = (statusMap.get('未调试') || 0) + (statusMap.get('已调试') || 0);
+    const res = await getStatusCount();
+    const statusMap = new Map(res.map(item => [Number(item.pileStatus), item.count]));
+    const enableCount = statusMap.get(1) || 0;
+    const disableCount = statusMap.get(2) || 0;
+    const otherCount = (statusMap.get(3) || 0) + (statusMap.get(4) || 0);
     tabsData.value[0].count = enableCount + disableCount + otherCount;
     tabsData.value[1].count = enableCount;
     tabsData.value[2].count = disableCount;
@@ -287,26 +288,23 @@ async function fetchStatusCount() {
   }
 }
 
-/** 标签页切换时重新加载表格 */
 function handleTabChange() {
   dataObj.currentPage = 1;
   handleRefresh();
 }
 
-// ==================== 原有工具函数 ====================
 function formatList(list) {
   return (list || []).map(item => ({
     ...item,
     createTime: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss') : '-',
     updateTime: item.updateTime ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-    pileStatusName: pileStatusMap.value.get(String(item.pileStatus)) || item.pileStatusName || '未知',
-    chargeModeName: chargeModeMap.value.get(String(item.chargeMode)) || item.chargeModeName || '未知',
+    pileStatusName: pileStatusMap.value.get(Number(item.pileStatus)) || item.pileStatusName || '未知',
+    chargeModeName: chargeModeMap.value.get(Number(item.chargeMode)) || item.chargeModeName || '未知',
     qrcodeUrl: qrcodeUrlMap.value.get(item.id) || null,
     qrcodeLoading: !qrcodeUrlMap.value.has(item.id),
   }));
 }
 
-// 批量加载当前页二维码
 async function loadQrcodesForCurrentPage() {
   const pendingItems = dataObj.list.filter(item => !item.qrcodeUrl && item.qrcodeLoading === true);
   if (pendingItems.length === 0) return;
@@ -326,18 +324,16 @@ async function loadQrcodesForCurrentPage() {
   await Promise.allSettled(promises);
 }
 
-// 获取表格数据（根据 activeName 添加状态筛选）
 const getTableData = async ({ page }) => {
   const params = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...searchParams.value,
   };
-  // 根据标签页添加状态筛选（后端可能用 pileStatus 字段，值为 '已启用' 或 '已停用'）
   if (activeName.value === '已启用') {
-    params.pileStatus = '已启用';
+    params.pileStatus = 1;
   } else if (activeName.value === '已停用') {
-    params.pileStatus = '已停用';
+    params.pileStatus = 2;
   }
 
   try {
@@ -355,7 +351,6 @@ const getTableData = async ({ page }) => {
   }
 };
 
-// 工具函数：根据状态名称获取ID
 const getStatusIdByName = (name) => {
   for (let [id, label] of pileStatusMap.value.entries()) {
     if (label === name) return id;
@@ -363,7 +358,6 @@ const getStatusIdByName = (name) => {
   return null;
 };
 
-// 工具函数：根据充电模式名称获取ID
 const getChargeModeIdByName = (name) => {
   for (let [id, label] of chargeModeMap.value.entries()) {
     if (label === name) return id;
@@ -414,6 +408,16 @@ const handleFieldClick = (fieldName, value) => {
     const boolValue = value === true || value === 'true' || value === 1;
     searchParams.value = { ...searchParams.value, faultFlag: boolValue };
     queryFormApi.setValues({ faultFlag: boolValue }, false);
+  } else if (fieldName === 'chargeMode') {
+    const numValue = Number(value);
+    if (!isNaN(numValue)) {
+      searchParams.value = { ...searchParams.value, [fieldName]: numValue };
+      queryFormApi.setValues({ [fieldName]: numValue }, false);
+    }
+  } else if (fieldName === 'stationId') {
+    // value 已经是数字 ID，直接设置
+    searchParams.value = { ...searchParams.value, [fieldName]: value };
+    queryFormApi.setValues({ [fieldName]: value }, false);
   } else {
     searchParams.value = { ...searchParams.value, [fieldName]: value };
     queryFormApi.setValues({ [fieldName]: value }, false);
@@ -422,7 +426,6 @@ const handleFieldClick = (fieldName, value) => {
   handleRefresh();
 };
 
-// 重置所有筛选条件（保留标签页状态）
 function resetFilter() {
   searchParams.value = {};
   queryFormApi.resetForm();
@@ -430,7 +433,6 @@ function resetFilter() {
   handleRefresh();
 }
 
-// 设置筛选条件（供图表钻取调用）
 function setFilter(filters) {
   if (!filters || Object.keys(filters).length === 0) {
     resetFilter();
@@ -439,9 +441,13 @@ function setFilter(filters) {
 
   const newFilters = { ...filters };
 
-  if (newFilters.chargeMode && typeof newFilters.chargeMode === 'string' && !chargeModeMap.value.has(newFilters.chargeMode)) {
+  if (newFilters.chargeMode && typeof newFilters.chargeMode === 'string') {
     const id = getChargeModeIdByName(newFilters.chargeMode);
     if (id) newFilters.chargeMode = id;
+    else {
+      const num = Number(newFilters.chargeMode);
+      if (!isNaN(num)) newFilters.chargeMode = num;
+    }
   }
 
   if (newFilters.pileStatus && typeof newFilters.pileStatus === 'string' && !pileStatusMap.value.has(newFilters.pileStatus)) {
@@ -479,8 +485,7 @@ const previewQrcode = async (id) => {
   qrcodePreviewVisible.value = true;
 };
 
-// ==================== 导出功能（改造） ====================
-/** 普通导出：按当前搜索条件 + 标签页状态，导出全部数据为单 sheet Excel */
+// ==================== 导出功能 ====================
 async function handleExport() {
   const loadingInstance = ElLoading.service({ text: '正在获取数据...' });
   try {
@@ -490,9 +495,9 @@ async function handleExport() {
       pageSize: 200,
     };
     if (activeName.value === '已启用') {
-      params.pileStatus = '已启用';
+      params.pileStatus = 1;
     } else if (activeName.value === '已停用') {
-      params.pileStatus = '已停用';
+      params.pileStatus = 2;
     }
 
     let allData = [];
@@ -546,7 +551,6 @@ async function handleExport() {
   }
 }
 
-/** 批量导出：将当前页选中的行分别导出为多个 sheet 的 Excel 文件 */
 async function handleBatchExport() {
   if (checkedIds.value.length === 0) {
     ElMessage.warning('请至少选择一条数据');
@@ -599,7 +603,6 @@ async function handleBatchExport() {
     loading.close();
   }
 }
-// ================================================================
 
 const handleLotDetail = (row) => {
   if (!row.lotId) {
@@ -634,7 +637,7 @@ async function handleDelete(row) {
     ElMessage.success($t('ui.actionMessage.deleteSuccess'));
     emit('refresh-chart');
     handleRefresh();
-    fetchStatusCount();  // 刷新计数
+    fetchStatusCount();
   } finally {
     loadingInstance.close();
   }
@@ -717,10 +720,10 @@ async function handleBatchDebug() {
 async function handleBatchDisable() {
   const validIds = checkedIds.value.filter(id => {
     const row = dataObj.list.find(item => item.id === id);
-    return row && (row.pileStatusName === '已调试' || row.pileStatusName === '已启用');
+    return row && (row.pileStatusName === '已调试' || row.pileStatusName === '已启用') && !row.faultFlag;
   });
   if (validIds.length === 0) {
-    ElMessage.warning('选中的充电桩中没有可停用的设备');
+    ElMessage.warning('选中的充电桩中没有可停用的设备（故障设备无法停用）');
     return;
   }
   await confirm(`确定对选中的 ${validIds.length} 个充电桩进行批量停用吗？`);
@@ -742,7 +745,7 @@ async function handleBatchDisable() {
 const hasDisableableSelected = computed(() => {
   return checkedIds.value.some(id => {
     const row = dataObj.list.find(item => item.id === id);
-    return row && (row.pileStatusName === '已调试' || row.pileStatusName === '已启用');
+    return row && (row.pileStatusName === '已调试' || row.pileStatusName === '已启用') && !row.faultFlag;
   });
 });
 
@@ -795,22 +798,38 @@ const loadFormOptions = async () => {
       getChargeModeDict(),
       getPileStatusDict(),
     ]);
+    // 填充 stationMap
+    stationMap.value.clear();
+    (stationList || []).forEach(item => {
+      stationMap.value.set(item.value, item.label);
+    });
+    const formattedChargeModes = (chargeModes || []).map(item => ({
+      value: Number(item.value),
+      label: item.label
+    }));
+    const formattedPileStatuses = (pileStatuses || []).map(item => ({
+      value: Number(item.value),
+      label: item.label
+    }));
+
     chargeModeMap.value.clear();
-    (chargeModes || []).forEach(item => chargeModeMap.value.set(String(item.value), item.label));
+    formattedChargeModes.forEach(item => chargeModeMap.value.set(item.value, item.label));
     pileStatusMap.value.clear();
-    (pileStatuses || []).forEach(item => pileStatusMap.value.set(String(item.value), item.label));
-    const notDebugged = (pileStatuses || []).find(item => item.label === '未调试');
+    formattedPileStatuses.forEach(item => pileStatusMap.value.set(item.value, item.label));
+
+    const notDebugged = formattedPileStatuses.find(item => item.label === '未调试');
     if (notDebugged) defaultStatusId.value = notDebugged.value;
 
     await formApi.updateSchema([
       { fieldName: 'stationId', componentProps: { options: Array.isArray(stationList) ? stationList : [] } },
       { fieldName: 'lotId', componentProps: { options: Array.isArray(lotList) ? lotList : [] } },
-      { fieldName: 'chargeMode', componentProps: { options: Array.isArray(chargeModes) ? chargeModes : [] } },
+      { fieldName: 'chargeMode', componentProps: { options: formattedChargeModes } },
     ]);
 
     await queryFormApi.updateSchema([
-      { fieldName: 'chargeMode', componentProps: { options: chargeModes || [] } },
-      { fieldName: 'pileStatus', componentProps: { options: pileStatuses || [] } },
+      { fieldName: 'stationId', componentProps: { options: stationList || [] } },
+      { fieldName: 'chargeMode', componentProps: { options: formattedChargeModes } },
+      { fieldName: 'pileStatus', componentProps: { options: formattedPileStatuses } },
     ]);
   } catch (error) {
     console.error('加载下拉选项失败', error);
@@ -835,7 +854,11 @@ const onOpenChange = async (isOpen) => {
     const drawerData = formDrawerApi.getData() || {};
     formData.value = drawerData;
     if (drawerData.id) {
-      await formApi.setValues(drawerData);
+      const formValues = { ...drawerData };
+      if (formValues.chargeMode !== undefined && formValues.chargeMode !== null) {
+        formValues.chargeMode = Number(formValues.chargeMode);
+      }
+      await formApi.setValues(formValues);
     } else {
       formApi.resetForm();
       if (defaultStatusId.value) {
@@ -854,13 +877,21 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel() { formDrawerApi.close(); },
   async onConfirm() {
     const validateResult = await formApi.validate();
-    if (!validateResult.valid) return;
+    if (!validateResult.valid) {
+      ElMessage.warning('请正确填写表单中红色标记的字段');
+      return;
+    }
     let values = formApi.form.values;
     const drawerData = formDrawerApi.getData() || {};
     const id = drawerData.id;
     const isEdit = !!id;
     const loadingInstance = ElLoading.service({ text: $t('ui.actionMessage.saving') });
     try {
+      if (values.power !== undefined && values.power !== null) values.power = Number(values.power);
+      if (values.chargeMode !== undefined && values.chargeMode !== null) values.chargeMode = Number(values.chargeMode);
+      if (values.stationId !== undefined && values.stationId !== null) values.stationId = Number(values.stationId);
+      if (values.lotId !== undefined && values.lotId !== null) values.lotId = Number(values.lotId);
+
       if (!isEdit) {
         if (!values.pileStatus && defaultStatusId.value) {
           values.pileStatus = defaultStatusId.value;
@@ -927,7 +958,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-// 暴露方法给父组件（图表钻取调用）
 defineExpose({
   setFilter,
   resetFilter,

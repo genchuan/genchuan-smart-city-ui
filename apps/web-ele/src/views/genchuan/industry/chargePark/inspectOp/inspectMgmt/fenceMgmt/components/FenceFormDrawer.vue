@@ -18,7 +18,7 @@ import {
   updateFenceMgmt,
 } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/fenceMgmt';
 
-import { parseFenceArea, userOptions } from '../table/data';
+import { parseFenceArea, statusOptions, userOptions } from '../table/data';
 import FenceMapEditor from './FenceMapEditor.vue';
 
 const props = defineProps({
@@ -33,6 +33,7 @@ const emit = defineEmits(['success']);
 const formRef = ref(null);
 const rowData = shallowRef({});
 const submitting = shallowRef(false);
+const isEdit = computed(() => rowData.value?.id);
 const drawerTitle = computed(() =>
   rowData.value?.id ? '编辑电子围栏' : '新增电子围栏',
 );
@@ -41,6 +42,7 @@ const form = reactive({
   name: '',
   area: '[]',
   userId: undefined,
+  status: '1',
 });
 
 function validateFenceName(rule, value, callback) {
@@ -110,6 +112,7 @@ async function submitForm() {
       name: form.name,
       area: form.area,
       userId: form.userId,
+      status: form.status,
     };
     if (rowData.value?.id) {
       await updateFenceMgmt({
@@ -132,6 +135,10 @@ async function submitForm() {
 }
 
 function open(row) {
+  form.status = row.status;
+  form.userId = row.userId;
+  form.area = row.area;
+  form.name = row.name;
   drawerApi.setData(row || {}).open();
 }
 
@@ -168,6 +175,16 @@ defineExpose({
       </ElFormItem>
       <ElFormItem label="围栏区域" prop="area">
         <FenceMapEditor v-model="form.area" height="340px" />
+      </ElFormItem>
+      <ElFormItem label="围栏状态" prop="status">
+        <ElSelect
+          v-model="form.status"
+          placeholder="请选择围栏状态"
+          clearable
+          filterable
+          :options="statusOptions"
+          :disabled="isEdit"
+        />
       </ElFormItem>
     </ElForm>
     <div class="drawer-footer">

@@ -1,11 +1,11 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {reactive, ref, watch} from 'vue';
+import {useVbenDrawer, useVbenModal} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import MoralActivityDetailDrawer from './components/moralActivityDetail.vue';
 import {
   getMoralActivityPage,
@@ -17,7 +17,6 @@ import {
   exportMoralActivity,
   getMoralActivityDetail,
   getDeptOptions,
-  getStudentOptions,
 } from '#/api/genchuan/educationTeaching/studentMgmt/moralEdu/moralActivity/data.js';
 import {
   textObj,
@@ -28,17 +27,12 @@ import {
   useRecordFormSchema,
 } from '#/api/genchuan/educationTeaching/studentMgmt/moralEdu/moralActivity/form.js';
 
-// 辅助函数：状态标签类型
+// 辅助函数
 const getStatusType = (status) => {
-  const map = {
-    '未发布': 'warning',
-    '进行中': 'success',
-    '已结束': 'info',
-  };
+  const map = {'未发布': 'warning', '进行中': 'success', '已结束': 'info'};
   return map[status] || 'info';
 };
 
-// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -52,7 +46,6 @@ const formatTimestamp = (timestamp) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
-// 提取日期部分（用于筛选）
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(parseInt(timestamp));
@@ -66,7 +59,7 @@ const getDateFromTimestamp = (timestamp) => {
 const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
-// ---------- 标签筛选 ----------
+// 标签筛选
 const tagFilters = ref({});
 
 function handleFilterTagClick(field, value) {
@@ -103,7 +96,7 @@ function getFieldLabel(field) {
     status: '状态',
     creator: '创建人',
     createTime: '创建时间',
-    activityName: '活动名称',
+    activityName: '活动名称'
   };
   return map[field] || field;
 }
@@ -113,42 +106,21 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// ---------- 抽屉组件 ----------
+// 抽屉与模态框
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
-
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
-});
-
-// 将 JoinDrawer 改为 JoinModal (模态框)
-const [JoinModal, joinModalApi] = useVbenModal({
-  title: textObj.joinText,
-  footer: false,
-  onCancel: () => joinModalApi.close(),
-});
-
 const [RecordDrawer, recordDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => recordDrawerApi.close(),
+  onCancel: () => recordDrawerApi.close()
 });
 
 const dataObj = reactive({
-  totalShow: false,
-  detailObj: {},
-  total: 0,
-  currentPage: 1,
-  pageSize: 10,
-  list: [],
-  loading: false,
+  totalShow: false, detailObj: {}, total: 0, currentPage: 1, pageSize: 10, list: [], loading: false,
 });
-
 const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
@@ -164,7 +136,7 @@ const currentEditId = ref(null);
 const joinActivityId = ref(null);
 const recordActivityId = ref(null);
 
-// 加载部门选项（value 为部门名称）
+// 部门选项
 const deptOptions = ref([]);
 const loadDeptOptions = async () => {
   const res = await getDeptOptions();
@@ -172,25 +144,13 @@ const loadDeptOptions = async () => {
 };
 loadDeptOptions();
 
-// 加载学生选项
-const studentOptions = ref([]);
-const loadStudentOptions = async () => {
-  const res = await getStudentOptions();
-  studentOptions.value = res;
-};
-loadStudentOptions();
-
+// 表格数据获取
 const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
-    const params = {
-      ...searchParams.value,
-      pageNo: page.currentPage,
-      pageSize: page.pageSize,
-    };
+    const params = {...searchParams.value, pageNo: page.currentPage, pageSize: page.pageSize};
     const res = await getMoralActivityPage(params);
     let filtered = res.list;
-    // 应用标签筛选
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
       filtered = filtered.filter(item => {
         let itemValue;
@@ -199,7 +159,7 @@ const getTableData = async ({page}) => {
             itemValue = item.activityType;
             break;
           case 'hostDept':
-            itemValue = item.hostDept;   // 现在 hostDept 直接是名称
+            itemValue = item.hostDept;
             break;
           case 'status':
             itemValue = item.status;
@@ -208,8 +168,7 @@ const getTableData = async ({page}) => {
             itemValue = item.creator;
             break;
           case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
+            itemValue = item.createTime ? getDateFromTimestamp(item.createTime) : '';
             break;
           case 'activityName':
             itemValue = item.activityName;
@@ -217,11 +176,8 @@ const getTableData = async ({page}) => {
           default:
             itemValue = item[field];
         }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
+        if (Array.isArray(filterValue)) return filterValue.includes(String(itemValue));
+        else return String(itemValue) === String(filterValue);
       });
     });
     dataObj.total = res.total;
@@ -230,7 +186,7 @@ const getTableData = async ({page}) => {
     console.error('获取数据失败:', error);
     dataObj.total = 0;
     dataObj.list = [];
-    ElMessage.error('获取数据失败，请稍后重试');
+    ElMessage.error('获取活动列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -263,7 +219,6 @@ async function handleExport() {
   }
 }
 
-// 批量发布
 async function handleBatchPublish() {
   if (checkedIds.value.length === 0) {
     ElMessage.warning('请至少选择一个活动');
@@ -278,7 +233,7 @@ async function handleBatchPublish() {
     await ElMessageBox.confirm(`确认发布选中的 ${unPublishRows.length} 个活动？发布后状态将变为“进行中”。`, '批量发布确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '发布中...'});
     try {
@@ -300,35 +255,15 @@ async function handleBatchPublish() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createFormApi.resetForm();
-  // 新增时设置默认状态为“未发布”
-  createFormApi.setValues({status: '未发布'});
   createDrawerApi.open();
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getMoralActivityDetail({id: row.id});
-    createFormApi.setValues({
-      activityName: detail.activityName,
-      activityType: detail.activityType,
-      hostDept: detail.hostDept,   // 直接使用部门名称
-      startTime: detail.startTime,
-      endTime: detail.endTime,
-      status: detail.status,
-      content: detail.content,
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  createDrawerApi.open();
 }
 
-// 单行发布
 async function handlePublish(row) {
   if (row.status !== '未发布') {
     ElMessage.warning('只有未发布的活动可以发布');
@@ -338,7 +273,7 @@ async function handlePublish(row) {
     await ElMessageBox.confirm(`确认发布活动"${row.activityName}"？发布后状态将变为“进行中”。`, '发布确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '发布中...'});
     try {
@@ -356,18 +291,66 @@ async function handlePublish(row) {
   }
 }
 
-// 报名 - 改为打开模态框
+// 报名功能
+const [JoinForm, joinFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  handleSubmit: async (values) => {
+    const loading = ElLoading.service({text: '报名中...'});
+    try {
+      const studentIdNum = Number(values.studentId);
+      if (isNaN(studentIdNum) || studentIdNum <= 0) {
+        ElMessage.error('请输入有效的学生ID');
+        loading.close();
+        return;
+      }
+      const payload = {
+        id: Number(joinActivityId.value),
+        studentId: studentIdNum
+      };
+      const res = await joinMoralActivity(payload);
+      const isSuccess = res === true || (res && res.code === 0);
+      if (isSuccess) {
+        ElMessage.success('报名成功');
+        joinModalApi.close();
+        handleRefresh();
+      } else {
+        ElMessage.error(res?.msg || '报名失败');
+      }
+    } catch (error) {
+      console.error('报名异常:', error);
+      ElMessage.error('报名失败，请检查网络或联系管理员');
+    } finally {
+      loading.close();
+    }
+  },
+  layout: 'horizontal',
+  schema: useJoinFormSchema(),
+  showCollapseButton: false,
+  submitButtonOptions: {content: '确认'},
+});
+
+const [JoinModal, joinModalApi] = useVbenModal({
+  title: textObj.joinText,
+  footer: false,
+  onCancel: () => joinModalApi.close(),
+  onOpenChange: async (isOpen) => {
+    if (isOpen) {
+      await joinFormApi.resetForm();
+    }
+  },
+});
+
 async function handleJoin(row) {
   if (row.status !== '进行中') {
     ElMessage.warning('只有进行中的活动可以报名');
     return;
   }
   joinActivityId.value = row.id;
-  joinFormApi.resetForm();
-  joinModalApi.open();   // 打开模态框
+  joinModalApi.open();
 }
 
-// 记录
+// 记录功能
 async function handleRecord(row) {
   if (row.status !== '进行中') {
     ElMessage.warning('只有进行中的活动可以记录');
@@ -386,12 +369,8 @@ const [CreateForm, createFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '发布中...'});
     try {
       let res;
-      if (isEditMode.value) {
-        res = await updateMoralActivity({...values, id: currentEditId.value});
-      } else {
-        const submitData = {...values, status: values.status || '未发布'};
-        res = await createMoralActivity(submitData);
-      }
+      if (isEditMode.value) res = await updateMoralActivity({...values, id: currentEditId.value});
+      else res = await createMoralActivity({...values, status: values.status || '未发布'});
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '发布成功');
         createDrawerApi.close();
@@ -409,50 +388,44 @@ const [CreateForm, createFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 动态注入部门选项（value 为部门名称）
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      await createFormApi.resetForm();
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getMoralActivityDetail({id: currentEditId.value});
+          await createFormApi.setValues({
+            activityName: detail.activityName,
+            activityType: detail.activityType,
+            hostDept: detail.hostDept,
+            startTime: detail.startTime,
+            endTime: detail.endTime,
+            status: detail.status,
+            content: detail.content,
+            remark: detail.remark,
+            photo: detail.photo || '',   // 新增 photo 回显
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败');
+          createDrawerApi.close();
+        }
+      } else {
+        await createFormApi.setValues({status: '未发布', photo: ''});
+      }
+    }
+  },
+});
+
 watch(createFormApi, (api) => {
   if (api && deptOptions.value.length) {
     const schema = api.getSchema();
     const hostDeptField = schema.find(f => f.fieldName === 'hostDept');
-    if (hostDeptField) {
-      hostDeptField.componentProps.options = deptOptions.value;
-    }
-  }
-}, {immediate: true});
-
-// 报名表单
-const [JoinForm, joinFormApi] = useVbenForm({
-  collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
-  handleSubmit: async (values) => {
-    const loading = ElLoading.service({text: '报名中...'});
-    try {
-      const res = await joinMoralActivity({id: joinActivityId.value, studentId: values.studentId});
-      if (res && res !== false) {
-        ElMessage.success('报名成功');
-        joinModalApi.close();
-        handleRefresh();
-      } else {
-        ElMessage.error('报名失败');
-      }
-    } finally {
-      loading.close();
-    }
-  },
-  layout: 'horizontal',
-  schema: useJoinFormSchema(),
-  showCollapseButton: false,
-  submitButtonOptions: {content: '确认'},
-});
-
-// 动态注入学生选项
-watch(joinFormApi, (api) => {
-  if (api && studentOptions.value.length) {
-    const schema = api.getSchema();
-    const studentField = schema.find(f => f.fieldName === 'studentId');
-    if (studentField) {
-      studentField.componentProps.options = studentOptions.value;
-    }
+    if (hostDeptField) hostDeptField.componentProps.options = deptOptions.value;
   }
 }, {immediate: true});
 
@@ -481,7 +454,7 @@ const [RecordForm, recordFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 查看详情
+// 详情抽屉
 const moralActivityDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -489,6 +462,7 @@ function handleOpenDetail(row) {
   moralActivityDetailDrawerRef.value.open();
 }
 
+// 查询表单
 const [QueryForm] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
@@ -507,6 +481,7 @@ const [QueryForm] = useVbenForm({
   submitButtonOptions: {content: '查询'},
 });
 
+// VxeGrid
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
@@ -524,7 +499,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 const showChart = ref(true);
 const toggleChart = () => {
   showChart.value = !showChart.value;
@@ -543,7 +517,6 @@ defineExpose({handleFilterTagClick, clearFilters});
     <CreateDrawer :title="isEditMode ? textObj.editText : textObj.addText">
       <CreateForm/>
     </CreateDrawer>
-    <!-- 报名改为模态框 -->
     <JoinModal>
       <JoinForm/>
     </JoinModal>
@@ -578,7 +551,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         </div>
       </template>
 
-      <!-- 钻取列 - 将 hostDeptName 改为 hostDept -->
       <template #activityName="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
           {{ row.activityName }}
@@ -586,14 +558,12 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #activityType="{ row }">
         <el-text @click="handleFilterTagClick('activityType', row.activityType)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.activityType }}
+                 style="cursor: pointer;">{{ row.activityType }}
         </el-text>
       </template>
       <template #hostDept="{ row }">
         <el-text @click="handleFilterTagClick('hostDept', row.hostDept)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.hostDept }}
+                 style="cursor: pointer;">{{ row.hostDept }}
         </el-text>
       </template>
       <template #status="{ row }">
@@ -604,18 +574,15 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.creator || '-' }}
+                 style="cursor: pointer;">{{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">
-          {{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
 
-      <!-- 时间格式化 -->
       <template #startTime="{ row }">
         <el-text>{{ formatTimestamp(row.startTime) }}</el-text>
       </template>
@@ -629,7 +596,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
@@ -36,6 +36,7 @@ import {
   getTrackStatusTagType,
   getUserName,
   isTrackStatusLabel,
+  loadTrackUserOptions,
   normalizeInspectTrackRow,
   textObj,
   useGridColumns,
@@ -142,9 +143,9 @@ async function getTableData({ page }) {
     const pageResult = response?.list ? response : response?.data || response;
     const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
 
-    if (list.length === 0 && !pageResult?.total) {
-      throw new Error('接口返回数据为空');
-    }
+    // if (list.length === 0 && !pageResult?.total) {
+    //   throw new Error('接口返回数据为空');
+    // }
 
     const normalizedList = list.map((item) => normalizeInspectTrackRow(item));
     const visibleList = filterTrendTime.value
@@ -361,6 +362,10 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(() => {
+  loadTrackUserOptions();
+});
 </script>
 
 <template>
@@ -567,7 +572,6 @@ watch(
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  min-height: 32px;
 }
 
 .inspect-track-filter-tags :deep(.el-tag) {

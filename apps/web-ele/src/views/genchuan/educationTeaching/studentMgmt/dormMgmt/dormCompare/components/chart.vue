@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption } from 'element-plus';
+import { ref, computed, onMounted, watch } from 'vue';
+import { ElRadioGroup, ElRadioButton } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import {
@@ -12,37 +12,42 @@ const loading = ref(true);
 const overviewData = ref({});      // 卡片数据 + dormStats
 const rankData = ref({});          // 柱状图专用数据
 
-// ========== 卡片数据 ==========
+// 周期选项（前端显示中文，接口层会自动转换为英文）
+const cycleOptions = ['周', '月', '学期'];
+const currentCycle = ref('周');
+
+// 卡片数据
 const cardList = computed(() => {
   const total = overviewData.value.totalCompare || 0;
   const avg = overviewData.value.avgScore || 0;
   const high = overviewData.value.highScore || 0;
   const low = overviewData.value.lowScore || 0;
   return [
-    { title: '总评比记录数', value: total, color: '#409EFF', status: 'total' },
-    { title: '平均得分', value: avg, color: '#67C23A', status: 'avg', suffix: '分' },
-    { title: '最高得分', value: high, color: '#E6A23C', status: 'high', suffix: '分' },
-    { title: '最低得分', value: low, color: '#F56C6C', status: 'low', suffix: '分' },
+    {title: '总评比记录数', value: total, color: '#409EFF', status: 'total'},
+    {title: '平均得分', value: avg, color: '#67C23A', status: 'avg', suffix: '分'},
+    {title: '最高得分', value: high, color: '#E6A23C', status: 'high', suffix: '分'},
+    {title: '最低得分', value: low, color: '#F56C6C', status: 'low', suffix: '分'},
   ];
 });
 
-// ========== 柱状图数据（宿舍得分排名） ==========
+// 柱状图数据（宿舍得分排名）
 const barData = computed(() => {
-  // 优先使用专用排名接口的数据，否则从 dormStats 提取
+  // 优先使用专用排名接口的数据
   if (rankData.value.labels && rankData.value.data) {
     return {
       xData: rankData.value.labels,
-      seriesData: [{ name: '得分', data: rankData.value.data }],
+      seriesData: [{name: '得分', data: rankData.value.data}],
     };
   }
+  // 否则从 dormStats 中提取，并按得分降序排序
   const stats = overviewData.value.dormStats || [];
+  const sorted = [...stats].sort((a, b) => b.score - a.score);
   return {
-    xData: stats.map(item => item.dormNum),
-    seriesData: [{ name: '得分', data: stats.map(item => item.score) }],
+    xData: sorted.map(item => item.dormNum),
+    seriesData: [{name: '得分', data: sorted.map(item => item.score)}],
   };
 });
 
-// ========== 事件发射 ==========
 const emit = defineEmits(['cardSelect', 'barSelect']);
 
 const handleCardClick = (cardInfo) => {
@@ -50,31 +55,33 @@ const handleCardClick = (cardInfo) => {
 };
 
 const handleBarClick = (dormNum) => {
-  emit('barSelect', { field: 'dormNum', value: dormNum });
+  emit('barSelect', {field: 'dormNum', value: dormNum});
 };
 
-// ========== 加载数据 ==========
+// 加载数据（根据当前周期）
 const loadData = async () => {
   loading.value = true;
   try {
+    const params = {cycle: currentCycle.value};
     const [chartRes, rankRes] = await Promise.allSettled([
-      getDormCompareChart({ cycle: '月' }), // 默认月周期，可扩展筛选
-      getDormCompareScoreRank({ cycle: '月' }),
+      getDormCompareChart(params),
+      getDormCompareScoreRank(params),
     ]);
     if (chartRes.status === 'fulfilled') {
       overviewData.value = chartRes.value;
     } else {
+      console.warn('得分看板接口失败，使用模拟数据');
       overviewData.value = {
         totalCompare: 86,
         avgScore: 85.2,
         highScore: 98.5,
         lowScore: 62.0,
         dormStats: [
-          { dormNum: '302', score: 95.5, rankNo: 1 },
-          { dormNum: '301', score: 92.0, rankNo: 2 },
-          { dormNum: '201', score: 90.5, rankNo: 3 },
-          { dormNum: '202', score: 88.0, rankNo: 4 },
-          { dormNum: '101', score: 85.5, rankNo: 5 },
+          {dormNum: '302', score: 95.5, rank: 1},
+          {dormNum: '301', score: 92.0, rank: 2},
+          {dormNum: '201', score: 90.5, rank: 3},
+          {dormNum: '202', score: 88.0, rank: 4},
+          {dormNum: '101', score: 85.5, rank: 5},
         ],
       };
     }
@@ -93,6 +100,11 @@ const loadData = async () => {
   }
 };
 
+// 监听周期变化，重新加载数据
+watch(currentCycle, () => {
+  loadData();
+});
+
 onMounted(() => {
   loadData();
 });
@@ -100,6 +112,15 @@ onMounted(() => {
 
 <template>
   <div v-loading="loading" class="chart-box">
+    <!-- 周期选择单选框 -->
+    <div class="cycle-radio">
+      <el-radio-group v-model="currentCycle">
+        <el-radio-button v-for="cycle in cycleOptions" :key="cycle" :label="cycle">
+          {{ cycle }}
+        </el-radio-button>
+      </el-radio-group>
+    </div>
+
     <div class="box-left">
       <Indicator
         class="left-card"
@@ -129,6 +150,14 @@ onMounted(() => {
   padding-left: 15px;
   padding-right: 15px;
   width: 100% !important;
+  position: relative;
+
+  .cycle-radio {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    z-index: 10;
+  }
 
   .box-left {
     display: grid !important;

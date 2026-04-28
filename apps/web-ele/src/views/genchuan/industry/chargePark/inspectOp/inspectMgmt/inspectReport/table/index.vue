@@ -151,9 +151,9 @@ async function getTableData({ page }) {
     const pageResult = response?.list ? response : response?.data || response;
     const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
 
-    if (list.length === 0 && !pageResult?.total) {
-      throw new Error('接口返回数据为空');
-    }
+    // if (list.length === 0 && !pageResult?.total) {
+    //   throw new Error('接口返回数据为空');
+    // }
 
     const normalizedList = list.map((item) => normalizeInspectReportRow(item));
     const visibleList = filterTrendTime.value
@@ -663,7 +663,6 @@ watch(
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  min-height: 32px;
 }
 
 .inspect-report-filter-tags :deep(.el-tag) {

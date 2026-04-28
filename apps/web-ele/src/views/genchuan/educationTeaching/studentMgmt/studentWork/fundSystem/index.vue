@@ -1,14 +1,14 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick, onMounted } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick, onMounted} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import FundDetailDrawer from './components/fundDetail.vue';
 import {
-  dataList,
+  // dataList 已删除，不再导入
   getFundSystemPage,
   createFundSystem,
   updateFundSystem,
@@ -64,7 +64,7 @@ const formatMoney = (amount) => {
   return `¥${parseFloat(amount).toFixed(2)}`;
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
@@ -120,12 +120,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
-});
-
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -141,7 +135,7 @@ const gridColumns = ref(getColumnsByStatus(activeName.value));
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -168,7 +162,7 @@ const createFormSchema = computed(() => {
   return schema;
 });
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -213,41 +207,10 @@ const getTableData = async ({ page }) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'grade':
-            itemValue = item.grade;
-            break;
-          case 'fundType':
-            itemValue = item.fundType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    // 模拟数据时仍需要前端分页
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取资助申请列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -266,10 +229,10 @@ function handleReset() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportFundSystem(searchParams.value);
-      downloadFileFromBlobPart({ fileName: '资助系统列表.xls', source: data });
+      downloadFileFromBlobPart({fileName: '资助系统列表.xls', source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -297,10 +260,10 @@ async function handleBatchAudit() {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '审核中...' });
+    const loading = ElLoading.service({text: '审核中...'});
     try {
       const ids = selectedRows.map(row => row.id);
-      const res = await auditFundSystem({ ids, status: '已汇总' });
+      const res = await auditFundSystem({ids, status: '已汇总'});
       if (res && res !== false) {
         ElMessage.success('批量审核成功');
         handleRefresh();
@@ -310,7 +273,8 @@ async function handleBatchAudit() {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 打开申请抽屉
@@ -318,36 +282,17 @@ function handleCreate() {
   try {
     isEditMode.value = false;
     currentEditId.value = null;
-    // 重置表单
-    createFormApi.resetForm();
-    // 新增时设置默认状态为“待审核”
-    createFormApi.setValues({ status: '待审核' });
-    // 打开抽屉
-    createDrawerApi.open();
+    createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
   } catch (error) {
     console.error('打开申请抽屉失败:', error);
     ElMessage.error('打开申请表单失败，请刷新页面重试');
   }
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getFundSystemDetail({ id: row.id });
-    createFormApi.setValues({
-      studentId: detail.studentId,
-      fundType: detail.fundType,
-      applyAmount: detail.applyAmount,
-      applyTime: detail.applyTime,
-      status: detail.status,     // 补充状态赋值
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 单行审核
@@ -362,9 +307,9 @@ async function handleAudit(row) {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '审核中...' });
+    const loading = ElLoading.service({text: '审核中...'});
     try {
-      const res = await auditFundSystem({ ids: [row.id], status: '已汇总' });
+      const res = await auditFundSystem({ids: [row.id], status: '已汇总'});
       if (res && res !== false) {
         ElMessage.success('审核成功');
         handleRefresh();
@@ -374,23 +319,24 @@ async function handleAudit(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 申请/编辑表单
 const [CreateForm, createFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: isEditMode.value ? '更新中...' : '申请中...' });
+    const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '申请中...'});
     try {
       let res;
       if (isEditMode.value) {
         // 编辑时传递 status（表单中已包含）
-        res = await updateFundSystem({ ...values, id: currentEditId.value });
+        res = await updateFundSystem({...values, id: currentEditId.value});
       } else {
         // 新增时确保 status 字段存在（默认待审核）
-        const submitData = { ...values, status: values.status || '待审核' };
+        const submitData = {...values, status: values.status || '待审核'};
         res = await createFundSystem(submitData);
       }
       if (res && res !== false) {
@@ -407,11 +353,46 @@ const [CreateForm, createFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: createFormSchema,  // 使用响应式计算属性，确保学生选项动态更新
   showCollapseButton: false,
-  submitButtonOptions: { content: computed(() => isEditMode.value ? '保存' : '申请') },
+  submitButtonOptions: {content: computed(() => isEditMode.value ? '保存' : '申请')},
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await createFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getFundSystemDetail({id: currentEditId.value});
+          await createFormApi.setValues({
+            studentId: detail.studentId,
+            fundType: detail.fundType,
+            applyAmount: detail.applyAmount,
+            applyTime: detail.applyTime,
+            status: detail.status,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          createDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式：设置默认状态为“待审核”
+        await createFormApi.setValues({status: '待审核'});
+      }
+    }
+  },
 });
 
 // 查看详情
 const fundDetailDrawerRef = ref(null);
+
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   fundDetailDrawerRef.value.open();
@@ -419,9 +400,9 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -431,20 +412,20 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -452,7 +433,7 @@ watch(activeName, (newVal) => {
   tagFilters.value = {};
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({ columns: gridColumns.value });
+  else gridApi.setGridOptions?.({columns: gridColumns.value});
   gridApi.reload();
 });
 
@@ -465,7 +446,7 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 
 onMounted(() => {
   loadStudentOptions();
@@ -474,12 +455,13 @@ onMounted(() => {
 
 <template>
   <div class="park-lot-table-new">
-    <FundDetailDrawer ref="fundDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <FundDetailDrawer ref="fundDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                      @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <CreateDrawer :title="isEditMode ? '编辑资助申请' : '资助申请'">
-      <CreateForm />
+      <CreateForm/>
     </CreateDrawer>
     <Grid>
       <template #table-title>
@@ -496,27 +478,33 @@ onMounted(() => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="申请" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="审核" icon-name="Check" @click="handleBatchAudit" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
+          <IconButton content="申请" icon-name="Plus" @click="handleCreate"/>
+          <IconButton content="审核" icon-name="Check" @click="handleBatchAudit"/>
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
-                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
           <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart" />
+                      @click="toggleChart"/>
         </div>
       </template>
 
       <template #studentId="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentId }}</el-text>
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+          {{ row.studentId }}
+        </el-text>
       </template>
       <template #grade="{ row }">
-        <el-text @click="handleFilterTagClick('grade', row.grade)" type="primary" style="cursor: pointer;">{{ row.grade }}</el-text>
+        <el-text @click="handleFilterTagClick('grade', row.grade)" type="primary"
+                 style="cursor: pointer;">{{ row.grade }}
+        </el-text>
       </template>
       <template #fundType="{ row }">
-        <el-text @click="handleFilterTagClick('fundType', row.fundType)" type="primary" style="cursor: pointer;">{{ row.fundType }}</el-text>
+        <el-text @click="handleFilterTagClick('fundType', row.fundType)" type="primary"
+                 style="cursor: pointer;">{{ row.fundType }}
+        </el-text>
       </template>
       <template #applyAmount="{ row }">
         <el-text>{{ formatMoney(row.applyAmount) }}</el-text>
@@ -528,13 +516,20 @@ onMounted(() => {
         <el-text>{{ formatTimestamp(row.auditTime) }}</el-text>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">{{ row.status }}</el-tag>
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
+          {{ row.status }}
+        </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer;">{{ row.creator || '-' }}
+        </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
+                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
+        </el-text>
       </template>
       <template #updateTime="{ row }">
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
@@ -542,9 +537,11 @@ onMounted(() => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
-          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check" @click="handleAudit(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
+          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check"
+                      @click="handleAudit(row)"/>
         </div>
       </template>
     </Grid>

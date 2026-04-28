@@ -1,6 +1,7 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -424,15 +425,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'reportTimeRange',
+      fieldName: 'reportTime',
       label: '上报时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择上报时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     {
@@ -491,13 +488,13 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'status' },
     },
-    {
-      field: 'creator',
-      title: '上报人',
-      minWidth: 110,
-      sortable: true,
-      slots: { default: 'creator' },
-    },
+    // {
+    //   field: 'creator',
+    //   title: '上报人',
+    //   minWidth: 110,
+    //   sortable: true,
+    //   slots: { default: 'creator' },
+    // },
     {
       field: 'auditUserName',
       title: '审核人',

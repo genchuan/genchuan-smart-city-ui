@@ -1,0 +1,952 @@
+<script lang="ts" setup>
+import type { UploadUserFile } from 'element-plus';
+
+import type {
+  GroupCarRow,
+  GroupProfileInfo,
+  GroupSelectOption,
+  OperatorInfo,
+} from '../data';
+
+import type { GroupCarDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupCar';
+
+import { nextTick, onMounted, ref } from 'vue';
+
+import { useVbenDrawer } from '@vben/common-ui';
+
+import dayjs from 'dayjs';
+import {
+  ElButton,
+  ElDescriptions,
+  ElDescriptionsItem,
+  ElDialog,
+  ElInput,
+  ElLoading,
+  ElMessage,
+  ElTag,
+} from 'element-plus';
+
+import { useVbenForm } from '#/adapter/form';
+import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { GroupCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupCar';
+import { GroupInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupInfo';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+
+import {
+  buildGroupCarQueryParams,
+  buildGroupCarRowFromApi,
+  buildGroupSelectOptions,
+  getBindingLogsSummary,
+  getGroupProfile,
+  getOperatorDetail,
+  detailFields as groupCarDetailFields,
+  groupOptions,
+  maskPhone,
+  useCreateSchema,
+  useEditSchema,
+  useGridColumns,
+  useSearchSchema,
+} from '../data';
+
+const props = withDefaults(
+  defineProps<{
+    reloadStats?: () => Promise<void> | void;
+    showStats?: boolean;
+    toggleStats?: () => void;
+  }>(),
+  {
+    reloadStats: async () => {},
+    showStats: false,
+    toggleStats: () => {},
+  },
+);
+
+const currentGroupProfile = ref<GroupProfileInfo | null>(null);
+const currentOperatorProfile = ref<null | OperatorInfo>(null);
+const currentRow = ref<GroupCarRow>();
+const detailCache = new Map<number, GroupCarDetailVO>();
+const detailDrawerRef = ref<null | { open: () => void }>(null);
+const drillFilters = ref({
+  plateColor: '',
+});
+const formData = ref<GroupCarRow>();
+const formMode = ref<'create' | 'edit'>('create');
+const formSource = ref<GroupCarDetailVO>();
+const groupDetailCache = new Map<number, GroupProfileInfo>();
+const groupDialogVisible = ref(false);
+const groupSelectOptions = ref<GroupSelectOption[]>(groupOptions);
+const importDialogVisible = ref(false);
+const importFileList = ref<UploadUserFile[]>([]);
+const operatorDialogVisible = ref(false);
+const rejectDialogVisible = ref(false);
+const rejectReason = ref('');
+const rejectRow = ref<GroupCarRow>();
+
+const detailData = ref();
+
+const [Form, formApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 96,
+  },
+  layout: 'horizontal',
+  schema: useCreateSchema(groupSelectOptions.value),
+  showDefaultActions: false,
+});
+
+function resolveGroupName(groupId: number, groupName?: string) {
+  if (groupName) {
+    return groupName;
+  }
+
+  return (
+    groupSelectOptions.value.find((item) => item.value === groupId)?.label ||
+    getGroupProfile(groupId).name
+  );
+}
+
+/** 获取车辆详情 */
+async function fetchGroupCarDetail(
+  row: GroupCarRow,
+  errorMessage = '加载集团车辆详情失败',
+) {
+  const cachedDetail = detailCache.get(row.id);
+
+  if (cachedDetail) {
+    return {
+      row: buildGroupCarRowFromApi(cachedDetail, row),
+      source: cachedDetail,
+    };
+  }
+
+  const loadingInstance = ElLoading.service({
+    target: '.group-car-table',
+    text: '加载中...',
+  });
+
+  try {
+    const data = await GroupCarApi.getGroupCar(row.id);
+    detailCache.set(row.id, data);
+
+    return {
+      row: buildGroupCarRowFromApi(data, {
+        ...row,
+        groupName: resolveGroupName(
+          Number(data.groupId ?? row.groupId),
+          data.groupName || row.groupName,
+        ),
+      }),
+      source: data,
+    };
+  } catch (error) {
+    ElMessage.error(errorMessage);
+    console.error('[groupCar] load detail failed:', error);
+    return null;
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 查询车辆列表 */
+async function queryGroupCarPage(
+  { page }: any,
+  formValues: Record<string, any>,
+) {
+  const result = await GroupCarApi.getGroupCarPage({
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+    ...buildGroupCarQueryParams({
+      ...formValues,
+      plateColor: drillFilters.value.plateColor,
+    }),
+  });
+
+  const list = Array.isArray(result?.list) ? result.list : [];
+
+  return {
+    list: list.map((item) => {
+      const groupId = Number(item.groupId ?? 0);
+
+      return buildGroupCarRowFromApi(item, {
+        groupId,
+        groupName: resolveGroupName(groupId, item.groupName),
+      });
+    }),
+    total: result?.total || 0,
+  };
+}
+
+const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  width: 520,
+  onCancel() {
+    formDrawerApi.close();
+  },
+  async onConfirm() {
+    const { valid } = await formApi.validate();
+    if (!valid) {
+      return;
+    }
+
+    const values = (await formApi.getValues()) as Record<string, any>;
+    const loadingInstance = ElLoading.service({
+      target: '.group-car-table',
+      text: formMode.value === 'create' ? '保存中...' : '更新中...',
+    });
+
+    try {
+      if (formMode.value === 'create') {
+        await GroupCarApi.createGroupCar({
+          bindTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+          carType: values.carType || '',
+          groupId: Number(values.groupId || 0),
+          plateColor: values.plateColor || '',
+          plateNo: values.plateNo || '',
+          remark: values.remark || '',
+          status: '待审核',
+        });
+        ElMessage.success('新增成功');
+      } else if (formData.value) {
+        await GroupCarApi.updateGroupCar({
+          auditRemark: formSource.value?.auditRemark,
+          auditorId: formSource.value?.auditorId,
+          auditTime: formSource.value?.auditTime,
+          bindTime: formSource.value?.bindTime || formData.value.bindTime,
+          carType: values.carType || '',
+          groupId: formSource.value?.groupId || formData.value.groupId,
+          id: formData.value.id,
+          plateColor: values.plateColor || '',
+          plateNo: values.plateNo || '',
+          remark: values.remark || '',
+          reserve1: formSource.value?.reserve1,
+          reserve2: formSource.value?.reserve2,
+          status: formSource.value?.status || formData.value.status,
+        });
+        ElMessage.success('编辑成功');
+      }
+
+      await handleReloadPage();
+      formDrawerApi.close();
+    } catch (error) {
+      ElMessage.error(formMode.value === 'create' ? '新增失败' : '编辑失败');
+      console.error('[groupCar] save failed:', error);
+    } finally {
+      loadingInstance.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (!isOpen) {
+      formData.value = undefined;
+      formSource.value = undefined;
+      return;
+    }
+
+    if (formMode.value === 'create') {
+      await formApi.resetForm();
+      return;
+    }
+
+    if (formData.value) {
+      await formApi.setValues({
+        carType: formData.value.carType,
+        plateColor: formData.value.plateColor,
+        plateNo: formData.value.plateNo,
+        remark: formData.value.remark,
+      });
+    }
+  },
+});
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  formOptions: {
+    schema: useSearchSchema(groupSelectOptions.value),
+  },
+  gridOptions: {
+    columns: useGridColumns(),
+    layouts: [['Form'], ['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
+    height: 'auto',
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: queryGroupCarPage,
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    toolbarConfig: {
+      refresh: true,
+      search: true,
+    },
+  },
+});
+
+/** 加载所属集团下拉 */
+async function loadGroupOptions() {
+  try {
+    const result = await GroupInfoApi.getGroupInfoPage({
+      pageNo: 1,
+      pageSize: 200,
+    });
+    const list = Array.isArray(result?.list) ? result.list : [];
+
+    groupSelectOptions.value = buildGroupSelectOptions(
+      list.map((item) => ({
+        label: item.name,
+        value: Number(item.id ?? 0),
+      })),
+    );
+  } catch (error) {
+    console.error('[groupCar] load group options failed:', error);
+    groupSelectOptions.value = buildGroupSelectOptions(
+      groupSelectOptions.value,
+    );
+  }
+
+  await formApi.updateSchema([
+    {
+      fieldName: 'groupId',
+      componentProps: {
+        options: groupSelectOptions.value,
+      },
+    },
+  ]);
+
+  await gridApi.formApi.updateSchema([
+    {
+      fieldName: 'groupId',
+      componentProps: {
+        options: groupSelectOptions.value,
+      },
+    },
+  ]);
+
+  await handleRefresh();
+}
+
+/** 刷新表格 */
+function handleRefresh() {
+  return gridApi.query();
+}
+
+/** 联动刷新页面 */
+async function handleReloadPage() {
+  detailCache.clear();
+  groupDetailCache.clear();
+  await handleRefresh();
+  await props.reloadStats?.();
+}
+
+/** 重置筛选条件 */
+async function resetSearch() {
+  drillFilters.value.plateColor = '';
+  await gridApi.formApi.resetForm();
+  await handleRefresh();
+}
+
+/** 设置筛选条件 */
+async function setSearchValues(values: Record<string, any>) {
+  const nextValues = { ...values };
+
+  drillFilters.value.plateColor = nextValues.plateColor || '';
+  delete nextValues.plateColor;
+
+  await gridApi.formApi.setValues(nextValues);
+  await handleRefresh();
+}
+
+/** 重新计算表格布局 */
+async function recalculateLayout() {
+  await gridApi.grid?.recalculate?.(true);
+  await gridApi.grid?.refreshScroll?.();
+}
+
+defineExpose({
+  recalculateLayout,
+  resetSearch,
+  setSearchValues,
+});
+
+onMounted(async () => {
+  await nextTick();
+  await loadGroupOptions();
+});
+
+/** 导出当前列表 */
+async function handleExport() {
+  const formValues = await gridApi.formApi.getValues();
+
+  try {
+    await GroupCarApi.exportGroupCar(
+      buildGroupCarQueryParams({
+        ...formValues,
+        plateColor: drillFilters.value.plateColor,
+      }),
+    );
+    ElMessage.success('导出成功');
+  } catch (error) {
+    ElMessage.error('导出失败');
+    console.error('[groupCar] export failed:', error);
+  }
+}
+
+/** 打开新增抽屉 */
+function handleCreate() {
+  formMode.value = 'create';
+  formData.value = undefined;
+  formSource.value = undefined;
+  formApi.setState(() => ({
+    schema: useCreateSchema(groupSelectOptions.value),
+  }));
+  formDrawerApi.setData(null).open();
+}
+
+/** 打开编辑抽屉 */
+async function handleEdit(row: GroupCarRow) {
+  const detail = await fetchGroupCarDetail(row);
+
+  if (!detail) {
+    return;
+  }
+
+  formMode.value = 'edit';
+  formData.value = detail.row;
+  formSource.value = detail.source;
+  formApi.setState(() => ({
+    schema: useEditSchema(),
+  }));
+  formDrawerApi.setData(detail.row).open();
+}
+
+/** 打开详情抽屉 */
+async function handleDetail(row: GroupCarRow) {
+  const detail = await fetchGroupCarDetail(row);
+
+  if (!detail) {
+    return;
+  }
+
+  currentRow.value = detail.row;
+  detailData.value = {
+    ...detail.row,
+    bindingLogsSummary: getBindingLogsSummary(detail.row.bindingLogs),
+  };
+  detailDrawerRef.value?.open();
+}
+
+/** 打开集团详情弹窗 */
+async function handleOpenGroup(row: GroupCarRow) {
+  const cachedProfile = groupDetailCache.get(row.groupId);
+
+  if (cachedProfile) {
+    currentGroupProfile.value = cachedProfile;
+    groupDialogVisible.value = true;
+    return;
+  }
+
+  const loadingInstance = ElLoading.service({
+    target: '.group-car-table',
+    text: '加载中...',
+  });
+
+  try {
+    const detail = await GroupInfoApi.getGroupInfo(row.groupId);
+    const profile = getGroupProfile(row.groupId, row.groupName, {
+      contact: detail.contact,
+      groupType: detail.groupType,
+      name: detail.name,
+      phone: detail.phone,
+      remark: detail.remark,
+    });
+
+    groupDetailCache.set(row.groupId, profile);
+    currentGroupProfile.value = profile;
+    groupDialogVisible.value = true;
+  } catch (error) {
+    currentGroupProfile.value =
+      row.groupInfo || getGroupProfile(row.groupId, row.groupName);
+    groupDialogVisible.value = true;
+    console.error('[groupCar] load group profile failed:', error);
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 打开操作人员弹窗 */
+async function handleOpenOperator(row: GroupCarRow) {
+  if (!row.auditorName || row.auditorName === '-') {
+    return;
+  }
+
+  if (row.auditorInfo) {
+    currentOperatorProfile.value = row.auditorInfo;
+    operatorDialogVisible.value = true;
+    return;
+  }
+
+  const detail = await fetchGroupCarDetail(row, '加载操作人员详情失败');
+
+  if (!detail) {
+    return;
+  }
+
+  currentOperatorProfile.value =
+    detail.row.auditorInfo ||
+    getOperatorDetail(detail.row.auditorName, undefined, detail.row.auditorId);
+  operatorDialogVisible.value = true;
+}
+
+/** 审核通过车辆 */
+async function handleApprove(row: GroupCarRow) {
+  const loadingInstance = ElLoading.service({
+    target: '.group-car-table',
+    text: '审核中...',
+  });
+
+  try {
+    await GroupCarApi.approveGroupCar({
+      auditRemark: '审核通过',
+      ids: [row.id],
+    });
+    ElMessage.success('审核通过');
+    await handleReloadPage();
+  } catch (error) {
+    ElMessage.error('审核通过失败');
+    console.error('[groupCar] approve failed:', error);
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 打开驳回弹窗 */
+function handleOpenReject(row: GroupCarRow) {
+  rejectReason.value = '';
+  rejectRow.value = row;
+  rejectDialogVisible.value = true;
+}
+
+/** 确认驳回车辆 */
+async function handleConfirmReject() {
+  if (rejectReason.value.trim().length < 10) {
+    ElMessage.warning('驳回理由不能少于 10 个字');
+    return;
+  }
+
+  if (!rejectRow.value) {
+    return;
+  }
+
+  const loadingInstance = ElLoading.service({
+    target: '.group-car-table',
+    text: '驳回中...',
+  });
+
+  try {
+    await GroupCarApi.rejectGroupCar({
+      auditRemark: rejectReason.value.trim(),
+      ids: [rejectRow.value.id],
+    });
+    rejectDialogVisible.value = false;
+    rejectReason.value = '';
+    rejectRow.value = undefined;
+    ElMessage.success('驳回成功');
+    await handleReloadPage();
+  } catch (error) {
+    ElMessage.error('驳回失败');
+    console.error('[groupCar] reject failed:', error);
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 解绑车辆 */
+async function handleUnbind(row: GroupCarRow) {
+  const loadingInstance = ElLoading.service({
+    target: '.group-car-table',
+    text: '解绑中...',
+  });
+
+  try {
+    await GroupCarApi.unbindGroupCar({
+      ids: [row.id],
+    });
+    ElMessage.success('解绑成功');
+    await handleReloadPage();
+  } catch (error) {
+    ElMessage.error('解绑失败');
+    console.error('[groupCar] unbind failed:', error);
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 重新绑定车辆 */
+async function handleRebind(row: GroupCarRow) {
+  const loadingInstance = ElLoading.service({
+    target: '.group-car-table',
+    text: '重新绑定中...',
+  });
+
+  try {
+    await GroupCarApi.rebindGroupCar({
+      ids: [row.id],
+    });
+    ElMessage.success('已重新发起绑定审核');
+    await handleReloadPage();
+  } catch (error) {
+    ElMessage.error('重新绑定失败');
+    console.error('[groupCar] rebind failed:', error);
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 按车牌颜色钻取列表 */
+async function handleFilterByPlateColor(plateColor: string) {
+  drillFilters.value.plateColor = plateColor;
+  await handleRefresh();
+}
+
+/** 下载导入模板 */
+function handleDownloadTemplate() {
+  const blob = new Blob(
+    [
+      '所属集团,车牌号码,车牌颜色,车辆类型,备注\n泉州智联企业集团,闽C66666,蓝牌,小型车,导入模板示例',
+    ],
+    { type: 'text/csv;charset=utf-8;' },
+  );
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = '集团车辆导入模板.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+/** 导入车辆数据 */
+async function handleImportCars() {
+  const file = importFileList.value[0]?.raw;
+
+  if (!file) {
+    ElMessage.warning('请先上传导入文件');
+    return;
+  }
+
+  const loadingInstance = ElLoading.service({
+    target: '.group-car-table',
+    text: '导入中...',
+  });
+
+  try {
+    await GroupCarApi.importGroupCar(file);
+    importDialogVisible.value = false;
+    importFileList.value = [];
+    ElMessage.success('导入成功');
+    await handleReloadPage();
+  } catch (error) {
+    ElMessage.error('导入失败');
+    console.error('[groupCar] import failed:', error);
+  } finally {
+    loadingInstance.close();
+  }
+}
+</script>
+
+<template>
+  <div class="group-car-table">
+    <div class="group-car-grid-wrap">
+      <Grid table-title="集团车辆列表">
+        <template #toolbar-tools>
+          <TableAction
+            :actions="[
+              {
+                label: '新增车辆',
+                type: 'primary',
+                icon: ACTION_ICON.ADD,
+                onClick: handleCreate,
+              },
+              {
+                label: '导入',
+                type: 'primary',
+                icon: ACTION_ICON.UPLOAD,
+                onClick: () => (importDialogVisible = true),
+              },
+              {
+                label: '导出',
+                type: 'primary',
+                icon: ACTION_ICON.DOWNLOAD,
+                onClick: handleExport,
+              },
+              {
+                label: props.showStats ? '隐藏统计' : '显示统计',
+                type: 'primary',
+                icon: props.showStats
+                  ? 'lucide:chevron-up'
+                  : 'lucide:chevron-down',
+                onClick: props.toggleStats,
+              },
+            ]"
+          />
+        </template>
+
+        <template #groupName="{ row }">
+          <ElButton type="primary" link @click="handleOpenGroup(row)">
+            {{ row.groupName }}
+          </ElButton>
+        </template>
+
+        <template #plateNo="{ row }">
+          <ElButton type="primary" link @click="handleDetail(row)">
+            {{ row.plateNo }}
+          </ElButton>
+        </template>
+
+        <template #plateColor="{ row }">
+          <ElButton
+            type="primary"
+            link
+            @click="handleFilterByPlateColor(row.plateColor)"
+          >
+            {{ row.plateColor }}
+          </ElButton>
+        </template>
+
+        <template #carType="{ row }">
+          <ElButton
+            type="primary"
+            link
+            @click="setSearchValues({ carType: row.carType })"
+          >
+            {{ row.carType }}
+          </ElButton>
+        </template>
+
+        <template #status="{ row }">
+          <ElButton
+            type="primary"
+            link
+            @click="setSearchValues({ status: row.status })"
+          >
+            <ElTag
+              :type="
+                row.status === '已绑定'
+                  ? 'success'
+                  : row.status === '待审核'
+                    ? 'warning'
+                    : row.status === '已驳回'
+                      ? 'danger'
+                      : 'info'
+              "
+            >
+              {{ row.status }}
+            </ElTag>
+          </ElButton>
+        </template>
+
+        <template #auditorName="{ row }">
+          <ElButton
+            v-if="row.auditorName !== '-'"
+            type="primary"
+            link
+            @click="handleOpenOperator(row)"
+          >
+            {{ row.auditorName }}
+          </ElButton>
+          <span v-else>{{ row.auditorName }}</span>
+        </template>
+
+        <template #actions="{ row }">
+          <TableAction
+            :actions="[
+              {
+                label: '查看',
+                type: 'primary',
+                link: true,
+                icon: ACTION_ICON.VIEW,
+                onClick: handleDetail.bind(null, row),
+              },
+              {
+                label: '通过',
+                type: 'primary',
+                link: true,
+                icon: ACTION_ICON.AUDIT,
+                ifShow: () => row.status === '待审核',
+                onClick: handleApprove.bind(null, row),
+              },
+              {
+                label: '驳回',
+                type: 'danger',
+                link: true,
+                icon: ACTION_ICON.DELETE,
+                ifShow: () => row.status === '待审核',
+                onClick: handleOpenReject.bind(null, row),
+              },
+              {
+                label: '解绑',
+                type: 'danger',
+                link: true,
+                icon: ACTION_ICON.DELETE,
+                ifShow: () => row.status === '已绑定',
+                popConfirm: {
+                  title: `确认解绑${row.plateNo}吗？`,
+                  confirm: handleUnbind.bind(null, row),
+                },
+              },
+              {
+                label: '重新绑定',
+                type: 'primary',
+                link: true,
+                icon: ACTION_ICON.AUDIT,
+                ifShow: () => row.status === '已解绑',
+                onClick: handleRebind.bind(null, row),
+              },
+              {
+                label: '编辑',
+                type: 'primary',
+                link: true,
+                icon: ACTION_ICON.EDIT,
+                ifShow: () => row.status === '待审核',
+                onClick: handleEdit.bind(null, row),
+              },
+            ]"
+          />
+        </template>
+      </Grid>
+    </div>
+
+    <FormDrawer :title="formMode === 'edit' ? '编辑车辆' : '新增车辆'">
+      <Form class="mx-4" />
+    </FormDrawer>
+
+    <DetailDrawer
+      ref="detailDrawerRef"
+      :data="detailData"
+      :fields="groupCarDetailFields"
+      :title="currentRow ? `${currentRow.plateNo}详情` : '车辆详情'"
+    />
+
+    <ElDialog v-model="importDialogVisible" title="导入集团车辆" width="520px">
+      <div class="import-tip">
+        提供标准模板下载，上传后按文档要求调用真实导入接口。
+      </div>
+      <div class="import-actions">
+        <ElButton @click="handleDownloadTemplate">下载模板</ElButton>
+      </div>
+      <el-upload
+        v-model:file-list="importFileList"
+        drag
+        :auto-upload="false"
+        :limit="1"
+        accept=".xls,.xlsx,.csv"
+      >
+        <div>点击或拖拽文件到此处上传</div>
+      </el-upload>
+      <template #footer>
+        <ElButton @click="importDialogVisible = false">取消</ElButton>
+        <ElButton type="primary" @click="handleImportCars">开始导入</ElButton>
+      </template>
+    </ElDialog>
+
+    <ElDialog
+      v-model="rejectDialogVisible"
+      title="驳回集团车辆绑定"
+      width="520px"
+    >
+      <ElInput
+        v-model="rejectReason"
+        :rows="4"
+        maxlength="200"
+        placeholder="请输入驳回理由，不少于 10 个字"
+        show-word-limit
+        type="textarea"
+      />
+      <template #footer>
+        <ElButton @click="rejectDialogVisible = false">取消</ElButton>
+        <ElButton type="primary" @click="handleConfirmReject">确认</ElButton>
+      </template>
+    </ElDialog>
+
+    <ElDialog v-model="groupDialogVisible" title="集团详情" width="520px">
+      <ElDescriptions v-if="currentGroupProfile" :column="1" border>
+        <ElDescriptionsItem label="集团名称">
+          {{ currentGroupProfile.name }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系人">
+          {{ currentGroupProfile.contact }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系手机号">
+          {{ maskPhone(currentGroupProfile.phone) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="集团类型">
+          {{ currentGroupProfile.groupType }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="备注">
+          {{ currentGroupProfile.remark }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+    </ElDialog>
+
+    <ElDialog
+      v-model="operatorDialogVisible"
+      title="操作人员详情"
+      width="520px"
+    >
+      <ElDescriptions v-if="currentOperatorProfile" :column="1" border>
+        <ElDescriptionsItem label="姓名">
+          {{ currentOperatorProfile.name }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="账号">
+          {{ currentOperatorProfile.account }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="角色">
+          {{ currentOperatorProfile.role }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="部门">
+          {{ currentOperatorProfile.dept }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="手机号">
+          {{ currentOperatorProfile.phone }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+    </ElDialog>
+  </div>
+</template>
+
+<style scoped lang="scss">
+.group-car-table,
+.group-car-grid-wrap {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.group-car-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.group-car-grid-wrap {
+  flex: 1;
+}
+
+.import-actions,
+.import-tip {
+  margin-bottom: 12px;
+}
+
+:deep(.vxe-grid) {
+  height: 100% !important;
+}
+
+:deep(.vxe-grid--layout-body-wrapper),
+:deep(.vxe-grid--layout-body-content-wrapper),
+:deep(.vxe-grid--table-container),
+:deep(.vxe-grid--table-wrapper) {
+  min-height: 0;
+}
+</style>

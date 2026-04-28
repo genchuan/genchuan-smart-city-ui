@@ -1,12 +1,56 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+// 状态映射（后端英文 unallocated -> 前端中文 未分配）
+const statusMap = {
+  '未分配': 'unallocated',
+  '已分配': 'allocated'
+};
+const statusReverse = {
+  'unallocated': '未分配',
+  'allocated': '已分配'
+};
+
+// 通用转换函数：后端 → 前端（将英文转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
+  }
+  return result;
+}
+
+// 通用转换函数：前端 → 后端（将中文转为英文）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 床位管理接口 ====================
 export function getBedMgmtPage(params) {
-  return requestClient.get('/studentmgmt/bed-mgmt/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    const mock = getMockList();
-    return { list: mock, total: mock.length };
-  });
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/bed-mgmt/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败', err);
+      return { list: [], total: 0 };
+    });
 }
 
 // 分配床位（批量，bedIds 与 studentIds 一一对应）
@@ -27,7 +71,8 @@ export function adjustBedMgmt(data) {
 
 // 新增床位
 export function createBedMgmt(data) {
-  return requestClient.post('/studentmgmt/bed-mgmt/create', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/bed-mgmt/create', convertedData).catch(err => {
     console.warn('新增接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -35,7 +80,8 @@ export function createBedMgmt(data) {
 
 // 更新床位
 export function updateBedMgmt(data) {
-  return requestClient.put('/studentmgmt/bed-mgmt/update', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/bed-mgmt/update', convertedData).catch(err => {
     console.warn('更新接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -43,7 +89,8 @@ export function updateBedMgmt(data) {
 
 // 导出
 export function exportBedMgmt(params) {
-  return requestClient.download('/studentmgmt/bed-mgmt/export-excel', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/bed-mgmt/export-excel', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
@@ -51,29 +98,12 @@ export function exportBedMgmt(params) {
 
 // 详情
 export function getBedMgmtDetail(params) {
-  return requestClient.get('/studentmgmt/bed-mgmt/get', { params }).catch(err => {
-    console.warn('详情接口失败，使用模拟数据', err);
-    const mockList = getMockList();
-    const detail = mockList.find(item => item.id === params.id) || mockList[0];
-    return Promise.resolve(detail);
-  });
-}
-
-// 获取学生列表（用于分配/调整下拉框）
-export function getStudentOptions(params) {
-  return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
-    console.warn('获取学生列表失败，使用模拟数据', err);
-    return Promise.resolve([
-      { value: 1, label: '张三' },
-      { value: 2, label: '李四' },
-      { value: 3, label: '王五' },
-      { value: 4, label: '赵六' },
-      { value: 5, label: '孙七' },
-      { value: 6, label: '周八' },
-      { value: 7, label: '吴九' },
-      { value: 8, label: '郑十' },
-    ]);
-  });
+  return requestClient.get('/studentmgmt/bed-mgmt/get', { params })
+    .then(res => convertEnToZh(res))
+    .catch(err => {
+      console.warn('详情接口失败', err);
+      return Promise.reject(err);
+    });
 }
 
 // ==================== 图表接口 ====================
@@ -124,179 +154,3 @@ export function getBedIndex(params) {
     });
   });
 }
-
-// 模拟数据（包含更多学生，便于展示学生信息详情）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      building: '1号楼',
-      floor: 1,
-      roomNum: '101',
-      bedNum: 'A',
-      studentId: 202301,
-      studentName: '张三',
-      assignTime: 1767225600000,
-      adjustTime: null,
-      status: '已分配',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 2,
-      building: '1号楼',
-      floor: 1,
-      roomNum: '101',
-      bedNum: 'B',
-      studentId: null,
-      studentName: null,
-      assignTime: null,
-      adjustTime: null,
-      status: '未分配',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 3,
-      building: '1号楼',
-      floor: 1,
-      roomNum: '102',
-      bedNum: 'C',
-      studentId: 202302,
-      studentName: '李四',
-      assignTime: 1769904000000,
-      adjustTime: null,
-      status: '已分配',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 4,
-      building: '1号楼',
-      floor: 1,
-      roomNum: '102',
-      bedNum: 'D',
-      studentId: null,
-      studentName: null,
-      assignTime: null,
-      adjustTime: null,
-      status: '未分配',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 5,
-      building: '2号楼',
-      floor: 2,
-      roomNum: '205',
-      bedNum: 'E',
-      studentId: 202403,
-      studentName: '王五',
-      assignTime: 1775088000000,
-      adjustTime: 1772496000000,
-      status: '已分配',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775088000000,
-      updateTime: 1772496000000,
-    },
-    {
-      id: 6,
-      building: '2号楼',
-      floor: 2,
-      roomNum: '205',
-      bedNum: 'F',
-      studentId: 202404,
-      studentName: '赵六',
-      assignTime: 1775088000000,
-      adjustTime: null,
-      status: '已分配',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775088000000,
-      updateTime: 1775088000000,
-    },
-    {
-      id: 7,
-      building: '2号楼',
-      floor: 2,
-      roomNum: '206',
-      bedNum: 'G',
-      studentId: null,
-      studentName: null,
-      assignTime: null,
-      adjustTime: null,
-      status: '未分配',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1780358400000,
-      updateTime: 1780358400000,
-    },
-    {
-      id: 8,
-      building: '3号楼',
-      floor: 3,
-      roomNum: '312',
-      bedNum: 'H',
-      studentId: 202505,
-      studentName: '孙七',
-      assignTime: 1782950400000,
-      adjustTime: 1782950400000,
-      status: '已分配',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1782950400000,
-      updateTime: 1782950400000,
-    },
-    {
-      id: 9,
-      building: '3号楼',
-      floor: 3,
-      roomNum: '312',
-      bedNum: 'I',
-      studentId: 202506,
-      studentName: '周八',
-      assignTime: 1782950400000,
-      adjustTime: null,
-      status: '已分配',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1782950400000,
-      updateTime: 1782950400000,
-    },
-    {
-      id: 10,
-      building: '3号楼',
-      floor: 3,
-      roomNum: '313',
-      bedNum: 'J',
-      studentId: null,
-      studentName: null,
-      assignTime: null,
-      adjustTime: null,
-      status: '未分配',
-      remark: '',
-      creator: 'teacher_wang',
-      updater: 'teacher_wang',
-      createTime: 1785628800000,
-      updateTime: 1785628800000,
-    },
-  ];
-};

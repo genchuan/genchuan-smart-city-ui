@@ -24,8 +24,8 @@ const formatTimestamp = (timestamp) => {
 };
 
 const drawerTitle = computed(() => {
-  const name = detailObj.value?.studentName || '入团申请';
-  return title.value || `${name}入团详情`;
+  const name = detailObj.value?.studentId || '入团申请';
+  return title.value || `学号${name}入团详情`;
 });
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
@@ -45,7 +45,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-section">🏫 入团申请信息</div>
       <div class="detail-card-row"><div class="detail-row-left">社团名称：</div><div class="detail-row-right">{{ detailObj.clubName || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">社团类型：</div><div class="detail-row-right">{{ detailObj.clubType || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">学生姓名：</div><div class="detail-row-right">{{ detailObj.studentName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">学号：</div><div class="detail-row-right">{{ detailObj.studentId || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">班级：</div><div class="detail-row-right">{{ detailObj.className || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">申请时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.applyTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.status || '-' }}</div></div>

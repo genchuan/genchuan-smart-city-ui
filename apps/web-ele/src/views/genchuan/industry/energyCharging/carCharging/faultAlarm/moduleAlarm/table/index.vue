@@ -60,10 +60,10 @@
         <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
           <el-tag v-if="searchParams.alarmCode" type="primary" closable @close="handleClearField('alarmCode')">告警编号：{{ searchParams.alarmCode }}</el-tag>
           <el-tag v-if="searchParams.moduleName" type="primary" closable @close="handleClearField('moduleName')">模块名称：{{ searchParams.moduleName }}</el-tag>
-          <el-tag v-if="searchParams.abnormalType" type="primary" closable @close="handleClearField('abnormalType')">异常类型：{{ abnormalTypeMap[searchParams.abnormalType] || searchParams.abnormalType }}</el-tag>
-          <el-tag v-if="searchParams.alarmLevel" type="primary" closable @close="handleClearField('alarmLevel')">告警等级：{{ alarmLevelMap[searchParams.alarmLevel] || searchParams.alarmLevel }}</el-tag>
-          <el-tag v-if="searchParams.alarmStatus" type="primary" closable @close="handleClearField('alarmStatus')">
-            告警状态：{{ Array.isArray(searchParams.alarmStatus) ? searchParams.alarmStatus.map(s => alarmStatusMap[s] || s).join('、') : (alarmStatusMap[searchParams.alarmStatus] || searchParams.alarmStatus) }}
+          <el-tag v-if="searchParams.abnormalTypeId" type="primary" closable @close="handleClearField('abnormalTypeId')">异常类型：{{ abnormalTypeMap[searchParams.abnormalTypeId] || searchParams.abnormalTypeId }}</el-tag>
+          <el-tag v-if="searchParams.alarmLevelId" type="primary" closable @close="handleClearField('alarmLevelId')">告警等级：{{ alarmLevelMap[searchParams.alarmLevelId] || searchParams.alarmLevelId }}</el-tag>
+          <el-tag v-if="searchParams.alarmStatusId" type="primary" closable @close="handleClearField('alarmStatusId')">
+            告警状态：{{ alarmStatusMap[searchParams.alarmStatusId] || searchParams.alarmStatusId }}
           </el-tag>
           <el-tag v-if="searchParams.alarmTimeBegin" type="primary" closable @close="handleClearField('alarmTimeBegin')">告警时间：{{ searchParams.alarmTimeBegin }} 至 {{ searchParams.alarmTimeEnd }}</el-tag>
           <el-tag v-if="searchParams.repairTimeBegin" type="primary" closable @close="handleClearField('repairTimeBegin')">修复时间：{{ searchParams.repairTimeBegin }} 至 {{ searchParams.repairTimeEnd }}</el-tag>
@@ -78,8 +78,8 @@
           <IconButton content="修复" icon-name="Tools" :disabled="!canBatchRepair" @click="handleBatchRepair" />
           <IconButton content="销账" icon-name="Finished" :disabled="!canBatchClose" @click="handleBatchClose" />
           <IconButton content="导出" icon-name="download" @click="handleNormalExport" />
-<!--          <IconButton content="批量导出" icon-name="download" :disabled="checkedIds.length === 0" @click="handleBatchExport" />-->
-<!--          <IconButton content="打印" icon-name="Printer" @click="handlePrintAsPDF" />-->
+          <!--          <IconButton content="批量导出" icon-name="download" :disabled="checkedIds.length === 0" @click="handleBatchExport" />-->
+          <!--          <IconButton content="打印" icon-name="Printer" @click="handlePrintAsPDF" />-->
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
           <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
@@ -94,10 +94,10 @@
         <el-text @click="handleFieldClick('moduleName', row.moduleName)" type="primary">{{ row.moduleName }}</el-text>
       </template>
       <template #abnormalType="{ row }">
-        <el-text @click="handleFieldClick('abnormalType', row.abnormalType)" type="primary">{{ row.abnormalTypeName }}</el-text>
+        <el-text @click="handleFieldClick('abnormalTypeId', row.abnormalTypeId)" type="primary">{{ row.abnormalName }}</el-text>
       </template>
       <template #alarmLevel="{ row }">
-        <el-tag :type="row.alarmLevel === '严重' ? 'danger' : 'info'" @click="handleFieldClick('alarmLevel', row.alarmLevel)" style="cursor: pointer">
+        <el-tag :type="row.alarmLevelName === '严重' ? 'danger' : 'info'" @click="handleFieldClick('alarmLevelId', row.alarmLevelId)" style="cursor: pointer">
           {{ row.alarmLevelName }}
         </el-tag>
       </template>
@@ -105,7 +105,7 @@
         <el-text @click="handleFieldClick('alarmTime', row.alarmTime)" type="primary">{{ row.alarmTime }}</el-text>
       </template>
       <template #alarmStatus="{ row }">
-        <el-tag :type="alarmStatusTagType(row.alarmStatus)" @click="handleFieldClick('alarmStatus', row.alarmStatus)" style="cursor: pointer">
+        <el-tag :type="alarmStatusTagType(row.alarmStatusName)" @click="handleFieldClick('alarmStatusId', row.alarmStatusId)" style="cursor: pointer">
           {{ row.alarmStatusName }}
         </el-tag>
       </template>
@@ -126,9 +126,9 @@
       <template #actions="{ row }">
         <div class="table-toolbar-tools" style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: center;">
           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton content="排查" icon-name="Edit" :disabled="row.alarmStatus !== '未排查'" @click="handleCheck(row)" />
-          <IconButton content="修复" icon-name="Tools" :disabled="row.alarmStatus !== '已排查'" @click="handleRepair(row)" />
-          <IconButton content="销账" icon-name="Finished" :disabled="row.alarmStatus !== '修复中'" @click="handleClose(row)" />
+          <IconButton content="排查" icon-name="Edit" :disabled="row.alarmStatusName !== '未排查'" @click="handleCheck(row)" />
+          <IconButton content="修复" icon-name="Tools" :disabled="row.alarmStatusName !== '已排查'" @click="handleRepair(row)" />
+          <IconButton content="销账" icon-name="Finished" :disabled="row.alarmStatusName !== '修复中'" @click="handleClose(row)" />
           <IconButton content="备注" icon-name="Document" @click="handleRemark(row)" />
         </div>
       </template>
@@ -215,22 +215,32 @@ const batchPreviewUrl = ref('');
 
 const isPdf = (url) => url?.toLowerCase().endsWith('.pdf');
 
+// 转换查询参数（将前端字段映射为后端字段）
 const convertSearchParams = (params) => {
   const converted = { ...params };
-  if (Array.isArray(converted.alarmStatus)) {
-    converted.alarmStatus = converted.alarmStatus.join(',');
+  // 注意：后端接收的是 abnormalTypeId、alarmLevelId、alarmStatusId
+  if (converted.abnormalTypeId !== undefined) {
+    // 保持原样，后端直接使用
+  }
+  if (converted.alarmLevelId !== undefined) {
+    // 保持原样
+  }
+  if (converted.alarmStatusId !== undefined) {
+    // 保持原样
   }
   return converted;
 };
 
+// 格式化列表数据（适配后端返回的字段）
 function formatList(list) {
   return (list || []).map(item => ({
     ...item,
     alarmTime: item.alarmTime ? dayjs(item.alarmTime).format('YYYY-MM-DD HH:mm:ss') : '-',
     repairTime: item.repairTime ? dayjs(item.repairTime).format('YYYY-MM-DD HH:mm:ss') : null,
-    abnormalTypeName: abnormalTypeMap[item.abnormalType] || item.abnormalType || '-',
-    alarmLevelName: alarmLevelMap[item.alarmLevel] || item.alarmLevel || '-',
-    alarmStatusName: alarmStatusMap[item.alarmStatus] || item.alarmStatus || '-',
+    abnormalName: item.abnormalName || '-',
+    alarmLevelName: item.alarmLevelName || '-',
+    alarmStatusName: item.alarmStatusName || '-',
+    operator: item.updaterName || item.updater || '-',
   }));
 }
 
@@ -262,7 +272,7 @@ function handleRefresh() {
 }
 
 function getStatusCount(status) {
-  return dataObj.list.filter(v => v.alarmStatus === status).length;
+  return dataObj.list.filter(v => v.alarmStatusName === status).length;
 }
 
 function handleClearField(fieldName) {
@@ -314,7 +324,7 @@ function handleCheck(row) {
 function handleBatchCheck() {
   const validIds = checkedIds.value.filter(id => {
     const row = dataObj.list.find(item => item.id === id);
-    return row?.alarmStatus === '未排查';
+    return row?.alarmStatusName === '未排查';
   });
   if (validIds.length === 0) {
     ElMessage.warning('请选择未排查状态的告警');
@@ -358,7 +368,7 @@ function handleRepair(row) {
 function handleBatchRepair() {
   const validIds = checkedIds.value.filter(id => {
     const row = dataObj.list.find(item => item.id === id);
-    return row?.alarmStatus === '已排查';
+    return row?.alarmStatusName === '已排查';
   });
   if (validIds.length === 0) {
     ElMessage.warning('请选择已排查状态的告警');
@@ -430,7 +440,7 @@ function handleClose(row) {
 async function handleBatchClose() {
   const validIds = checkedIds.value.filter(id => {
     const row = dataObj.list.find(item => item.id === id);
-    return row?.alarmStatus === '修复中';
+    return row?.alarmStatusName === '修复中';
   });
   if (validIds.length === 0) {
     ElMessage.warning('请选择修复中状态的告警');
@@ -599,13 +609,6 @@ function setFilter(filters) {
     return;
   }
   const processedFilters = { ...filters };
-  if (Array.isArray(processedFilters.alarmStatus)) {
-    if (processedFilters.alarmStatus.length === 0) {
-      delete processedFilters.alarmStatus;
-    } else {
-      processedFilters.alarmStatus = processedFilters.alarmStatus.join(',');
-    }
-  }
   Object.assign(searchParams.value, processedFilters);
   queryFormApi.setValues(processedFilters);
   handleRefresh();
@@ -614,19 +617,19 @@ function setFilter(filters) {
 const canBatchCheck = computed(() => {
   return checkedIds.value.some(id => {
     const row = dataObj.list.find(item => item.id === id);
-    return row?.alarmStatus === '未排查';
+    return row?.alarmStatusName === '未排查';
   });
 });
 const canBatchRepair = computed(() => {
   return checkedIds.value.some(id => {
     const row = dataObj.list.find(item => item.id === id);
-    return row?.alarmStatus === '已排查';
+    return row?.alarmStatusName === '已排查';
   });
 });
 const canBatchClose = computed(() => {
   return checkedIds.value.some(id => {
     const row = dataObj.list.find(item => item.id === id);
-    return row?.alarmStatus === '修复中';
+    return row?.alarmStatusName === '修复中';
   });
 });
 
@@ -685,3 +688,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 defineExpose({ setFilter, resetFilter });
 </script>
+
+<style scoped>
+.voucher-preview {
+  margin-top: 8px;
+}
+</style>

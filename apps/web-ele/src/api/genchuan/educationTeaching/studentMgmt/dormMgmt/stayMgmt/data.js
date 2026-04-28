@@ -50,9 +50,9 @@ export function getStayMgmtPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mock = getMockList();
-      return { list: convertList(mock), total: mock.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -104,10 +104,9 @@ export function getStayMgmtDetail(params) {
   return requestClient.get('/studentmgmt/stay-mgmt/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -164,99 +163,3 @@ export function getStayMgmtCount(params) {
     });
   });
 }
-
-// 模拟数据（原始值使用英文，通过转换函数对外提供中文）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      studentId: 202301,
-      studentName: '张三',
-      className: '高一1班',
-      stayDate: [2025, 1, 1],
-      stayReason: '周末补习',
-      applyTime: 1767225600000,
-      parentConfirmTime: 1767312000000,
-      auditUser: '张老师',
-      auditTime: 1767398400000,
-      status: 'approved',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 2,
-      studentId: 202302,
-      studentName: '李四',
-      className: '高一1班',
-      stayDate: [2025, 1, 1],
-      stayReason: '社团活动',
-      applyTime: 1767225600000,
-      parentConfirmTime: null,
-      auditUser: null,
-      auditTime: null,
-      status: 'pending_confirm',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1767225600000,
-      updateTime: 1767225600000,
-    },
-    {
-      id: 3,
-      studentId: 202403,
-      studentName: '王五',
-      className: '高一2班',
-      stayDate: [2025, 2, 1],
-      stayReason: '比赛集训',
-      applyTime: 1769904000000,
-      parentConfirmTime: 1769990400000,
-      auditUser: null,
-      auditTime: null,
-      status: 'pending_audit',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 4,
-      studentId: 202404,
-      studentName: '赵六',
-      className: '高一2班',
-      stayDate: [2025, 2, 1],
-      stayReason: '图书馆自习',
-      applyTime: 1769904000000,
-      parentConfirmTime: null,
-      auditUser: null,
-      auditTime: null,
-      status: 'pending_confirm',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 5,
-      studentId: 202505,
-      studentName: '孙七',
-      className: '高一3班',
-      stayDate: [2025, 3, 1],
-      stayReason: '参加活动',
-      applyTime: 1775088000000,
-      parentConfirmTime: 1775174400000,
-      auditUser: '李老师',
-      auditTime: 1775260800000,
-      status: 'approved',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775088000000,
-      updateTime: 1775088000000,
-    },
-  ];
-};

@@ -259,7 +259,7 @@ function handleResize() {
 async function fetchChartData() {
   try {
     const response = await getSpaceMonitorChart();
-    normalizeChartData(response);
+    normalizeChartData(response?.data || response);
   } catch (error) {
     console.error('获取车位状态监控看板失败，使用静态数据:', error);
     normalizeChartData(getMockChartData());
@@ -294,8 +294,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="space-monitor-visualization">
-    <div class="cards-section">
+  <div class="park-chart-box">
+    <div class="chart-box-left space-cards">
       <button
         v-for="card in state.cardList"
         :key="card.title"
@@ -311,8 +311,8 @@ onUnmounted(() => {
       </button>
     </div>
 
-    <div class="right-section">
-      <div class="map-wrapper">
+    <div class="space-right-section">
+      <div class="park-type-chart space-map-wrapper">
         <MapComponent
           :data="mapData"
           :info-window-config="state.mapConfig.infoWindowConfig"
@@ -321,7 +321,7 @@ onUnmounted(() => {
           :status-key-map="state.mapConfig.statusKeyMap"
         />
       </div>
-      <div class="trend-wrapper">
+      <div class="simple-bar-chart space-trend-wrapper">
         <div ref="trendChartRef" class="chart-container"></div>
       </div>
     </div>
@@ -329,22 +329,9 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.space-monitor-visualization {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
-}
-
-.cards-section {
+.space-cards {
   display: grid;
-  flex-shrink: 0;
   grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
 }
 
 .stat-card {
@@ -378,25 +365,22 @@ onUnmounted(() => {
   line-height: 1.2;
 }
 
-.right-section {
+.space-right-section {
   display: flex;
   flex: 1 1 0;
   gap: 20px;
   min-width: 0;
-  height: 320px;
 }
 
-.map-wrapper {
-  width: 50%;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 8px;
-}
-
-.trend-wrapper {
+.space-map-wrapper {
   flex: 1;
   min-width: 0;
-  height: 100%;
+  margin-left: 15px;
+  overflow: hidden;
+}
+
+.space-trend-wrapper {
+  padding: 0;
 }
 
 .chart-container {

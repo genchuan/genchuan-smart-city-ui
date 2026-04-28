@@ -1,14 +1,13 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import TargetDetailDrawer from './components/targetDetail.vue';
 import {
-  getMockList,
   getTargetMgmtPage,
   createTargetMgmt,
   updateTargetMgmt,
@@ -117,12 +116,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
-});
-
 const [ConfigDrawer, configDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
@@ -202,44 +195,10 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'evaluatorType':
-            itemValue = item.evaluatorType;
-            break;
-          case 'scoreType':
-            itemValue = item.scoreType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          case 'targetName':
-            itemValue = item.targetName;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    // 模拟数据时仍需要前端分页
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取指标列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -287,31 +246,13 @@ async function handleBatchConfig() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createFormApi.resetForm();
-  // 新增时设置默认状态为“未启用”
-  createFormApi.setValues({ status: '未启用' });
-  createDrawerApi.open();
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getTargetMgmtDetail({id: row.id});
-    createFormApi.setValues({
-      targetName: detail.targetName,
-      totalScore: detail.totalScore,
-      warnThreshold: detail.warnThreshold,
-      evaluatorType: detail.evaluatorType,
-      scoreType: detail.scoreType,
-      status: detail.status,     // 补充状态赋值
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 启用
@@ -383,7 +324,7 @@ const [CreateForm, createFormApi] = useVbenForm({
         res = await updateTargetMgmt({...values, id: currentEditId.value});
       } else {
         // 新增时确保 status 字段存在（默认未启用）
-        const submitData = { ...values, status: values.status || '未启用' };
+        const submitData = {...values, status: values.status || '未启用'};
         res = await createTargetMgmt(submitData);
       }
       if (res && res !== false) {
@@ -401,6 +342,41 @@ const [CreateForm, createFormApi] = useVbenForm({
   schema: useCreateFormSchema(isEditMode.value),
   showCollapseButton: false,
   submitButtonOptions: {content: '保存'},
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await createFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getTargetMgmtDetail({id: currentEditId.value});
+          await createFormApi.setValues({
+            targetName: detail.targetName,
+            totalScore: detail.totalScore,
+            warnThreshold: detail.warnThreshold,
+            evaluatorType: detail.evaluatorType,
+            scoreType: detail.scoreType,
+            status: detail.status,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          createDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式：设置默认状态为“未启用”
+        await createFormApi.setValues({status: '未启用'});
+      }
+    }
+  },
 });
 
 // 配置表单
@@ -568,7 +544,8 @@ defineExpose({handleFilterTagClick, clearFilters});
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '未启用'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '未启用'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '未启用'" content="启用" icon-name="Check"
                       @click="handleEnable(row)"/>
           <IconButton v-if="row.status === '已启用'" content="停用" icon-name="CircleClose"

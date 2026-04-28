@@ -18,13 +18,14 @@ import {
   updateInspectUser,
 } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectUser';
 
-import { areaOptions, deviceOptions } from '../table/data';
+import { statusOptions } from '../table/data';
 
 const emit = defineEmits(['success']);
 
 const formRef = ref(null);
 const rowData = shallowRef({});
 const submitting = shallowRef(false);
+const isEdit = computed(() => rowData.value?.id);
 const drawerTitle = computed(() =>
   rowData.value?.id ? '编辑巡检人员' : '新增巡检人员',
 );
@@ -34,6 +35,7 @@ const form = reactive({
   phone: '',
   area: '',
   deviceId: undefined,
+  status: '1',
 });
 
 function validatePhone(rule, value, callback) {
@@ -52,6 +54,7 @@ const rules = {
   name: [{ required: true, message: '请输入人员姓名', trigger: 'blur' }],
   phone: [{ validator: validatePhone, trigger: 'blur' }],
   area: [{ required: true, message: '请选择所属片区', trigger: 'change' }],
+  status: [{ required: true, message: '请选择人员状态', trigger: 'change' }],
 };
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -92,6 +95,7 @@ async function submitForm() {
       phone: form.phone,
       area: form.area,
       deviceId: form.deviceId,
+      status: form.status,
     };
     if (rowData.value?.id) {
       await updateInspectUser({
@@ -142,17 +146,18 @@ defineExpose({
         />
       </ElFormItem>
       <ElFormItem label="所属片区" prop="area">
-        <ElSelect v-model="form.area" clearable placeholder="请选择所属片区">
+        <!-- <ElSelect v-model="form.area" clearable placeholder="请选择所属片区">
           <ElOption
             v-for="item in areaOptions"
             :key="item.value"
             :label="item.label"
             :value="item.value"
           />
-        </ElSelect>
+        </ElSelect> -->
+        <ElInput v-model="form.area" placeholder="请输入所属片区" />
       </ElFormItem>
       <ElFormItem label="绑定设备">
-        <ElSelect
+        <!-- <ElSelect
           v-model="form.deviceId"
           clearable
           filterable
@@ -160,6 +165,22 @@ defineExpose({
         >
           <ElOption
             v-for="item in deviceOptions"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+          />
+        </ElSelect> -->
+        <ElInput v-model="form.deviceId" placeholder="请输入绑定设备Id" />
+      </ElFormItem>
+      <ElFormItem label="人员状态" prop="status">
+        <ElSelect
+          v-model="form.status"
+          clearable
+          placeholder="请选择人员状态"
+          :disabled="isEdit"
+        >
+          <ElOption
+            v-for="item in statusOptions"
             :key="item.value"
             :label="item.label"
             :value="item.value"
@@ -175,7 +196,6 @@ defineExpose({
     </div>
   </Drawer>
 </template>
-
 <style scoped>
 .drawer-footer {
   display: flex;

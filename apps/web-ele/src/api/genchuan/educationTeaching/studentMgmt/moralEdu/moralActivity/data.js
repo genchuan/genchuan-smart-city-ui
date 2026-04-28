@@ -1,7 +1,6 @@
 import { requestClient } from '#/api/request';
 
 // ==================== 映射表 ====================
-// 活动类型映射
 const activityTypeMap = {
   '党团活动': 'party_league',
   '志愿活动': 'volunteer',
@@ -13,7 +12,6 @@ const activityTypeReverse = {
   'other': '其他'
 };
 
-// 状态映射
 const statusMap = {
   '未发布': 'unpublished',
   '进行中': 'ongoing',
@@ -25,14 +23,12 @@ const statusReverse = {
   'ended': '已结束'
 };
 
-// 部门ID到名称的映射（根据后端实际数据）
 const deptIdToName = {
   1001: '学生工作部',
   1002: '团委',
   1003: '教务处'
 };
 
-// 通用转换函数：后端 → 前端
 function convertEnToZh(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const result = { ...obj };
@@ -48,7 +44,6 @@ function convertEnToZh(obj) {
   return result;
 }
 
-// 通用转换函数：前端 → 后端
 function convertZhToEn(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const result = { ...obj };
@@ -58,8 +53,6 @@ function convertZhToEn(obj) {
   if (result.status && statusMap[result.status]) {
     result.status = statusMap[result.status];
   }
-  // 注意：hostDept 前端是名称，后端期望 ID，但需要反向映射（名称 → ID）
-  // 由于名称到ID的映射不唯一（但此处我们只用于提交，可构建反向映射）
   if (result.hostDept && typeof result.hostDept === 'string') {
     const reverseDeptMap = Object.fromEntries(
       Object.entries(deptIdToName).map(([id, name]) => [name, Number(id)])
@@ -71,7 +64,6 @@ function convertZhToEn(obj) {
   return result;
 }
 
-// 转换列表数据
 function convertList(list) {
   if (!Array.isArray(list)) return list;
   return list.map(item => convertEnToZh(item));
@@ -88,10 +80,9 @@ export function getMoralActivityPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mock = getMockList();
-      // 模拟数据已经是中文，但为了保持一致也调用转换（幂等）
-      return { list: convertList(mock), total: mock.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -112,7 +103,6 @@ export function updateMoralActivity(data) {
 }
 
 export function publishMoralActivity(ids) {
-  // 发布接口只传 ids，无需转换
   return requestClient.put('/studentmgmt/moral-activity/publish', { ids }).catch(err => {
     console.warn('发布接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -120,15 +110,14 @@ export function publishMoralActivity(ids) {
 }
 
 export function joinMoralActivity(data) {
-  // 报名接口只传 id 和 studentId，无需转换
-  return requestClient.put('/studentmgmt/moral-activity/join', data).catch(err => {
-    console.warn('报名接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  const payload = {
+    id: Number(data.id),
+    studentId: Number(data.studentId)
+  };
+  return requestClient.put('/studentmgmt/moral-activity/join', payload);
 }
 
 export function recordMoralActivity(data) {
-  // 记录接口只传 id、content、joinNum，无需转换
   return requestClient.put('/studentmgmt/moral-activity/record', data).catch(err => {
     console.warn('记录接口失败，模拟成功', err);
     return Promise.resolve(true);
@@ -147,14 +136,12 @@ export function getMoralActivityDetail(params) {
   return requestClient.get('/studentmgmt/moral-activity/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
-// 获取学生列表（用于报名下拉框）
 export function getStudentOptions(params) {
   return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
     console.warn('获取学生列表失败，使用模拟数据', err);
@@ -168,11 +155,9 @@ export function getStudentOptions(params) {
   });
 }
 
-// 获取部门列表（用于主办部门下拉框）- 返回部门名称作为 value，同时保留 id 用于映射
 export function getDeptOptions(params) {
   return requestClient.get('/studentmgmt/dept/options', { params }).catch(err => {
     console.warn('获取部门列表失败，使用模拟数据', err);
-    // 模拟数据：返回包含 id 和 name 的对象数组，便于映射
     return Promise.resolve([
       { id: 1001, name: '学生工作部', value: '学生工作部', label: '学生工作部' },
       { id: 1002, name: '团委', value: '团委', label: '团委' },
@@ -182,129 +167,46 @@ export function getDeptOptions(params) {
 }
 
 // ==================== 图表接口 ====================
+// 修改：模拟数据字段与后端保持一致
 export function getMoralActivityChart(params) {
   return requestClient.get('/studentmgmt/moral-activity/chart', { params }).catch(err => {
     console.warn('图表总览接口失败，使用模拟数据', err);
     return Promise.resolve({
-      statusCount: { unPublishCount: 2, processingCount: 3, finishedCount: 10 },
-      activityTypeCount: { partyCount: 5, volunteerCount: 7, otherCount: 3 },
+      statusCount: { ongoing: 3, ended: 5, unpublished: 2 },
+      activityTypeCount: { party_league: 4, volunteer: 3, other: 3 },
       monthTrend: [
-        { month: '2025-01', count: 2 },
-        { month: '2025-02', count: 4 },
-        { month: '2025-03', count: 9 },
+        { date: '2025-03', totalCount: 2 },
+        { date: '2025-04', totalCount: 1 },
+        { date: '2025-06', totalCount: 1 },
       ],
       joinTrend: [
-        { month: '2025-01', count: 80 },
-        { month: '2025-02', count: 150 },
-        { month: '2025-03', count: 300 },
+        { date: '2025-03', totalCount: 1 },
+        { date: '2025-04', totalCount: 1 },
+        { date: '2025-05', totalCount: 1 },
       ],
     });
   });
 }
 
 export function getMoralActivityCount(params) {
-  return requestClient.get('/studentmgmt/moral-activity/chart/activityCount', { params }).catch(err => {
-    console.warn('活动数量统计接口失败，使用模拟数据', err);
-    return Promise.resolve({
-      typeList: ['党团活动', '志愿活动', '其他'],
-      activityCountList: [5, 7, 3],
-      joinCountList: [200, 280, 50],
+  return requestClient.get('/studentmgmt/moral-activity/chart/activityCount', { params })
+    .then(res => {
+      if (res && res.typeList && Array.isArray(res.typeList)) {
+        const typeMapping = {
+          'party_league': '党团活动',
+          'volunteer': '志愿活动',
+          'other': '其他'
+        };
+        res.typeList = res.typeList.map(item => typeMapping[item] || item);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('活动数量统计接口失败，使用模拟数据', err);
+      return Promise.resolve({
+        typeList: ['党团活动', '志愿活动', '其他'],
+        activityCountList: [5, 7, 3],
+        joinCountList: [200, 280, 50],
+      });
     });
-  });
 }
-
-// 模拟数据（原始值使用中文，与前端一致）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      activityName: '学雷锋志愿活动',
-      activityType: '志愿活动',
-      hostDept: '学生工作部',
-      startTime: 1767225600000,
-      endTime: 1767312000000,
-      joinNum: 45,
-      photo: 'https://picsum.photos/id/100/200/150',
-      content: '组织学生清扫校园',
-      publishTime: 1767139200000,
-      status: '进行中',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1767139200000,
-      updateTime: 1767139200000,
-    },
-    {
-      id: 2,
-      activityName: '党史知识竞赛',
-      activityType: '党团活动',
-      hostDept: '团委',
-      startTime: 1769904000000,
-      endTime: 1769990400000,
-      joinNum: 80,
-      photo: '',
-      content: '',
-      publishTime: null,
-      status: '未发布',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1769904000000,
-      updateTime: 1769904000000,
-    },
-    {
-      id: 3,
-      activityName: '社区服务',
-      activityType: '志愿活动',
-      hostDept: '学生工作部',
-      startTime: 1775088000000,
-      endTime: 1775174400000,
-      joinNum: 120,
-      photo: 'https://picsum.photos/id/101/200/150',
-      content: '',
-      publishTime: 1775001600000,
-      status: '已结束',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1775001600000,
-      updateTime: 1775001600000,
-    },
-    {
-      id: 4,
-      activityName: '环保讲座',
-      activityType: '其他',
-      hostDept: '教务处',
-      startTime: 1777680000000,
-      endTime: 1777766400000,
-      joinNum: 60,
-      photo: 'https://picsum.photos/id/102/200/150',
-      content: '',
-      publishTime: 1777593600000,
-      status: '进行中',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1777593600000,
-      updateTime: 1777593600000,
-    },
-    {
-      id: 5,
-      activityName: '植树活动',
-      activityType: '志愿活动',
-      hostDept: '团委',
-      startTime: 1780358400000,
-      endTime: 1780444800000,
-      joinNum: null,
-      photo: '',
-      content: '',
-      publishTime: null,
-      status: '未发布',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1780358400000,
-      updateTime: 1780358400000,
-    },
-  ];
-};

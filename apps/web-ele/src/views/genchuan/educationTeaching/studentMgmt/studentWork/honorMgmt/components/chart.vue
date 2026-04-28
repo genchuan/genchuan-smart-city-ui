@@ -1,6 +1,6 @@
 <script setup>
-import {reactive, onMounted, ref, computed} from 'vue';
-import {ElMessage, ElSelect, ElOption} from 'element-plus';
+import { reactive, onMounted, ref, computed } from 'vue';
+import { ElMessage, ElSelect, ElOption } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import {
@@ -9,17 +9,17 @@ import {
 } from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/honorMgmt/data.js';
 
 const mockClassData = [
-  {name: '计算机1班', count: 45},
-  {name: '计算机2班', count: 42},
-  {name: '软件1班', count: 48},
-  {name: '软件2班', count: 50},
-  {name: '电子1班', count: 40},
+  { name: '计算机1班', count: 45 },
+  { name: '计算机2班', count: 42 },
+  { name: '软件1班', count: 48 },
+  { name: '软件2班', count: 50 },
+  { name: '电子1班', count: 40 },
 ];
 const mockTypeData = [
-  {name: '优秀学生', count: 128},
-  {name: '奖学金', count: 86},
-  {name: '竞赛获奖', count: 92},
-  {name: '其他', count: 22},
+  { name: '优秀学生', count: 128 },
+  { name: '奖学金', count: 86 },
+  { name: '竞赛获奖', count: 92 },
+  { name: '其他', count: 22 },
 ];
 
 const loading = ref(true);
@@ -38,16 +38,17 @@ const currentBarData = computed(() => {
   };
 });
 
+// 修改：使用后端实际字段名
 const cardList = computed(() => {
-  const total = overviewData.value.totalHonor || 0;
-  const pending = overviewData.value.pendingAudit || 0;
-  const pushed = overviewData.value.pushedHonor || 0;
-  const monthNew = overviewData.value.thisMonthNew || 0;
+  const total = overviewData.value.totalHonorCount || 0;
+  const pending = overviewData.value.pendingAuditCount || 0;
+  const todayPush = overviewData.value.todayPushCount || 0;
+  const excellent = overviewData.value.excellentStudentCount || 0;
   return [
     {title: '荣誉记录总数', value: total, color: '#409EFF', status: 'total'},
     {title: '待审核数', value: pending, color: '#E6A23C', status: 'pending'},
-    {title: '已推送数', value: pushed, color: '#67C23A', status: 'pushed'},
-    {title: '本月新增', value: monthNew, color: '#F56C6C', status: 'monthNew'},
+    {title: '今日推送数', value: todayPush, color: '#67C23A', status: 'todayPush'},
+    {title: '优秀学生数', value: excellent, color: '#F56C6C', status: 'excellent'},
   ];
 });
 
@@ -57,7 +58,6 @@ const handleCardClick = (cardInfo) => {
   emit('cardSelect', cardInfo.status);
 };
 
-// 修复：Bar 组件 @bar-click 直接传递分类名称（字符串）
 const handleBarClick = (name) => {
   if (activeDimension.value === 'class') {
     emit('barSelect', {field: 'className', value: name});
@@ -91,18 +91,31 @@ const loadAllChartData = async () => {
       getHonorCount({dimension: 'class'}),
       getHonorCount({dimension: 'type'}),
     ]);
-    if (overviewRes.status === 'fulfilled') overviewData.value = overviewRes.value;
-    else overviewData.value = {
-      totalHonor: 328,
-      pendingAudit: 12,
-      pushedHonor: 298,
-      thisMonthNew: 28
-    };
+    if (overviewRes.status === 'fulfilled') {
+      overviewData.value = overviewRes.value;
+    } else {
+      // 使用后端字段名的模拟数据
+      overviewData.value = {
+        totalHonorCount: 328,
+        pendingAuditCount: 12,
+        todayPushCount: 8,
+        excellentStudentCount: 128,
+        scholarshipCount: 86,
+        competitionCount: 92,
+      };
+    }
     chartData.value.class = classRes.status === 'fulfilled' ? classRes.value : mockClassData;
     chartData.value.type = typeRes.status === 'fulfilled' ? typeRes.value : mockTypeData;
   } catch (error) {
     console.error('加载图表数据失败', error);
-    overviewData.value = {totalHonor: 328, pendingAudit: 12, pushedHonor: 298, thisMonthNew: 28};
+    overviewData.value = {
+      totalHonorCount: 328,
+      pendingAuditCount: 12,
+      todayPushCount: 8,
+      excellentStudentCount: 128,
+      scholarshipCount: 86,
+      competitionCount: 92,
+    };
     chartData.value = {class: mockClassData, type: mockTypeData};
   } finally {
     loading.value = false;

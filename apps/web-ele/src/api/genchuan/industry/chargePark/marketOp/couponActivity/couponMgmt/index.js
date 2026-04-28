@@ -1,0 +1,114 @@
+import { requestClient } from '#/api/request.js';
+
+// ==================== 列表页交互操作接口 ====================
+
+/** 分页查询优惠券列表
+ * @param {Object} params - 请求参数
+ * @param {string} params.name - 券名称，支持模糊查询
+ * @param {string} params.type - 券类型（满减/折扣/时长/立减）
+ * @param {string} params.status - 券状态（未领取/已领取/已使用/已过期）
+ * @param {string} params.validTime - 有效期，支持时间范围查询
+ * @param {number} params.pageNo - 页码，默认1
+ * @param {number} params.pageSize - 每页条数，默认10
+ * @returns {Promise}
+ */
+export function getCouponMgmtPage(params) {
+  return requestClient.get('/marketop/coupon-mgmt/page', { params });
+}
+
+/** 新增优惠券
+ * @param {Object} data - 请求参数
+ * @param {string} data.name - 券名称，唯一
+ * @param {string} data.type - 券类型（满减/折扣/时长/立减）
+ * @param {number} data.amount - 面额
+ * @param {string} data.useCondition - 使用条件
+ * @param {string} data.validTime - 有效期
+ * @param {string} data.description - 券描述
+ * @param {string} data.stationIds - 适用场站，存储场站ID列表，逗号分隔
+ * @returns {Promise}
+ */
+export function createCouponMgmt(data) {
+  return requestClient.post('/marketop/coupon-mgmt/create', data);
+}
+
+/** 导入优惠券
+ * @param {File} file - 导入文件，支持Excel格式
+ * @returns {Promise}
+ */
+export function importCouponMgmt(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return requestClient.post('/marketop/coupon-mgmt/import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+}
+
+/** 导出优惠券数据
+ * @returns {Promise}
+ */
+export function exportCouponMgmt() {
+  return requestClient.download('/marketop/coupon-mgmt/export');
+}
+
+// ==================== 列表行交互操作接口 ====================
+
+/** 获取优惠券详情
+ * @param {number} id - 优惠券ID
+ * @returns {Promise}
+ */
+export function getCouponMgmtDetail(id) {
+  return requestClient.get('/marketop/coupon-mgmt/get', { params: { id } });
+}
+
+/** 发放优惠券
+ * @param {Object} data - 请求参数
+ * @param {number} data.id - 优惠券ID
+ * @param {number} data.receiverId - 领取人用户ID
+ * @returns {Promise}
+ */
+export function sendCouponMgmt(data) {
+  return requestClient.put('/marketop/coupon-mgmt/send', data);
+}
+
+/** 核销优惠券
+ * @param {Object} data - 请求参数
+ * @param {number} data.id - 优惠券ID
+ * @returns {Promise}
+ */
+export function verifyCouponMgmt(data) {
+  return requestClient.put('/marketop/coupon-mgmt/verify', data);
+}
+
+/** 重新发放优惠券
+ * @param {Object} data - 请求参数
+ * @param {number} data.id - 优惠券ID
+ * @param {number} data.receiverId - 领取人用户ID
+ * @param {string} data.newValidTime - 新的有效期
+ * @returns {Promise}
+ */
+export function resendCouponMgmt(data) {
+  return requestClient.put('/marketop/coupon-mgmt/resend', data);
+}
+
+/** 编辑优惠券
+ * @param {Object} data - 请求参数
+ * @returns {Promise}
+ */
+export function updateCouponMgmt(data) {
+  return requestClient.put('/marketop/coupon-mgmt/update', data);
+}
+
+// ==================== 数据可视化图表接口 ====================
+
+/** 优惠券统计（折线图 + 柱状图 + 卡片）
+ * @param {Object} params - 请求参数
+ * @param {string} params.startTime - 统计开始时间
+ * @param {string} params.endTime - 统计结束时间
+ * @param {number} params.stationId - 场站ID，支持按场站筛选
+ * @returns {Promise}
+ */
+export function getCouponMgmtChart(params) {
+  return requestClient.get('/marketop/coupon-mgmt/chart', { params });
+}

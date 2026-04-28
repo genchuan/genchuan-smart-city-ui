@@ -35,9 +35,9 @@ const [Modal, modalApi] = useVbenModal({
 
 function downloadTemplate() {
   const templateData = [
-    ['姓名', '手机号', '所属片区', '绑定设备ID'],
-    ['张三', '13800001234', '丰泽区', '101'],
-    ['李四', '13800001235', '鲤城区', '102'],
+    ['姓名', '手机号', '所属片区', '绑定设备ID', '人员状态'],
+    ['张三', '13800001234', '丰泽区', '101', '正常'],
+    ['李四', '13800001235', '鲤城区', '102', '正常'],
   ];
   const worksheet = XLSX.utils.aoa_to_sheet(templateData);
   const workbook = XLSX.utils.book_new();

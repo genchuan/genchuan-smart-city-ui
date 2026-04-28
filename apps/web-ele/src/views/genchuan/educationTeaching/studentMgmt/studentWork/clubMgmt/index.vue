@@ -8,7 +8,6 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { downloadFileFromBlobPart } from '@vben/utils';
 import ClubDetailDrawer from './components/clubDetail.vue';
 import {
-  dataList,
   getClubMgmtPage,
   createClubMgmt,
   updateClubMgmt,
@@ -128,12 +127,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
-});
-
 // 场馆申请抽屉
 const [VenueDrawer, venueDrawerApi] = useVbenDrawer({
   modal: false,
@@ -234,41 +227,10 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'clubName':
-            itemValue = item.clubName;
-            break;
-          case 'clubType':
-            itemValue = item.clubType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    // 模拟数据时仍需要前端分页
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取社团申请列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -369,40 +331,26 @@ async function handleBatchArchive() {
   }
 }
 
-// 打开申请抽屉（简化：只重置表单和打开抽屉）
+// 打开申请抽屉
 function handleCreate() {
   try {
     isEditMode.value = false;
     currentEditId.value = null;
-    createFormApi.resetForm();
-    createDrawerApi.open();
+    createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
   } catch (error) {
     console.error('打开申请抽屉失败:', error);
     ElMessage.error('打开申请表单失败，请刷新页面重试');
   }
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   if (row.status !== '待审核') {
     ElMessage.warning('只有待审核状态的入团申请可以编辑');
     return;
   }
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getClubMgmtDetail({id: row.id});
-    createFormApi.setValues({
-      clubName: detail.clubName,
-      clubType: detail.clubType,
-      studentId: detail.studentId,
-      applyTime: detail.applyTime,
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 单行审核
@@ -412,7 +360,7 @@ async function handleAudit(row) {
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认审核入团申请（学生：${row.studentName}，社团：${row.clubName}）？审核后状态将变为"已通过"。`, '审核确认', {
+    await ElMessageBox.confirm(`确认审核入团申请（学号：${row.studentId}，社团：${row.clubName}）？审核后状态将变为"已通过"。`, '审核确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
@@ -440,7 +388,7 @@ async function handleArchive(row) {
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认对入团申请（学生：${row.studentName}，社团：${row.clubName}）进行建档？建档后状态将变为"已建档"。`, '建档确认', {
+    await ElMessageBox.confirm(`确认对入团申请（学号：${row.studentId}，社团：${row.clubName}）进行建档？建档后状态将变为"已建档"。`, '建档确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
@@ -480,10 +428,12 @@ const [CreateForm, createFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '申请中...'});
     try {
       let res;
+      // 确保 status 字段存在（新增时默认待审核）
+      const submitData = {...values, status: values.status || '待审核'};
       if (isEditMode.value) {
-        res = await updateClubMgmt({...values, id: currentEditId.value});
+        res = await updateClubMgmt({...submitData, id: currentEditId.value});
       } else {
-        res = await createClubMgmt(values);
+        res = await createClubMgmt(submitData);
       }
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '申请成功');
@@ -500,6 +450,40 @@ const [CreateForm, createFormApi] = useVbenForm({
   schema: createFormSchema, // 使用响应式计算属性，确保学生选项动态更新
   showCollapseButton: false,
   submitButtonOptions: {content: computed(() => isEditMode.value ? '保存' : '申请')},
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await createFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getClubMgmtDetail({id: currentEditId.value});
+          await createFormApi.setValues({
+            clubName: detail.clubName,
+            clubType: detail.clubType,
+            studentId: detail.studentId,
+            applyTime: detail.applyTime,
+            status: detail.status,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          createDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式：设置默认状态为“待审核”
+        await createFormApi.setValues({status: '待审核'});
+      }
+    }
+  },
 });
 
 // 场馆申请表单
@@ -647,9 +631,9 @@ onMounted(() => {
                  style="cursor: pointer;">{{ row.clubType }}
         </el-text>
       </template>
-      <template #studentName="{ row }">
+      <template #studentId="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
-          {{ row.studentName }}
+          {{ row.studentId }}
         </el-text>
       </template>
       <template #applyTime="{ row }">

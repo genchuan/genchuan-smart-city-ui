@@ -1,14 +1,13 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import RepairDetailDrawer from './components/repairDetail.vue';
 import {
-  getMockList,
   getRepairMgmtPage,
   createRepairMgmt,
   assignRepairMgmt,
@@ -17,7 +16,6 @@ import {
   updateRepairMgmt,
   exportRepairMgmt,
   getRepairMgmtDetail,
-  getRepairUserOptions,
 } from '#/api/genchuan/educationTeaching/studentMgmt/dormMgmt/repairMgmt/data.js';
 import {
   textObj,
@@ -70,7 +68,7 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
@@ -127,12 +125,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => applyDrawerApi.close(),
-});
-
 const [FeedbackDrawer, feedbackDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
@@ -153,7 +145,7 @@ const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -164,22 +156,14 @@ const currentEditId = ref(null);
 const assignIds = ref([]);      // 待派单的ID列表
 const feedbackIds = ref([]);    // 待反馈的ID列表
 
-// 获取维修人列表
-const repairUserOptions = ref([]);
-const loadRepairUserOptions = async () => {
-  const res = await getRepairUserOptions();
-  repairUserOptions.value = res;
-};
-loadRepairUserOptions();
-
 // 派单弹窗
 const assignVisible = ref(false);
-const assignRepairUser = ref('');
+const assignRepairUser = ref('');   // 改为输入框，直接存储维修人姓名
 const currentAssignIds = ref([]);
 
 // 反馈弹窗已由抽屉代替
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -224,40 +208,10 @@ const getTableData = async ({ page }) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'dormNum':
-            itemValue = item.dormNum;
-            break;
-          case 'repairType':
-            itemValue = item.repairType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取报修列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -276,10 +230,10 @@ function handleReset() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportRepairMgmt(searchParams.value);
-      downloadFileFromBlobPart({ fileName: `${textObj.excelName}.xls`, source: data });
+      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -307,13 +261,16 @@ async function handleBatchAssign() {
 }
 
 async function submitAssign() {
-  if (!assignRepairUser.value) {
-    ElMessage.warning('请选择维修人');
+  if (!assignRepairUser.value || !assignRepairUser.value.trim()) {
+    ElMessage.warning('请输入维修人姓名');
     return;
   }
-  const loading = ElLoading.service({ text: '派单中...' });
+  const loading = ElLoading.service({text: '派单中...'});
   try {
-    const res = await assignRepairMgmt({ ids: currentAssignIds.value, repairUser: assignRepairUser.value });
+    const res = await assignRepairMgmt({
+      ids: currentAssignIds.value,
+      repairUser: assignRepairUser.value.trim()
+    });
     if (res && res !== false) {
       ElMessage.success('派单成功');
       assignVisible.value = false;
@@ -346,33 +303,17 @@ async function handleBatchFeedback() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  applyFormApi.resetForm();
-  // 设置默认申请时间为当前时间，默认状态为“待派单”
-  applyFormApi.setValues({ applyTime: Date.now(), status: '待派单' });
-  applyDrawerApi.open();
+  applyDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   if (row.status !== '待派单') {
     ElMessage.warning('只有待派单状态的报修可以编辑');
     return;
   }
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getRepairMgmtDetail({ id: row.id });
-    applyFormApi.setValues({
-      dormNum: detail.dormNum,
-      repairType: detail.repairType,
-      applyTime: detail.applyTime,
-      status: detail.status,     // 补充状态赋值
-      remark: detail.remark,
-    });
-    applyDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  applyDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 单行派单
@@ -413,9 +354,9 @@ async function handleAccept(row) {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '验收中...' });
+    const loading = ElLoading.service({text: '验收中...'});
     try {
-      const res = await acceptRepairMgmt({ id: row.id });
+      const res = await acceptRepairMgmt({id: row.id});
       if (res && res !== false) {
         ElMessage.success('验收成功');
         handleRefresh();
@@ -425,23 +366,24 @@ async function handleAccept(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 申请表单
 const [ApplyForm, applyFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: isEditMode.value ? '保存中...' : '提交中...' });
+    const loading = ElLoading.service({text: isEditMode.value ? '保存中...' : '提交中...'});
     try {
       let res;
       if (isEditMode.value) {
         // 编辑时传递 status（表单中已包含）
-        res = await updateRepairMgmt({ ...values, id: currentEditId.value });
+        res = await updateRepairMgmt({...values, id: currentEditId.value});
       } else {
         // 新增时确保 status 字段存在（默认待派单）
-        const submitData = { ...values, status: values.status || '待派单' };
+        const submitData = {...values, status: values.status || '待派单'};
         res = await createRepairMgmt(submitData);
       }
       if (res && res !== false) {
@@ -458,17 +400,53 @@ const [ApplyForm, applyFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useApplyFormSchema(isEditMode.value),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => applyDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await applyFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getRepairMgmtDetail({id: currentEditId.value});
+          await applyFormApi.setValues({
+            dormNum: detail.dormNum,
+            repairType: detail.repairType,
+            applyTime: detail.applyTime,
+            status: detail.status,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          applyDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式：设置默认申请时间为当前时间，默认状态为“待派单”
+        await applyFormApi.setValues({applyTime: Date.now(), status: '待派单'});
+      }
+    }
+  },
 });
 
 // 反馈表单
 const [FeedbackForm, feedbackFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '提交反馈...' });
+    const loading = ElLoading.service({text: '提交反馈...'});
     try {
-      const res = await feedbackRepairMgmt({ ids: feedbackIds.value, feedbackContent: values.feedbackContent });
+      const res = await feedbackRepairMgmt({
+        ids: feedbackIds.value,
+        feedbackContent: values.feedbackContent
+      });
       if (res && res !== false) {
         ElMessage.success('反馈成功');
         feedbackDrawerApi.close();
@@ -483,11 +461,12 @@ const [FeedbackForm, feedbackFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useFeedbackFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
 });
 
 // 详情抽屉
 const repairDetailDrawerRef = ref(null);
+
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   repairDetailDrawerRef.value.open();
@@ -495,9 +474,9 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -507,20 +486,20 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -533,34 +512,32 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <RepairDetailDrawer ref="repairDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <RepairDetailDrawer ref="repairDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                        @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <ApplyDrawer :title="isEditMode ? textObj.editText : textObj.applyText">
-      <ApplyForm />
+      <ApplyForm/>
     </ApplyDrawer>
     <FeedbackDrawer :title="textObj.feedbackText">
-      <FeedbackForm />
+      <FeedbackForm/>
     </FeedbackDrawer>
 
-    <!-- 派单弹窗 -->
+    <!-- 派单弹窗 - 维修人改为输入框 -->
     <el-dialog v-model="assignVisible" title="派单" width="400px">
       <el-form label-width="80px">
         <el-form-item label="维修人">
-          <el-select v-model="assignRepairUser" filterable placeholder="请选择维修人" style="width: 100%">
-            <el-option
-              v-for="user in repairUserOptions"
-              :key="user.value"
-              :label="user.label"
-              :value="user.value"
-            />
-          </el-select>
+          <el-input
+            v-model="assignRepairUser"
+            placeholder="请输入维修人姓名"
+            clearable
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -584,41 +561,48 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="申请" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="派单" icon-name="User" @click="handleBatchAssign" />
-          <IconButton content="反馈" icon-name="EditPen" @click="handleBatchFeedback" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart" @click="toggleChart" />
+          <IconButton content="申请" icon-name="Plus" @click="handleCreate"/>
+          <IconButton content="派单" icon-name="User" @click="handleBatchAssign"/>
+          <IconButton content="反馈" icon-name="EditPen" @click="handleBatchFeedback"/>
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
+          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
+                      @click="toggleChart"/>
         </div>
       </template>
 
       <!-- 钻取列 -->
       <template #dormNum="{ row }">
-        <el-text @click="handleFilterTagClick('dormNum', row.dormNum)" type="primary" style="cursor: pointer;">
+        <el-text @click="handleFilterTagClick('dormNum', row.dormNum)" type="primary"
+                 style="cursor: pointer;">
           {{ row.dormNum }}
         </el-text>
       </template>
       <template #repairType="{ row }">
-        <el-text @click="handleFilterTagClick('repairType', row.repairType)" type="primary" style="cursor: pointer;">
+        <el-text @click="handleFilterTagClick('repairType', row.repairType)" type="primary"
+                 style="cursor: pointer;">
           {{ row.repairType }}
         </el-text>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
           {{ row.status }}
         </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer;">
           {{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
+                 type="primary" style="cursor: pointer;">
           {{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
@@ -643,11 +627,15 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '待派单'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
-          <IconButton v-if="row.status === '待派单'" content="派单" icon-name="User" @click="handleAssign(row)" />
-          <IconButton v-if="row.status === '维修中'" content="反馈" icon-name="EditPen" @click="handleFeedback(row)" />
-          <IconButton v-if="row.status === '已维修' && row.checkStatus !== '已验收'" content="验收" icon-name="Check" @click="handleAccept(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
+          <IconButton v-if="row.status === '待派单'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '待派单'" content="派单" icon-name="User"
+                      @click="handleAssign(row)"/>
+          <IconButton v-if="row.status === '维修中'" content="反馈" icon-name="EditPen"
+                      @click="handleFeedback(row)"/>
+          <IconButton v-if="row.status === '已维修'" content="验收"
+                      icon-name="Check" @click="handleAccept(row)"/>
         </div>
       </template>
     </Grid>

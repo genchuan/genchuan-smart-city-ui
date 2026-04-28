@@ -2,7 +2,6 @@
 import { reactive, onMounted, ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
-import Bar from '#/genchuan-components/stats/barClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
 import {
   getDutyMgmtChart,
@@ -29,15 +28,6 @@ const cardList = computed(() => {
   ];
 });
 
-// 各状态值班记录数量柱状图（支持点击筛选）
-const barXData = computed(() => {
-  const map = chartData.value.statusCountMap || {};
-  return Object.keys(map);
-});
-const barSeriesData = computed(() => [
-  { name: '值班记录数量', data: Object.values(chartData.value.statusCountMap || {}) },
-]);
-
 // 折线图数据（使用 lineChart 组件）
 const lineXData = computed(() => indexData.value.monthList || []);
 const lineSeriesData = computed(() => [
@@ -47,12 +37,7 @@ const lineSeriesData = computed(() => [
   { name: '出车率(%)', data: indexData.value.vehicleRateList || [] },
 ]);
 
-const emit = defineEmits(['barClick', 'lineClick']);
-
-// 柱状图点击筛选（状态）—— 修正：直接接收字符串（柱子名称）
-const handleBarClick = (statusName) => {
-  emit('barClick', { type: 'status', value: statusName });
-};
+const emit = defineEmits(['lineClick']);
 
 // 折线图点击筛选（月份）
 const handleLineClick = (monthName) => {
@@ -111,14 +96,6 @@ onMounted(() => {
         v-bind="item"
       />
     </div>
-    <Bar
-      style="flex: 1 !important;"
-      title="各状态值班记录数量"
-      :x-data="barXData"
-      :series-data="barSeriesData"
-      y-name="数量"
-      @bar-click="handleBarClick"
-    />
     <lineChart
       style="flex: 1.5 !important;"
       :title="'值班核心指标趋势'"

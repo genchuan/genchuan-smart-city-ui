@@ -7,9 +7,7 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { downloadFileFromBlobPart } from '@vben/utils';
 import BedDetailDrawer from './components/bedDetail.vue';
-import StudentInfoDrawer from './components/studentDetail.vue';
 import {
-  getMockList,
   getBedMgmtPage,
   createBedMgmt,
   assignBedMgmt,
@@ -17,7 +15,6 @@ import {
   updateBedMgmt,
   exportBedMgmt,
   getBedMgmtDetail,
-  getStudentOptions,
 } from '#/api/genchuan/educationTeaching/studentMgmt/dormMgmt/bedMgmt/data.js';
 import {
   textObj,
@@ -117,12 +114,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [BedFormDrawer, bedFormDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => bedFormDrawerApi.close(),
-});
-
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -145,9 +136,6 @@ function handleRowCheckboxChange({records}) {
 const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
-const assignBedIds = ref([]);
-const adjustBedId = ref(null);
-const currentAdjustRow = ref(null);
 
 // 批量分配弹窗相关
 const batchAssignVisible = ref(false);
@@ -157,19 +145,14 @@ const batchAssignList = ref([]);
 const singleAssignVisible = ref(false);
 const currentSingleBed = ref(null);
 const selectedStudentId = ref(null);
+const singleAssignTime = ref(''); // 分配时间
 
 // 单行调整弹窗相关
 const adjustVisible = ref(false);
 const currentAdjustBed = ref(null);
 const newStudentId = ref(null);
-
-// 获取学生列表
-const studentOptions = ref([]);
-const loadStudentOptions = async () => {
-  const res = await getStudentOptions();
-  studentOptions.value = res;
-};
-loadStudentOptions();
+const newBedId = ref(null);        // 新床位ID（数字输入框）
+const adjustTime = ref('');        // 调整时间
 
 const getTableData = async ({page}) => {
   dataObj.loading = true;
@@ -218,43 +201,10 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'building':
-            itemValue = item.building;
-            break;
-          case 'roomNum':
-            itemValue = item.roomNum;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          case 'studentId':
-            itemValue = item.studentId;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取床位列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -291,31 +241,14 @@ async function handleExport() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  bedFormApi.resetForm();
-  // 设置默认状态为未分配
-  bedFormApi.setValues({status: '未分配'});
   bedFormDrawerApi.open();
 }
 
 // 编辑床位
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getBedMgmtDetail({id: row.id});
-    bedFormApi.setValues({
-      building: detail.building,
-      floor: detail.floor,
-      roomNum: detail.roomNum,
-      bedNum: detail.bedNum,
-      status: detail.status,
-      remark: detail.remark || '',
-    });
-    bedFormDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  bedFormDrawerApi.open();
 }
 
 // 批量分配
@@ -331,6 +264,7 @@ async function handleBatchAssign() {
     roomNum: row.roomNum,
     bedNum: row.bedNum,
     studentId: null,
+    assignTime: '', // 分配时间字段
   }));
   batchAssignVisible.value = true;
 }
@@ -338,14 +272,27 @@ async function handleBatchAssign() {
 async function submitBatchAssign() {
   const missing = batchAssignList.value.filter(item => !item.studentId);
   if (missing.length) {
-    ElMessage.warning('请为所有床位选择学生');
+    ElMessage.warning('请为所有床位填写学号');
     return;
+  }
+  const missingTime = batchAssignList.value.filter(item => !item.assignTime);
+  if (missingTime.length) {
+    ElMessage.warning('请为所有床位填写分配时间');
+    return;
+  }
+  for (const item of batchAssignList.value) {
+    if (isNaN(Number(item.studentId))) {
+      ElMessage.error(`床位 ${item.building} ${item.roomNum} ${item.bedNum} 的学号必须为数字`);
+      return;
+    }
   }
   const loading = ElLoading.service({text: '分配中...'});
   try {
     const bedIds = batchAssignList.value.map(item => item.id);
-    const studentIds = batchAssignList.value.map(item => item.studentId);
-    const res = await assignBedMgmt({bedIds, studentIds});
+    const studentIds = batchAssignList.value.map(item => Number(item.studentId));
+    const assignTimes = batchAssignList.value.map(item => item.assignTime);
+    // 假设后端接口支持 assignTimes 数组，与 bedIds 一一对应
+    const res = await assignBedMgmt({bedIds, studentIds, assignTimes});
     if (res && res !== false) {
       ElMessage.success('分配成功');
       batchAssignVisible.value = false;
@@ -366,19 +313,29 @@ async function handleAssign(row) {
   }
   currentSingleBed.value = row;
   selectedStudentId.value = null;
+  singleAssignTime.value = '';
   singleAssignVisible.value = true;
 }
 
 async function submitSingleAssign() {
   if (!selectedStudentId.value) {
-    ElMessage.warning('请选择学生');
+    ElMessage.warning('请填写学号');
+    return;
+  }
+  if (!singleAssignTime.value) {
+    ElMessage.warning('请选择分配时间');
+    return;
+  }
+  if (isNaN(Number(selectedStudentId.value))) {
+    ElMessage.error('学号必须为数字');
     return;
   }
   const loading = ElLoading.service({text: '分配中...'});
   try {
     const res = await assignBedMgmt({
       bedIds: [currentSingleBed.value.id],
-      studentIds: [selectedStudentId.value],
+      studentIds: [Number(selectedStudentId.value)],
+      assignTimes: [singleAssignTime.value],
     });
     if (res && res !== false) {
       ElMessage.success('分配成功');
@@ -400,24 +357,43 @@ async function handleAdjust(row) {
   }
   currentAdjustBed.value = row;
   newStudentId.value = null;
+  newBedId.value = null;
+  adjustTime.value = '';
   adjustVisible.value = true;
 }
 
 async function submitAdjust() {
   if (!newStudentId.value) {
-    ElMessage.warning('请选择新学生');
+    ElMessage.warning('请填写新学号');
     return;
   }
-  if (currentAdjustBed.value.studentId === newStudentId.value) {
-    ElMessage.warning('新学生与原学生相同，无需调整');
+  if (!newBedId.value) {
+    ElMessage.warning('请填写新床位ID');
+    return;
+  }
+  if (!adjustTime.value) {
+    ElMessage.warning('请选择调整时间');
+    return;
+  }
+  if (isNaN(Number(newStudentId.value))) {
+    ElMessage.error('学号必须为数字');
+    return;
+  }
+  if (isNaN(Number(newBedId.value))) {
+    ElMessage.error('新床位ID必须为数字');
+    return;
+  }
+  if (currentAdjustBed.value.studentId === Number(newStudentId.value)) {
+    ElMessage.warning('新学号与原学号相同，无需调整');
     return;
   }
   const loading = ElLoading.service({text: '调整中...'});
   try {
     const res = await adjustBedMgmt({
       oldBedId: currentAdjustBed.value.id,
-      newBedId: currentAdjustBed.value.id,
-      studentId: newStudentId.value,
+      newBedId: Number(newBedId.value),
+      studentId: Number(newStudentId.value),
+      adjustTime: adjustTime.value,
     });
     if (res && res !== false) {
       ElMessage.success('调整成功');
@@ -431,7 +407,7 @@ async function submitAdjust() {
   }
 }
 
-// 新增/编辑表单（使用 useBedFormSchema）
+// 新增/编辑表单
 const [BedForm, bedFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
@@ -461,20 +437,42 @@ const [BedForm, bedFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
+const [BedFormDrawer, bedFormDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => bedFormDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      await bedFormApi.resetForm();
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getBedMgmtDetail({id: currentEditId.value});
+          await bedFormApi.setValues({
+            building: detail.building,
+            floor: detail.floor,
+            roomNum: detail.roomNum,
+            bedNum: detail.bedNum,
+            status: detail.status,
+            remark: detail.remark || '',
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          bedFormDrawerApi.close();
+        }
+      } else {
+        await bedFormApi.setValues({status: '未分配'});
+      }
+    }
+  },
+});
+
 // 详情抽屉
 const bedDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   bedDetailDrawerRef.value.open();
-}
-
-// 学生详情抽屉
-const studentInfoDrawerRef = ref(null);
-
-function handleOpenStudentDetail(row) {
-  if (!row.studentId) return;
-  studentInfoDrawerRef.value.open(row.studentId);
 }
 
 const [QueryForm] = useVbenForm({
@@ -524,32 +522,40 @@ defineExpose({handleFilterTagClick, clearFilters});
   <div class="park-lot-table-new">
     <BedDetailDrawer ref="bedDetailDrawerRef" :detail-obj="dataObj.detailObj"
                      @refresh="handleRefresh"/>
-    <StudentInfoDrawer ref="studentInfoDrawerRef"/>
     <Drawer title="搜索">
       <QueryForm/>
     </Drawer>
 
-    <!-- 新增/编辑床位抽屉（使用 useVbenForm） -->
+    <!-- 新增/编辑床位抽屉 -->
     <BedFormDrawer :title="isEditMode ? textObj.editText : textObj.addText">
       <BedForm/>
     </BedFormDrawer>
 
-    <!-- 批量分配弹窗 -->
-    <el-dialog v-model="batchAssignVisible" title="批量分配床位" width="600px">
+    <!-- 批量分配弹窗（增加分配时间） -->
+    <el-dialog v-model="batchAssignVisible" title="批量分配床位" width="800px">
       <el-table :data="batchAssignList" border>
-        <el-table-column prop="building" label="楼栋"/>
-        <el-table-column prop="roomNum" label="房间号"/>
-        <el-table-column prop="bedNum" label="床位号"/>
-        <el-table-column label="分配学生" width="200">
+        <el-table-column prop="building" label="楼栋" width="100"/>
+        <el-table-column prop="roomNum" label="房间号" width="100"/>
+        <el-table-column prop="bedNum" label="床位号" width="80"/>
+        <el-table-column label="学号" min-width="150">
           <template #default="{ row }">
-            <el-select v-model="row.studentId" filterable placeholder="请选择学生">
-              <el-option
-                v-for="stu in studentOptions"
-                :key="stu.value"
-                :label="stu.label"
-                :value="stu.value"
-              />
-            </el-select>
+            <el-input
+              v-model="row.studentId"
+              type="number"
+              placeholder="请输入学号"
+              controls-position="right"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column label="分配时间" min-width="200">
+          <template #default="{ row }">
+            <el-date-picker
+              v-model="row.assignTime"
+              type="datetime"
+              placeholder="请选择分配时间"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              style="width: 100%"
+            />
           </template>
         </el-table-column>
       </el-table>
@@ -559,23 +565,25 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
     </el-dialog>
 
-    <!-- 单行分配弹窗 -->
-    <el-dialog v-model="singleAssignVisible" title="分配床位" width="400px">
+    <!-- 单行分配弹窗（增加分配时间） -->
+    <el-dialog v-model="singleAssignVisible" title="分配床位" width="450px">
       <el-form label-width="80px">
-        <el-form-item label="选择学生">
-          <el-select
+        <el-form-item label="学号">
+          <el-input
             v-model="selectedStudentId"
-            filterable
-            placeholder="请选择学生"
+            type="number"
+            placeholder="请输入学号"
+            controls-position="right"
+          />
+        </el-form-item>
+        <el-form-item label="分配时间">
+          <el-date-picker
+            v-model="singleAssignTime"
+            type="datetime"
+            placeholder="请选择分配时间"
+            value-format="YYYY-MM-DD HH:mm:ss"
             style="width: 100%"
-          >
-            <el-option
-              v-for="stu in studentOptions"
-              :key="stu.value"
-              :label="stu.label"
-              :value="stu.value"
-            />
-          </el-select>
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -584,23 +592,33 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
     </el-dialog>
 
-    <!-- 单行调整弹窗 -->
-    <el-dialog v-model="adjustVisible" title="调整床位" width="400px">
-      <el-form label-width="80px">
-        <el-form-item label="新学生">
-          <el-select
+    <!-- 单行调整弹窗（增加新床位ID和调整时间） -->
+    <el-dialog v-model="adjustVisible" title="调整床位" width="450px">
+      <el-form label-width="100px">
+        <el-form-item label="新学号">
+          <el-input
             v-model="newStudentId"
-            filterable
-            placeholder="请选择新学生"
+            type="number"
+            placeholder="请输入新学号"
+            controls-position="right"
+          />
+        </el-form-item>
+        <el-form-item label="新床位ID">
+          <el-input
+            v-model="newBedId"
+            type="number"
+            placeholder="请输入新床位ID"
+            controls-position="right"
+          />
+        </el-form-item>
+        <el-form-item label="调整时间">
+          <el-date-picker
+            v-model="adjustTime"
+            type="datetime"
+            placeholder="请选择调整时间"
+            value-format="YYYY-MM-DD HH:mm:ss"
             style="width: 100%"
-          >
-            <el-option
-              v-for="stu in studentOptions"
-              :key="stu.value"
-              :label="stu.label"
-              :value="stu.value"
-            />
-          </el-select>
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -610,6 +628,7 @@ defineExpose({handleFilterTagClick, clearFilters});
     </el-dialog>
 
     <Grid>
+      <!-- 标签筛选展示 -->
       <template #table-title>
         <ElTag
           v-for="(value, field) in tagFilters"
@@ -651,7 +670,7 @@ defineExpose({handleFilterTagClick, clearFilters});
         </el-text>
       </template>
       <template #studentId="{ row }">
-        <el-text v-if="row.studentId" @click="handleOpenStudentDetail(row)" type="primary"
+        <el-text v-if="row.studentId" @click="handleOpenDetail(row)" type="primary"
                  style="cursor: pointer;">
           {{ row.studentId }}
         </el-text>

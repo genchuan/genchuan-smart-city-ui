@@ -8,7 +8,6 @@ import {useVbenVxeGrid} from '#/adapter/vxe-table';
 import {downloadFileFromBlobPart} from '@vben/utils';
 import StudentDetailDrawer from './components/studentDetail.vue';
 import {
-  dataList,
   getStudentInfoPage,
   createStudentInfo,
   updateStudentInfo,
@@ -116,12 +115,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
-});
-
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -191,41 +184,10 @@ const getTableData = async ({page}) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'major':
-            itemValue = item.major;
-            break;
-          case 'className':
-            itemValue = item.className;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    // 模拟数据时仍需要前端分页
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取学生列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -282,41 +244,20 @@ async function handleBatchDelete() {
       loading.close();
     }
   } catch {
+    // 取消操作
   }
 }
 
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createFormApi.resetForm();
   createDrawerApi.open();
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getStudentInfoDetail({id: row.id});
-    createFormApi.setValues({
-      studentNo: detail.studentNo,
-      name: detail.name,
-      idCard: detail.idCard,
-      grade: detail.grade,               // 新增年级赋值
-      educationLevel: detail.educationLevel,
-      studyForm: detail.studyForm,
-      major: detail.major,
-      className: detail.className,
-      studentType: detail.studentType,
-      status: detail.status,
-      phone: detail.phone,
-      parentPhone: detail.parentPhone,
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败，请检查网络或联系管理员');
-  }
+  createDrawerApi.open();
 }
 
 async function handleDelete(row) {
@@ -339,6 +280,7 @@ async function handleDelete(row) {
       loading.close();
     }
   } catch {
+    // 取消操作
   }
 }
 
@@ -384,6 +326,41 @@ const [CreateForm, createFormApi] = useVbenForm({
   schema: useCreateFormSchema(isEditMode.value),
   showCollapseButton: false,
   submitButtonOptions: {content: '保存'},
+});
+
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      await createFormApi.resetForm();
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getStudentInfoDetail({id: currentEditId.value});
+          await createFormApi.setValues({
+            studentNo: detail.studentNo,
+            name: detail.name,
+            idCard: detail.idCard,
+            grade: detail.grade,
+            educationLevel: detail.educationLevel,
+            studyForm: detail.studyForm,
+            major: detail.major,
+            className: detail.className,
+            studentType: detail.studentType,
+            status: detail.status,
+            phone: detail.phone,
+            parentPhone: detail.parentPhone,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          createDrawerApi.close();
+        }
+      }
+    }
+  },
 });
 
 // 查看详情

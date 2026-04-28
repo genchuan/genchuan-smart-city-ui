@@ -1,14 +1,13 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick, onMounted } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick, onMounted} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import BehaviorDetailDrawer from './components/behaviorDetail.vue';
 import {
-  dataList,
   getBehaviorMgmtPage,
   createBehaviorMgmt,
   updateBehaviorMgmt,
@@ -69,7 +68,7 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
@@ -126,12 +125,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
-});
-
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -147,7 +140,7 @@ const gridColumns = ref(getColumnsByStatus(activeName.value));
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -156,7 +149,7 @@ const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -198,38 +191,10 @@ const getTableData = async ({ page }) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'leaveType':
-            itemValue = item.leaveType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    // 模拟数据时仍需要前端分页
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取请假列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -248,10 +213,10 @@ function handleReset() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportBehaviorMgmt(searchParams.value);
-      downloadFileFromBlobPart({ fileName: '行为管理列表.xls', source: data });
+      downloadFileFromBlobPart({fileName: '行为管理列表.xls', source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -300,13 +265,14 @@ async function confirmAudit() {
     ElMessage.warning('请选择审批结果');
     return;
   }
-  const loading = ElLoading.service({ text: '审批中...' });
+  const loading = ElLoading.service({text: '审批中...'});
   try {
     const ids = currentAuditRows.value.map(row => row.id);
+    // 注意：接口字段名为 remark，不是 auditRemark
     const res = await auditBehaviorMgmt({
       ids,
       status: auditStatus.value,
-      auditRemark: auditRemark.value || '',
+      remark: auditRemark.value || '',   // 已修正
     });
     if (res && res !== false) {
       ElMessage.success('审批成功');
@@ -329,14 +295,17 @@ async function handleCancel(row) {
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认撤销请假申请（学生：${row.studentName}，类型：${row.leaveType}）？撤销后状态将变为"已驳回"。`, '撤销确认', {
+    // 使用 prompt 但允许不填写（非必填）
+    const {value: cancelReason} = await ElMessageBox.prompt('请输入撤销原因（可选）', '撤销确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      inputPlaceholder: '可不填',
+      // 不设置 inputValidator，允许空值
     });
-    const loading = ElLoading.service({ text: '撤销中...' });
+    const loading = ElLoading.service({text: '撤销中...'});
     try {
-      const res = await cancelBehaviorMgmt({ id: row.id });
+      // 如果用户未输入，value 为 ''，传空字符串即可
+      const res = await cancelBehaviorMgmt({id: row.id, cancelReason: cancelReason || ''});
       if (res && res !== false) {
         ElMessage.success('撤销成功');
         handleRefresh();
@@ -346,27 +315,32 @@ async function handleCancel(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch (error) {
+    // 用户点击取消时不做处理
+    if (error !== 'cancel') {
+      console.error('撤销失败', error);
+    }
+  }
 }
 
 // ---------- 申请/编辑表单 ----------
 const [CreateForm, createFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
     if (values.startTime && values.endTime && values.startTime >= values.endTime) {
       ElMessage.error('结束时间必须大于开始时间');
       return;
     }
-    const loading = ElLoading.service({ text: isEditMode.value ? '更新中...' : '申请中...' });
+    const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '申请中...'});
     try {
       let res;
       if (isEditMode.value) {
         // 编辑时传递 status（表单中已包含）
-        res = await updateBehaviorMgmt({ ...values, id: currentEditId.value });
+        res = await updateBehaviorMgmt({...values, id: currentEditId.value});
       } else {
         // 新增时确保 status 字段存在（默认待审批）
-        const submitData = { ...values, status: values.status || '待审批' };
+        const submitData = {...values, status: values.status || '待审批'};
         res = await createBehaviorMgmt(submitData);
       }
       if (res && res !== false) {
@@ -383,7 +357,43 @@ const [CreateForm, createFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useCreateFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await createFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getBehaviorMgmtDetail({id: currentEditId.value});
+          await createFormApi.setValues({
+            studentId: detail.studentId,
+            leaveType: detail.leaveType,
+            startTime: detail.startTime,
+            endTime: detail.endTime,
+            leaveReason: detail.leaveReason,
+            auditLevel: detail.auditLevel,
+            status: detail.status,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          createDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式：设置默认状态为“待审批”
+        await createFormApi.setValues({status: '待审批'});
+      }
+    }
+  },
 });
 
 // ---------- 加载学生选项 ----------
@@ -394,7 +404,7 @@ const loadStudentOptions = async () => {
     let options = Array.isArray(res) ? res : (res.data || []);
     // 使用 updateSchema 更新 studentId 字段的 options
     createFormApi.updateSchema([
-      { fieldName: 'studentId', componentProps: { options } }
+      {fieldName: 'studentId', componentProps: {options}}
     ]);
     console.log('学生选项加载成功', options);
   } catch (error) {
@@ -407,36 +417,18 @@ const loadStudentOptions = async () => {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createFormApi.resetForm();
-  // 新增时设置默认状态为“待审批”
-  createFormApi.setValues({ status: '待审批' });
-  createDrawerApi.open();
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getBehaviorMgmtDetail({ id: row.id });
-    createFormApi.setValues({
-      studentId: detail.studentId,
-      leaveType: detail.leaveType,
-      startTime: detail.startTime,
-      endTime: detail.endTime,
-      leaveReason: detail.leaveReason,
-      auditLevel: detail.auditLevel,
-      status: detail.status,     // 补充状态赋值
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败');
-  }
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 查看详情
 const behaviorDetailDrawerRef = ref(null);
+
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   behaviorDetailDrawerRef.value.open();
@@ -445,9 +437,9 @@ function handleOpenDetail(row) {
 // ---------- 搜索表单 ----------
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -457,7 +449,7 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 // ---------- 表格 ----------
@@ -465,13 +457,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -479,7 +471,7 @@ watch(activeName, (newVal) => {
   tagFilters.value = {};
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({ columns: gridColumns.value });
+  else gridApi.setGridOptions?.({columns: gridColumns.value});
   gridApi.reload();
 });
 
@@ -492,7 +484,7 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 
 onMounted(() => {
   loadStudentOptions();
@@ -501,12 +493,13 @@ onMounted(() => {
 
 <template>
   <div class="park-lot-table-new">
-    <BehaviorDetailDrawer ref="behaviorDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <BehaviorDetailDrawer ref="behaviorDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                          @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <CreateDrawer :title="isEditMode ? '编辑请假申请' : '请假申请'">
-      <CreateForm />
+      <CreateForm/>
     </CreateDrawer>
     <Grid>
       <template #table-title>
@@ -523,24 +516,28 @@ onMounted(() => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="申请" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="审批" icon-name="Check" @click="handleBatchAudit" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
+          <IconButton content="申请" icon-name="Plus" @click="handleCreate"/>
+          <IconButton content="审批" icon-name="Check" @click="handleBatchAudit"/>
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
-                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
           <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart" />
+                      @click="toggleChart"/>
         </div>
       </template>
 
       <template #studentId="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentId }}</el-text>
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+          {{ row.studentId }}
+        </el-text>
       </template>
       <template #leaveType="{ row }">
-        <el-text @click="handleFilterTagClick('leaveType', row.leaveType)" type="primary" style="cursor: pointer;">{{ row.leaveType }}</el-text>
+        <el-text @click="handleFilterTagClick('leaveType', row.leaveType)" type="primary"
+                 style="cursor: pointer;">{{ row.leaveType }}
+        </el-text>
       </template>
       <template #startTime="{ row }">
         <el-text>{{ formatTimestamp(row.startTime) }}</el-text>
@@ -555,13 +552,20 @@ onMounted(() => {
         <el-tag :type="getSyncType(row.attendanceSync)">{{ row.attendanceSync }}</el-tag>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">{{ row.status }}</el-tag>
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
+          {{ row.status }}
+        </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer;">{{ row.creator || '-' }}
+        </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
+                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
+        </el-text>
       </template>
       <template #updateTime="{ row }">
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
@@ -569,10 +573,13 @@ onMounted(() => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status !== '已通过'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
-          <IconButton v-if="row.status === '待审批'" content="审批" icon-name="Check" @click="handleAudit(row)" />
-          <IconButton v-if="row.status === '已通过'" content="撤销" icon-name="Refresh" color="#F56C6C" @click="handleCancel(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
+          <IconButton v-if="row.status !== '已通过'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '待审批'" content="审批" icon-name="Check"
+                      @click="handleAudit(row)"/>
+          <IconButton v-if="row.status === '已通过'" content="撤销" icon-name="Refresh"
+                      color="#F56C6C" @click="handleCancel(row)"/>
         </div>
       </template>
     </Grid>
@@ -582,12 +589,12 @@ onMounted(() => {
       <el-form label-width="100px">
         <el-form-item label="审批结果" required>
           <el-select v-model="auditStatus" placeholder="请选择审批结果" style="width: 100%;">
-            <el-option label="通过" value="已通过" />
-            <el-option label="驳回" value="已驳回" />
+            <el-option label="通过" value="已通过"/>
+            <el-option label="驳回" value="已驳回"/>
           </el-select>
         </el-form-item>
         <el-form-item label="审批备注">
-          <el-input v-model="auditRemark" type="textarea" :rows="3" placeholder="请输入备注（可选）" />
+          <el-input v-model="auditRemark" type="textarea" :rows="3" placeholder="请输入备注（可选）"/>
         </el-form-item>
       </el-form>
       <template #footer>

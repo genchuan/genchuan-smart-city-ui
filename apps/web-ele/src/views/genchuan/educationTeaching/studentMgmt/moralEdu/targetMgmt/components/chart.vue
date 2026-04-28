@@ -9,70 +9,79 @@ import {
   getTargetIndex,
 } from '#/api/genchuan/educationTeaching/studentMgmt/moralEdu/targetMgmt/data.js';
 
+// 默认时间范围参数（毫秒时间戳）
+const defaultStartTime = 1704067200000;
+const defaultEndTime = 1798732799000;
+
 const loading = ref(true);
 const overviewData = ref({});
 const indexData = ref({});
 
-// ========== 卡片数据 ==========
+// 卡片数据
 const cardList = computed(() => {
   const total = indexData.value.totalTargetCount || 0;
   const enabled = indexData.value.enabledTargetCount || 0;
   const warned = indexData.value.warnTargetCount || 0;
   const avg = indexData.value.avgScore || 0;
   return [
-    { title: '指标总数', value: total, color: '#409EFF', status: 'total' },
-    { title: '启用指标数', value: enabled, color: '#67C23A', status: 'enabled' },
-    { title: '预警指标数', value: warned, color: '#F56C6C', status: 'warned' },
-    { title: '平均得分', value: avg, color: '#E6A23C', status: 'avg', suffix: '分' },
+    {title: '指标总数', value: total, color: '#409EFF', status: 'total'},
+    {title: '启用指标数', value: enabled, color: '#67C23A', status: 'enabled'},
+    {title: '预警指标数', value: warned, color: '#F56C6C', status: 'warned'},
+    {title: '平均得分', value: avg, color: '#E6A23C', status: 'avg', suffix: '分'},
   ];
 });
 
-// ========== 柱状图配置（带下拉切换） ==========
+// 柱状图配置（适配后端 evaluatorTypeCount 和 scoreTypeCount）
 const barOptions = computed(() => [
   {
     title: '评价人类型分布',
     type: 'evaluatorType',
     getData: () => {
-      const map = { teacherCount: '教职工', parentCount: '家长', leaderCount: '领导' };
       const data = overviewData.value.evaluatorTypeCount || {};
-      return {
-        xData: Object.keys(map).map(key => map[key]),
-        seriesData: [{ name: '指标数量', data: Object.keys(map).map(key => data[key] || 0) }]
-      };
+      // 后端键名：teacher, parent, leader
+      const xData = ['教职工', '家长', '领导'];
+      const seriesData = [
+        {name: '指标数量', data: [data.teacher || 0, data.parent || 0, data.leader || 0]}
+      ];
+      return {xData, seriesData};
     }
   },
   {
     title: '计分方式分布',
     type: 'scoreType',
     getData: () => {
-      const map = { accumulateCount: '累计赋分', apiCount: '接口赋分' };
       const data = overviewData.value.scoreTypeCount || {};
-      return {
-        xData: Object.keys(map).map(key => map[key]),
-        seriesData: [{ name: '指标数量', data: Object.keys(map).map(key => data[key] || 0) }]
-      };
+      // 后端键名已经是中文："累计赋分", "接口赋分"
+      const xData = ['累计赋分', '接口赋分'];
+      const seriesData = [
+        {name: '指标数量', data: [data['累计赋分'] || 0, data['接口赋分'] || 0]}
+      ];
+      return {xData, seriesData};
     }
   }
 ]);
 
 const activeBarIndex = ref(0);
-const currentBarData = computed(() => barOptions.value[activeBarIndex.value]?.getData() || { xData: [], seriesData: [] });
+const currentBarData = computed(() => barOptions.value[activeBarIndex.value]?.getData() || {
+  xData: [],
+  seriesData: []
+});
 const currentBarTitle = computed(() => barOptions.value[activeBarIndex.value]?.title || '');
 
 const handleBarChange = (index) => {
   activeBarIndex.value = index;
 };
 
-// ========== 饼图配置（带下拉切换） ==========
+// 饼图配置（适配 statusCount 和 scoreDistribution）
 const pieOptions = computed(() => [
   {
     title: '状态分布',
     type: 'status',
     getData: () => {
-      const status = overviewData.value.statusCount || { unEnableCount: 0, enabledCount: 0 };
+      const status = overviewData.value.statusCount || {disable: 0, enable: 0};
       return [
-        { name: '未启用', value: status.unEnableCount || 0 },
-        { name: '已启用', value: status.enabledCount || 0 }
+        {name: '未启用', value: status.disable || 0},
+        {name: '已启用', value: status.enable || 0}
       ];
     }
   },
@@ -80,10 +89,13 @@ const pieOptions = computed(() => [
     title: '指标得分分布',
     type: 'scoreDistribution',
     getData: () => {
-      const distribution = overviewData.value.scoreDistribution || [];
-      return distribution.map(item => ({
-        name: item.range,
-        value: item.count
+      const distributionArray = overviewData.value.scoreDistribution || [];
+      if (!distributionArray.length) return [];
+      const distObj = distributionArray[0];
+      // 将对象转换为 { name: range, value: count } 数组
+      return Object.entries(distObj).map(([range, count]) => ({
+        name: range,
+        value: count
       }));
     }
   }
@@ -97,7 +109,7 @@ const handlePieChange = (index) => {
   activePieIndex.value = index;
 };
 
-// ========== 事件发射 ==========
+// 事件发射
 const emit = defineEmits(['barSelect', 'cardSelect', 'pieSelect']);
 
 const handleCardClick = (cardInfo) => {
@@ -107,32 +119,39 @@ const handleCardClick = (cardInfo) => {
 const handleBarClickWrapper = (name) => {
   const currentType = barOptions.value[activeBarIndex.value]?.type;
   if (currentType === 'evaluatorType') {
-    emit('barSelect', { field: 'evaluatorType', value: name });
+    // 将中文名称映射回英文键名？根据实际筛选需求决定
+    let value = name;
+    if (name === '教职工') value = 'teacher';
+    if (name === '家长') value = 'parent';
+    if (name === '领导') value = 'leader';
+    emit('barSelect', {field: 'evaluatorType', value});
   } else if (currentType === 'scoreType') {
-    emit('barSelect', { field: 'scoreType', value: name });
+    emit('barSelect', {field: 'scoreType', value: name});
   }
 };
 
 const handlePieClickWrapper = (item) => {
   const currentType = pieOptions.value[activePieIndex.value]?.type;
   if (currentType === 'status') {
-    // 状态分布点击：传递状态筛选
     let status = '';
-    if (item.name === '未启用') status = '未启用';
-    if (item.name === '已启用') status = '已启用';
-    if (status) emit('cardSelect', status === '未启用' ? 'unEnabled' : 'enabled');
+    if (item.name === '未启用') status = 'disable';
+    if (item.name === '已启用') status = 'enable';
+    if (status) emit('cardSelect', status);
   } else if (currentType === 'scoreDistribution') {
-    // 得分分布点击：传递区间（可选，需求未要求，但保留事件）
-    emit('pieSelect', { range: item.name, count: item.value });
+    emit('pieSelect', {range: item.name, count: item.value});
   }
 };
 
-// ========== 加载数据 ==========
+// 加载数据（传递 startTime 和 endTime）
 const loadData = async () => {
   loading.value = true;
   try {
+    const chartParams = {
+      startTime: defaultStartTime,
+      endTime: defaultEndTime
+    };
     const [chartRes, indexRes] = await Promise.allSettled([
-      getTargetMgmtChart({}),
+      getTargetMgmtChart(chartParams),
       getTargetIndex()
     ]);
     if (chartRes.status === 'fulfilled') {
@@ -140,16 +159,10 @@ const loadData = async () => {
     } else {
       console.warn('分布接口失败，使用模拟数据');
       overviewData.value = {
-        statusCount: { unEnableCount: 2, enabledCount: 8 },
-        evaluatorTypeCount: { teacherCount: 5, parentCount: 2, leaderCount: 3 },
-        scoreTypeCount: { accumulateCount: 6, apiCount: 4 },
-        scoreDistribution: [
-          { range: '0-20', count: 1 },
-          { range: '20-40', count: 2 },
-          { range: '40-60', count: 3 },
-          { range: '60-80', count: 2 },
-          { range: '80-100', count: 2 }
-        ]
+        statusCount: {disable: 4, enable: 6},
+        evaluatorTypeCount: {teacher: 5, parent: 2, leader: 3},
+        scoreTypeCount: {"累计赋分": 8, "接口赋分": 2},
+        scoreDistribution: [{"0-20": 1, "20-40": 2, "40-60": 3, "60-80": 2, "80-100": 2}]
       };
     }
     if (indexRes.status === 'fulfilled') {
@@ -165,16 +178,11 @@ const loadData = async () => {
     }
   } catch (error) {
     console.error('加载图表数据失败', error);
-    // 全部使用模拟数据
     overviewData.value = {
-      statusCount: { unEnableCount: 2, enabledCount: 8 },
-      evaluatorTypeCount: { teacherCount: 5, parentCount: 2, leaderCount: 3 },
-      scoreTypeCount: { accumulateCount: 6, apiCount: 4 },
-      scoreDistribution: [
-        { range: '0-20', count: 1 }, { range: '20-40', count: 2 },
-        { range: '40-60', count: 3 }, { range: '60-80', count: 2 },
-        { range: '80-100', count: 2 }
-      ]
+      statusCount: {disable: 4, enable: 6},
+      evaluatorTypeCount: {teacher: 5, parent: 2, leader: 3},
+      scoreTypeCount: {"累计赋分": 8, "接口赋分": 2},
+      scoreDistribution: [{"0-20": 1, "20-40": 2, "40-60": 3, "60-80": 2, "80-100": 2}]
     };
     indexData.value = {
       totalTargetCount: 10,
@@ -270,7 +278,6 @@ onMounted(() => {
     }
   }
 
-  // 柱状图与饼图容器统一样式
   .bar-chart-area,
   .pie-chart-area {
     position: relative;
@@ -279,7 +286,6 @@ onMounted(() => {
     height: 100%;
   }
 
-  // 下拉选择器绝对定位（右上角）
   .chart-select-wrapper {
     position: absolute;
     top: 8px;

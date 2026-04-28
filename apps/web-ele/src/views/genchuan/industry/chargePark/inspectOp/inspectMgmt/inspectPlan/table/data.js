@@ -1,6 +1,7 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -46,6 +47,19 @@ export function isPlanCycleLabel(value, label) {
 
 export function getPlanStatusLabel(value) {
   return getDictLabel(INSPECT_PLAN_STATUS_DICT, value);
+}
+
+export function getPlanCycleTagType(value) {
+  const tagMap = {
+    日: 'primary',
+    周: 'success',
+    月: 'warning',
+    季: 'info',
+  };
+  return getDictTagTypeFromDict(
+    getDictObj(INSPECT_PLAN_CYCLE_DICT, String(value)),
+    tagMap[getPlanCycleLabel(value)] || 'info',
+  );
 }
 
 export function isPlanStatusLabel(value, label) {
@@ -276,7 +290,7 @@ export function getMockChartData() {
     finishCount: index < 2 ? 1 : 2 + (index % 2),
   }));
   const typeData = inspectTypeOptions.map((option) => ({
-    typeName: option.value,
+    typeName: option.label,
     count: list.filter((item) => item.type === option.value).length,
   }));
 
@@ -331,17 +345,32 @@ export function useSearchFormSchema() {
         options: statusOptions,
       },
     },
+    // {
+    //   fieldName: 'effectTime',
+    //   label: '生效时间',
+    //   component: 'DatePicker',
+    //   componentProps: {
+    //     placeholder: '请选择生效时间',
+    //     type: 'datetimerange',
+    //     valueFormat: 'timestamp',
+    //     clearable: true,
+    //   },
+    // },
     {
-      fieldName: 'createTimeRange',
+      fieldName: 'createTime',
       label: '创建时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择创建时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
+      // componentProps: {
+      //   placeholder: ['开始时间', '结束时间'],
+      //   showTime: true,
+      //   type: 'datetimerange',
+      //   valueFormat: 'x',
+      //   style: { width: '100%' },
+      //   clearable: true,
+      // },
     },
   ];
 }
@@ -386,6 +415,16 @@ export function useFormSchema() {
       },
       rules: 'required',
     },
+    {
+      fieldName: 'status',
+      label: '计划状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择计划状态',
+        options: statusOptions,
+      },
+      rules: 'required',
+    },
     // {
     //   fieldName: 'effectTime',
     //   label: '生效时间',
@@ -412,7 +451,7 @@ export function useFormSchema() {
 
 export function useEditFormSchema() {
   return useFormSchema().map((item) => {
-    if (['name', 'scope', 'type'].includes(item.fieldName)) {
+    if (['name', 'scope', 'status', 'type'].includes(item.fieldName)) {
       return {
         ...item,
         componentProps: {
@@ -450,7 +489,13 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'scope' },
     },
-    { field: 'cycle', title: '执行周期', minWidth: 100, sortable: true },
+    {
+      field: 'cycle',
+      title: '执行周期',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'cycle' },
+    },
     {
       field: 'status',
       title: '计划状态',
@@ -510,7 +555,13 @@ export const detailFields = [
     formatter: getPlanTypeLabel,
   },
   { key: 'scope', label: '巡检范围' },
-  { key: 'cycle', label: '执行周期' },
+  {
+    key: 'cycle',
+    label: '执行周期',
+    type: 'tag',
+    tagType: getPlanCycleTagType,
+    formatter: getPlanCycleLabel,
+  },
   { key: 'description', label: '计划描述' },
   {
     key: 'status',

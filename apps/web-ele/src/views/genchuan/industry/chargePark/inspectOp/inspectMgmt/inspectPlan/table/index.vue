@@ -17,7 +17,6 @@ import {
   updateInspectPlan,
 } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectPlan';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
 
 import ImportExcelDialog from '../components/ImportExcelDialog.vue';
 import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
@@ -25,6 +24,8 @@ import {
   auditorOptions,
   detailFields,
   filterMockList,
+  getPlanCycleLabel,
+  getPlanCycleTagType,
   getPlanStatusLabel,
   getPlanStatusTagType,
   getPlanTypeLabel,
@@ -74,6 +75,7 @@ const checkedRows = ref([]);
 const filterType = ref('');
 const filterScope = ref('');
 const filterStatus = ref('');
+const filterCycle = ref('');
 const filterAuditUserId = ref('');
 const filterTrendTime = ref('');
 
@@ -137,10 +139,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
           ...values,
           id: formData.value.id,
         });
-        ElMessage.success($t('ui.actionMessage.editSuccess'));
+        ElMessage.success('编辑成功');
       } else {
         await createInspectPlan(values);
-        ElMessage.success($t('ui.actionMessage.addSuccess'));
+        ElMessage.success('新增成功');
       }
       formDrawerApi.close();
       handleRefresh();
@@ -165,6 +167,7 @@ function buildQueryParams(page) {
     pageSize: page.pageSize,
     ...dataObj.searchParams,
     type: filterType.value || dataObj.searchParams.type,
+    cycle: filterCycle.value || dataObj.searchParams.cycle,
     scope: filterScope.value || dataObj.searchParams.scope,
     status: filterStatus.value || dataObj.searchParams.status,
     auditUserId: filterAuditUserId.value || dataObj.searchParams.auditUserId,
@@ -192,9 +195,9 @@ async function getTableData({ page }) {
     const pageResult = response?.list ? response : response?.data || response;
     const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
 
-    if (list.length === 0 && !pageResult?.total) {
-      throw new Error('接口返回数据为空');
-    }
+    // if (list.length === 0 && !pageResult?.total) {
+    //   throw new Error('接口返回数据为空');
+    // }
 
     dataObj.useStaticData = false;
     dataObj.total = pageResult.total || 0;
@@ -353,6 +356,11 @@ function handleStatusClick(status) {
   gridApi.query();
 }
 
+function handleCycleClick(cycle) {
+  filterCycle.value = filterCycle.value === cycle ? '' : cycle;
+  gridApi.query();
+}
+
 function handleAuditorClick(auditUserId) {
   filterAuditUserId.value =
     Number(filterAuditUserId.value) === Number(auditUserId) ? '' : auditUserId;
@@ -383,6 +391,9 @@ function cancelFilter(type) {
     type: () => {
       filterType.value = '';
     },
+    cycle: () => {
+      filterCycle.value = '';
+    },
   };
 
   clearMap[type]?.();
@@ -402,6 +413,9 @@ watch(
     }
     if (filter.type === 'trendTime') {
       filterTrendTime.value = filter.value;
+    }
+    if (filter.type === 'cycle') {
+      filterCycle.value = filter.value;
     }
     gridApi.query();
   },
@@ -452,6 +466,14 @@ watch(
             @close="cancelFilter('status')"
           >
             计划状态：{{ getPlanStatusLabel(filterStatus) }}
+          </ElTag>
+          <ElTag
+            v-if="filterCycle"
+            closable
+            type="info"
+            @close="cancelFilter('cycle')"
+          >
+            执行周期：{{ getPlanCycleLabel(filterCycle) }}
           </ElTag>
           <ElTag
             v-if="filterAuditUserId"
@@ -536,13 +558,25 @@ watch(
         </ElTag>
       </template>
 
+      <template #cycle="{ row }">
+        <ElTag
+          style="cursor: pointer"
+          :type="getPlanCycleTagType(row.cycle)"
+          @click="handleCycleClick(row.cycle)"
+        >
+          {{ getPlanCycleLabel(row.cycle) }}
+        </ElTag>
+      </template>
+
       <template #progress="{ row }">
         <el-progress
           style="cursor: pointer"
           :percentage="row.progress"
           :status="getProgressStatus(row.progress)"
           @click="handleProgressDetail(row)"
-        />
+        >
+          <span>{{ row.progressText }}</span>
+        </el-progress>
       </template>
 
       <template #auditUserName="{ row }">
@@ -630,7 +664,6 @@ watch(
   flex-wrap: wrap;
   gap: 12px;
   align-items: center;
-  min-height: 32px;
 }
 
 .inspect-plan-filter-tags :deep(.el-tag) {

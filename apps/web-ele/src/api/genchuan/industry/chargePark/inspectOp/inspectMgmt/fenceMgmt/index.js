@@ -1,5 +1,10 @@
 import { requestClient } from '#/api/request.js';
 
+/** 删除电子围栏 */
+export function deleteFenceMgmt(id) {
+  return requestClient.delete(`/inspectop/fence-mgmt/delete?id=${id}`);
+}
+
 /** 分页查询电子围栏列表 */
 export function getFenceMgmtPage(params) {
   return requestClient.get('/inspectop/fence-mgmt/page', { params });

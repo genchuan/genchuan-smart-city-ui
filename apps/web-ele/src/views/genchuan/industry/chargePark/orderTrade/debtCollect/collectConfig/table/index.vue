@@ -11,14 +11,13 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { 
-  cancelShareChargeOrder,
-  exportShareChargeOrderExcel,
-  getShareChargeOrderPage,
-  invoiceShareChargeOrder,
-  payShareChargeOrder,
-  refundShareChargeOrder,
-  returnShareChargeOrder,
-} from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+  getDebtRecordCollectConfigPage,
+  createDebtRecordCollectConfig,
+  saveDebtRecordCollectConfig,
+  updateDebtRecordCollectConfig,
+  enableDebtRecordCollectConfig,
+  disableDebtRecordCollectConfig,
+} from '#/api/genchuan/industry/chargePark/orderTrade/debtCollect/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -111,8 +110,7 @@ function handleRefresh() {
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
-  const data = await exportShareChargeOrderExcel();
-  downloadFileFromBlobPart({ fileName: '共享充电订单报表.xls', source: data });
+  ElMessage.info('导出功能开发中');
 }
 
 // ====================== 图片转PDF（终极零乱码） ======================
@@ -198,24 +196,19 @@ const getTableData = async (pageObj) => {
 
   try {
     dataObj.loading = true;
-    const res = await getShareChargeOrderPage(params);
+    const res = await getDebtRecordCollectConfigPage(params);
     dataObj.total = res.total;
     dataObj.list = res.list.map((v) => {
       return {
         ...v,
-        lendTime:  formatTimestamp(v.lendTime),
-        returnTime: formatTimestamp(v.returnTime),
-        archiveTime: formatTimestamp(v.archiveTime),
-        createOrderTime: formatTimestamp(v.createOrderTime),
-        updateTime: formatTimestamp(v.updateTime),
         createTime: formatTimestamp(v.createTime),
-        payTime: formatTimestamp(v.payTime),
+        updateTime: formatTimestamp(v.updateTime),
       };
     });
     return dataObj;
   } catch (error) {
-    console.error('获取订单数据失败:', error);
-    ElMessage.error('获取订单数据失败');
+    console.error('获取追缴配置数据失败:', error);
+    ElMessage.error('获取追缴配置数据失败');
     return dataObj;
   } finally {
     dataObj.loading = false;
@@ -322,13 +315,27 @@ const openEn = async () => {
 };
 
 // 订单状态映射
+// 追缴配置状态映射
 const statusMap = {
-  lending: { label: '借出中', type: 'primary' },
-  pending_pay: { label: '待支付', type: 'warning' },
-  paid: { label: '已支付', type: 'success' },
-  completed: { label: '已完成', type: 'success' },
-  cancelled: { label: '已取消', type: 'info' },
-  refunding: { label: '退款中', type: 'danger' },
+  inactive: { label: '未生效', type: 'info' },
+  active: { label: '已生效', type: 'success' },
+};
+
+// 追缴方式映射
+const collectMethodMap = {
+  sms: { label: '短信', type: 'primary' },
+  notify: { label: '站内信', type: 'info' },
+  phone: { label: '电话', type: 'warning' },
+};
+
+// 获取追缴方式标签
+const getCollectMethodLabel = (method) => {
+  return collectMethodMap[method]?.label || method;
+};
+
+// 获取追缴方式类型
+const getCollectMethodType = (method) => {
+  return collectMethodMap[method]?.type || 'default';
 };
 
 // 获取状态标签
@@ -341,133 +348,135 @@ const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
 };
 
-// 支付弹窗
-const payDialogVisible = ref(false);
-const payForm = reactive({
-  id: '',
+// 创建弹窗
+const createDialogVisible = ref(false);
+const createForm = reactive({
+  id: 0,
+  configNo: '',
+  collectMethod: '',
+  templateId: 0,
+  pushFrequency: 0,
+  status: '',
   remark: '',
+  operatorId: 0,
 });
 
-// 打开支付弹窗
-const handlePay = (row) => {
-  payForm.id = row.id;
-  payForm.remark = '';
-  payDialogVisible.value = true;
+// 打开创建弹窗
+const handleCreateConfig = () => {
+  Object.assign(createForm, {
+    id: 0,
+    configNo: '',
+    collectMethod: '',
+    templateId: 0,
+    pushFrequency: 0,
+    status: '',
+    remark: '',
+    operatorId: 0,
+  });
+  createDialogVisible.value = true;
 };
 
-// 提交支付
-const handlePaySubmit = async () => {
+// 提交创建
+const handleCreateConfigSubmit = async () => {
   try {
-    await payShareChargeOrder(payForm);
-    ElMessage.success('支付成功');
-    payDialogVisible.value = false;
+    await createDebtRecordCollectConfig(createForm);
+    ElMessage.success('创建成功');
+    createDialogVisible.value = false;
     handleRefresh();
   } catch {
-    ElMessage.error('支付失败');
+    ElMessage.error('创建失败');
   }
 };
 
-// 取消弹窗
-const cancelDialogVisible = ref(false);
-const cancelForm = reactive({
-  id: '',
+// 更新弹窗
+const updateDialogVisible = ref(false);
+const updateForm = reactive({
+  id: 0,
+  configNo: '',
+  collectMethod: '',
+  templateId: 0,
+  pushFrequency: 0,
+  status: '',
   remark: '',
+  operatorId: 0,
 });
 
-// 打开取消弹窗
-const handleCancel = (row) => {
-  cancelForm.id = row.id;
-  cancelForm.remark = '';
-  cancelDialogVisible.value = true;
+// 打开更新弹窗
+const handleUpdateConfig = (row) => {
+  Object.assign(updateForm, {
+    id: row.id,
+    configNo: row.configNo || '',
+    collectMethod: row.collectMethod || '',
+    templateId: row.templateId || 0,
+    pushFrequency: row.pushFrequency || 0,
+    status: row.status || '',
+    remark: '',
+    operatorId: 0,
+  });
+  updateDialogVisible.value = true;
 };
 
-// 提交取消
-const handleCancelSubmit = async () => {
+// 提交更新
+const handleUpdateConfigSubmit = async () => {
   try {
-    await cancelShareChargeOrder(cancelForm);
-    ElMessage.success('取消成功');
-    cancelDialogVisible.value = false;
+    await updateDebtRecordCollectConfig(updateForm);
+    ElMessage.success('更新成功');
+    updateDialogVisible.value = false;
     handleRefresh();
   } catch {
-    ElMessage.error('取消失败');
+    ElMessage.error('更新失败');
   }
 };
 
-// 退款弹窗
-const refundDialogVisible = ref(false);
-const refundForm = reactive({
+// 启用弹窗
+const enableDialogVisible = ref(false);
+const enableForm = reactive({
   id: '',
   remark: '',
 });
 
-// 打开退款弹窗
-const handleRefund = (row) => {
-  refundForm.id = row.id;
-  refundForm.remark = '';
-  refundDialogVisible.value = true;
+// 打开启用弹窗
+const handleEnable = (row) => {
+  enableForm.id = row.id;
+  enableForm.remark = '';
+  enableDialogVisible.value = true;
 };
 
-// 提交退款
-const handleRefundSubmit = async () => {
+// 提交启用
+const handleEnableSubmit = async () => {
   try {
-    await refundShareChargeOrder(refundForm);
-    ElMessage.success('退款申请已提交');
-    refundDialogVisible.value = false;
+    await enableDebtRecordCollectConfig(enableForm);
+    ElMessage.success('启用成功');
+    enableDialogVisible.value = false;
     handleRefresh();
   } catch {
-    ElMessage.error('退款申请失败');
+    ElMessage.error('启用失败');
   }
 };
 
-// 开票弹窗
-const invoiceDialogVisible = ref(false);
-const invoiceForm = reactive({
+// 禁用弹窗
+const disableDialogVisible = ref(false);
+const disableForm = reactive({
   id: '',
   remark: '',
 });
 
-// 打开开票弹窗
-const handleInvoice = (row) => {
-  invoiceForm.id = row.id;
-  invoiceForm.remark = '';
-  invoiceDialogVisible.value = true;
+// 打开禁用弹窗
+const handleDisable = (row) => {
+  disableForm.id = row.id;
+  disableForm.remark = '';
+  disableDialogVisible.value = true;
 };
 
-// 提交开票
-const handleInvoiceSubmit = async () => {
+// 提交禁用
+const handleDisableSubmit = async () => {
   try {
-    await invoiceShareChargeOrder(invoiceForm);
-    ElMessage.success('开票申请已提交');
-    invoiceDialogVisible.value = false;
+    await disableDebtRecordCollectConfig(disableForm);
+    ElMessage.success('禁用成功');
+    disableDialogVisible.value = false;
     handleRefresh();
   } catch {
-    ElMessage.error('开票申请失败');
-  }
-};
-
-// 归还弹窗
-const returnDialogVisible = ref(false);
-const returnForm = reactive({
-  id: '',
-  remark: '',
-});
-
-// 打开归还弹窗
-const handleReturn = (row) => {
-  returnForm.id = row.id;
-  returnForm.remark = '';
-  returnDialogVisible.value = true;
-};
-
-// 提交归还
-const handleReturnSubmit = async () => {
-  try {
-    await returnShareChargeOrder(returnForm);
-    ElMessage.success('归还成功');
-    returnDialogVisible.value = false;
-    handleRefresh();
-  } catch {
-    ElMessage.error('归还失败');
+    ElMessage.error('禁用失败');
   }
 };
 
@@ -549,151 +558,153 @@ const alarmColumns = [
       </el-table>
     </ElDialog>
 
-    <!-- 支付弹窗 -->
+    <!-- 创建弹窗 -->
     <ElDialog
-      v-model="payDialogVisible"
-      title="订单支付"
+      v-model="createDialogVisible"
+      title="创建追缴配置"
       width="500px"
       append-to-body
     >
-      <el-form :model="payForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="payForm.id" disabled />
+      <el-form :model="createForm" label-width="80px">
+        <el-form-item label="配置编号">
+          <el-input v-model="createForm.configNo" />
+        </el-form-item>
+        <el-form-item label="追缴方式">
+          <el-select v-model="createForm.collectMethod" placeholder="请选择追缴方式">
+            <el-option label="短信" value="sms" />
+            <el-option label="站内信" value="notify" />
+            <el-option label="电话" value="phone" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="推送频率">
+          <el-input v-model.number="createForm.pushFrequency" type="number" />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="createForm.status" placeholder="请选择状态">
+            <el-option label="未生效" value="inactive" />
+            <el-option label="已生效" value="active" />
+          </el-select>
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="payForm.remark"
+            v-model="createForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入支付备注"
+            placeholder="请输入备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="payDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handlePaySubmit">
-            确认支付
+          <el-button @click="createDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleCreateConfigSubmit">
+            确认创建
           </el-button>
         </div>
       </template>
     </ElDialog>
 
-    <!-- 取消弹窗 -->
+    <!-- 更新弹窗 -->
     <ElDialog
-      v-model="cancelDialogVisible"
-      title="取消订单"
+      v-model="updateDialogVisible"
+      title="更新追缴配置"
       width="500px"
       append-to-body
     >
-      <el-form :model="cancelForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="cancelForm.id" disabled />
+      <el-form :model="updateForm" label-width="80px">
+        <el-form-item label="配置编号">
+          <el-input v-model="updateForm.configNo" />
+        </el-form-item>
+        <el-form-item label="追缴方式">
+          <el-select v-model="updateForm.collectMethod" placeholder="请选择追缴方式">
+            <el-option label="短信" value="sms" />
+            <el-option label="站内信" value="notify" />
+            <el-option label="电话" value="phone" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="推送频率">
+          <el-input v-model.number="updateForm.pushFrequency" type="number" />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select v-model="updateForm.status" placeholder="请选择状态">
+            <el-option label="启用" value="enabled" />
+            <el-option label="禁用" value="disabled" />
+          </el-select>
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="cancelForm.remark"
+            v-model="updateForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入取消备注"
+            placeholder="请输入备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="cancelDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleCancelSubmit">
-            确认取消
+          <el-button @click="updateDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleUpdateConfigSubmit">
+            确认更新
           </el-button>
         </div>
       </template>
     </ElDialog>
 
-    <!-- 退款弹窗 -->
+    <!-- 启用弹窗 -->
     <ElDialog
-      v-model="refundDialogVisible"
-      title="退款申请"
+      v-model="enableDialogVisible"
+      title="启用追缴配置"
       width="500px"
       append-to-body
     >
-      <el-form :model="refundForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="refundForm.id" disabled />
+      <el-form :model="enableForm" label-width="80px">
+        <el-form-item label="配置ID">
+          <el-input v-model="enableForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="refundForm.remark"
+            v-model="enableForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入退款备注"
+            placeholder="请输入启用备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="refundDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleRefundSubmit">
-            确认退款
+          <el-button @click="enableDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleEnableSubmit">
+            确认启用
           </el-button>
         </div>
       </template>
     </ElDialog>
 
-    <!-- 开票弹窗 -->
+    <!-- 禁用弹窗 -->
     <ElDialog
-      v-model="invoiceDialogVisible"
-      title="开票申请"
+      v-model="disableDialogVisible"
+      title="禁用追缴配置"
       width="500px"
       append-to-body
     >
-      <el-form :model="invoiceForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="invoiceForm.id" disabled />
+      <el-form :model="disableForm" label-width="80px">
+        <el-form-item label="配置ID">
+          <el-input v-model="disableForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
-            v-model="invoiceForm.remark"
+            v-model="disableForm.remark"
             type="textarea"
             rows="3"
-            placeholder="请输入开票备注"
+            placeholder="请输入禁用备注"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="invoiceDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleInvoiceSubmit">
-            确认开票
-          </el-button>
-        </div>
-      </template>
-    </ElDialog>
-
-    <!-- 归还弹窗 -->
-    <ElDialog
-      v-model="returnDialogVisible"
-      title="归还"
-      width="500px"
-      append-to-body
-    >
-      <el-form :model="returnForm" label-width="80px">
-        <el-form-item label="订单ID">
-          <el-input v-model="returnForm.id" disabled />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input
-            v-model="returnForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入归还备注"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="returnDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleReturnSubmit">
-            确认归还
+          <el-button @click="disableDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleDisableSubmit">
+            确认禁用
           </el-button>
         </div>
       </template>
@@ -708,11 +719,9 @@ const alarmColumns = [
             @click="handleExport"
           />
           <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
+            content="新增配置"
+            icon-name="Plus"
+            @click="handleCreateConfig"
           />
           <IconButton
             content="搜索"
@@ -737,38 +746,20 @@ const alarmColumns = [
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
-      <template #orderNo="{ row }">
+      <template #configNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
           class="common-align"
           type="primary"
         >
-          {{ row.orderNo }}
+          {{ row.configNo }}
         </el-text>
       </template>
-      <template #payMethod="{ row }">
-        <span v-if="row.payMethod === 'wechat'">微信</span>
-        <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
-        <span v-else-if="row.payMethod === 'bank'">银行卡</span>
-        <span v-else-if="row.payMethod === 'cash'">现金</span>
-        <span v-else>{{ row.payMethod }}</span>
+      <template #collectMethod="{ row }">
+        <el-tag :type="getCollectMethodType(row.collectMethod)">
+          {{ getCollectMethodLabel(row.collectMethod) }}
+        </el-tag>
       </template>
-      <template #halfyearWarnCount="{ row }">
-        <el-text @click="handleTotal(row)" class="common-align" type="primary">
-          {{ row.halfyearWarnCount }}
-        </el-text>
-      </template>
-
-      <template #orderId="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.orderId }}
-        </el-text>
-      </template>
-
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
@@ -777,35 +768,22 @@ const alarmColumns = [
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="归还"
-            v-if="row.status === 'lending'"
-            icon-name="video-pause"
-            @click="handleReturn(row)"
+            content="编辑"
+            icon-name="Edit"
+            @click="handleUpdateConfig(row)"
           />
           <IconButton
-            content="支付"
-            v-if="row.status === 'pending_pay'"
-            icon-name="Money"
-            @click="handlePay(row)"
+            content="启用"
+            v-if="row.status === 'inactive'"
+            icon-name="Check"
+            @click="handleEnable(row)"
           />
           <IconButton
-            content="退款"
-            icon-name="back"
-            v-if="row.status === 'paid'"
-            @click="handleRefund(row)"
-          />
-          <IconButton
-            content="取消"
-            v-if="row.status === 'pending_pay'"
-            icon-name="delete"
+            content="禁用"
+            v-if="row.status === 'active'"
+            icon-name="Close"
             color="#F56C6C"
-            @click="handleCancel(row)"
-          />
-          <IconButton
-            content="开票"
-            v-if="row.status === 'completed'"
-            icon-name="Document"
-            @click="handleInvoice(row)"
+            @click="handleDisable(row)"
           />
         </div>
       </template>

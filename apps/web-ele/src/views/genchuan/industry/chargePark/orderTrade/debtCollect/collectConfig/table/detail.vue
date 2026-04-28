@@ -2,7 +2,7 @@
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 设备借出订单详情
+// 追缴配置详情
 const props = defineProps({
   detailObj: {
     type: Object,
@@ -19,8 +19,8 @@ const { detailObj, title } = toRefs(props);
 
 // 标题
 const drawerTitle = computed(() => {
-  const orderNo = detailObj.value?.orderNo || '设备借出订单';
-  return title.value || `${orderNo} 详情`;
+  const configNo = detailObj.value?.configNo || '追缴配置';
+  return title.value || `${configNo} 详情`;
 });
 
 // 抽屉
@@ -51,68 +51,33 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">订单编号:</div>
-        <div class="detail-row-right">{{ detailObj.orderNo || '-' }}</div>
+        <div class="detail-row-left">配置编号:</div>
+        <div class="detail-row-right">{{ detailObj.configNo || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">用户ID:</div>
-        <div class="detail-row-right">{{ detailObj.userId || '-' }}</div>
+        <div class="detail-row-left">追缴方式:</div>
+        <div class="detail-row-right">{{ detailObj.collectMethod || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">用户昵称:</div>
-        <div class="detail-row-right">{{ detailObj.userNickname || '-' }}</div>
+        <div class="detail-row-left">推送模板ID:</div>
+        <div class="detail-row-right">{{ detailObj.templateId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">借出时间:</div>
-        <div class="detail-row-right">{{ detailObj.lendTime || '-' }}</div>
+        <div class="detail-row-left">推送频次（小时）:</div>
+        <div class="detail-row-right">{{ detailObj.pushFrequency || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">归还时间:</div>
-        <div class="detail-row-right">{{ detailObj.returnTime || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">实际使用时长（分钟）:</div>
-        <div class="detail-row-right">{{ detailObj.actualDuration || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">订单金额:</div>
-        <div class="detail-row-right">{{ detailObj.amount || '0.00' }} 元</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">订单状态:</div>
+        <div class="detail-row-left">状态:</div>
         <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">订单生成时间:</div>
-        <div class="detail-row-right">{{ detailObj.createOrderTime || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">所属场站ID:</div>
-        <div class="detail-row-right">{{ detailObj.stationId || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">支付方式:</div>
-        <div class="detail-row-right">{{ detailObj.payMethod || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">优惠抵扣金额:</div>
-        <div class="detail-row-right">{{ detailObj.discountAmount || '0.00' }} 元</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">归档时间:</div>
-        <div class="detail-row-right">{{ detailObj.archiveTime || '-' }}</div>
+        <div class="detail-row-left">配置说明:</div>
+        <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
       </div>
 
       <div class="detail-card-row">

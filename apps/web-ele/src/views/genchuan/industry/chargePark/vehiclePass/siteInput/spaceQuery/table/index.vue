@@ -433,12 +433,20 @@ onMounted(() => {
     ElMessage.success(`已筛选泊位：${spaceNo}`);
   };
 
+<<<<<<<< HEAD:apps/web-ele/src/views/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery/table/index.vue
   window.addEventListener('filterByChart:spaceQuery', handleFilterByStatus);
+========
+  window.addEventListener('filterByChart', handleFilterByStatus);
+>>>>>>>> 80366cfb2187d4eb6f6d466b2ac29d895fce4bfa:apps/web-ele/src/views/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery/table/index.vue.bak
   window.addEventListener('filterBySpace', handleFilterBySpace);
 });
 
 onUnmounted(() => {
+<<<<<<<< HEAD:apps/web-ele/src/views/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery/table/index.vue
   window.removeEventListener('filterByChart:spaceQuery', () => {});
+========
+  window.removeEventListener('filterByChart', () => {});
+>>>>>>>> 80366cfb2187d4eb6f6d466b2ac29d895fce4bfa:apps/web-ele/src/views/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery/table/index.vue.bak
   window.removeEventListener('filterBySpace', () => {});
 });
 </script>
@@ -516,7 +524,11 @@ onUnmounted(() => {
         <el-text
           class="common-align"
           type="primary"
+<<<<<<<< HEAD:apps/web-ele/src/views/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery/table/index.vue
           style="cursor: pointer"
+========
+          style="cursor: pointer;"
+>>>>>>>> 80366cfb2187d4eb6f6d466b2ac29d895fce4bfa:apps/web-ele/src/views/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery/table/index.vue.bak
           @click="handleSpaceNoClick(row)"
         >
           {{ row.spaceNo }}
@@ -526,7 +538,11 @@ onUnmounted(() => {
         <el-text
           class="common-align"
           type="primary"
+<<<<<<<< HEAD:apps/web-ele/src/views/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery/table/index.vue
           style="cursor: pointer"
+========
+          style="cursor: pointer;"
+>>>>>>>> 80366cfb2187d4eb6f6d466b2ac29d895fce4bfa:apps/web-ele/src/views/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery/table/index.vue.bak
           @click="handleQueryUserClick(row)"
         >
           {{ row.queryUserName }}
@@ -536,7 +552,11 @@ onUnmounted(() => {
         <el-text
           class="common-align"
           type="primary"
+<<<<<<<< HEAD:apps/web-ele/src/views/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery/table/index.vue
           style="cursor: pointer"
+========
+          style="cursor: pointer;"
+>>>>>>>> 80366cfb2187d4eb6f6d466b2ac29d895fce4bfa:apps/web-ele/src/views/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery/table/index.vue.bak
           @click="handleAreaClick(row)"
         >
           {{ row.areaName }}
@@ -590,3 +610,7 @@ onUnmounted(() => {
   }
 }
 </style>
+<<<<<<<< HEAD:apps/web-ele/src/views/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery/table/index.vue
+========
+
+>>>>>>>> 80366cfb2187d4eb6f6d466b2ac29d895fce4bfa:apps/web-ele/src/views/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery/table/index.vue.bak

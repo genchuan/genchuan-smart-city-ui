@@ -1,14 +1,13 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import AssessDetailDrawer from './components/assessDetail.vue';
 import {
-  dataList,
   getAssessMgmtPage,
   createAssessMgmt,
   updateAssessMgmt,
@@ -57,7 +56,7 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
@@ -113,12 +112,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel: () => drawerApi.close(),
 });
 
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => createDrawerApi.close(),
-});
-
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -134,7 +127,7 @@ const gridColumns = ref(getColumnsByStatus(activeName.value));
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -143,7 +136,7 @@ const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -188,40 +181,10 @@ const getTableData = async ({ page }) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = dataList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'className':
-            itemValue = item.className;
-            break;
-          case 'assessType':
-            itemValue = item.assessType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取考评列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -240,10 +203,10 @@ function handleReset() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportAssessMgmt(searchParams.value);
-      downloadFileFromBlobPart({ fileName: '考评管理列表.xls', source: data });
+      downloadFileFromBlobPart({fileName: '考评管理列表.xls', source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -271,10 +234,10 @@ async function handleBatchPublish() {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '发布中...' });
+    const loading = ElLoading.service({text: '发布中...'});
     try {
       const ids = selectedRows.map(row => row.id);
-      const res = await publishAssessMgmt({ ids });
+      const res = await publishAssessMgmt({ids});
       if (res && res !== false) {
         ElMessage.success('批量发布成功');
         handleRefresh();
@@ -284,41 +247,24 @@ async function handleBatchPublish() {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createFormApi.resetForm();
-  // 新增时设置默认状态为“未发布”
-  createFormApi.setValues({ status: '未发布' });
-  createDrawerApi.open();
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
-async function handleEdit(row) {
+function handleEdit(row) {
   if (row.status !== '未发布') {
     ElMessage.warning('只有未发布状态的考评记录可以编辑');
     return;
   }
   isEditMode.value = true;
   currentEditId.value = row.id;
-  try {
-    const detail = await getAssessMgmtDetail({ id: row.id });
-    createFormApi.setValues({
-      className: detail.className,
-      assessType: detail.assessType,
-      cycle: detail.cycle,
-      score: detail.score,
-      assessUser: detail.assessUser,
-      status: detail.status,     // 补充状态赋值
-      remark: detail.remark,
-    });
-    createDrawerApi.open();
-  } catch (error) {
-    console.error('加载详情失败', error);
-    ElMessage.error('加载详情失败，请检查网络或联系管理员');
-  }
+  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
 }
 
 // 单行发布
@@ -333,9 +279,9 @@ async function handlePublish(row) {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '发布中...' });
+    const loading = ElLoading.service({text: '发布中...'});
     try {
-      const res = await publishAssessMgmt({ ids: [row.id] });
+      const res = await publishAssessMgmt({ids: [row.id]});
       if (res && res !== false) {
         ElMessage.success('发布成功');
         handleRefresh();
@@ -345,7 +291,8 @@ async function handlePublish(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 新增/编辑表单
@@ -393,6 +340,41 @@ const [CreateForm, createFormApi] = useVbenForm({
   schema: useCreateFormSchema(isEditMode.value),
   showCollapseButton: false,
   submitButtonOptions: {content: '保存'},
+});
+
+// 修复的核心：在抽屉打开时重置表单并加载编辑数据
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => createDrawerApi.close(),
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 每次打开前先重置表单（清空值 + 清除校验错误）
+      await createFormApi.resetForm();
+      // 如果是编辑模式，则填充数据
+      if (isEditMode.value && currentEditId.value) {
+        try {
+          const detail = await getAssessMgmtDetail({id: currentEditId.value});
+          await createFormApi.setValues({
+            className: detail.className,
+            assessType: detail.assessType,
+            cycle: detail.cycle,
+            score: detail.score,
+            assessUser: detail.assessUser,
+            status: detail.status,
+            remark: detail.remark,
+          });
+        } catch (error) {
+          console.error('加载详情失败', error);
+          ElMessage.error('加载详情失败，请检查网络或联系管理员');
+          createDrawerApi.close(); // 加载失败则关闭抽屉
+        }
+      } else {
+        // 新增模式，设置默认状态为“未发布”
+        await createFormApi.setValues({status: '未发布'});
+      }
+    }
+  },
 });
 
 // 查看详情
