@@ -70,6 +70,7 @@ const exceptionPointDialogRef = ref(null);
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 const filterUserId = ref('');
+const filterUserName = ref('');
 const filterArea = ref('');
 const filterStatus = ref('');
 const filterSyncStatus = ref('');
@@ -147,7 +148,12 @@ async function getTableData({ page }) {
     //   throw new Error('接口返回数据为空');
     // }
 
-    const normalizedList = list.map((item) => normalizeInspectTrackRow(item));
+    const normalizedList = list.map((item) => {
+      return{
+        ...normalizeInspectTrackRow(item),
+        trackPointsText:`${item?.points?.split('|')?.length ?? 0} 个轨迹点`
+      }
+    });
     const visibleList = filterTrendTime.value
       ? filterInspectTrackRows(normalizedList, {
           ...queryParams,
@@ -263,7 +269,10 @@ function onSubmit(values) {
 async function handleOpenDetail(row) {
   try {
     const response = await getInspectTrackDetail(row.id);
-    dataObj.detailObj = normalizeInspectTrackRow(response || row);
+    dataObj.detailObj = {
+      ...normalizeInspectTrackRow(response || row),
+      ...row,
+    }
   } catch (error) {
     console.error('获取巡检轨迹详情失败，使用行数据:', error);
     dataObj.detailObj = normalizeInspectTrackRow(row);
@@ -296,10 +305,11 @@ function changeTotalShow() {
   dataObj.totalShow = !dataObj.totalShow;
 }
 
-function handleUserClick(userId) {
-  if (!userId) return;
+function handleUserClick(row) {
+  if (!row?.userId) return;
   filterUserId.value =
-    Number(filterUserId.value) === Number(userId) ? '' : userId;
+    Number(filterUserId.value) === Number(row?.userId) ? '' : row?.userId;
+  filterUserName.value = row?.userName;
   gridApi.query();
 }
 
@@ -390,7 +400,7 @@ onMounted(() => {
             type="primary"
             @close="cancelFilter('userId')"
           >
-            巡检人员：{{ getUserName(filterUserId) }}
+            巡检人员：{{ filterUserName }}
           </ElTag>
           <ElTag
             v-if="filterArea"
@@ -435,15 +445,15 @@ onMounted(() => {
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchReplay"
           />
-          <ElDropdown @command="handleExport">
-            <IconButton content="导出" icon-name="download" />
-            <template #dropdown>
+          <!-- <ElDropdown @command="handleExport"> -->
+            <IconButton content="导出" icon-name="download"  @click="handleExport"/>
+            <!-- <template #dropdown>
               <ElDropdownMenu>
                 <ElDropdownItem command="excel">导出 Excel</ElDropdownItem>
                 <ElDropdownItem command="pdf">导出 PDF</ElDropdownItem>
               </ElDropdownMenu>
-            </template>
-          </ElDropdown>
+            </template> -->
+          <!-- </ElDropdown> -->
           <IconButton
             content="搜索"
             icon-name="search"
@@ -467,7 +477,7 @@ onMounted(() => {
           class="common-align"
           style="cursor: pointer"
           type="primary"
-          @click="handleUserClick(row.userId)"
+          @click="handleUserClick(row)"
         >
           {{ row.userName }}
         </el-text>

@@ -86,7 +86,7 @@ function normalizeTrendData(trendData) {
     const trackTime = item.time ?? item.trackTime ?? item.track_time;
     return {
       trackTime: String(trackTime ?? ''),
-      time: formatTrendTime(trackTime),
+      time: item.time,
       totalMileage: Number(item.totalMileage ?? item.mileage ?? 0),
     };
   });

@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getInspectPlanChart } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectPlan';
-import Columnar from '#/components/stats/columnar.vue';
+import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
@@ -130,7 +130,7 @@ onMounted(() => {
       y-name="计划数"
       @line-click="handleTrendClick"
     />
-    <Columnar
+    <BarClick
       class="park-type-chart"
       title="计划类型分布"
       :series-data="typeSeriesData"
