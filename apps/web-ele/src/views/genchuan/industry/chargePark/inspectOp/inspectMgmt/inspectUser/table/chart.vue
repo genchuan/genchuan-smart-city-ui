@@ -67,7 +67,7 @@ async function fetchChartData() {
 
 function handleCardClick(card) {
   if (card.status === 'online') {
-    emit('onlineFilter', '在线');
+    emit('onlineFilter', '1');
     return;
   }
   emit('statusFilter', '');
