@@ -16,7 +16,7 @@ const cards = reactive([
   { title: '入场峰值', value: 0, color: '#FF9F40', key: 'enterPeak' },
 ]);
 
-const state = reactive({
+const state = reactive(
   chartData: {
     trend: [],
     typeCount: [],
