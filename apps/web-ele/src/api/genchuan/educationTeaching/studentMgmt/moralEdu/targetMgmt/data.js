@@ -122,12 +122,9 @@ export function getTargetMgmtDetail(params) {
 }
 
 // ==================== 图表接口 ====================
-// 适配后端字段格式
 export function getTargetMgmtChart(params) {
-  // 调用时需传递 startTime, endTime 参数
   return requestClient.get('/studentmgmt/target-mgmt/chart', { params }).catch(err => {
     console.warn('图表总览接口失败，使用模拟数据', err);
-    // 模拟数据与后端字段完全一致
     return Promise.resolve({
       statusCount: {
         disable: 4,

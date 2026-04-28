@@ -139,7 +139,6 @@ export function getHonorMgmtDetail(params) {
 }
 
 // ==================== 图表接口 ====================
-// 图表接口返回的数据结构中没有 honorType 和 status 字段，无需转换
 export function getHonorMgmtChart(params) {
   return requestClient.get('/studentmgmt/honor-mgmt/chart', { params }).catch(err => {
     console.warn('图表总览接口失败，使用模拟数据', err);
@@ -158,14 +157,12 @@ export function getHonorMgmtChart(params) {
 export function getHonorCount(params) {
   return requestClient.get('/studentmgmt/honor-mgmt/chart/honorCount', { params })
     .then(res => {
-      // 如果是 type 维度，需要将数字 name 转为中文荣誉类型
       if (params.dimension === 'type' && Array.isArray(res)) {
         return res.map(item => ({
           ...item,
-          name: honorTypeReverse[item.name] || item.name  // 利用已有的 honorTypeReverse 映射表
+          name: honorTypeReverse[item.name] || item.name
         }));
       }
-      // class 维度或其他情况直接返回
       return res;
     })
     .catch(err => {

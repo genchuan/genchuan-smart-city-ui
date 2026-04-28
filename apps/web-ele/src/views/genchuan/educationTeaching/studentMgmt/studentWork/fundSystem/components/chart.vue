@@ -1,6 +1,6 @@
 <script setup>
-import { reactive, onMounted, ref, computed } from 'vue';
-import { ElMessage } from 'element-plus';
+import {reactive, onMounted, ref, computed} from 'vue';
+import {ElMessage} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import {
@@ -18,16 +18,16 @@ const cardList = computed(() => {
   const totalAmount = overviewData.value.totalApplyAmount || 0;
   const approved = overviewData.value.approvedCount || 0;
   return [
-    { title: '申请总次数', value: totalApply, color: '#409EFF', status: 'total' },
-    { title: '待审核数', value: pending, color: '#E6A23C', status: 'pending' },
-    { title: '申请总金额', value: `¥${totalAmount.toFixed(2)}`, color: '#67C23A', status: 'amount' },
-    { title: '已审核数', value: approved, color: '#909399', status: 'approved' },
+    {title: '申请总次数', value: totalApply, color: '#409EFF', status: 'total'},
+    {title: '待审核数', value: pending, color: '#E6A23C', status: 'pending'},
+    {title: '申请总金额', value: `¥${totalAmount.toFixed(2)}`, color: '#67C23A', status: 'amount'},
+    {title: '已审核数', value: approved, color: '#909399', status: 'approved'},
   ];
 });
 
 const barGradeXData = computed(() => gradeData.value.map(item => item.grade));
 const barGradeSeries = computed(() => [
-  { name: '资助人数', data: gradeData.value.map(item => item.fundCount) },
+  {name: '资助人数', data: gradeData.value.map(item => item.fundCount)},
 ]);
 
 const barTypeXData = computed(() => gradeData.value.map(item => item.grade));
@@ -44,9 +44,9 @@ const barTypeOther = computed(() => gradeData.value.map(item => {
   return type ? type.value : 0;
 }));
 const barTypeSeries = computed(() => [
-  { name: '助学金', data: barTypeScholarship.value },
-  { name: '勤工俭学', data: barTypeWorkStudy.value },
-  { name: '其他', data: barTypeOther.value },
+  {name: '助学金', data: barTypeScholarship.value},
+  {name: '勤工俭学', data: barTypeWorkStudy.value},
+  {name: '其他', data: barTypeOther.value},
 ]);
 
 const emit = defineEmits(['barClick', 'cardSelect']);
@@ -55,18 +55,15 @@ const handleCardClick = (cardInfo) => {
   emit('cardSelect', cardInfo.status);
 };
 
-// 统一处理柱状图点击，兼容参数可能是字符串或对象
 const handleBarClick = (params, chartType) => {
   let gradeName = null;
   if (typeof params === 'string') {
     gradeName = params;
   } else if (params && typeof params === 'object') {
-    // 尝试多种可能的属性（根据实际 Bar 组件传递的结构）
     gradeName = params.name || params.label || params.xValue || params.value;
   }
   if (gradeName) {
-    // 确保 emit 的数据格式为 { type: 'grade', value: 年级 }
-    emit('barClick', { type: 'grade', value: gradeName });
+    emit('barClick', {type: 'grade', value: gradeName});
   } else {
     console.warn('柱状图点击未能解析年级名称', params);
   }
@@ -75,14 +72,16 @@ const handleBarClick = (params, chartType) => {
 const loadData = async () => {
   loading.value = true;
   try {
+    // ✅ 修正：移除 timeRange 参数，后端不需要传参
     const [chartRes, countRes] = await Promise.all([
-      getFundSystemChart({ timeRange: '本学期' }),
-      getFundCount({ timeRange: '本学期' }),
+      getFundSystemChart({}),
+      getFundCount({}),
     ]);
     overviewData.value = chartRes;
     gradeData.value = countRes.gradeStatistics || [];
   } catch (error) {
     console.error('加载图表数据失败', error);
+    // 依然保留模拟数据兜底
     overviewData.value = {
       totalApplyCount: 128,
       pendingAuditCount: 23,
@@ -90,11 +89,46 @@ const loadData = async () => {
       approvedCount: 105,
     };
     gradeData.value = [
-      { grade: '2022级', fundCount: 45, typeDistribution: [{ name: '助学金', value: 32 }, { name: '勤工俭学', value: 10 }, { name: '其他', value: 3 }] },
-      { grade: '2023级', fundCount: 42, typeDistribution: [{ name: '助学金', value: 28 }, { name: '勤工俭学', value: 11 }, { name: '其他', value: 3 }] },
-      { grade: '2024级', fundCount: 41, typeDistribution: [{ name: '助学金', value: 29 }, { name: '勤工俭学', value: 8 }, { name: '其他', value: 4 }] },
-      { grade: '2025级', fundCount: 38, typeDistribution: [{ name: '助学金', value: 25 }, { name: '勤工俭学', value: 10 }, { name: '其他', value: 3 }] },
-      { grade: '2026级', fundCount: 35, typeDistribution: [{ name: '助学金', value: 22 }, { name: '勤工俭学', value: 9 }, { name: '其他', value: 4 }] },
+      {
+        grade: '2022级',
+        fundCount: 45,
+        typeDistribution: [{name: '助学金', value: 32}, {
+          name: '勤工俭学',
+          value: 10
+        }, {name: '其他', value: 3}]
+      },
+      {
+        grade: '2023级',
+        fundCount: 42,
+        typeDistribution: [{name: '助学金', value: 28}, {
+          name: '勤工俭学',
+          value: 11
+        }, {name: '其他', value: 3}]
+      },
+      {
+        grade: '2024级',
+        fundCount: 41,
+        typeDistribution: [{name: '助学金', value: 29}, {name: '勤工俭学', value: 8}, {
+          name: '其他',
+          value: 4
+        }]
+      },
+      {
+        grade: '2025级',
+        fundCount: 38,
+        typeDistribution: [{name: '助学金', value: 25}, {
+          name: '勤工俭学',
+          value: 10
+        }, {name: '其他', value: 3}]
+      },
+      {
+        grade: '2026级',
+        fundCount: 35,
+        typeDistribution: [{name: '助学金', value: 22}, {name: '勤工俭学', value: 9}, {
+          name: '其他',
+          value: 4
+        }]
+      },
     ];
   } finally {
     loading.value = false;

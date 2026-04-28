@@ -167,7 +167,6 @@ export function getDeptOptions(params) {
 }
 
 // ==================== 图表接口 ====================
-// 修改：模拟数据字段与后端保持一致
 export function getMoralActivityChart(params) {
   return requestClient.get('/studentmgmt/moral-activity/chart', { params }).catch(err => {
     console.warn('图表总览接口失败，使用模拟数据', err);

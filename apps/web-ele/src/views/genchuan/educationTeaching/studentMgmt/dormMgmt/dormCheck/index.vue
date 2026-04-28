@@ -383,7 +383,7 @@ const [CheckForm, checkFormApi] = useVbenForm({
     const loading = ElLoading.service({text: '打卡中...'});
     try {
       const res = await createDormCheck({
-        studentId: currentCheckStudentIds,
+        studentIds: currentCheckStudentIds,
         checkTime: values.checkTime,
       });
       if (res && res !== false) {

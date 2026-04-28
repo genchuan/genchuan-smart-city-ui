@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, onMounted, ref, computed } from 'vue';
-import { ElMessage, ElSelect, ElOption } from 'element-plus';
+import { ElMessage, ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
@@ -45,6 +45,23 @@ const distributionData = ref({grade: [], major: [], class: []});
 const coreIndexData = ref([]);
 
 const activeDistribution = ref('grade');
+
+// 时间范围选择器相关（只针对核心指标接口）
+// 默认值：开始时间 2024-01-01，结束时间 2026-12-31
+const dateRange = ref([new Date('2024-01-01'), new Date('2026-12-31')]);
+
+// 格式化日期为后端需要的 ISO 8601 格式 (LocalDateTime)
+const formatLocalDateTime = (date) => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
+
 // 计算当前饼图数据（转换为 Pie 组件所需格式）
 const distributionPieData = computed(() => {
   const raw = distributionData.value[activeDistribution.value] || [];
@@ -86,8 +103,7 @@ const updateBarTrend = () => {
   barState.xData = data.map(item => item.date);
   barState.seriesData = [
     {name: '新增学生数', data: data.map(item => item.newStudentCount)},
-    {name: '异动学生数', data: data.map(item => item.transferCount)},
-    {name: '休学学生数', data: data.map(item => item.suspendCount)},
+    {name: '学籍异动数', data: data.map(item => item.statusChangeCount)},
   ];
   barState.title = '学生核心指标趋势';
 };
@@ -131,16 +147,56 @@ const changeDistribution = async (dimension) => {
   }
 };
 
+// 加载核心指标数据（带时间范围参数）
+const loadCoreIndexData = async () => {
+  try {
+    const params = {};
+
+    // 只有当时间范围存在时才添加参数
+    if (dateRange.value && dateRange.value.length === 2) {
+      const startDate = dateRange.value[0];
+      const endDate = dateRange.value[1];
+      if (startDate) {
+        params.startTime = formatLocalDateTime(startDate);
+      }
+      if (endDate) {
+        // 设置结束时间为当天的 23:59:59
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999);
+        params.endTime = formatLocalDateTime(endDateTime);
+      }
+    }
+
+    const res = await getStudentInfoCoreIndex(params);
+    coreIndexData.value = res;
+    updateBarTrend();
+  } catch (error) {
+    console.error('加载核心指标数据失败', error);
+    coreIndexData.value = [
+      {date: '2025-01', newStudentCount: 45, statusChangeCount: 3},
+      {date: '2025-02', newStudentCount: 12, statusChangeCount: 1},
+      {date: '2025-03', newStudentCount: 8, statusChangeCount: 5},
+    ];
+    updateBarTrend();
+  }
+};
+
+// 时间范围变化处理
+const handleDateRangeChange = () => {
+  if (dateRange.value && dateRange.value.length === 2) {
+    loadCoreIndexData();
+  }
+};
+
 // 加载所有图表数据
 const loadAllChartData = async () => {
   loading.value = true;
   try {
-    const [overviewRes, gradeRes, majorRes, classRes, coreRes] = await Promise.allSettled([
+    const [overviewRes, gradeRes, majorRes, classRes] = await Promise.allSettled([
       getStudentInfoChart({}),
       getStudentInfoDistribution({dimension: 'grade'}),
       getStudentInfoDistribution({dimension: 'major'}),
       getStudentInfoDistribution({dimension: 'class'}),
-      getStudentInfoCoreIndex({cycle: '月'}),
     ]);
 
     if (overviewRes.status === 'fulfilled') {
@@ -163,16 +219,8 @@ const loadAllChartData = async () => {
     distributionData.value.major = majorRes.status === 'fulfilled' ? majorRes.value : mockDistribution.major;
     distributionData.value.class = classRes.status === 'fulfilled' ? classRes.value : mockDistribution.class;
 
-    if (coreRes.status === 'fulfilled') {
-      coreIndexData.value = coreRes.value;
-    } else {
-      coreIndexData.value = [
-        {date: '2025-01', newStudentCount: 45, transferCount: 2, suspendCount: 1},
-        {date: '2025-02', newStudentCount: 12, transferCount: 1, suspendCount: 0},
-        {date: '2025-03', newStudentCount: 8, transferCount: 3, suspendCount: 2},
-      ];
-    }
-    updateBarTrend();
+    // 单独加载核心指标数据（带时间范围）
+    await loadCoreIndexData();
   } catch (error) {
     console.error('加载图表数据失败', error);
     // 设置默认数据（使用后端字段名）
@@ -188,9 +236,9 @@ const loadAllChartData = async () => {
     };
     distributionData.value = mockDistribution;
     coreIndexData.value = [
-      {date: '2025-01', newStudentCount: 45, transferCount: 2, suspendCount: 1},
-      {date: '2025-02', newStudentCount: 12, transferCount: 1, suspendCount: 0},
-      {date: '2025-03', newStudentCount: 8, transferCount: 3, suspendCount: 2},
+      {date: '2025-01', newStudentCount: 45, statusChangeCount: 3},
+      {date: '2025-02', newStudentCount: 12, statusChangeCount: 1},
+      {date: '2025-03', newStudentCount: 8, statusChangeCount: 5},
     ];
     updateBarTrend();
   } finally {
@@ -233,7 +281,24 @@ onMounted(() => {
         @pie-click="handlePieClick"
       />
     </div>
-    <div class="chart-wrapper" style="flex: 1.5 !important;">
+    <div class="chart-wrapper bar-chart-container" style="flex: 1.5 !important;">
+      <!-- 时间范围选择器（只针对核心指标接口） -->
+      <div class="date-range-wrapper">
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="起始时间"
+          end-placeholder="结束时间"
+          size="small"
+          :shortcuts="[
+            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
+            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
+            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
+          ]"
+          @change="handleDateRangeChange"
+        />
+      </div>
       <Bar
         :title="barState.title"
         :x-data="barState.xData"
@@ -281,6 +346,35 @@ onMounted(() => {
     top: 8px;
     right: 10px;
     z-index: 10;
+  }
+
+  /* 柱状图容器特殊样式，用于绝对定位时间选择器 */
+  .bar-chart-container {
+    position: relative;
+  }
+
+  .date-range-wrapper {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    z-index: 10;
+  }
+
+  /* 紧凑的时间选择器样式 */
+  :deep(.el-date-editor) {
+    --el-date-editor-width: 240px;
+
+    .el-range__icon {
+      margin-right: 2px;
+    }
+
+    .el-range-separator {
+      padding: 0 4px;
+    }
+
+    .el-range__close-icon {
+      margin-left: 2px;
+    }
   }
 }
 </style>

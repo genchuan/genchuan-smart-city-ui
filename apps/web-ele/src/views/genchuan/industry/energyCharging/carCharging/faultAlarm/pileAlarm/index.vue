@@ -190,8 +190,10 @@ const getTableData = async ({ page }) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // ✅ 修改点1：使用后端返回的总记录数
+    dataObj.total = res.total;
+    // ✅ 修改点2：直接使用当前页数据（res.list 已经是当前页数据，不需要再 slice）
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
@@ -224,6 +226,7 @@ const getTableData = async ({ page }) => {
       });
     });
     dataObj.total = filtered.length;
+    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
   } finally {
     dataObj.loading = false;

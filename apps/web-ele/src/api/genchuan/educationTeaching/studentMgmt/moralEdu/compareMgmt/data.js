@@ -13,12 +13,25 @@ const cycleReverse = {
   'semester': '学期'
 };
 
+// 状态映射
+const statusMap = {
+  '打分中': 'scoring',
+  '已汇总': 'summarized'
+};
+const statusReverse = {
+  'scoring': '打分中',
+  'summarized': '已汇总'
+};
+
 // 通用转换函数：后端 → 前端（将英文转为中文）
 function convertEnToZh(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const result = { ...obj };
   if (result.cycle && cycleReverse[result.cycle]) {
     result.cycle = cycleReverse[result.cycle];
+  }
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
   }
   return result;
 }
@@ -29,6 +42,9 @@ function convertZhToEn(obj) {
   const result = { ...obj };
   if (result.cycle && cycleMap[result.cycle]) {
     result.cycle = cycleMap[result.cycle];
+  }
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
   }
   return result;
 }
@@ -51,7 +67,6 @@ export function getCompareMgmtPage(params) {
     })
     .catch(err => {
       console.warn('分页接口失败', err);
-      // 分页接口已联调成功，不再使用模拟数据，返回空列表
       return { list: [], total: 0 };
     });
 }
@@ -99,7 +114,6 @@ export function getCompareMgmtDetail(params) {
     .then(res => convertEnToZh(res))
     .catch(err => {
       console.warn('详情接口失败', err);
-      // 不再使用模拟数据，直接抛出错误让调用方处理
       return Promise.reject(err);
     });
 }
@@ -110,10 +124,10 @@ export function getCompareMgmtChart(params) {
     console.warn('图表总览接口失败，使用模拟数据', err);
     return Promise.resolve({
       rankList: [
-        { className: '高一(1)班', totalScore: 92.5, rankNo: 1 },
-        { className: '高一(3)班', totalScore: 90.0, rankNo: 2 },
-        { className: '高一(2)班', totalScore: 88.0, rankNo: 3 },
-        { className: '高二(1)班', totalScore: 85.5, rankNo: 4 },
+        { class_name: '高一(1)班', total_score: 92.5, rank_no: 1 },
+        { class_name: '高一(3)班', total_score: 90.0, rank_no: 2 },
+        { class_name: '高一(2)班', total_score: 88.0, rank_no: 3 },
+        { class_name: '高二(1)班', total_score: 85.5, rank_no: 4 },
       ],
       statusCount: { scoringCount: 5, finishedCount: 15 },
       cycleCount: { weekCount: 8, monthCount: 10, termCount: 2 },

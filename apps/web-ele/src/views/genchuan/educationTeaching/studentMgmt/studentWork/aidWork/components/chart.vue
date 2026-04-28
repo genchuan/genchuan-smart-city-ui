@@ -1,6 +1,6 @@
 <script setup>
 import {reactive, onMounted, ref, computed} from 'vue';
-import {ElMessage, ElSelect, ElOption} from 'element-plus';
+import {ElMessage, ElSelect, ElOption, ElDatePicker} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
@@ -20,6 +20,22 @@ const aidTypeMap = {
 const loading = ref(true);
 const chartData = ref({});
 const typeApplyData = ref([]); // 存储后端返回的数组，每个元素有 type, applyCount, finishCount, finishRate
+
+// 时间范围选择器相关（针对两个接口）
+// 默认值：开始时间 2024-01-01，结束时间 2026-12-31
+const dateRange = ref([new Date('2024-01-01'), new Date('2026-12-31')]);
+
+// 格式化日期为后端需要的 ISO 8601 格式 (LocalDateTime)
+const formatLocalDateTime = (date) => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
 
 // 卡片列表
 const cardList = computed(() => {
@@ -147,9 +163,93 @@ const handleBarClick = (params) => {
   emit('barClick', {type: 'aidType', value: typeName});
 };
 
+// 加载看板数据（带时间范围参数）
+const loadChartData = async () => {
+  try {
+    const params = {};
+
+    // 只有当时间范围存在时才添加参数
+    if (dateRange.value && dateRange.value.length === 2) {
+      const startDate = dateRange.value[0];
+      const endDate = dateRange.value[1];
+      if (startDate) {
+        params.startTime = formatLocalDateTime(startDate);
+      }
+      if (endDate) {
+        // 设置结束时间为当天的 23:59:59
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999);
+        params.endTime = formatLocalDateTime(endDateTime);
+      }
+    }
+
+    const res = await getAidWorkChart(params);
+    chartData.value = res;
+  } catch (error) {
+    console.warn('获取看板数据失败，使用模拟数据', error);
+    chartData.value = {
+      totalApplyCount: 256,
+      totalPassCount: 198,
+      totalApplyAmount: 768000,
+      totalGrantAmount: 594000,
+      statusCountMap: {'待审核': 32, '已通过': 198, '已完成': 26},
+      typeCountMap: {'奖学金': 86, '助学金': 102, '助学贷款': 48, '勤工俭学': 20},
+    };
+  }
+};
+
+// 加载申请人数统计（带时间范围参数）
+const loadApplyCountData = async () => {
+  try {
+    const params = {};
+
+    // 只有当时间范围存在时才添加参数
+    if (dateRange.value && dateRange.value.length === 2) {
+      const startDate = dateRange.value[0];
+      const endDate = dateRange.value[1];
+      if (startDate) {
+        params.startTime = formatLocalDateTime(startDate);
+      }
+      if (endDate) {
+        // 设置结束时间为当天的 23:59:59
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999);
+        params.endTime = formatLocalDateTime(endDateTime);
+      }
+    }
+
+    const res = await getApplyCount(params);
+    typeApplyData.value = res;
+  } catch (error) {
+    console.warn('获取申请人数统计失败，使用模拟数据', error);
+    typeApplyData.value = [
+      {type: "1", name: "", applyCount: 86, finishCount: 78, finishRate: 0.907},
+      {type: "2", name: "", applyCount: 102, finishCount: 92, finishRate: 0.902},
+      {type: "3", name: "", applyCount: 48, finishCount: 42, finishRate: 0.875},
+      {type: "4", name: "", applyCount: 20, finishCount: 18, finishRate: 0.90},
+    ];
+  }
+};
+
+// 时间范围变化处理
+const handleDateRangeChange = async () => {
+  if (dateRange.value && dateRange.value.length === 2) {
+    loading.value = true;
+    try {
+      await Promise.all([
+        loadChartData(),
+        loadApplyCountData(),
+      ]);
+    } finally {
+      loading.value = false;
+    }
+  }
+};
+
 const loadData = async () => {
   loading.value = true;
   try {
+    // 初始化时不传时间参数，让后端返回全部数据
     const [chartRes, applyRes] = await Promise.allSettled([
       getAidWorkChart({}),
       getApplyCount({}),
@@ -167,10 +267,8 @@ const loadData = async () => {
       };
     }
     if (applyRes.status === 'fulfilled') {
-      // 后端直接返回数组，赋值给 typeApplyData
       typeApplyData.value = applyRes.value;
     } else {
-      // 模拟数据也要是数组格式，字段与后端一致
       typeApplyData.value = [
         {type: "1", name: "", applyCount: 86, finishCount: 78, finishRate: 0.907},
         {type: "2", name: "", applyCount: 102, finishCount: 92, finishRate: 0.902},
@@ -180,7 +278,6 @@ const loadData = async () => {
     }
   } catch (error) {
     console.error('加载图表数据失败', error);
-    // fallback
     chartData.value = {
       totalApplyCount: 256,
       totalPassCount: 198,
@@ -242,7 +339,7 @@ onMounted(() => {
     </div>
 
     <!-- 柱状图切换区域 -->
-    <div class="chart-area">
+    <div class="chart-area bar-chart-container">
       <div class="chart-select-wrapper">
         <el-select
           v-model="activeChartIndex"
@@ -256,6 +353,23 @@ onMounted(() => {
             :value="idx"
           />
         </el-select>
+      </div>
+      <!-- 时间范围选择器（只针对两个接口） -->
+      <div class="date-range-wrapper">
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="起始时间"
+          end-placeholder="结束时间"
+          size="small"
+          :shortcuts="[
+            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
+            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
+            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
+          ]"
+          @change="handleDateRangeChange"
+        />
       </div>
       <Bar
         :title="currentChart.title"
@@ -321,5 +435,34 @@ onMounted(() => {
   top: 8px;
   right: 10px;
   z-index: 10;
+}
+
+/* 柱状图容器特殊样式，用于绝对定位时间选择器 */
+.bar-chart-container {
+  position: relative;
+}
+
+.date-range-wrapper {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 10;
+}
+
+/* 紧凑的时间选择器样式 */
+:deep(.el-date-editor) {
+  --el-date-editor-width: 240px;
+
+  .el-range__icon {
+    margin-right: 2px;
+  }
+
+  .el-range-separator {
+    padding: 0 4px;
+  }
+
+  .el-range__close-icon {
+    margin-left: 2px;
+  }
 }
 </style>

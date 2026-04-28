@@ -1,6 +1,6 @@
 <script setup>
-import { reactive, onMounted, ref, computed } from 'vue';
-import { ElMessage, ElSelect, ElOption } from 'element-plus';
+import {reactive, onMounted, ref, computed} from 'vue';
+import {ElMessage, ElSelect, ElOption, ElDatePicker} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import {
@@ -9,17 +9,17 @@ import {
 } from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/honorMgmt/data.js';
 
 const mockClassData = [
-  { name: '计算机1班', count: 45 },
-  { name: '计算机2班', count: 42 },
-  { name: '软件1班', count: 48 },
-  { name: '软件2班', count: 50 },
-  { name: '电子1班', count: 40 },
+  {name: '计算机1班', count: 45},
+  {name: '计算机2班', count: 42},
+  {name: '软件1班', count: 48},
+  {name: '软件2班', count: 50},
+  {name: '电子1班', count: 40},
 ];
 const mockTypeData = [
-  { name: '优秀学生', count: 128 },
-  { name: '奖学金', count: 86 },
-  { name: '竞赛获奖', count: 92 },
-  { name: '其他', count: 22 },
+  {name: '优秀学生', count: 128},
+  {name: '奖学金', count: 86},
+  {name: '竞赛获奖', count: 92},
+  {name: '其他', count: 22},
 ];
 
 const loading = ref(true);
@@ -29,6 +29,22 @@ const chartData = ref({class: [], type: []});
 const activeDimension = ref('type');
 const barTitleMap = {type: '各类型荣誉数量', class: '各班级荣誉数量'};
 const barYName = '荣誉数量';
+
+// 时间范围选择器相关（只针对荣誉数量接口）
+// 默认值：开始时间 2024-01-01，结束时间 2026-12-31
+const dateRange = ref([new Date('2024-01-01'), new Date('2026-12-31')]);
+
+// 格式化日期为后端需要的 ISO 8601 格式 (LocalDateTime)
+const formatLocalDateTime = (date) => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
 
 const currentBarData = computed(() => {
   const raw = chartData.value[activeDimension.value] || [];
@@ -75,7 +91,26 @@ const changeDimension = async (dimension) => {
 
 const fetchChartData = async (dimension) => {
   try {
-    const data = await getHonorCount({dimension});
+    const params = {
+      dimension: dimension,
+    };
+
+    // 只有当时间范围存在时才添加参数
+    if (dateRange.value && dateRange.value.length === 2) {
+      const startDate = dateRange.value[0];
+      const endDate = dateRange.value[1];
+      if (startDate) {
+        params.startTime = formatLocalDateTime(startDate);
+      }
+      if (endDate) {
+        // 设置结束时间为当天的 23:59:59
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999);
+        params.endTime = formatLocalDateTime(endDateTime);
+      }
+    }
+
+    const data = await getHonorCount(params);
     chartData.value[dimension] = data;
   } catch (error) {
     console.warn(`获取${dimension}荣誉数量失败，使用模拟数据`, error);
@@ -83,9 +118,18 @@ const fetchChartData = async (dimension) => {
   }
 };
 
+// 时间范围变化处理
+const handleDateRangeChange = async () => {
+  if (dateRange.value && dateRange.value.length === 2) {
+    // 重新加载当前维度的数据
+    await fetchChartData(activeDimension.value);
+  }
+};
+
 const loadAllChartData = async () => {
   loading.value = true;
   try {
+    // 初始化时不传时间参数，让后端返回全部数据
     const [overviewRes, classRes, typeRes] = await Promise.allSettled([
       getHonorMgmtChart({}),
       getHonorCount({dimension: 'class'}),
@@ -133,12 +177,29 @@ onMounted(() => {
       <Indicator class="left-card" v-for="item in cardList" :key="item.title" v-bind="item"
                  @click="handleCardClick"/>
     </div>
-    <div class="chart-wrapper">
+    <div class="chart-wrapper bar-chart-container">
       <div class="bar-select-wrapper">
         <el-select v-model="activeDimension" size="small" @change="changeDimension">
           <el-option label="各类型荣誉数量" value="type"/>
           <el-option label="各班级荣誉数量" value="class"/>
         </el-select>
+      </div>
+      <!-- 时间范围选择器（只针对荣誉数量接口） -->
+      <div class="date-range-wrapper">
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="起始时间"
+          end-placeholder="结束时间"
+          size="small"
+          :shortcuts="[
+            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
+            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
+            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
+          ]"
+          @change="handleDateRangeChange"
+        />
       </div>
       <Bar
         :title="barTitleMap[activeDimension]"
@@ -186,6 +247,35 @@ onMounted(() => {
     top: 8px;
     right: 10px;
     z-index: 10;
+  }
+
+  /* 柱状图容器特殊样式，用于绝对定位时间选择器 */
+  .bar-chart-container {
+    position: relative;
+  }
+
+  .date-range-wrapper {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    z-index: 10;
+  }
+
+  /* 紧凑的时间选择器样式 */
+  :deep(.el-date-editor) {
+    --el-date-editor-width: 240px;
+
+    .el-range__icon {
+      margin-right: 2px;
+    }
+
+    .el-range-separator {
+      padding: 0 4px;
+    }
+
+    .el-range__close-icon {
+      margin-left: 2px;
+    }
   }
 }
 </style>

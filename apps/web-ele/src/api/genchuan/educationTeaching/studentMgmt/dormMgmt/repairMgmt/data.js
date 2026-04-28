@@ -17,12 +17,14 @@ const repairTypeReverse = {
 const statusMap = {
   '待派单': 'pending',
   '维修中': 'repairing',
-  '已维修': 'completed'
+  '已维修': 'completed',
+  '已验收': 'checked'
 };
 const statusReverse = {
   'pending': '待派单',
   'repairing': '维修中',
-  'completed': '已维修'
+  'completed': '已维修',
+  'checked': '已验收'
 };
 
 // 通用转换函数：后端 → 前端（将英文转为中文）
@@ -130,30 +132,43 @@ export function getRepairMgmtDetail(params) {
 // ==================== 图表接口 ====================
 export function getRepairMgmtChart(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.get('/studentmgmt/repair-mgmt/chart', { params: convertedParams }).catch(err => {
-    console.warn('看板接口失败，使用模拟数据', err);
-    return Promise.resolve({
-      totalRepairCount: 86,
-      pendingDispatchCount: 8,
-      repairingCount: 5,
-      repairedCount: 12,
-      acceptedCount: 61,
-      dailyTrend: [
-        { date: '2025-03-25', count: 15 },
-        { date: '2025-03-26', count: 18 },
-        { date: '2025-03-27', count: 20 },
-        { date: '2025-03-28', count: 16 },
-        { date: '2025-03-29', count: 22 },
-        { date: '2025-03-30', count: 21 },
-        { date: '2025-03-31', count: 8 },
-      ],
-      typeDistribution: [
-        { type: '水电', count: 52 },
-        { type: '家具', count: 24 },
-        { type: '其他', count: 10 },
-      ],
+  return requestClient.get('/studentmgmt/repair-mgmt/chart', { params: convertedParams })
+    .then(res => {
+      if (res) {
+        // 转换 typeDistribution 中的英文类型为中文
+        if (res.typeDistribution && Array.isArray(res.typeDistribution)) {
+          res.typeDistribution = res.typeDistribution.map(item => ({
+            ...item,
+            type: repairTypeReverse[item.type] || item.type
+          }));
+        }
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('看板接口失败，使用模拟数据', err);
+      return Promise.resolve({
+        totalRepairCount: 86,
+        pendingDispatchCount: 8,
+        repairingCount: 5,
+        repairedCount: 12,
+        acceptedCount: 61,
+        dailyTrend: [
+          { date: '2025-03-25', count: 15 },
+          { date: '2025-03-26', count: 18 },
+          { date: '2025-03-27', count: 20 },
+          { date: '2025-03-28', count: 16 },
+          { date: '2025-03-29', count: 22 },
+          { date: '2025-03-30', count: 21 },
+          { date: '2025-03-31', count: 8 },
+        ],
+        typeDistribution: [
+          { type: '水电', count: 52 },
+          { type: '家具', count: 24 },
+          { type: '其他', count: 10 },
+        ],
+      });
     });
-  });
 }
 
 export function getRepairMgmtCount(params) {
