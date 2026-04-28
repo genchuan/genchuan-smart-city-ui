@@ -154,6 +154,7 @@ onMounted(() => {
     <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -204,7 +205,12 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss">
+.chart-box-left{
+  .left-card {
+    height: 159px !important;
+  }
+}
 .inspect-track-map-section {
   position: relative;
   flex: 1.1 1 0;

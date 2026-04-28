@@ -148,6 +148,7 @@ onMounted(() => {
     <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -171,7 +172,7 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .park-chart-box {
   display: flex;
   flex-wrap: nowrap !important;
@@ -203,4 +204,9 @@ onMounted(() => {
   border-radius: 4px;
 }
 
+.chart-box-left{
+  .left-card {
+    height: 159px !important;
+  }
+}
 </style>
