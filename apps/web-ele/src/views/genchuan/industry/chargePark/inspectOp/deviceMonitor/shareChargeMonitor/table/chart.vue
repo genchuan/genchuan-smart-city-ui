@@ -155,6 +155,7 @@ onMounted(() => {
     <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -187,18 +188,25 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .monitor-right-section {
   display: flex;
   flex: 1 1 0;
-  gap: 20px;
+  // gap: 20px;
+  margin-left: 15px;
   min-width: 0;
 }
 
 .monitor-map-wrapper {
   flex: 1;
   min-width: 0;
-  margin-left: 15px;
+  // margin-left: 15px;
   overflow: hidden;
+}
+
+.chart-box-left{
+  .left-card {
+    height: 159px !important;
+  }
 }
 </style>

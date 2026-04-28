@@ -286,7 +286,9 @@ function onSubmit(values) {
 async function handleOpenDetail(row) {
   try {
     const response = await getInspectReportDetail(row.id);
-    dataObj.detailObj = normalizeInspectReportRow(response || row);
+    dataObj.detailObj = {
+      ...normalizeInspectReportRow(response || row)
+    }
   } catch (error) {
     console.error('获取巡检上报详情失败，使用行数据:', error);
     dataObj.detailObj = row;
@@ -298,7 +300,10 @@ async function handleTaskClick(row) {
   if (!row.taskId) return;
   try {
     const response = await getInspectTaskDetail(row.taskId);
-    dataObj.taskDetailObj = normalizeInspectTaskRow(response || row);
+    dataObj.taskDetailObj = {
+      ...normalizeInspectTaskRow(response || row),
+      ...row,
+    }
   } catch (error) {
     console.error('获取巡检任务详情失败，使用行数据:', error);
     dataObj.taskDetailObj = normalizeInspectTaskRow({
