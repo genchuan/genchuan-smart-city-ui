@@ -99,13 +99,7 @@ export function useGridColumns() {
       title: '车牌',
       minWidth: 100,
       sortable: true,
-    },
-    {
-      field: 'stationId',
-      title: '场站ID',
-      minWidth: 100,
-      sortable: true,
-    },
+    }, 
     {
       field: 'orderType',
       title: '订单类型',
