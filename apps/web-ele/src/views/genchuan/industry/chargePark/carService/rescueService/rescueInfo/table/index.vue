@@ -330,16 +330,6 @@ async function onSubmit(values, isReset = false) {
     await resetAllFilters();
   } else {
     const formValues = { ...values };
-    if (formValues.userName) {
-      const userId = getUserIdByUserName(formValues.userName);
-      if (userId) {
-        formValues.userId = userId;
-      } else {
-        ElMessage.warning(`未找到用户“${formValues.userName}”，请检查用户名`);
-        return;
-      }
-      delete formValues.userName;
-    }
     dataObj.serachObj = { ...formValues };
     chartStatusListFilter.value = '';
     chartDateFilter.value = '';
