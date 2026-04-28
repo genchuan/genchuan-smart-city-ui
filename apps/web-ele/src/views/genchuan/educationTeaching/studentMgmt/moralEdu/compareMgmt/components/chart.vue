@@ -92,15 +92,15 @@ onMounted(() => {
 <template>
   <div v-loading="loading" class="chart-box">
     <!-- 周期筛选单选框（置于顶部右侧） -->
-    <div class="cycle-selector">
-      <el-select v-model="cycleFilter" size="small" @change="onCycleChange">
-        <el-option
+    <div class="cycle-radio">
+      <el-radio-group v-model="cycleFilter" @change="onCycleChange">
+        <el-radio-button
           v-for="opt in cycleOptions"
           :key="opt.value"
           :label="opt.label"
           :value="opt.value"
         />
-      </el-select>
+      </el-radio-group>
     </div>
 
     <!-- 横向条形图：班级德育得分排名 -->
@@ -135,7 +135,7 @@ onMounted(() => {
   width: 100% !important;
   position: relative;
 
-  .cycle-selector {
+  .cycle-radio {
     position: absolute;
     top: 8px;
     right: 10px;

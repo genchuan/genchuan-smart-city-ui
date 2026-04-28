@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption } from 'element-plus';
+import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import LineChart from '#/genchuan-components/stats/lineChartClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
@@ -13,6 +13,22 @@ const loading = ref(true);
 const chartData = ref({});       // 柱状图数据（活动类型数量/参与人数）
 const trendData = ref({});       // 折线图数据（月度趋势）
 const overviewData = ref({});    // 饼图数据（状态分布、类型分布）
+
+// 时间范围选择器相关（针对两个接口）
+// 默认值：开始时间 2024-01-01，结束时间 2026-12-31
+const dateRange = ref([new Date('2024-01-01'), new Date('2026-12-31')]);
+
+// 格式化日期为后端需要的 ISO 8601 格式 (LocalDateTime)
+const formatLocalDateTime = (date) => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
 
 // ========== 柱状图配置 ==========
 const barOptions = computed(() => [
@@ -159,10 +175,102 @@ const handlePieClick = (item) => {
   }
 };
 
+// 加载活动数量统计（带时间范围参数）
+const loadActivityCount = async () => {
+  try {
+    const params = {};
+
+    // 只有当时间范围存在时才添加参数
+    if (dateRange.value && dateRange.value.length === 2) {
+      const startDate = dateRange.value[0];
+      const endDate = dateRange.value[1];
+      if (startDate) {
+        params.startTime = formatLocalDateTime(startDate);
+      }
+      if (endDate) {
+        // 设置结束时间为当天的 23:59:59
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999);
+        params.endTime = formatLocalDateTime(endDateTime);
+      }
+    }
+
+    const res = await getMoralActivityCount(params);
+    chartData.value = res;
+  } catch (error) {
+    console.warn('活动数量统计接口失败，使用模拟数据', error);
+    chartData.value = {
+      typeList: ['党团活动', '志愿活动', '其他'],
+      activityCountList: [5, 7, 3],
+      joinCountList: [200, 280, 50],
+    };
+  }
+};
+
+// 加载图表总览数据（带时间范围参数）
+const loadActivityChart = async () => {
+  try {
+    const params = {};
+
+    // 只有当时间范围存在时才添加参数
+    if (dateRange.value && dateRange.value.length === 2) {
+      const startDate = dateRange.value[0];
+      const endDate = dateRange.value[1];
+      if (startDate) {
+        params.startTime = formatLocalDateTime(startDate);
+      }
+      if (endDate) {
+        // 设置结束时间为当天的 23:59:59
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999);
+        params.endTime = formatLocalDateTime(endDateTime);
+      }
+    }
+
+    const res = await getMoralActivityChart(params);
+    overviewData.value = res;
+    trendData.value = res;
+  } catch (error) {
+    console.warn('图表总览接口失败，使用模拟数据', error);
+    const mockData = {
+      statusCount: {ongoing: 3, ended: 5, unpublished: 2},
+      activityTypeCount: {party_league: 4, volunteer: 3, other: 3},
+      monthTrend: [
+        {date: '2025-03', totalCount: 2},
+        {date: '2025-04', totalCount: 1},
+        {date: '2025-06', totalCount: 1},
+      ],
+      joinTrend: [
+        {date: '2025-03', totalCount: 1},
+        {date: '2025-04', totalCount: 1},
+        {date: '2025-05', totalCount: 1},
+      ],
+    };
+    overviewData.value = mockData;
+    trendData.value = mockData;
+  }
+};
+
+// 时间范围变化处理
+const handleDateRangeChange = async () => {
+  if (dateRange.value && dateRange.value.length === 2) {
+    loading.value = true;
+    try {
+      await Promise.all([
+        loadActivityCount(),
+        loadActivityChart(),
+      ]);
+    } finally {
+      loading.value = false;
+    }
+  }
+};
+
 // ========== 加载数据 ==========
 const loadData = async () => {
   loading.value = true;
   try {
+    // 初始化时不传时间参数，让后端返回全部数据
     const [countRes, chartRes] = await Promise.allSettled([
       getMoralActivityCount({}),
       getMoralActivityChart({})
@@ -178,13 +286,11 @@ const loadData = async () => {
       };
     }
     if (chartRes.status === 'fulfilled') {
-      // 直接使用后端返回的数据结构，字段已适配
       overviewData.value = chartRes.value;
-      trendData.value = chartRes.value; // 复用返回的 trend 数据
+      trendData.value = chartRes.value;
     } else {
       console.warn('图表总览接口失败，使用模拟数据');
-      // 模拟数据字段与后端保持一致
-      overviewData.value = {
+      const mockData = {
         statusCount: {ongoing: 3, ended: 5, unpublished: 2},
         activityTypeCount: {party_league: 4, volunteer: 3, other: 3},
         monthTrend: [
@@ -198,17 +304,17 @@ const loadData = async () => {
           {date: '2025-05', totalCount: 1},
         ],
       };
-      trendData.value = overviewData.value;
+      overviewData.value = mockData;
+      trendData.value = mockData;
     }
   } catch (error) {
     console.error('加载图表数据失败', error);
-    // 全部使用模拟数据（后端字段格式）
     chartData.value = {
       typeList: ['党团活动', '志愿活动', '其他'],
       activityCountList: [5, 7, 3],
       joinCountList: [200, 280, 50],
     };
-    overviewData.value = {
+    const mockData = {
       statusCount: {ongoing: 3, ended: 5, unpublished: 2},
       activityTypeCount: {party_league: 4, volunteer: 3, other: 3},
       monthTrend: [
@@ -222,7 +328,8 @@ const loadData = async () => {
         {date: '2025-05', totalCount: 1},
       ],
     };
-    trendData.value = overviewData.value;
+    overviewData.value = mockData;
+    trendData.value = mockData;
   } finally {
     loading.value = false;
   }
@@ -247,6 +354,23 @@ onMounted(() => {
           />
         </el-select>
       </div>
+      <!-- 时间范围选择器（只针对两个接口） -->
+      <div class="date-range-wrapper">
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="起始时间"
+          end-placeholder="结束时间"
+          size="small"
+          :shortcuts="[
+            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
+            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
+            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
+          ]"
+          @change="handleDateRangeChange"
+        />
+      </div>
       <Pie
         :title-text="currentPieTitle"
         :data="currentPieData"
@@ -255,7 +379,7 @@ onMounted(() => {
     </div>
 
     <!-- 柱状图区域 -->
-    <div class="chart-area">
+    <div class="chart-area bar-chart-container">
       <div class="chart-select-wrapper">
         <el-select v-model="activeBarIndex" size="small" @change="handleBarChange">
           <el-option
@@ -319,6 +443,35 @@ onMounted(() => {
     top: 8px;
     right: 10px;
     z-index: 10;
+  }
+
+  /* 柱状图容器特殊样式，用于绝对定位时间选择器 */
+  .bar-chart-container {
+    position: relative;
+  }
+
+  .date-range-wrapper {
+    position: absolute;
+    top: 38px;
+    left: 10px;
+    z-index: 10;
+  }
+
+  /* 紧凑的时间选择器样式 */
+  :deep(.el-date-editor) {
+    --el-date-editor-width: 240px;
+
+    .el-range__icon {
+      margin-right: 2px;
+    }
+
+    .el-range-separator {
+      padding: 0 4px;
+    }
+
+    .el-range__close-icon {
+      margin-left: 2px;
+    }
   }
 }
 </style>

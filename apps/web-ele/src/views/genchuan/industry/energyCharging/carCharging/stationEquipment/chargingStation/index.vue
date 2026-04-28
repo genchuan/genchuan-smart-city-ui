@@ -449,7 +449,6 @@ const handleRowDisable = (row) => {
   disableDrawerApi.open();
 };
 
-// ---------- 获取表格数据（支持前端筛选） ----------
 const getTableData = async ({ page }) => {
   const params = {
     pageNo: page.currentPage,
@@ -461,7 +460,6 @@ const getTableData = async ({ page }) => {
     let listData = res.data?.list || res.list || [];
     let total = res.data?.total || res.total || 0;
 
-    // 应用标签筛选（前端过滤）
     if (Object.keys(tagFilters.value).length > 0) {
       listData = listData.filter(item => {
         for (const [field, filterValue] of Object.entries(tagFilters.value)) {
@@ -471,7 +469,6 @@ const getTableData = async ({ page }) => {
               itemValue = item.stationName;
               break;
             case 'areaName':
-              // 从场站名称或地址中提取区域（示例）
               itemValue = extractAreaName(item);
               break;
             case 'stationStatus':
@@ -488,11 +485,6 @@ const getTableData = async ({ page }) => {
         }
         return true;
       });
-      total = listData.length;
-      // 前端分页
-      const start = (page.currentPage - 1) * page.pageSize;
-      const end = start + page.pageSize;
-      listData = listData.slice(start, end);
     }
 
     dataObj.total = total;
@@ -758,20 +750,6 @@ defineExpose({ handleFilterTagClick, clearFilters });
           <template v-else-if="row.stationStatus === 'disabled' || row.stationStatus === '已停用'">
             <IconButton content="启用" icon-name="CircleCheck" @click="handleEnable(row)" />
           </template>
-        </div>
-      </template>
-
-      <template #bottom>
-        <div class="common-total" @click="dataObj.totalShow = !dataObj.totalShow">
-          <el-icon>
-            <ArrowDown v-if="!dataObj.totalShow" />
-            <ArrowUp v-else />
-          </el-icon>
-        </div>
-        <div class="common-total-bottom" v-if="dataObj.totalShow">
-          <div v-if="dataObj.totalShow && showChart && activeName !== '全部'" class="bottom-chart-wrapper">
-            <!-- 图表组件可后续扩展 -->
-          </div>
         </div>
       </template>
     </Grid>

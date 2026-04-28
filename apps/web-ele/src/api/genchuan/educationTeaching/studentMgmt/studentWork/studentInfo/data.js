@@ -237,9 +237,9 @@ export function getStudentInfoCoreIndex(params) {
   return requestClient.get('/studentmgmt/student-info/chart/coreIndex', { params }).catch(err => {
     console.warn('核心指标接口失败，使用模拟数据', err);
     return Promise.resolve([
-      { date: '2025-01', newStudentCount: 45, transferCount: 2, suspendCount: 1 },
-      { date: '2025-02', newStudentCount: 12, transferCount: 1, suspendCount: 0 },
-      { date: '2025-03', newStudentCount: 8, transferCount: 3, suspendCount: 2 },
+      { date: '2025-01', newStudentCount: 45, statusChangeCount: 3 },
+      { date: '2025-02', newStudentCount: 12, statusChangeCount: 1 },
+      { date: '2025-03', newStudentCount: 8, statusChangeCount: 5 },
     ]);
   });
 }

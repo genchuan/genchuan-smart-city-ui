@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption } from 'element-plus';
+import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
@@ -9,13 +9,25 @@ import {
   getTargetIndex,
 } from '#/api/genchuan/educationTeaching/studentMgmt/moralEdu/targetMgmt/data.js';
 
-// 默认时间范围参数（毫秒时间戳）
-const defaultStartTime = 1704067200000;
-const defaultEndTime = 1798732799000;
-
 const loading = ref(true);
 const overviewData = ref({});
 const indexData = ref({});
+
+// 时间范围选择器相关（只针对 getTargetMgmtChart 接口）
+// 默认值：开始时间 2024-01-01，结束时间 2026-12-31
+const dateRange = ref([new Date('2024-01-01'), new Date('2026-12-31')]);
+
+// 格式化日期为后端需要的 ISO 8601 格式 (LocalDateTime)
+const formatLocalDateTime = (date) => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
 
 // 卡片数据
 const cardList = computed(() => {
@@ -119,7 +131,7 @@ const handleCardClick = (cardInfo) => {
 const handleBarClickWrapper = (name) => {
   const currentType = barOptions.value[activeBarIndex.value]?.type;
   if (currentType === 'evaluatorType') {
-    // 将中文名称映射回英文键名？根据实际筛选需求决定
+    // 将中文名称映射回英文键名
     let value = name;
     if (name === '教职工') value = 'teacher';
     if (name === '家长') value = 'parent';
@@ -142,16 +154,58 @@ const handlePieClickWrapper = (item) => {
   }
 };
 
-// 加载数据（传递 startTime 和 endTime）
+// 加载图表分布数据（带时间范围参数）
+const loadChartData = async () => {
+  try {
+    const params = {};
+
+    // 只有当时间范围存在时才添加参数
+    if (dateRange.value && dateRange.value.length === 2) {
+      const startDate = dateRange.value[0];
+      const endDate = dateRange.value[1];
+      if (startDate) {
+        params.startTime = formatLocalDateTime(startDate);
+      }
+      if (endDate) {
+        // 设置结束时间为当天的 23:59:59
+        const endDateTime = new Date(endDate);
+        endDateTime.setHours(23, 59, 59, 999);
+        params.endTime = formatLocalDateTime(endDateTime);
+      }
+    }
+
+    const res = await getTargetMgmtChart(params);
+    overviewData.value = res;
+  } catch (error) {
+    console.warn('图表总览接口失败，使用模拟数据', error);
+    overviewData.value = {
+      statusCount: {disable: 4, enable: 6},
+      evaluatorTypeCount: {teacher: 5, parent: 2, leader: 3},
+      scoreTypeCount: {"累计赋分": 8, "接口赋分": 2},
+      scoreDistribution: [{"0-20": 1, "20-40": 2, "40-60": 3, "60-80": 2, "80-100": 2}]
+    };
+  }
+};
+
+// 时间范围变化处理
+const handleDateRangeChange = async () => {
+  if (dateRange.value && dateRange.value.length === 2) {
+    loading.value = true;
+    try {
+      await loadChartData();
+    } finally {
+      loading.value = false;
+    }
+  }
+};
+
+// 加载数据
 const loadData = async () => {
   loading.value = true;
   try {
-    const chartParams = {
-      startTime: defaultStartTime,
-      endTime: defaultEndTime
-    };
+    // 初始化时不传时间参数，让后端返回全部数据
     const [chartRes, indexRes] = await Promise.allSettled([
-      getTargetMgmtChart(chartParams),
+      getTargetMgmtChart({}),
       getTargetIndex()
     ]);
     if (chartRes.status === 'fulfilled') {
@@ -214,7 +268,7 @@ onMounted(() => {
     </div>
 
     <!-- 柱状图区域（带下拉选择器） -->
-    <div class="bar-chart-area">
+    <div class="bar-chart-area bar-chart-container">
       <div class="chart-select-wrapper">
         <el-select v-model="activeBarIndex" size="small" @change="handleBarChange">
           <el-option
@@ -246,6 +300,23 @@ onMounted(() => {
             :value="idx"
           />
         </el-select>
+      </div>
+      <!-- 时间范围选择器（只针对 getTargetMgmtChart 接口） -->
+      <div class="date-range-wrapper">
+        <el-date-picker
+          v-model="dateRange"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="起始时间"
+          end-placeholder="结束时间"
+          size="small"
+          :shortcuts="[
+            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
+            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
+            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
+          ]"
+          @change="handleDateRangeChange"
+        />
       </div>
       <Pie
         style="flex: 1 !important;"
@@ -291,6 +362,35 @@ onMounted(() => {
     top: 8px;
     right: 10px;
     z-index: 10;
+  }
+
+  /* 柱状图容器特殊样式，用于绝对定位时间选择器 */
+  .bar-chart-container {
+    position: relative;
+  }
+
+  .date-range-wrapper {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    z-index: 10;
+  }
+
+  /* 紧凑的时间选择器样式 */
+  :deep(.el-date-editor) {
+    --el-date-editor-width: 240px;
+
+    .el-range__icon {
+      margin-right: 2px;
+    }
+
+    .el-range-separator {
+      padding: 0 4px;
+    }
+
+    .el-range__close-icon {
+      margin-left: 2px;
+    }
   }
 }
 </style>

@@ -14,11 +14,11 @@ const applyTypeReverse = {
 // 状态映射
 const statusMap = {
   '待审核': 'pending',
-  '已通过': 'approved'
+  '已通过': 'approve'
 };
 const statusReverse = {
   'pending': '待审核',
-  'approved': '已通过'
+  'approve': '已通过'
 };
 
 // 通用转换函数：后端 → 前端（将英文转为中文）
@@ -159,7 +159,7 @@ export function getAccessApplyChart(params) {
 
 export function getAccessApplyCount(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.get('/studentmgmt/access-apply/chart/applyCount', { params: convertedParams }).catch(err => {
+  return requestClient.get('/studentmgmt/access-apply/applyCount', { params: convertedParams }).catch(err => {
     console.warn('班级统计接口失败，使用模拟数据', err);
     return Promise.resolve({
       classStatistics: [
