@@ -6,7 +6,7 @@ import { useVbenModal } from '@vben/common-ui';
 import { WarningFilled } from '@element-plus/icons-vue';
 import { ElLoading, ElMessage } from 'element-plus';
 
-import { approveInspectReport } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectReport';
+import { approveInspectReport, processInspectReport } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectReport';
 
 const emit = defineEmits(['success']);
 
@@ -20,6 +20,13 @@ const actionConfig = {
     successMessage: '巡检上报已通过',
     loadingMessage: '正在审核巡检上报...',
     api: approveInspectReport,
+  },
+  execute: {
+    title: '确认执行',
+    message: (id) => `确定要执行巡检上报 ${id} 吗？执行后将进入待处置状态。`,
+    successMessage: '巡检上报已执行',
+    loadingMessage: '正在执行巡检上报...',
+    api: processInspectReport,
   },
 };
 
