@@ -88,6 +88,7 @@ onMounted(() => {
     <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -98,13 +99,20 @@ onMounted(() => {
       />
     </div>
 
-      <LineChartClick
-        title="日志量趋势"
-        class="simple-bar-chart"
-        :series-data="trendSeriesData"
-        :x-data="trendXData"
-        y-name="日志数"
-        @line-click="handleTrendClick"
-      />
+    <LineChartClick
+      title="日志量趋势"
+      class="simple-bar-chart"
+      :series-data="trendSeriesData"
+      :x-data="trendXData"
+      y-name="日志数"
+      @line-click="handleTrendClick"
+    />
   </div>
 </template>
+<style lang="scss">
+.chart-box-left {
+  .left-card {
+    height: 159px !important;
+  }
+}
+</style>

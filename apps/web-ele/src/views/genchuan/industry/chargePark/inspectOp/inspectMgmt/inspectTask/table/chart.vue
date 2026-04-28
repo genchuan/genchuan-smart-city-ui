@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getInspectTaskChart } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectTask';
-import Columnar from '#/components/stats/columnar.vue';
+import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
@@ -85,6 +85,7 @@ onMounted(() => {
     <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -103,7 +104,7 @@ onMounted(() => {
       y-name="分钟"
       @line-click="handleTrendClick"
     />
-    <Columnar
+    <BarClick
       class="park-type-chart"
       title="任务类型分布"
       :x-data="state.typeData.map((item) => getPlanTypeLabel(item.typeName))"
@@ -113,3 +114,10 @@ onMounted(() => {
     />
   </div>
 </template>
+<style lang="scss">
+.chart-box-left {
+  .left-card {
+    height: 159px !important;
+  }
+}
+</style>

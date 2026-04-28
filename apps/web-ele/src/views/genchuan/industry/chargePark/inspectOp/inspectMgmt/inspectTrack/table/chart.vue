@@ -86,7 +86,7 @@ function normalizeTrendData(trendData) {
     const trackTime = item.time ?? item.trackTime ?? item.track_time;
     return {
       trackTime: String(trackTime ?? ''),
-      time: formatTrendTime(trackTime),
+      time: item.time,
       totalMileage: Number(item.totalMileage ?? item.mileage ?? 0),
     };
   });
@@ -154,6 +154,7 @@ onMounted(() => {
     <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -204,7 +205,13 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss">
+.chart-box-left {
+  .left-card {
+    height: 159px !important;
+  }
+}
+
 .inspect-track-map-section {
   position: relative;
   flex: 1.1 1 0;
@@ -240,5 +247,4 @@ onMounted(() => {
   cursor: pointer;
   background: rgb(255 255 255 / 90%);
 }
-
 </style>

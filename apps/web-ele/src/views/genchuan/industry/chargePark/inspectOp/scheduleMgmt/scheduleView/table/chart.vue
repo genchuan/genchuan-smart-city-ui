@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getScheduleViewChart } from '#/api/genchuan/industry/chargePark/inspectOp/scheduleMgmt/scheduleView';
-import Columnar from '#/components/stats/columnar.vue';
+import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
 import { getMockChartData, getShiftTypeTagType, getUserName } from './data';
@@ -102,6 +102,7 @@ onMounted(() => {
     <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -136,7 +137,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <Columnar
+    <BarClick
       class="simple-bar-chart"
       title="人员排班分布"
       :series-data="userSeriesData"
@@ -147,7 +148,13 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+.chart-box-left {
+  .left-card {
+    height: 159px !important;
+  }
+}
+
 .schedule-calendar-section {
   flex: 1.05 1 0;
   min-width: 0;
@@ -206,9 +213,9 @@ onMounted(() => {
   max-width: 100%;
   padding: 2px 6px;
   overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 11px;
   line-height: 16px;
-  text-overflow: ellipsis;
   white-space: nowrap;
   border-radius: 6px;
 }
@@ -227,5 +234,4 @@ onMounted(() => {
   color: var(--el-color-info);
   background-color: var(--el-color-info-light-9);
 }
-
 </style>
