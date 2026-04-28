@@ -75,16 +75,16 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">总金额:</div>
+        <div class="detail-row-left">订单金额:</div>
         <div class="detail-row-right">
-          {{ detailObj.totalAmount || 0 }} 元
+          {{ detailObj.amount || 0 }} 元
         </div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">实付金额:</div>
+        <div class="detail-row-left">优惠抵扣金额:</div>
         <div class="detail-row-right">
-          {{ detailObj.payAmount || 0 }} 元
+          {{ detailObj.discountAmount || 0 }} 元
         </div>
       </div>
 
