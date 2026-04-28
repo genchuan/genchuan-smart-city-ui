@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getOilMonitorChart } from '#/api/genchuan/industry/chargePark/inspectOp/deviceMonitor/oilMonitor';
-import Columnar from '#/components/stats/columnar.vue';
+import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
@@ -127,7 +127,7 @@ onMounted(() => {
       y-name="占位数"
       @line-click="handleTrendClick"
     />
-    <Columnar
+    <BarClick
       class="park-type-chart"
       title="各场站占位数"
       :series-data="stationSeriesData"

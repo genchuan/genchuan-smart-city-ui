@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getAssetInfoChart } from '#/api/genchuan/industry/chargePark/inspectOp/assetMgmt/assetInfo';
-import Columnar from '#/components/stats/columnar.vue';
+import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
 import { getMockChartData, getAssetTypeLabel } from './data';
@@ -88,7 +88,7 @@ onMounted(() => {
       />
     </div>
 
-    <Columnar
+    <BarClick
       class="simple-bar-chart"
       title="资产类型分布"
       :series-data="typeSeriesData"

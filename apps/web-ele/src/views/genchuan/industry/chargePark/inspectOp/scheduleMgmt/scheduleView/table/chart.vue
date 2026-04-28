@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getScheduleViewChart } from '#/api/genchuan/industry/chargePark/inspectOp/scheduleMgmt/scheduleView';
-import Columnar from '#/components/stats/columnar.vue';
+import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
 import { getMockChartData, getShiftTypeTagType, getUserName } from './data';
@@ -137,7 +137,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <Columnar
+    <BarClick
       class="simple-bar-chart"
       title="人员排班分布"
       :series-data="userSeriesData"

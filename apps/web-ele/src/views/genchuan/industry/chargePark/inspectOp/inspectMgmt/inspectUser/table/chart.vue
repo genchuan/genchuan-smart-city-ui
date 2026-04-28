@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getInspectUserChart } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectUser';
-import Columnar from '#/components/stats/columnar.vue';
+import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
 import { getMockChartData } from './data';
@@ -100,7 +100,7 @@ onMounted(() => {
       />
     </div>
 
-    <Columnar
+    <BarClick
       class="simple-bar-chart"
       title="人员区域分布"
       :series-data="areaSeriesData"
