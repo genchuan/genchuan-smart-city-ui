@@ -189,6 +189,15 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
       const formData = await createFormApi.getValues();
       // 获取抽屉数据
       const drawerData = createDrawerApi.getData();
+
+      // 校验生效时间必须早于失效时间
+      if (formData.effectTime && formData.expireTime) {
+        if (new Date(formData.effectTime) >= new Date(formData.expireTime)) {
+          ElMessage.error('生效时间必须早于失效时间');
+          return;
+        }
+      }
+
       // 判断是创建还是编辑
       if (drawerData.rowData) {
         // 编辑模式，调用更新接口

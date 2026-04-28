@@ -332,12 +332,14 @@ const getStatusType = (status) => {
 const payDialogVisible = ref(false);
 const payForm = reactive({
   id: '',
+  orderNo: '',
   remark: '',
 });
 
 // 打开支付弹窗
 const handlePay = (row) => {
   payForm.id = row.id;
+  payForm.orderNo = row.orderNo;
   payForm.remark = '';
   payDialogVisible.value = true;
 };
@@ -358,12 +360,14 @@ const handlePaySubmit = async () => {
 const cancelDialogVisible = ref(false);
 const cancelForm = reactive({
   id: '',
+  orderNo: '',
   remark: '',
 });
 
 // 打开取消弹窗
 const handleCancel = (row) => {
   cancelForm.id = row.id;
+  cancelForm.orderNo = row.orderNo;
   cancelForm.remark = '';
   cancelDialogVisible.value = true;
 };
@@ -384,18 +388,26 @@ const handleCancelSubmit = async () => {
 const refundDialogVisible = ref(false);
 const refundForm = reactive({
   id: '',
+  orderNo: '',
   remark: '',
 });
 
 // 打开退款弹窗
 const handleRefund = (row) => {
   refundForm.id = row.id;
+  refundForm.orderNo = row.orderNo;
   refundForm.remark = '';
   refundDialogVisible.value = true;
 };
 
 // 提交退款
 const handleRefundSubmit = async () => {
+  // 校验退款申请内容长度
+  if (refundForm.remark && refundForm.remark.length < 10) {
+    ElMessage.error('退款申请内容需要≥10个字符');
+    return;
+  }
+  
   try {
     await refundOrder(refundForm);
     ElMessage.success('退款申请已提交');
@@ -410,25 +422,42 @@ const handleRefundSubmit = async () => {
 const invoiceDialogVisible = ref(false);
 const invoiceForm = reactive({
   id: '',
+  orderNo: '',
+  invoiceTitle: '',
+  invoiceTaxNo: '',
+  invoiceEmail: '',
   remark: '',
 });
 
 // 打开开票弹窗
 const handleInvoice = (row) => {
   invoiceForm.id = row.id;
+  invoiceForm.orderNo = row.orderNo;
   invoiceForm.remark = '';
   invoiceDialogVisible.value = true;
 };
 
+// 邮箱格式校验
+const validateEmail = (email) => {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email);
+};
+
 // 提交开票
 const handleInvoiceSubmit = async () => {
+  // 校验邮箱格式
+  if (invoiceForm.invoiceEmail && !validateEmail(invoiceForm.invoiceEmail)) {
+    ElMessage.error('请输入有效的邮箱地址');
+    return;
+  }
+  
   try {
     await invoiceOrder(invoiceForm);
-    ElMessage.success('开票申请已提交');
+    ElMessage.success($t('开票申请已提交'));
     invoiceDialogVisible.value = false;
     handleRefresh();
-  } catch (error) {
-    ElMessage.error('开票申请失败');
+  } catch (error) { 
+    ElMessage.error($t(error.msg));
   }
 };
 
@@ -521,6 +550,9 @@ const alarmColumns = [
         <el-form-item label="订单ID">
           <el-input v-model="payForm.id" disabled />
         </el-form-item>
+        <el-form-item label="订单编号">
+          <el-input v-model="payForm.orderNo" disabled />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="payForm.remark" type="textarea" rows="3" placeholder="请输入支付备注" />
         </el-form-item>
@@ -543,6 +575,9 @@ const alarmColumns = [
       <el-form :model="cancelForm" label-width="80px">
         <el-form-item label="订单ID">
           <el-input v-model="cancelForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="订单编号">
+          <el-input v-model="cancelForm.orderNo" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="cancelForm.remark" type="textarea" rows="3" placeholder="请输入取消备注" />
@@ -567,6 +602,9 @@ const alarmColumns = [
         <el-form-item label="订单ID">
           <el-input v-model="refundForm.id" disabled />
         </el-form-item>
+        <el-form-item label="订单编号">
+          <el-input v-model="refundForm.orderNo" disabled />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="refundForm.remark" type="textarea" rows="3" placeholder="请输入退款备注" />
         </el-form-item>
@@ -590,6 +628,18 @@ const alarmColumns = [
         <el-form-item label="订单ID">
           <el-input v-model="invoiceForm.id" disabled />
         </el-form-item>
+        <el-form-item label="订单编号">
+          <el-input v-model="invoiceForm.orderNo" disabled />
+        </el-form-item>
+        <el-form-item label="发票抬头">
+          <el-input v-model="invoiceForm.invoiceTitle" placeholder="请输入发票抬头" />
+        </el-form-item>
+        <el-form-item label="发票税号">
+          <el-input v-model="invoiceForm.invoiceTaxNo" placeholder="请输入发票税号" />
+        </el-form-item>
+        <el-form-item label="接收邮箱">
+          <el-input v-model="invoiceForm.invoiceEmail" placeholder="请输入接收邮箱" />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="invoiceForm.remark" type="textarea" rows="3" placeholder="请输入开票备注" />
         </el-form-item>
@@ -610,13 +660,13 @@ const alarmColumns = [
             icon-name="download"
             @click="handleExport"
           /> 
-          <IconButton
+          <!-- <IconButton
             content="批量删除"
             icon-name="delete"
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch"
-          />
+          /> -->
           <IconButton
             content="搜索"
             icon-name="search"
@@ -703,7 +753,7 @@ const alarmColumns = [
             content="开票"
             icon-name="Document"
             @click="handleInvoice(row)"
-            v-if="row.status === 'completed'"
+            v-if="row.status === 'paid' || row.status === 'completed'"
           />
         </div>
       </template>
