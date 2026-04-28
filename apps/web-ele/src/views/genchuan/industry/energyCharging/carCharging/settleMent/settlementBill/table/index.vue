@@ -244,6 +244,7 @@ const getTableData = async (pageObj) => {
   dataObj.list = data.list.map((v) => {
     return {
       ...v,
+      settlementTime: formatTimestamp(v.settlementTime),
       auditTime: formatTimestamp(v.auditTime), 
       createTime: formatTimestamp(v.createTime),
     };
