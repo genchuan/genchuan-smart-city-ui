@@ -156,8 +156,7 @@ const initLineChart = () => {
   }
   lineChartInstance = echarts.init(lineChartRef.value);
   lineChartInstance.setOption(getLineOption());
-  // 移除折线图点击钻取功能（不再发送 date 筛选）
-  // lineChartInstance.on('click', ...) 已删除
+  lineChartInstance.off('click');
 };
 
 const handleResize = () => lineChartInstance?.resize();
