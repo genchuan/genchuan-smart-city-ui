@@ -450,8 +450,8 @@ const handleInvoiceSubmit = async () => {
     ElMessage.success($t('开票申请已提交'));
     invoiceDialogVisible.value = false;
     handleRefresh();
-  } catch (error) {
-    ElMessage.error($t('开票申请失败'));
+  } catch (error) { 
+    ElMessage.error($t(error.msg));
   }
 };
 
@@ -654,13 +654,13 @@ const alarmColumns = [
             icon-name="download"
             @click="handleExport"
           /> 
-          <IconButton
+          <!-- <IconButton
             content="批量删除"
             icon-name="delete"
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch"
-          />
+          /> -->
           <IconButton
             content="搜索"
             icon-name="search"
