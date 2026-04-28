@@ -114,7 +114,7 @@ function initPieChart() {
     if (params.componentType === 'series') {
       const date = params.name;
       window.dispatchEvent(
-        new CustomEvent('filterEndPark', { detail: { date } }),
+        new CustomEvent('filterByChart:endPark', { detail: { date } }),
       );
     }
   });
@@ -134,12 +134,12 @@ function handleCardClick(key) {
   if (key === 'endCount') {
     // 结束量：跳转所有结束停车记录列表
     window.dispatchEvent(
-      new CustomEvent('filterEndPark', { detail: { status: null } }),
+      new CustomEvent('filterByChart:endPark', { detail: { status: null } }),
     );
   } else if (key === 'paySuccessRate') {
     // 支付成功率：跳转已支付状态的结束停车记录列表
     window.dispatchEvent(
-      new CustomEvent('filterEndPark', { detail: { status: '已支付' } }),
+      new CustomEvent('filterByChart:endPark', { detail: { status: '已支付' } }),
     );
   }
 }

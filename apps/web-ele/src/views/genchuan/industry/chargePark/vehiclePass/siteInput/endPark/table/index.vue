@@ -22,6 +22,9 @@ import { $t } from '#/locales';
 import IconButton from '#/components/common/IconButton.vue';
 import { exportToExcel } from '#/utils/excel.js';
 
+import SpaceDetailDialog from '../../../components/SpaceDetailDialog.vue';
+import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
+
 import {
   dataList,
   detailFields,
@@ -55,6 +58,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const detailDrawerRef = ref(null);
+const vehicleDetailRef = ref(null);
+const spaceDetailRef = ref(null);
 
 const [CreateForm, createFormApi] = useVbenForm({
   commonConfig: {
@@ -349,8 +354,26 @@ const handleFullShow = () => {
 
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
-  const filterParams = event.detail;
-  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+  const { status, date } = event.detail;
+
+  if (status !== undefined) {
+    // 卡片钻取：按状态筛选
+    if (status === null) {
+      // 结束量卡片：显示所有记录
+      dataObj.searchParams = {};
+    } else {
+      // 支付成功率卡片：显示已支付记录
+      dataObj.searchParams = { status };
+    }
+  } else if (date) {
+    // 折线图钻取：按日期筛选，将日期转换为时间戳范围
+    const timestamp = new Date(date).getTime();
+    const nextDayTimestamp = timestamp + 86400000;
+    dataObj.searchParams = {
+      endTime: [timestamp.toString(), nextDayTimestamp.toString()],
+    };
+  }
+
   handleRefresh();
   ElMessage.success('已应用图表筛选');
 };
@@ -513,16 +536,14 @@ const handleCancel = (row) => {
     .open();
 };
 
-// 点击车牌跳转车辆详情
+// 点击车牌打开车辆详情
 const handlePlateNoClick = (row) => {
-  ElMessage.info(`跳转到车辆详情：${row.plateNo}`);
-  // TODO: 实现跳转到车辆详情弹窗
+  vehicleDetailRef.value?.open(row.plateNo, row);
 };
 
-// 点击车位跳转车位详情
+// 点击车位打开泊位详情
 const handleSpaceIdClick = (row) => {
-  ElMessage.info(`跳转到车位详情：${row.spaceId}`);
-  // TODO: 实现跳转到车位详情弹窗
+  spaceDetailRef.value?.open(row.spaceId, row);
 };
 
 // 点击缴费状态筛选同状态记录
@@ -600,6 +621,8 @@ const handleChartFilter = (event) => {
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <VehicleDetailDialog ref="vehicleDetailRef" />
+    <SpaceDetailDialog ref="spaceDetailRef" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
