@@ -332,12 +332,14 @@ const getStatusType = (status) => {
 const payDialogVisible = ref(false);
 const payForm = reactive({
   id: '',
+  orderNo: '',
   remark: '',
 });
 
 // 打开支付弹窗
 const handlePay = (row) => {
   payForm.id = row.id;
+  payForm.orderNo = row.orderNo;
   payForm.remark = '';
   payDialogVisible.value = true;
 };
@@ -358,12 +360,14 @@ const handlePaySubmit = async () => {
 const cancelDialogVisible = ref(false);
 const cancelForm = reactive({
   id: '',
+  orderNo: '',
   remark: '',
 });
 
 // 打开取消弹窗
 const handleCancel = (row) => {
   cancelForm.id = row.id;
+  cancelForm.orderNo = row.orderNo;
   cancelForm.remark = '';
   cancelDialogVisible.value = true;
 };
@@ -384,12 +388,14 @@ const handleCancelSubmit = async () => {
 const refundDialogVisible = ref(false);
 const refundForm = reactive({
   id: '',
+  orderNo: '',
   remark: '',
 });
 
 // 打开退款弹窗
 const handleRefund = (row) => {
   refundForm.id = row.id;
+  refundForm.orderNo = row.orderNo;
   refundForm.remark = '';
   refundDialogVisible.value = true;
 };
@@ -410,12 +416,14 @@ const handleRefundSubmit = async () => {
 const invoiceDialogVisible = ref(false);
 const invoiceForm = reactive({
   id: '',
+  orderNo: '',
   remark: '',
 });
 
 // 打开开票弹窗
 const handleInvoice = (row) => {
   invoiceForm.id = row.id;
+  invoiceForm.orderNo = row.orderNo;
   invoiceForm.remark = '';
   invoiceDialogVisible.value = true;
 };
@@ -521,6 +529,9 @@ const alarmColumns = [
         <el-form-item label="订单ID">
           <el-input v-model="payForm.id" disabled />
         </el-form-item>
+        <el-form-item label="订单编号">
+          <el-input v-model="payForm.orderNo" disabled />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="payForm.remark" type="textarea" rows="3" placeholder="请输入支付备注" />
         </el-form-item>
@@ -543,6 +554,9 @@ const alarmColumns = [
       <el-form :model="cancelForm" label-width="80px">
         <el-form-item label="订单ID">
           <el-input v-model="cancelForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="订单编号">
+          <el-input v-model="cancelForm.orderNo" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="cancelForm.remark" type="textarea" rows="3" placeholder="请输入取消备注" />
@@ -567,6 +581,9 @@ const alarmColumns = [
         <el-form-item label="订单ID">
           <el-input v-model="refundForm.id" disabled />
         </el-form-item>
+        <el-form-item label="订单编号">
+          <el-input v-model="refundForm.orderNo" disabled />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="refundForm.remark" type="textarea" rows="3" placeholder="请输入退款备注" />
         </el-form-item>
@@ -589,6 +606,9 @@ const alarmColumns = [
       <el-form :model="invoiceForm" label-width="80px">
         <el-form-item label="订单ID">
           <el-input v-model="invoiceForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="订单编号">
+          <el-input v-model="invoiceForm.orderNo" disabled />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="invoiceForm.remark" type="textarea" rows="3" placeholder="请输入开票备注" />
