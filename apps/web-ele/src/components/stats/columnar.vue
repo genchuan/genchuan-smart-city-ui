@@ -65,7 +65,7 @@ const initChart = async () => {
     const option = {
       title: { text: props.title, left: 'center' },
       tooltip: { trigger: 'axis' },
-      legend: { bottom: 10, left: 'center' },
+      legend: { top: 10, left: 10 },
       grid: {
         left: '3%',
         right: '4%',
