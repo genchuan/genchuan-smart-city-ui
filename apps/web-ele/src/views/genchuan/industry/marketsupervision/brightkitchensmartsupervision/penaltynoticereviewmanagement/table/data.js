@@ -141,11 +141,25 @@ export function useFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'draftPunishAmt',
-      label: '草拟处罚金额',
+      fieldName: 'draftPunishAmtMin',
+      label: '草拟处罚金额下限',
       component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入草拟处罚金额',
+        placeholder: '请输入草拟处罚金额下限',
+        min: 0,
+        precision: 2,
+        addonAfter: '元',
+      },
+      labelWidth: '120',
+      rules: 'required',
+      isSearch: true
+    },
+    {
+      fieldName: 'draftPunishAmtMax',
+      label: '草拟处罚金额上限',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入草拟处罚金额上限',  
         min: 0,
         precision: 2,
         addonAfter: '元',
