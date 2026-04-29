@@ -129,7 +129,7 @@ onMounted(() => {
     <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
-         class="left-card"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"

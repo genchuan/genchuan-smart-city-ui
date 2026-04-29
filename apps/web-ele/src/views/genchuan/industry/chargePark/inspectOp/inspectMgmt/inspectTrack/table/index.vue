@@ -149,10 +149,10 @@ async function getTableData({ page }) {
     // }
 
     const normalizedList = list.map((item) => {
-      return{
+      return {
         ...normalizeInspectTrackRow(item),
-        trackPointsText:`${item?.points?.split('|')?.length ?? 0} 个轨迹点`
-      }
+        trackPointsText: `${item?.points?.split('|')?.length ?? 0} 个轨迹点`,
+      };
     });
     const visibleList = filterTrendTime.value
       ? filterInspectTrackRows(normalizedList, {
@@ -272,7 +272,7 @@ async function handleOpenDetail(row) {
     dataObj.detailObj = {
       ...normalizeInspectTrackRow(response || row),
       ...row,
-    }
+    };
   } catch (error) {
     console.error('获取巡检轨迹详情失败，使用行数据:', error);
     dataObj.detailObj = normalizeInspectTrackRow(row);
@@ -446,8 +446,12 @@ onMounted(() => {
             @click="handleBatchReplay"
           />
           <!-- <ElDropdown @command="handleExport"> -->
-            <IconButton content="导出" icon-name="download"  @click="handleExport"/>
-            <!-- <template #dropdown>
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <!-- <template #dropdown>
               <ElDropdownMenu>
                 <ElDropdownItem command="excel">导出 Excel</ElDropdownItem>
                 <ElDropdownItem command="pdf">导出 PDF</ElDropdownItem>

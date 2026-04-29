@@ -115,7 +115,7 @@ onMounted(() => {
   </div>
 </template>
 <style lang="scss">
-.chart-box-left{
+.chart-box-left {
   .left-card {
     height: 159px !important;
   }

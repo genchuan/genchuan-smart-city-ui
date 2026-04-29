@@ -203,7 +203,8 @@ onMounted(() => {
   // margin-left: 15px;
   overflow: hidden;
 }
-.chart-box-left{
+
+.chart-box-left {
   .left-card {
     height: 159px !important;
   }

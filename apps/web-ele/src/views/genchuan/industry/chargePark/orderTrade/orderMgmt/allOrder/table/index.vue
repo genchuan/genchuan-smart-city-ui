@@ -1,7 +1,7 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui'; 
+import { confirm, useVbenDrawer } from '@vben/common-ui';
 
 import { ElDialog, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -11,14 +11,21 @@ import * as XLSX from 'xlsx';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
-import { getOrderPage , exportOrderExcel, payOrder, cancelOrder , refundOrder, invoiceOrder} from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import {
+  getOrderPage,
+  exportOrderExcel,
+  payOrder,
+  cancelOrder,
+  refundOrder,
+  invoiceOrder,
+} from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import { $t } from '#/locales';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 import { formatTimestamp } from '#/utils';
-import {  useFormSchema, useGridColumns } from './data';
+import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
@@ -103,9 +110,9 @@ function handleRefresh() {
 }
 
 // ====================== 导出 EXCEL ======================
-async function handleExport() { 
-    const data = await exportOrderExcel();
-    downloadFileFromBlobPart({ fileName: '订单报表.xls', source: data });
+async function handleExport() {
+  const data = await exportOrderExcel();
+  downloadFileFromBlobPart({ fileName: '订单报表.xls', source: data });
 }
 
 // ====================== 图片转PDF（终极零乱码） ======================
@@ -188,19 +195,19 @@ const getTableData = async (pageObj) => {
     pageSize: page.pageSize,
     ...dataObj.searchObj,
   };
-  
+
   try {
     dataObj.loading = true;
     const res = await getOrderPage(params);
     dataObj.total = res.total;
     dataObj.list = res.list.map((v) => {
-        return {
-          ...v, 
-          payTime: formatTimestamp(v.payTime),
-          updateTime: formatTimestamp(v.updateTime),
-          createTime: formatTimestamp(v.createTime),
-        };
-      });;
+      return {
+        ...v,
+        payTime: formatTimestamp(v.payTime),
+        updateTime: formatTimestamp(v.updateTime),
+        createTime: formatTimestamp(v.createTime),
+      };
+    });
     return dataObj;
   } catch (error) {
     console.error('获取订单数据失败:', error);
@@ -227,10 +234,12 @@ const [QueryForm, queryFormApi] = useVbenForm({
     drawerApi.close();
   },
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
-    delete v.rules;
-    return { ...v }  
-  }).filter((v) => v.isSearch),
+  schema: useFormSchema()
+    .map((v) => {
+      delete v.rules;
+      return { ...v };
+    })
+    .filter((v) => v.isSearch),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -252,10 +261,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     pagerConfig: dataObj,
     toolbarConfig: {
-        'class-name': 'common-tool-bar-config',
-        refresh: true,
-        search: true,
-      },
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+      search: true,
+    },
     showOverflow: true,
   },
   gridEvents: {
@@ -310,12 +319,12 @@ const openEn = async () => {
 
 // 订单状态映射
 const statusMap = {
-  'charging': { label: '充电中', type: 'primary' },
-  'pending_pay': { label: '待支付', type: 'warning' },
-  'paid': { label: '已支付', type: 'success' },
-  'completed': { label: '已完成', type: 'success' },
-  'cancelled': { label: '已取消', type: 'info' },
-  'refunding': { label: '退款中', type: 'danger' },
+  charging: { label: '充电中', type: 'primary' },
+  pending_pay: { label: '待支付', type: 'warning' },
+  paid: { label: '已支付', type: 'success' },
+  completed: { label: '已完成', type: 'success' },
+  cancelled: { label: '已取消', type: 'info' },
+  refunding: { label: '退款中', type: 'danger' },
 };
 
 // 获取状态标签
@@ -407,7 +416,7 @@ const handleRefundSubmit = async () => {
     ElMessage.error('退款申请内容需要≥10个字符');
     return;
   }
-  
+
   try {
     await refundOrder(refundForm);
     ElMessage.success('退款申请已提交');
@@ -450,13 +459,13 @@ const handleInvoiceSubmit = async () => {
     ElMessage.error('请输入有效的邮箱地址');
     return;
   }
-  
+
   try {
     await invoiceOrder(invoiceForm);
     ElMessage.success($t('开票申请已提交'));
     invoiceDialogVisible.value = false;
     handleRefresh();
-  } catch (error) { 
+  } catch (error) {
     ElMessage.error($t(error.msg));
   }
 };
@@ -554,13 +563,20 @@ const alarmColumns = [
           <el-input v-model="payForm.orderNo" disabled />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="payForm.remark" type="textarea" rows="3" placeholder="请输入支付备注" />
+          <el-input
+            v-model="payForm.remark"
+            type="textarea"
+            rows="3"
+            placeholder="请输入支付备注"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="payDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handlePaySubmit">确认支付</el-button>
+          <el-button type="primary" @click="handlePaySubmit"
+            >确认支付</el-button
+          >
         </div>
       </template>
     </ElDialog>
@@ -580,13 +596,20 @@ const alarmColumns = [
           <el-input v-model="cancelForm.orderNo" disabled />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="cancelForm.remark" type="textarea" rows="3" placeholder="请输入取消备注" />
+          <el-input
+            v-model="cancelForm.remark"
+            type="textarea"
+            rows="3"
+            placeholder="请输入取消备注"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="cancelDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleCancelSubmit">确认取消</el-button>
+          <el-button type="primary" @click="handleCancelSubmit"
+            >确认取消</el-button
+          >
         </div>
       </template>
     </ElDialog>
@@ -606,13 +629,20 @@ const alarmColumns = [
           <el-input v-model="refundForm.orderNo" disabled />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="refundForm.remark" type="textarea" rows="3" placeholder="请输入退款备注" />
+          <el-input
+            v-model="refundForm.remark"
+            type="textarea"
+            rows="3"
+            placeholder="请输入退款备注"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="refundDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleRefundSubmit">确认退款</el-button>
+          <el-button type="primary" @click="handleRefundSubmit"
+            >确认退款</el-button
+          >
         </div>
       </template>
     </ElDialog>
@@ -632,34 +662,50 @@ const alarmColumns = [
           <el-input v-model="invoiceForm.orderNo" disabled />
         </el-form-item>
         <el-form-item label="发票抬头">
-          <el-input v-model="invoiceForm.invoiceTitle" placeholder="请输入发票抬头" />
+          <el-input
+            v-model="invoiceForm.invoiceTitle"
+            placeholder="请输入发票抬头"
+          />
         </el-form-item>
         <el-form-item label="发票税号">
-          <el-input v-model="invoiceForm.invoiceTaxNo" placeholder="请输入发票税号" />
+          <el-input
+            v-model="invoiceForm.invoiceTaxNo"
+            placeholder="请输入发票税号"
+          />
         </el-form-item>
         <el-form-item label="接收邮箱">
-          <el-input v-model="invoiceForm.invoiceEmail" placeholder="请输入接收邮箱" />
+          <el-input
+            v-model="invoiceForm.invoiceEmail"
+            placeholder="请输入接收邮箱"
+          />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="invoiceForm.remark" type="textarea" rows="3" placeholder="请输入开票备注" />
+          <el-input
+            v-model="invoiceForm.remark"
+            type="textarea"
+            rows="3"
+            placeholder="请输入开票备注"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="invoiceDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleInvoiceSubmit">确认开票</el-button>
+          <el-button type="primary" @click="handleInvoiceSubmit"
+            >确认开票</el-button
+          >
         </div>
       </template>
     </ElDialog>
 
     <Grid>
       <template #toolbar-tools>
-        <div class="common-toolbar-tools"> 
+        <div class="common-toolbar-tools">
           <IconButton
             content="导出EXCEL"
             icon-name="download"
             @click="handleExport"
-          /> 
+          />
           <!-- <IconButton
             content="批量删除"
             icon-name="delete"
@@ -729,7 +775,7 @@ const alarmColumns = [
             content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
-          /> 
+          />
           <IconButton
             content="支付"
             icon-name="Money"

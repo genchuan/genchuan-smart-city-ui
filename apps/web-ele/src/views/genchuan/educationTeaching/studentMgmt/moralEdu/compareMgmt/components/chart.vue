@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption } from 'element-plus';
+import { computed, onMounted, ref } from 'vue';
+
+import { getCompareMgmtChart } from '#/api/genchuan/educationTeaching/studentMgmt/moralEdu/compareMgmt/data.js';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import BarHorizontal from '#/genchuan-components/stats/barHorizontal.vue';
-import { getCompareMgmtChart } from '#/api/genchuan/educationTeaching/studentMgmt/moralEdu/compareMgmt/data.js';
 
+const emit = defineEmits(['barSelect']);
 const loading = ref(true);
 const chartData = ref({});
 
@@ -18,9 +19,9 @@ const cycleOptions = [
 
 // 周期中文 -> 英文映射（用于接口请求）
 const cycleMap = {
-  '周': 'week',
-  '月': 'month',
-  '学期': 'semester',
+  周: 'week',
+  月: 'month',
+  学期: 'semester',
 };
 
 // ========== 横向条形图（班级德育得分排名 - 只展示前3名）==========
@@ -30,8 +31,10 @@ const barHorizontalData = computed(() => {
   const top4 = sortedDesc.slice(0, 3);
   const sortedAsc = top4.sort((a, b) => a.total_score - b.total_score);
   return {
-    xData: sortedAsc.map(item => item.class_name),
-    seriesData: [{ name: '总得分', data: sortedAsc.map(item => item.total_score) }],
+    xData: sortedAsc.map((item) => item.class_name),
+    seriesData: [
+      { name: '总得分', data: sortedAsc.map((item) => item.total_score) },
+    ],
   };
 });
 
@@ -40,15 +43,13 @@ const barHorizontalData = computed(() => {
 const barData = computed(() => {
   const rankList = chartData.value.rankList || [];
   // 按排名顺序展示（rank_no 越小排名越前），也可按得分排序，这里保持后端返回的顺序
-  const classList = rankList.map(item => item.class_name);
-  const scoreList = rankList.map(item => item.total_score);
+  const classList = rankList.map((item) => item.class_name);
+  const scoreList = rankList.map((item) => item.total_score);
   return {
     xData: classList,
     seriesData: [{ name: '总得分', data: scoreList }],
   };
 });
-
-const emit = defineEmits(['barSelect']);
 
 // 柱状图点击（筛选班级）
 const handleBarClick = (className) => {
@@ -69,8 +70,8 @@ const loadData = async () => {
     chartData.value = {
       rankList: [
         { class_name: '高一(1)班', total_score: 92.5, rank_no: 1 },
-        { class_name: '高一(3)班', total_score: 90.0, rank_no: 2 },
-        { class_name: '高一(2)班', total_score: 88.0, rank_no: 3 },
+        { class_name: '高一(3)班', total_score: 90, rank_no: 2 },
+        { class_name: '高一(2)班', total_score: 88, rank_no: 3 },
         { class_name: '高二(1)班', total_score: 85.5, rank_no: 4 },
       ],
     };
@@ -105,7 +106,7 @@ onMounted(() => {
 
     <!-- 横向条形图：班级德育得分排名 -->
     <BarHorizontal
-      style="flex: 1.5 !important;"
+      style="flex: 1.5 !important"
       title="班级德育得分排名"
       :x-data="barHorizontalData.xData"
       :series-data="barHorizontalData.seriesData"
@@ -115,7 +116,7 @@ onMounted(() => {
 
     <!-- 柱状图：各班级得分统计 -->
     <Bar
-      style="flex: 2 !important;"
+      style="flex: 2 !important"
       title="各班级得分统计"
       :x-data="barData.xData"
       :series-data="barData.seriesData"
@@ -127,13 +128,13 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .chart-box {
-  padding-bottom: 0.5rem;
+  position: relative;
   display: flex;
   flex-wrap: wrap;
-  padding-left: 15px;
-  padding-right: 15px;
   width: 100% !important;
-  position: relative;
+  padding-right: 15px;
+  padding-bottom: 0.5rem;
+  padding-left: 15px;
 
   .cycle-radio {
     position: absolute;

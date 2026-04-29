@@ -1,17 +1,21 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
-import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
-import Pie from '#/genchuan-components/stats/pieClick.vue';
-import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
+import { computed, onMounted, ref } from 'vue';
+
+import { ElDatePicker, ElOption, ElSelect } from 'element-plus';
+
 import {
   getRepairMgmtChart,
   getRepairMgmtCount,
 } from '#/api/genchuan/educationTeaching/studentMgmt/dormMgmt/repairMgmt/data.js';
+import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
+import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
+import Pie from '#/genchuan-components/stats/pieClick.vue';
 
+// ========== 事件发射 ==========
+const emit = defineEmits(['cardSelect', 'pieSelect', 'lineSelect']);
 const loading = ref(true);
-const chartData = ref({});      // 卡片 + 折线图 + 类型分布
-const countData = ref({});      // 完成率统计
+const chartData = ref({}); // 卡片 + 折线图 + 类型分布
+const countData = ref({}); // 完成率统计
 
 // 时间范围选择器绑定的值（数组格式 [startDate, endDate]）
 const timeRange = ref([]);
@@ -63,7 +67,12 @@ const cardList = computed(() => {
   return [
     { title: '总报修次数', value: total, color: '#409EFF', status: 'total' },
     { title: '待派单', value: pending, color: '#E6A23C', status: 'pending' },
-    { title: '维修中', value: repairing, color: '#F56C6C', status: 'repairing' },
+    {
+      title: '维修中',
+      value: repairing,
+      color: '#F56C6C',
+      status: 'repairing',
+    },
     { title: '已维修', value: repaired, color: '#67C23A', status: 'repaired' },
     { title: '已验收', value: accepted, color: '#909399', status: 'accepted' },
   ];
@@ -74,8 +83,8 @@ const lineData = computed(() => {
   const trend = chartData.value.dailyTrend || [];
   // 兼容 dailyTrend 为 null 或空数组的情况
   return {
-    xAxis: trend.map(item => item.date),
-    series: [{ name: '报修次数', data: trend.map(item => item.count) }],
+    xAxis: trend.map((item) => item.date),
+    series: [{ name: '报修次数', data: trend.map((item) => item.count) }],
   };
 });
 
@@ -87,7 +96,10 @@ const pieOptions = computed(() => [
     getData: () => {
       const distribution = chartData.value.typeDistribution || [];
       // 后端返回的 type 是英文，但 data.js 已在 convertEnToZh 中转换为中文，这里直接使用
-      return distribution.map(item => ({ name: item.type, value: item.count }));
+      return distribution.map((item) => ({
+        name: item.type,
+        value: item.count,
+      }));
     },
   },
   {
@@ -96,24 +108,28 @@ const pieOptions = computed(() => [
     getData: () => {
       const typeStats = countData.value.typeStatistics || [];
       // 如果后端有 finishRate 字段则使用，否则用 finished/total 计算
-      return typeStats.map(item => ({
+      return typeStats.map((item) => ({
         name: item.type,
-        value: item.finishRate !== undefined ? item.finishRate * 100 : (item.finished / item.total) * 100,
+        value:
+          item.finishRate === undefined
+            ? (item.finished / item.total) * 100
+            : item.finishRate * 100,
       }));
     },
   },
 ]);
 
 const activePieIndex = ref(0);
-const currentPieData = computed(() => pieOptions.value[activePieIndex.value]?.getData() || []);
-const currentPieTitle = computed(() => pieOptions.value[activePieIndex.value]?.title || '');
+const currentPieData = computed(
+  () => pieOptions.value[activePieIndex.value]?.getData() || [],
+);
+const currentPieTitle = computed(
+  () => pieOptions.value[activePieIndex.value]?.title || '',
+);
 
 const handlePieChange = (index) => {
   activePieIndex.value = index;
 };
-
-// ========== 事件发射 ==========
-const emit = defineEmits(['cardSelect', 'pieSelect', 'lineSelect']);
 
 const handleCardClick = (cardInfo) => {
   emit('cardSelect', cardInfo.status);
@@ -206,10 +222,13 @@ onMounted(() => {
     </div>
 
     <!-- 折线图区域（包含日期选择器） -->
-    <div class="line-chart-container" style="flex: 1.5 !important; position: relative;">
+    <div
+      class="line-chart-container"
+      style=" position: relative;flex: 1.5 !important"
+    >
       <!-- 日期范围选择器（紧凑样式，位于右上角） -->
       <div class="date-range-wrapper">
-        <el-date-picker
+        <ElDatePicker
           v-model="timeRange"
           type="daterange"
           range-separator="-"
@@ -219,9 +238,33 @@ onMounted(() => {
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
           :shortcuts="[
-            { text: '近7天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 7); return [start, end]; } },
-            { text: '近30天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 30); return [start, end]; } },
-            { text: '近90天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 90); return [start, end]; } }
+            {
+              text: '近7天',
+              value: () => {
+                const end = new Date();
+                const start = new Date();
+                start.setDate(end.getDate() - 7);
+                return [start, end];
+              },
+            },
+            {
+              text: '近30天',
+              value: () => {
+                const end = new Date();
+                const start = new Date();
+                start.setDate(end.getDate() - 30);
+                return [start, end];
+              },
+            },
+            {
+              text: '近90天',
+              value: () => {
+                const end = new Date();
+                const start = new Date();
+                start.setDate(end.getDate() - 90);
+                return [start, end];
+              },
+            },
           ]"
           @change="handleDateRangeChange"
         />
@@ -238,23 +281,36 @@ onMounted(() => {
     <!-- 饼图（可切换） -->
     <div class="chart-area">
       <div class="chart-select-wrapper">
-        <el-select v-model="activePieIndex" size="small" @change="handlePieChange">
-          <el-option v-for="(opt, idx) in pieOptions" :key="idx" :label="opt.title" :value="idx" />
-        </el-select>
+        <ElSelect
+          v-model="activePieIndex"
+          size="small"
+          @change="handlePieChange"
+        >
+          <ElOption
+            v-for="(opt, idx) in pieOptions"
+            :key="idx"
+            :label="opt.title"
+            :value="idx"
+          />
+        </ElSelect>
       </div>
-      <Pie :title-text="currentPieTitle" :data="currentPieData" @pie-click="handlePieClick" />
+      <Pie
+        :title-text="currentPieTitle"
+        :data="currentPieData"
+        @pie-click="handlePieClick"
+      />
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
 .chart-box {
-  padding-bottom: 0.5rem;
   display: flex;
   flex-wrap: wrap;
-  padding-left: 15px;
-  padding-right: 15px;
   width: 100% !important;
+  padding-right: 15px;
+  padding-bottom: 0.5rem;
+  padding-left: 15px;
 
   .box-left-m {
     display: grid !important;

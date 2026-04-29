@@ -192,9 +192,9 @@ onMounted(() => {
 .monitor-right-section {
   display: flex;
   flex: 1 1 0;
+  min-width: 0;
   // gap: 20px;
   margin-left: 15px;
-  min-width: 0;
 }
 
 .monitor-map-wrapper {
@@ -203,10 +203,10 @@ onMounted(() => {
   // margin-left: 15px;
   overflow: hidden;
 }
+
 .chart-box-left {
   .left-card {
     height: 159px !important;
   }
 }
-
 </style>

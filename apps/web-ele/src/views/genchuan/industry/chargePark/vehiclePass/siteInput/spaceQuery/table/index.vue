@@ -433,12 +433,12 @@ onMounted(() => {
     ElMessage.success(`已筛选泊位：${spaceNo}`);
   };
 
-  window.addEventListener('filterByChart', handleFilterByStatus);
+  window.addEventListener('filterByChart:spaceQuery', handleFilterByStatus);
   window.addEventListener('filterBySpace', handleFilterBySpace);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('filterByChart', () => {});
+  window.removeEventListener('filterByChart:spaceQuery', () => {});
   window.removeEventListener('filterBySpace', () => {});
 });
 </script>

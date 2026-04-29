@@ -81,11 +81,9 @@ let pieChartInstance = null;
 
 async function loadChartData() {
   try {
-    const today = new Date();
     const params = {
       reportCycle: '日报',
       stationId: props.parkId,
-      statTime: today.toISOString().split('T')[0],
       tenantId: 1, // TODO: 从用户信息获取
     };
 
@@ -210,9 +208,12 @@ function initLineChart() {
 
   // 添加折线图点击事件
   lineChartInstance.on('click', (params) => {
-    const filterParams = { date: params.name };
+    const clickDate = new Date(params.name);
+    const startTime = new Date(clickDate.setHours(0, 0, 0, 0)).getTime().toString();
+    const endTime = new Date(clickDate.setHours(23, 59, 59, 999)).getTime().toString();
+    const filterParams = { startTime, endTime };
     window.dispatchEvent(
-      new CustomEvent('filterByChart', { detail: filterParams }),
+      new CustomEvent('filterByChart:passOpReport', { detail: filterParams }),
     );
   });
 }
@@ -289,7 +290,7 @@ function initBarChart() {
       dataType: params.seriesName, // '入场量', '离场量', 'ETC通行量'
     };
     window.dispatchEvent(
-      new CustomEvent('filterByChart', { detail: filterParams }),
+      new CustomEvent('filterByChart:passOpReport', { detail: filterParams }),
     );
   });
 }
@@ -343,7 +344,7 @@ function initPieChart() {
   pieChartInstance.on('click', (params) => {
     const filterParams = { category: params.name };
     window.dispatchEvent(
-      new CustomEvent('filterByChart', { detail: filterParams }),
+      new CustomEvent('filterByChart:passOpReport', { detail: filterParams }),
     );
   });
 }
@@ -356,8 +357,8 @@ function initCharts() {
 
 function handleCardClick(key) {
   const today = new Date();
-  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime();
+  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
 
   const filterMap = {
     entryCount: {
@@ -375,7 +376,7 @@ function handleCardClick(key) {
   const filterParams = filterMap[key];
   if (filterParams) {
     window.dispatchEvent(
-      new CustomEvent('filterByChart', { detail: filterParams }),
+      new CustomEvent('filterByChart:passOpReport', { detail: filterParams }),
     );
   }
 }

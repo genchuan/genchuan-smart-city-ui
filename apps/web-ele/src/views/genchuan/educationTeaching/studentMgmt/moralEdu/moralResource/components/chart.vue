@@ -1,14 +1,18 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
-import Bar from '#/genchuan-components/stats/barClick.vue';
-import LineChart from '#/genchuan-components/stats/lineChartClick.vue';
-import Pie from '#/genchuan-components/stats/pieClick.vue';
+import { computed, onMounted, ref } from 'vue';
+
+import { ElDatePicker, ElOption, ElSelect } from 'element-plus';
+
 import {
   getMoralResourceChart,
   getMoralResourceCount,
 } from '#/api/genchuan/educationTeaching/studentMgmt/moralEdu/moralResource/data.js';
+import Bar from '#/genchuan-components/stats/barClick.vue';
+import LineChart from '#/genchuan-components/stats/lineChartClick.vue';
+import Pie from '#/genchuan-components/stats/pieClick.vue';
 
+// ========== 事件发射 ==========
+const emit = defineEmits(['barSelect', 'pieSelect', 'lineSelect']);
 const loading = ref(true);
 const chartData = ref({});
 const typeCountData = ref({});
@@ -38,8 +42,8 @@ const pieOptions = computed(() => [
       const typeCount = chartData.value.resourceTypeCount || {};
       return [
         { name: '课程', value: typeCount.courseCount || 0 },
-        { name: '图书', value: typeCount.bookCount || 0},
-        {name: '专题包', value: typeCount.packageCount || 0},
+        { name: '图书', value: typeCount.bookCount || 0 },
+        { name: '专题包', value: typeCount.packageCount || 0 },
       ];
     },
   },
@@ -49,14 +53,21 @@ const pieOptions = computed(() => [
     getData: () => {
       const typeList = typeCountData.value.typeList || [];
       const learnRateList = typeCountData.value.learnRateList || [];
-      return typeList.map((name, idx) => ({name, value: learnRateList[idx] || 0}));
+      return typeList.map((name, idx) => ({
+        name,
+        value: learnRateList[idx] || 0,
+      }));
     },
   },
 ]);
 
 const activePieIndex = ref(0);
-const currentPieData = computed(() => pieOptions.value[activePieIndex.value]?.getData() || []);
-const currentPieTitle = computed(() => pieOptions.value[activePieIndex.value]?.title || '');
+const currentPieData = computed(
+  () => pieOptions.value[activePieIndex.value]?.getData() || [],
+);
+const currentPieTitle = computed(
+  () => pieOptions.value[activePieIndex.value]?.title || '',
+);
 
 const handlePieChange = (index) => {
   activePieIndex.value = index;
@@ -72,7 +83,10 @@ const barOptions = computed(() => [
       return {
         xData: ['未上架', '已上架'],
         seriesData: [
-          {name: '资源数量', data: [status.unOnlineCount || 0, status.onlineCount || 0]},
+          {
+            name: '资源数量',
+            data: [status.unOnlineCount || 0, status.onlineCount || 0],
+          },
         ],
       };
     },
@@ -86,7 +100,7 @@ const barOptions = computed(() => [
       const countList = typeCountData.value.resourceCountList || [];
       return {
         xData: typeList,
-        seriesData: [{name: '资源数量', data: countList}],
+        seriesData: [{ name: '资源数量', data: countList }],
       };
     },
     yName: '资源数量',
@@ -94,12 +108,19 @@ const barOptions = computed(() => [
 ]);
 
 const activeBarIndex = ref(0);
-const currentBarData = computed(() => barOptions.value[activeBarIndex.value]?.getData() || {
-  xData: [],
-  seriesData: []
-});
-const currentBarTitle = computed(() => barOptions.value[activeBarIndex.value]?.title || '');
-const currentYName = computed(() => barOptions.value[activeBarIndex.value]?.yName || '');
+const currentBarData = computed(
+  () =>
+    barOptions.value[activeBarIndex.value]?.getData() || {
+      xData: [],
+      seriesData: [],
+    },
+);
+const currentBarTitle = computed(
+  () => barOptions.value[activeBarIndex.value]?.title || '',
+);
+const currentYName = computed(
+  () => barOptions.value[activeBarIndex.value]?.yName || '',
+);
 
 const handleBarChange = (index) => {
   activeBarIndex.value = index;
@@ -113,10 +134,14 @@ const lineOptions = computed(() => [
     getData: () => {
       const trend = chartData.value.learnTrend || [];
       // 按日期排序
-      const sorted = [...trend].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const sorted = [...trend].sort(
+        (a, b) => new Date(a.date) - new Date(b.date),
+      );
       return {
-        xData: sorted.map(item => item.date),
-        seriesData: [{name: '学习人数', data: sorted.map(item => item.count)}],
+        xData: sorted.map((item) => item.date),
+        seriesData: [
+          { name: '学习人数', data: sorted.map((item) => item.count) },
+        ],
       };
     },
     yName: '学习人数',
@@ -127,10 +152,14 @@ const lineOptions = computed(() => [
     getData: () => {
       const trend = chartData.value.rateTrend || [];
       // 按日期排序
-      const sorted = [...trend].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const sorted = [...trend].sort(
+        (a, b) => new Date(a.date) - new Date(b.date),
+      );
       return {
-        xData: sorted.map(item => item.date),
-        seriesData: [{name: '完成率(%)', data: sorted.map(item => item.rate)}],
+        xData: sorted.map((item) => item.date),
+        seriesData: [
+          { name: '完成率(%)', data: sorted.map((item) => item.rate) },
+        ],
       };
     },
     yName: '完成率(%)',
@@ -138,38 +167,42 @@ const lineOptions = computed(() => [
 ]);
 
 const activeLineIndex = ref(0);
-const currentLineData = computed(() => lineOptions.value[activeLineIndex.value]?.getData() || {
-  xData: [],
-  seriesData: []
-});
-const currentLineTitle = computed(() => lineOptions.value[activeLineIndex.value]?.title || '');
-const currentLineYName = computed(() => lineOptions.value[activeLineIndex.value]?.yName || '');
+const currentLineData = computed(
+  () =>
+    lineOptions.value[activeLineIndex.value]?.getData() || {
+      xData: [],
+      seriesData: [],
+    },
+);
+const currentLineTitle = computed(
+  () => lineOptions.value[activeLineIndex.value]?.title || '',
+);
+const currentLineYName = computed(
+  () => lineOptions.value[activeLineIndex.value]?.yName || '',
+);
 
 const handleLineChange = (index) => {
   activeLineIndex.value = index;
 };
 
-// ========== 事件发射 ==========
-const emit = defineEmits(['barSelect', 'pieSelect', 'lineSelect']);
-
 const handlePieClick = (item) => {
   const currentType = pieOptions.value[activePieIndex.value]?.type;
   if (currentType === 'resourceType') {
-    emit('pieSelect', {field: 'resourceType', value: item.name});
+    emit('pieSelect', { field: 'resourceType', value: item.name });
   }
 };
 
 const handleBarClick = (name) => {
   const currentType = barOptions.value[activeBarIndex.value]?.type;
   if (currentType === 'status') {
-    emit('barSelect', {field: 'status', value: name});
+    emit('barSelect', { field: 'status', value: name });
   } else if (currentType === 'resourceTypeCount') {
-    emit('barSelect', {field: 'resourceType', value: name});
+    emit('barSelect', { field: 'resourceType', value: name });
   }
 };
 
 const handleLineClick = (date) => {
-  emit('lineSelect', {field: 'month', value: date});
+  emit('lineSelect', { field: 'month', value: date });
 };
 
 // 加载图表总览数据（带时间范围参数）
@@ -197,17 +230,17 @@ const loadChartData = async () => {
   } catch (error) {
     console.warn('图表总览接口失败，使用模拟数据', error);
     chartData.value = {
-      statusCount: {unOnlineCount: 3, onlineCount: 17},
-      resourceTypeCount: {courseCount: 10, bookCount: 6, packageCount: 4},
+      statusCount: { unOnlineCount: 3, onlineCount: 17 },
+      resourceTypeCount: { courseCount: 10, bookCount: 6, packageCount: 4 },
       learnTrend: [
-        {date: '2025-07', count: 1},
-        {date: '2025-08', count: 8},
-        {date: '2025-09', count: 1},
+        { date: '2025-07', count: 1 },
+        { date: '2025-08', count: 8 },
+        { date: '2025-09', count: 1 },
       ],
       rateTrend: [
-        {date: '2025-07', rate: 58.2},
-        {date: '2025-08', rate: 81.53},
-        {date: '2025-09', rate: 65.3},
+        { date: '2025-07', rate: 58.2 },
+        { date: '2025-08', rate: 81.53 },
+        { date: '2025-09', rate: 65.3 },
       ],
     };
   }
@@ -240,7 +273,7 @@ const loadCountData = async () => {
     typeCountData.value = {
       typeList: ['课程', '图书', '专题包'],
       resourceCountList: [10, 6, 4],
-      learnRateList: [85.5, 78.0, 90.0],
+      learnRateList: [85.5, 78, 90],
     };
   }
 };
@@ -250,10 +283,7 @@ const handleDateRangeChange = async () => {
   if (dateRange.value && dateRange.value.length === 2) {
     loading.value = true;
     try {
-      await Promise.all([
-        loadChartData(),
-        loadCountData(),
-      ]);
+      await Promise.all([loadChartData(), loadCountData()]);
     } finally {
       loading.value = false;
     }
@@ -274,17 +304,17 @@ const loadData = async () => {
     } else {
       console.warn('图表总览接口失败，使用模拟数据');
       chartData.value = {
-        statusCount: {unOnlineCount: 3, onlineCount: 17},
-        resourceTypeCount: {courseCount: 10, bookCount: 6, packageCount: 4},
+        statusCount: { unOnlineCount: 3, onlineCount: 17 },
+        resourceTypeCount: { courseCount: 10, bookCount: 6, packageCount: 4 },
         learnTrend: [
-          {date: '2025-07', count: 1},
-          {date: '2025-08', count: 8},
-          {date: '2025-09', count: 1},
+          { date: '2025-07', count: 1 },
+          { date: '2025-08', count: 8 },
+          { date: '2025-09', count: 1 },
         ],
         rateTrend: [
-          {date: '2025-07', rate: 58.2},
-          {date: '2025-08', rate: 81.53},
-          {date: '2025-09', rate: 65.3},
+          { date: '2025-07', rate: 58.2 },
+          { date: '2025-08', rate: 81.53 },
+          { date: '2025-09', rate: 65.3 },
         ],
       };
     }
@@ -295,7 +325,7 @@ const loadData = async () => {
       typeCountData.value = {
         typeList: ['课程', '图书', '专题包'],
         resourceCountList: [10, 6, 4],
-        learnRateList: [85.5, 78.0, 90.0],
+        learnRateList: [85.5, 78, 90],
       };
     }
   } catch (error) {
@@ -315,13 +345,22 @@ onMounted(() => {
     <!-- 饼图区域 -->
     <div class="chart-area">
       <div class="chart-select-wrapper">
-        <el-select v-model="activePieIndex" size="small" @change="handlePieChange">
-          <el-option v-for="(opt, idx) in pieOptions" :key="idx" :label="opt.title" :value="idx"/>
-        </el-select>
+        <ElSelect
+          v-model="activePieIndex"
+          size="small"
+          @change="handlePieChange"
+        >
+          <ElOption
+            v-for="(opt, idx) in pieOptions"
+            :key="idx"
+            :label="opt.title"
+            :value="idx"
+          />
+        </ElSelect>
       </div>
       <!-- 时间范围选择器（只针对两个接口） -->
       <div class="date-range-wrapper">
-        <el-date-picker
+        <ElDatePicker
           v-model="dateRange"
           type="daterange"
           range-separator="-"
@@ -329,22 +368,59 @@ onMounted(() => {
           end-placeholder="结束时间"
           size="small"
           :shortcuts="[
-            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
-            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
-            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
+            {
+              text: '近三个月',
+              value: () => {
+                const end = new Date();
+                const start = new Date();
+                start.setMonth(start.getMonth() - 3);
+                return [start, end];
+              },
+            },
+            {
+              text: '近半年',
+              value: () => {
+                const end = new Date();
+                const start = new Date();
+                start.setMonth(start.getMonth() - 6);
+                return [start, end];
+              },
+            },
+            {
+              text: '近一年',
+              value: () => {
+                const end = new Date();
+                const start = new Date();
+                start.setFullYear(start.getFullYear() - 1);
+                return [start, end];
+              },
+            },
           ]"
           @change="handleDateRangeChange"
         />
       </div>
-      <Pie :title-text="currentPieTitle" :data="currentPieData" @pie-click="handlePieClick"/>
+      <Pie
+        :title-text="currentPieTitle"
+        :data="currentPieData"
+        @pie-click="handlePieClick"
+      />
     </div>
 
     <!-- 柱状图区域 -->
     <div class="chart-area bar-chart-container">
       <div class="chart-select-wrapper">
-        <el-select v-model="activeBarIndex" size="small" @change="handleBarChange">
-          <el-option v-for="(opt, idx) in barOptions" :key="idx" :label="opt.title" :value="idx"/>
-        </el-select>
+        <ElSelect
+          v-model="activeBarIndex"
+          size="small"
+          @change="handleBarChange"
+        >
+          <ElOption
+            v-for="(opt, idx) in barOptions"
+            :key="idx"
+            :label="opt.title"
+            :value="idx"
+          />
+        </ElSelect>
       </div>
       <Bar
         :title="currentBarTitle"
@@ -358,9 +434,18 @@ onMounted(() => {
     <!-- 折线图区域 -->
     <div class="chart-area">
       <div class="chart-select-wrapper">
-        <el-select v-model="activeLineIndex" size="small" @change="handleLineChange">
-          <el-option v-for="(opt, idx) in lineOptions" :key="idx" :label="opt.title" :value="idx"/>
-        </el-select>
+        <ElSelect
+          v-model="activeLineIndex"
+          size="small"
+          @change="handleLineChange"
+        >
+          <ElOption
+            v-for="(opt, idx) in lineOptions"
+            :key="idx"
+            :label="opt.title"
+            :value="idx"
+          />
+        </ElSelect>
       </div>
       <LineChart
         :title="currentLineTitle"
@@ -375,12 +460,12 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .chart-box {
-  padding-bottom: 0.5rem;
   display: flex;
   flex-wrap: wrap;
-  padding-left: 15px;
-  padding-right: 15px;
   width: 100% !important;
+  padding-right: 15px;
+  padding-bottom: 0.5rem;
+  padding-left: 15px;
 
   .chart-area {
     position: relative;

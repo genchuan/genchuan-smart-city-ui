@@ -5,7 +5,7 @@ import { getAssetInfoChart } from '#/api/genchuan/industry/chargePark/inspectOp/
 import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
-import { getMockChartData, getAssetTypeLabel } from './data';
+import { getAssetTypeLabel, getMockChartData } from './data';
 
 const emit = defineEmits(['statusFilter', 'typeFilter']);
 

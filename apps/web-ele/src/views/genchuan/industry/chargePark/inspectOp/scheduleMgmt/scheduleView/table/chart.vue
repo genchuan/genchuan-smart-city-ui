@@ -149,11 +149,12 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.chart-box-left{
+.chart-box-left {
   .left-card {
     height: 159px !important;
   }
 }
+
 .schedule-calendar-section {
   flex: 1.05 1 0;
   min-width: 0;
@@ -212,9 +213,9 @@ onMounted(() => {
   max-width: 100%;
   padding: 2px 6px;
   overflow: hidden;
+  text-overflow: ellipsis;
   font-size: 11px;
   line-height: 16px;
-  text-overflow: ellipsis;
   white-space: nowrap;
   border-radius: 6px;
 }
@@ -233,5 +234,4 @@ onMounted(() => {
   color: var(--el-color-info);
   background-color: var(--el-color-info-light-9);
 }
-
 </style>

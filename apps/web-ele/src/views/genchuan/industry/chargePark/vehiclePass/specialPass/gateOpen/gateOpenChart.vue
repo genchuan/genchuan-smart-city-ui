@@ -41,13 +41,7 @@ let barChartInstance = null;
 
 async function loadChartData() {
   try {
-    const endTime = new Date();
-    const startTime = new Date();
-    startTime.setDate(startTime.getDate() - 7);
-
     const params = {
-      startTime: Math.floor(startTime.getTime() / 1000).toString(),
-      endTime: Math.floor(endTime.getTime() / 1000).toString(),
       stationId: props.parkId,
     };
 
@@ -161,7 +155,7 @@ function handleCardClick(key) {
   const filterParams = filterMap[key];
   if (filterParams) {
     window.dispatchEvent(
-      new CustomEvent('filterByChart', { detail: filterParams }),
+      new CustomEvent('filterByChart:gateOpen', { detail: filterParams }),
     );
   }
 }

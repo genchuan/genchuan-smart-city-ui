@@ -6,12 +6,12 @@ import { ElTag } from 'element-plus';
 
 // 订单状态映射
 const statusMap = {
-  'charging': { label: '充电中', type: 'primary' },
-  'pending_pay': { label: '待支付', type: 'warning' },
-  'paid': { label: '已支付', type: 'success' },
-  'completed': { label: '已完成', type: 'success' },
-  'cancelled': { label: '已取消', type: 'info' },
-  'refunding': { label: '退款中', type: 'danger' },
+  charging: { label: '充电中', type: 'primary' },
+  pending_pay: { label: '待支付', type: 'warning' },
+  paid: { label: '已支付', type: 'success' },
+  completed: { label: '已完成', type: 'success' },
+  cancelled: { label: '已取消', type: 'info' },
+  refunding: { label: '退款中', type: 'danger' },
 };
 
 // 定义组件接收的属性（充电停车订单详情）
@@ -66,7 +66,7 @@ defineExpose({
         <div class="detail-row-right">
           {{ detailObj.orderNo || '-' }}
         </div>
-      </div> 
+      </div>
       <div class="detail-card-row">
         <div class="detail-row-left">订单类型:</div>
         <div class="detail-row-right">
@@ -76,9 +76,7 @@ defineExpose({
 
       <div class="detail-card-row">
         <div class="detail-row-left">订单金额:</div>
-        <div class="detail-row-right">
-          {{ detailObj.amount || 0 }} 元
-        </div>
+        <div class="detail-row-right">{{ detailObj.amount || 0 }} 元</div>
       </div>
 
       <div class="detail-card-row">
@@ -96,9 +94,7 @@ defineExpose({
               {{ statusMap[detailObj.status]?.label || detailObj.status }}
             </ElTag>
           </template>
-          <template v-else>
-            -
-          </template>
+          <template v-else> - </template>
         </div>
       </div>
 

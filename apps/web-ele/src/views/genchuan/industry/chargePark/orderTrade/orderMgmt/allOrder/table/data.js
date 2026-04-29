@@ -99,7 +99,7 @@ export function useGridColumns() {
       title: '车牌',
       minWidth: 100,
       sortable: true,
-    }, 
+    },
     {
       field: 'orderType',
       title: '订单类型',
@@ -137,7 +137,7 @@ export function useGridColumns() {
       title: '备注',
       minWidth: 200,
       sortable: false,
-    }, 
+    },
     {
       field: 'creator',
       title: '创建者',

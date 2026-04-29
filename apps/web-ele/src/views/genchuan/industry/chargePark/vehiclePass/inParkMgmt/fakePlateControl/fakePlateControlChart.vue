@@ -41,13 +41,7 @@ let barChartInstance = null;
 
 async function loadChartData() {
   try {
-    const endTime = new Date();
-    const startTime = new Date();
-    startTime.setDate(startTime.getDate() - 7);
-
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
       stationId: props.parkId,
     };
 
@@ -115,6 +109,15 @@ function initPieChart() {
     ],
   };
   pieChartInstance.setOption(option);
+
+  // 添加点击事件
+  pieChartInstance.on('click', (params) => {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:fakePlateControl', {
+        detail: { identifyDate: params.name },
+      }),
+    );
+  });
 }
 
 function initBarChart() {
@@ -145,6 +148,15 @@ function initBarChart() {
     ],
   };
   barChartInstance.setOption(option);
+
+  // 添加点击事件
+  barChartInstance.on('click', (params) => {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:fakePlateControl', {
+        detail: { stationName: params.name },
+      }),
+    );
+  });
 }
 
 function initCharts() {
@@ -161,7 +173,7 @@ function handleCardClick(key) {
   const filterParams = filterMap[key];
   if (filterParams) {
     window.dispatchEvent(
-      new CustomEvent('filterByChart', { detail: filterParams }),
+      new CustomEvent('filterByChart:fakePlateControl', { detail: filterParams }),
     );
   }
 }

@@ -1,14 +1,18 @@
 <script setup>
-import { reactive, onMounted, ref, computed } from 'vue';
-import { ElMessage, ElSelect, ElOption, ElDatePicker } from 'element-plus';
-import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
-import Pie from '#/genchuan-components/stats/pieClick.vue';
-import Bar from '#/genchuan-components/stats/barClick.vue';
+import { computed, onMounted, reactive, ref } from 'vue';
+
+import { ElDatePicker, ElOption, ElSelect } from 'element-plus';
+
 import {
   getStudentInfoChart,
-  getStudentInfoDistribution,
   getStudentInfoCoreIndex,
+  getStudentInfoDistribution,
 } from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/studentInfo/data.js';
+import Bar from '#/genchuan-components/stats/barClick.vue';
+import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
+import Pie from '#/genchuan-components/stats/pieClick.vue';
+
+const emit = defineEmits(['pieSelect', 'barSelect', 'cardSelect']);
 
 // 模拟分布数据（最终 fallback）
 const mockDistribution = {
@@ -19,29 +23,29 @@ const mockDistribution = {
     { name: '2024级', count: 321 },
   ],
   major: [
-    {name: '计算机科学与技术', count: 328},
-    {name: '软件工程', count: 286},
-    {name: '电子信息工程', count: 252},
-    {name: '网络工程', count: 215},
-    {name: '数据科学与大数据技术', count: 175},
+    { name: '计算机科学与技术', count: 328 },
+    { name: '软件工程', count: 286 },
+    { name: '电子信息工程', count: 252 },
+    { name: '网络工程', count: 215 },
+    { name: '数据科学与大数据技术', count: 175 },
   ],
   class: [
-    {name: '计算机1班', count: 45},
-    {name: '计算机2班', count: 42},
-    {name: '软件1班', count: 48},
-    {name: '软件2班', count: 50},
-    {name: '电子1班', count: 40},
+    { name: '计算机1班', count: 45 },
+    { name: '计算机2班', count: 42 },
+    { name: '软件1班', count: 48 },
+    { name: '软件2班', count: 50 },
+    { name: '电子1班', count: 40 },
   ],
 };
 
 // 将 count 字段转换为 value（Pie 组件需要 {name, value}）
 const convertToPieData = (data) => {
-  return data.map(item => ({name: item.name, value: item.count}));
+  return data.map((item) => ({ name: item.name, value: item.count }));
 };
 
 const loading = ref(true);
 const overviewData = ref({});
-const distributionData = ref({grade: [], major: [], class: []});
+const distributionData = ref({ grade: [], major: [], class: [] });
 const coreIndexData = ref([]);
 
 const activeDistribution = ref('grade');
@@ -72,7 +76,7 @@ const distributionPieData = computed(() => {
 const pieTitleMap = {
   grade: '年级分布',
   major: '专业分布',
-  class: '班级分布'
+  class: '班级分布',
 };
 
 // 修改：使用后端实际字段名
@@ -84,9 +88,19 @@ const cardList = computed(() => {
   const dropOut = overviewData.value.dropOutCount || 0;
   const abnormal = transfer + suspend + dropOut;
   return [
-    {title: '学生总人数', value: total, color: '#409EFF', status: 'total'},
-    {title: '在籍人数', value: inSchool, color: '#67C23A', status: 'inSchool'},
-    {title: '异动人数', value: abnormal, color: '#E6A23C', status: 'abnormal'},
+    { title: '学生总人数', value: total, color: '#409EFF', status: 'total' },
+    {
+      title: '在籍人数',
+      value: inSchool,
+      color: '#67C23A',
+      status: 'inSchool',
+    },
+    {
+      title: '异动人数',
+      value: abnormal,
+      color: '#E6A23C',
+      status: 'abnormal',
+    },
   ];
 });
 
@@ -100,15 +114,13 @@ const barState = reactive({
 const updateBarTrend = () => {
   const data = coreIndexData.value;
   if (data.length === 0) return;
-  barState.xData = data.map(item => item.date);
+  barState.xData = data.map((item) => item.date);
   barState.seriesData = [
-    {name: '新增学生数', data: data.map(item => item.newStudentCount)},
-    {name: '学籍异动数', data: data.map(item => item.statusChangeCount)},
+    { name: '新增学生数', data: data.map((item) => item.newStudentCount) },
+    { name: '学籍异动数', data: data.map((item) => item.statusChangeCount) },
   ];
   barState.title = '学生核心指标趋势';
 };
-
-const emit = defineEmits(['pieSelect', 'barSelect', 'cardSelect']);
 
 const handleCardClick = (cardInfo) => {
   emit('cardSelect', cardInfo.status);
@@ -116,11 +128,25 @@ const handleCardClick = (cardInfo) => {
 
 const handlePieClick = (item) => {
   let filterField = '';
-  let filterValue = item.name;
-  if (activeDistribution.value === 'grade') filterField = 'grade';
-  else if (activeDistribution.value === 'major') filterField = 'major';
-  else if (activeDistribution.value === 'class') filterField = 'className';
-  emit('pieSelect', {field: filterField, value: filterValue});
+  const filterValue = item.name;
+  switch (activeDistribution.value) {
+    case 'class': {
+      {
+        filterField = 'className';
+        // No default
+      }
+      break;
+    }
+    case 'grade': {
+      filterField = 'grade';
+      break;
+    }
+    case 'major': {
+      filterField = 'major';
+      break;
+    }
+  }
+  emit('pieSelect', { field: filterField, value: filterValue });
 };
 
 const handleBarClick = (date) => {
@@ -130,7 +156,7 @@ const handleBarClick = (date) => {
 // 独立的分布数据获取函数（供切换选项卡时调用）
 const fetchDistribution = async (dimension) => {
   try {
-    const data = await getStudentInfoDistribution({dimension});
+    const data = await getStudentInfoDistribution({ dimension });
     // 接口返回的数据可能已经是 {name, count} 格式
     distributionData.value[dimension] = data;
   } catch (error) {
@@ -142,7 +168,10 @@ const fetchDistribution = async (dimension) => {
 // 切换分布维度
 const changeDistribution = async (dimension) => {
   // 如果当前维度数据为空，则请求
-  if (!distributionData.value[dimension] || distributionData.value[dimension].length === 0) {
+  if (
+    !distributionData.value[dimension] ||
+    distributionData.value[dimension].length === 0
+  ) {
     await fetchDistribution(dimension);
   }
 };
@@ -173,9 +202,9 @@ const loadCoreIndexData = async () => {
   } catch (error) {
     console.error('加载核心指标数据失败', error);
     coreIndexData.value = [
-      {date: '2025-01', newStudentCount: 45, statusChangeCount: 3},
-      {date: '2025-02', newStudentCount: 12, statusChangeCount: 1},
-      {date: '2025-03', newStudentCount: 8, statusChangeCount: 5},
+      { date: '2025-01', newStudentCount: 45, statusChangeCount: 3 },
+      { date: '2025-02', newStudentCount: 12, statusChangeCount: 1 },
+      { date: '2025-03', newStudentCount: 8, statusChangeCount: 5 },
     ];
     updateBarTrend();
   }
@@ -192,12 +221,13 @@ const handleDateRangeChange = () => {
 const loadAllChartData = async () => {
   loading.value = true;
   try {
-    const [overviewRes, gradeRes, majorRes, classRes] = await Promise.allSettled([
-      getStudentInfoChart({}),
-      getStudentInfoDistribution({dimension: 'grade'}),
-      getStudentInfoDistribution({dimension: 'major'}),
-      getStudentInfoDistribution({dimension: 'class'}),
-    ]);
+    const [overviewRes, gradeRes, majorRes, classRes] =
+      await Promise.allSettled([
+        getStudentInfoChart({}),
+        getStudentInfoDistribution({ dimension: 'grade' }),
+        getStudentInfoDistribution({ dimension: 'major' }),
+        getStudentInfoDistribution({ dimension: 'class' }),
+      ]);
 
     if (overviewRes.status === 'fulfilled') {
       overviewData.value = overviewRes.value;
@@ -215,9 +245,12 @@ const loadAllChartData = async () => {
       };
     }
 
-    distributionData.value.grade = gradeRes.status === 'fulfilled' ? gradeRes.value : mockDistribution.grade;
-    distributionData.value.major = majorRes.status === 'fulfilled' ? majorRes.value : mockDistribution.major;
-    distributionData.value.class = classRes.status === 'fulfilled' ? classRes.value : mockDistribution.class;
+    distributionData.value.grade =
+      gradeRes.status === 'fulfilled' ? gradeRes.value : mockDistribution.grade;
+    distributionData.value.major =
+      majorRes.status === 'fulfilled' ? majorRes.value : mockDistribution.major;
+    distributionData.value.class =
+      classRes.status === 'fulfilled' ? classRes.value : mockDistribution.class;
 
     // 单独加载核心指标数据（带时间范围）
     await loadCoreIndexData();
@@ -236,9 +269,9 @@ const loadAllChartData = async () => {
     };
     distributionData.value = mockDistribution;
     coreIndexData.value = [
-      {date: '2025-01', newStudentCount: 45, statusChangeCount: 3},
-      {date: '2025-02', newStudentCount: 12, statusChangeCount: 1},
-      {date: '2025-03', newStudentCount: 8, statusChangeCount: 5},
+      { date: '2025-01', newStudentCount: 45, statusChangeCount: 3 },
+      { date: '2025-02', newStudentCount: 12, statusChangeCount: 1 },
+      { date: '2025-03', newStudentCount: 8, statusChangeCount: 5 },
     ];
     updateBarTrend();
   } finally {
@@ -253,7 +286,7 @@ onMounted(() => {
 
 <template>
   <div v-loading="loading" class="chart-box">
-    <div class="chart-box-left" style="flex: 1 !important;">
+    <div class="chart-box-left" style="flex: 1 !important">
       <Indicator
         class="left-card"
         v-for="item in cardList"
@@ -262,18 +295,18 @@ onMounted(() => {
         @click="handleCardClick"
       />
     </div>
-    <div class="chart-wrapper pie-chart-container" style="flex: 1 !important;">
+    <div class="chart-wrapper pie-chart-container" style="flex: 1 !important">
       <!-- 下拉选择器 -->
       <div class="pie-select-wrapper">
-        <el-select
+        <ElSelect
           v-model="activeDistribution"
           size="small"
           @change="changeDistribution"
         >
-          <el-option label="年级分布" value="grade"/>
-          <el-option label="专业分布" value="major"/>
-          <el-option label="班级分布" value="class"/>
-        </el-select>
+          <ElOption label="年级分布" value="grade" />
+          <ElOption label="专业分布" value="major" />
+          <ElOption label="班级分布" value="class" />
+        </ElSelect>
       </div>
       <Pie
         :title-text="pieTitleMap[activeDistribution]"
@@ -281,10 +314,10 @@ onMounted(() => {
         @pie-click="handlePieClick"
       />
     </div>
-    <div class="chart-wrapper bar-chart-container" style="flex: 1.5 !important;">
+    <div class="chart-wrapper bar-chart-container" style="flex: 1.5 !important">
       <!-- 时间范围选择器（只针对核心指标接口） -->
       <div class="date-range-wrapper">
-        <el-date-picker
+        <ElDatePicker
           v-model="dateRange"
           type="daterange"
           range-separator="-"
@@ -292,9 +325,33 @@ onMounted(() => {
           end-placeholder="结束时间"
           size="small"
           :shortcuts="[
-            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
-            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
-            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
+            {
+              text: '近三个月',
+              value: () => {
+                const end = new Date();
+                const start = new Date();
+                start.setMonth(start.getMonth() - 3);
+                return [start, end];
+              },
+            },
+            {
+              text: '近半年',
+              value: () => {
+                const end = new Date();
+                const start = new Date();
+                start.setMonth(start.getMonth() - 6);
+                return [start, end];
+              },
+            },
+            {
+              text: '近一年',
+              value: () => {
+                const end = new Date();
+                const start = new Date();
+                start.setFullYear(start.getFullYear() - 1);
+                return [start, end];
+              },
+            },
           ]"
           @change="handleDateRangeChange"
         />
@@ -312,12 +369,12 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .chart-box {
-  padding-bottom: 0.5rem;
   display: flex;
   flex-wrap: wrap;
-  padding-left: 15px;
-  padding-right: 15px;
   width: 100% !important;
+  padding-right: 15px;
+  padding-bottom: 0.5rem;
+  padding-left: 15px;
 
   .chart-box-left {
     display: flex;
@@ -330,10 +387,10 @@ onMounted(() => {
   }
 
   .chart-wrapper {
+    position: relative;
     display: flex;
     flex-direction: column;
     min-width: 280px;
-    position: relative;
   }
 
   /* 饼图容器特殊样式，用于绝对定位下拉选择器 */

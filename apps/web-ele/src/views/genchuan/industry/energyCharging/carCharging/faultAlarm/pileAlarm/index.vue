@@ -27,15 +27,19 @@ import {
 // 辅助函数：状态标签类型
 const getStatusType = (status) => {
   const map = {
-    '未派单': 'warning',
-    '已派单': 'primary',
-    '处置中': 'success',
-    '已销单': 'info',
+    未派单: 'warning',
+    已派单: 'primary',
+    处置中: 'success',
+    已销单: 'info',
   };
   return map[status] || 'info';
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: Boolean,
+  arrowState: Boolean,
+});
 const emit = defineEmits(['arrow-change']);
 
 // 放在辅助函数定义区域（例如在 getStatusType 函数后面）
@@ -72,7 +76,11 @@ function handleFilterTagClick(field, value) {
   if (tagFilters.value[field] !== undefined) {
     const existing = tagFilters.value[field];
     // 如果新值等于旧值，则删除该筛选
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+    if (
+      Array.isArray(existing) &&
+      existing.length === 1 &&
+      existing[0] === value
+    ) {
       delete tagFilters.value[field];
     } else if (!Array.isArray(existing) && existing === value) {
       delete tagFilters.value[field];
@@ -140,7 +148,7 @@ const checkedIds = ref([]);
 const checkedRows = ref([]);
 
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map(item => item.id);
+  checkedIds.value = records.map((item) => item.id);
   checkedRows.value = records;
 }
 
@@ -154,34 +162,57 @@ const getTableData = async ({ page }) => {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-    if (params.alarmTime && Array.isArray(params.alarmTime) && params.alarmTime.length === 2) {
+    if (
+      params.alarmTime &&
+      Array.isArray(params.alarmTime) &&
+      params.alarmTime.length === 2
+    ) {
       params.alarmTimeStart = params.alarmTime[0];
       params.alarmTimeEnd = params.alarmTime[1];
       delete params.alarmTime;
     }
     const res = await getPileAlarmPage(params);
     // 直接使用返回的数据，不再判断 res.code
-    let filtered = res.list.filter(v => activeName.value === '全部' || v.alarmStatus === activeName.value);
+    let filtered = res.list.filter(
+      (v) => activeName.value === '全部' || v.alarmStatus === activeName.value,
+    );
     // 应用标签筛选（支持数组多值）
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
+      filtered = filtered.filter((item) => {
         let itemValue;
         switch (field) {
-          case 'station': itemValue = item.stationName; break;
-          case 'faultType': itemValue = item.faultType; break;
-          case 'alarmLevel': itemValue = item.alarmLevel; break;
+          case 'station':
+            itemValue = item.stationName;
+            break;
+          case 'faultType':
+            itemValue = item.faultType;
+            break;
+          case 'alarmLevel':
+            itemValue = item.alarmLevel;
+            break;
           case 'alarmTime':
-            const alarmDate = item.alarmTime ? item.alarmTime.split(' ')[0] : '';
+            const alarmDate = item.alarmTime
+              ? item.alarmTime.split(' ')[0]
+              : '';
             itemValue = alarmDate;
             break;
-          case 'handleUser': itemValue = item.handleUserName || item.handleUser; break;
-          case 'alarmStatus': itemValue = item.alarmStatus; break;
+          case 'handleUser':
+            itemValue = item.handleUserName || item.handleUser;
+            break;
+          case 'alarmStatus':
+            itemValue = item.alarmStatus;
+            break;
           case 'disposeTime':
-            const disposeDate = item.disposeTime ? item.disposeTime.split(' ')[0] : '';
+            const disposeDate = item.disposeTime
+              ? item.disposeTime.split(' ')[0]
+              : '';
             itemValue = disposeDate;
             break;
-          case 'operator': itemValue = item.createBy || '-'; break;
-          default: itemValue = item[field];
+          case 'operator':
+            itemValue = item.createBy || '-';
+            break;
+          default:
+            itemValue = item[field];
         }
         if (Array.isArray(filterValue)) {
           return filterValue.includes(String(itemValue));
@@ -197,26 +228,45 @@ const getTableData = async ({ page }) => {
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
-    let filtered = mockData.filter(v => activeName.value === '全部' || v.alarmStatus === activeName.value);
+    let filtered = mockData.filter(
+      (v) => activeName.value === '全部' || v.alarmStatus === activeName.value,
+    );
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
+      filtered = filtered.filter((item) => {
         let itemValue;
         switch (field) {
-          case 'station': itemValue = item.stationName; break;
-          case 'faultType': itemValue = item.faultType; break;
-          case 'alarmLevel': itemValue = item.alarmLevel; break;
+          case 'station':
+            itemValue = item.stationName;
+            break;
+          case 'faultType':
+            itemValue = item.faultType;
+            break;
+          case 'alarmLevel':
+            itemValue = item.alarmLevel;
+            break;
           case 'alarmTime':
-            const alarmDate = item.alarmTime ? item.alarmTime.split(' ')[0] : '';
+            const alarmDate = item.alarmTime
+              ? item.alarmTime.split(' ')[0]
+              : '';
             itemValue = alarmDate;
             break;
-          case 'handleUser': itemValue = item.handleUserName || item.handleUser; break;
-          case 'alarmStatus': itemValue = item.alarmStatus; break;
+          case 'handleUser':
+            itemValue = item.handleUserName || item.handleUser;
+            break;
+          case 'alarmStatus':
+            itemValue = item.alarmStatus;
+            break;
           case 'disposeTime':
-            const disposeDate = item.disposeTime ? item.disposeTime.split(' ')[0] : '';
+            const disposeDate = item.disposeTime
+              ? item.disposeTime.split(' ')[0]
+              : '';
             itemValue = disposeDate;
             break;
-          case 'operator': itemValue = 'admin'; break;
-          default: itemValue = item[field];
+          case 'operator':
+            itemValue = 'admin';
+            break;
+          default:
+            itemValue = item[field];
         }
         if (Array.isArray(filterValue)) {
           return filterValue.includes(String(itemValue));
@@ -227,23 +277,33 @@ const getTableData = async ({ page }) => {
     });
     dataObj.total = filtered.length;
     // 模拟数据时仍需要前端分页
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.list = filtered.slice(
+      (page.currentPage - 1) * page.pageSize,
+      page.currentPage * page.pageSize,
+    );
   } finally {
     dataObj.loading = false;
   }
   return dataObj;
 };
 
-function handleRefresh() { gridApi.reload(); }
+function handleRefresh() {
+  gridApi.reload();
+}
 
 async function handleExport() {
   try {
     const loading = ElLoading.service({ text: '正在导出...' });
     try {
       const data = await exportPileAlarm();
-      downloadFileFromBlobPart({ fileName: '充电桩告警列表.xls', source: data });
+      downloadFileFromBlobPart({
+        fileName: '充电桩告警列表.xls',
+        source: data,
+      });
       ElMessage.success('导出成功');
-    } finally { loading.close(); }
+    } finally {
+      loading.close();
+    }
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
@@ -251,86 +311,185 @@ async function handleExport() {
 }
 
 async function handleBatchDispatch() {
-  if (checkedIds.value.length === 0) { ElMessage.warning('请至少选择一条告警记录'); return; }
-  const selectedRows = checkedRows.value.filter(row => row.alarmStatus === '未派单');
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一条告警记录');
+    return;
+  }
+  const selectedRows = checkedRows.value.filter(
+    (row) => row.alarmStatus === '未派单',
+  );
 
   try {
-    const { value: handler } = await ElMessageBox.prompt('请输入处理人员', '派单', {
-      confirmButtonText: '确认', cancelButtonText: '取消', inputPlaceholder: '请输入处理人员姓名',
-    });
+    const { value: handler } = await ElMessageBox.prompt(
+      '请输入处理人员',
+      '派单',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputPlaceholder: '请输入处理人员姓名',
+      },
+    );
     if (handler) {
       const loading = ElLoading.service({ text: '派单中...' });
       try {
-        const promises = selectedRows.map(row => dispatchPileAlarm({ id: row.id, handleUserId: handler }));
+        const promises = selectedRows.map((row) =>
+          dispatchPileAlarm({ id: row.id, handleUserId: handler }),
+        );
         const results = await Promise.all(promises);
-        const allSuccess = results.every(res => res === true);
+        const allSuccess = results.every((res) => res === true);
         if (allSuccess) {
-          selectedRows.forEach(row => { row.alarmStatus = '已派单'; row.handleUser = handler; row.handleUser = handler; row.handleUserName = handler; });
-          ElMessage.success('派单成功'); handleRefresh();
-        } else { ElMessage.error('部分派单失败'); }
-      } finally { loading.close(); }
+          selectedRows.forEach((row) => {
+            row.alarmStatus = '已派单';
+            row.handleUser = handler;
+            row.handleUser = handler;
+            row.handleUserName = handler;
+          });
+          ElMessage.success('派单成功');
+          handleRefresh();
+        } else {
+          ElMessage.error('部分派单失败');
+        }
+      } finally {
+        loading.close();
+      }
     }
   } catch {}
 }
 
 async function handleBatchDispose() {
-  if (checkedIds.value.length === 0) { ElMessage.warning('请至少选择一条告警记录'); return; }
-  const selectedRows = checkedRows.value.filter(row => row.alarmStatus === '已派单');
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一条告警记录');
+    return;
+  }
+  const selectedRows = checkedRows.value.filter(
+    (row) => row.alarmStatus === '已派单',
+  );
 
   try {
-    const { value: measure } = await ElMessageBox.prompt('请输入处置措施', '处置', {
-      confirmButtonText: '确认', cancelButtonText: '取消', inputPlaceholder: '请输入处置措施',
-    });
+    const { value: measure } = await ElMessageBox.prompt(
+      '请输入处置措施',
+      '处置',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputPlaceholder: '请输入处置措施',
+      },
+    );
     if (measure) {
       const loading = ElLoading.service({ text: '处置中...' });
       try {
-        const promises = selectedRows.map(row => handlePileAlarm({ id: row.id, disposeMeasure: measure }));
+        const promises = selectedRows.map((row) =>
+          handlePileAlarm({ id: row.id, disposeMeasure: measure }),
+        );
         const results = await Promise.all(promises);
-        const allSuccess = results.every(res => res === true);
+        const allSuccess = results.every((res) => res === true);
         if (allSuccess) {
-          const now = new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).replace(/\//g, '-');
-          selectedRows.forEach(row => { row.alarmStatus = '处置中'; row.disposeMeasure = measure; row.disposeTime = now; });
-          ElMessage.success('处置成功'); handleRefresh();
-        } else { ElMessage.error('部分处置失败'); }
-      } finally { loading.close(); }
+          const now = new Date()
+            .toLocaleString('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false,
+            })
+            .replace(/\//g, '-');
+          selectedRows.forEach((row) => {
+            row.alarmStatus = '处置中';
+            row.disposeMeasure = measure;
+            row.disposeTime = now;
+          });
+          ElMessage.success('处置成功');
+          handleRefresh();
+        } else {
+          ElMessage.error('部分处置失败');
+        }
+      } finally {
+        loading.close();
+      }
     }
   } catch {}
 }
 
 async function handleBatchClose() {
-  if (checkedIds.value.length === 0) { ElMessage.warning('请至少选择一条告警记录'); return; }
-  const selectedRows = checkedRows.value.filter(row => row.alarmStatus === '处置中');
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一条告警记录');
+    return;
+  }
+  const selectedRows = checkedRows.value.filter(
+    (row) => row.alarmStatus === '处置中',
+  );
 
   try {
-    await ElMessageBox.confirm('确认销单？销单后告警状态将变为"已销单"，且需确认设备已恢复正常。', '销单确认', {
-      confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning',
-    });
+    await ElMessageBox.confirm(
+      '确认销单？销单后告警状态将变为"已销单"，且需确认设备已恢复正常。',
+      '销单确认',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning',
+      },
+    );
     const loading = ElLoading.service({ text: '销单中...' });
     try {
-      const promises = selectedRows.map(row => closePileAlarm({ id: row.id }));
+      const promises = selectedRows.map((row) =>
+        closePileAlarm({ id: row.id }),
+      );
       const results = await Promise.all(promises);
-      const allSuccess = results.every(res => res === true);
+      const allSuccess = results.every((res) => res === true);
       if (allSuccess) {
-        const now = new Date().toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).replace(/\//g, '-');
-        selectedRows.forEach(row => { row.alarmStatus = '已销单'; row.disposeTime = now; });
-        ElMessage.success('销单成功'); handleRefresh();
-      } else { ElMessage.error('部分销单失败'); }
-    } finally { loading.close(); }
+        const now = new Date()
+          .toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+          })
+          .replace(/\//g, '-');
+        selectedRows.forEach((row) => {
+          row.alarmStatus = '已销单';
+          row.disposeTime = now;
+        });
+        ElMessage.success('销单成功');
+        handleRefresh();
+      } else {
+        ElMessage.error('部分销单失败');
+      }
+    } finally {
+      loading.close();
+    }
   } catch {}
 }
 
 async function handleRowDispatch(row) {
   try {
-    const { value: handler } = await ElMessageBox.prompt('请输入处理人员', '派单', {
-      confirmButtonText: '确认', cancelButtonText: '取消', inputValue: row.handleUser || '',
-    });
+    const { value: handler } = await ElMessageBox.prompt(
+      '请输入处理人员',
+      '派单',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputValue: row.handleUser || '',
+      },
+    );
     if (handler) {
       const loading = ElLoading.service({ text: '派单中...' });
       try {
-        const res = await dispatchPileAlarm({ id: row.id, handleUserId: handler });
+        const res = await dispatchPileAlarm({
+          id: row.id,
+          handleUserId: handler,
+        });
         if (res === true) {
-          row.alarmStatus = '已派单'; row.handleUser = handler; row.handleUser = handler; row.handleUserName = handler;
-          ElMessage.success('派单成功'); handleRefresh();
+          row.alarmStatus = '已派单';
+          row.handleUser = handler;
+          row.handleUser = handler;
+          row.handleUserName = handler;
+          ElMessage.success('派单成功');
+          handleRefresh();
         } else {
           ElMessage.error('派单失败');
         }
@@ -338,31 +497,41 @@ async function handleRowDispatch(row) {
         loading.close();
       }
     }
-  } catch {
-  }
+  } catch {}
 }
 
 async function handleRowDispose(row) {
   try {
-    const {value: measure} = await ElMessageBox.prompt('请输入处置措施', '处置', {
-      confirmButtonText: '确认', cancelButtonText: '取消', inputValue: row.disposeMeasure || '',
-    });
+    const { value: measure } = await ElMessageBox.prompt(
+      '请输入处置措施',
+      '处置',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputValue: row.disposeMeasure || '',
+      },
+    );
     if (measure) {
-      const loading = ElLoading.service({text: '处置中...'});
+      const loading = ElLoading.service({ text: '处置中...' });
       try {
-        const res = await handlePileAlarm({id: row.id, disposeMeasure: measure});
+        const res = await handlePileAlarm({
+          id: row.id,
+          disposeMeasure: measure,
+        });
         if (res === true) {
           row.alarmStatus = '处置中';
           row.disposeMeasure = measure;
-          row.disposeTime = new Date().toLocaleString('zh-CN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-          }).replace(/\//g, '-');
+          row.disposeTime = new Date()
+            .toLocaleString('zh-CN', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: false,
+            })
+            .replace(/\//g, '-');
           ElMessage.success('处置成功');
           handleRefresh();
         } else {
@@ -372,29 +541,36 @@ async function handleRowDispose(row) {
         loading.close();
       }
     }
-  } catch {
-  }
+  } catch {}
 }
 
 async function handleRowClose(row) {
   try {
-    await ElMessageBox.confirm('确认销单？销单后告警状态将变为"已销单"。', '销单确认', {
-      confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning',
-    });
-    const loading = ElLoading.service({text: '销单中...'});
+    await ElMessageBox.confirm(
+      '确认销单？销单后告警状态将变为"已销单"。',
+      '销单确认',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning',
+      },
+    );
+    const loading = ElLoading.service({ text: '销单中...' });
     try {
-      const res = await closePileAlarm({id: row.id});
+      const res = await closePileAlarm({ id: row.id });
       if (res === true) {
         row.alarmStatus = '已销单';
-        row.disposeTime = new Date().toLocaleString('zh-CN', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: false
-        }).replace(/\//g, '-');
+        row.disposeTime = new Date()
+          .toLocaleString('zh-CN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+          })
+          .replace(/\//g, '-');
         ElMessage.success('销单成功');
         handleRefresh();
       } else {
@@ -403,19 +579,20 @@ async function handleRowClose(row) {
     } finally {
       loading.close();
     }
-  } catch {
-  }
+  } catch {}
 }
 
 async function handleRowRemark(row) {
   try {
-    const {value: remark} = await ElMessageBox.prompt('请输入备注', '备注', {
-      confirmButtonText: '确认', cancelButtonText: '取消', inputValue: row.remark || '',
+    const { value: remark } = await ElMessageBox.prompt('请输入备注', '备注', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputValue: row.remark || '',
     });
     if (remark !== null) {
-      const loading = ElLoading.service({text: '保存备注中...'});
+      const loading = ElLoading.service({ text: '保存备注中...' });
       try {
-        const res = await remarkPileAlarm({id: row.id, remark});
+        const res = await remarkPileAlarm({ id: row.id, remark });
         if (res === true) {
           row.remark = remark;
           ElMessage.success('备注添加成功');
@@ -427,38 +604,44 @@ async function handleRowRemark(row) {
         loading.close();
       }
     }
-  } catch {
-  }
+  } catch {}
 }
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: {
+    componentProps: { class: 'w-full' },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
   handleSubmit: (values) => {
-    searchParams.value = {...values};
+    searchParams.value = { ...values };
     drawerApi.close();
     gridApi.reload();
   },
   layout: 'horizontal',
-  schema: useFormSchema().map(v => {
+  schema: useFormSchema().map((v) => {
     delete v.rules;
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: {content: '查询'},
+  submitButtonOptions: { content: '查询' },
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: {ajax: {query: getTableData}},
-    rowConfig: {keyField: 'id', isHover: true},
+    proxyConfig: { ajax: { query: getTableData } },
+    rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
-    toolbarConfig: {refresh: true, search: true},
+    toolbarConfig: { refresh: true, search: true },
     showOverflow: true,
   },
-  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
   showSearchForm: false,
 });
 
@@ -466,7 +649,7 @@ watch(activeName, (newVal) => {
   tagFilters.value = {};
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({columns: gridColumns.value});
+  else gridApi.setGridOptions?.({ columns: gridColumns.value });
   gridApi.reload();
 });
 
@@ -485,7 +668,7 @@ const handleOpenPileDetail = (row) => {
     pileCode: row.pileCode,
     pileName: row.pileName,
     stationId: row.stationId,
-    stationName: row.stationName
+    stationName: row.stationName,
   };
   pileDetailDrawerRef.value.open();
 };
@@ -504,15 +687,21 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-defineExpose({handleFilterTagClick, clearFilters});
+defineExpose({ handleFilterTagClick, clearFilters });
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <AlarmDetailDrawer ref="alarmDetailDrawerRef" :detail-obj="dataObj.detailObj"/>
-    <PileDetailDrawer ref="pileDetailDrawerRef" :detail-obj="dataObj.pileDetail"/>
+    <AlarmDetailDrawer
+      ref="alarmDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+    />
+    <PileDetailDrawer
+      ref="pileDetailDrawerRef"
+      :detail-obj="dataObj.pileDetail"
+    />
     <Drawer title="搜索">
-      <QueryForm/>
+      <QueryForm />
     </Drawer>
     <Grid>
       <template #table-title>
@@ -530,76 +719,172 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="批量派单" icon-name="User" @click="handleBatchDispatch"/>
-          <IconButton content="批量处置" icon-name="Finished" @click="handleBatchDispose"/>
-          <IconButton content="批量销单" icon-name="EditPen" color="#F56C6C"
-                      @click="handleBatchClose"/>
-          <IconButton content="导出" icon-name="download" @click="handleExport"/>
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
-                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+          <IconButton
+            content="批量派单"
+            icon-name="User"
+            @click="handleBatchDispatch"
+          />
+          <IconButton
+            content="批量处置"
+            icon-name="Finished"
+            @click="handleBatchDispose"
+          />
+          <IconButton
+            content="批量销单"
+            icon-name="EditPen"
+            color="#F56C6C"
+            @click="handleBatchClose"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="筛选"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
+          <IconButton
+            :content="showChart ? '隐藏图表' : '显示图表'"
+            icon-name="PieChart"
+            @click="toggleChart"
+          />
         </div>
       </template>
       <template #alarmCode="{ row }">
-        <el-text @click="handleOpenAlarmDetail(row)" type="primary" style="cursor: pointer;">
+        <el-text
+          @click="handleOpenAlarmDetail(row)"
+          type="primary"
+          style="cursor: pointer"
+        >
           {{ row.alarmCode }}
         </el-text>
       </template>
       <template #pileCode="{ row }">
-        <el-text @click="handleOpenPileDetail(row)" type="primary" style="cursor: pointer;">
+        <el-text
+          @click="handleOpenPileDetail(row)"
+          type="primary"
+          style="cursor: pointer"
+        >
           {{ row.pileName }}
         </el-text>
       </template>
       <template #station="{ row }">
-        <el-text @click="handleFilterTagClick('station', row.stationName)" type="primary"
-                 style="cursor: pointer;">{{ row.stationName }}
+        <el-text
+          @click="handleFilterTagClick('station', row.stationName)"
+          type="primary"
+          style="cursor: pointer"
+          >{{ row.stationName }}
         </el-text>
       </template>
       <template #faultType="{ row }">
-        <el-text @click="handleFilterTagClick('faultType', row.faultType)" type="primary"
-                 style="cursor: pointer;">{{ row.faultType }}
+        <el-text
+          @click="handleFilterTagClick('faultType', row.faultType)"
+          type="primary"
+          style="cursor: pointer"
+          >{{ row.faultType }}
         </el-text>
       </template>
       <template #alarmLevel="{ row }">
-        <el-tag :type="row.alarmLevel === '一级' ? 'danger' : row.alarmLevel === '二级' ? 'warning' : 'info'"
-                @click="handleFilterTagClick('alarmLevel', row.alarmLevel)"
-                style="cursor: pointer;">{{ row.alarmLevel }}
+        <el-tag
+          :type="
+            row.alarmLevel === '一级'
+              ? 'danger'
+              : row.alarmLevel === '二级'
+                ? 'warning'
+                : 'info'
+          "
+          @click="handleFilterTagClick('alarmLevel', row.alarmLevel)"
+          style="cursor: pointer"
+          >{{ row.alarmLevel }}
         </el-tag>
       </template>
       <template #alarmTime="{ row }">
-        <el-text @click="handleFilterTagClick('alarmTime', getDateFromTimestamp(row.alarmTime))" type="primary" style="cursor: pointer;">
+        <el-text
+          @click="
+            handleFilterTagClick(
+              'alarmTime',
+              getDateFromTimestamp(row.alarmTime),
+            )
+          "
+          type="primary"
+          style="cursor: pointer"
+        >
           {{ formatTimestamp(row.alarmTime) }}
         </el-text>
       </template>
       <template #manager="{ row }">
-        <el-text @click="handleFilterTagClick('handleUser', row.handleUserName || row.handleUser)" type="primary"
-                 style="cursor: pointer;">{{ row.handleUserName || row.handleUser || '-' }}
+        <el-text
+          @click="
+            handleFilterTagClick(
+              'handleUser',
+              row.handleUserName || row.handleUser,
+            )
+          "
+          type="primary"
+          style="cursor: pointer"
+          >{{ row.handleUserName || row.handleUser || '-' }}
         </el-text>
       </template>
       <template #alarmStatus="{ row }">
-        <el-tag :type="getStatusType(row.alarmStatus)"
-                @click="handleFilterTagClick('alarmStatus', row.alarmStatus)"
-                style="cursor: pointer;">{{ row.alarmStatus }}
+        <el-tag
+          :type="getStatusType(row.alarmStatus)"
+          @click="handleFilterTagClick('alarmStatus', row.alarmStatus)"
+          style="cursor: pointer"
+          >{{ row.alarmStatus }}
         </el-tag>
       </template>
       <template #disposeTime="{ row }">
-        <el-text @click="handleFilterDisposeTime(row)" type="primary" style="cursor: pointer;">
+        <el-text
+          @click="handleFilterDisposeTime(row)"
+          type="primary"
+          style="cursor: pointer"
+        >
           {{ formatTimestamp(row.disposeTime) }}
         </el-text>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="查看" icon-name="View" @click="handleOpenAlarmDetail(row)"/>
-          <IconButton content="备注" icon-name="edit" @click="handleRowRemark(row)"/>
-          <IconButton v-if="row.alarmStatus === '未派单'" content="派单" icon-name="User"
-                      @click="handleRowDispatch(row)"/>
-          <IconButton v-if="row.alarmStatus === '已派单'" content="处置" icon-name="Finished"
-                      @click="handleRowDispose(row)"/>
-          <IconButton v-if="row.alarmStatus === '处置中'" content="销单" icon-name="EditPen"
-                      color="#F56C6C" @click="handleRowClose(row)"/>
+          <IconButton
+            content="查看"
+            icon-name="View"
+            @click="handleOpenAlarmDetail(row)"
+          />
+          <IconButton
+            content="备注"
+            icon-name="edit"
+            @click="handleRowRemark(row)"
+          />
+          <IconButton
+            v-if="row.alarmStatus === '未派单'"
+            content="派单"
+            icon-name="User"
+            @click="handleRowDispatch(row)"
+          />
+          <IconButton
+            v-if="row.alarmStatus === '已派单'"
+            content="处置"
+            icon-name="Finished"
+            @click="handleRowDispose(row)"
+          />
+          <IconButton
+            v-if="row.alarmStatus === '处置中'"
+            content="销单"
+            icon-name="EditPen"
+            color="#F56C6C"
+            @click="handleRowClose(row)"
+          />
         </div>
       </template>
     </Grid>

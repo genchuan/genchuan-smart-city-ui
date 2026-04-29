@@ -340,9 +340,9 @@ onUnmounted(() => {
 .space-right-section {
   display: flex;
   flex: 1 1 0;
+  min-width: 0;
   // gap: 20px;
   margin-left: 15px;
-  min-width: 0;
 }
 
 .space-map-wrapper {

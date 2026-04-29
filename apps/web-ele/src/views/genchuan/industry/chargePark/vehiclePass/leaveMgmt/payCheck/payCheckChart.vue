@@ -38,13 +38,7 @@ let pieChartInstance = null;
 
 async function loadChartData() {
   try {
-    const endTime = new Date();
-    const startTime = new Date();
-    startTime.setDate(startTime.getDate() - 7);
-
     const params = {
-      startTime: Math.floor(startTime.getTime() / 1000).toString(),
-      endTime: Math.floor(endTime.getTime() / 1000).toString(),
       stationId: props.parkId,
     };
 
@@ -123,8 +117,8 @@ function initCharts() {
 
 function handleCardClick(key) {
   const today = new Date();
-  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime();
+  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
 
   const filterMap = {
     checkSuccessRate: { startTime: todayStart, endTime: todayEnd },
@@ -134,7 +128,7 @@ function handleCardClick(key) {
   const filterParams = filterMap[key];
   if (filterParams) {
     window.dispatchEvent(
-      new CustomEvent('filterByChart', { detail: filterParams }),
+      new CustomEvent('filterByChart:payCheck', { detail: filterParams }),
     );
   }
 }
