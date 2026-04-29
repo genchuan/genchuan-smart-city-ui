@@ -11,7 +11,7 @@ import * as XLSX from 'xlsx';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
-import { getTempParkOrderPage, exportTempParkOrderExcel, refundTempParkOrder, invoiceTempParkOrder, cancelTempParkOrder, payTempParkOrder, invoiceOrder } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { getTempParkOrderPage, exportTempParkOrderExcel, refundTempParkOrder, invoiceTempParkOrder, cancelTempParkOrder, payTempParkOrder, invoiceOrder, getPlateIdentifyPage } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import { $t } from '#/locales';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
@@ -418,6 +418,10 @@ const invoiceForm = reactive({
   remark: '',
 });
 
+// 车牌详情弹窗
+const plateDetailDialogVisible = ref(false);
+const plateDetailData = ref({});
+
 // 打开开票弹窗
 const handleInvoice = (row) => {
   invoiceForm.id = row.id;
@@ -445,7 +449,37 @@ const handleInvoiceSubmit = async () => {
     invoiceDialogVisible.value = false;
     handleRefresh();
   } catch (error) {
-    ElMessage.error(error.msg);
+    ElMessage.error('开票申请失败');
+  }
+};
+
+// 获取车牌详情
+const handlePlateDetail = async (row) => {
+  try {
+    console.log({ plateNo: row.plateNo })
+    const res = await getPlateIdentifyPage({ plateNo: row.plateNo });
+    if (res.list && Array.isArray(res.list)) {
+      const plate = res.list.find(item => item.plateNo === row.plateNo);
+      if (plate) {
+        // 格式化时间
+        const formattedPlate = {
+          ...plate,
+          createTime: formatTimestamp(plate.createTime),
+          updateTime: formatTimestamp(plate.updateTime)
+        };
+        plateDetailData.value = formattedPlate;
+      } else {
+        plateDetailData.value = null;
+        ElMessage.info('暂无车牌数据');
+      }
+    } else {
+      plateDetailData.value = null;
+      ElMessage.info('暂无车牌数据');
+    }
+    plateDetailDialogVisible.value = true;
+  } catch (error) {
+    console.error('获取车牌详情失败:', error);
+    ElMessage.error('获取车牌详情失败');
   }
 };
 
@@ -530,6 +564,8 @@ const alarmColumns = [
           <el-button type="primary" @click="handlePaySubmit">确认支付</el-button>
         </div>
       </template>
+
+ 
     </ElDialog>
 
     <!-- 取消弹窗 -->
@@ -595,6 +631,68 @@ const alarmColumns = [
       </template>
     </ElDialog>
 
+    <!-- 车牌详情弹窗 -->
+    <ElDialog v-model="plateDetailDialogVisible" title="车牌详情" width="800px" append-to-body>
+      <div v-if="plateDetailData" class="plate-detail-container">
+        <div class="detail-row">
+          <span class="detail-label">主键ID:</span>
+          <span class="detail-value">{{ plateDetailData.id }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">车牌:</span>
+          <span class="detail-value">{{ plateDetailData.plateNo }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">车牌颜色:</span>
+          <span class="detail-value">{{ plateDetailData.plateColor }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">置信度:</span>
+          <span class="detail-value">{{ plateDetailData.confidence }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">图片URL:</span>
+          <span class="detail-value">{{ plateDetailData.imageUrl }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">识别状态:</span>
+          <span class="detail-value">{{ plateDetailData.status }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">场站名称:</span>
+          <span class="detail-value">{{ plateDetailData.stationName }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">备注:</span>
+          <span class="detail-value">{{ plateDetailData.remark }}</span>
+        </div> 
+        <div class="detail-row">
+          <span class="detail-label">创建者:</span>
+          <span class="detail-value">{{ plateDetailData.creator }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">更新者:</span>
+          <span class="detail-value">{{ plateDetailData.updater }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">创建时间:</span>
+          <span class="detail-value">{{ plateDetailData.createTime }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">更新时间:</span>
+          <span class="detail-value">{{ plateDetailData.updateTime }}</span>
+        </div>
+      </div>
+      <div v-else class="no-data">
+        暂无车牌数据
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="plateDetailDialogVisible = false">关闭</el-button>
+        </div>
+      </template>
+    </ElDialog>
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
@@ -618,6 +716,11 @@ const alarmColumns = [
           {{ row.orderNo }}
         </el-text>
       </template>
+      <template #plateNo="{ row }">
+        <el-text @click="handlePlateDetail(row)" class="common-align" type="primary">
+          {{ row.plateNo }}
+        </el-text>
+      </template>
       <template #payMethod="{ row }">
         <span v-if="row.payMethod === 'wechat'">微信</span>
         <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
@@ -629,8 +732,7 @@ const alarmColumns = [
         <el-text @click="handleTotal(row)" class="common-align" type="primary">
           {{ row.halfyearWarnCount }}
         </el-text>
-      </template>
-
+      </template> 
       <template #orderId="{ row }">
         <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
           {{ row.orderId }}
@@ -661,3 +763,69 @@ const alarmColumns = [
     </Grid>
   </div>
 </template>
+<style scoped>
+/* 自定义样式 */
+.park-lot-table-new {
+  width: 100%;
+  height: 100%;
+}
+
+.common-toolbar-tools {
+  display: flex;
+  gap: 8px;
+}
+
+.table-toolbar-tools {
+  display: flex;
+  gap: 4px;
+}
+
+.common-total {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin: 10px 0;
+  color: #409eff;
+}
+
+.tabel-tab-icon {
+  margin-right: 8px;
+}
+
+/* 车牌详情弹窗样式 */
+.plate-detail-container {
+  padding: 20px;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+}
+
+.detail-row {
+  display: flex;
+  margin-bottom: 8px;
+  padding: 8px;
+  background-color: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.detail-label {
+  width: 120px;
+  font-weight: 600;
+  color: #606266;
+  text-align: right;
+  margin-right: 20px;
+}
+
+.detail-value {
+  flex: 1;
+  color: #303133;
+  word-break: break-all;
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #909399;
+  font-size: 16px;
+}
+</style>

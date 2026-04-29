@@ -215,6 +215,7 @@ export function useGridColumns() {
       title: '车牌',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'plateNo' },
     },
     {
       field: 'parkDuration',
