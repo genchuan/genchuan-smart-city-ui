@@ -1,6 +1,7 @@
 <script setup>
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
+import { ElTag } from 'element-plus';
 
 // 定义组件接收的属性（临时停车订单详情）
 const props = defineProps({
@@ -14,6 +15,16 @@ const props = defineProps({
     default: '',
   },
 });
+
+// 订单状态映射
+const statusMap = {
+  'charging': { label: '充电中', type: 'primary' },
+  'pending_pay': { label: '待支付', type: 'warning' },
+  'paid': { label: '已支付', type: 'success' },
+  'completed': { label: '已完成', type: 'success' },
+  'cancelled': { label: '已取消', type: 'info' },
+  'refunding': { label: '退款中', type: 'danger' },
+};
 
 const { detailObj, title } = toRefs(props);
 
@@ -88,7 +99,16 @@ defineExpose({
 
       <div class="detail-card-row">
         <div class="detail-row-left">支付状态:</div>
-        <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
+        <div class="detail-row-right">
+          <template v-if="detailObj.status">
+            <ElTag :type="statusMap[detailObj.status]?.type || 'default'">
+              {{ statusMap[detailObj.status]?.label || detailObj.status }}
+            </ElTag>
+          </template>
+          <template v-else>
+            -
+          </template>
+        </div>
       </div>
 
       <div class="detail-card-row">
@@ -108,7 +128,13 @@ defineExpose({
 
       <div class="detail-card-row">
         <div class="detail-row-left">支付方式:</div>
-        <div class="detail-row-right">{{ detailObj.payMethod || '-' }}</div>
+        <div class="detail-row-right">
+          <span v-if="detailObj.payMethod === 'wechat'">微信</span>
+          <span v-else-if="detailObj.payMethod === 'alipay'">支付宝</span>
+          <span v-else-if="detailObj.payMethod === 'bank'">银行卡</span>
+          <span v-else-if="detailObj.payMethod === 'cash'">现金</span>
+          <span v-else>{{ detailObj.payMethod || '-' }}</span>
+        </div>
       </div>
 
       <div class="detail-card-row">
