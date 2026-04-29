@@ -1,52 +1,60 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { reactive, ref } from 'vue';
+
+import { useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
+
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
+
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
-import DormCheckDetailDrawer from './components/dormCheckDetail.vue';
 import {
-  getMockList,
-  getDormCheckPage,
   createDormCheck,
-  recheckDormCheck,
-  pushDormCheck,
   exportDormCheck,
-  getDormCheckDetail,
-  getStudentOptions,
+  getDormCheckPage,
+  pushDormCheck,
+  recheckDormCheck,
 } from '#/api/genchuan/educationTeaching/studentMgmt/dormMgmt/dormCheck/data.js';
 import {
+  getColumns,
   textObj,
   useFormSchema,
-  getColumns,
-  useCheckFormSchema,
 } from '#/api/genchuan/educationTeaching/studentMgmt/dormMgmt/dormCheck/form.js';
+
+import DormCheckDetailDrawer from './components/dormCheckDetail.vue';
+
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: Boolean,
+  arrowState: Boolean,
+});
+
+const emit = defineEmits(['arrow-change']);
 
 // 辅助函数：状态标签类型
 const getStatusType = (status) => {
   const map = {
-    '正常': 'success',
-    '异常': 'danger',
+    正常: 'success',
+    异常: 'danger',
   };
   return map[status] || 'info';
 };
 
 const getCheckStatusType = (checkStatus) => {
   const map = {
-    '正常': 'success',
-    '迟到': 'warning',
-    '未到': 'danger',
+    正常: 'success',
+    迟到: 'warning',
+    未到: 'danger',
   };
   return map[checkStatus] || 'info';
 };
 
 const getAbnormalTypeColor = (abnormalType) => {
   const map = {
-    '无': 'success',
-    '晚归': 'warning',
-    '未归': 'danger',
+    无: 'success',
+    晚归: 'warning',
+    未归: 'danger',
   };
   return map[abnormalType] || 'info';
 };
@@ -54,7 +62,7 @@ const getAbnormalTypeColor = (abnormalType) => {
 // 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
-  const date = new Date(parseInt(timestamp));
+  const date = new Date(Number.parseInt(timestamp));
   if (isNaN(date.getTime())) return timestamp;
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -68,7 +76,7 @@ const formatTimestamp = (timestamp) => {
 // 提取日期部分（用于筛选）
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
-  const date = new Date(parseInt(timestamp));
+  const date = new Date(Number.parseInt(timestamp));
   if (isNaN(date.getTime())) return '';
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -76,25 +84,26 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
-const emit = defineEmits(['arrow-change']);
-
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
 function handleFilterTagClick(field, value) {
   if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (tagFilters.value[field] === undefined) {
+    tagFilters.value[field] = value;
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+    if (
+      Array.isArray(existing) &&
+      existing.length === 1 &&
+      existing[0] === value
+    ) {
       delete tagFilters.value[field];
     } else if (!Array.isArray(existing) && existing === value) {
       delete tagFilters.value[field];
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
   gridApi.reload();
 }
@@ -116,7 +125,7 @@ function getFieldLabel(field) {
     status: '状态',
     creator: '创建人',
     createTime: '创建时间',
-    studentId: '学生ID',
+    studentId: '学号',
     className: '班级',
   };
   return map[field] || field;
@@ -155,12 +164,12 @@ const checkedIds = ref([]);
 const checkedRows = ref([]);
 
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map(item => item.id);
+  checkedIds.value = records.map((item) => item.id);
   checkedRows.value = records;
 }
 
 const searchParams = ref({});
-let currentCheckStudentIds = []; // 存储当前打卡选中的学生ID列表
+let currentCheckStudentIds = [];
 
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
@@ -174,85 +183,57 @@ const getTableData = async ({ page }) => {
     let filtered = res.list;
     // 应用标签筛选
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
+      filtered = filtered.filter((item) => {
         let itemValue;
         switch (field) {
-          case 'checkStatus':
-            itemValue = item.checkStatus;
-            break;
-          case 'abnormalType':
+          case 'abnormalType': {
             itemValue = item.abnormalType;
             break;
-          case 'status':
-            itemValue = item.status;
+          }
+          case 'checkStatus': {
+            itemValue = item.checkStatus;
             break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          case 'studentId':
-            itemValue = item.studentId;
-            break;
-          case 'className':
+          }
+          case 'className': {
             itemValue = item.className;
             break;
-          default:
+          }
+          case 'createTime': {
+            const createDate = item.createTime
+              ? getDateFromTimestamp(item.createTime)
+              : '';
+            itemValue = createDate;
+            break;
+          }
+          case 'creator': {
+            itemValue = item.creator;
+            break;
+          }
+          case 'status': {
+            itemValue = item.status;
+            break;
+          }
+          case 'studentId': {
+            itemValue = item.studentId;
+            break;
+          }
+          default: {
             itemValue = item[field];
+          }
         }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
+        return Array.isArray(filterValue)
+          ? filterValue.includes(String(itemValue))
+          : String(itemValue) === String(filterValue);
       });
     });
     dataObj.total = res.total || filtered.length;
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'checkStatus':
-            itemValue = item.checkStatus;
-            break;
-          case 'abnormalType':
-            itemValue = item.abnormalType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          case 'studentId':
-            itemValue = item.studentId;
-            break;
-          case 'className':
-            itemValue = item.className;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据并提示用户
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取考勤记录失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -274,7 +255,10 @@ async function handleExport() {
     const loading = ElLoading.service({ text: '正在导出...' });
     try {
       const data = await exportDormCheck(searchParams.value);
-      downloadFileFromBlobPart({ fileName: `${textObj.excelName}.xls`, source: data });
+      downloadFileFromBlobPart({
+        fileName: `${textObj.excelName}.xls`,
+        source: data,
+      });
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -291,20 +275,24 @@ async function handleBatchRecheck() {
     ElMessage.warning('请至少选择一个考勤记录');
     return;
   }
-  const abnormalRows = checkedRows.value.filter(row => row.status === '异常');
+  const abnormalRows = checkedRows.value.filter((row) => row.status === '异常');
   if (abnormalRows.length === 0) {
     ElMessage.warning('请选择状态为【异常】的记录进行补卡');
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认补卡选中的 ${abnormalRows.length} 条异常记录？补卡后状态将变为正常。`, '批量补卡确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
+    await ElMessageBox.confirm(
+      `确认补卡选中的 ${abnormalRows.length} 条异常记录？补卡后状态将变为正常。`,
+      '批量补卡确认',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning',
+      },
+    );
     const loading = ElLoading.service({ text: '补卡中...' });
     try {
-      const ids = abnormalRows.map(row => row.id);
+      const ids = abnormalRows.map((row) => row.id);
       const res = await recheckDormCheck({ ids });
       if (res && res !== false) {
         ElMessage.success('批量补卡成功');
@@ -320,44 +308,49 @@ async function handleBatchRecheck() {
 
 // 批量推送
 async function handleBatchPush() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个考勤记录');
-    return;
-  }
+  if (checkedIds.value.length === 0)
+    return ElMessage.warning('请至少选择一个考勤记录');
   const rows = checkedRows.value;
   if (rows.length === 0) return;
-  try {
-    await ElMessageBox.confirm(`确认推送选中的 ${rows.length} 条考勤记录？推送后家长可见。`, '批量推送确认', {
+  await ElMessageBox.confirm(
+    `确认推送选中的 ${rows.length} 条考勤记录？推送后家长可见。`,
+    '批量推送确认',
+    {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
-    });
-    const loading = ElLoading.service({ text: '推送中...' });
-    try {
-      const ids = rows.map(row => row.id);
-      const res = await pushDormCheck({ ids });
-      if (res && res !== false) {
-        ElMessage.success('批量推送成功');
-        handleRefresh();
-      } else {
-        ElMessage.error('批量推送失败');
-      }
-    } finally {
-      loading.close();
+    },
+  );
+  const loading = ElLoading.service({ text: '推送中...' });
+  try {
+    const ids = rows.map((row) => row.id);
+    const pushTime = Date.now(); // 当前时间戳（毫秒）
+    const res = await pushDormCheck({ ids, pushTime }); // 添加 pushTime
+    if (res && res !== false) {
+      ElMessage.success('批量推送成功');
+      handleRefresh();
+    } else {
+      ElMessage.error(res?.msg || '批量推送失败');
     }
-  } catch {}
+  } catch (error) {
+    console.error('推送失败:', error);
+    ElMessage.error(error?.message || '批量推送失败');
+  } finally {
+    loading.close();
+  }
 }
 
-// 打卡：基于勾选的记录中的学生ID
 function handleBatchCheck() {
   if (checkedRows.value.length === 0) {
-    ElMessage.warning('请至少选择一个考勤记录（用于提取学生ID）');
+    ElMessage.warning('请至少选择一个考勤记录（用于提取学号）');
     return;
   }
   // 提取所有勾选记录中的 studentId，去重
-  const studentIds = [...new Set(checkedRows.value.map(row => row.studentId).filter(id => id))];
+  const studentIds = [
+    ...new Set(checkedRows.value.map((row) => row.studentId).filter(Boolean)),
+  ];
   if (studentIds.length === 0) {
-    ElMessage.warning('勾选的记录中没有有效的学生ID');
+    ElMessage.warning('勾选的记录中没有有效的学号');
     return;
   }
   currentCheckStudentIds = studentIds;
@@ -373,11 +366,15 @@ async function handleRecheck(row) {
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认补卡学生ID ${row.studentId} 的考勤记录？补卡后状态将变为正常。`, '补卡确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
+    await ElMessageBox.confirm(
+      `确认补卡学号 ${row.studentId} 的考勤记录？补卡后状态将变为正常。`,
+      '补卡确认',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning',
+      },
+    );
     const loading = ElLoading.service({ text: '补卡中...' });
     try {
       const res = await recheckDormCheck({ ids: [row.id] });
@@ -395,31 +392,40 @@ async function handleRecheck(row) {
 
 // 单行推送
 async function handlePush(row) {
-  try {
-    await ElMessageBox.confirm(`确认推送学生ID ${row.studentId} 的考勤记录？`, '推送确认', {
+  await ElMessageBox.confirm(
+    `确认推送学号 ${row.studentId} 的考勤记录？`,
+    '推送确认',
+    {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
-    });
-    const loading = ElLoading.service({ text: '推送中...' });
-    try {
-      const res = await pushDormCheck({ ids: [row.id] });
-      if (res && res !== false) {
-        ElMessage.success('推送成功');
-        handleRefresh();
-      } else {
-        ElMessage.error('推送失败');
-      }
-    } finally {
-      loading.close();
+    },
+  );
+  const loading = ElLoading.service({ text: '推送中...' });
+  try {
+    const pushTime = Date.now();
+    const res = await pushDormCheck({ ids: [row.id], pushTime }); // 添加 pushTime
+    if (res && res !== false) {
+      ElMessage.success('推送成功');
+      handleRefresh();
+    } else {
+      ElMessage.error('推送失败');
     }
-  } catch {}
+  } catch (error) {
+    console.error('推送失败:', error);
+    ElMessage.error(error?.message || '推送失败');
+  } finally {
+    loading.close();
+  }
 }
 
-// 打卡表单（只包含考勤时间和备注，不包含学生选择）
 const [CheckForm, checkFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {
+    componentProps: { class: 'w-full' },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
   handleSubmit: async (values) => {
     const loading = ElLoading.service({ text: '打卡中...' });
     try {
@@ -432,8 +438,11 @@ const [CheckForm, checkFormApi] = useVbenForm({
         checkDrawerApi.close();
         handleRefresh();
       } else {
-        ElMessage.error('打卡失败');
+        ElMessage.error(res?.msg || '打卡失败');
       }
+    } catch (error) {
+      console.error('打卡失败:', error);
+      ElMessage.error(error?.message || '打卡失败');
     } finally {
       loading.close();
     }
@@ -467,41 +476,26 @@ const [CheckForm, checkFormApi] = useVbenForm({
 
 // 详情抽屉
 const dormCheckDetailDrawerRef = ref(null);
+
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   dormCheckDetailDrawerRef.value.open();
 }
 
-// 学生信息详情弹窗（内部实现）
-const studentInfoVisible = ref(false);
-const currentStudentId = ref(null);
-const currentStudentInfo = ref({});
-
-// 获取学生信息（模拟，实际可调用接口）
-async function fetchStudentInfo(studentId) {
-  // 模拟：从列表数据中查找
-  const row = dataObj.list.find(item => item.studentId === studentId);
-  if (row) {
-    currentStudentInfo.value = {
-      id: row.studentId,
-      name: row.studentName,
-      className: row.className,
-    };
-  } else {
-    currentStudentInfo.value = { id: studentId, name: '未知', className: '未知' };
-  }
-}
-
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {
+    componentProps: { class: 'w-full' },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
   handleSubmit: (values) => {
     searchParams.value = { ...values };
     drawerApi.close();
     gridApi.reload();
   },
   layout: 'horizontal',
-  schema: useFormSchema().map(v => {
+  schema: useFormSchema().map((v) => {
     delete v.rules;
     return v;
   }),
@@ -519,7 +513,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     toolbarConfig: { refresh: true, search: true },
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
   showSearchForm: false,
 });
 
@@ -537,7 +534,11 @@ defineExpose({ handleFilterTagClick, clearFilters });
 
 <template>
   <div class="park-lot-table-new">
-    <DormCheckDetailDrawer ref="dormCheckDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <DormCheckDetailDrawer
+      ref="dormCheckDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+      @refresh="handleRefresh"
+    />
     <Drawer title="搜索">
       <QueryForm />
     </Drawer>
@@ -560,46 +561,107 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="打卡" icon-name="Checked" @click="handleBatchCheck" />
-          <IconButton content="补卡" icon-name="Edit" @click="handleBatchRecheck" />
-          <IconButton content="推送" icon-name="Promotion" @click="handleBatchPush" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
+          <IconButton
+            content="打卡"
+            icon-name="Checked"
+            @click="handleBatchCheck"
+          />
+          <IconButton
+            content="补卡"
+            icon-name="EditPen"
+            @click="handleBatchRecheck"
+          />
+          <IconButton
+            content="推送"
+            icon-name="Promotion"
+            @click="handleBatchPush"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="筛选"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
           <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart" @click="toggleChart" />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
+          <IconButton
+            :content="showChart ? '隐藏图表' : '显示图表'"
+            icon-name="PieChart"
+            @click="toggleChart"
+          />
         </div>
       </template>
 
       <!-- 钻取列 -->
       <template #studentId="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+        <el-text
+          @click="handleOpenDetail(row)"
+          type="primary"
+          style="cursor: pointer"
+        >
           {{ row.studentId }}
         </el-text>
       </template>
       <template #checkStatus="{ row }">
-        <el-tag :type="getCheckStatusType(row.checkStatus)" @click="handleFilterTagClick('checkStatus', row.checkStatus)" style="cursor: pointer;">
+        <el-tag
+          :type="getCheckStatusType(row.checkStatus)"
+          @click="handleFilterTagClick('checkStatus', row.checkStatus)"
+          style="cursor: pointer"
+        >
           {{ row.checkStatus }}
         </el-tag>
       </template>
       <template #abnormalType="{ row }">
-        <el-tag :type="getAbnormalTypeColor(row.abnormalType)" @click="handleFilterTagClick('abnormalType', row.abnormalType)" style="cursor: pointer;">
+        <el-tag
+          :type="getAbnormalTypeColor(row.abnormalType)"
+          @click="handleFilterTagClick('abnormalType', row.abnormalType)"
+          style="cursor: pointer"
+        >
           {{ row.abnormalType }}
         </el-tag>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
+        <el-tag
+          :type="getStatusType(row.status)"
+          @click="handleFilterTagClick('status', row.status)"
+          style="cursor: pointer"
+        >
           {{ row.status }}
         </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">
+        <el-text
+          @click="handleFilterTagClick('creator', row.creator)"
+          type="primary"
+          style="cursor: pointer"
+        >
           {{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">
+        <el-text
+          @click="
+            handleFilterTagClick(
+              'createTime',
+              getDateFromTimestamp(row.createTime),
+            )
+          "
+          type="primary"
+          style="cursor: pointer"
+        >
           {{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
@@ -621,9 +683,22 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '异常'" content="补卡" icon-name="Edit" @click="handleRecheck(row)" />
-          <IconButton content="推送" icon-name="Promotion" @click="handlePush(row)" />
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            v-if="row.status === '异常'"
+            content="补卡"
+            icon-name="EditPen"
+            @click="handleRecheck(row)"
+          />
+          <IconButton
+            content="推送"
+            icon-name="Promotion"
+            @click="handlePush(row)"
+          />
         </div>
       </template>
     </Grid>

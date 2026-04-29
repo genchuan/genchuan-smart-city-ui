@@ -3,13 +3,15 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { ElMessage } from 'element-plus';
 
+import { getPointLotteryChart } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointLottery';
+
 import PointLotteryStats from './components/PointLotteryStats.vue';
 import Table from './table/index.vue';
 
 import '#/genchuan-components/page/index.scss';
 
-// 控制统计组件显示/隐藏的状态
-const showStats = ref(false);
+// 控制统计组件显示/隐藏的状态 - 默认展开
+const showStats = ref(true);
 
 // 切换统计组件显示/隐藏状态
 const toggleStats = () => {
@@ -25,59 +27,54 @@ const statsData = ref({
   lineData: [],
 });
 
-// 获取统计数据（模拟数据，实际应从API获取）
+// 获取统计数据 - 从API获取
 const fetchStatsData = async () => {
   try {
-    // TODO: 替换为实际API调用
-    // const response = await getPointLotteryStats();
-
-    // 模拟统计数据
-    const mockData = {
-      totalLotteryCount: 12580,
-      winRate: '23.5%',
-      trendData: [],
-    };
-
-    // 生成近30天的模拟数据
-    const today = new Date();
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      mockData.trendData.push({
-        date: date.toISOString().split('T')[0],
-        count: Math.floor(Math.random() * 200) + 300,
-      });
+    const response = await getPointLotteryChart();
+    if (!response) {
+      throw new Error('获取统计数据失败');
     }
 
     // 组装卡片数据
     statsData.value.cards = [
       {
         title: '总抽奖量',
-        value: mockData.totalLotteryCount,
+        value: response.lotteryCount || 0,
         color: '#4A90E2',
         type: 'total',
       },
       {
         title: '累计中奖率',
-        value: mockData.winRate,
+        value: `${(response.winRate || 0) * 100}%`,
         color: '#50E3C2',
         type: 'winRate',
       },
     ];
 
     // 组装折线图数据
-    statsData.value.lineData = mockData.trendData;
+    statsData.value.lineData = (response.trendList || []).map(item => ({
+      date: item.lotteryTime,
+      count: item.count,
+    }));
   } catch (error) {
     ElMessage.error('获取统计数据失败');
     console.error(error);
   }
 };
 
+// 获取表格组件实例（处理v-for中的ref数组情况）
+const getTableComponent = () => {
+  // 在v-for中使用ref时，tableRef可能是数组
+  const tableComponent = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  return tableComponent;
+};
+
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (type, value) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('card', type, value);
+  const tableComponent = getTableComponent();
+  if (tableComponent && typeof tableComponent.handleStatsFilter === 'function') {
+    tableComponent.handleStatsFilter('card', type, value);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
@@ -86,8 +83,9 @@ const handleCardClick = async (type, value) => {
 // 处理折线图点击 - 钻取筛选
 const handleLineClick = async (date) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('date', null, date);
+  const tableComponent = getTableComponent();
+  if (tableComponent && typeof tableComponent.handleStatsFilter === 'function') {
+    tableComponent.handleStatsFilter('date', null, date);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }

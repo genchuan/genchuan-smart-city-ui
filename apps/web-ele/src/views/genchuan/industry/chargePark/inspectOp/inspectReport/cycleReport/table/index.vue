@@ -42,6 +42,14 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
+  },
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -199,9 +207,9 @@ async function getTableData({ page }) {
     const pageResult = response?.list ? response : response?.data || response;
     const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
 
-    if (list.length === 0 && !pageResult?.total) {
-      throw new Error('接口返回数据为空');
-    }
+    // if (list.length === 0 && !pageResult?.total) {
+    //   throw new Error('接口返回数据为空');
+    // }
 
     dataObj.useStaticData = false;
     dataObj.total = pageResult.total || 0;
@@ -490,6 +498,11 @@ watch(
             content="搜索"
             icon-name="search"
             @click="handleSearchShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
           />
           <IconButton
             content="全屏"

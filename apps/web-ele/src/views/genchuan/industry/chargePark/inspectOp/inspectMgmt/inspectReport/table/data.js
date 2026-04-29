@@ -1,6 +1,7 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -424,15 +425,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'reportTimeRange',
+      fieldName: 'reportTime',
       label: '上报时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择上报时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     {
@@ -526,7 +523,7 @@ export function useGridColumns() {
     },
     {
       field: 'remark',
-      title: '处置结果/备注',
+      title: '审核意见',
       minWidth: 170,
       sortable: true,
       slots: { default: 'remark' },
@@ -561,12 +558,12 @@ export const detailFields = [
   { key: 'creator', label: '上报人' },
   { key: 'content', label: '上报内容' },
   { key: 'auditUserName', label: '审核人' },
-  { key: 'auditTimeStr', label: '审核时间' },
-  { key: 'auditRemark', label: '审核意见' },
+  { key: 'remark', label: '审核时间' },
+  { key: 'auditResult', label: '审核意见' },
   { key: 'processUserName', label: '处置人' },
   { key: 'processTimeStr', label: '处置时间' },
-  { key: 'processResult', label: '处置结果' },
-  { key: 'remark', label: '备注' },
+  // { key: 'processResult', label: '处置结果' },
+  // { key: 'remark', label: '备注' },
   { key: 'updater', label: '更新者' },
   { key: 'createTimeStr', label: '创建时间' },
   { key: 'updateTimeStr', label: '更新时间' },

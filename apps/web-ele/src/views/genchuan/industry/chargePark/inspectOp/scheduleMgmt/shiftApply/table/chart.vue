@@ -72,10 +72,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="shift-apply-visualization">
-    <div class="cards-section">
+  <div class="park-chart-box">
+    <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -85,38 +86,21 @@ onMounted(() => {
         @click="handleCardClick"
       />
     </div>
-    <div class="chart-wrapper">
-      <LineChartClick
-        title="申请量趋势"
-        :series-data="trendSeriesData"
-        :x-data="trendXData"
-        y-name="申请量"
-        @line-click="handleTrendClick"
-      />
-    </div>
+    <!-- class="simple-bar-chart" -->
+    <LineChartClick
+      title="申请量趋势"
+      class="simple-bar-chart"
+      :series-data="trendSeriesData"
+      :x-data="trendXData"
+      y-name="申请量"
+      @line-click="handleTrendClick"
+    />
   </div>
 </template>
-
-<style scoped>
-.shift-apply-visualization {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
-}
-.cards-section {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
-}
-.chart-wrapper {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 320px;
+<style lang="scss">
+.chart-box-left {
+  .left-card {
+    height: 159px !important;
+  }
 }
 </style>

@@ -9,7 +9,7 @@ export function generateCycleReport(data) {
 }
 
 export function exportCycleReport(params) {
-  return requestClient.download('/inspectop/cycle-report/export', {
+  return requestClient.download('/inspectop/cycle-report/export-excel', {
     params,
   });
 }

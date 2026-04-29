@@ -140,7 +140,13 @@ onMounted(() => {
 <template>
   <div v-loading="loading" class="chart-box">
     <div class="box-left">
-      <Indicator class="left-card" v-for="item in cardList" :key="item.title" v-bind="item" @click="handleCardClick" />
+      <Indicator
+        class="left-card"
+        v-for="item in cardList"
+        :key="item.title"
+        v-bind="item"
+        @click="handleCardClick"
+      />
     </div>
 
     <lineChart
@@ -179,7 +185,6 @@ onMounted(() => {
   .box-left {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
     min-width: 280px;
     max-width: 320px;
     margin-top: 10px !important;

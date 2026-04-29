@@ -5,7 +5,7 @@ import { getAssetInfoChart } from '#/api/genchuan/industry/chargePark/inspectOp/
 import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
-import { getMockChartData, getAssetTypeLabel } from './data';
+import { getAssetTypeLabel, getMockChartData } from './data';
 
 const emit = defineEmits(['statusFilter', 'typeFilter']);
 
@@ -73,10 +73,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="asset-info-visualization">
-    <div class="cards-section">
+  <div class="park-chart-box">
+    <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -87,50 +88,20 @@ onMounted(() => {
       />
     </div>
 
-    <div class="charts-section">
-      <div class="chart-wrapper">
-        <BarClick
-          title="资产类型分布"
-          :series-data="typeSeriesData"
-          :x-data="typeXData"
-          y-name="资产数"
-          @bar-click="handleTypeClick"
-        />
-      </div>
-    </div>
+    <BarClick
+      class="simple-bar-chart"
+      title="资产类型分布"
+      :series-data="typeSeriesData"
+      :x-data="typeXData"
+      y-name="资产数"
+      @bar-click="handleTypeClick"
+    />
   </div>
 </template>
-
-<style scoped>
-.asset-info-visualization {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
-}
-
-.cards-section {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
-}
-
-.charts-section {
-  display: grid;
-  flex: 1 1 0;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 20px;
-  min-width: 0;
-  height: 320px;
-}
-
-.chart-wrapper {
-  min-width: 0;
-  height: 100%;
+<style lang="scss">
+.chart-box-left {
+  .left-card {
+    height: 159px !important;
+  }
 }
 </style>

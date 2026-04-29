@@ -3,10 +3,29 @@ import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
- 
+
 import screenfull from 'screenfull';
-import { getSettlementBillList, createSettlementBillBatch, exportSettlementBillExcel, auditSettlementBill, rejectSettlementBill, settleSettlementBill , reAuditSettlementBill,updateRemarkSettlementBill} from '#/api/genchuan/industry/energyCharging/carCharging/settlement/settlementBill/index.js';
-import { ElDialog, ElLoading, ElForm, ElFormItem, ElInput, ElMessageBox, ElMessage, ElButton, ElDatePicker } from 'element-plus';
+import {
+  getSettlementBillList,
+  createSettlementBillBatch,
+  exportSettlementBillExcel,
+  auditSettlementBill,
+  rejectSettlementBill,
+  settleSettlementBill,
+  reAuditSettlementBill,
+  updateRemarkSettlementBill,
+} from '#/api/genchuan/industry/energyCharging/carCharging/settlement/settlementBill/index.js';
+import {
+  ElDialog,
+  ElLoading,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElMessageBox,
+  ElMessage,
+  ElButton,
+  ElDatePicker,
+} from 'element-plus';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 
@@ -28,38 +47,36 @@ const props = defineProps({
 const createBillDialogVisible = ref(false);
 const createBillForm = reactive({
   cooperator: 'XX能源科技有限公司',
-  settlementCycle: '2025-04'
+  settlementCycle: '2025-04',
 });
 
 // 审核结算单弹窗相关
 const auditDialogVisible = ref(false);
 const auditForm = reactive({
   id: '',
-  auditRemark: '审核通过，数据无误'
+  auditRemark: '审核通过，数据无误',
 });
 
 // 驳回结算单弹窗相关
 const rejectDialogVisible = ref(false);
 const rejectForm = reactive({
   id: '',
-  rejectReason: '结算数据存在异常，金额核对不符'
+  rejectReason: '结算数据存在异常，金额核对不符',
 });
 
 // 结算结算单弹窗相关
 const settleDialogVisible = ref(false);
 const settleForm = reactive({
   id: '',
-  settlementChannel: '对公转账'
+  settlementChannel: '对公转账',
 });
 
 // 更新备注弹窗相关
 const remarkDialogVisible = ref(false);
 const remarkForm = reactive({
   id: '',
-  remark: ''
+  remark: '',
 });
-
-
 
 const handleCreateBill = async () => {
   try {
@@ -193,8 +210,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() { },
-  async onOpenChange() { },
+  onConfirm() {},
+  async onOpenChange() {},
 });
 
 /** 刷新表格 */
@@ -216,7 +233,6 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
-
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
@@ -237,15 +253,13 @@ const getTableData = async (pageObj) => {
     ...dataObj.serachObj,
   };
 
-
-
   const data = await getSettlementBillList(getParams);
   dataObj.total = data.total;
   dataObj.list = data.list.map((v) => {
     return {
       ...v,
       settlementTime: formatTimestamp(v.settlementTime),
-      auditTime: formatTimestamp(v.auditTime), 
+      auditTime: formatTimestamp(v.auditTime),
       createTime: formatTimestamp(v.createTime),
     };
   });
@@ -326,7 +340,6 @@ const handleOpenDetail = (row) => {
 
 // 新增抽屉创建相关
 
-
 const handleSerachShow = () => {
   drawerApi.open();
 };
@@ -336,28 +349,24 @@ const handleFullShow = () => {
 
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
-
-
-
 </script>
 
 <template>
   <div class="park-lot-table-new">
-
     <!-- 使用封装后的详情抽屉组件 -->
-    <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" title="详情" />
+    <ParkDetailDrawer
+      ref="parkDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+      title="详情"
+    />
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
 
-
-
     <Grid>
-
       <!-- 快捷筛选标签 -->
-      <template #table-title>
-      </template>
+      <template #table-title> </template>
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
@@ -392,21 +401,51 @@ const parkDetailDrawerRef = ref(null);
       </template>
 
       <template #billCode="{ row }">
-        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
           {{ row.billCode }}
         </el-text>
       </template>
 
-
-
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="审核" :disabled="row.billStatus !== '待审核'"  icon-name="edit" @click="handleAudit(row)" />
-          <IconButton content="重新审核结算" :disabled="row.billStatus !== '已驳回'"  icon-name="Check" @click="handleResetSettle(row)" />
-          <IconButton content="驳回" :disabled="row.billStatus !== '待审核'"  icon-name="Close" @click="handleReject(row)"/>
-          <IconButton content="结算" :disabled="row.billStatus !== '审核通过'" icon-name="Check" @click="handleSettle(row)" />
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton content="备注" icon-name="Edit" @click="handleUpdateRemark(row)" />
+          <IconButton
+            content="审核"
+            :disabled="row.billStatus !== '待审核'"
+            icon-name="edit"
+            @click="handleAudit(row)"
+          />
+          <IconButton
+            content="重新审核结算"
+            :disabled="row.billStatus !== '已驳回'"
+            icon-name="Check"
+            @click="handleResetSettle(row)"
+          />
+          <IconButton
+            content="驳回"
+            :disabled="row.billStatus !== '待审核'"
+            icon-name="Close"
+            @click="handleReject(row)"
+          />
+          <IconButton
+            content="结算"
+            :disabled="row.billStatus !== '审核通过'"
+            icon-name="Check"
+            @click="handleSettle(row)"
+          />
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="备注"
+            icon-name="Edit"
+            @click="handleUpdateRemark(row)"
+          />
           <!-- <IconButton content="删除" icon-name="delete" color="#F56C6C" @click="handleDeleteSingle(row)" /> -->
         </div>
       </template>
@@ -421,7 +460,7 @@ const parkDetailDrawerRef = ref(null);
       title="生成结算单"
       v-model="createBillDialogVisible"
       width="500px"
-      :close-on-click-modal="false" 
+      :close-on-click-modal="false"
     >
       <div class="dialog-content">
         <div class="form-item">
@@ -461,11 +500,7 @@ const parkDetailDrawerRef = ref(null);
       <div class="dialog-content">
         <div class="form-item">
           <label class="form-label">结算单ID:</label>
-          <ElInput
-            v-model="auditForm.id"
-            placeholder="结算单ID"
-            disabled
-          />
+          <ElInput v-model="auditForm.id" placeholder="结算单ID" disabled />
         </div>
         <div class="form-item">
           <label class="form-label">审核备注:</label>
@@ -496,11 +531,7 @@ const parkDetailDrawerRef = ref(null);
       <div class="dialog-content">
         <div class="form-item">
           <label class="form-label">结算单ID:</label>
-          <ElInput
-            v-model="rejectForm.id"
-            placeholder="结算单ID"
-            disabled
-          />
+          <ElInput v-model="rejectForm.id" placeholder="结算单ID" disabled />
         </div>
         <div class="form-item">
           <label class="form-label">驳回原因:</label>
@@ -531,11 +562,7 @@ const parkDetailDrawerRef = ref(null);
       <div class="dialog-content">
         <div class="form-item">
           <label class="form-label">结算单ID:</label>
-          <ElInput
-            v-model="settleForm.id"
-            placeholder="结算单ID"
-            disabled
-          />
+          <ElInput v-model="settleForm.id" placeholder="结算单ID" disabled />
         </div>
         <div class="form-item">
           <label class="form-label">结算渠道:</label>
@@ -564,11 +591,7 @@ const parkDetailDrawerRef = ref(null);
       <div class="dialog-content">
         <div class="form-item">
           <label class="form-label">结算单ID:</label>
-          <ElInput
-            v-model="remarkForm.id"
-            placeholder="结算单ID"
-            disabled
-          />
+          <ElInput v-model="remarkForm.id" placeholder="结算单ID" disabled />
         </div>
         <div class="form-item">
           <label class="form-label">备注内容:</label>
@@ -584,7 +607,9 @@ const parkDetailDrawerRef = ref(null);
       <template #footer>
         <span class="dialog-footer">
           <ElButton @click="remarkDialogVisible = false">取消</ElButton>
-          <ElButton type="primary" @click="confirmUpdateRemark">确认更新</ElButton>
+          <ElButton type="primary" @click="confirmUpdateRemark"
+            >确认更新</ElButton
+          >
         </span>
       </template>
     </ElDialog>
@@ -615,9 +640,9 @@ const parkDetailDrawerRef = ref(null);
 
 .form-label {
   width: 100px;
+  margin-right: 20px;
   font-weight: 500;
   color: #606266;
-  margin-right: 20px;
 }
 
 .form-item .el-input {

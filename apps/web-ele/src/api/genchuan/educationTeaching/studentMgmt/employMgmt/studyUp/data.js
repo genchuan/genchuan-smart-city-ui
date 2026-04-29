@@ -64,9 +64,9 @@ export function getStudyUpPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mock = convertList(getMockList());
-      return { list: mock, total: mock.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -111,10 +111,9 @@ export function getStudyUpDetail(params) {
   return requestClient.get('/studentmgmt/study-up/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -153,94 +152,3 @@ export function getStudyUpCount(params) {
     });
   });
 }
-
-// 模拟数据（原始值使用英文）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      studentId: 1001,
-      studentName: '张三',
-      schoolName: '福建师范大学',
-      schoolType: 'public',
-      major: '计算机科学与技术',
-      planContent: '重点复习高数、英语，参加专升本集训',
-      planTime: 1735689600000,
-      recordTime: 1735776000000,
-      status: 'planned',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1735603200000,
-      updateTime: 1735689600000,
-    },
-    {
-      id: 2,
-      studentId: 1002,
-      studentName: '李四',
-      schoolName: null,
-      schoolType: null,
-      major: null,
-      planContent: null,
-      planTime: null,
-      recordTime: null,
-      status: 'pending_plan',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1735603200000,
-      updateTime: 1735603200000,
-    },
-    {
-      id: 3,
-      studentId: 1003,
-      studentName: '王五',
-      schoolName: '华侨大学',
-      schoolType: 'public',
-      major: '机械工程',
-      planContent: '备考研究生，目标华大机电学院',
-      planTime: 1738281600000,
-      recordTime: 1738368000000,
-      status: 'planned',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1738195200000,
-      updateTime: 1738281600000,
-    },
-    {
-      id: 4,
-      studentId: 1004,
-      studentName: '赵六',
-      schoolName: null,
-      schoolType: null,
-      major: null,
-      planContent: null,
-      planTime: null,
-      recordTime: null,
-      status: 'pending_plan',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1738195200000,
-      updateTime: 1738195200000,
-    },
-    {
-      id: 5,
-      studentId: 1005,
-      studentName: '孙七',
-      schoolName: '厦门大学',
-      schoolType: 'public',
-      major: '会计学',
-      planContent: '准备考研，英语和专业课需加强',
-      planTime: 1738886400000,
-      recordTime: 1738972800000,
-      status: 'planned',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1738800000000,
-      updateTime: 1738886400000,
-    },
-  ];
-};

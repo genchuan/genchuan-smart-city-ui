@@ -86,7 +86,7 @@ function normalizeTrendData(trendData) {
     const trackTime = item.time ?? item.trackTime ?? item.track_time;
     return {
       trackTime: String(trackTime ?? ''),
-      time: formatTrendTime(trackTime),
+      time: item.time,
       totalMileage: Number(item.totalMileage ?? item.mileage ?? 0),
     };
   });
@@ -119,7 +119,7 @@ function normalizeChartData(data) {
 async function fetchChartData() {
   try {
     const response = await getInspectTrackChart();
-    normalizeChartData(response);
+    normalizeChartData(response?.data || response);
   } catch (error) {
     console.error('获取巡检轨迹统计失败，使用静态数据:', error);
     normalizeChartData(getMockChartData());
@@ -150,10 +150,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="inspect-track-visualization">
-    <div class="cards-section">
+  <div class="park-chart-box">
+    <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -164,7 +165,7 @@ onMounted(() => {
       />
     </div>
 
-    <div class="map-section">
+    <div class="park-type-chart inspect-track-map-section">
       <div class="map-title">巡检轨迹展示</div>
       <MapPanel
         :data="markerData"
@@ -192,47 +193,31 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="trend-section">
-      <LineChartClick
-        title="巡检里程趋势"
-        :series-data="trendSeriesData"
-        :x-data="trendXData"
-        x-axis-label-font-style="italic"
-        y-name="公里"
-        @line-click="handleTrendClick"
-      />
-    </div>
+    <LineChartClick
+      class="simple-bar-chart"
+      title="巡检里程趋势"
+      :series-data="trendSeriesData"
+      :x-data="trendXData"
+      x-axis-label-font-style="italic"
+      y-name="公里"
+      @line-click="handleTrendClick"
+    />
   </div>
 </template>
 
-<style scoped>
-.inspect-track-visualization {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
+<style lang="scss">
+.chart-box-left {
+  .left-card {
+    height: 159px !important;
+  }
 }
 
-.cards-section {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
-}
-
-.map-section {
+.inspect-track-map-section {
   position: relative;
   flex: 1.1 1 0;
   min-width: 0;
-  height: 320px;
+  margin-left: 15px;
   overflow: hidden;
-  background-color: hsl(var(--card));
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
 }
 
 .map-title {
@@ -261,11 +246,5 @@ onMounted(() => {
 .track-tag {
   cursor: pointer;
   background: rgb(255 255 255 / 90%);
-}
-
-.trend-section {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 320px;
 }
 </style>

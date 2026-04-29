@@ -1,0 +1,744 @@
+<script setup>
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+
+import { useVbenDrawer } from '@vben/common-ui';
+
+import { ElLoading, ElMessage } from 'element-plus';
+import screenfull from 'screenfull';
+
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  confirmPlateIdentify,
+  correctPlateIdentify,
+  createPlateIdentify,
+  exportPlateIdentify,
+  getPlateIdentify,
+  getPlateIdentifyPage,
+} from '#/api/genchuan/industry/chargePark/vehiclePass/enterMgmt/plateIdentify';
+import IconButton from '#/components/common/IconButton.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import { $t } from '#/locales';
+import { exportToExcel } from '#/utils/excel.js';
+
+import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
+import ImagePreviewDialog from '../../plateIdentify/components/ImagePreviewDialog.vue';
+import {
+  dataList,
+  detailFields,
+  plateColorTypeMap,
+  statusTypeMap,
+  textObj,
+  useCorrectFormSchema,
+  useCreateFormSchema,
+  useGridColumns,
+  useSearchFormSchema,
+} from './data';
+
+const props = defineProps({
+  secondShow: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+// 是否使用真实API（默认false使用模拟数据）
+const USE_REAL_API = true;
+
+const getTitle = computed(() => {
+  return formData.value?.id ? '修正车牌识别' : textObj.addText;
+});
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  onConfirm() {},
+  async onOpenChange() {},
+});
+
+const detailDrawerRef = ref(null);
+const imagePreviewRef = ref(null);
+const vehicleDetailRef = ref(null);
+const formData = ref();
+
+// 查询表单
+const [SearchForm] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onSubmit,
+  layout: 'horizontal',
+  schema: useSearchFormSchema(),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+// 新增表单
+const [CreateForm, createFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useCreateFormSchema(),
+  showDefaultActions: false,
+});
+
+// 修正表单
+const [CorrectForm, correctFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useCorrectFormSchema(),
+  showDefaultActions: false,
+});
+
+// 新增Drawer
+const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    createFormDrawerApi.close();
+  },
+  onConfirm() {
+    const obj = createFormApi.form.values;
+    handleCreateSubmit(obj);
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      createFormApi.resetForm();
+    }
+  },
+});
+
+// 修正Drawer
+const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    correctFormDrawerApi.close();
+  },
+  onConfirm() {
+    const obj = correctFormApi.form.values;
+    handleCorrectSubmit(obj);
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      formData.value = correctFormDrawerApi.getData();
+      if (formData.value?.id) {
+        await correctFormApi.setValues(formData.value);
+      }
+    }
+  },
+});
+
+function handleRefresh() {
+  gridApi.query();
+}
+
+async function handleExport() {
+  if (USE_REAL_API) {
+    try {
+      await exportPlateIdentify(dataObj.searchParams);
+      ElMessage.success('导出成功');
+    } catch (error) {
+      ElMessage.error('导出失败');
+      console.error(error);
+    }
+  } else {
+    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  }
+}
+
+function handleCreate() {
+  createFormDrawerApi
+    .setData({
+      title: textObj.addText,
+    })
+    .open();
+}
+
+async function handleCreateSubmit(data) {
+  if (USE_REAL_API) {
+    const loadingInstance = ElLoading.service({
+      text: '正在创建...',
+    });
+    try {
+      await createPlateIdentify(data);
+      ElMessage.success('创建成功');
+      handleRefresh();
+      createFormDrawerApi.close();
+    } catch (error) {
+      ElMessage.error('创建失败');
+      console.error(error);
+    } finally {
+      loadingInstance.close();
+    }
+  } else {
+    dataObj.apilist.push(data);
+    handleRefresh();
+    createFormDrawerApi.close();
+  }
+}
+
+function handleEdit(row) {
+  correctFormDrawerApi
+    .setData({
+      title: '修正车牌识别',
+      ...row,
+    })
+    .open();
+}
+
+async function handleCorrectSubmit(data) {
+  if (USE_REAL_API) {
+    const loadingInstance = ElLoading.service({
+      text: '正在修正...',
+    });
+    try {
+      await correctPlateIdentify({
+        ...data,
+        id: formData.value?.id,
+        isCorrected: true,
+      });
+      ElMessage.success('修正成功');
+      handleRefresh();
+      correctFormDrawerApi.close();
+    } catch (error) {
+      ElMessage.error('修正失败');
+      console.error(error);
+    } finally {
+      loadingInstance.close();
+    }
+  } else {
+    dataObj.apilist.forEach((v, i) => {
+      if (v.id === formData.value?.id) {
+        dataObj.apilist[i] = { ...v, ...data, isCorrected: true };
+      }
+    });
+    handleRefresh();
+    correctFormDrawerApi.close();
+  }
+}
+
+async function handleConfirm(row) {
+  if (USE_REAL_API) {
+    const loadingInstance = ElLoading.service({
+      text: '正在确认...',
+    });
+    try {
+      await confirmPlateIdentify({ id: row.id });
+      ElMessage.success('确认成功');
+      handleRefresh();
+    } catch (error) {
+      ElMessage.error('确认失败');
+      console.error(error);
+    } finally {
+      loadingInstance.close();
+    }
+  } else {
+    ElMessage.success('确认成功');
+    handleRefresh();
+  }
+}
+
+async function handleDelete(row) {
+  const loadingInstance = ElLoading.service({
+    text: $t('ui.actionMessage.deleting', [row.plateNo]),
+  });
+  try {
+    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
+    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.plateNo]));
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+async function handleDeleteBatch() {
+  await confirm($t('确定删除这些数据吗？'));
+  const loadingInstance = ElLoading.service({
+    text: $t('ui.actionMessage.deletingBatch'),
+  });
+  try {
+    dataObj.apilist = dataObj.apilist.filter(
+      (v) => !checkedIds.value.includes(v.id),
+    );
+    checkedIds.value = [];
+    ElMessage.success($t('删除成功'));
+    handleRefresh();
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+const checkedIds = ref([]);
+function handleRowCheckboxChange({ records }) {
+  checkedIds.value = records.map((item) => item.id);
+}
+
+const dataObj = reactive({
+  totalShow: false,
+  detailObj: {},
+  total: dataList().length,
+  currentPage: 1,
+  pageSize: 10,
+  apilist: dataList(),
+  list: [],
+  searchParams: {},
+});
+
+const changeTotalShow = () => {
+  dataObj.totalShow = !dataObj.totalShow;
+};
+
+const getTableData = async (pageObj) => {
+  const page = pageObj.page;
+
+  // 使用真实API
+  if (USE_REAL_API) {
+    try {
+      const params = {
+        pageNo: page.currentPage,
+        pageSize: page.pageSize,
+        ...dataObj.searchParams,
+      };
+
+      const res = await getPlateIdentifyPage(params);
+      dataObj.total = res.total || 0;
+      dataObj.list = res.list || [];
+      return dataObj;
+    } catch (error) {
+      ElMessage.error('获取数据失败');
+      console.error(error);
+      return dataObj;
+    }
+  }
+
+  // 使用模拟数据
+  const filteredList = dataObj.apilist.filter((v) => {
+    let statusMatch = true;
+    switch (activeName.value) {
+      case '识别失败': {
+        statusMatch = v.status === '识别失败';
+        break;
+      }
+      case '识别成功': {
+        statusMatch = v.status === '识别成功';
+        break;
+      }
+    }
+
+    let searchMatch = true;
+    Object.keys(dataObj.searchParams).forEach((key) => {
+      const value = dataObj.searchParams[key];
+      if (value) {
+        searchMatch =
+          typeof value === 'string'
+            ? searchMatch && v[key]?.toString().includes(value)
+            : searchMatch && v[key] === value;
+      }
+    });
+
+    return statusMatch && searchMatch;
+  });
+
+  dataObj.total = filteredList.length;
+  dataObj.list = filteredList.slice(
+    (page.currentPage - 1) * page.pageSize,
+    page.currentPage * page.pageSize,
+  );
+  return dataObj;
+};
+
+const [QueryForm] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onSubmit,
+  layout: 'horizontal',
+  schema: useSearchFormSchema(),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+function onSubmit(values) {
+  dataObj.searchParams = values;
+  handleRefresh();
+  drawerApi.close();
+}
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: useGridColumns(),
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => getTableData({ page }),
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    pagerConfig: dataObj,
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+      search: true,
+    },
+    showOverflow: true,
+  },
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
+  showSearchForm: false,
+});
+
+const activeName = ref('全部');
+
+const handleOpenDetail = async (row) => {
+  if (USE_REAL_API) {
+    const loadingInstance = ElLoading.service({
+      text: '加载详情中...',
+    });
+    try {
+      const res = await getPlateIdentify(row.id);
+      dataObj.detailObj = res;
+      detailDrawerRef.value.open();
+    } catch (error) {
+      ElMessage.error('获取详情失败');
+      console.error(error);
+    } finally {
+      loadingInstance.close();
+    }
+  } else {
+    dataObj.detailObj = row;
+    detailDrawerRef.value.open();
+  }
+};
+
+const tabsData = ref([
+  { label: '全部' },
+  { label: '识别成功' },
+  { label: '识别失败' },
+]);
+
+const createLabel = (item) => {
+  let count = 0;
+
+  switch (item.label) {
+    case '全部': {
+      count = dataObj.apilist.length;
+      break;
+    }
+    case '识别失败': {
+      count = dataObj.apilist.filter((v) => v.status === '识别失败').length;
+      break;
+    }
+    case '识别成功': {
+      count = dataObj.apilist.filter((v) => v.status === '识别成功').length;
+      break;
+    }
+  }
+
+  return `${item.label}(${count})`;
+};
+
+const handleClick = () => {
+  gridApi.query();
+};
+
+const handleSerachShow = () => {
+  drawerApi.open();
+};
+
+const handleFullShow = () => {
+  screenfull.toggle();
+};
+
+// 车牌点击 - 跳转车辆详情
+const handlePlateNoClick = (row) => {
+  if (!row.plateNo) {
+    ElMessage.warning('该记录无车牌信息');
+    return;
+  }
+  vehicleDetailRef.value?.open(row.plateNo, row);
+};
+
+// 车牌颜色点击 - 筛选同颜色车牌
+const handlePlateColorClick = (row) => {
+  if (!row.plateColor) return;
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    plateColor: row.plateColor,
+  };
+  handleRefresh();
+  ElMessage.success(`已筛选车牌颜色: ${row.plateColor}`);
+};
+
+// 状态点击 - 筛选同状态记录
+const handleStatusClick = (row) => {
+  dataObj.searchParams = { ...dataObj.searchParams, status: row.status };
+  handleRefresh();
+  ElMessage.success(`已筛选状态: ${row.status}`);
+};
+
+// 场站点击 - 筛选同场站记录
+const handleStationClick = (row) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    stationName: row.stationName,
+  };
+  handleRefresh();
+  ElMessage.success(`已筛选场站: ${row.stationName}`);
+};
+
+// 图片预览
+const handleImagePreview = (row) => {
+  if (!row.imageUrl) {
+    ElMessage.warning('暂无图片');
+    return;
+  }
+  imagePreviewRef.value?.open(
+    row.imageUrl,
+    `${row.plateNo || '未识别'} - 抓拍图片`,
+  );
+};
+
+// 根据状态判断按钮显示
+const shouldShowConfirm = (status) => {
+  return status === '识别成功';
+};
+
+const shouldShowCorrect = (status) => {
+  return status === '识别失败';
+};
+
+// 获取置信度颜色
+const getConfidenceColor = (confidence) => {
+  if (confidence >= 90) return 'success';
+  if (confidence >= 70) return 'warning';
+  return 'danger';
+};
+
+// 处理图表卡片点击筛选
+const handleFilterByChart = (event) => {
+  const filterParams = event.detail;
+  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+  handleRefresh();
+  ElMessage.success('已应用图表筛选');
+};
+
+onMounted(() => {
+  window.addEventListener('filterByChart:plateIdentify', handleFilterByChart);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('filterByChart:plateIdentify', handleFilterByChart);
+});
+</script>
+
+<template>
+  <div class="park-lot-table-new">
+    <CreateFormDrawer :title="textObj.addText">
+      <CreateForm />
+    </CreateFormDrawer>
+    <CorrectFormDrawer :title="getTitle">
+      <CorrectForm />
+    </CorrectFormDrawer>
+    <DetailDrawer
+      ref="detailDrawerRef"
+      :title="`${dataObj.detailObj.plateNo}详情`"
+      :data="dataObj.detailObj"
+      :fields="detailFields"
+    />
+    <ImagePreviewDialog ref="imagePreviewRef" />
+    <VehicleDetailDialog ref="vehicleDetailRef" />
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
+    <Grid>
+      <template #table-title>
+        <div class="tabel-tabs">
+          <div v-if="props.secondShow">
+            <el-tabs
+              v-model="activeName"
+              class="demo-tabs"
+              @tab-change="handleClick"
+            >
+              <el-tab-pane
+                v-for="item in tabsData"
+                :key="item.label"
+                :label="createLabel(item)"
+                :name="item.label"
+              />
+            </el-tabs>
+          </div>
+        </div>
+      </template>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton
+            content="筛选"
+            icon-name="Filter"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            content="导出"
+            icon-name="Download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="手动录入"
+            icon-name="Plus"
+            @click="handleCreate"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
+        </div>
+      </template>
+      <template #id="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.id }}
+        </el-text>
+      </template>
+      <template #plateNo="{ row }">
+        <el-text
+          v-if="row.plateNo"
+          @click="handlePlateNoClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.plateNo }}
+        </el-text>
+        <el-text v-else type="info">未识别</el-text>
+      </template>
+      <template #plateColor="{ row }">
+        <el-tag
+          v-if="row.plateColor"
+          :type="plateColorTypeMap[row.plateColor] || 'info'"
+          @click="handlePlateColorClick(row)"
+          style="cursor: pointer"
+        >
+          {{ row.plateColor }}
+        </el-tag>
+        <el-text v-else type="info">-</el-text>
+      </template>
+      <template #confidence="{ row }">
+        <el-tag :type="getConfidenceColor(row.confidence)">
+          {{ row.confidence }}%
+        </el-tag>
+      </template>
+      <template #imageUrl="{ row }">
+        <el-button
+          v-if="row.imageUrl"
+          link
+          type="primary"
+          @click="handleImagePreview(row)"
+        >
+          查看图片
+        </el-button>
+        <el-text v-else type="info">无图片</el-text>
+      </template>
+      <template #status="{ row }">
+        <el-tag
+          :type="statusTypeMap[row.status] || 'info'"
+          @click="handleStatusClick(row)"
+          style="cursor: pointer"
+        >
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #stationName="{ row }">
+        <el-text
+          @click="handleStationClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.stationName }}
+        </el-text>
+      </template>
+      <template #isCorrected="{ row }">
+        <el-tag :type="row.isCorrected ? 'success' : 'info'">
+          {{ row.isCorrected ? '已修正' : '未修正' }}
+        </el-tag>
+      </template>
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="查看"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            v-if="shouldShowConfirm(row.status)"
+            content="确认"
+            icon-name="CircleCheck"
+            @click="handleConfirm(row)"
+          />
+          <IconButton
+            v-if="shouldShowCorrect(row.status)"
+            content="修正"
+            icon-name="Edit"
+            @click="handleEdit(row)"
+          />
+        </div>
+      </template>
+      <template #bottom>
+        <div class="common-total" @click="changeTotalShow">
+          <el-icon class="tabel-tab-icon" v-if="!dataObj.totalShow">
+            <ArrowDown />
+          </el-icon>
+          <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
+            <ArrowUp />
+          </el-icon>
+          <span>
+            本页统计：入场记录数量: {{ dataObj.list.length }}; 已选择:
+            {{ checkedIds.length }}
+          </span>
+        </div>
+        <div class="common-total-bottom" v-if="dataObj.totalShow">
+          <span> 全部统计：{{ textObj.total }} </span>
+        </div>
+      </template>
+    </Grid>
+  </div>
+</template>

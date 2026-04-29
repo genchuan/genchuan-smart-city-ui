@@ -1,6 +1,7 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -322,15 +323,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'scheduleDateRange',
+      fieldName: 'scheduleDate',
       label: '排班日期',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择排班日期',
-        format: 'YYYY-MM-DD',
-        valueFormat: 'timestamp',
-        type: 'daterange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     {

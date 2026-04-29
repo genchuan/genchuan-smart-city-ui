@@ -13,6 +13,7 @@ import * as echarts from 'echarts';
 
 import { getSpaceMonitorChart } from '#/api/genchuan/industry/chargePark/inspectOp/deviceMonitor/spaceMonitor';
 import MapComponent from '#/genchuan-components/Map/index.vue';
+import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
 import {
   getMockChartData,
@@ -259,7 +260,7 @@ function handleResize() {
 async function fetchChartData() {
   try {
     const response = await getSpaceMonitorChart();
-    normalizeChartData(response);
+    normalizeChartData(response?.data || response);
   } catch (error) {
     console.error('获取车位状态监控看板失败，使用静态数据:', error);
     normalizeChartData(getMockChartData());
@@ -294,25 +295,23 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="space-monitor-visualization">
-    <div class="cards-section">
-      <button
+  <div class="park-chart-box">
+    <div class="chart-box-left space-cards">
+      <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
-        class="stat-card"
-        :style="{ borderLeftColor: card.color }"
-        type="button"
-        @click="handleCardClick(card)"
+        :color="card.color"
+        :status="card.status"
+        :title="card.title"
+        :value="card.value"
+        @click="handleCardClick"
       >
-        <span class="card-title">{{ card.title }}</span>
-        <span class="card-value" :style="{ color: card.color }">
-          {{ card.value }}
-        </span>
-      </button>
+      </IndicatorClick>
     </div>
 
-    <div class="right-section">
-      <div class="map-wrapper">
+    <div class="space-right-section">
+      <div class="park-type-chart space-map-wrapper">
         <MapComponent
           :data="mapData"
           :info-window-config="state.mapConfig.infoWindowConfig"
@@ -321,82 +320,40 @@ onUnmounted(() => {
           :status-key-map="state.mapConfig.statusKeyMap"
         />
       </div>
-      <div class="trend-wrapper">
+      <div class="simple-bar-chart space-trend-wrapper">
         <div ref="trendChartRef" class="chart-container"></div>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
-.space-monitor-visualization {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
-}
-
-.cards-section {
+<style scoped lang="scss">
+.space-cards {
   display: grid;
-  flex-shrink: 0;
   grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
 }
 
-.stat-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 18px;
-  text-align: left;
-  cursor: pointer;
-  background: #fff;
-  border: 1px solid #edf1f5;
-  border-left: 4px solid #2fbf71;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+.left-card {
+  height: 100%;
 }
 
-.stat-card:hover {
-  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
-}
-
-.card-title {
-  margin-bottom: 14px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #596678;
-}
-
-.card-value {
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.right-section {
+.space-right-section {
   display: flex;
   flex: 1 1 0;
-  gap: 20px;
   min-width: 0;
-  height: 320px;
+  // gap: 20px;
+  margin-left: 15px;
 }
 
-.map-wrapper {
-  width: 50%;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 8px;
-}
-
-.trend-wrapper {
+.space-map-wrapper {
   flex: 1;
   min-width: 0;
-  height: 100%;
+  // margin-left: 15px;
+  overflow: hidden;
+}
+
+.space-trend-wrapper {
+  padding: 0;
 }
 
 .chart-container {

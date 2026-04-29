@@ -72,7 +72,7 @@ function normalizeChartData(data) {
 async function fetchChartData() {
   try {
     const response = await getOilMonitorChart();
-    normalizeChartData(response);
+    normalizeChartData(response?.data || response);
   } catch (error) {
     console.error('获取油车占位监测看板失败，使用静态数据:', error);
     normalizeChartData(getMockChartData());
@@ -104,10 +104,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="oil-monitor-visualization">
-    <div class="cards-section">
+  <div class="park-chart-box">
+    <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -118,59 +119,28 @@ onMounted(() => {
       />
     </div>
 
-    <div class="charts-section">
-      <div class="chart-panel">
-        <LineChartClick
-          title="占位监测趋势"
-          :series-data="trendSeriesData"
-          :x-data="trendXData"
-          y-name="占位数"
-          @line-click="handleTrendClick"
-        />
-      </div>
-      <div class="chart-panel">
-        <BarClick
-          title="各场站占位数"
-          :series-data="stationSeriesData"
-          :x-data="stationXData"
-          y-name="占位数"
-          @bar-click="handleStationClick"
-        />
-      </div>
-    </div>
+    <LineChartClick
+      class="simple-bar-chart"
+      title="占位监测趋势"
+      :series-data="trendSeriesData"
+      :x-data="trendXData"
+      y-name="占位数"
+      @line-click="handleTrendClick"
+    />
+    <BarClick
+      class="park-type-chart"
+      title="各场站占位数"
+      :series-data="stationSeriesData"
+      :x-data="stationXData"
+      y-name="占位数"
+      @bar-click="handleStationClick"
+    />
   </div>
 </template>
-
-<style scoped>
-.oil-monitor-visualization {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
-}
-
-.cards-section {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
-}
-
-.charts-section {
-  display: grid;
-  flex: 1 1 0;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  min-width: 0;
-  height: 320px;
-}
-
-.chart-panel {
-  min-width: 0;
-  height: 100%;
+<style lang="scss">
+.chart-box-left {
+  .left-card {
+    height: 159px !important;
+  }
 }
 </style>

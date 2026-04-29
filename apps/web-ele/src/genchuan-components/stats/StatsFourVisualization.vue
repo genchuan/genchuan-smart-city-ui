@@ -102,6 +102,9 @@ const emit = defineEmits([
   'update:currentBarLineIndex',
   'pieChartChange',
   'barLineChartChange',
+  'cardClick',
+  'pieClick',
+  'barLineClick',
 ]);
 
 // 图表引用
@@ -161,6 +164,10 @@ const toggleView = () => {
       initCharts();
     }, 0);
   }
+};
+
+const handleCardClick = (card) => {
+  emit('cardClick', card);
 };
 
 // 第一个圆环图切换
@@ -441,6 +448,13 @@ const initPieChart1 = () => {
         pieChartInstance1 = echarts.init(pieChartRef1.value);
         const option = getPieOption(currentPieData1.value);
         pieChartInstance1.setOption(option);
+        pieChartInstance1.on('click', (params) => {
+          emit('pieClick', {
+            chartIndex: 1,
+            chartKey: currentPieData1.value?.value,
+            data: params,
+          });
+        });
       }
     } catch (error) {
       console.error('初始化第一个圆环图失败:', error);
@@ -461,6 +475,13 @@ const initPieChart2 = () => {
         pieChartInstance2 = echarts.init(pieChartRef2.value);
         const option = getPieOption(currentPieData2.value);
         pieChartInstance2.setOption(option);
+        pieChartInstance2.on('click', (params) => {
+          emit('pieClick', {
+            chartIndex: 2,
+            chartKey: currentPieData2.value?.value,
+            data: params,
+          });
+        });
       }
     } catch (error) {
       console.error('初始化第二个圆环图失败:', error);
@@ -499,6 +520,13 @@ const initBarLineChart = () => {
     barLineChartInstance = echarts.init(barLineChartRef.value);
     const option = getBarLineOption(currentBarLineData.value);
     barLineChartInstance.setOption(option);
+    barLineChartInstance.on('click', (params) => {
+      emit('barLineClick', {
+        chartType: currentBarLineData.value?.type || 'bar',
+        chartKey: currentBarLineData.value?.value,
+        data: params,
+      });
+    });
   } catch (error) {
     console.error('初始化柱状/折线图失败:', error);
   }
@@ -597,6 +625,7 @@ onUnmounted(() => {
         :style="{
           borderLeftColor: card.color || '#4A90E2',
         }"
+        @click="handleCardClick(card)"
       >
         <div class="card-header">
           <span class="card-title">{{ card.title }}</span>

@@ -58,7 +58,7 @@ function normalizeChartData(data) {
 async function fetchChartData() {
   try {
     const response = await getInspectUserChart();
-    normalizeChartData(response);
+    normalizeChartData(response?.data || response);
   } catch (error) {
     console.error('获取巡检人员统计失败，使用静态数据:', error);
     normalizeChartData(getMockChartData());
@@ -67,7 +67,7 @@ async function fetchChartData() {
 
 function handleCardClick(card) {
   if (card.status === 'online') {
-    emit('onlineFilter', '在线');
+    emit('onlineFilter', '1');
     return;
   }
   emit('statusFilter', '');
@@ -85,10 +85,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="inspect-user-visualization">
-    <div class="cards-section">
+  <div class="park-chart-box">
+    <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -99,40 +100,21 @@ onMounted(() => {
       />
     </div>
 
-    <div class="chart-section">
-      <BarClick
-        title="人员区域分布"
-        :series-data="areaSeriesData"
-        :x-data="areaXData"
-        y-name="人员数"
-        @bar-click="handleAreaClick"
-      />
-    </div>
+    <BarClick
+      class="simple-bar-chart"
+      title="人员区域分布"
+      :series-data="areaSeriesData"
+      :x-data="areaXData"
+      y-name="人员数"
+      @bar-click="handleAreaClick"
+    />
   </div>
 </template>
 
-<style scoped>
-.inspect-user-visualization {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
-}
-
-.cards-section {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
-}
-
-.chart-section {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 320px;
+<style lang="scss">
+.chart-box-left {
+  .left-card {
+    height: 159px !important;
+  }
 }
 </style>

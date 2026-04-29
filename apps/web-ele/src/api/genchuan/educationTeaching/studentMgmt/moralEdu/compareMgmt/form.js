@@ -43,7 +43,7 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'className', title: '班级', minWidth: 120, slots: { default: 'className' } },
+    { field: 'className', title: '班级', minWidth: 180, slots: { default: 'className' } },
     { field: 'cycle', title: '评比周期', minWidth: 100 },
     { field: 'totalScore', title: '总得分', minWidth: 100 },
     { field: 'rankNo', title: '排名', minWidth: 80 },

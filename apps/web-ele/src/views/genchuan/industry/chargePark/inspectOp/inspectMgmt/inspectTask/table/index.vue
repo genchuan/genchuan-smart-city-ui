@@ -149,9 +149,9 @@ async function getTableData({ page }) {
     const pageResult = response?.list ? response : response?.data || response;
     const list = Array.isArray(pageResult?.list) ? pageResult.list : [];
 
-    if (list.length === 0 && !pageResult?.total) {
-      throw new Error('接口返回数据为空');
-    }
+    // if (list.length === 0 && !pageResult?.total) {
+    //   throw new Error('接口返回数据为空');
+    // }
 
     dataObj.useStaticData = false;
     dataObj.total = pageResult.total || 0;
@@ -362,7 +362,10 @@ function onSubmit(values) {
 async function handleOpenDetail(row) {
   try {
     const response = await getInspectTaskDetail(row.id);
-    dataObj.detailObj = normalizeInspectTaskRow(response || row);
+    dataObj.detailObj = {
+      ...normalizeInspectTaskRow(response || row),
+      ...row,
+    };
   } catch (error) {
     console.error('获取巡检任务详情失败，使用行数据:', error);
     dataObj.detailObj = row;
@@ -459,12 +462,12 @@ watch(
   (filter) => {
     if (!filter) return;
     if (filter.type === 'status') {
-      if (filter.value === '待处理') {
-        filterStatus.value = '';
-        filterStatusGroup.value = '待处理';
+      if (filter.value === '处理中') {
+        filterStatus.value = '3';
+        filterStatusGroup.value = '处理中';
       } else {
-        filterStatus.value = filter.value;
-        filterStatusGroup.value = '';
+        filterStatus.value = '4';
+        filterStatusGroup.value = '已完成';
       }
       filterTrendTime.value = '';
     }
@@ -637,7 +640,9 @@ onMounted(() => {
           :percentage="row.progress"
           :status="getProgressStatus(row.progress)"
           @click="handleProgressDetail(row)"
-        />
+        >
+          <span>{{ row.progressText }}</span>
+        </el-progress>
       </template>
 
       <template #archiveText="{ row }">

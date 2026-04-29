@@ -49,9 +49,9 @@ export function getDormAssignPage(params) {
       return res;
     })
     .catch(err => {
-      console.warn('分页接口失败，使用模拟数据', err);
-      const mock = convertList(getMockList());
-      return { list: mock, total: mock.length };
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
     });
 }
 
@@ -96,10 +96,9 @@ export function getDormAssignDetail(params) {
   return requestClient.get('/studentmgmt/dorm-assign/get', { params })
     .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(convertEnToZh(detail));
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -131,117 +130,3 @@ export function getDormAssignIndex(params) {
     });
   });
 }
-
-// 模拟数据（原始值使用英文）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      studentId: 1001,
-      studentName: '张三',
-      dormNum: '1号楼101',
-      bedId: 101,
-      bedName: '1号床',
-      ruleContent: '按班级优先分配',
-      assignTime: 1735689600000,
-      adjustTime: 1738886400000,
-      finishRate: 100.0,
-      status: 'assigned',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1735603200000,
-      updateTime: 1735689600000,
-    },
-    {
-      id: 2,
-      studentId: 1002,
-      studentName: '',
-      dormNum: null,
-      bedId: null,
-      bedName: null,
-      ruleContent: '智能分配',
-      assignTime: null,
-      adjustTime: null,
-      finishRate: 0,
-      status: 'unassigned',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1735603200000,
-      updateTime: 1735603200000,
-    },
-    {
-      id: 3,
-      studentId: 1003,
-      studentName: '王五',
-      dormNum: '2号楼205',
-      bedId: 205,
-      bedName: '5号床',
-      ruleContent: '按性别分配',
-      assignTime: 1738281600000,
-      adjustTime: null,
-      finishRate: 100.0,
-      status: 'assigned',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1738195200000,
-      updateTime: 1738281600000,
-    },
-    {
-      id: 4,
-      studentId: 1004,
-      studentName: '',
-      dormNum: null,
-      bedId: null,
-      bedName: null,
-      ruleContent: '智能分配',
-      assignTime: null,
-      adjustTime: null,
-      finishRate: 0,
-      status: 'unassigned',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1738195200000,
-      updateTime: 1738195200000,
-    },
-    {
-      id: 5,
-      studentId: 1005,
-      studentName: '孙七',
-      dormNum: '3号楼302',
-      bedId: 302,
-      bedName: '2号床',
-      ruleContent: '同班级优先',
-      assignTime: 1738886400000,
-      adjustTime: null,
-      finishRate: 100.0,
-      status: 'assigned',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1738800000000,
-      updateTime: 1738886400000,
-    },
-    {
-      id: 6,
-      studentId: 1006,
-      studentName: '',
-      dormNum: null,
-      bedId: null,
-      bedName: null,
-      ruleContent: '随机分配',
-      assignTime: null,
-      adjustTime: null,
-      finishRate: 0,
-      status: 'unassigned',
-      remark: '',
-      creator: 'teacher_wang',
-      updater: 'teacher_wang',
-      createTime: 1738800000000,
-      updateTime: 1738800000000,
-    },
-  ];
-};

@@ -1,3 +1,111 @@
+<template>
+  <div class="park-lot-table-new">
+    <Grid>
+      <template #table-title>
+        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+          <el-tag v-for="filter in activeFilters" :key="filter.field" type="primary" closable @close="handleClearField(filter.field)">
+            {{ filter.label }}
+          </el-tag>
+        </div>
+      </template>
+
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+        </div>
+      </template>
+
+      <template #id="{ row }">
+        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
+      </template>
+      <template #user_name="{ row }">
+        <el-text @click="showUserDetail(row.userId)" type="primary" style="cursor: pointer">
+          {{ getUserName(row.userId) }}
+        </el-text>
+      </template>
+      <template #merchant_name="{ row }">
+        <el-text v-if="row.merchantId" @click="showMerchantDetail(row.merchantId)" type="primary" style="cursor: pointer">
+          {{ getMerchantName(row.merchantId) }}
+        </el-text>
+        <span v-else>-</span>
+      </template>
+      <template #content="{ row }">
+        <el-text @click="filterByContent(row.content)" type="primary" style="cursor: pointer">
+          {{ row.content }}
+        </el-text>
+      </template>
+      <template #status="{ row }">
+        <el-tag :type="{ 待调解: 'warning', 调解中: 'primary', 已完成: 'success' }[row.status]"
+                @click="filterByStatus(row.status)" style="cursor: pointer">
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #mediate_user_name="{ row }">
+        <el-text v-if="row.mediateUserId" @click="showUserDetail(row.mediateUserId)" type="primary" style="cursor: pointer">
+          {{ row.mediateUserName || getUserName(row.mediateUserId) }}
+        </el-text>
+        <span v-else>-</span>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <template v-if="row.status === '待调解'">
+            <IconButton content="调解" icon-name="check" @click="handleMediate(row)" />
+            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          </template>
+          <template v-else-if="row.status === '调解中'">
+            <IconButton content="更新进度" icon-name="Edit" @click="openUpdateProgress(row)" />
+            <IconButton content="确认" icon-name="Finished" @click="openConfirm(row)" />
+            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          </template>
+          <template v-else>
+            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          </template>
+        </div>
+      </template>
+    </Grid>
+
+    <SearchDrawer title="搜索">
+      <QueryForm class="query-form" />
+    </SearchDrawer>
+
+    <DisputeMediateDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="纠纷调解详情" />
+
+    <ProgressDrawer>
+      <el-form :model="progressForm" label-width="100px">
+        <el-form-item label="调解进度" required>
+          <el-input v-model="progressForm.progress" type="textarea" rows="3" placeholder="请输入调解进度描述" />
+        </el-form-item>
+      </el-form>
+    </ProgressDrawer>
+
+    <ConfirmDrawer>
+      <el-form :model="confirmForm" label-width="100px">
+        <el-form-item label="调解结果" required>
+          <el-input v-model="confirmForm.confirmResult" type="textarea" rows="3" placeholder="请填写调解结果" />
+        </el-form-item>
+      </el-form>
+    </ConfirmDrawer>
+
+    <el-dialog v-model="userDetailVisible" title="用户详情" width="400px">
+      <p>用户ID：{{ currentUser.id }}</p>
+      <p>用户名称：{{ currentUser.name }}</p>
+    </el-dialog>
+
+    <el-dialog v-model="merchantDetailVisible" title="商户详情" width="400px">
+      <p>商户ID：{{ currentMerchant.id }}</p>
+      <p>商户名称：{{ currentMerchant.name }}</p>
+    </el-dialog>
+  </div>
+</template>
+
 <script setup>
 import { reactive, ref, onMounted, onUnmounted, computed } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
@@ -20,9 +128,16 @@ import {
 import { useFormSchema, useGridColumns } from './data';
 import DisputeMediateDetailDrawer from './detail.vue';
 
-const props = defineProps({ secondShow: Boolean });
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: { type: Boolean, default: false },
+});
+const emit = defineEmits(['arrow-change']);
 
-// 数据状态
+const arrowChange = () => {
+  emit('arrow-change');
+};
+
 const dataObj = reactive({
   detailObj: {},
   total: 0,
@@ -32,7 +147,6 @@ const dataObj = reactive({
   pageSize: 10,
 });
 
-// ==================== 用户映射表 ====================
 const userMap = ref(new Map());
 async function fetchUserMap() {
   try {
@@ -47,7 +161,6 @@ function getUserName(id) {
   return userMap.value.get(String(id)) || String(id);
 }
 
-// ==================== 商户映射表 ====================
 const merchantMap = ref(new Map());
 async function fetchMerchantMap() {
   try {
@@ -62,7 +175,6 @@ function getMerchantName(id) {
   return merchantMap.value.get(String(id)) || String(id);
 }
 
-// ==================== 获取表格数据 ====================
 const getTableData = async (pageObj) => {
   const params = {
     pageNo: pageObj.page.currentPage,
@@ -84,22 +196,12 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-// ==================== 搜索表单 ====================
 const [QueryForm, QueryFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {
-    componentProps: { class: 'w-full' },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useFormSchema()
-    .filter(v => v.isSearch)
-    .map(v => {
-      delete v.rules;
-      return v;
-    }),
+  schema: useFormSchema().filter(v => v.isSearch).map(v => { delete v.rules; return v; }),
   showCollapseButton: true,
   submitButtonOptions: { content: '查询' },
   resetButtonOptions: {
@@ -119,13 +221,8 @@ const resetAllFilters = async () => {
 };
 
 async function onSubmit(values, isReset = false) {
-  if (isReset) {
-    await resetAllFilters();
-  } else {
-    dataObj.searchObj = { ...values };
-    dataObj.currentPage = 1;
-    gridApi.query();
-  }
+  if (isReset) await resetAllFilters();
+  else { dataObj.searchObj = { ...values }; dataObj.currentPage = 1; gridApi.query(); }
 }
 
 const handleClearField = async (fieldName) => {
@@ -151,16 +248,11 @@ const activeFilters = computed(() => {
   return filters;
 });
 
-// ==================== 表格组件 ====================
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns({ getUserName, getMerchantName }),
     keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getTableData({ page }),
-      },
-    },
+    proxyConfig: { ajax: { query: async ({ page }) => getTableData({ page }) } },
     rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
     toolbarConfig: { refresh: true, search: true },
@@ -170,14 +262,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 function handleRefresh() { gridApi.query(); }
-
 async function handleExport() {
   const data = await exportDisputeMediate(dataObj.searchObj);
   downloadFileFromBlobPart({ fileName: '纠纷调解记录.xls', source: data });
   ElMessage.success('导出成功');
 }
 
-// ==================== 详情抽屉 ====================
 const detailDrawerRef = ref(null);
 const handleOpenDetail = async (row) => {
   const res = await getDisputeMediateDetail({ id: row.id });
@@ -185,7 +275,6 @@ const handleOpenDetail = async (row) => {
   detailDrawerRef.value.open();
 };
 
-// ==================== 调解（待调解 → 调解中） ====================
 const handleMediate = async (row) => {
   await confirm('确认认领该纠纷吗？认领后状态将变为“调解中”。');
   await mediateDispute({ id: row.id });
@@ -193,14 +282,10 @@ const handleMediate = async (row) => {
   handleRefresh();
 };
 
-// ==================== 更新进度（调解中） ====================
 const progressForm = reactive({ progress: '' });
 let currentProgressRow = null;
 const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  width: 500,
-  title: '更新调解进度',
+  modal: false, appendToMain: true, width: 500, title: '更新调解进度',
   onCancel: () => progressDrawerApi.close(),
   onConfirm: async () => {
     if (!progressForm.progress) return ElMessage.warning('请填写调解进度');
@@ -216,14 +301,10 @@ const openUpdateProgress = (row) => {
   progressDrawerApi.open();
 };
 
-// ==================== 确认（调解中 → 已完成） ====================
 const confirmForm = reactive({ confirmResult: '' });
 let currentConfirmRow = null;
 const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  width: 500,
-  title: '确认调解结果',
+  modal: false, appendToMain: true, width: 500, title: '确认调解结果',
   onCancel: () => confirmDrawerApi.close(),
   onConfirm: async () => {
     if (!confirmForm.confirmResult) return ElMessage.warning('请填写调解结果');
@@ -239,7 +320,6 @@ const openConfirm = (row) => {
   confirmDrawerApi.open();
 };
 
-// ==================== 钻取筛选 ====================
 const filterByStatus = (status) => {
   dataObj.searchObj.status = status;
   dataObj.currentPage = 1;
@@ -251,7 +331,6 @@ const filterByContent = (content) => {
   gridApi.query();
 };
 
-// ==================== 用户/商户详情弹窗 ====================
 const userDetailVisible = ref(false);
 const currentUser = ref({ id: '', name: '' });
 const showUserDetail = (userId) => {
@@ -268,7 +347,6 @@ const showMerchantDetail = (merchantId) => {
   merchantDetailVisible.value = true;
 };
 
-// ==================== 图表刷新事件 ====================
 const handleChartRefresh = (event) => {
   const filters = event.detail;
   const newSearchObj = { ...dataObj.searchObj };
@@ -284,7 +362,6 @@ const handleChartRefresh = (event) => {
   gridApi.query();
 };
 
-// ==================== 搜索抽屉 & 全屏 ====================
 const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
   modal: false, appendToMain: true, footer: false, width: 500,
   onCancel: () => searchDrawerApi.close(),
@@ -301,126 +378,3 @@ onUnmounted(() => {
   window.removeEventListener('dispute-mediate-chart-refresh', handleChartRefresh);
 });
 </script>
-
-<template>
-  <div class="park-lot-table-new">
-    <Grid>
-      <!-- 筛选标签区 -->
-      <template #table-title>
-        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
-          <el-tag v-for="filter in activeFilters" :key="filter.field" type="primary" closable @close="handleClearField(filter.field)">
-            {{ filter.label }}
-          </el-tag>
-        </div>
-      </template>
-
-      <!-- 工具栏按钮 -->
-      <template #toolbar-tools>
-        <div class="common-toolbar-tools">
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
-        </div>
-      </template>
-
-      <!-- 调解ID：跳转详情抽屉 -->
-      <template #id="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
-      </template>
-
-      <!-- 用户：跳转用户详情弹窗 -->
-      <template #user_name="{ row }">
-        <el-text @click="showUserDetail(row.userId)" type="primary" style="cursor: pointer">
-          {{ getUserName(row.userId) }}
-        </el-text>
-      </template>
-
-      <!-- 商户：跳转商户详情弹窗 -->
-      <template #merchant_name="{ row }">
-        <el-text v-if="row.merchantId" @click="showMerchantDetail(row.merchantId)" type="primary" style="cursor: pointer">
-          {{ getMerchantName(row.merchantId) }}
-        </el-text>
-        <span v-else>-</span>
-      </template>
-
-      <!-- 纠纷内容：筛选同内容 -->
-      <template #content="{ row }">
-        <el-text @click="filterByContent(row.content)" type="primary" style="cursor: pointer">
-          {{ row.content }}
-        </el-text>
-      </template>
-
-      <!-- 调解状态：筛选同状态 -->
-      <template #status="{ row }">
-        <el-tag :type="{ 待调解: 'warning', 调解中: 'primary', 已完成: 'success' }[row.status]"
-                @click="filterByStatus(row.status)" style="cursor: pointer">
-          {{ row.status }}
-        </el-tag>
-      </template>
-
-      <!-- 调解人：跳转用户详情弹窗 -->
-      <template #mediate_user_name="{ row }">
-        <el-text v-if="row.mediateUserId" @click="showUserDetail(row.mediateUserId)" type="primary" style="cursor: pointer">
-          {{ row.mediateUserName || getUserName(row.mediateUserId) }}
-        </el-text>
-        <span v-else>-</span>
-      </template>
-
-      <!-- 操作按钮（根据状态显示） -->
-      <template #actions="{ row }">
-        <div class="table-toolbar-tools">
-          <template v-if="row.status === '待调解'">
-            <IconButton content="调解" icon-name="check" @click="handleMediate(row)" />
-            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          </template>
-          <template v-else-if="row.status === '调解中'">
-            <IconButton content="更新进度" icon-name="Edit" @click="openUpdateProgress(row)" />
-            <IconButton content="确认" icon-name="Finished" @click="openConfirm(row)" />
-            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          </template>
-          <template v-else>
-            <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          </template>
-        </div>
-      </template>
-    </Grid>
-
-    <!-- 搜索抽屉 -->
-    <SearchDrawer title="搜索">
-      <QueryForm class="query-form" />
-    </SearchDrawer>
-
-    <!-- 详情抽屉 -->
-    <DisputeMediateDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="纠纷调解详情" />
-
-    <!-- 更新进度抽屉 -->
-    <ProgressDrawer>
-      <el-form :model="progressForm" label-width="100px">
-        <el-form-item label="调解进度" required>
-          <el-input v-model="progressForm.progress" type="textarea" rows="3" placeholder="请输入调解进度描述" />
-        </el-form-item>
-      </el-form>
-    </ProgressDrawer>
-
-    <!-- 确认抽屉 -->
-    <ConfirmDrawer>
-      <el-form :model="confirmForm" label-width="100px">
-        <el-form-item label="调解结果" required>
-          <el-input v-model="confirmForm.confirmResult" type="textarea" rows="3" placeholder="请填写调解结果" />
-        </el-form-item>
-      </el-form>
-    </ConfirmDrawer>
-
-    <!-- 用户详情弹窗 -->
-    <el-dialog v-model="userDetailVisible" title="用户详情" width="400px">
-      <p>用户ID：{{ currentUser.id }}</p>
-      <p>用户名称：{{ currentUser.name }}</p>
-    </el-dialog>
-
-    <!-- 商户详情弹窗 -->
-    <el-dialog v-model="merchantDetailVisible" title="商户详情" width="400px">
-      <p>商户ID：{{ currentMerchant.id }}</p>
-      <p>商户名称：{{ currentMerchant.name }}</p>
-    </el-dialog>
-  </div>
-</template>

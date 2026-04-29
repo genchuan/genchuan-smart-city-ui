@@ -128,7 +128,7 @@ function normalizeChartData(data) {
 async function fetchChartData() {
   try {
     const response = await getCarChargeMonitorChart();
-    normalizeChartData(response);
+    normalizeChartData(response?.data || response);
   } catch (error) {
     console.error('获取汽车充电监测看板失败，使用静态数据:', error);
     normalizeChartData(getMockChartData());
@@ -151,10 +151,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="car-charge-monitor-visualization">
-    <div class="cards-section">
+  <div class="park-chart-box">
+    <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -165,8 +166,8 @@ onMounted(() => {
       />
     </div>
 
-    <div class="right-section">
-      <div class="map-wrapper">
+    <div class="monitor-right-section">
+      <div class="park-type-chart monitor-map-wrapper">
         <MapComponent
           :data="mapData"
           :info-window-config="state.mapConfig.infoWindowConfig"
@@ -175,56 +176,37 @@ onMounted(() => {
           :status-key-map="state.mapConfig.statusKeyMap"
         />
       </div>
-      <div class="trend-wrapper">
-        <LineChartClick
-          title="状态更新趋势"
-          :series-data="trendSeriesData"
-          :x-data="trendXData"
-          y-name="设备数"
-          @line-click="handleTrendClick"
-        />
-      </div>
+      <LineChartClick
+        class="simple-bar-chart"
+        title="状态更新趋势"
+        :series-data="trendSeriesData"
+        :x-data="trendXData"
+        y-name="设备数"
+        @line-click="handleTrendClick"
+      />
     </div>
   </div>
 </template>
 
-<style scoped>
-.car-charge-monitor-visualization {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  width: 100%;
-  min-height: 320px;
-  overflow: hidden;
-}
-
-.cards-section {
-  display: grid;
-  flex-shrink: 0;
-  grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
-  width: 240px;
-  height: 320px;
-}
-
-.right-section {
+<style scoped lang="scss">
+.monitor-right-section {
   display: flex;
   flex: 1 1 0;
-  gap: 20px;
   min-width: 0;
-  height: 320px;
+  // gap: 20px;
+  margin-left: 15px;
 }
 
-.map-wrapper {
-  width: 50%;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 8px;
-}
-
-.trend-wrapper {
+.monitor-map-wrapper {
   flex: 1;
   min-width: 0;
-  height: 100%;
+  // margin-left: 15px;
+  overflow: hidden;
+}
+
+.chart-box-left {
+  .left-card {
+    height: 159px !important;
+  }
 }
 </style>
