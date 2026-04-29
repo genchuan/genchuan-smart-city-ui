@@ -2,6 +2,17 @@
 import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { ElTag } from 'element-plus';
+
+// 订单状态映射
+const statusMap = {
+  charging: { label: '充电中', type: 'primary' },
+  pending_pay: { label: '待支付', type: 'warning' },
+  paid: { label: '已支付', type: 'success' },
+  completed: { label: '已完成', type: 'success' },
+  cancelled: { label: '已取消', type: 'info' },
+  refunding: { label: '退款中', type: 'danger' },
+};
 
 // 定义组件接收的属性（充电停车订单详情）
 const props = defineProps({
@@ -56,21 +67,6 @@ defineExpose({
           {{ detailObj.orderNo || '-' }}
         </div>
       </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">用户ID:</div>
-        <div class="detail-row-right">
-          {{ detailObj.userId || '-' }}
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">场站ID:</div>
-        <div class="detail-row-right">
-          {{ detailObj.stationId || '-' }}
-        </div>
-      </div>
-
       <div class="detail-card-row">
         <div class="detail-row-left">订单类型:</div>
         <div class="detail-row-right">
@@ -79,23 +75,26 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">总金额:</div>
-        <div class="detail-row-right">
-          {{ detailObj.totalAmount || 0 }} 元
-        </div>
+        <div class="detail-row-left">订单金额:</div>
+        <div class="detail-row-right">{{ detailObj.amount || 0 }} 元</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">实付金额:</div>
+        <div class="detail-row-left">优惠抵扣金额:</div>
         <div class="detail-row-right">
-          {{ detailObj.payAmount || 0 }} 元
+          {{ detailObj.discountAmount || 0 }} 元
         </div>
       </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">订单状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.status || '-' }}
+          <template v-if="detailObj.status">
+            <ElTag :type="statusMap[detailObj.status]?.type || 'default'">
+              {{ statusMap[detailObj.status]?.label || detailObj.status }}
+            </ElTag>
+          </template>
+          <template v-else> - </template>
         </div>
       </div>
 

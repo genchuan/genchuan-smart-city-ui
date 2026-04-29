@@ -43,22 +43,31 @@ const chartData = reactive({
   hasData: false,
 });
 
-const chartRefs = ref({});
+const chartRefs = reactive({});
 const chartInstances = ref({});
+
+const lineChartRef = ref(null);
+const barChartRef = ref(null);
+let lineChartInstance = null;
+let barChartInstance = null;
+
+function setChartRef(index) {
+  return (el) => {
+    if (el) {
+      chartRefs[`chart-${index}`] = el;
+      console.log(`[plateIdentifyChart] Set ref for chart-${index}:`, el);
+    }
+  };
+}
 
 async function loadChartData() {
   try {
-    const endTime = new Date();
-    const startTime = new Date();
-    startTime.setDate(startTime.getDate() - 7);
-
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
       stationId: props.parkId,
     };
 
     const res = await getPlateIdentifyChart(params);
+    console.log('[plateIdentifyChart] API Response:', res);
 
     // Always update card values
     if (res?.cardData) {
@@ -76,6 +85,10 @@ async function loadChartData() {
       (res.successRateTrend?.length > 0 ||
         res.stationIdentifyCount?.length > 0);
 
+    console.log('[plateIdentifyChart] hasChartData:', hasChartData);
+    console.log('[plateIdentifyChart] successRateTrend:', res?.successRateTrend);
+    console.log('[plateIdentifyChart] stationIdentifyCount:', res?.stationIdentifyCount);
+
     if (hasChartData) {
       chartData.charts[0].xAxis = (res.successRateTrend || []).map(
         (item) => item.date,
@@ -91,9 +104,15 @@ async function loadChartData() {
         (item) => item.count,
       );
 
+      console.log('[plateIdentifyChart] Chart 0 data:', chartData.charts[0]);
+      console.log('[plateIdentifyChart] Chart 1 data:', chartData.charts[1]);
+
       chartData.hasData = true;
+      console.log('[plateIdentifyChart] Before nextTick');
       await nextTick();
+      console.log('[plateIdentifyChart] After nextTick, calling initCharts');
       initCharts();
+      console.log('[plateIdentifyChart] After initCharts');
     } else {
       chartData.hasData = false;
     }
@@ -104,45 +123,61 @@ async function loadChartData() {
 }
 
 function initCharts() {
-  chartData.charts.forEach((chart, index) => {
-    const chartRef = chartRefs.value[`chart-${index}`];
-    if (!chartRef) return;
+  console.log('[plateIdentifyChart] initCharts called');
+  initLineChart();
+  initBarChart();
+}
 
-    if (chartInstances.value[`chart-${index}`]) {
-      chartInstances.value[`chart-${index}`].dispose();
-    }
+function initLineChart() {
+  if (!lineChartRef.value) {
+    console.warn('[plateIdentifyChart] lineChartRef not found');
+    return;
+  }
+  if (lineChartInstance) lineChartInstance.dispose();
+  lineChartInstance = echarts.init(lineChartRef.value);
 
-    const chartInstance = echarts.init(chartRef);
-    chartInstances.value[`chart-${index}`] = chartInstance;
+  const chart = chartData.charts[0];
+  const option = getChartOption(chart);
+  console.log('[plateIdentifyChart] Line chart option:', option);
+  lineChartInstance.setOption(option);
 
-    const option = getChartOption(chart);
-    chartInstance.setOption(option);
+  // 添加点击事件
+  lineChartInstance.on('click', (params) => {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:plateIdentify', {
+        detail: { identifyTime: params.name },
+      }),
+    );
+  });
+}
 
-    // 添加点击事件
-    chartInstance.on('click', (params) => {
-      if (index === 0) {
-        // 识别成功率趋势 - 按日期筛选
-        window.dispatchEvent(
-          new CustomEvent('filterByChart', {
-            detail: { identifyTime: params.name },
-          }),
-        );
-      } else if (index === 1) {
-        // 各场站识别量 - 按场站筛选
-        window.dispatchEvent(
-          new CustomEvent('filterByChart', {
-            detail: { stationName: params.name },
-          }),
-        );
-      }
-    });
+function initBarChart() {
+  if (!barChartRef.value) {
+    console.warn('[plateIdentifyChart] barChartRef not found');
+    return;
+  }
+  if (barChartInstance) barChartInstance.dispose();
+  barChartInstance = echarts.init(barChartRef.value);
+
+  const chart = chartData.charts[1];
+  const option = getChartOption(chart);
+  console.log('[plateIdentifyChart] Bar chart option:', option);
+  barChartInstance.setOption(option);
+
+  // 添加点击事件
+  barChartInstance.on('click', (params) => {
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:plateIdentify', {
+        detail: { stationName: params.name },
+      }),
+    );
   });
 }
 
 function handleCardClick(key) {
   const today = new Date();
-  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime();
+  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
 
   const filterMap = {
     successRate: { startTime: todayStart, endTime: todayEnd },
@@ -152,7 +187,7 @@ function handleCardClick(key) {
   const filterParams = filterMap[key];
   if (filterParams) {
     window.dispatchEvent(
-      new CustomEvent('filterByChart', { detail: filterParams }),
+      new CustomEvent('filterByChart:plateIdentify', { detail: filterParams }),
     );
   }
 }
@@ -226,9 +261,8 @@ function getChartOption(chart) {
 }
 
 function handleResize() {
-  Object.values(chartInstances.value).forEach((chartInstance) => {
-    chartInstance.resize();
-  });
+  lineChartInstance?.resize();
+  barChartInstance?.resize();
 }
 
 // 监听 parkId 变化
@@ -246,9 +280,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
-  Object.values(chartInstances.value).forEach((chartInstance) => {
-    chartInstance.dispose();
-  });
+  lineChartInstance?.dispose();
+  barChartInstance?.dispose();
 });
 </script>
 
@@ -281,15 +314,11 @@ onUnmounted(() => {
 
     <!-- 右侧图表区域 -->
     <div v-if="chartData.hasData" class="chart-wrapper">
-      <div
-        v-for="(chart, index) in chartData.charts"
-        :key="`chart-${index}`"
-        class="chart-container"
-      >
-        <div
-          :ref="(el) => (chartRefs.value[`chart-${index}`] = el)"
-          style="width: 100%; height: 100%"
-        ></div>
+      <div class="chart-container">
+        <div ref="lineChartRef" style="width: 100%; height: 100%"></div>
+      </div>
+      <div class="chart-container">
+        <div ref="barChartRef" style="width: 100%; height: 100%"></div>
       </div>
     </div>
   </div>

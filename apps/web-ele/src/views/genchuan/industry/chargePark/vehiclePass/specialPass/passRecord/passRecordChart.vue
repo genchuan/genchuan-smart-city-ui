@@ -38,13 +38,7 @@ let trendChartInstance = null;
 
 async function loadChartData() {
   try {
-    const endTime = new Date();
-    const startTime = new Date();
-    startTime.setDate(startTime.getDate() - 7);
-
     const params = {
-      startTime: startTime.toISOString().split('T')[0],
-      endTime: endTime.toISOString().split('T')[0],
       stationId: props.parkId,
     };
 
@@ -124,7 +118,7 @@ function initTrendChart() {
   trendChartInstance.on('click', (params) => {
     const date = params.name;
     window.dispatchEvent(
-      new CustomEvent('filterByChart', {
+      new CustomEvent('filterByChart:passRecord', {
         detail: {
           status: 'trendDate',
           date: date,
@@ -144,15 +138,17 @@ function handleCardClick(key) {
   // 根据卡片类型设置不同的筛选参数
   if (key === 'todayPassCount') {
     // 今日放行量：筛选今天的记录
-    const today = new Date().toISOString().split('T')[0];
-    filterParams = { status: 'todayPass', date: today };
+    const today = new Date();
+    const startTime = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
+    const endTime = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
+    filterParams = { status: 'todayPass', startTime, endTime };
   } else if (key === 'abnormalPassRate') {
     // 异常放行占比：筛选异常记录
     filterParams = { status: 'abnormalPass' };
   }
 
   window.dispatchEvent(
-    new CustomEvent('filterByChart', { detail: filterParams }),
+    new CustomEvent('filterByChart:passRecord', { detail: filterParams }),
   );
 }
 

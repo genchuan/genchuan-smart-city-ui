@@ -180,11 +180,11 @@ onMounted(() => {
 }
 
 .fence-map-section {
-  margin-left: 15px;
   position: relative;
   flex: 1 1 0;
   min-width: 0;
   height: 320px;
+  margin-left: 15px;
   overflow: hidden;
 }
 
@@ -205,7 +205,7 @@ onMounted(() => {
   border-radius: 4px;
 }
 
-.chart-box-left{
+.chart-box-left {
   .left-card {
     height: 159px !important;
   }

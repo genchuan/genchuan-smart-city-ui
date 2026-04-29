@@ -41,13 +41,7 @@ let barChartInstance = null;
 
 async function loadChartData() {
   try {
-    const endTime = new Date();
-    const startTime = new Date();
-    startTime.setDate(startTime.getDate() - 7);
-
     const params = {
-      startTime: Math.floor(startTime.getTime() / 1000).toString(),
-      endTime: Math.floor(endTime.getTime() / 1000).toString(),
       areaId: props.areaId,
     };
 
@@ -115,9 +109,12 @@ function initPieChart() {
 
   // 添加点击事件
   pieChartInstance.on('click', (params) => {
+    const clickDate = new Date(params.name);
+    const startTime = new Date(clickDate.setHours(0, 0, 0, 0)).getTime().toString();
+    const endTime = new Date(clickDate.setHours(23, 59, 59, 999)).getTime().toString();
     window.dispatchEvent(
-      new CustomEvent('filterByChart', {
-        detail: { date: params.name },
+      new CustomEvent('filterByChart:inspectTask', {
+        detail: { startTime, endTime },
       }),
     );
   });
@@ -155,7 +152,7 @@ function initBarChart() {
   // 添加点击事件
   barChartInstance.on('click', (params) => {
     window.dispatchEvent(
-      new CustomEvent('filterByChart', {
+      new CustomEvent('filterByChart:inspectTask', {
         detail: { taskType: params.name },
       }),
     );
@@ -176,7 +173,7 @@ function handleCardClick(key) {
   const filterParams = filterMap[key];
   if (filterParams) {
     window.dispatchEvent(
-      new CustomEvent('filterByChart', { detail: filterParams }),
+      new CustomEvent('filterByChart:inspectTask', { detail: filterParams }),
     );
   }
 }

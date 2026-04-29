@@ -27,10 +27,10 @@ import {
 // 辅助函数：状态标签类型
 const getStatusType = (status) => {
   const map = {
-    '未核实': 'warning',
-    '已核实': 'primary',
-    '处理中': 'success',
-    '已完结': 'info',
+    未核实: 'warning',
+    已核实: 'primary',
+    处理中: 'success',
+    已完结: 'info',
   };
   return map[status] || 'info';
 };
@@ -66,7 +66,11 @@ const formatMoney = (amount) => {
   return `¥${parseFloat(amount).toFixed(2)}`;
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({
+  secondShow: Boolean,
+  arrowShow: Boolean,
+  arrowState: Boolean,
+});
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
@@ -76,7 +80,11 @@ function handleFilterTagClick(field, value) {
   if (!field || value == null) return;
   if (tagFilters.value[field] !== undefined) {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+    if (
+      Array.isArray(existing) &&
+      existing.length === 1 &&
+      existing[0] === value
+    ) {
       delete tagFilters.value[field];
     } else if (!Array.isArray(existing) && existing === value) {
       delete tagFilters.value[field];
@@ -138,7 +146,7 @@ const checkedIds = ref([]);
 const checkedRows = ref([]);
 
 function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map(item => item.id);
+  checkedIds.value = records.map((item) => item.id);
   checkedRows.value = records;
 }
 
@@ -152,7 +160,11 @@ const getTableData = async ({ page }) => {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-    if (params.createTime && Array.isArray(params.createTime) && params.createTime.length === 2) {
+    if (
+      params.createTime &&
+      Array.isArray(params.createTime) &&
+      params.createTime.length === 2
+    ) {
       params.startTime = params.createTime[0];
       params.endTime = params.createTime[1];
       delete params.createTime;
@@ -161,7 +173,7 @@ const getTableData = async ({ page }) => {
     let filtered = res.list;
     // 应用标签筛选
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
+      filtered = filtered.filter((item) => {
         let itemValue;
         switch (field) {
           case 'abnormalType':
@@ -177,7 +189,9 @@ const getTableData = async ({ page }) => {
             itemValue = item.creator;
             break;
           case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
+            const createDate = item.createTime
+              ? getDateFromTimestamp(item.createTime)
+              : '';
             itemValue = createDate;
             break;
           default:
@@ -190,14 +204,16 @@ const getTableData = async ({ page }) => {
         }
       });
     });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // ✅ 修改点1：使用后端返回的总记录数
+    dataObj.total = res.total;
+    // ✅ 修改点2：直接使用当前页数据（res.list 已经是当前页数据，不需要再 slice）
+    dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
     let filtered = mockData;
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
+      filtered = filtered.filter((item) => {
         let itemValue;
         switch (field) {
           case 'abnormalType':
@@ -213,7 +229,9 @@ const getTableData = async ({ page }) => {
             itemValue = item.creator;
             break;
           case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
+            const createDate = item.createTime
+              ? getDateFromTimestamp(item.createTime)
+              : '';
             itemValue = createDate;
             break;
           default:
@@ -227,7 +245,10 @@ const getTableData = async ({ page }) => {
       });
     });
     dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    dataObj.list = filtered.slice(
+      (page.currentPage - 1) * page.pageSize,
+      page.currentPage * page.pageSize,
+    );
   } finally {
     dataObj.loading = false;
   }
@@ -282,7 +303,7 @@ async function confirmVerify() {
   }
   const loading = ElLoading.service({ text: '核实中...' });
   try {
-    const ids = currentVerifyRows.value.map(row => row.id);
+    const ids = currentVerifyRows.value.map((row) => row.id);
     const res = await verifyAbnormalOrder({
       ids,
       verifyResult: verifyResult.value,
@@ -306,7 +327,9 @@ async function handleBatchVerify() {
     ElMessage.warning('请至少选择一条异常订单');
     return;
   }
-  const selectedRows = checkedRows.value.filter(row => row.abnormalStatus === '未核实');
+  const selectedRows = checkedRows.value.filter(
+    (row) => row.abnormalStatus === '未核实',
+  );
   if (selectedRows.length === 0) {
     ElMessage.warning('请选择状态为【未核实】的订单');
     return;
@@ -329,21 +352,27 @@ async function handleBatchHandle() {
     ElMessage.warning('请至少选择一条异常订单');
     return;
   }
-  const selectedRows = checkedRows.value.filter(row => row.abnormalStatus === '已核实');
+  const selectedRows = checkedRows.value.filter(
+    (row) => row.abnormalStatus === '已核实',
+  );
   if (selectedRows.length === 0) {
     ElMessage.warning('请选择状态为【已核实】的订单');
     return;
   }
   try {
-    const { value: measure } = await ElMessageBox.prompt('请输入处理措施', '处理', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      inputPlaceholder: '请输入处理措施',
-    });
+    const { value: measure } = await ElMessageBox.prompt(
+      '请输入处理措施',
+      '处理',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputPlaceholder: '请输入处理措施',
+      },
+    );
     if (measure) {
       const loading = ElLoading.service({ text: '处理中...' });
       try {
-        const ids = selectedRows.map(row => row.id);
+        const ids = selectedRows.map((row) => row.id);
         const res = await handleAbnormalOrder({ ids, handleMeasure: measure });
         if (res === true) {
           ElMessage.success('批量处理成功');
@@ -364,20 +393,26 @@ async function handleBatchComplete() {
     ElMessage.warning('请至少选择一条异常订单');
     return;
   }
-  const selectedRows = checkedRows.value.filter(row => row.abnormalStatus === '处理中');
+  const selectedRows = checkedRows.value.filter(
+    (row) => row.abnormalStatus === '处理中',
+  );
   if (selectedRows.length === 0) {
     ElMessage.warning('请选择状态为【处理中】的订单');
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认完结选中的 ${selectedRows.length} 条异常订单？完结后状态将变为"已完结"。`, '批量完结确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
+    await ElMessageBox.confirm(
+      `确认完结选中的 ${selectedRows.length} 条异常订单？完结后状态将变为"已完结"。`,
+      '批量完结确认',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning',
+      },
+    );
     const loading = ElLoading.service({ text: '完结中...' });
     try {
-      const ids = selectedRows.map(row => row.id);
+      const ids = selectedRows.map((row) => row.id);
       const res = await completeAbnormalOrder({ ids });
       if (res === true) {
         ElMessage.success('批量完结成功');
@@ -398,15 +433,22 @@ async function handleRowHandle(row) {
     return;
   }
   try {
-    const { value: measure } = await ElMessageBox.prompt('请输入处理措施', '处理', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      inputPlaceholder: '请输入处理措施',
-    });
+    const { value: measure } = await ElMessageBox.prompt(
+      '请输入处理措施',
+      '处理',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        inputPlaceholder: '请输入处理措施',
+      },
+    );
     if (measure) {
       const loading = ElLoading.service({ text: '处理中...' });
       try {
-        const res = await handleAbnormalOrder({ ids: [row.id], handleMeasure: measure });
+        const res = await handleAbnormalOrder({
+          ids: [row.id],
+          handleMeasure: measure,
+        });
         if (res === true) {
           ElMessage.success('处理成功');
           handleRefresh();
@@ -427,23 +469,35 @@ async function handleRowRefund(row) {
     return;
   }
   try {
-    const { value: amount } = await ElMessageBox.prompt('请输入退款金额', '退款', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      inputPlaceholder: '例如：20.00',
-      inputPattern: /^\d+(\.\d{1,2})?$/,
-      inputErrorMessage: '请输入正确的金额格式',
-    });
-    if (amount) {
-      const { value: reason } = await ElMessageBox.prompt('请输入退款原因', '退款原因', {
+    const { value: amount } = await ElMessageBox.prompt(
+      '请输入退款金额',
+      '退款',
+      {
         confirmButtonText: '确认',
         cancelButtonText: '取消',
-        inputPlaceholder: '请输入退款原因',
-      });
+        inputPlaceholder: '例如：20.00',
+        inputPattern: /^\d+(\.\d{1,2})?$/,
+        inputErrorMessage: '请输入正确的金额格式',
+      },
+    );
+    if (amount) {
+      const { value: reason } = await ElMessageBox.prompt(
+        '请输入退款原因',
+        '退款原因',
+        {
+          confirmButtonText: '确认',
+          cancelButtonText: '取消',
+          inputPlaceholder: '请输入退款原因',
+        },
+      );
       if (reason) {
         const loading = ElLoading.service({ text: '退款中...' });
         try {
-          const res = await refundAbnormalOrder({ id: row.id, refundAmount: parseFloat(amount), refundReason: reason });
+          const res = await refundAbnormalOrder({
+            id: row.id,
+            refundAmount: parseFloat(amount),
+            refundReason: reason,
+          });
           if (res === true) {
             ElMessage.success('退款成功');
             handleRefresh();
@@ -465,11 +519,15 @@ async function handleRowComplete(row) {
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认完结异常订单（订单号：${row.orderCode}）？完结后状态将变为"已完结"。`, '完结确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
+    await ElMessageBox.confirm(
+      `确认完结异常订单（订单号：${row.orderCode}）？完结后状态将变为"已完结"。`,
+      '完结确认',
+      {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning',
+      },
+    );
     const loading = ElLoading.service({ text: '完结中...' });
     try {
       const res = await completeAbnormalOrder({ ids: [row.id] });
@@ -519,14 +577,18 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {
+    componentProps: { class: 'w-full' },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
   handleSubmit: (values) => {
     searchParams.value = { ...values };
     drawerApi.close();
     gridApi.reload();
   },
   layout: 'horizontal',
-  schema: useFormSchema().map(v => {
+  schema: useFormSchema().map((v) => {
     delete v.rules;
     return v;
   }),
@@ -544,7 +606,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     toolbarConfig: { refresh: true, search: true },
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
   showSearchForm: false,
 });
 
@@ -570,8 +635,11 @@ defineExpose({ handleFilterTagClick, clearFilters });
 
 <template>
   <div class="park-lot-table-new">
-    <AbnormalOrderDetailDrawer ref="abnormalOrderDetailDrawerRef" :detail-obj="dataObj.detailObj"
-                               @refresh="handleRefresh" />
+    <AbnormalOrderDetailDrawer
+      ref="abnormalOrderDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+      @refresh="handleRefresh"
+    />
     <Drawer title="搜索">
       <QueryForm />
     </Drawer>
@@ -590,53 +658,151 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="核实" icon-name="Check" @click="handleBatchVerify" />
-          <IconButton content="处理" icon-name="Tools" @click="handleBatchHandle" />
-          <IconButton content="完结" icon-name="EditPen" color="#F56C6C" @click="handleBatchComplete" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="刷新" icon-name="Refresh" @click="handleRefresh" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
-                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart" />
+          <IconButton
+            content="核实"
+            icon-name="Check"
+            @click="handleBatchVerify"
+          />
+          <IconButton
+            content="处理"
+            icon-name="Tools"
+            @click="handleBatchHandle"
+          />
+          <IconButton
+            content="完结"
+            icon-name="EditPen"
+            color="#F56C6C"
+            @click="handleBatchComplete"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="筛选"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            content="刷新"
+            icon-name="Refresh"
+            @click="handleRefresh"
+          />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
+          <IconButton
+            :content="showChart ? '隐藏图表' : '显示图表'"
+            icon-name="PieChart"
+            @click="toggleChart"
+          />
         </div>
       </template>
 
       <template #orderCode="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.orderCode }}</el-text>
+        <el-text
+          @click="handleOpenDetail(row)"
+          type="primary"
+          style="cursor: pointer"
+          >{{ row.orderCode }}</el-text
+        >
       </template>
       <template #abnormalType="{ row }">
-        <el-tag @click="handleFilterTagClick('abnormalType', row.abnormalType)" style="cursor: pointer;">{{ row.abnormalType }}</el-tag>
+        <el-tag
+          @click="handleFilterTagClick('abnormalType', row.abnormalType)"
+          style="cursor: pointer"
+          >{{ row.abnormalType }}</el-tag
+        >
       </template>
       <template #checkUser="{ row }">
-        <el-text @click="handleFilterTagClick('checkUser', row.checkUser)" type="primary" style="cursor: pointer;">{{ row.checkUser || '-' }}</el-text>
+        <el-text
+          @click="handleFilterTagClick('checkUser', row.checkUser)"
+          type="primary"
+          style="cursor: pointer"
+          >{{ row.checkUser || '-' }}</el-text
+        >
       </template>
       <template #handleTime="{ row }">
         <el-text>{{ formatTimestamp(row.handleTime) }}</el-text>
       </template>
       <template #abnormalStatus="{ row }">
-        <el-tag :type="getStatusType(row.abnormalStatus)" @click="handleFilterTagClick('abnormalStatus', row.abnormalStatus)" style="cursor: pointer;">{{ row.abnormalStatus }}</el-tag>
+        <el-tag
+          :type="getStatusType(row.abnormalStatus)"
+          @click="handleFilterTagClick('abnormalStatus', row.abnormalStatus)"
+          style="cursor: pointer"
+          >{{ row.abnormalStatus }}</el-tag
+        >
       </template>
       <template #refundAmount="{ row }">
         <el-text>{{ formatMoney(row.refundAmount) }}</el-text>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
+        <el-text
+          @click="handleFilterTagClick('creator', row.creator)"
+          type="primary"
+          style="cursor: pointer"
+          >{{ row.creator || '-' }}</el-text
+        >
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
+        <el-text
+          @click="
+            handleFilterTagClick(
+              'createTime',
+              getDateFromTimestamp(row.createTime),
+            )
+          "
+          type="primary"
+          style="cursor: pointer"
+          >{{ formatTimestamp(row.createTime) }}</el-text
+        >
       </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.abnormalStatus === '未核实'" content="核实" icon-name="Check" @click="handleRowVerify(row)" />
-          <IconButton v-if="row.abnormalStatus === '已核实'" content="处理" icon-name="Tools" @click="handleRowHandle(row)" />
-          <IconButton v-if="['已核实', '处理中'].includes(row.abnormalStatus)" content="退款" icon-name="Money" @click="handleRowRefund(row)" />
-          <IconButton v-if="row.abnormalStatus === '处理中'" content="完结" icon-name="EditPen" color="#F56C6C" @click="handleRowComplete(row)" />
-          <IconButton content="备注" icon-name="edit" @click="handleRowRemark(row)" />
+          <IconButton
+            content="查看"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            v-if="row.abnormalStatus === '未核实'"
+            content="核实"
+            icon-name="Check"
+            @click="handleRowVerify(row)"
+          />
+          <IconButton
+            v-if="row.abnormalStatus === '已核实'"
+            content="处理"
+            icon-name="Tools"
+            @click="handleRowHandle(row)"
+          />
+          <IconButton
+            v-if="['已核实', '处理中'].includes(row.abnormalStatus)"
+            content="退款"
+            icon-name="Money"
+            @click="handleRowRefund(row)"
+          />
+          <IconButton
+            v-if="row.abnormalStatus === '处理中'"
+            content="完结"
+            icon-name="EditPen"
+            color="#F56C6C"
+            @click="handleRowComplete(row)"
+          />
+          <IconButton
+            content="备注"
+            icon-name="edit"
+            @click="handleRowRemark(row)"
+          />
         </div>
       </template>
     </Grid>
@@ -645,14 +811,23 @@ defineExpose({ handleFilterTagClick, clearFilters });
     <el-dialog title="核实" v-model="verifyDialogVisible" width="400px">
       <el-form label-width="100px">
         <el-form-item label="核实结果" required>
-          <el-select v-model="verifyResult" placeholder="请选择核实结果" style="width: 100%;">
+          <el-select
+            v-model="verifyResult"
+            placeholder="请选择核实结果"
+            style="width: 100%"
+          >
             <el-option label="正常" value="正常" />
             <el-option label="异常" value="异常" />
             <el-option label="误报" value="误报" />
           </el-select>
         </el-form-item>
         <el-form-item label="核实备注">
-          <el-input v-model="verifyRemark" type="textarea" :rows="3" placeholder="请输入核实备注（可选）" />
+          <el-input
+            v-model="verifyRemark"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入核实备注（可选）"
+          />
         </el-form-item>
       </el-form>
       <template #footer>

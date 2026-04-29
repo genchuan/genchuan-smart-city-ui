@@ -147,20 +147,23 @@ onMounted(() => {
   min-height: 320px;
   overflow: hidden;
 }
+
 .cards-section {
   display: grid;
   flex-shrink: 0;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   width: 360px;
   height: 320px;
 }
+
 .chart-wrapper {
   flex: 1 1 0;
   min-width: 0;
   height: 320px;
 }
+
 .task-chart {
   flex: 0.9 1 0;
 }

@@ -206,11 +206,12 @@ onMounted(() => {
 </template>
 
 <style lang="scss">
-.chart-box-left{
+.chart-box-left {
   .left-card {
     height: 159px !important;
   }
 }
+
 .inspect-track-map-section {
   position: relative;
   flex: 1.1 1 0;
@@ -246,5 +247,4 @@ onMounted(() => {
   cursor: pointer;
   background: rgb(255 255 255 / 90%);
 }
-
 </style>

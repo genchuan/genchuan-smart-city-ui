@@ -574,11 +574,11 @@ onMounted(() => {
     }
   };
 
-  window.addEventListener('filterByChart', handleFilterByChart);
+  window.addEventListener('filterByChart:passOpReport', handleFilterByChart);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('filterByChart', handleFilterByChart);
+  window.removeEventListener('filterByChart:passOpReport', handleFilterByChart);
 });
 </script>
 

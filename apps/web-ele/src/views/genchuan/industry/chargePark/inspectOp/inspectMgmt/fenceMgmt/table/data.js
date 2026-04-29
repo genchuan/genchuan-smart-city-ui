@@ -261,7 +261,10 @@ export function normalizeFenceMgmtRow(row) {
   const bindTime = normalizeTimeValue(
     row.bindTime ?? row.bind_time ?? row.reserve2,
   );
-  const effectTime = row.status === '2' ? normalizeTimeValue(row.updateTime ?? row.updateTime) : null;
+  const effectTime =
+    row.status === '2'
+      ? normalizeTimeValue(row.updateTime ?? row.updateTime)
+      : null;
   const userId = row.userId ?? row.user_id;
   const status = row.statusName || row.status || '未生效';
   const area = row.area || '[]';

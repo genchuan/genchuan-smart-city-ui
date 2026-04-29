@@ -40,13 +40,7 @@ let barChartInstance = null;
 
 async function loadChartData() {
   try {
-    const endTime = new Date();
-    const startTime = new Date();
-    startTime.setDate(startTime.getDate() - 7);
-
     const params = {
-      startTime: Math.floor(startTime.getTime() / 1000).toString(),
-      endTime: Math.floor(endTime.getTime() / 1000).toString(),
       areaId: props.parkId,
     };
 
@@ -120,7 +114,7 @@ function initPieChart() {
     if (params.componentType === 'series') {
       const date = params.name;
       window.dispatchEvent(
-        new CustomEvent('filterEndPark', { detail: { date } }),
+        new CustomEvent('filterByChart:endPark', { detail: { date } }),
       );
     }
   });
@@ -140,12 +134,12 @@ function handleCardClick(key) {
   if (key === 'endCount') {
     // 结束量：跳转所有结束停车记录列表
     window.dispatchEvent(
-      new CustomEvent('filterEndPark', { detail: { status: null } }),
+      new CustomEvent('filterByChart:endPark', { detail: { status: null } }),
     );
   } else if (key === 'paySuccessRate') {
     // 支付成功率：跳转已支付状态的结束停车记录列表
     window.dispatchEvent(
-      new CustomEvent('filterEndPark', { detail: { status: '已支付' } }),
+      new CustomEvent('filterByChart:endPark', { detail: { status: '已支付' } }),
     );
   }
 }
@@ -191,12 +185,9 @@ onUnmounted(() => {
     </div>
 
     <!-- 右侧图表区域 -->
-    <div v-if="state.hasData" class="chart-wrapper">
-      <div class="chart-container">
+    <div v-if="state.hasData" class="chart-wrapper-single">
+      <div class="chart-container-single">
         <div ref="pieChartRef" style="width: 100%; height: 100%"></div>
-      </div>
-      <div class="chart-container">
-        <div ref="barChartRef" style="width: 100%; height: 100%"></div>
       </div>
     </div>
   </div>
@@ -302,6 +293,24 @@ onUnmounted(() => {
     margin: 0 !important;
 
     .chart-container {
+      flex: 1;
+      min-width: 0;
+      height: 330px;
+      padding: 10px;
+      background-color: hsl(var(--card));
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+    }
+  }
+
+  .chart-wrapper-single {
+    display: flex !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+
+    .chart-container-single {
       flex: 1;
       min-width: 0;
       height: 330px;

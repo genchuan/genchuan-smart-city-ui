@@ -6,7 +6,10 @@ import { useVbenModal } from '@vben/common-ui';
 import { WarningFilled } from '@element-plus/icons-vue';
 import { ElLoading, ElMessage } from 'element-plus';
 
-import { approveInspectReport, processInspectReport } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectReport';
+import {
+  approveInspectReport,
+  processInspectReport,
+} from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectReport';
 
 const emit = defineEmits(['success']);
 

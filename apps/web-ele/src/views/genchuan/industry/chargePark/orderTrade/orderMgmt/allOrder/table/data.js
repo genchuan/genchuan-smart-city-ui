@@ -101,12 +101,6 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'stationId',
-      title: '场站ID',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
       field: 'orderType',
       title: '订单类型',
       minWidth: 150,
@@ -114,14 +108,14 @@ export function useGridColumns() {
       slots: { default: 'orderType' },
     },
     {
-      field: 'totalAmount',
-      title: '总金额',
+      field: 'amount',
+      title: '订单金额',
       minWidth: 140,
       sortable: true,
     },
     {
-      field: 'payAmount',
-      title: '实付金额',
+      field: 'discountAmount',
+      title: '优惠抵扣金额',
       minWidth: 140,
       sortable: true,
     },
@@ -143,7 +137,7 @@ export function useGridColumns() {
       title: '备注',
       minWidth: 200,
       sortable: false,
-    }, 
+    },
     {
       field: 'creator',
       title: '创建者',
