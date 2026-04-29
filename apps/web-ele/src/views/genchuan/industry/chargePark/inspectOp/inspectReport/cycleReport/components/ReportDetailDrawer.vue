@@ -56,10 +56,10 @@ defineExpose({ close, open });
 <template>
   <DrawerComponent>
     <div class="cycle-report-detail-drawer">
-      <div class="drawer-actions">
+      <!-- <div class="drawer-actions">
         <el-button type="primary" @click="handleExport">导出</el-button>
         <el-button @click="close">关闭</el-button>
-      </div>
+      </div> -->
 
       <section class="detail-section">
         <div class="section-title">基础信息</div>
@@ -78,24 +78,30 @@ defineExpose({ close, open });
             <span>报表类型</span>
             <strong>{{ detailData.reportType || '-' }}</strong>
           </div>
-          <div class="info-item">
+          <El-Tooltip :content="detailData.stationName">
+            <div class="info-item">
             <span>所属场站</span>
             <strong>{{ detailData.stationName || '-' }}</strong>
           </div>
-          <div class="info-item">
+          </El-Tooltip>
+          <El-Tooltip :content="detailData.statTime">
+            <div class="info-item">
             <span>统计时段</span>
             <strong>{{ detailData.statTime || '-' }}</strong>
           </div>
+          </El-Tooltip>
           <div class="info-item">
             <span>生成状态</span>
             <el-tag :type="getGenerateStatusTagType(detailData.generateStatus)">
               {{ detailData.generateStatus || '-' }}
             </el-tag>
           </div>
-          <div class="info-item">
+          <El-Tooltip :content="detailData.generateTimeStr">
+            <div class="info-item">
             <span>生成时间</span>
             <strong>{{ detailData.generateTimeStr || '-' }}</strong>
           </div>
+          </El-Tooltip>
           <div class="info-item">
             <span>操作人</span>
             <strong>{{ detailData.operator || '-' }}</strong>
@@ -121,7 +127,7 @@ defineExpose({ close, open });
         </div>
       </section>
 
-      <section class="detail-section">
+      <!-- <section class="detail-section">
         <div class="section-title">对比分析</div>
         <el-descriptions :column="1" border>
           <el-descriptions-item label="同比数据">
@@ -137,7 +143,7 @@ defineExpose({ close, open });
             {{ detailData.updateTimeStr || '-' }}
           </el-descriptions-item>
         </el-descriptions>
-      </section>
+      </section> -->
     </div>
   </DrawerComponent>
 </template>

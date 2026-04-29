@@ -12,7 +12,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   exportCycleReport,
   generateCycleReport,
-  getCycleReportDetail,
+  // getCycleReportDetail,
   getCycleReportPage,
 } from '#/api/genchuan/industry/chargePark/inspectOp/inspectReport/cycleReport';
 
@@ -216,6 +216,11 @@ async function getTableData({ page }) {
     dataObj.list = sortListByMetric(
       applyLocalTrendFilter(list.map((item) => normalizeCycleReportRow(item))),
     );
+    // list.map((item) => {
+    //   return{
+    //     ...normalizeCycleReportRow(item),
+    //   }
+    // })
   } catch (error) {
     console.error('获取周期报表数据失败，使用静态数据', error);
     getPagedMockData(queryParams, page);
@@ -332,9 +337,9 @@ function onSubmit(values) {
 
 async function handleOpenDetail(row) {
   try {
-    const response = await getCycleReportDetail(row.id);
-    const detail = response?.id ? response : response?.data || response;
-    detailDrawerRef.value?.open(normalizeCycleReportRow({ ...row, ...detail }));
+    // const response = await getCycleReportDetail(row.id);
+    // const detail = response?.id ? response : response?.data || response;
+    detailDrawerRef.value?.open(normalizeCycleReportRow({ ...row }));
   } catch (error) {
     console.error(error);
     detailDrawerRef.value?.open(row);
