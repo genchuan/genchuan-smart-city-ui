@@ -196,6 +196,7 @@ const getTableData = async (pageObj) => {
     dataObj.list = res.list.map((v) => {
       return {
         ...v,
+        archiveTime: formatTimestamp(v.archiveTime),
         createOrderTime: formatTimestamp(v.createOrderTime),
         updateTime: formatTimestamp(v.updateTime),
         createTime: formatTimestamp(v.createTime),
