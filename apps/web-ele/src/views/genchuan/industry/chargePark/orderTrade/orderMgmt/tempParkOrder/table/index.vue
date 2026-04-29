@@ -412,6 +412,9 @@ const handleRefundSubmit = async () => {
 const invoiceDialogVisible = ref(false);
 const invoiceForm = reactive({
   id: '',
+  invoiceTitle: '',
+  invoiceTaxNo: '',
+  invoiceEmail: '',
   remark: '',
 });
 
@@ -422,15 +425,27 @@ const handleInvoice = (row) => {
   invoiceDialogVisible.value = true;
 };
 
+// 邮箱格式校验
+const validateEmail = (email) => {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email);
+};
+
 // 提交开票
 const handleInvoiceSubmit = async () => {
+  // 校验邮箱格式
+  if (invoiceForm.invoiceEmail && !validateEmail(invoiceForm.invoiceEmail)) {
+    ElMessage.error('请输入有效的邮箱地址');
+    return;
+  }
+  
   try {
     await invoiceTempParkOrder(invoiceForm);
     ElMessage.success('开票申请已提交');
     invoiceDialogVisible.value = false;
     handleRefresh();
   } catch (error) {
-    ElMessage.error('开票申请失败');
+    ElMessage.error(error.msg);
   }
 };
 
@@ -559,6 +574,15 @@ const alarmColumns = [
         <el-form-item label="订单ID">
           <el-input v-model="invoiceForm.id" disabled />
         </el-form-item>
+        <el-form-item label="发票抬头">
+          <el-input v-model="invoiceForm.invoiceTitle" placeholder="请输入发票抬头" />
+        </el-form-item>
+        <el-form-item label="发票税号">
+          <el-input v-model="invoiceForm.invoiceTaxNo" placeholder="请输入发票税号" />
+        </el-form-item>
+        <el-form-item label="接收邮箱">
+          <el-input v-model="invoiceForm.invoiceEmail" placeholder="请输入接收邮箱" />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="invoiceForm.remark" type="textarea" rows="3" placeholder="请输入开票备注" />
         </el-form-item>
@@ -620,7 +644,7 @@ const alarmColumns = [
           <IconButton content="退款" icon-name="back" v-if="row.status === 'paid'" @click="handleRefund(row)" />
           <IconButton content="取消" v-if="row.status === 'pending_pay'" icon-name="delete" color="#F56C6C"
             @click="handleCancel(row)" />
-          <IconButton content="开票" v-if="row.status === 'completed'" icon-name="Document" @click="handleInvoice(row)" />
+          <IconButton content="开票" v-if="row.status === 'paid' || row.status === 'completed'" icon-name="Document" @click="handleInvoice(row)" />
         </div>
       </template>
       <template #bottom>
