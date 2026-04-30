@@ -2,10 +2,10 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getAssetInfoChart } from '#/api/genchuan/industry/chargePark/inspectOp/assetMgmt/assetInfo';
-import Columnar from '#/components/stats/columnar.vue';
+import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
-import { getMockChartData, getAssetTypeLabel } from './data';
+import { getAssetTypeLabel, getMockChartData } from './data';
 
 const emit = defineEmits(['statusFilter', 'typeFilter']);
 
@@ -77,6 +77,7 @@ onMounted(() => {
     <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -87,7 +88,7 @@ onMounted(() => {
       />
     </div>
 
-    <Columnar
+    <BarClick
       class="simple-bar-chart"
       title="资产类型分布"
       :series-data="typeSeriesData"
@@ -97,4 +98,10 @@ onMounted(() => {
     />
   </div>
 </template>
-
+<style lang="scss">
+.chart-box-left {
+  .left-card {
+    height: 159px !important;
+  }
+}
+</style>

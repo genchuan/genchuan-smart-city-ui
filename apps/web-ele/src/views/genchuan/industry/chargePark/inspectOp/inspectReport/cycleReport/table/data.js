@@ -1,5 +1,5 @@
 import { formatDate } from '#/utils/genchuan/formatTime';
-import { getRangePickerDefaultProps } from '#/utils';
+// import { getRangePickerDefaultProps } from '#/utils';
 
 export const reportCycleOptions = [
   { label: '日报', value: '日报' },

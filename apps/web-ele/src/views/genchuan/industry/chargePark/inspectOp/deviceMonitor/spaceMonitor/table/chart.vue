@@ -13,6 +13,7 @@ import * as echarts from 'echarts';
 
 import { getSpaceMonitorChart } from '#/api/genchuan/industry/chargePark/inspectOp/deviceMonitor/spaceMonitor';
 import MapComponent from '#/genchuan-components/Map/index.vue';
+import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
 import {
   getMockChartData,
@@ -296,19 +297,17 @@ onUnmounted(() => {
 <template>
   <div class="park-chart-box">
     <div class="chart-box-left space-cards">
-      <button
+      <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
-        class="stat-card"
-        :style="{ borderLeftColor: card.color }"
-        type="button"
-        @click="handleCardClick(card)"
+        :color="card.color"
+        :status="card.status"
+        :title="card.title"
+        :value="card.value"
+        @click="handleCardClick"
       >
-        <span class="card-title">{{ card.title }}</span>
-        <span class="card-value" :style="{ color: card.color }">
-          {{ card.value }}
-        </span>
-      </button>
+      </IndicatorClick>
     </div>
 
     <div class="space-right-section">
@@ -328,54 +327,28 @@ onUnmounted(() => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .space-cards {
   display: grid;
   grid-template-rows: repeat(2, 1fr);
 }
 
-.stat-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 18px;
-  text-align: left;
-  cursor: pointer;
-  background: #fff;
-  border: 1px solid #edf1f5;
-  border-left: 4px solid #2fbf71;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
-}
-
-.stat-card:hover {
-  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
-}
-
-.card-title {
-  margin-bottom: 14px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #596678;
-}
-
-.card-value {
-  font-size: 30px;
-  font-weight: 700;
-  line-height: 1.2;
+.left-card {
+  height: 100%;
 }
 
 .space-right-section {
   display: flex;
   flex: 1 1 0;
-  gap: 20px;
   min-width: 0;
+  // gap: 20px;
+  margin-left: 15px;
 }
 
 .space-map-wrapper {
   flex: 1;
   min-width: 0;
-  margin-left: 15px;
+  // margin-left: 15px;
   overflow: hidden;
 }
 

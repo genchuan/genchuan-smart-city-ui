@@ -9,7 +9,16 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getRateSettingList, exporRateSettingExcel, deleteRateSetting, createRateSetting, updateRateSetting, enableRateSetting, disableRateSetting, copyRateSetting } from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/rateSetting/index.js';
+import {
+  getRateSettingList,
+  exporRateSettingExcel,
+  deleteRateSetting,
+  createRateSetting,
+  updateRateSetting,
+  enableRateSetting,
+  disableRateSetting,
+  copyRateSetting,
+} from '#/api/genchuan/industry/energyCharging/carCharging/chargingOrder/rateSetting/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 
@@ -31,8 +40,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() { },
-  async onOpenChange() { },
+  onConfirm() {},
+  async onOpenChange() {},
 });
 
 /** 刷新表格 */
@@ -68,7 +77,6 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
-
 const dataObj = reactive({
   totalShow: false,
   detailObj: {}, // 保留详情对象用于传递给组件
@@ -88,8 +96,6 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.serachObj,
   };
-
-
 
   const data = await getRateSettingList(getParams);
   dataObj.total = data.total;
@@ -189,6 +195,15 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
       const formData = await createFormApi.getValues();
       // 获取抽屉数据
       const drawerData = createDrawerApi.getData();
+
+      // 校验生效时间必须早于失效时间
+      if (formData.effectTime && formData.expireTime) {
+        if (new Date(formData.effectTime) >= new Date(formData.expireTime)) {
+          ElMessage.error('生效时间必须早于失效时间');
+          return;
+        }
+      }
+
       // 判断是创建还是编辑
       if (drawerData.rowData) {
         // 编辑模式，调用更新接口
@@ -207,7 +222,9 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
       handleRefresh();
     } catch (error) {
       // 接口调用失败处理
-      ElMessage.error(`${drawerData.rowData ? '编辑' : '创建'}失败：${error.msg || '请稍后重试'}`);
+      ElMessage.error(
+        `${drawerData.rowData ? '编辑' : '创建'}失败：${error.msg || '请稍后重试'}`,
+      );
     }
   },
   async onOpenChange(isOpen) {
@@ -434,7 +451,6 @@ const handleFullShow = () => {
 // 定义组件ref，用于调用组件方法
 const parkDetailDrawerRef = ref(null);
 
-
 const handleDeleteSingle = async (row) => {
   try {
     // 调用删除接口
@@ -447,14 +463,17 @@ const handleDeleteSingle = async (row) => {
     // 接口调用失败处理
     ElMessage.error(`删除失败：${error.msg || '请稍后重试'}`);
   }
-}
+};
 </script>
 
 <template>
   <div class="park-lot-table-new">
-
     <!-- 使用封装后的详情抽屉组件 -->
-    <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" title="详情" />
+    <ParkDetailDrawer
+      ref="parkDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+      title="详情"
+    />
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -469,40 +488,91 @@ const handleDeleteSingle = async (row) => {
     </CopyDrawer>
 
     <Grid>
-
-
-
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="生效" icon-name="Check" @click="handleEnable" :disabled="isEmpty(checkedIds)" />
-          <IconButton content="失效" icon-name="Close" @click="handleDisable" :disabled="isEmpty(checkedIds)" />
+          <IconButton
+            content="生效"
+            icon-name="Check"
+            @click="handleEnable"
+            :disabled="isEmpty(checkedIds)"
+          />
+          <IconButton
+            content="失效"
+            icon-name="Close"
+            @click="handleDisable"
+            :disabled="isEmpty(checkedIds)"
+          />
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="批量删除" icon-name="delete" color="#F56C6C" :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch" />
-          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="批量删除"
+            icon-name="delete"
+            color="#F56C6C"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleDeleteBatch"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
         </div>
       </template>
 
       <template #rateCode="{ row }">
-        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
           {{ row.rateCode }}
         </el-text>
       </template>
 
-
-
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="复制" icon-name="document" @click="handleCopy(row)" />
-          <IconButton content="生效" icon-name="Check" @click="handleRowEnable(row)"
-            :disabled="row.rateStatus === '已生效'" />
-          <IconButton content="失效" icon-name="Close" @click="handleRowDisable(row)"
-            :disabled="row.rateStatus === '已失效'" />
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton content="编辑" icon-name="edit" @click="handleUpdate(row)" />
-          <IconButton content="删除" icon-name="delete" color="#F56C6C" @click="handleDeleteSingle(row)" />
+          <IconButton
+            content="复制"
+            icon-name="document"
+            @click="handleCopy(row)"
+          />
+          <IconButton
+            content="生效"
+            icon-name="Check"
+            @click="handleRowEnable(row)"
+            :disabled="row.rateStatus === '已生效'"
+          />
+          <IconButton
+            content="失效"
+            icon-name="Close"
+            @click="handleRowDisable(row)"
+            :disabled="row.rateStatus === '已失效'"
+          />
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="编辑"
+            icon-name="edit"
+            @click="handleUpdate(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="delete"
+            color="#F56C6C"
+            @click="handleDeleteSingle(row)"
+          />
         </div>
       </template>
 

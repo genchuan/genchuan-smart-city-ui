@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getAssetStockChart } from '#/api/genchuan/industry/chargePark/inspectOp/assetMgmt/stockMgmt';
-import Columnar from '#/components/stats/columnar.vue';
+import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
@@ -100,6 +100,7 @@ onMounted(() => {
     <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -118,7 +119,7 @@ onMounted(() => {
       y-name="库存数"
       @line-click="handleTrendClick"
     />
-    <Columnar
+    <BarClick
       class="park-type-chart"
       title="资产库存分布"
       :series-data="stockSeriesData"
@@ -128,3 +129,10 @@ onMounted(() => {
     />
   </div>
 </template>
+<style lang="scss">
+.chart-box-left {
+  .left-card {
+    height: 159px !important;
+  }
+}
+</style>

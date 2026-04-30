@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getInspectReportChart } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectReport';
-import Columnar from '#/components/stats/columnar.vue';
+import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 import { formatDate } from '#/utils/genchuan/formatTime';
@@ -129,6 +129,7 @@ onMounted(() => {
     <div class="chart-box-left">
       <IndicatorClick
         v-for="card in state.cardList"
+        class="left-card"
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
@@ -147,7 +148,7 @@ onMounted(() => {
       y-name="上报数"
       @line-click="handleTrendClick"
     />
-    <Columnar
+    <BarClick
       class="park-type-chart"
       title="上报类型分布"
       :series-data="typeSeriesData"
@@ -157,3 +158,11 @@ onMounted(() => {
     />
   </div>
 </template>
+
+<style lang="scss">
+.park-type-chart {
+  .left-card {
+    height: 159px !important;
+  }
+}
+</style>

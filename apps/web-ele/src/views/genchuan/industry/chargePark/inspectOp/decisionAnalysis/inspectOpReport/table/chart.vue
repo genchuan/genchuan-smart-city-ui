@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getInspectOpReportChart } from '#/api/genchuan/industry/chargePark/inspectOp/decisionAnalysis/inspectOpReport';
-import Columnar from '#/components/stats/columnar.vue';
+import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
@@ -127,7 +127,7 @@ onMounted(() => {
       />
     </div>
     <div class="chart-wrapper task-chart">
-      <Columnar
+      <BarClick
         title="运维任务分布"
         :series-data="taskSeriesData"
         :x-data="taskXData"
@@ -147,20 +147,23 @@ onMounted(() => {
   min-height: 320px;
   overflow: hidden;
 }
+
 .cards-section {
   display: grid;
   flex-shrink: 0;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   width: 360px;
   height: 320px;
 }
+
 .chart-wrapper {
   flex: 1 1 0;
   min-width: 0;
   height: 320px;
 }
+
 .task-chart {
   flex: 0.9 1 0;
 }
