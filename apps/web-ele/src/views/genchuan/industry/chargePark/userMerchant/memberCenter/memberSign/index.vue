@@ -7,12 +7,15 @@ import type {
 
 import { computed, ref } from 'vue';
 
-import { DocAlert, Page } from '@vben/common-ui';
+import { DocAlert, Page, useVbenDrawer } from '@vben/common-ui';
 
 import { ElMessage } from 'element-plus';
+import screenfull from 'screenfull';
 
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberSignApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberSign';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
 import { useGridColumns, useGridFormSchema } from './data';
@@ -39,21 +42,64 @@ const detailData = computed(() => {
   };
 });
 
-const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useGridFormSchema(),
+const searchParams = ref<Record<string, any>>({});
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
   },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useGridFormSchema().map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
+
+const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     height: 'auto',
     keepSource: true,
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
+          const queryValues = {
+            ...searchParams.value,
+            ...formValues,
+          };
+
           return await MemberSignApi.getMemberSignPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
-            ...(formValues as MemberSignPageReqVO),
+            ...(queryValues as MemberSignPageReqVO),
           });
         },
       },
@@ -67,14 +113,26 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   } as VxeTableGridOptions<MemberSignVO>,
+  showSearchForm: false,
 });
+
+/** 刷新表格 */
+function handleRefresh() {
+  gridApi.query();
+}
+
+/** 打开搜索抽屉 */
+async function handleSearchShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
 
 /** 导出当前列表 */
 async function handleExport() {
   try {
-    const formValues =
-      (await gridApi.formApi.getValues()) as MemberSignPageReqVO;
-    await MemberSignApi.exportMemberSign(formValues);
+    await MemberSignApi.exportMemberSign(
+      searchParams.value as MemberSignPageReqVO,
+    );
     ElMessage.success('导出成功');
   } catch {
     ElMessage.error('导出失败');
@@ -97,32 +155,39 @@ async function handleDetail(row: MemberSignVO) {
       />
     </template>
 
-    <Grid table-title="会员签到列表">
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
+
+    <Grid>
       <template #toolbar-tools>
-        <TableAction
-          :actions="[
-            {
-              label: '导出',
-              type: 'primary',
-              icon: ACTION_ICON.DOWNLOAD,
-              onClick: handleExport,
-            },
-          ]"
-        />
+        <div class="common-toolbar-tools">
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSearchShow"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
       </template>
 
       <template #actions="{ row }">
-        <TableAction
-          :actions="[
-            {
-              label: '查看',
-              type: 'primary',
-              link: true,
-              icon: ACTION_ICON.VIEW,
-              onClick: handleDetail.bind(null, row),
-            },
-          ]"
-        />
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="查看"
+            icon-name="View"
+            @click="handleDetail(row)"
+          />
+        </div>
       </template>
     </Grid>
 

@@ -5,13 +5,17 @@ import type { MallAfterSaleApi } from '#/api/mall/trade/afterSale';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 
 import { ElButton, ElImage, ElTabs, ElTag } from 'element-plus';
+import screenfull from 'screenfull';
 
-import { TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getAfterSalePage } from '#/api/mall/trade/afterSale';
+import IconButton from '#/components/common/IconButton.vue';
 import {
   useGridColumns,
   useGridFormSchema,
@@ -30,6 +34,56 @@ const statusTabs = ref([
   },
 ]);
 const statusTab = ref(statusTabs.value[0]!.value);
+const searchParams = ref<Record<string, any>>({});
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useGridFormSchema().map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
+
+/** 刷新表格 */
+function handleRefresh() {
+  gridApi.query();
+}
+
+/** 打开搜索抽屉 */
+async function handleSearchShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
 
 /** 处理退款 */
 function handleOpenAfterSaleDetail(row: MallAfterSaleApi.AfterSale) {
@@ -44,18 +98,16 @@ function handleOpenOrderDetail(row: MallAfterSaleApi.AfterSale) {
 /** 切换售后状态 */
 function handleChangeStatus(key: number | string) {
   statusTab.value = key.toString();
-  gridApi.query();
+  handleRefresh();
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useGridFormSchema(),
-  },
   gridOptions: {
     cellConfig: {
       height: 60,
     },
     columns: useGridColumns(),
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
     pagerConfig: {
       pageSize: 10,
@@ -69,6 +121,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             userId: props.userId,
             status:
               statusTab.value === '0' ? undefined : Number(statusTab.value),
+            ...searchParams.value,
             ...formValues,
           });
         },
@@ -83,6 +136,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   } as VxeTableGridOptions<MallAfterSaleApi.AfterSale>,
+  showSearchForm: false,
 });
 
 /** 初始化 */
@@ -97,6 +151,10 @@ onMounted(() => {
 </script>
 
 <template>
+  <Drawer title="搜索">
+    <QueryForm class="query-form" />
+  </Drawer>
+
   <Grid>
     <template #toolbar-actions>
       <ElTabs
@@ -111,6 +169,20 @@ onMounted(() => {
           :name="tab.value"
         />
       </ElTabs>
+    </template>
+    <template #toolbar-tools>
+      <div class="common-toolbar-tools">
+        <IconButton
+          content="搜索"
+          icon-name="search"
+          @click="handleSearchShow"
+        />
+        <IconButton
+          content="全屏"
+          icon-name="FullScreen"
+          @click="() => screenfull.toggle()"
+        />
+      </div>
     </template>
     <template #orderNo="{ row }">
       <ElButton type="primary" link @click="handleOpenOrderDetail(row)">
@@ -141,16 +213,13 @@ onMounted(() => {
       </div>
     </template>
     <template #actions="{ row }">
-      <TableAction
-        :actions="[
-          {
-            label: '处理退款',
-            type: 'primary',
-            link: true,
-            onClick: handleOpenAfterSaleDetail.bind(null, row),
-          },
-        ]"
-      />
+      <div class="table-toolbar-tools">
+        <IconButton
+          content="处理退款"
+          icon-name="Operation"
+          @click="handleOpenAfterSaleDetail(row)"
+        />
+      </div>
     </template>
   </Grid>
 </template>

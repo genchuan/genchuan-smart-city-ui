@@ -130,6 +130,11 @@ export const detailFields = [
 
 export const statusOptions: PlateAuthStatus[] = ['待审核', '已认证', '已驳回'];
 
+export const textObj = {
+  excelAllName: '车牌认证列表.xlsx',
+  excelName: '车牌认证',
+};
+
 export const userOptions: UserSelectOption[] = [
   {
     label: '张三',

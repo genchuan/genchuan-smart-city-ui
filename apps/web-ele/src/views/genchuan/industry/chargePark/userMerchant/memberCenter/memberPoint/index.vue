@@ -6,12 +6,17 @@ import type {
   MemberPointVO,
 } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberPoint';
 
-import { DocAlert, Page } from '@vben/common-ui';
+import { ref } from 'vue';
+
+import { DocAlert, Page, useVbenDrawer } from '@vben/common-ui';
 
 import { ElMessage, ElMessageBox } from 'element-plus';
+import screenfull from 'screenfull';
 
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberPointApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberPoint';
+import IconButton from '#/components/common/IconButton.vue';
 
 import { useGridColumns, useGridFormSchema } from './data';
 
@@ -20,21 +25,64 @@ function isAbnormalRecord(status?: MemberPointVO['status']) {
   return ['abnormal', '异常', '异常记录'].includes(String(status ?? ''));
 }
 
-const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useGridFormSchema(),
+const searchParams = ref<Record<string, any>>({});
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
   },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useGridFormSchema().map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
+
+const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     height: 'auto',
     keepSource: true,
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
+          const queryValues = {
+            ...searchParams.value,
+            ...formValues,
+          };
+
           return await MemberPointApi.getMemberPointPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
-            ...(formValues as MemberPointPageReqVO),
+            ...(queryValues as MemberPointPageReqVO),
           });
         },
       },
@@ -48,6 +96,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   } as VxeTableGridOptions<MemberPointVO>,
+  showSearchForm: false,
 });
 
 /** 刷新表格 */
@@ -55,12 +104,18 @@ function handleRefresh() {
   gridApi.query();
 }
 
+/** 打开搜索抽屉 */
+async function handleSearchShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
+
 /** 导出当前列表 */
 async function handleExport() {
   try {
-    const formValues =
-      (await gridApi.formApi.getValues()) as MemberPointPageReqVO;
-    await MemberPointApi.exportMemberPoint(formValues);
+    await MemberPointApi.exportMemberPoint(
+      searchParams.value as MemberPointPageReqVO,
+    );
     ElMessage.success('导出成功');
   } catch {
     ElMessage.error('导出失败');
@@ -100,33 +155,41 @@ async function handleCheck(row: MemberPointVO) {
       />
     </template>
 
-    <Grid table-title="会员积分列表">
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
+
+    <Grid>
       <template #toolbar-tools>
-        <TableAction
-          :actions="[
-            {
-              label: '导出',
-              type: 'primary',
-              icon: ACTION_ICON.DOWNLOAD,
-              onClick: handleExport,
-            },
-          ]"
-        />
+        <div class="common-toolbar-tools">
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSearchShow"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
       </template>
 
       <template #actions="{ row }">
-        <TableAction
-          :actions="[
-            {
-              label: '核查',
-              type: 'danger',
-              link: true,
-              icon: ACTION_ICON.AUDIT,
-              ifShow: () => isAbnormalRecord(row.status),
-              onClick: handleCheck.bind(null, row),
-            },
-          ]"
-        />
+        <div class="table-toolbar-tools">
+          <IconButton
+            v-if="isAbnormalRecord(row.status)"
+            content="核查"
+            icon-name="DocumentChecked"
+            color="#F56C6C"
+            @click="handleCheck(row)"
+          />
+        </div>
       </template>
     </Grid>
   </Page>

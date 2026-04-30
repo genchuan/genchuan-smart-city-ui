@@ -22,11 +22,14 @@ import {
   ElTableColumn,
   ElTag,
 } from 'element-plus';
+import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import { $t } from '#/locales';
 
 import {
   buildUserInfoQueryParams,
@@ -71,6 +74,115 @@ const operatorDialogVisible = ref(false);
 const vehicleDialogVisible = ref(false);
 const walletDialogVisible = ref(false);
 const detailDrawerRef = ref<null | { open: () => void }>(null);
+
+// 快捷筛选变量
+const filterStatus = ref('');
+const filterUserType = ref('');
+const filterPhone = ref('');
+
+const getTitle = computed(() => {
+  return formData.value?.id ? textObj.editText : textObj.addText;
+});
+
+const [FormDrawer, formDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  width: 500,
+  onCancel() {
+    formDrawerApi.close();
+  },
+  async onConfirm() {
+    const { valid } = await formApi.validate();
+    if (!valid) {
+      return;
+    }
+
+    const values = (await formApi.getValues()) as Record<string, string>;
+    const loadingInstance = ElLoading.service({
+      target: '.user-info-table',
+      text: formMode.value === 'create' ? '保存中...' : '更新中...',
+    });
+
+    try {
+      if (formMode.value === 'create') {
+        await UserInfoApi.createUserInfo({
+          nickname: values.nickname || '',
+          phone: values.phone || '',
+          userType: values.userType || '',
+          status: '正常',
+          registerTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+          remark: values.remark || '',
+          walletBalance: 0,
+          carCount: 0,
+        });
+        ElMessage.success($t('ui.actionMessage.addSuccess'));
+      } else if (formData.value) {
+        await UserInfoApi.updateUserInfo({
+          id: formData.value.id,
+          nickname: values.nickname || '',
+          phone: formSource.value?.phone || formData.value.phone,
+          userType: formSource.value?.userType || formData.value.userType,
+          status: formSource.value?.status || formData.value.status,
+          registerTime: formData.value.registerTime,
+          loginTime:
+            formData.value.loginTime === '-'
+              ? undefined
+              : formData.value.loginTime,
+          walletBalance:
+            formSource.value?.walletBalance ?? formData.value.walletBalance,
+          carCount: formSource.value?.carCount ?? formData.value.carCount,
+          remark: values.remark || '',
+          reserve1: formSource.value?.reserve1,
+          reserve2: formSource.value?.reserve2,
+        });
+        ElMessage.success($t('ui.actionMessage.editSuccess'));
+      }
+
+      await handleReloadPage();
+      formDrawerApi.close();
+    } catch (error) {
+      ElMessage.error(formMode.value === 'create' ? '新增失败' : '编辑失败');
+      console.error('[userInfo] save failed:', error);
+    } finally {
+      loadingInstance.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (!isOpen) {
+      formData.value = undefined;
+      formSource.value = undefined;
+      return;
+    }
+
+    if (formMode.value === 'create') {
+      formApi.resetForm();
+      await formApi.setValues({
+        remark: '',
+        userType: '个人用户',
+      });
+      return;
+    }
+
+    if (formData.value) {
+      await formApi.setValues({
+        nickname: formData.value.nickname,
+        remark: formData.value.remark,
+      });
+    }
+  },
+});
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const searchParams = ref<Record<string, any>>({});
 
 const detailFields = ref([
   { key: 'nickname', label: '用户昵称' },
@@ -144,6 +256,27 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useSearchSchema().map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
 /** 获取用户详情 */
 async function fetchUserDetail(
   row: UserRow,
@@ -183,12 +316,29 @@ async function fetchUserDetail(
 /** 查询用户列表 */
 async function queryUserInfoPage(
   { page }: any,
-  formValues: Record<string, any>,
+  formValues: Record<string, any> = {},
 ) {
+  const queryValues = {
+    ...searchParams.value,
+    ...formValues,
+  };
+
+  if (filterStatus.value) {
+    queryValues.status = filterStatus.value;
+  }
+
+  if (filterUserType.value) {
+    queryValues.userType = filterUserType.value;
+  }
+
+  if (filterPhone.value) {
+    queryValues.phone = filterPhone.value;
+  }
+
   const result = await UserInfoApi.getUserInfoPage({
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    ...buildUserInfoQueryParams(formValues),
+    ...buildUserInfoQueryParams(queryValues),
   });
 
   const list = Array.isArray(result?.list) ? result.list : [];
@@ -199,125 +349,11 @@ async function queryUserInfoPage(
   };
 }
 
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  width: 500,
-  onCancel() {
-    formDrawerApi.close();
-  },
-  async onConfirm() {
-    const { valid } = await formApi.validate();
-    if (!valid) {
-      return;
-    }
-
-    const values = (await formApi.getValues()) as Record<string, string>;
-    const loadingInstance = ElLoading.service({
-      target: '.user-info-table',
-      text: formMode.value === 'create' ? '保存中...' : '更新中...',
-    });
-
-    try {
-      if (formMode.value === 'create') {
-        await UserInfoApi.createUserInfo({
-          nickname: values.nickname || '',
-          phone: values.phone || '',
-          userType: values.userType || '',
-          status: '正常',
-          registerTime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-          remark: values.remark || '',
-          walletBalance: 0,
-          carCount: 0,
-        });
-        ElMessage.success('新增成功');
-      } else if (formData.value) {
-        await UserInfoApi.updateUserInfo({
-          id: formData.value.id,
-          nickname: values.nickname || '',
-          phone: formSource.value?.phone || formData.value.phone,
-          userType: formSource.value?.userType || formData.value.userType,
-          status: formSource.value?.status || formData.value.status,
-          registerTime: formData.value.registerTime,
-          loginTime:
-            formData.value.loginTime === '-'
-              ? undefined
-              : formData.value.loginTime,
-          walletBalance:
-            formSource.value?.walletBalance ?? formData.value.walletBalance,
-          carCount: formSource.value?.carCount ?? formData.value.carCount,
-          remark: values.remark || '',
-          reserve1: formSource.value?.reserve1,
-          reserve2: formSource.value?.reserve2,
-        });
-        ElMessage.success('编辑成功');
-      }
-
-      await handleReloadPage();
-      formDrawerApi.close();
-    } catch (error) {
-      ElMessage.error(formMode.value === 'create' ? '新增失败' : '编辑失败');
-      console.error('[userInfo] save failed:', error);
-    } finally {
-      loadingInstance.close();
-    }
-  },
-  async onOpenChange(isOpen) {
-    if (!isOpen) {
-      formData.value = undefined;
-      formSource.value = undefined;
-      return;
-    }
-
-    if (formMode.value === 'create') {
-      formApi.resetForm();
-      await formApi.setValues({
-        remark: '',
-        userType: '个人用户',
-      });
-      return;
-    }
-
-    if (formData.value) {
-      await formApi.setValues({
-        nickname: formData.value.nickname,
-        remark: formData.value.remark,
-      });
-    }
-  },
-});
-
-const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useSearchSchema(),
-  },
-  gridOptions: {
-    columns: gridColumns,
-    layouts: [['Form'], ['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
-    keepSource: true,
-    height: 'auto',
-    proxyConfig: {
-      ajax: {
-        query: queryUserInfoPage,
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    toolbarConfig: {
-      refresh: true,
-      search: true,
-    },
-  },
-  gridEvents: {
-    checkboxAll: handleRowCheckboxChange,
-    checkboxChange: handleRowCheckboxChange,
-  },
-});
-
-/** 刷新表格 */
+/** 刷新表格 - 同时清除所有快捷筛选 */
 function handleRefresh() {
+  filterStatus.value = '';
+  filterUserType.value = '';
+  filterPhone.value = '';
   return gridApi.query();
 }
 
@@ -331,38 +367,31 @@ async function handleReloadPage() {
 
 /** 重置筛选条件 */
 async function resetSearch() {
-  await gridApi.formApi.resetForm();
-  await handleRefresh();
+  searchParams.value = {};
+  filterStatus.value = '';
+  filterUserType.value = '';
+  filterPhone.value = '';
+  await queryFormApi.resetForm();
+  return gridApi.query();
 }
 
 /** 设置筛选条件 */
 async function setSearchValues(values: Record<string, any>) {
-  await gridApi.formApi.setValues(values);
-  await handleRefresh();
+  searchParams.value = {
+    ...searchParams.value,
+    ...values,
+  };
+  filterStatus.value = '';
+  filterUserType.value = '';
+  filterPhone.value = '';
+  await queryFormApi.setValues(searchParams.value);
+  return gridApi.query();
 }
 
 /** 重新计算表格布局 */
 async function recalculateLayout() {
   await gridApi.grid?.recalculate?.(true);
   await gridApi.grid?.refreshScroll?.();
-}
-
-/** 按状态钻取列表 */
-async function handleFilterStatus(status: UserRow['status']) {
-  await gridApi.formApi.setValues({ status });
-  await handleRefresh();
-}
-
-/** 按手机号钻取列表 */
-async function handleFilterPhone(phone: string) {
-  await gridApi.formApi.setValues({ phone });
-  await handleRefresh();
-}
-
-/** 按用户类型钻取列表 */
-async function handleFilterUserType(userType: string) {
-  await gridApi.formApi.setValues({ userType });
-  await handleRefresh();
 }
 
 defineExpose({
@@ -373,10 +402,24 @@ defineExpose({
 
 /** 导出当前列表 */
 async function handleExport() {
-  const formValues = await gridApi.formApi.getValues();
+  const exportValues = {
+    ...searchParams.value,
+  };
+
+  if (filterStatus.value) {
+    exportValues.status = filterStatus.value;
+  }
+
+  if (filterUserType.value) {
+    exportValues.userType = filterUserType.value;
+  }
+
+  if (filterPhone.value) {
+    exportValues.phone = filterPhone.value;
+  }
 
   try {
-    await UserInfoApi.exportUserInfo(buildUserInfoQueryParams(formValues));
+    await UserInfoApi.exportUserInfo(buildUserInfoQueryParams(exportValues));
     ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
@@ -573,166 +616,303 @@ async function handleImportUsers() {
     loadingInstance.close();
   }
 }
+
+/** 打开搜索弹窗 */
+async function handleSerachShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
+
+/** 按状态筛选 */
+function handleFilterStatus(status: string) {
+  filterStatus.value = filterStatus.value === status ? '' : status;
+  gridApi.query();
+}
+
+/** 按用户类型筛选 */
+function handleFilterUserType(userType: string) {
+  filterUserType.value = filterUserType.value === userType ? '' : userType;
+  gridApi.query();
+}
+
+/** 按手机号筛选 */
+function handleFilterPhone(phone: string) {
+  filterPhone.value = filterPhone.value === phone ? '' : phone;
+  gridApi.query();
+}
+
+/** 取消状态筛选 */
+function handleCancelStatusFilter() {
+  filterStatus.value = '';
+  gridApi.query();
+}
+
+/** 取消用户类型筛选 */
+function handleCancelUserTypeFilter() {
+  filterUserType.value = '';
+  gridApi.query();
+}
+
+/** 取消手机号筛选 */
+function handleCancelPhoneFilter() {
+  filterPhone.value = '';
+  gridApi.query();
+}
+
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: gridColumns,
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
+    keepSource: true,
+    height: 'auto',
+    proxyConfig: {
+      ajax: {
+        query: queryUserInfoPage,
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    toolbarConfig: {
+      refresh: true,
+      search: true,
+    },
+    showOverflow: true,
+  },
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
+  showSearchForm: false,
+});
+
+const handleOpenDetail = (row: UserRow) => {
+  detailObj.value = row;
+  if (detailDrawerRef.value) {
+    detailDrawerRef.value.open();
+  }
+};
 </script>
 
 <template>
   <div class="user-info-table">
     <div class="user-info-grid-wrap">
-      <Grid table-title="用户信息列表">
+      <Grid>
+        <template #table-title>
+          <div
+            class="tabel-tabs"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              align-items: center;
+              gap: 10px;
+            "
+          >
+            <!-- 用户状态筛选标签 -->
+            <ElTag
+              v-if="filterStatus"
+              type="warning"
+              closable
+              @close="handleCancelStatusFilter"
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+            >
+              用户状态：{{ filterStatus }}
+            </ElTag>
+            <!-- 用户类型筛选标签 -->
+            <ElTag
+              v-if="filterUserType"
+              type="success"
+              closable
+              @close="handleCancelUserTypeFilter"
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+            >
+              用户类型：{{ filterUserType }}
+            </ElTag>
+            <!-- 手机号筛选标签 -->
+            <ElTag
+              v-if="filterPhone"
+              type="primary"
+              closable
+              @close="handleCancelPhoneFilter"
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+            >
+              绑定手机号：{{ maskPhone(filterPhone) }}
+            </ElTag>
+          </div>
+        </template>
+
         <template #toolbar-tools>
-          <TableAction
-            :actions="[
-              {
-                label: '新增用户',
-                type: 'primary',
-                icon: ACTION_ICON.ADD,
-                onClick: handleCreate,
-              },
-              {
-                label: '导入',
-                type: 'primary',
-                icon: ACTION_ICON.UPLOAD,
-                onClick: () => (importDialogVisible = true),
-              },
-              {
-                label: '导出',
-                type: 'primary',
-                icon: ACTION_ICON.DOWNLOAD,
-                onClick: handleExport,
-              },
-              {
-                label: '批量禁用',
-                type: 'danger',
-                icon: ACTION_ICON.DELETE,
-                disabled: isEmpty(checkedIds),
-                onClick: handleDisableBatch,
-              },
-              {
-                label: props.showStats ? '隐藏统计' : '显示统计',
-                type: 'primary',
-                icon: props.showStats
-                  ? 'lucide:chevron-up'
-                  : 'lucide:chevron-down',
-                onClick: props.toggleStats,
-              },
-            ]"
-          />
+          <div class="common-toolbar-tools">
+            <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+            <IconButton
+              content="导入"
+              icon-name="Upload"
+              @click="() => (importDialogVisible = true)"
+            />
+            <IconButton
+              content="导出"
+              icon-name="download"
+              @click="handleExport"
+            />
+            <IconButton
+              content="批量禁用"
+              icon-name="delete"
+              color="#F56C6C"
+              :disabled="isEmpty(checkedIds)"
+              @click="handleDisableBatch"
+            />
+            <IconButton
+              content="搜索"
+              icon-name="search"
+              @click="handleSerachShow"
+            />
+            <IconButton
+              :content="props.showStats ? '隐藏统计' : '显示统计'"
+              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+              @click="props.toggleStats"
+            />
+            <IconButton
+              content="全屏"
+              icon-name="FullScreen"
+              @click="() => screenfull.toggle()"
+            />
+          </div>
         </template>
 
         <template #nickname="{ row }">
-          <ElButton type="primary" link @click="handleDetail(row)">
+          <el-text
+            @click="handleOpenDetail(row)"
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+          >
             {{ row.nickname }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #phone="{ row }">
-          <ElButton type="primary" link @click="handleFilterPhone(row.phone)">
+          <el-text
+            @click="handleFilterPhone(row.phone)"
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+          >
             {{ maskPhone(row.phone) }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #userType="{ row }">
-          <ElButton
-            type="primary"
-            link
+          <ElTag
             @click="handleFilterUserType(row.userType)"
+            style="cursor: pointer"
           >
             {{ row.userType }}
-          </ElButton>
+          </ElTag>
         </template>
 
         <template #status="{ row }">
-          <ElButton type="primary" link @click="handleFilterStatus(row.status)">
-            <ElTag :type="row.status === '正常' ? 'success' : 'danger'">
-              {{ row.status }}
-            </ElTag>
-          </ElButton>
+          <ElTag
+            @click="handleFilterStatus(row.status)"
+            :type="row.status === '正常' ? 'success' : 'danger'"
+            style="cursor: pointer"
+          >
+            {{ row.status }}
+          </ElTag>
         </template>
 
         <template #walletBalance="{ row }">
-          <ElButton type="primary" link @click="handleOpenWallet(row)">
+          <el-text
+            @click="handleOpenWallet(row)"
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+          >
             {{ row.walletBalance.toFixed(2) }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #carCount="{ row }">
-          <ElButton type="primary" link @click="handleOpenCars(row)">
+          <el-text
+            @click="handleOpenCars(row)"
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+          >
             {{ row.carCount }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #creator="{ row }">
-          <ElButton
-            type="primary"
-            link
+          <el-text
             @click="handleOpenOperator(row, 'creator')"
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
           >
             {{ row.creator }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #updater="{ row }">
-          <ElButton
-            type="primary"
-            link
+          <el-text
             @click="handleOpenOperator(row, 'updater')"
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
           >
             {{ row.updater }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #actions="{ row }">
-          <TableAction
-            :actions="[
-              {
-                label: '详情',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.VIEW,
-                onClick: handleDetail.bind(null, row),
-              },
-              {
-                label: '编辑',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.EDIT,
-                ifShow: () => row.status === '正常',
-                onClick: handleEdit.bind(null, row),
-              },
-              {
-                label: row.status === '正常' ? '禁用' : '启用',
-                type: row.status === '正常' ? 'danger' : 'primary',
-                link: true,
-                icon:
-                  row.status === '正常'
-                    ? ACTION_ICON.DELETE
-                    : ACTION_ICON.AUDIT,
-                popConfirm: {
-                  title: `确认${row.status === '正常' ? '禁用' : '启用'}${row.nickname}吗？`,
-                  confirm: handleToggleStatus.bind(
-                    null,
-                    row,
-                    row.status === '正常' ? '禁用' : '正常',
-                  ),
-                },
-              },
-              {
-                label: '查看',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.VIEW,
-                onClick: handleDetail.bind(null, row),
-              },
-            ]"
-          />
+          <div class="table-toolbar-tools">
+            <IconButton
+              content="详情"
+              icon-name="View"
+              @click="handleDetail(row)"
+            />
+            <IconButton
+              v-if="row.status === '正常'"
+              content="编辑"
+              icon-name="Edit"
+              @click="handleEdit(row)"
+            />
+            <IconButton
+              v-if="row.status === '正常'"
+              content="禁用"
+              icon-name="Close"
+              @click="handleToggleStatus(row, '禁用')"
+            />
+            <IconButton
+              v-else
+              content="启用"
+              icon-name="Check"
+              @click="handleToggleStatus(row, '正常')"
+            />
+          </div>
         </template>
       </Grid>
     </div>
 
-    <FormDrawer :title="formData?.id ? textObj.editText : textObj.addText">
+    <!-- 新增/编辑表单抽屉 -->
+    <FormDrawer :title="getTitle">
       <Form class="mx-4" />
     </FormDrawer>
 
+    <!-- 搜索抽屉 -->
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
+
+    <!-- 详情抽屉 -->
     <DetailDrawer
       ref="detailDrawerRef"
       :data="detailData"
@@ -740,6 +920,7 @@ async function handleImportUsers() {
       :title="detailObj ? `${detailObj.nickname}详情` : '用户详情'"
     />
 
+    <!-- 操作人员弹窗 -->
     <ElDialog
       v-model="operatorDialogVisible"
       title="操作人员详情"
@@ -764,6 +945,7 @@ async function handleImportUsers() {
       </ElDescriptions>
     </ElDialog>
 
+    <!-- 导入弹窗 -->
     <ElDialog v-model="importDialogVisible" title="导入用户" width="520px">
       <div class="import-tip">
         提供标准模板下载，上传后按文档要求模拟导入校验。
@@ -786,6 +968,7 @@ async function handleImportUsers() {
       </template>
     </ElDialog>
 
+    <!-- 钱包明细弹窗 -->
     <ElDialog v-model="walletDialogVisible" title="用户钱包明细" width="720px">
       <ElTable :data="currentWalletLogs" border>
         <ElTableColumn prop="time" label="时间" min-width="170" />
@@ -795,6 +978,7 @@ async function handleImportUsers() {
       </ElTable>
     </ElDialog>
 
+    <!-- 车辆明细弹窗 -->
     <ElDialog v-model="vehicleDialogVisible" title="绑定车辆列表" width="720px">
       <ElTable :data="currentCars" border>
         <ElTableColumn prop="plateNo" label="车牌号码" min-width="140" />

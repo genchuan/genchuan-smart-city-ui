@@ -5,8 +5,16 @@ import type {
 } from '#/adapter/vxe-table';
 import type { MallBrokerageUserApi } from '#/api/mall/trade/brokerage/user';
 
+import { ref } from 'vue';
+
+import { useVbenDrawer } from '@vben/common-ui';
+
+import screenfull from 'screenfull';
+
+import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getBrokerageUserPage } from '#/api/mall/trade/brokerage/user';
+import IconButton from '#/components/common/IconButton.vue';
 import { getRangePickerDefaultProps } from '#/utils';
 
 defineOptions({ name: 'BrokerageList' });
@@ -14,6 +22,8 @@ defineOptions({ name: 'BrokerageList' });
 const props = defineProps<{
   userId: number;
 }>();
+
+const searchParams = ref<Record<string, any>>({});
 
 const formSchema = (): any[] => {
   return [
@@ -89,12 +99,59 @@ const columns = (): VxeGridPropTypes.Columns => {
   ];
 };
 
-const [Grid] = useVbenVxeGrid({
-  formOptions: {
-    schema: formSchema(),
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
   },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: formSchema().map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
+
+/** 刷新表格 */
+function handleRefresh() {
+  gridApi.query();
+}
+
+/** 打开搜索抽屉 */
+async function handleSearchShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: columns(),
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
     proxyConfig: {
       ajax: {
@@ -103,6 +160,7 @@ const [Grid] = useVbenVxeGrid({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             bindUserId: props.userId,
+            ...searchParams.value,
             ...formValues,
           });
         },
@@ -117,9 +175,29 @@ const [Grid] = useVbenVxeGrid({
       search: true,
     },
   } as VxeTableGridOptions<MallBrokerageUserApi.BrokerageUser>,
+  showSearchForm: false,
 });
 </script>
 
 <template>
-  <Grid />
+  <Drawer title="搜索">
+    <QueryForm class="query-form" />
+  </Drawer>
+
+  <Grid>
+    <template #toolbar-tools>
+      <div class="common-toolbar-tools">
+        <IconButton
+          content="搜索"
+          icon-name="search"
+          @click="handleSearchShow"
+        />
+        <IconButton
+          content="全屏"
+          icon-name="FullScreen"
+          @click="() => screenfull.toggle()"
+        />
+      </div>
+    </template>
+  </Grid>
 </template>

@@ -12,11 +12,10 @@ import type { GroupCarDetailVO } from '#/api/genchuan/industry/chargePark/userMe
 
 import { nextTick, onMounted, ref } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
 
 import dayjs from 'dayjs';
 import {
-  ElButton,
   ElDescriptions,
   ElDescriptionsItem,
   ElDialog,
@@ -25,11 +24,13 @@ import {
   ElMessage,
   ElTag,
 } from 'element-plus';
+import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { GroupCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupCar';
 import { GroupInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupInfo';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
 import {
@@ -68,7 +69,9 @@ const detailCache = new Map<number, GroupCarDetailVO>();
 const detailDrawerRef = ref<null | { open: () => void }>(null);
 const drillFilters = ref({
   plateColor: '',
+  status: '',
 });
+const searchParams = ref<Record<string, any>>({});
 const formData = ref<GroupCarRow>();
 const formMode = ref<'create' | 'edit'>('create');
 const formSource = ref<GroupCarDetailVO>();
@@ -96,6 +99,44 @@ const [Form, formApi] = useVbenForm({
   schema: useCreateSchema(groupSelectOptions.value),
   showDefaultActions: false,
 });
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useSearchSchema(groupSelectOptions.value).map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
 
 function resolveGroupName(groupId: number, groupName?: string) {
   if (groupName) {
@@ -153,15 +194,18 @@ async function fetchGroupCarDetail(
 /** 查询车辆列表 */
 async function queryGroupCarPage(
   { page }: any,
-  formValues: Record<string, any>,
+  formValues: Record<string, any> = {},
 ) {
+  const queryValues = {
+    ...searchParams.value,
+    ...formValues,
+    ...drillFilters.value,
+  };
+
   const result = await GroupCarApi.getGroupCarPage({
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    ...buildGroupCarQueryParams({
-      ...formValues,
-      plateColor: drillFilters.value.plateColor,
-    }),
+    ...buildGroupCarQueryParams(queryValues),
   });
 
   const list = Array.isArray(result?.list) ? result.list : [];
@@ -262,12 +306,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useSearchSchema(groupSelectOptions.value),
-  },
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Form'], ['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     height: 'auto',
     keepSource: true,
     proxyConfig: {
@@ -284,6 +325,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   },
+  showSearchForm: false,
 });
 
 /** 加载所属集团下拉 */
@@ -317,7 +359,7 @@ async function loadGroupOptions() {
     },
   ]);
 
-  await gridApi.formApi.updateSchema([
+  await queryFormApi.updateSchema([
     {
       fieldName: 'groupId',
       componentProps: {
@@ -329,8 +371,12 @@ async function loadGroupOptions() {
   await handleRefresh();
 }
 
-/** 刷新表格 */
+/** 刷新表格 - 同时清除所有快捷筛选 */
 function handleRefresh() {
+  drillFilters.value = {
+    plateColor: '',
+    status: '',
+  };
   return gridApi.query();
 }
 
@@ -344,20 +390,27 @@ async function handleReloadPage() {
 
 /** 重置筛选条件 */
 async function resetSearch() {
-  drillFilters.value.plateColor = '';
-  await gridApi.formApi.resetForm();
-  await handleRefresh();
+  searchParams.value = {};
+  drillFilters.value = {
+    plateColor: '',
+    status: '',
+  };
+  await queryFormApi.resetForm();
+  return gridApi.query();
 }
 
 /** 设置筛选条件 */
 async function setSearchValues(values: Record<string, any>) {
-  const nextValues = { ...values };
-
-  drillFilters.value.plateColor = nextValues.plateColor || '';
-  delete nextValues.plateColor;
-
-  await gridApi.formApi.setValues(nextValues);
-  await handleRefresh();
+  searchParams.value = {
+    ...searchParams.value,
+    ...values,
+  };
+  drillFilters.value = {
+    plateColor: '',
+    status: '',
+  };
+  await queryFormApi.setValues(searchParams.value);
+  return gridApi.query();
 }
 
 /** 重新计算表格布局 */
@@ -379,13 +432,11 @@ onMounted(async () => {
 
 /** 导出当前列表 */
 async function handleExport() {
-  const formValues = await gridApi.formApi.getValues();
-
   try {
     await GroupCarApi.exportGroupCar(
       buildGroupCarQueryParams({
-        ...formValues,
-        plateColor: drillFilters.value.plateColor,
+        ...searchParams.value,
+        ...drillFilters.value,
       }),
     );
     ElMessage.success('导出成功');
@@ -566,6 +617,12 @@ async function handleConfirmReject() {
 
 /** 解绑车辆 */
 async function handleUnbind(row: GroupCarRow) {
+  try {
+    await confirm(`确认解绑${row.plateNo}吗？`);
+  } catch {
+    return;
+  }
+
   const loadingInstance = ElLoading.service({
     target: '.group-car-table',
     text: '解绑中...',
@@ -607,9 +664,10 @@ async function handleRebind(row: GroupCarRow) {
 }
 
 /** 按车牌颜色钻取列表 */
-async function handleFilterByPlateColor(plateColor: string) {
-  drillFilters.value.plateColor = plateColor;
-  await handleRefresh();
+function handleFilterByPlateColor(plateColor: string) {
+  drillFilters.value.plateColor =
+    drillFilters.value.plateColor === plateColor ? '' : plateColor;
+  gridApi.query();
 }
 
 /** 下载导入模板 */
@@ -655,169 +713,219 @@ async function handleImportCars() {
     loadingInstance.close();
   }
 }
+
+/** 打开搜索抽屉 */
+async function handleSerachShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+/** 按绑定状态筛选 */
+function handleFilterStatus(status: GroupCarRow['status']) {
+  drillFilters.value.status =
+    drillFilters.value.status === status ? '' : status;
+  gridApi.query();
+}
+
+/** 取消车牌颜色筛选 */
+function handleCancelPlateColorFilter() {
+  drillFilters.value.plateColor = '';
+  gridApi.query();
+}
+
+/** 取消绑定状态筛选 */
+function handleCancelStatusFilter() {
+  drillFilters.value.status = '';
+  gridApi.query();
+}
 </script>
 
 <template>
   <div class="group-car-table">
     <div class="group-car-grid-wrap">
-      <Grid table-title="集团车辆列表">
+      <Grid>
+        <template #table-title>
+          <div
+            class="tabel-tabs"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              align-items: center;
+              gap: 10px;
+            "
+          >
+            <ElTag
+              v-if="drillFilters.plateColor"
+              type="success"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelPlateColorFilter"
+            >
+              车牌颜色：{{ drillFilters.plateColor }}
+            </ElTag>
+            <ElTag
+              v-if="drillFilters.status"
+              type="warning"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelStatusFilter"
+            >
+              绑定状态：{{ drillFilters.status }}
+            </ElTag>
+          </div>
+        </template>
+
         <template #toolbar-tools>
-          <TableAction
-            :actions="[
-              {
-                label: '新增车辆',
-                type: 'primary',
-                icon: ACTION_ICON.ADD,
-                onClick: handleCreate,
-              },
-              {
-                label: '导入',
-                type: 'primary',
-                icon: ACTION_ICON.UPLOAD,
-                onClick: () => (importDialogVisible = true),
-              },
-              {
-                label: '导出',
-                type: 'primary',
-                icon: ACTION_ICON.DOWNLOAD,
-                onClick: handleExport,
-              },
-              {
-                label: props.showStats ? '隐藏统计' : '显示统计',
-                type: 'primary',
-                icon: props.showStats
-                  ? 'lucide:chevron-up'
-                  : 'lucide:chevron-down',
-                onClick: props.toggleStats,
-              },
-            ]"
-          />
+          <div class="common-toolbar-tools">
+            <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+            <IconButton
+              content="导入"
+              icon-name="Upload"
+              @click="() => (importDialogVisible = true)"
+            />
+            <IconButton
+              content="导出"
+              icon-name="download"
+              @click="handleExport"
+            />
+            <IconButton
+              content="搜索"
+              icon-name="search"
+              @click="handleSerachShow"
+            />
+            <IconButton
+              :content="props.showStats ? '隐藏统计' : '显示统计'"
+              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+              @click="props.toggleStats"
+            />
+            <IconButton
+              content="全屏"
+              icon-name="FullScreen"
+              @click="() => screenfull.toggle()"
+            />
+          </div>
         </template>
 
         <template #groupName="{ row }">
-          <ElButton type="primary" link @click="handleOpenGroup(row)">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleOpenGroup(row)"
+          >
             {{ row.groupName }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #plateNo="{ row }">
-          <ElButton type="primary" link @click="handleDetail(row)">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleDetail(row)"
+          >
             {{ row.plateNo }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #plateColor="{ row }">
-          <ElButton
+          <el-text
+            class="common-align"
             type="primary"
-            link
+            style="cursor: pointer"
             @click="handleFilterByPlateColor(row.plateColor)"
           >
             {{ row.plateColor }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #carType="{ row }">
-          <ElButton
+          <el-text
+            class="common-align"
             type="primary"
-            link
+            style="cursor: pointer"
             @click="setSearchValues({ carType: row.carType })"
           >
             {{ row.carType }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #status="{ row }">
-          <ElButton
-            type="primary"
-            link
-            @click="setSearchValues({ status: row.status })"
+          <ElTag
+            :type="
+              row.status === '已绑定'
+                ? 'success'
+                : row.status === '待审核'
+                  ? 'warning'
+                  : row.status === '已驳回'
+                    ? 'danger'
+                    : 'info'
+            "
+            style="cursor: pointer"
+            @click="handleFilterStatus(row.status)"
           >
-            <ElTag
-              :type="
-                row.status === '已绑定'
-                  ? 'success'
-                  : row.status === '待审核'
-                    ? 'warning'
-                    : row.status === '已驳回'
-                      ? 'danger'
-                      : 'info'
-              "
-            >
-              {{ row.status }}
-            </ElTag>
-          </ElButton>
+            {{ row.status }}
+          </ElTag>
         </template>
 
         <template #auditorName="{ row }">
-          <ElButton
+          <el-text
             v-if="row.auditorName !== '-'"
+            class="common-align"
             type="primary"
-            link
+            style="cursor: pointer"
             @click="handleOpenOperator(row)"
           >
             {{ row.auditorName }}
-          </ElButton>
+          </el-text>
           <span v-else>{{ row.auditorName }}</span>
         </template>
 
         <template #actions="{ row }">
-          <TableAction
-            :actions="[
-              {
-                label: '查看',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.VIEW,
-                onClick: handleDetail.bind(null, row),
-              },
-              {
-                label: '通过',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.AUDIT,
-                ifShow: () => row.status === '待审核',
-                onClick: handleApprove.bind(null, row),
-              },
-              {
-                label: '驳回',
-                type: 'danger',
-                link: true,
-                icon: ACTION_ICON.DELETE,
-                ifShow: () => row.status === '待审核',
-                onClick: handleOpenReject.bind(null, row),
-              },
-              {
-                label: '解绑',
-                type: 'danger',
-                link: true,
-                icon: ACTION_ICON.DELETE,
-                ifShow: () => row.status === '已绑定',
-                popConfirm: {
-                  title: `确认解绑${row.plateNo}吗？`,
-                  confirm: handleUnbind.bind(null, row),
-                },
-              },
-              {
-                label: '重新绑定',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.AUDIT,
-                ifShow: () => row.status === '已解绑',
-                onClick: handleRebind.bind(null, row),
-              },
-              {
-                label: '编辑',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.EDIT,
-                ifShow: () => row.status === '待审核',
-                onClick: handleEdit.bind(null, row),
-              },
-            ]"
-          />
+          <div class="table-toolbar-tools">
+            <IconButton
+              content="详情"
+              icon-name="View"
+              @click="handleDetail(row)"
+            />
+            <IconButton
+              v-if="row.status === '待审核'"
+              content="通过"
+              icon-name="Check"
+              @click="handleApprove(row)"
+            />
+            <IconButton
+              v-if="row.status === '待审核'"
+              content="驳回"
+              icon-name="Close"
+              @click="handleOpenReject(row)"
+            />
+            <IconButton
+              v-if="row.status === '已绑定'"
+              content="解绑"
+              icon-name="Close"
+              @click="handleUnbind(row)"
+            />
+            <IconButton
+              v-if="row.status === '已解绑'"
+              content="重新绑定"
+              icon-name="RefreshRight"
+              @click="handleRebind(row)"
+            />
+            <IconButton
+              v-if="row.status === '待审核'"
+              content="编辑"
+              icon-name="Edit"
+              @click="handleEdit(row)"
+            />
+          </div>
         </template>
       </Grid>
     </div>
+
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
 
     <FormDrawer :title="formMode === 'edit' ? '编辑车辆' : '新增车辆'">
       <Form class="mx-4" />

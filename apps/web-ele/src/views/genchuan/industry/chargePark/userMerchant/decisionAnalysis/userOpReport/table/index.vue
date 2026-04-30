@@ -5,6 +5,8 @@ import type { UserOpReportDetailVO } from '#/api/genchuan/industry/chargePark/us
 
 import { computed, ref } from 'vue';
 
+import { useVbenDrawer } from '@vben/common-ui';
+
 import {
   ElButton,
   ElDescriptions,
@@ -16,9 +18,12 @@ import {
   ElMessage,
   ElTag,
 } from 'element-plus';
+import screenfull from 'screenfull';
 
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { UserOpReportApi } from '#/api/genchuan/industry/chargePark/userMerchant/decisionAnalysis/userOpReport';
+import IconButton from '#/components/common/IconButton.vue';
 import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
 import {
@@ -52,10 +57,50 @@ const generateForm = ref({
   filterCondition: '',
   remark: '',
 });
+const filterReportType = ref('');
+const searchParams = ref<Record<string, any>>({});
 
 const detailStatsData = computed(() =>
   buildDetailStatsData(detailReport.value),
 );
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useSearchSchema().map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
 
 /** 获取状态标签颜色 */
 function getStatusTagType(status: string) {
@@ -98,12 +143,21 @@ async function fetchUserOpReportDetail(
 /** 查询报表列表 */
 async function queryUserOpReportPage(
   { page }: { page: { currentPage: number; pageSize: number } },
-  formValues: Record<string, any>,
+  formValues: Record<string, any> = {},
 ) {
+  const queryValues = {
+    ...searchParams.value,
+    ...formValues,
+  };
+
+  if (filterReportType.value) {
+    queryValues.reportType = filterReportType.value;
+  }
+
   const result = await UserOpReportApi.getUserOpReportPage({
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    ...buildUserOpReportQueryParams(formValues),
+    ...buildUserOpReportQueryParams(queryValues),
   });
   const list = Array.isArray(result?.list) ? result.list : [];
 
@@ -114,12 +168,9 @@ async function queryUserOpReportPage(
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useSearchSchema(),
-  },
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Form'], ['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
     height: 'auto',
     proxyConfig: {
@@ -136,10 +187,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   },
+  showSearchForm: false,
 });
 
-/** 刷新表格 */
+/** 刷新表格 - 同时清除所有快捷筛选 */
 function handleRefresh() {
+  filterReportType.value = '';
   return gridApi.query();
 }
 
@@ -152,15 +205,21 @@ async function handleReloadPage() {
 
 /** 重置筛选条件 */
 async function resetSearch() {
-  await gridApi.formApi.resetForm();
-  await handleRefresh();
+  searchParams.value = {};
+  filterReportType.value = '';
+  await queryFormApi.resetForm();
+  return gridApi.query();
 }
 
 /** 设置筛选条件 */
 async function setSearchValues(values: Record<string, any>) {
-  await gridApi.formApi.resetForm();
-  await gridApi.formApi.setValues(values);
-  await handleRefresh();
+  searchParams.value = {
+    ...searchParams.value,
+    ...values,
+  };
+  filterReportType.value = '';
+  await queryFormApi.setValues(searchParams.value);
+  return gridApi.query();
 }
 
 /** 重新计算表格布局 */
@@ -189,11 +248,17 @@ async function handleOpenDetail(row: UserOpReportRow) {
 
 /** 导出当前列表 */
 async function handleExport() {
-  const formValues = await gridApi.formApi.getValues();
+  const exportValues = {
+    ...searchParams.value,
+  };
+
+  if (filterReportType.value) {
+    exportValues.reportType = filterReportType.value;
+  }
 
   try {
     await UserOpReportApi.exportUserOpReport(
-      buildUserOpReportQueryParams(formValues),
+      buildUserOpReportQueryParams(exportValues),
     );
     ElMessage.success('导出成功');
   } catch (error) {
@@ -216,6 +281,25 @@ async function handleExportRow(row: UserOpReportRow) {
     ElMessage.error('导出失败');
     console.error('[userOpReport] export row failed:', error);
   }
+}
+
+/** 打开搜索抽屉 */
+async function handleSerachShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+/** 按报表类型筛选 */
+function handleFilterReportType(reportType: UserOpReportRow['reportType']) {
+  filterReportType.value =
+    filterReportType.value === reportType ? '' : reportType;
+  gridApi.query();
+}
+
+/** 取消报表类型筛选 */
+function handleCancelReportTypeFilter() {
+  filterReportType.value = '';
+  gridApi.query();
 }
 
 /** 确认生成自定义报表 */
@@ -254,42 +338,68 @@ async function handleConfirmGenerate() {
 <template>
   <div class="user-op-report-table">
     <div class="user-op-report-grid-wrap">
-      <Grid table-title="用户运营报表列表">
+      <Grid>
+        <template #table-title>
+          <div
+            class="tabel-tabs"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              align-items: center;
+              gap: 10px;
+            "
+          >
+            <ElTag
+              v-if="filterReportType"
+              type="success"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelReportTypeFilter"
+            >
+              报表类型：{{ filterReportType }}
+            </ElTag>
+          </div>
+        </template>
+
         <template #toolbar-tools>
-          <TableAction
-            :actions="[
-              {
-                label: '生成自定义报表',
-                type: 'primary',
-                icon: ACTION_ICON.ADD,
-                onClick: () => (generateDialogVisible = true),
-              },
-              {
-                label: '导出',
-                type: 'primary',
-                icon: ACTION_ICON.DOWNLOAD,
-                onClick: handleExport,
-              },
-              {
-                label: props.showStats ? '隐藏统计' : '显示统计',
-                type: 'primary',
-                icon: props.showStats
-                  ? 'lucide:chevron-up'
-                  : 'lucide:chevron-down',
-                onClick: props.toggleStats,
-              },
-            ]"
-          />
+          <div class="common-toolbar-tools">
+            <IconButton
+              content="生成自定义报表"
+              icon-name="Plus"
+              @click="() => (generateDialogVisible = true)"
+            />
+            <IconButton
+              content="导出"
+              icon-name="download"
+              @click="handleExport"
+            />
+            <IconButton
+              content="搜索"
+              icon-name="search"
+              @click="handleSerachShow"
+            />
+            <IconButton
+              :content="props.showStats ? '隐藏统计' : '显示统计'"
+              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+              @click="props.toggleStats"
+            />
+            <IconButton
+              content="全屏"
+              icon-name="FullScreen"
+              @click="() => screenfull.toggle()"
+            />
+          </div>
         </template>
 
         <template #reportType="{ row }">
-          <ElButton
+          <el-text
+            class="common-align"
             type="primary"
-            link
-            @click="setSearchValues({ reportType: row.reportType })"
+            style="cursor: pointer"
+            @click="handleFilterReportType(row.reportType)"
           >
             {{ row.reportType }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #filterCondition="{ row }">
@@ -303,27 +413,25 @@ async function handleConfirmGenerate() {
         </template>
 
         <template #actions="{ row }">
-          <TableAction
-            :actions="[
-              {
-                label: '查看',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.VIEW,
-                onClick: handleOpenDetail.bind(null, row),
-              },
-              {
-                label: '导出',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.DOWNLOAD,
-                onClick: handleExportRow.bind(null, row),
-              },
-            ]"
-          />
+          <div class="table-toolbar-tools">
+            <IconButton
+              content="详情"
+              icon-name="View"
+              @click="handleOpenDetail(row)"
+            />
+            <IconButton
+              content="导出"
+              icon-name="download"
+              @click="handleExportRow(row)"
+            />
+          </div>
         </template>
       </Grid>
     </div>
+
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
 
     <ElDrawer
       v-model="detailDrawerVisible"

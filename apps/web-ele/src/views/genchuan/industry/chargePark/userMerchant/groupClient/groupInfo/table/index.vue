@@ -7,7 +7,7 @@ import type { GroupInfoDetailVO } from '#/api/genchuan/industry/chargePark/userM
 
 import { computed, ref } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
 
 import dayjs from 'dayjs';
 import {
@@ -22,10 +22,12 @@ import {
   ElTableColumn,
   ElTag,
 } from 'element-plus';
+import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { GroupInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupInfo';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
 import {
@@ -63,8 +65,12 @@ const detailCache = new Map<number, GroupInfoDetailVO>();
 const detailDrawerRef = ref<null | { open: () => void }>(null);
 const detailObj = ref<GroupInfoRow>();
 const drillFilters = ref({
+  contact: '',
+  groupType: '',
   phone: '',
+  status: '',
 });
+const searchParams = ref<Record<string, any>>({});
 const formData = ref<GroupInfoRow>();
 const formMode = ref<'create' | 'edit'>('create');
 const formSource = ref<GroupInfoDetailVO>();
@@ -103,6 +109,44 @@ const [Form, formApi] = useVbenForm({
   schema: useCreateSchema(),
   showDefaultActions: false,
 });
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useSearchSchema().map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
 
 /** 获取集团详情 */
 async function fetchGroupDetail(
@@ -143,12 +187,15 @@ async function fetchGroupDetail(
 /** 查询集团列表 */
 async function queryGroupInfoPage(
   { page }: any,
-  formValues: Record<string, any>,
+  formValues: Record<string, any> = {},
 ) {
+  const queryValues = {
+    ...searchParams.value,
+    ...formValues,
+  };
+
   const result = await GroupInfoApi.getGroupInfoPage({
-    ...buildGroupInfoQueryParams(formValues, {
-      phone: drillFilters.value.phone,
-    }),
+    ...buildGroupInfoQueryParams(queryValues, drillFilters.value),
     pageNo: page.currentPage,
     pageSize: page.pageSize,
   });
@@ -250,12 +297,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useSearchSchema(),
-  },
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Form'], ['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
     height: 'auto',
     proxyConfig: {
@@ -272,10 +316,17 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   },
+  showSearchForm: false,
 });
 
-/** 刷新表格 */
+/** 刷新表格 - 同时清除所有快捷筛选 */
 function handleRefresh() {
+  drillFilters.value = {
+    contact: '',
+    groupType: '',
+    phone: '',
+    status: '',
+  };
   return gridApi.query();
 }
 
@@ -288,20 +339,31 @@ async function handleReloadPage() {
 
 /** 重置筛选条件 */
 async function resetSearch() {
-  drillFilters.value.phone = '';
-  await gridApi.formApi.resetForm();
-  await handleRefresh();
+  searchParams.value = {};
+  drillFilters.value = {
+    contact: '',
+    groupType: '',
+    phone: '',
+    status: '',
+  };
+  await queryFormApi.resetForm();
+  return gridApi.query();
 }
 
 /** 设置筛选条件 */
 async function setSearchValues(values: Record<string, any>) {
-  const nextValues = { ...values };
-
-  drillFilters.value.phone = nextValues.phone || '';
-  delete nextValues.phone;
-
-  await gridApi.formApi.setValues(nextValues);
-  await handleRefresh();
+  searchParams.value = {
+    ...searchParams.value,
+    ...values,
+  };
+  drillFilters.value = {
+    contact: '',
+    groupType: '',
+    phone: '',
+    status: '',
+  };
+  await queryFormApi.setValues(searchParams.value);
+  return gridApi.query();
 }
 
 /** 重新计算表格布局 */
@@ -318,13 +380,9 @@ defineExpose({
 
 /** 导出当前列表 */
 async function handleExport() {
-  const formValues = await gridApi.formApi.getValues();
-
   try {
     await GroupInfoApi.exportGroupInfo(
-      buildGroupInfoQueryParams(formValues, {
-        phone: drillFilters.value.phone,
-      }),
+      buildGroupInfoQueryParams(searchParams.value, drillFilters.value),
     );
     ElMessage.success('导出成功');
   } catch (error) {
@@ -342,13 +400,6 @@ function handleCreate() {
     schema: useCreateSchema(),
   }));
   formDrawerApi.setData(null).open();
-}
-
-/** 按手机号钻取列表 */
-async function handleFilterByPhone(phone: string) {
-  drillFilters.value.phone = phone;
-  await gridApi.formApi.resetForm();
-  await handleRefresh();
 }
 
 /** 打开编辑抽屉 */
@@ -436,6 +487,12 @@ async function handleToggleStatus(
   row: GroupInfoRow,
   status: GroupInfoRow['status'],
 ) {
+  try {
+    await confirm(`确认${status === '正常' ? '启用' : '禁用'}${row.name}吗？`);
+  } catch {
+    return;
+  }
+
   const loadingInstance = ElLoading.service({
     target: '.group-info-table',
     text: status === '正常' ? '启用中...' : '禁用中...',
@@ -572,6 +629,63 @@ async function handleImportGroups() {
   }
 }
 
+/** 打开搜索抽屉 */
+async function handleSerachShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+/** 按联系人筛选 */
+function handleFilterContact(contact: string) {
+  drillFilters.value.contact =
+    drillFilters.value.contact === contact ? '' : contact;
+  gridApi.query();
+}
+
+/** 按手机号筛选 */
+function handleFilterPhone(phone: string) {
+  drillFilters.value.phone = drillFilters.value.phone === phone ? '' : phone;
+  gridApi.query();
+}
+
+/** 按集团类型筛选 */
+function handleFilterGroupType(groupType: string) {
+  drillFilters.value.groupType =
+    drillFilters.value.groupType === groupType ? '' : groupType;
+  gridApi.query();
+}
+
+/** 按集团状态筛选 */
+function handleFilterStatus(status: GroupInfoRow['status']) {
+  drillFilters.value.status =
+    drillFilters.value.status === status ? '' : status;
+  gridApi.query();
+}
+
+/** 取消联系人筛选 */
+function handleCancelContactFilter() {
+  drillFilters.value.contact = '';
+  gridApi.query();
+}
+
+/** 取消手机号筛选 */
+function handleCancelPhoneFilter() {
+  drillFilters.value.phone = '';
+  gridApi.query();
+}
+
+/** 取消集团类型筛选 */
+function handleCancelGroupTypeFilter() {
+  drillFilters.value.groupType = '';
+  gridApi.query();
+}
+
+/** 取消集团状态筛选 */
+function handleCancelStatusFilter() {
+  drillFilters.value.status = '';
+  gridApi.query();
+}
+
 /** 获取集团状态标签颜色 */
 function getStatusTagType(status: GroupInfoRow['status']) {
   switch (status) {
@@ -595,173 +709,221 @@ function getStatusTagType(status: GroupInfoRow['status']) {
 <template>
   <div class="group-info-table">
     <div class="group-info-grid-wrap">
-      <Grid table-title="集团信息列表">
+      <Grid>
+        <template #table-title>
+          <div
+            class="tabel-tabs"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              align-items: center;
+              gap: 10px;
+            "
+          >
+            <ElTag
+              v-if="drillFilters.contact"
+              type="info"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelContactFilter"
+            >
+              联系人：{{ drillFilters.contact }}
+            </ElTag>
+            <ElTag
+              v-if="drillFilters.phone"
+              type="primary"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelPhoneFilter"
+            >
+              联系手机号：{{ maskPhone(drillFilters.phone) }}
+            </ElTag>
+            <ElTag
+              v-if="drillFilters.groupType"
+              type="success"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelGroupTypeFilter"
+            >
+              集团类型：{{ drillFilters.groupType }}
+            </ElTag>
+            <ElTag
+              v-if="drillFilters.status"
+              type="warning"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelStatusFilter"
+            >
+              集团状态：{{ drillFilters.status }}
+            </ElTag>
+          </div>
+        </template>
+
         <template #toolbar-tools>
-          <TableAction
-            :actions="[
-              {
-                label: '新增集团',
-                type: 'primary',
-                icon: ACTION_ICON.ADD,
-                onClick: handleCreate,
-              },
-              {
-                label: '导入',
-                type: 'primary',
-                icon: ACTION_ICON.UPLOAD,
-                onClick: () => (importDialogVisible = true),
-              },
-              {
-                label: '导出',
-                type: 'primary',
-                icon: ACTION_ICON.DOWNLOAD,
-                onClick: handleExport,
-              },
-              {
-                label: props.showStats ? '隐藏统计' : '显示统计',
-                type: 'primary',
-                icon: props.showStats
-                  ? 'lucide:chevron-up'
-                  : 'lucide:chevron-down',
-                onClick: props.toggleStats,
-              },
-            ]"
-          />
+          <div class="common-toolbar-tools">
+            <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+            <IconButton
+              content="导入"
+              icon-name="Upload"
+              @click="() => (importDialogVisible = true)"
+            />
+            <IconButton
+              content="导出"
+              icon-name="download"
+              @click="handleExport"
+            />
+            <IconButton
+              content="搜索"
+              icon-name="search"
+              @click="handleSerachShow"
+            />
+            <IconButton
+              :content="props.showStats ? '隐藏统计' : '显示统计'"
+              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+              @click="props.toggleStats"
+            />
+            <IconButton
+              content="全屏"
+              icon-name="FullScreen"
+              @click="() => screenfull.toggle()"
+            />
+          </div>
         </template>
 
         <template #name="{ row }">
-          <ElButton type="primary" link @click="handleDetail(row)">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleDetail(row)"
+          >
             {{ row.name }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #contact="{ row }">
-          <ElButton
+          <el-text
+            class="common-align"
             type="primary"
-            link
-            @click="setSearchValues({ contact: row.contact })"
+            style="cursor: pointer"
+            @click="handleFilterContact(row.contact)"
           >
             {{ row.contact }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #phone="{ row }">
-          <ElButton type="primary" link @click="handleFilterByPhone(row.phone)">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleFilterPhone(row.phone)"
+          >
             {{ maskPhone(row.phone) }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #groupType="{ row }">
-          <ElButton
+          <el-text
+            class="common-align"
             type="primary"
-            link
-            @click="setSearchValues({ groupType: row.groupType })"
+            style="cursor: pointer"
+            @click="handleFilterGroupType(row.groupType)"
           >
             {{ row.groupType }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #status="{ row }">
-          <ElButton
-            type="primary"
-            link
-            @click="setSearchValues({ status: row.status })"
+          <ElTag
+            :type="getStatusTagType(row.status)"
+            style="cursor: pointer"
+            @click="handleFilterStatus(row.status)"
           >
-            <ElTag :type="getStatusTagType(row.status)">
-              {{ row.status }}
-            </ElTag>
-          </ElButton>
+            {{ row.status }}
+          </ElTag>
         </template>
 
         <template #walletBalance="{ row }">
-          <ElButton type="primary" link @click="handleOpenAccount(row)">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleOpenAccount(row)"
+          >
             {{ row.walletBalance.toFixed(2) }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #auditorName="{ row }">
-          <ElButton
+          <el-text
             v-if="row.auditorName !== '-'"
+            class="common-align"
             type="primary"
-            link
+            style="cursor: pointer"
             @click="handleOpenOperator(row, 'auditor')"
           >
             {{ row.auditorName }}
-          </ElButton>
+          </el-text>
           <span v-else>{{ row.auditorName }}</span>
         </template>
 
         <template #creator="{ row }">
-          <ElButton
+          <el-text
+            class="common-align"
             type="primary"
-            link
+            style="cursor: pointer"
             @click="handleOpenOperator(row, 'creator')"
           >
             {{ row.creator }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #actions="{ row }">
-          <TableAction
-            :actions="[
-              {
-                label: '查看',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.VIEW,
-                onClick: handleDetail.bind(null, row),
-              },
-              {
-                label: '通过',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.AUDIT,
-                ifShow: () => row.status === '待审核',
-                onClick: handleApprove.bind(null, row),
-              },
-              {
-                label: '驳回',
-                type: 'danger',
-                link: true,
-                icon: ACTION_ICON.DELETE,
-                ifShow: () => row.status === '待审核',
-                onClick: handleOpenReject.bind(null, row),
-              },
-              {
-                label: '编辑',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.EDIT,
-                ifShow: () => row.status === '正常',
-                onClick: handleEdit.bind(null, row),
-              },
-              {
-                label: '禁用',
-                type: 'danger',
-                link: true,
-                icon: ACTION_ICON.DELETE,
-                ifShow: () => row.status === '正常',
-                popConfirm: {
-                  title: `确认禁用${row.name}吗？`,
-                  confirm: handleToggleStatus.bind(null, row, '禁用'),
-                },
-              },
-              {
-                label: '启用',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.AUDIT,
-                ifShow: () => row.status === '禁用',
-                popConfirm: {
-                  title: `确认启用${row.name}吗？`,
-                  confirm: handleToggleStatus.bind(null, row, '正常'),
-                },
-              },
-            ]"
-          />
+          <div class="table-toolbar-tools">
+            <IconButton
+              content="详情"
+              icon-name="View"
+              @click="handleDetail(row)"
+            />
+            <IconButton
+              v-if="row.status === '待审核'"
+              content="通过"
+              icon-name="Check"
+              @click="handleApprove(row)"
+            />
+            <IconButton
+              v-if="row.status === '待审核'"
+              content="驳回"
+              icon-name="Close"
+              @click="handleOpenReject(row)"
+            />
+            <IconButton
+              v-if="row.status === '正常'"
+              content="编辑"
+              icon-name="Edit"
+              @click="handleEdit(row)"
+            />
+            <IconButton
+              v-if="row.status === '正常'"
+              content="禁用"
+              icon-name="Close"
+              @click="handleToggleStatus(row, '禁用')"
+            />
+            <IconButton
+              v-if="row.status === '禁用'"
+              content="启用"
+              icon-name="Check"
+              @click="handleToggleStatus(row, '正常')"
+            />
+          </div>
         </template>
       </Grid>
     </div>
+
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
 
     <FormDrawer
       :title="formMode === 'edit' ? textObj.editText : textObj.addText"

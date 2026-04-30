@@ -5,14 +5,16 @@ import type { CreditConfigVO } from '#/api/genchuan/industry/chargePark/userMerc
 
 import { computed, ref } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
 
 import dayjs from 'dayjs';
-import { ElButton, ElLoading, ElMessage, ElTag } from 'element-plus';
+import { ElLoading, ElMessage, ElTag } from 'element-plus';
+import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { CreditConfigApi } from '#/api/genchuan/industry/chargePark/userMerchant/creditMgmt/creditConfig';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
 import {
@@ -47,7 +49,11 @@ const detailDrawerRef = ref<null | { open: () => void }>(null);
 const detailObj = ref<CreditConfigRow>();
 const drillFilters = ref({
   configType: '',
+  levelThreshold: '',
+  ruleDesc: '',
+  status: '',
 });
+const searchParams = ref<Record<string, any>>({});
 const formData = ref<CreditConfigRow>();
 const formMode = ref<'create' | 'edit'>('create');
 const formSource = ref<CreditConfigVO>();
@@ -76,6 +82,44 @@ const [Form, formApi] = useVbenForm({
   schema: useCreateSchema(),
   showDefaultActions: false,
 });
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useSearchSchema().map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
 
 /** 格式化提交时间 */
 function formatSubmitTime(value?: string) {
@@ -142,13 +186,20 @@ async function fetchCreditConfigDetail(
 /** 查询信用配置列表 */
 async function queryCreditConfigPage(
   { page }: { page: { currentPage: number; pageSize: number } },
-  formValues: Record<string, any>,
+  formValues: Record<string, any> = {},
 ) {
+  const queryValues = {
+    ...searchParams.value,
+    ...formValues,
+    levelThreshold: drillFilters.value.levelThreshold,
+    ruleDesc: drillFilters.value.ruleDesc,
+    status: drillFilters.value.status,
+  };
   const isConfigTypeDrill = !!drillFilters.value.configType;
   const result = await CreditConfigApi.getCreditConfigPage({
     pageNo: isConfigTypeDrill ? 1 : page.currentPage,
     pageSize: isConfigTypeDrill ? 9999 : page.pageSize,
-    ...buildCreditConfigQueryParams(formValues),
+    ...buildCreditConfigQueryParams(queryValues),
   });
 
   const sourceList = Array.isArray(result?.list) ? result.list : [];
@@ -265,12 +316,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useSearchSchema(),
-  },
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Form'], ['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
     height: 'auto',
     proxyConfig: {
@@ -287,10 +335,17 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   },
+  showSearchForm: false,
 });
 
-/** 刷新表格 */
+/** 刷新表格 - 同时清除所有快捷筛选 */
 function handleRefresh() {
+  drillFilters.value = {
+    configType: '',
+    levelThreshold: '',
+    ruleDesc: '',
+    status: '',
+  };
   return gridApi.query();
 }
 
@@ -303,21 +358,31 @@ async function handleReloadPage() {
 
 /** 重置筛选条件 */
 async function resetSearch() {
-  drillFilters.value.configType = '';
-  await gridApi.formApi.resetForm();
-  await handleRefresh();
+  searchParams.value = {};
+  drillFilters.value = {
+    configType: '',
+    levelThreshold: '',
+    ruleDesc: '',
+    status: '',
+  };
+  await queryFormApi.resetForm();
+  return gridApi.query();
 }
 
 /** 设置筛选条件 */
 async function setSearchValues(values: Record<string, any>) {
-  const nextValues = { ...values };
-
-  drillFilters.value.configType = nextValues.configType || '';
-  delete nextValues.configType;
-
-  await gridApi.formApi.resetForm();
-  await gridApi.formApi.setValues(nextValues);
-  await handleRefresh();
+  searchParams.value = {
+    ...searchParams.value,
+    ...values,
+  };
+  drillFilters.value = {
+    configType: '',
+    levelThreshold: '',
+    ruleDesc: '',
+    status: '',
+  };
+  await queryFormApi.setValues(searchParams.value);
+  return gridApi.query();
 }
 
 /** 重新计算表格布局 */
@@ -395,6 +460,12 @@ async function handleEnable(row: CreditConfigRow) {
 
 /** 禁用信用配置 */
 async function handleDisable(row: CreditConfigRow) {
+  try {
+    await confirm('确认禁用当前信用配置吗？');
+  } catch {
+    return;
+  }
+
   const loadingInstance = ElLoading.service({
     target: '.credit-config-table',
     text: '禁用中...',
@@ -413,106 +484,182 @@ async function handleDisable(row: CreditConfigRow) {
     loadingInstance.close();
   }
 }
+
+/** 打开搜索抽屉 */
+async function handleSerachShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+/** 按规则筛选 */
+function handleFilterRuleDesc(ruleDesc: string) {
+  drillFilters.value.ruleDesc =
+    drillFilters.value.ruleDesc === ruleDesc ? '' : ruleDesc;
+  gridApi.query();
+}
+
+/** 按等级阈值筛选 */
+function handleFilterLevelThreshold(levelThreshold: string) {
+  drillFilters.value.levelThreshold =
+    drillFilters.value.levelThreshold === levelThreshold ? '' : levelThreshold;
+  gridApi.query();
+}
+
+/** 按配置状态筛选 */
+function handleFilterStatus(status: CreditConfigRow['status']) {
+  drillFilters.value.status =
+    drillFilters.value.status === status ? '' : status;
+  gridApi.query();
+}
+
+/** 取消规则筛选 */
+function handleCancelRuleDescFilter() {
+  drillFilters.value.ruleDesc = '';
+  gridApi.query();
+}
+
+/** 取消等级阈值筛选 */
+function handleCancelLevelThresholdFilter() {
+  drillFilters.value.levelThreshold = '';
+  gridApi.query();
+}
+
+/** 取消配置状态筛选 */
+function handleCancelStatusFilter() {
+  drillFilters.value.status = '';
+  gridApi.query();
+}
 </script>
 
 <template>
   <div class="credit-config-table">
     <div class="credit-config-grid-wrap">
-      <Grid table-title="信用配置列表">
+      <Grid>
+        <template #table-title>
+          <div
+            class="tabel-tabs"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              align-items: center;
+              gap: 10px;
+            "
+          >
+            <ElTag
+              v-if="drillFilters.ruleDesc"
+              type="info"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelRuleDescFilter"
+            >
+              加减分规则：{{ drillFilters.ruleDesc }}
+            </ElTag>
+            <ElTag
+              v-if="drillFilters.levelThreshold"
+              type="primary"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelLevelThresholdFilter"
+            >
+              等级阈值：{{ drillFilters.levelThreshold }}
+            </ElTag>
+            <ElTag
+              v-if="drillFilters.status"
+              type="warning"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelStatusFilter"
+            >
+              配置状态：{{ drillFilters.status }}
+            </ElTag>
+          </div>
+        </template>
+
         <template #toolbar-tools>
-          <TableAction
-            :actions="[
-              {
-                label: '新增配置',
-                type: 'primary',
-                icon: ACTION_ICON.ADD,
-                onClick: handleCreate,
-              },
-              {
-                label: props.showStats ? '隐藏统计' : '显示统计',
-                type: 'primary',
-                icon: props.showStats
-                  ? 'lucide:chevron-up'
-                  : 'lucide:chevron-down',
-                onClick: props.toggleStats,
-              },
-            ]"
-          />
+          <div class="common-toolbar-tools">
+            <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+            <IconButton
+              content="搜索"
+              icon-name="search"
+              @click="handleSerachShow"
+            />
+            <IconButton
+              :content="props.showStats ? '隐藏统计' : '显示统计'"
+              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+              @click="props.toggleStats"
+            />
+            <IconButton
+              content="全屏"
+              icon-name="FullScreen"
+              @click="() => screenfull.toggle()"
+            />
+          </div>
         </template>
 
         <template #ruleDesc="{ row }">
-          <ElButton
+          <el-text
+            class="common-align"
             type="primary"
-            link
-            @click="setSearchValues({ ruleDesc: row.ruleDesc })"
+            style="cursor: pointer"
+            @click="handleFilterRuleDesc(row.ruleDesc)"
           >
             {{ row.ruleDesc }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #levelThreshold="{ row }">
-          <ElButton
+          <el-text
+            class="common-align"
             type="primary"
-            link
-            @click="setSearchValues({ levelThreshold: row.levelThreshold })"
+            style="cursor: pointer"
+            @click="handleFilterLevelThreshold(row.levelThreshold)"
           >
             {{ row.levelThreshold }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #status="{ row }">
-          <ElButton
-            type="primary"
-            link
-            @click="setSearchValues({ status: row.status })"
+          <ElTag
+            :type="getStatusTagType(row.status)"
+            style="cursor: pointer"
+            @click="handleFilterStatus(row.status)"
           >
-            <ElTag :type="getStatusTagType(row.status)">
-              {{ row.status }}
-            </ElTag>
-          </ElButton>
+            {{ row.status }}
+          </ElTag>
         </template>
 
         <template #actions="{ row }">
-          <TableAction
-            :actions="[
-              {
-                label: '查看',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.VIEW,
-                onClick: handleDetail.bind(null, row),
-              },
-              {
-                label: '编辑',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.EDIT,
-                onClick: handleEdit.bind(null, row),
-              },
-              {
-                label: '生效',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.AUDIT,
-                ifShow: () => row.status === '未生效',
-                onClick: handleEnable.bind(null, row),
-              },
-              {
-                label: '禁用',
-                type: 'danger',
-                link: true,
-                icon: ACTION_ICON.DELETE,
-                ifShow: () => row.status === '已生效',
-                popConfirm: {
-                  title: `确认禁用当前信用配置吗？`,
-                  confirm: handleDisable.bind(null, row),
-                },
-              },
-            ]"
-          />
+          <div class="table-toolbar-tools">
+            <IconButton
+              content="详情"
+              icon-name="View"
+              @click="handleDetail(row)"
+            />
+            <IconButton
+              content="编辑"
+              icon-name="Edit"
+              @click="handleEdit(row)"
+            />
+            <IconButton
+              v-if="row.status === '未生效'"
+              content="生效"
+              icon-name="Check"
+              @click="handleEnable(row)"
+            />
+            <IconButton
+              v-if="row.status === '已生效'"
+              content="禁用"
+              icon-name="Close"
+              @click="handleDisable(row)"
+            />
+          </div>
         </template>
       </Grid>
     </div>
+
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
 
     <FormDrawer
       :title="formMode === 'edit' ? textObj.editText : textObj.addText"
