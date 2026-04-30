@@ -716,8 +716,8 @@ function getStatusTagType(status: GroupInfoRow['status']) {
             style="
               display: flex;
               flex-wrap: wrap;
-              align-items: center;
               gap: 10px;
+              align-items: center;
             "
           >
             <ElTag

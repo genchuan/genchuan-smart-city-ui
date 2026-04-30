@@ -712,8 +712,8 @@ const handleOpenDetail = (row: UserRow) => {
             style="
               display: flex;
               flex-wrap: wrap;
-              align-items: center;
               gap: 10px;
+              align-items: center;
             "
           >
             <!-- 用户状态筛选标签 -->

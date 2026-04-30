@@ -679,8 +679,8 @@ async function handleOpenOperator(row: PlateAuthRow) {
             style="
               display: flex;
               flex-wrap: wrap;
-              align-items: center;
               gap: 10px;
+              align-items: center;
             "
           >
             <ElTag
@@ -962,8 +962,8 @@ async function handleOpenOperator(row: PlateAuthRow) {
 
 .table-title-wrap {
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
 }
 
 .table-title-text {
