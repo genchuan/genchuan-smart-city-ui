@@ -6,7 +6,7 @@ export function useFormSchema() {
     { fieldName: 'spaceId', label: '车位ID', component: 'Input', componentProps: { placeholder: '请输入车位ID' }, isSearch: true },
     { fieldName: 'reserveType', label: '预约类型', component: 'Select', componentProps: { placeholder: '请选择', options: [{ label: '停车预约', value: '停车预约' }, { label: '充电预约', value: '充电预约' }] }, isSearch: true },
     { fieldName: 'status', label: '预约状态', component: 'Select', componentProps: { placeholder: '请选择', options: [{ label: '待审核', value: '待审核' }, { label: '已生效', value: '已生效' }, { label: '已完成', value: '已完成' }, { label: '已取消', value: '已取消' }] }, isSearch: true },
-    { fieldName: 'reserveTime', label: '预约时间', component: 'DatePicker', componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD HH:mm:ss' }, isSearch: true },
+    { fieldName: 'reserveTime', label: '预约时间', component: 'DatePicker', componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD HH:mm:ss', defaultTime: [new Date(2000, 0, 1, 0, 0, 0), new Date(2000, 0, 1, 23, 59, 59)] }, isSearch: true },
   ];
 }
 

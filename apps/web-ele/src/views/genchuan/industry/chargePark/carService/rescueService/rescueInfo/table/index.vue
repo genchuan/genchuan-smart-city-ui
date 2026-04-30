@@ -10,6 +10,7 @@ import { formatTimestamp } from '#/utils';
 import {
   getRescueInfoPage,
   exportRescueInfoExcel,
+  exportRescueInfoPdf,
   batchDispatchRescue,
   dispatchRescue,
   claimRescue,
@@ -233,9 +234,12 @@ const getTableData = async (pageObj) => {
   };
 
   if (dataObj.serachObj.createTime && Array.isArray(dataObj.serachObj.createTime)) {
-    params.createTimeBegin = dataObj.serachObj.createTime[0];
-    params.createTimeEnd = dataObj.serachObj.createTime[1];
-    delete params.createTime;
+    params.createTime = dataObj.serachObj.createTime;
+  }
+
+  if (dataObj.serachObj.location) {
+    params.locationName = dataObj.serachObj.location;
+    delete params.location;
   }
 
   if (dataObj.serachObj.statusList && Array.isArray(dataObj.serachObj.statusList)) {
@@ -248,10 +252,7 @@ const getTableData = async (pageObj) => {
   if (dataObj.serachObj.dispatchTimeRange && Array.isArray(dataObj.serachObj.dispatchTimeRange)) {
     const [startDate, endDate] = dataObj.serachObj.dispatchTimeRange;
     if (startDate && endDate) {
-      const startTimestamp = new Date(`${startDate} 00:00:00`).getTime();
-      const endTimestamp = new Date(`${endDate} 23:59:59`).getTime();
-      params.dispatchTimeBegin = startTimestamp;
-      params.dispatchTimeEnd = endTimestamp;
+      params.createTime = [`${startDate} 00:00:00`, `${endDate} 23:59:59`];
     }
     delete params.dispatchTimeRange;
   }
@@ -329,16 +330,6 @@ async function onSubmit(values, isReset = false) {
     await resetAllFilters();
   } else {
     const formValues = { ...values };
-    if (formValues.userName) {
-      const userId = getUserIdByUserName(formValues.userName);
-      if (userId) {
-        formValues.userId = userId;
-      } else {
-        ElMessage.warning(`未找到用户“${formValues.userName}”，请检查用户名`);
-        return;
-      }
-      delete formValues.userName;
-    }
     dataObj.serachObj = { ...formValues };
     chartStatusListFilter.value = '';
     chartDateFilter.value = '';
@@ -478,6 +469,11 @@ async function handleExport() {
   downloadFileFromBlobPart({ fileName: '救援信息记录.xls', source: data });
 }
 
+async function handleExportPdf() {
+  const data = await exportRescueInfoPdf(dataObj.serachObj);
+  downloadFileFromBlobPart({ fileName: '救援信息记录.pdf', source: data });
+}
+
 const rescueUserList = ref([]);
 async function fetchRescueUsers() {
   rescueUserList.value = (await getRescueUserList()) || [];
@@ -595,8 +591,8 @@ async function confirmTransfer() {
 const evaluateForm = reactive({ score: 5, evaluateContent: '' });
 let currentEvaluateRow = null;
 const openEvaluateDrawer = (row) => {
-  evaluateForm.score = 5;
-  evaluateForm.evaluateContent = '';
+  evaluateForm.score = row.score ?? 5;
+  evaluateForm.evaluateContent = row.evaluateContent ?? '';
   currentEvaluateRow = row;
   evaluateDrawerApi.open();
 };
@@ -782,11 +778,12 @@ defineExpose({ handleRefresh, handleChartRefresh });
         <div class="common-toolbar-tools">
           <IconButton
             content="批量派发"
-            icon-name="send"
+            icon-name="Promotion"
             :disabled="isEmpty(checkedIds)"
             @click="openBatchDispatchDrawer"
           />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="导出 Excel" icon-name="download" @click="handleExport" />
+          <IconButton content="导出 PDF" icon-name="document" @click="handleExportPdf" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
           <!-- 新增展开/收缩按钮 -->
           <IconButton
@@ -886,7 +883,18 @@ defineExpose({ handleRefresh, handleChartRefresh });
             <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           </template>
           <template v-else-if="row.status === '已完成'">
-            <IconButton content="评价" icon-name="star" @click="openEvaluateDrawer(row)" />
+            <IconButton
+              :content="
+                row.status !== '已完成'
+                  ? '仅已完成可评价'
+                  : row.archiveStatus === '已归档'
+                    ? '已归档不可评价'
+                    : '评价'
+              "
+              :disabled="row.status !== '已完成' || row.archiveStatus === '已归档'"
+              icon-name="star"
+              @click="openEvaluateDrawer(row)"
+            />
             <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
             <IconButton content="归档" icon-name="folder" @click="handleArchive(row)" />
           </template>
