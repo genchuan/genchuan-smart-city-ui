@@ -3,7 +3,7 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { ElMessage } from 'element-plus';
+import { ElDatePicker, ElMessage } from 'element-plus';
 
 import { resendCouponMgmt } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 
@@ -22,10 +22,15 @@ const [Modal, modalApi] = useVbenModal({
 
 const rowData = ref(null);
 const loading = ref(false);
+const newValidTime = ref(null);
 
 // 打开弹窗
 const open = (row) => {
   rowData.value = row;
+  // 默认设置为当前时间+30天
+  const defaultDate = new Date();
+  defaultDate.setDate(defaultDate.getDate() + 30);
+  newValidTime.value = defaultDate;
   modalApi.open();
 };
 
@@ -33,15 +38,20 @@ const open = (row) => {
 const handleConfirm = async () => {
   if (!rowData.value) return;
 
+  if (!newValidTime.value) {
+    ElMessage.warning('请选择新有效期');
+    return;
+  }
+
   loading.value = true;
   try {
-    // 计算新的有效期（当前时间+30天）
-    const newValidTime = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    // 将日期转换为时间戳
+    const validTimeStamp = new Date(newValidTime.value).getTime();
 
     await resendCouponMgmt({
       id: rowData.value.id,
       receiverId: rowData.value.receiverId,
-      newValidTime: newValidTime,
+      newValidTime: validTimeStamp,
     });
     ElMessage.success('重新发放成功');
     emit('success');
@@ -80,7 +90,14 @@ defineExpose({
           </div>
           <div class="info-item">
             <span class="info-label">新有效期：</span>
-            <span class="info-value highlight">{{ new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleString() }}</span>
+            <span class="info-value highlight">
+              <ElDatePicker
+                v-model="newValidTime"
+                type="datetime"
+                placeholder="请选择新有效期"
+                style="width: 200px"
+              />
+            </span>
           </div>
         </div>
         <p class="confirm-tip">重新发放后，该优惠券状态将更新为未领取，重新开放领取</p>
@@ -119,6 +136,8 @@ defineExpose({
 
 .info-item {
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
 }
 
 .info-item:last-child {
@@ -127,11 +146,14 @@ defineExpose({
 
 .info-label {
   color: var(--el-text-color-secondary);
+  flex-shrink: 0;
+  width: 80px;
 }
 
 .info-value {
   font-weight: 500;
   color: var(--el-text-color-primary);
+  flex: 1;
 }
 
 .info-value.highlight {

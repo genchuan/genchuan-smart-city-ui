@@ -1,7 +1,8 @@
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import * as echarts from 'echarts';
+import { ElOption, ElSelect } from 'element-plus';
 
 const props = defineProps({
   data: {
@@ -14,9 +15,27 @@ const props = defineProps({
       lineData: [],
     }),
   },
+  // 饼图选项列表，用于下拉切换
+  pieChartOptions: {
+    type: Array,
+    default: () => [],
+    // 格式: [{ label: '规则类型占比', value: 'ruleType', data: [...] }, ...]
+  },
+  // 柱状图选项列表，用于下拉切换
+  barChartOptions: {
+    type: Array,
+    default: () => [],
+    // 格式: [{ label: '活动类型分布', value: 'activityType', data: [...] }, ...]
+  },
+  // 折线图选项列表，用于下拉切换
+  lineChartOptions: {
+    type: Array,
+    default: () => [],
+    // 格式: [{ label: '活动参与趋势', value: 'joinTrend', data: {...} }, ...]
+  },
 });
 
-const emit = defineEmits(['cardClick', 'pieClick', 'barClick', 'lineClick']);
+const emit = defineEmits(['cardClick', 'pieClick', 'barClick', 'lineClick', 'pieChartChange', 'barChartChange', 'lineChartChange']);
 
 const pieChartRef = ref(null);
 const barChartRef = ref(null);
@@ -25,30 +44,88 @@ const pieChartInstance = ref(null);
 const barChartInstance = ref(null);
 const lineChartInstance = ref(null);
 
-const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B'];
+const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B', '#FFD93D'];
 
-// 初始化饼图 - 规则类型占比
+// 当前选中的图表索引
+const currentPieIndex = ref(0);
+const currentBarIndex = ref(0);
+const currentLineIndex = ref(0);
+
+// 计算当前选中的饼图数据
+const currentPieData = computed(() => {
+  if (props.pieChartOptions.length === 0) return null;
+  const index = currentPieIndex.value;
+  if (index < 0 || index >= props.pieChartOptions.length) {
+    return props.pieChartOptions[0];
+  }
+  return props.pieChartOptions[index];
+});
+
+// 计算当前选中的柱状图数据
+const currentBarData = computed(() => {
+  if (props.barChartOptions.length === 0) return null;
+  const index = currentBarIndex.value;
+  if (index < 0 || index >= props.barChartOptions.length) {
+    return props.barChartOptions[0];
+  }
+  return props.barChartOptions[index];
+});
+
+// 计算当前选中的折线图数据
+const currentLineData = computed(() => {
+  if (props.lineChartOptions.length === 0) return null;
+  const index = currentLineIndex.value;
+  if (index < 0 || index >= props.lineChartOptions.length) {
+    return props.lineChartOptions[0];
+  }
+  return props.lineChartOptions[index];
+});
+
+// 饼图切换
+const handlePieChange = (index) => {
+  currentPieIndex.value = index;
+  emit('pieChartChange', props.pieChartOptions[index]);
+  initPieChart();
+};
+
+// 柱状图切换
+const handleBarChange = (index) => {
+  currentBarIndex.value = index;
+  emit('barChartChange', props.barChartOptions[index]);
+  initBarChart();
+};
+
+// 折线图切换
+const handleLineChange = (index) => {
+  currentLineIndex.value = index;
+  emit('lineChartChange', props.lineChartOptions[index]);
+  initLineChart();
+};
+
+// 初始化饼图
 const initPieChart = () => {
   if (!pieChartRef.value) return;
 
   if (pieChartInstance.value) {
     pieChartInstance.value.dispose();
+    pieChartInstance.value = null;
   }
+
+  const chartData = currentPieData.value;
+  if (!chartData || !chartData.data || chartData.data.length === 0) return;
 
   const chartInstance = echarts.init(pieChartRef.value);
   pieChartInstance.value = chartInstance;
 
-  const pieData = props.data.pieData || [];
-
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '规则类型占比',
+      text: chartData.label || '分布统计',
       left: 'center',
       top: 10,
       textStyle: {
         color: '#6E7E91',
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 500,
       },
     },
@@ -70,17 +147,17 @@ const initPieChart = () => {
       left: 'center',
       textStyle: {
         color: '#6E7E91',
-        fontSize: 11,
+        fontSize: 10,
       },
-      itemWidth: 12,
-      itemHeight: 12,
+      itemWidth: 10,
+      itemHeight: 10,
       formatter(name) {
-        return name.length > 5 ? `${name.slice(0, 5)}...` : name;
+        return name.length > 4 ? `${name.slice(0, 4)}...` : name;
       },
     },
     series: [
       {
-        name: '规则类型',
+        name: chartData.label || '分布统计',
         type: 'pie',
         radius: ['35%', '55%'],
         center: ['50%', '52%'],
@@ -135,43 +212,52 @@ const initPieChart = () => {
           borderWidth: 2,
           borderColor: '#fff',
         },
-        data: pieData,
+        data: chartData.data,
       },
     ],
   };
 
   chartInstance.setOption(option);
 
-  // 点击事件
+  // 点击事件 - 钻取
   chartInstance.on('click', (params) => {
-    emit('pieClick', pieData[params.dataIndex]?.type);
+    const dataItem = chartData.data[params.dataIndex];
+    emit('pieClick', {
+      type: chartData.value,
+      name: dataItem?.name,
+      value: dataItem?.type || dataItem?.name,
+    });
   });
 };
 
-// 初始化柱状图 - 活动类型分布
+// 初始化柱状图
 const initBarChart = () => {
   if (!barChartRef.value) return;
 
   if (barChartInstance.value) {
     barChartInstance.value.dispose();
+    barChartInstance.value = null;
   }
+
+  const chartData = currentBarData.value;
+  if (!chartData || !chartData.data || chartData.data.length === 0) return;
 
   const chartInstance = echarts.init(barChartRef.value);
   barChartInstance.value = chartInstance;
 
-  const barData = props.data.barData || [];
+  const barData = chartData.data;
   const xAxisData = barData.map((item) => item.name);
   const countData = barData.map((item) => item.value);
 
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '活动类型分布',
+      text: chartData.label || '分布统计',
       left: 'center',
       top: 10,
       textStyle: {
         color: '#6E7E91',
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 500,
       },
     },
@@ -245,7 +331,7 @@ const initBarChart = () => {
     },
     series: [
       {
-        name: '活动数',
+        name: chartData.label || '数量',
         type: 'bar',
         data: countData,
         itemStyle: {
@@ -280,36 +366,44 @@ const initBarChart = () => {
 
   chartInstance.setOption(option);
 
-  // 点击事件
+  // 点击事件 - 钻取
   chartInstance.on('click', (params) => {
-    emit('barClick', barData[params.dataIndex]?.type);
+    const dataItem = barData[params.dataIndex];
+    emit('barClick', {
+      type: chartData.value,
+      name: dataItem?.name,
+      value: dataItem?.type || dataItem?.name,
+    });
   });
 };
 
-// 初始化折线图 - 活动参与趋势
+// 初始化折线图
 const initLineChart = () => {
   if (!lineChartRef.value) return;
 
   if (lineChartInstance.value) {
     lineChartInstance.value.dispose();
+    lineChartInstance.value = null;
   }
+
+  const chartData = currentLineData.value;
+  if (!chartData || !chartData.data || !chartData.data.xAxis || chartData.data.xAxis.length === 0) return;
 
   const chartInstance = echarts.init(lineChartRef.value);
   lineChartInstance.value = chartInstance;
 
-  const lineData = props.data.lineData || [];
-  const xAxisData = lineData.map((item) => item.date);
-  const trendData = lineData.map((item) => item.value);
+  const xAxisData = chartData.data.xAxis;
+  const seriesData = chartData.data.series;
 
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '活动参与趋势',
+      text: chartData.label || '趋势统计',
       left: 'center',
       top: 10,
       textStyle: {
         color: '#6E7E91',
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 500,
       },
     },
@@ -323,7 +417,7 @@ const initLineChart = () => {
       },
       formatter: (params) => {
         const data = params[0];
-        return `${data.name}<br/>参与人数: ${data.value}`;
+        return `${data.name}<br/>${chartData.label}: ${data.value}`;
       },
     },
     grid: {
@@ -383,9 +477,9 @@ const initLineChart = () => {
     },
     series: [
       {
-        name: '参与人数',
+        name: chartData.label || '数值',
         type: 'line',
-        data: trendData,
+        data: seriesData,
         smooth: true,
         symbol: 'circle',
         symbolSize: 6,
@@ -419,40 +513,57 @@ const initLineChart = () => {
 
   chartInstance.setOption(option);
 
-  // 点击事件
+  // 点击事件 - 钻取
   chartInstance.on('click', (params) => {
-    emit('lineClick', lineData[params.dataIndex]?.fullDate);
+    emit('lineClick', {
+      type: chartData.value,
+      name: params.name,
+      value: chartData.data.fullDates?.[params.dataIndex] || params.name,
+    });
   });
 };
 
 const initCharts = () => {
-  initPieChart();
-  initBarChart();
-  initLineChart();
+  nextTick(() => {
+    initPieChart();
+    initBarChart();
+    initLineChart();
+  });
 };
 
 const handleResize = () => {
-  if (pieChartInstance.value) {
-    pieChartInstance.value.resize();
-  }
-  if (barChartInstance.value) {
-    barChartInstance.value.resize();
-  }
-  if (lineChartInstance.value) {
-    lineChartInstance.value.resize();
-  }
+  pieChartInstance.value?.resize();
+  barChartInstance.value?.resize();
+  lineChartInstance.value?.resize();
 };
 
 const handleCardClick = (card) => {
   emit('cardClick', card.type);
 };
 
+// 监听数据变化
 watch(
-  () => props.data,
+  () => props.pieChartOptions,
   () => {
-    initCharts();
+    initPieChart();
   },
-  { deep: true, immediate: true },
+  { deep: true },
+);
+
+watch(
+  () => props.barChartOptions,
+  () => {
+    initBarChart();
+  },
+  { deep: true },
+);
+
+watch(
+  () => props.lineChartOptions,
+  () => {
+    initLineChart();
+  },
+  { deep: true },
 );
 
 onMounted(() => {
@@ -462,15 +573,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
-  if (pieChartInstance.value) {
-    pieChartInstance.value.dispose();
-  }
-  if (barChartInstance.value) {
-    barChartInstance.value.dispose();
-  }
-  if (lineChartInstance.value) {
-    lineChartInstance.value.dispose();
-  }
+  pieChartInstance.value?.dispose();
+  barChartInstance.value?.dispose();
+  lineChartInstance.value?.dispose();
 });
 </script>
 
@@ -501,12 +606,65 @@ onUnmounted(() => {
 
     <!-- 图表区域 -->
     <div class="charts-wrapper">
-      <!-- 饼图区域 - 规则类型占比 -->
-      <div class="rule-type-chart" ref="pieChartRef"></div>
-      <!-- 柱状图区域 - 活动类型分布 -->
-      <div class="activity-type-chart" ref="barChartRef"></div>
-      <!-- 折线图区域 - 活动参与趋势 -->
-      <div class="simple-bar-chart" ref="lineChartRef"></div>
+      <!-- 饼图区域 - 带切换下拉框 -->
+      <div class="chart-area">
+        <div v-if="pieChartOptions.length > 1" class="chart-select-wrapper">
+          <ElSelect
+            :model-value="currentPieIndex"
+            size="small"
+            class="chart-select"
+            @change="handlePieChange"
+          >
+            <ElOption
+              v-for="(option, idx) in pieChartOptions"
+              :key="idx"
+              :label="option.label"
+              :value="idx"
+            />
+          </ElSelect>
+        </div>
+        <div ref="pieChartRef" class="chart-container"></div>
+      </div>
+
+      <!-- 柱状图区域 - 带切换下拉框 -->
+      <div class="chart-area">
+        <div v-if="barChartOptions.length > 1" class="chart-select-wrapper">
+          <ElSelect
+            :model-value="currentBarIndex"
+            size="small"
+            class="chart-select"
+            @change="handleBarChange"
+          >
+            <ElOption
+              v-for="(option, idx) in barChartOptions"
+              :key="idx"
+              :label="option.label"
+              :value="idx"
+            />
+          </ElSelect>
+        </div>
+        <div ref="barChartRef" class="chart-container"></div>
+      </div>
+
+      <!-- 折线图区域 - 带切换下拉框 -->
+      <div class="chart-area line-chart-area">
+        <div v-if="lineChartOptions.length > 1" class="chart-select-wrapper">
+          <ElSelect
+            :model-value="currentLineIndex"
+            size="small"
+            class="chart-select"
+            @change="handleLineChange"
+          >
+            <ElOption
+              v-for="(option, idx) in lineChartOptions"
+              :key="idx"
+              :label="option.label"
+              :value="idx"
+            />
+          </ElSelect>
+        </div>
+        <div ref="lineChartRef" class="chart-container"></div>
+      </div>
     </div>
   </div>
 </template>
@@ -517,6 +675,7 @@ onUnmounted(() => {
   flex-wrap: nowrap;
   width: 100%;
   height: auto;
+  padding-bottom: 0.5rem;
   min-height: 280px;
   overflow: hidden;
 }
@@ -542,7 +701,7 @@ onUnmounted(() => {
   min-height: 0;
   padding: 4px 8px;
   cursor: pointer;
-  background-color: #fff;
+  background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
@@ -599,22 +758,39 @@ onUnmounted(() => {
   height: 280px;
 }
 
-.rule-type-chart {
+.chart-area {
+  position: relative;
   flex: 0 0 28%;
   min-width: 0;
   height: 280px;
 }
 
-.activity-type-chart {
-  flex: 0 0 28%;
-  min-width: 0;
-  height: 280px;
-}
-
-.simple-bar-chart {
+.line-chart-area {
   flex: 1;
-  min-width: 0;
-  height: 280px;
-  margin-left: 0 !important;
+}
+
+.chart-select-wrapper {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  z-index: 10;
+}
+
+.chart-select {
+  width: 100px;
+}
+
+.chart-select :deep(.el-input__wrapper) {
+  background-color: rgb(255 255 255 / 95%);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 10%);
+}
+
+.chart-select :deep(.el-input__inner) {
+  font-size: 12px;
+}
+
+.chart-container {
+  width: 100%;
+  height: 100%;
 }
 </style>

@@ -47,7 +47,7 @@ const [Form, formApi] = useVbenForm({
       componentProps: {
         placeholder: '请输入接收发票的邮箱',
       },
-      rules: 'required|email',
+      rules: 'required',
     },
   ],
   showDefaultActions: false,
@@ -66,6 +66,12 @@ const [Modal, modalApi] = useVbenModal({
     }
     const values = await formApi.getValues();
     try {
+      // 简单校验邮箱格式
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(values.email)) {
+        ElMessage.error('请输入正确的邮箱格式');
+        return;
+      }
       const invoiceInfo = JSON.stringify({
         title: values.title,
         taxNo: values.taxNo,
@@ -81,7 +87,8 @@ const [Modal, modalApi] = useVbenModal({
       emit('success');
     } catch (error) {
       console.error('开票失败:', error);
-      ElMessage.error('开票失败');
+      const errorMsg = error?.response?.data?.msg || error?.message || '开票失败，请稍后重试';
+      ElMessage.error(errorMsg);
     }
   },
   async onOpenChange(isOpen) {

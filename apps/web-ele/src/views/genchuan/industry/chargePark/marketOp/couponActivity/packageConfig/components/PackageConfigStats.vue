@@ -58,7 +58,7 @@ const initBarChart = () => {
       axisPointer: {
         type: 'shadow',
       },
-      formatter: '{b}: {c}个',
+      formatter: '{b}: {c}',
     },
     grid: {
       left: '3%',
@@ -151,9 +151,12 @@ const initBarChart = () => {
 
   chartInstance.setOption(option);
 
-  // 点击事件
+  // 点击事件 - 传递type值
   chartInstance.on('click', (params) => {
-    emit('barClick', barData[params.dataIndex]?.name);
+    const barItem = props.data.barData[params.dataIndex];
+    if (barItem) {
+      emit('barClick', barItem.type);
+    }
   });
 };
 
@@ -231,6 +234,7 @@ onUnmounted(() => {
   flex-wrap: nowrap;
   width: 100%;
   height: auto;
+  padding-bottom: 0.5rem;
   min-height: 280px;
   overflow: hidden;
 }
@@ -248,7 +252,7 @@ onUnmounted(() => {
   flex: 1;
   padding: 16px;
   cursor: pointer;
-  background-color: #fff;
+  background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);

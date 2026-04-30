@@ -1,15 +1,19 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue';
 
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj } from '@vben/hooks';
+
 import { ElMessage } from 'element-plus';
 
+import { getCardConfigChart } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardConfig';
 import CardConfigStats from './components/CardConfigStats.vue';
 import Table from './table/index.vue';
 
 import '#/genchuan-components/page/index.scss';
 
 // 控制统计组件显示/隐藏的状态
-const showStats = ref(false);
+const showStats = ref(true);
 
 // 切换统计组件显示/隐藏状态
 const toggleStats = () => {
@@ -23,95 +27,120 @@ const toggleStats = () => {
 const statsData = ref({
   cards: [],
   pieData: [],
+  barData: [],
 });
 
-// 静态统计数据 - 接口失败时使用
-const staticStatsData = {
-  effectiveCount: 5,
-  totalSaleCount: 486,
-  typeRatio: [
-    { type: '0', typeName: '日卡', count: 2 },
-    { type: '1', typeName: '周卡', count: 2 },
-    { type: '2', typeName: '月卡', count: 2 },
-    { type: '3', typeName: '季卡', count: 1 },
-    { type: '4', typeName: '年卡', count: 1 },
-  ],
-};
+// 获取卡种类型标签文本
+function getCardTypeLabel(type) {
+  const dict = getDictObj(DICT_TYPE.CARD_CONFIG_TYPE, String(type));
+  return dict ? dict.label : type;
+}
+
+// 获取适用范围标签文本
+function getScopeLabel(scope) {
+  const dict = getDictObj(DICT_TYPE.CARD_CONFIG_SCOPE, String(scope));
+  return dict ? dict.label : scope;
+}
 
 // 组装统计数据
 const assembleStatsData = (data) => {
   // 组装卡片数据
   statsData.value.cards = [
     {
-      title: '生效配置数',
-      value: data.effectiveCount || 0,
-      color: '#4A90E2',
-      filterType: 'effective',
-    },
-    {
       title: '累计卡种销量',
-      value: data.totalSaleCount || 0,
+      value: data.salesCount || 0,
       color: '#50E3C2',
       desc: '总销量',
       filterType: 'sale',
     },
+    {
+      title: '生效配置数',
+      value: data.enableCount || 0,
+      color: '#4A90E2',
+      filterType: 'effective',
+      status: '1', // 已生效状态
+    },
   ];
 
-  // 组装饼图数据
+  // 组装饼图数据 - 配置类型占比
   statsData.value.pieData = (data.typeRatio || []).map((item) => ({
-    name: item.typeName,
-    value: item.count,
+    name: getCardTypeLabel(item.type),
+    value: Math.round(item.rate * 100), // 将比率转换为百分比数值
     type: item.type,
+  }));
+
+  // 组装柱状图数据 - 适用范围分布
+  statsData.value.barData = (data.scopeCountList || []).map((item) => ({
+    scope: item.scope,
+    scopeName: getScopeLabel(item.scope),
+    count: item.count,
   }));
 };
 
-// 获取统计数据
+// 获取统计数据 - 从API获取
 const fetchStatsData = async () => {
   try {
-    // TODO: 替换为实际API调用
-    // const response = await getCardConfigChart();
-    // if (response && response.code === 200 && response.data) {
-    //   const data = response.data;
-    //   const hasData =
-    //     data.effectiveCount > 0 ||
-    //     (data.typeRatio && data.typeRatio.length > 0);
-    //   if (hasData) {
-    //     assembleStatsData(data);
-    //   } else {
-    //     assembleStatsData(staticStatsData);
-    //   }
-    // } else {
-    //   assembleStatsData(staticStatsData);
-    // }
-
-    // 使用静态数据
-    assembleStatsData(staticStatsData);
+    const response = await getCardConfigChart();
+    if (response) {
+      assembleStatsData(response);
+    }
   } catch (error) {
-    // 接口调用失败，错误信息打印到控制台，使用静态数据
-    console.error('获取统计数据失败，使用静态数据:', error);
-    assembleStatsData(staticStatsData);
+    ElMessage.error('获取统计数据失败');
+    console.error('获取统计数据失败:', error);
   }
+};
+
+// 获取表格组件实例（处理v-for中的ref数组情况）
+const getTableComponent = () => {
+  // 在v-for中使用ref时，tableRef可能是数组
+  const tableComponent = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
+  return tableComponent;
 };
 
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (card) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('card', card.filterType);
+  const tableComponent = getTableComponent();
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
+    // 生效配置数卡片，传入 status 进行筛选
+    if (card.filterType === 'effective' && card.status) {
+      tableComponent.handleStatsFilter('status', card.status);
+    } else {
+      tableComponent.handleStatsFilter('card', card.filterType);
+    }
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
 };
 
-// 处理饼图点击 - 钻取筛选
-const handlePieClick = async (typeName) => {
+// 处理饼图点击 - 钻取筛选配置类型
+const handlePieClick = async (type) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    // 从饼图数据中找到对应的type值
-    const pieItem = statsData.value.pieData.find((item) => item.name === typeName);
-    if (pieItem) {
-      tableRef.value.handleStatsFilter('type', pieItem.type);
-    }
+  const tableComponent = getTableComponent();
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
+    tableComponent.handleStatsFilter('type', type);
+  } else {
+    console.warn('tableRef not ready or handleStatsFilter not available');
+  }
+};
+
+// 处理柱状图点击 - 钻取筛选适用范围
+const handleBarClick = async (scope) => {
+  await nextTick();
+  const tableComponent = getTableComponent();
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
+    tableComponent.handleStatsFilter('scope', scope);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
@@ -153,6 +182,7 @@ onMounted(() => {
       :data="statsData"
       @card-click="handleCardClick"
       @pie-click="handlePieClick"
+      @bar-click="handleBarClick"
     />
     <!-- 箭头图标已屏蔽 -->
     <!--

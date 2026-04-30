@@ -44,10 +44,10 @@ const initBarChart = () => {
     title: {
       text: '类目订单分布',
       left: 'center',
-      top: 10,
+      top: 5,
       textStyle: {
         color: '#6E7E91',
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 500,
       },
     },
@@ -62,15 +62,14 @@ const initBarChart = () => {
       axisPointer: {
         type: 'shadow',
       },
-      formatter: '{b}: {c}单',
+      formatter: '{b}: {c}',
     },
     grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '10%',
-      top: '20%',
-      containLabel: true,
-      backgroundColor: 'transparent',
+      left: 50,
+      right: 20,
+      bottom: 60,
+      top: 40,
+      containLabel: false,
     },
     xAxis: {
       type: 'category',
@@ -78,8 +77,15 @@ const initBarChart = () => {
       data: xAxisData,
       axisLabel: {
         color: '#9AA8B7',
-        fontSize: 12,
-        interval: 0,
+        fontSize: 10,
+        interval: xAxisData.length > 8 ? 'auto' : 0,
+        rotate: xAxisData.length > 5 ? 45 : 0,
+        formatter: function(value) {
+          if (value.length > 4) {
+            return value.substring(0, 4) + '...';
+          }
+          return value;
+        },
       },
       axisLine: {
         lineStyle: {
@@ -99,17 +105,13 @@ const initBarChart = () => {
       type: 'value',
       axisLabel: {
         color: '#9AA8B7',
-        fontSize: 11,
+        fontSize: 10,
       },
       axisLine: {
-        lineStyle: {
-          color: '#E8F4FD',
-        },
+        show: false,
       },
       axisTick: {
-        lineStyle: {
-          color: '#E8F4FD',
-        },
+        show: false,
       },
       splitLine: {
         lineStyle: {
@@ -130,23 +132,18 @@ const initBarChart = () => {
           ]),
           borderRadius: [4, 4, 0, 0],
         },
-        barWidth: '40%',
+        barWidth: '50%',
         label: {
           show: true,
           position: 'top',
           color: '#6E7E91',
-          fontSize: 12,
+          fontSize: 11,
           formatter: '{c}',
         },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
             shadowColor: 'rgba(74, 144, 226, 0.3)',
-          },
-          label: {
-            show: true,
-            fontSize: 14,
-            fontWeight: 'bold',
           },
         },
       },
@@ -155,9 +152,11 @@ const initBarChart = () => {
 
   chartInstance.setOption(option);
 
-  // 点击事件
   chartInstance.on('click', (params) => {
-    emit('barClick', barData[params.dataIndex]?.categoryId);
+    const clickedData = barData[params.dataIndex];
+    if (clickedData) {
+      emit('barClick', clickedData);
+    }
   });
 };
 
@@ -179,12 +178,12 @@ const initLineChart = () => {
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '订单量趋势（近30天）',
+      text: '订单量趋势（30天）',
       left: 'center',
-      top: 10,
+      top: 5,
       textStyle: {
         color: '#6E7E91',
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 500,
       },
     },
@@ -202,12 +201,11 @@ const initLineChart = () => {
       },
     },
     grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '10%',
-      top: '20%',
-      containLabel: true,
-      backgroundColor: 'transparent',
+      left: 50,
+      right: 20,
+      bottom: 50,
+      top: 40,
+      containLabel: false,
     },
     xAxis: {
       type: 'category',
@@ -215,7 +213,7 @@ const initLineChart = () => {
       data: xAxisData,
       axisLabel: {
         color: '#9AA8B7',
-        fontSize: 11,
+        fontSize: 10,
         rotate: 45,
         interval: 'auto',
       },
@@ -237,17 +235,13 @@ const initLineChart = () => {
       type: 'value',
       axisLabel: {
         color: '#9AA8B7',
-        fontSize: 11,
+        fontSize: 10,
       },
       axisLine: {
-        lineStyle: {
-          color: '#E8F4FD',
-        },
+        show: false,
       },
       axisTick: {
-        lineStyle: {
-          color: '#E8F4FD',
-        },
+        show: false,
       },
       splitLine: {
         lineStyle: {
@@ -263,10 +257,10 @@ const initLineChart = () => {
         data: orderData,
         smooth: true,
         symbol: 'circle',
-        symbolSize: 6,
+        symbolSize: 5,
         lineStyle: {
           color: '#50E3C2',
-          width: 3,
+          width: 2,
         },
         itemStyle: {
           color: '#50E3C2',
@@ -285,16 +279,12 @@ const initLineChart = () => {
             shadowColor: 'rgba(80, 227, 194, 0.5)',
           },
         },
-        label: {
-          show: false,
-        },
       },
     ],
   };
 
   chartInstance.setOption(option);
 
-  // 点击事件
   chartInstance.on('click', (params) => {
     emit('lineClick', lineData[params.dataIndex]?.fullDate);
   });
@@ -382,28 +372,35 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: nowrap;
   width: 100%;
-  height: auto;
+  height: 300px;
   min-height: 300px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .chart-box-left {
   display: flex;
   flex-shrink: 0;
   flex-direction: column;
-  width: 200px;
-  gap: 16px;
+  width: 180px;
+  height: 100%;
+  gap: 12px;
+  padding-right: 16px;
+  box-sizing: border-box;
 }
 
 .stat-card {
   flex: 1;
-  padding: 16px;
+  padding: 12px 16px;
   cursor: pointer;
-  background-color: #fff;
+  background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .stat-card:last-child {
@@ -419,12 +416,12 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .card-title {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #6e7e91;
 }
@@ -441,7 +438,7 @@ onUnmounted(() => {
 }
 
 .card-value {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
   color: #303133;
 }
@@ -455,21 +452,24 @@ onUnmounted(() => {
 .charts-wrapper {
   position: relative;
   display: flex;
-  flex: 1 1 0;
+  flex: 1;
   min-width: 0;
-  gap: 20px;
+  height: 100%;
+  gap: 16px;
+  box-sizing: border-box;
 }
 
 .activity-type-chart {
-  flex: 0 0 40%;
+  flex: 0 0 42%;
   min-width: 0;
-  height: 280px;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .activity-trend-chart {
   flex: 1;
   min-width: 0;
-  height: 280px;
-  margin-left: 0 !important;
+  height: 100%;
+  box-sizing: border-box;
 }
 </style>

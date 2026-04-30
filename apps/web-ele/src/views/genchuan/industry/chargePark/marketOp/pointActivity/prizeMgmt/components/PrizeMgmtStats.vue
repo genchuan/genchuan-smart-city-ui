@@ -58,7 +58,7 @@ const initBarChart = () => {
       axisPointer: {
         type: 'shadow',
       },
-      formatter: '{b}: {c}个',
+      formatter: '{b}: {c}',
     },
     grid: {
       left: '3%',
@@ -153,7 +153,8 @@ const initBarChart = () => {
 
   // 点击事件
   chartInstance.on('click', (params) => {
-    emit('barClick', barData[params.dataIndex]?.name);
+    const dataItem = barData[params.dataIndex];
+    emit('barClick', dataItem?.type, dataItem?.name);
   });
 };
 
@@ -229,6 +230,7 @@ onUnmounted(() => {
 .prize-chart-box {
   display: flex;
   flex-wrap: nowrap;
+  padding-bottom: 0.5rem;
   width: 100%;
   height: auto;
   min-height: 280px;
@@ -248,7 +250,7 @@ onUnmounted(() => {
   flex: 1;
   padding: 16px;
   cursor: pointer;
-  background-color: #fff;
+  background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);

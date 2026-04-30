@@ -24,7 +24,7 @@ export function saveRuleConfig(data) {
 
 /** 导出积分规则配置数据 */
 export function exportRuleConfig() {
-  return requestClient.download('/marketop/rule-config/export-excel');
+  return requestClient.download('/marketop/rule-config/export');
 }
 
 // ==================== 列表行交互操作接口 ====================
@@ -47,6 +47,6 @@ export function disableRuleConfig(data) {
 // ==================== 数据可视化图表接口 ====================
 
 /** 积分规则统计（饼图 + 卡片） */
-export function getRuleConfigChart(params) {
-  return requestClient.get('/marketop/rule-config/chart', { params });
+export function getRuleConfigChart() {
+  return requestClient.get('/marketop/rule-config/chart');
 }

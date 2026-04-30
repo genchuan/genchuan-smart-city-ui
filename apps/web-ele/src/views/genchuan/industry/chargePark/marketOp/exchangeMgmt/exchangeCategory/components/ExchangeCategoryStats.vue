@@ -9,18 +9,146 @@ const props = defineProps({
     required: false,
     default: () => ({
       cards: [],
+      pieData: [],
       barData: [],
     }),
   },
 });
 
-const emit = defineEmits(['cardClick', 'barClick']);
+const emit = defineEmits(['cardClick', 'pieClick', 'barClick']);
 
+const pieChartRef = ref(null);
 const barChartRef = ref(null);
+const pieChartInstance = ref(null);
 const barChartInstance = ref(null);
 
 const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B'];
 
+// 初始化饼图 - 类目状态分布
+const initPieChart = () => {
+  if (!pieChartRef.value) return;
+
+  if (pieChartInstance.value) {
+    pieChartInstance.value.dispose();
+  }
+
+  const chartInstance = echarts.init(pieChartRef.value);
+  pieChartInstance.value = chartInstance;
+
+  const pieData = props.data.pieData || [];
+
+  const option = {
+    backgroundColor: 'transparent',
+    title: {
+      text: '类目状态分布',
+      left: 'center',
+      top: 10,
+      textStyle: {
+        color: '#6E7E91',
+        fontSize: 16,
+        fontWeight: 500,
+      },
+    },
+    tooltip: {
+      trigger: 'item',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#E8F4FD',
+      borderWidth: 1,
+      textStyle: {
+        color: '#6E7E91',
+      },
+      formatter: '{b}: {c} ({d}%)',
+    },
+    color: freshColors,
+    legend: {
+      orient: 'horizontal',
+      bottom: 5,
+      type: 'scroll',
+      left: 'center',
+      textStyle: {
+        color: '#6E7E91',
+        fontSize: 11,
+      },
+      itemWidth: 12,
+      itemHeight: 12,
+      formatter(name) {
+        return name.length > 5 ? `${name.slice(0, 5)}...` : name;
+      },
+    },
+    series: [
+      {
+        name: '类目状态',
+        type: 'pie',
+        radius: ['35%', '55%'],
+        center: ['50%', '52%'],
+        avoidLabelOverlap: true,
+        minShowLabelAngle: 5,
+        label: {
+          show: true,
+          position: 'outside',
+          formatter(params) {
+            const name =
+              params.name.length > 4
+                ? `${params.name.slice(0, 4)}...`
+                : params.name;
+            return `{name|${name}}\n{percent|${params.percent}%}`;
+          },
+          rich: {
+            name: {
+              color: '#6E7E91',
+              fontSize: 11,
+              lineHeight: 16,
+              align: 'center',
+            },
+            percent: {
+              color: '#4A90E2',
+              fontSize: 12,
+              fontWeight: 'bold',
+              lineHeight: 16,
+              align: 'center',
+            },
+          },
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 13,
+            fontWeight: 'bold',
+          },
+          scale: true,
+          scaleSize: 5,
+        },
+        labelLine: {
+          show: true,
+          length: 12,
+          length2: 8,
+          smooth: true,
+          lineStyle: {
+            color: '#9AA8B7',
+            width: 1,
+          },
+        },
+        itemStyle: {
+          borderWidth: 2,
+          borderColor: '#fff',
+        },
+        data: pieData,
+      },
+    ],
+  };
+
+  chartInstance.setOption(option);
+
+  // 点击事件 - 传递 status 值用于钻取筛选
+  chartInstance.on('click', (params) => {
+    const pieItem = pieData.find((item) => item.name === params.name);
+    if (pieItem) {
+      emit('pieClick', pieItem.status);
+    }
+  });
+};
+
+// 初始化柱状图 - 类目适用范围分布
 const initBarChart = () => {
   if (!barChartRef.value) return;
 
@@ -38,7 +166,7 @@ const initBarChart = () => {
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '类目商品分布',
+      text: '类目适用范围分布',
       left: 'center',
       top: 10,
       textStyle: {
@@ -55,10 +183,7 @@ const initBarChart = () => {
       textStyle: {
         color: '#6E7E91',
       },
-      axisPointer: {
-        type: 'shadow',
-      },
-      formatter: '{b}: {c}个',
+      formatter: '{b}: {c}',
     },
     grid: {
       left: '3%',
@@ -76,6 +201,7 @@ const initBarChart = () => {
         color: '#6E7E91',
         fontSize: 12,
         interval: 0,
+        rotate: xAxisData.length > 5 ? 30 : 0,
       },
       axisLine: {
         lineStyle: {
@@ -116,7 +242,7 @@ const initBarChart = () => {
     },
     series: [
       {
-        name: '商品数量',
+        name: '类目数量',
         type: 'bar',
         data: countData,
         itemStyle: {
@@ -151,17 +277,24 @@ const initBarChart = () => {
 
   chartInstance.setOption(option);
 
-  // 点击事件
+  // 点击事件 - 传递 scope 值用于钻取筛选
   chartInstance.on('click', (params) => {
-    emit('barClick', barData[params.dataIndex]?.id);
+    const barItem = barData[params.dataIndex];
+    if (barItem) {
+      emit('barClick', barItem.scope);
+    }
   });
 };
 
 const initCharts = () => {
+  initPieChart();
   initBarChart();
 };
 
 const handleResize = () => {
+  if (pieChartInstance.value) {
+    pieChartInstance.value.resize();
+  }
   if (barChartInstance.value) {
     barChartInstance.value.resize();
   }
@@ -186,6 +319,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
+  if (pieChartInstance.value) {
+    pieChartInstance.value.dispose();
+  }
   if (barChartInstance.value) {
     barChartInstance.value.dispose();
   }
@@ -219,7 +355,9 @@ onUnmounted(() => {
 
     <!-- 图表区域 -->
     <div class="charts-wrapper">
-      <!-- 柱状图区域 -->
+      <!-- 饼图区域 - 类目状态分布 -->
+      <div class="category-type-chart" ref="pieChartRef"></div>
+      <!-- 柱状图区域 - 类目适用范围分布 -->
       <div class="category-type-chart" ref="barChartRef"></div>
     </div>
   </div>
@@ -231,6 +369,7 @@ onUnmounted(() => {
   flex-wrap: nowrap;
   width: 100%;
   height: auto;
+  padding-bottom: 0.5rem;
   min-height: 280px;
   overflow: hidden;
 }
@@ -248,7 +387,7 @@ onUnmounted(() => {
   flex: 1;
   padding: 16px;
   cursor: pointer;
-  background-color: #fff;
+  background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);

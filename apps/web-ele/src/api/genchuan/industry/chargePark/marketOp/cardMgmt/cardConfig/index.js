@@ -77,7 +77,7 @@ export function getCardConfigDetail(params) {
  * @returns {Promise}
  */
 export function activateCardConfig(data) {
-  return requestClient.put('/marketop/card-config/activate', data);
+  return requestClient.put('/marketop/card-config/enable', data);
 }
 
 /** 禁用卡种配置
@@ -92,11 +92,8 @@ export function disableCardConfig(data) {
 // ==================== 数据可视化图表接口 ====================
 
 /** 卡种配置统计（饼图 + 卡片）
- * @param {Object} params - 请求参数
- * @param {string} params.startTime - 统计开始时间
- * @param {string} params.endTime - 统计结束时间
  * @returns {Promise}
  */
-export function getCardConfigChart(params) {
-  return requestClient.get('/marketop/card-config/chart', { params });
+export function getCardConfigChart() {
+  return requestClient.get('/marketop/card-config/chart');
 }

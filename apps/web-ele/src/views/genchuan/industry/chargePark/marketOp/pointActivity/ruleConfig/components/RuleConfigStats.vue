@@ -10,14 +10,17 @@ const props = defineProps({
     default: () => ({
       cards: [],
       pieData: [],
+      barData: [],
     }),
   },
 });
 
-const emit = defineEmits(['cardClick', 'pieClick']);
+const emit = defineEmits(['cardClick', 'pieClick', 'barClick']);
 
 const pieChartRef = ref(null);
 const pieChartInstance = ref(null);
+const barChartRef = ref(null);
+const barChartInstance = ref(null);
 
 const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B'];
 
@@ -134,17 +137,139 @@ const initPieChart = () => {
   chartInstance.setOption(option);
 
   chartInstance.on('click', (params) => {
-    emit('pieClick', params.name);
+    const dataItem = props.data.pieData?.[params.dataIndex];
+    emit('pieClick', dataItem?.type, params.name);
+  });
+};
+
+const initBarChart = () => {
+  if (!barChartRef.value) return;
+
+  if (barChartInstance.value) {
+    barChartInstance.value.dispose();
+  }
+
+  const chartInstance = echarts.init(barChartRef.value);
+  barChartInstance.value = chartInstance;
+
+  const barData = props.data.barData || [];
+  const xAxisData = barData.map((item) => item.name);
+  const valueData = barData.map((item) => item.value);
+
+  const option = {
+    backgroundColor: 'transparent',
+    title: {
+      text: '适用场景分布',
+      left: 'center',
+      top: 10,
+      textStyle: {
+        color: '#6E7E91',
+        fontSize: 16,
+        fontWeight: 500,
+      },
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#E8F4FD',
+      borderWidth: 1,
+      textStyle: {
+        color: '#6E7E91',
+      },
+      axisPointer: {
+        type: 'shadow',
+      },
+      formatter(params) {
+        const param = params[0];
+        return `${param.name}: ${param.value}`;
+      },
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: 60,
+      containLabel: true,
+    },
+    xAxis: {
+      type: 'category',
+      data: xAxisData,
+      axisLine: {
+        lineStyle: {
+          color: '#D9D9D9',
+        },
+      },
+      axisLabel: {
+        color: '#6E7E91',
+        fontSize: 12,
+      },
+      axisTick: {
+        show: false,
+      },
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: {
+        show: false,
+      },
+      axisTick: {
+        show: false,
+      },
+      axisLabel: {
+        color: '#6E7E91',
+        fontSize: 12,
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#F0F0F0',
+          type: 'dashed',
+        },
+      },
+    },
+    series: [
+      {
+        name: '数量',
+        type: 'bar',
+        data: valueData,
+        barWidth: '50%',
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#4A90E2' },
+            { offset: 1, color: '#50E3C2' },
+          ]),
+          borderRadius: [4, 4, 0, 0],
+        },
+        emphasis: {
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: '#2E7AD1' },
+              { offset: 1, color: '#3DD4B5' },
+            ]),
+          },
+        },
+      },
+    ],
+  };
+
+  chartInstance.setOption(option);
+
+  chartInstance.on('click', (params) => {
+    const dataItem = props.data.barData?.[params.dataIndex];
+    emit('barClick', dataItem?.scene, params.name);
   });
 };
 
 const initCharts = () => {
   initPieChart();
+  initBarChart();
 };
 
 const handleResize = () => {
   if (pieChartInstance.value) {
     pieChartInstance.value.resize();
+  }
+  if (barChartInstance.value) {
+    barChartInstance.value.resize();
   }
 };
 
@@ -169,6 +294,9 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
   if (pieChartInstance.value) {
     pieChartInstance.value.dispose();
+  }
+  if (barChartInstance.value) {
+    barChartInstance.value.dispose();
   }
 });
 </script>
@@ -202,6 +330,8 @@ onUnmounted(() => {
     <div class="charts-wrapper">
       <!-- 饼图区域 -->
       <div class="rule-type-chart" ref="pieChartRef"></div>
+      <!-- 柱状图区域 -->
+      <div class="rule-scene-chart" ref="barChartRef"></div>
     </div>
   </div>
 </template>
@@ -213,6 +343,7 @@ onUnmounted(() => {
   width: 100%;
   height: auto;
   min-height: 280px;
+  padding-bottom: 0.5rem;
   overflow: hidden;
 }
 
@@ -229,7 +360,7 @@ onUnmounted(() => {
   flex: 1;
   padding: 16px;
   cursor: pointer;
-  background-color: #fff;
+  background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
@@ -294,6 +425,12 @@ onUnmounted(() => {
   flex: 1;
   min-width: 0;
   height: 280px;
-  margin-left: 0 !important;
+  margin-right: 10px;
+}
+
+.rule-scene-chart {
+  flex: 1;
+  min-width: 0;
+  height: 280px;
 }
 </style>

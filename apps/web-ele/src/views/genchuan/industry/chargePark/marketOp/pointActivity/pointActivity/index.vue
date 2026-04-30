@@ -3,11 +3,10 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj } from '@vben/hooks';
+
 import { ElMessage } from 'element-plus';
 
-import {
-  getPointActivityChart,
-} from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
+import { getPointActivityChart } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
 
 import PointActivityStats from './components/PointActivityStats.vue';
 import Table from './table/index.vue';
@@ -58,14 +57,14 @@ const fetchStatsData = async () => {
 
     // 组装柱状图数据 - 活动类型分布
     // 将类型代码映射为字典标签
-    statsData.value.barData = (response.typeCountList || []).map(item => ({
+    statsData.value.barData = (response.typeCountList || []).map((item) => ({
       type: item.type,
       typeName: getTypeLabel(item.type),
       count: item.count,
     }));
 
     // 组装折线图数据 - 活动参与趋势
-    statsData.value.lineData = (response.trendList || []).map(item => ({
+    statsData.value.lineData = (response.trendList || []).map((item) => ({
       date: item.date,
       userCount: item.count,
     }));
@@ -84,7 +83,9 @@ function getTypeLabel(type) {
 // 获取表格组件实例（处理v-for中的ref数组情况）
 const getTableComponent = () => {
   // 在v-for中使用ref时，tableRef可能是数组
-  const tableComponent = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  const tableComponent = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
   return tableComponent;
 };
 
@@ -92,7 +93,10 @@ const getTableComponent = () => {
 const handleCardClick = async (cardType) => {
   await nextTick();
   const tableComponent = getTableComponent();
-  if (tableComponent && typeof tableComponent.handleStatsFilter === 'function') {
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
     tableComponent.handleStatsFilter('card', cardType);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
@@ -103,7 +107,10 @@ const handleCardClick = async (cardType) => {
 const handleBarClick = async (type) => {
   await nextTick();
   const tableComponent = getTableComponent();
-  if (tableComponent && typeof tableComponent.handleStatsFilter === 'function') {
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
     tableComponent.handleStatsFilter('type', type);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
@@ -114,7 +121,10 @@ const handleBarClick = async (type) => {
 const handleLineClick = async (date) => {
   await nextTick();
   const tableComponent = getTableComponent();
-  if (tableComponent && typeof tableComponent.handleStatsFilter === 'function') {
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
     tableComponent.handleStatsFilter('date', date);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
@@ -178,11 +188,7 @@ onMounted(() => {
       </el-icon>
     </div>
     -->
-    <el-tabs
-      v-model="activeName"
-      class="common-tabs"
-      type="card"
-    >
+    <el-tabs v-model="activeName" class="common-tabs" type="card">
       <el-tab-pane
         v-for="item in tabArray"
         :key="item.label"

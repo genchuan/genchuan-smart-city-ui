@@ -347,6 +347,12 @@ export const useTabbarStore = defineStore('core-tabbar', {
       const { currentRoute } = router;
       const { name } = currentRoute.value;
 
+      // 添加空值检查，避免name为null或undefined时出错
+      if (!name) {
+        console.warn('[TabbarStore] Cannot refresh: route name is null or undefined');
+        return;
+      }
+
       this.excludeCachedTabs.add(name as string);
       this.renderRouteView = false;
       startProgress();

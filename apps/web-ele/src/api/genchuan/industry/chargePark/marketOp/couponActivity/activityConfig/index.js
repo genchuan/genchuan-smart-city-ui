@@ -91,11 +91,8 @@ export function disableActivityConfig(data) {
 // ==================== 数据可视化图表接口 ====================
 
 /** 活动配置统计（饼图 + 卡片）
- * @param {Object} params - 请求参数
- * @param {string} params.startTime - 统计开始时间
- * @param {string} params.endTime - 统计结束时间
  * @returns {Promise}
  */
-export function getActivityConfigChart(params) {
-  return requestClient.get('/marketop/activity-config/chart', { params });
+export function getActivityConfigChart() {
+  return requestClient.get('/marketop/activity-config/chart');
 }

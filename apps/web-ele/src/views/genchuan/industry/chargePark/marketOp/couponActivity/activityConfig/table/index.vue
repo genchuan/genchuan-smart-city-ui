@@ -459,16 +459,20 @@ const handleFullShow = () => {
 function handleStatsFilter(filterSource, filterValue) {
   if (filterSource === 'type') {
     // 点击饼图 - 按配置类型筛选
-    filterType.value = filterValue;
+    filterType.value = filterType.value === filterValue ? '' : filterValue;
+    gridApi.query();
+  } else if (filterSource === 'userGroup') {
+    // 点击柱状图 - 按适用人群筛选
+    filterUserGroup.value = filterUserGroup.value === filterValue ? '' : filterValue;
     gridApi.query();
   } else if (filterSource === 'card') {
     // 点击卡片
-    if (filterValue === 'effective') {
+    if (filterValue === 'enable') {
       // 点击生效配置数 - 筛选已生效的配置
       filterStatus.value = '1';
       gridApi.query();
-    } else if (filterValue === 'participation') {
-      // 点击活动参与率 - 可以按参与人数排序或筛选
+    } else if (filterValue === 'join') {
+      // 点击活动参与率
       ElMessage.info('按参与率筛选');
     }
   }
@@ -542,11 +546,11 @@ defineExpose({
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
+<!--          <IconButton-->
+<!--            content="导出"-->
+<!--            icon-name="download"-->
+<!--            @click="handleExport"-->
+<!--          />-->
           <!--          <IconButton-->
           <!--            content="批量删除"-->
           <!--            icon-name="delete"-->

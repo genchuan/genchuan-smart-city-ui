@@ -27,6 +27,15 @@ export function createExchangeCategory(data) {
   return requestClient.post('/marketop/exchange-category/create', data);
 }
 
+/** 下载导入积分活动模板
+ * @returns {Promise} 返回文件流
+ */
+export function getExchangeCategoryImportTemplate() {
+  return requestClient.download(
+    '/marketop/exchange-category/get-import-template',
+  );
+}
+
 /** 导入兑换类目
  * @param {File} file - 导入文件，支持Excel格式
  * @returns {Promise}
@@ -60,30 +69,30 @@ export function getExchangeCategoryDetail(params) {
 }
 
 /** 生效兑换类目
- * @param {Object} data - 请求参数
- * @param {number} data.id - 类目ID
+ * @param {Object} params - 请求参数
+ * @param {number} params.id - 类目ID
  * @returns {Promise}
  */
-export function activateExchangeCategory(data) {
-  return requestClient.put('/marketop/exchange-category/activate', data);
+export function activateExchangeCategory(params) {
+  return requestClient.put('/marketop/exchange-category/enable', null, { params });
 }
 
 /** 禁用兑换类目
- * @param {Object} data - 请求参数
- * @param {number} data.id - 类目ID
+ * @param {Object} params - 请求参数
+ * @param {number} params.id - 类目ID
  * @returns {Promise}
  */
-export function disableExchangeCategory(data) {
-  return requestClient.put('/marketop/exchange-category/disable', data);
+export function disableExchangeCategory(params) {
+  return requestClient.put('/marketop/exchange-category/disable', null, { params });
 }
 
 /** 启用兑换类目
- * @param {Object} data - 请求参数
- * @param {number} data.id - 类目ID
+ * @param {Object} params - 请求参数
+ * @param {number} params.id - 类目ID
  * @returns {Promise}
  */
-export function enableExchangeCategory(data) {
-  return requestClient.put('/marketop/exchange-category/enable', data);
+export function enableExchangeCategory(params) {
+  return requestClient.put('/marketop/exchange-category/enable', null, { params });
 }
 
 /** 编辑兑换类目
@@ -102,11 +111,8 @@ export function updateExchangeCategory(data) {
 // ==================== 数据可视化图表接口 ====================
 
 /** 兑换类目统计（柱状图 + 卡片）
- * @param {Object} params - 请求参数
- * @param {string} params.startTime - 统计开始时间
- * @param {string} params.endTime - 统计结束时间
  * @returns {Promise}
  */
-export function getExchangeCategoryChart(params) {
-  return requestClient.get('/marketop/exchange-category/chart', { params });
+export function getExchangeCategoryChart() {
+  return requestClient.get('/marketop/exchange-category/chart');
 }

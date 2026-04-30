@@ -2,6 +2,7 @@
 import { computed, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -14,7 +15,6 @@ import {
   updatePackageConfig,
 } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/packageConfig';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { exportToExcel } from '#/utils/excel.js';
 import { formatDate } from '#/utils/genchuan/formatTime';
 import StatusConfirmDialog from '#/views/genchuan/industry/chargePark/marketOp/couponActivity/packageConfig/components/StatusConfirmDialog.vue';
 
@@ -83,11 +83,16 @@ const [Form, formApi] = useVbenForm({
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
+  title: getTitle,
   onCancel() {
     formDrawerApi.close();
   },
   async onConfirm() {
-    const obj = formApi.form.values;
+    const { valid } = await formApi.validate();
+    if (!valid) {
+      return;
+    }
+    const obj = await formApi.getValues();
     const loadingInstance = ElLoading.service({
       text: '保存中...',
     });
@@ -131,28 +136,101 @@ function handleRefresh() {
   gridApi.query();
 }
 
-/** 导出表格 */
+/** 导出表格 - 使用后端接口导出 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  try {
+    const loadingInstance = ElLoading.service({
+      text: '导出中...',
+    });
+
+    // 构建导出参数（包含当前筛选条件）
+    const params = {
+      name: dataObj.searchParams.name,
+      type: filterType.value || dataObj.searchParams.type,
+      scope: filterScope.value || dataObj.searchParams.scope,
+      status: filterStatus.value || dataObj.searchParams.status,
+      auditorName: dataObj.searchParams.auditorName,
+      creator: dataObj.searchParams.creator,
+    };
+
+    // 调用后端导出接口
+    const response = await getPackageConfigPage({
+      ...params,
+      pageNo: 1,
+      pageSize: 99999, // 获取所有数据
+    });
+
+    if (response && response.list) {
+      // 格式化时间字段
+      const formattedList = response.list.map((item) => ({
+        ...item,
+        id: String(item.id),
+        typeName: getPackageConfigTypeLabel(item.type),
+        statusName: getPackageConfigStatusLabel(item.status),
+        scopeName: getPackageConfigScopeLabel(item.scope),
+        createTimeStr: item.createTime ? formatDate(item.createTime) : '-',
+        auditTimeStr: item.auditTime ? formatDate(item.auditTime) : '-',
+        effectTimeStr: item.effectTime ? formatDate(item.effectTime) : '-',
+        updateTimeStr: item.updateTime ? formatDate(item.updateTime) : '-',
+      }));
+
+      // 准备Excel数据
+      const excelData = formattedList.map((item) => ({
+        '券包名称': item.name,
+        '券包类型': item.typeName,
+        '包含优惠券': item.couponNames || '-',
+        '价格': `¥${item.price}`,
+        '适用范围': item.scopeName,
+        '配置状态': item.statusName,
+        '创建时间': item.createTimeStr,
+        '审核人': item.auditorName || '-',
+        '审核时间': item.auditTimeStr,
+        '销量': item.saleCount || 0,
+        '生效时间': item.effectTimeStr,
+        '券包描述': item.description || '-',
+      }));
+
+      // 转换为CSV格式
+      const headers = Object.keys(excelData[0] || {});
+      const csvContent = [
+        headers.join(','),
+        ...excelData.map((row) => headers.map((h) => `"${(row[h] || '').toString().replace(/"/g, '""')}"`).join(',')),
+      ].join('\n');
+
+      // 创建Blob并下载
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      downloadFileFromBlobPart({
+        fileName: textObj.excelAllName,
+        source: blob,
+      });
+
+      ElMessage.success('导出成功');
+    } else {
+      ElMessage.error('导出失败：数据为空');
+    }
+  } catch (error) {
+    console.error('导出失败:', error);
+    ElMessage.error('导出失败');
+  } finally {
+    ElLoading.service().close();
+  }
 }
 
 /** 创建 */
 function handleCreate() {
-  formDrawerApi
-    .setData({
-      title: textObj.addText,
-    })
-    .open();
+  formDrawerApi.setData({
+    title: textObj.addText,
+  });
+  formDrawerApi.open();
 }
 
 /** 编辑 */
 function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: textObj.editText,
-      ...row,
-    })
-    .open();
+  formDrawerApi.setData({
+    title: textObj.editText,
+    ...row,
+  });
+  formDrawerApi.open();
 }
 
 /** 生效 */
@@ -211,7 +289,18 @@ const getTableData = async (pageObj) => {
     if (response) {
       const { list, total } = response;
       dataObj.total = total || 0;
-      dataObj.list = list || [];
+      // 格式化时间字段，统一转换为字符串形式
+      dataObj.list = (list || []).map((item) => ({
+        ...item,
+        id: String(item.id),
+        typeName: getPackageConfigTypeLabel(item.type),
+        statusName: getPackageConfigStatusLabel(item.status),
+        scopeName: getPackageConfigScopeLabel(item.scope),
+        createTimeStr: item.createTime ? formatDate(item.createTime) : '',
+        auditTimeStr: item.auditTime ? formatDate(item.auditTime) : '-',
+        effectTimeStr: item.effectTime ? formatDate(item.effectTime) : '',
+        updateTimeStr: item.updateTime ? formatDate(item.updateTime) : '',
+      }));
       return dataObj;
     }
   } catch (error) {
@@ -243,11 +332,24 @@ const getTableData = async (pageObj) => {
       return searchMatch;
     });
 
+    // 格式化时间字段
     dataObj.total = filteredList.length;
-    dataObj.list = filteredList.slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+    dataObj.list = filteredList
+      .slice(
+        (page.currentPage - 1) * page.pageSize,
+        page.currentPage * page.pageSize,
+      )
+      .map((item) => ({
+        ...item,
+        id: String(item.id),
+        typeName: getPackageConfigTypeLabel(item.type),
+        statusName: getPackageConfigStatusLabel(item.status),
+        scopeName: getPackageConfigScopeLabel(item.scope),
+        createTimeStr: item.createTime ? formatDate(item.createTime) : '',
+        auditTimeStr: item.auditTime ? formatDate(item.auditTime) : '-',
+        effectTimeStr: item.effectTime ? formatDate(item.effectTime) : '',
+        updateTimeStr: item.updateTime ? formatDate(item.updateTime) : '',
+      }));
   }
   return dataObj;
 };
@@ -384,23 +486,18 @@ const handleFullShow = () => {
 function handleStatsFilter(filterSource, filterValue) {
   if (filterSource === 'type') {
     // 点击柱状图 - 按券包类型筛选
-    // 根据类型名称找到对应的类型值
-    const typeMap = {
-      新手包: '0',
-      节日包: '1',
-      日常包: '2',
-    };
-    filterType.value = typeMap[filterValue] || '';
+    // 直接使用传递的type值
+    filterType.value = filterType.value === filterValue ? '' : filterValue;
     gridApi.query();
   } else if (filterSource === 'card') {
     // 点击卡片
-    if (filterValue === 'effective') {
-      // 点击生效配置数 - 筛选已生效的券包
-      filterStatus.value = '1';
+    if (filterValue === 'enable') {
+      // 点击生效配置数 - 筛选已生效的券包（status=1表示已生效）
+      filterStatus.value = filterStatus.value === '1' ? '' : '1';
       gridApi.query();
     } else if (filterValue === 'sale') {
       // 点击累计券包销量 - 可以按销量排序
-      ElMessage.info('按销量筛选');
+      // ElMessage.info('按销量筛选');
     }
   }
 }
@@ -551,16 +648,9 @@ defineExpose({
           {{ getPackageConfigStatusLabel(row.status) }}
         </ElTag>
       </template>
-      <!-- 创建时间 - 格式化显示 -->
+      <!-- 创建时间 - 使用格式化后的字符串 -->
       <template #createTime="{ row }">
-        <span>{{
-          row.createTime
-            ? formatDate(
-                new Date(Number(row.createTime)),
-                'YYYY-MM-DD HH:mm:ss',
-              )
-            : ''
-        }}</span>
+        <span>{{ row.createTimeStr }}</span>
       </template>
       <!-- 审核人 - 点击跳转操作人员详情 -->
       <template #auditorName="{ row }">
@@ -575,13 +665,9 @@ defineExpose({
         </el-text>
         <span v-else>-</span>
       </template>
-      <!-- 审核时间 - 格式化显示 -->
+      <!-- 审核时间 - 使用格式化后的字符串 -->
       <template #auditTime="{ row }">
-        <span>{{
-          row.auditTime
-            ? formatDate(new Date(Number(row.auditTime)), 'YYYY-MM-DD HH:mm:ss')
-            : '-'
-        }}</span>
+        <span>{{ row.auditTimeStr }}</span>
       </template>
       <!-- 销量 - 点击跳转券包订单明细 -->
       <template #saleCount="{ row }">
@@ -594,16 +680,9 @@ defineExpose({
           {{ row.saleCount }}
         </el-text>
       </template>
-      <!-- 生效时间 - 格式化显示 -->
+      <!-- 生效时间 - 使用格式化后的字符串 -->
       <template #effectTime="{ row }">
-        <span>{{
-          row.effectTime
-            ? formatDate(
-                new Date(Number(row.effectTime)),
-                'YYYY-MM-DD HH:mm:ss',
-              )
-            : ''
-        }}</span>
+        <span>{{ row.effectTimeStr }}</span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

@@ -100,11 +100,8 @@ export function disablePackageConfig(data) {
 
 /**
  * 券包配置统计（柱状图 + 卡片）
- * @param {Object} params - 请求参数
- * @param {string} params.startTime - 统计开始时间
- * @param {string} params.endTime - 统计结束时间
  * @returns {Promise}
  */
-export function getPackageConfigChart(params) {
-  return requestClient.get('/marketop/package-config/chart', { params });
+export function getPackageConfigChart() {
+  return requestClient.get('/marketop/package-config/chart');
 }

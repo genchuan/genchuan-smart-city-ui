@@ -76,12 +76,8 @@ export function cancelExchangeOrder(data) {
 // ==================== 数据可视化图表接口 ====================
 
 /** 兑换订单统计（折线图 + 柱状图 + 卡片）
- * @param {Object} params - 请求参数
- * @param {string} params.startTime - 统计开始时间
- * @param {string} params.endTime - 统计结束时间
- * @param {number} params.stationId - 场站ID，支持按场站筛选
  * @returns {Promise}
  */
-export function getExchangeOrderChart(params) {
-  return requestClient.get('/marketop/exchange-order/chart', { params });
+export function getExchangeOrderChart() {
+  return requestClient.get('/marketop/exchange-order/chart');
 }
