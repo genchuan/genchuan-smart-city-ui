@@ -216,6 +216,10 @@ const getTableData = async (pageObj) => {
     dataObj.loading = false;
   }
 };
+console.log(useFormSchema().map((v) => {
+    delete v.rules;
+    return { ...v };
+  }).filter((v) => v.isSearch))
 const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {

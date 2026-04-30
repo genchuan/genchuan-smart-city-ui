@@ -74,6 +74,54 @@ export function useFormSchema() {
       },
       labelWidth: 120,
     },
+    {
+      fieldName: 'createOrderTimeStart',
+      label: '订单生成时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: 120,
+      isSearch: true,
+    },
+    {
+      fieldName: 'createOrderTimeEnd',
+      label: '订单结束时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: 120,
+      isSearch: true,
+    },
+    {
+      fieldName: 'payTimeStart',
+      label: '支付开始时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: 120,
+      isSearch: true,
+    },
+    {
+      fieldName: 'payTimeEnd',
+      label: '支付结束时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: 120,
+      isSearch: true,
+    },
   ];
 }
 

@@ -12,7 +12,6 @@ export function useFormSchema() {
         min: 0,
       },
       labelWidth: 120,
-      isSearch: true,
     },
     {
       fieldName: 'orderNo',
@@ -23,7 +22,6 @@ export function useFormSchema() {
         maxLength: 50,
       },
       labelWidth: 120,
-      isSearch: true,
     },
     {
       fieldName: 'carPlate',
@@ -34,7 +32,6 @@ export function useFormSchema() {
         maxLength: 20,
       },
       labelWidth: 120,
-      isSearch: true,
     },
     {
       fieldName: 'parkDuration',
@@ -65,23 +62,40 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择支付状态',
         options: [
+          { label: '充电中', value: 'charging' },
+          { label: '待支付', value: 'pending_pay' },
+          { label: '已支付', value: 'paid' },
           { label: '已完成', value: 'completed' },
-          { label: '未支付', value: 'unpaid' },
           { label: '已取消', value: 'cancelled' },
+          { label: '退款中', value: 'refunding' },
         ],
       },
       labelWidth: 120,
       isSearch: true,
     },
     {
-      fieldName: 'createOrderTime',
+      fieldName: 'createOrderTimeStart',
       label: '订单生成时间',
-      component: 'DateTimePicker',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择订单生成时间',
+        type: 'datetime',
         format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
+      isSearch: true,
+    },
+    {
+      fieldName: 'createOrderTimeEnd',
+      label: '订单生成结束时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: 120,
+      isSearch: true,
     },
     {
       fieldName: 'stationId',
@@ -260,7 +274,7 @@ export function useGridColumns() {
       field: 'payMethod',
       title: '支付方式',
       minWidth: 120,
-      sortable: true, 
+      sortable: true,
       slots: { default: 'payMethod' },
     },
     {
@@ -281,7 +295,7 @@ export function useGridColumns() {
       title: '操作人ID',
       minWidth: 120,
       sortable: true,
-    }, 
+    },
     {
       field: 'creator',
       title: '创建者',
@@ -298,13 +312,13 @@ export function useGridColumns() {
       field: 'createTime',
       title: '创建时间',
       minWidth: 220,
-      sortable: true, 
+      sortable: true,
     },
     {
       field: 'updateTime',
       title: '更新时间',
       minWidth: 220,
-      sortable: true, 
+      sortable: true,
     },
     {
       title: '操作',
