@@ -85,6 +85,7 @@ async function submitAction() {
         ids: reportIds.value,
         auditResult: form.auditResult,
         auditRemark: form.auditRemark,
+        reserve1:form.auditRemark,
       });
       ElMessage.success('批量审核成功');
     }
