@@ -319,13 +319,7 @@ export function useGridColumns() {
       title: '归档时间',
       minWidth: 220,
       sortable: true, 
-    },
-    {
-      field: 'operatorId',
-      title: '操作人ID',
-      minWidth: 120,
-      sortable: true,
-    },
+    }, 
     {
       field: 'creator',
       title: '创建者',

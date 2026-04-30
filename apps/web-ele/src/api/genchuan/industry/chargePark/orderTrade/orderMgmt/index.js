@@ -241,3 +241,10 @@ export function batchHandleAbnormalOrder(data) {
   return requestClient.post('/ordertrade/abnormal-order/batch-handle', data);
 }
  
+
+/** 获取车牌详情 */
+export function getPlateIdentifyPage(params) {
+  return requestClient.get('/vehiclepass/plate-identify/page', {
+    params,
+  });
+}
