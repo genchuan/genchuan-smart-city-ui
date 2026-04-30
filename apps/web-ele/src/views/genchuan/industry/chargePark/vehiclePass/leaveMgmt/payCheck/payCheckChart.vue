@@ -90,7 +90,7 @@ function initPieChart() {
       type: 'category',
       data: state.chartData.trend.map((item) => item.date),
     },
-    yAxis: { type: 'value', name: '成功率(%)', min: 90, max: 100 },
+    yAxis: { type: 'value', name: '成功率(%)', min: 0, max: 100 },
     series: [
       {
         name: '核验成功率',
