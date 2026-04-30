@@ -334,7 +334,7 @@ onUnmounted(() => {
 }
 
 .left-card {
-  height: 159px;
+  height: 159px !important;
 }
 
 .space-right-section {
