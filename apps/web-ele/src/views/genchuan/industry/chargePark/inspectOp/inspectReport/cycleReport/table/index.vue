@@ -13,6 +13,7 @@ import {
   exportCycleReport,
   generateCycleReport,
   // getCycleReportDetail,
+  exportCycleReportById,
   getCycleReportPage,
 } from '#/api/genchuan/industry/chargePark/inspectOp/inspectReport/cycleReport';
 
@@ -303,6 +304,20 @@ async function handleExport(params = {}) {
   }
 }
 
+async function handleExportById(id) {
+  try {
+    const data = await exportCycleReportById(id);
+    downloadFileFromBlobPart({
+      fileName: `周期报表_${id}.xlsx`,
+      source: data,
+    });
+  }
+  catch (error) {
+    console.error(error);
+    ElMessage.error('导出失败');
+  }
+}
+
 function handleExportList() {
   handleExport();
 }
@@ -314,7 +329,7 @@ async function handleExportRow(row) {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    await handleExport({ id: row.id });
+    await handleExportById(row.id);
   } catch (error) {
     if (error !== 'cancel') {
       console.error(error);
