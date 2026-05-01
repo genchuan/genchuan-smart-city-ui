@@ -15,8 +15,10 @@ export function useFormSchema() {
 
 export function useGridColumns() {
   return [
+    { type: 'checkbox', width: 40 },
+    { type: 'seq', title: '序号', width: 60 },
     { field: 'reportCycle', title: '报表周期', minWidth: 120, slots: { default: 'reportCycle' } },
-    { field: 'statTime', title: '统计时段', minWidth: 150, slots: { default: 'statTime' } },
+    { field: 'statTime', title: '统计时段', minWidth: 240, slots: { default: 'statTime' } },
     { field: 'rescueCompleteRate', title: '救援完成率(%)', minWidth: 120, slots: { default: 'rescueCompleteRate' } },
     { field: 'reserveSuccessRate', title: '预约成功率(%)', minWidth: 120, slots: { default: 'reserveSuccessRate' } },
     { field: 'complaintHandleRate', title: '投诉处理率(%)', minWidth: 120, slots: { default: 'complaintHandleRate' } },

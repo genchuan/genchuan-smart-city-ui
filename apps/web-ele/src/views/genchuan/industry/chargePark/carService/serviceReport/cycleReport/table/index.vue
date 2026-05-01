@@ -85,7 +85,7 @@
     <CreateDrawer>
       <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-width="100px">
         <el-form-item label="统计类型" prop="statType" required>
-          <el-select v-model="createForm.statType" placeholder="请选择统计类型">
+          <el-select v-model="createForm.statType" placeholder="请选择统计类型" @change="onStatTypeChange">
             <el-option label="日报" value="日报" />
             <el-option label="周报" value="周报" />
             <el-option label="月报" value="月报" />
@@ -95,12 +95,17 @@
             <el-option label="自定义" value="自定义" />
           </el-select>
         </el-form-item>
-        <el-form-item label="统计开始时间" prop="statStartTime" required>
-          <el-date-picker v-model="createForm.statStartTime" type="datetime" placeholder="选择开始时间" value-format="YYYY-MM-DD HH:mm:ss" />
+        <el-form-item v-if="createForm.statType && createForm.statType !== '自定义'" label="统计区间">
+          <el-text type="info">{{ createForm.statStartTime }} 至 {{ createForm.statEndTime }}</el-text>
         </el-form-item>
-        <el-form-item label="统计结束时间" prop="statEndTime" required>
-          <el-date-picker v-model="createForm.statEndTime" type="datetime" placeholder="选择结束时间" value-format="YYYY-MM-DD HH:mm:ss" />
-        </el-form-item>
+        <template v-if="createForm.statType === '自定义'">
+          <el-form-item label="统计开始时间" prop="statStartTime" required>
+            <el-date-picker v-model="createForm.statStartTime" type="datetime" placeholder="选择开始时间" value-format="YYYY-MM-DD HH:mm:ss" />
+          </el-form-item>
+          <el-form-item label="统计结束时间" prop="statEndTime" required>
+            <el-date-picker v-model="createForm.statEndTime" type="datetime" placeholder="选择结束时间" value-format="YYYY-MM-DD HH:mm:ss" />
+          </el-form-item>
+        </template>
       </el-form>
     </CreateDrawer>
 
@@ -123,8 +128,8 @@
     <DimensionDetailDrawer ref="dimensionDrawerRef" />
 
     <el-dialog v-model="operatorDialogVisible" title="操作人详情" width="400px">
-      <p>用户ID：{{ currentOperator.id }}</p>
-      <p>用户名称：{{ currentOperator.name }}</p>
+      <p>账号：{{ currentOperator.username || '-' }}</p>
+      <p>姓名：{{ currentOperator.name || '-' }}</p>
     </el-dialog>
 
     <QueryForm.Drawer title="筛选" />
@@ -172,7 +177,7 @@ const currentDetail = ref(null);
 const compareData = ref(null);
 const compareTitle = ref('增长率分析');
 const operatorDialogVisible = ref(false);
-const currentOperator = ref({ id: '', name: '' });
+const currentOperator = ref({ id: '', username: '', name: '' });
 
 const rateChartRef = ref(null);
 const totalChartRef = ref(null);
@@ -268,6 +273,11 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
+const checkedRows = ref([]);
+const handleRowCheckboxChange = ({ records }) => {
+  checkedRows.value = records || [];
+};
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
@@ -278,6 +288,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     toolbarConfig: { refresh: true, search: true },
     showOverflow: true,
   },
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
   showSearchForm: false,
 });
 
@@ -287,13 +301,11 @@ const createForm = reactive({ statType: '', statStartTime: '', statEndTime: '' }
 const createFormRef = ref(null);
 const createRules = {
   statType: [{ required: true, message: '请选择统计类型', trigger: 'change' }],
-  statStartTime: [{ required: true, message: '请选择统计开始时间', trigger: 'change' }],
-  statEndTime: [
-    { required: true, message: '请选择统计结束时间', trigger: 'change' },
+  statStartTime: [
     {
       validator: (rule, value, callback) => {
-        if (createForm.statStartTime && value && new Date(value) <= new Date(createForm.statStartTime)) {
-          callback(new Error('结束时间必须晚于开始时间'));
+        if (createForm.statType === '自定义' && !value) {
+          callback(new Error('请选择统计开始时间'));
         } else {
           callback();
         }
@@ -301,6 +313,79 @@ const createRules = {
       trigger: 'change'
     }
   ],
+  statEndTime: [
+    {
+      validator: (rule, value, callback) => {
+        if (createForm.statType === '自定义') {
+          if (!value) return callback(new Error('请选择统计结束时间'));
+          if (createForm.statStartTime && new Date(value) <= new Date(createForm.statStartTime)) {
+            return callback(new Error('结束时间必须晚于开始时间'));
+          }
+        }
+        callback();
+      },
+      trigger: 'change'
+    }
+  ],
+};
+
+// 根据统计类型自动计算时间区间
+const fmt = (d) => {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
+const computeRange = (type) => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth(); // 0-11
+  const d = now.getDate();
+  let start, end;
+  switch (type) {
+    case '日报':
+      start = new Date(y, m, d, 0, 0, 0);
+      end = new Date(y, m, d, 23, 59, 59);
+      break;
+    case '周报': {
+      // ISO 周：周一为第一天
+      const day = now.getDay() || 7; // 周日 0 → 7
+      start = new Date(y, m, d - day + 1, 0, 0, 0);
+      end = new Date(y, m, d - day + 7, 23, 59, 59);
+      break;
+    }
+    case '月报':
+      start = new Date(y, m, 1, 0, 0, 0);
+      end = new Date(y, m + 1, 0, 23, 59, 59); // 下月 0 号 = 本月最后一天
+      break;
+    case '季报': {
+      const qStart = Math.floor(m / 3) * 3; // 0,3,6,9
+      start = new Date(y, qStart, 1, 0, 0, 0);
+      end = new Date(y, qStart + 3, 0, 23, 59, 59);
+      break;
+    }
+    case '半年报': {
+      const hStart = m < 6 ? 0 : 6;
+      start = new Date(y, hStart, 1, 0, 0, 0);
+      end = new Date(y, hStart + 6, 0, 23, 59, 59);
+      break;
+    }
+    case '年报':
+      start = new Date(y, 0, 1, 0, 0, 0);
+      end = new Date(y, 11, 31, 23, 59, 59);
+      break;
+    default:
+      return { start: '', end: '' };
+  }
+  return { start: fmt(start), end: fmt(end) };
+};
+const onStatTypeChange = (type) => {
+  if (type === '自定义') {
+    createForm.statStartTime = '';
+    createForm.statEndTime = '';
+  } else {
+    const { start, end } = computeRange(type);
+    createForm.statStartTime = start;
+    createForm.statEndTime = end;
+  }
 };
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   modal: false, appendToMain: true, width: 550, title: '生成周期报表',
@@ -324,11 +409,57 @@ const openCreateDrawer = () => {
 };
 
 const handleExportList = async () => {
+  // 有选中：前端导出选中行（CSV）；无选中：调后端导出全列表
+  if (checkedRows.value.length > 0) {
+    await ElMessageBox.confirm(`确认导出选中的 ${checkedRows.value.length} 条数据吗？`, '提示', { type: 'info' });
+    await exportRowsAsXlsx(checkedRows.value);
+    ElMessage.success('导出成功');
+    return;
+  }
   await ElMessageBox.confirm('确认导出当前列表数据吗？', '提示', { type: 'info' });
   const params = { ...dataObj.searchObj, pageNo: 1, pageSize: 10000 };
   const blob = await exportCycleReport(params);
   downloadFileFromBlobPart({ fileName: '周期报表列表.xlsx', source: blob });
   ElMessage.success('导出成功');
+};
+
+// 前端 XLSX 生成 + 下载（选中导出走这条路，无需后端接口改动）
+const exportRowsAsXlsx = async (rows) => {
+  const XLSX = await import('xlsx');
+  const cols = [
+    { field: 'reportCycle', title: '报表周期' },
+    { field: 'statTime', title: '统计时段' },
+    { field: 'rescueCompleteRate', title: '救援完成率(%)' },
+    { field: 'reserveSuccessRate', title: '预约成功率(%)' },
+    { field: 'complaintHandleRate', title: '投诉处理率(%)' },
+    { field: 'findCarSuccessRate', title: '寻车定位成功率(%)' },
+    { field: 'spacePushSuccessRate', title: '空位推送成功率(%)' },
+    { field: 'effectiveWordingCount', title: '生效话术数' },
+    { field: 'rescueTotal', title: '救援总量' },
+    { field: 'reserveTotal', title: '预约总量' },
+    { field: 'complaintTotal', title: '投诉总量' },
+    { field: 'spacePushTotal', title: '空位推送总量' },
+    { field: 'generateStatus', title: '生成状态' },
+    { field: 'generateTime', title: '报表生成时间' },
+    { field: 'operator', title: '操作人' },
+    { field: 'yearOnYearGrowthRate', title: '同比增长率(%)' },
+    { field: 'monthOnMonthGrowthRate', title: '环比增长率(%)' },
+    { field: 'serviceStatusRatio', title: '服务状态占比' },
+  ];
+  // 行数据 → [{标题: 值, ...}]
+  const data = rows.map(r => {
+    const o = {};
+    cols.forEach(c => { o[c.title] = r[c.field] ?? ''; });
+    return o;
+  });
+  const ws = XLSX.utils.json_to_sheet(data, { header: cols.map(c => c.title) });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '周期报表');
+  // 文件名：所选行如果全是同一周期类型，用该类型；否则统称"多类型"
+  const cycles = [...new Set(rows.map(r => r.reportCycle).filter(Boolean))];
+  const prefix = cycles.length === 1 ? cycles[0] : `周期报表_多类型`;
+  const ts = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
+  XLSX.writeFile(wb, `${prefix}_${rows.length}条_${ts}.xlsx`);
 };
 
 const handleRowExport = async (id) => {
@@ -434,12 +565,10 @@ const dimensionTitleMap = {
   wording: '话术明细',
 };
 const openDimensionDetail = async (reportId, dimension) => {
-  const res = await getDimensionDetail({ id: reportId, dimension, pageNo: 1, pageSize: 100 });
-  dimensionDrawerRef.value.open({
-    title: dimensionTitleMap[dimension] || `${dimension}明细`,
-    data: res.list || [],
-    total: res.total,
-  });
+  // 复用详情抽屉，自动定位到对应维度 Tab
+  const res = await getCycleReportDetail({ id: reportId });
+  currentDetail.value = res;
+  detailDrawerRef.value?.open(dimension);
 };
 
 const showOperatorDetail = async (userId, userName) => {
@@ -449,15 +578,31 @@ const showOperatorDetail = async (userId, userName) => {
   }
   try {
     const userInfo = await getUserInfo(userId);
-    currentOperator.value = { id: userId, name: userInfo.nickname || userName };
+    currentOperator.value = {
+      id: userId,
+      username: userInfo.username || '',
+      name: userInfo.nickname || userName || '',
+    };
   } catch {
-    currentOperator.value = { id: userId, name: userName || userId };
+    currentOperator.value = { id: userId, username: '', name: userName || '' };
   }
   operatorDialogVisible.value = true;
 };
 
 const handleChartDrill = async (event) => {
-  const filters = event.detail;
+  const filters = event.detail || {};
+  if (filters.dimension) {
+    if (!dataObj.list || dataObj.list.length === 0) {
+      ElMessage.warning('暂无可下钻的报表，请先生成');
+      return;
+    }
+    const latestReport = dataObj.list[0];
+    // 复用详情抽屉，定位到对应维度 Tab；若来自柱子/扇区，携带 type 做类型过滤
+    const res = await getCycleReportDetail({ id: latestReport.id });
+    currentDetail.value = res || latestReport;
+    detailDrawerRef.value?.open(filters.dimension, filters.type);
+    return;
+  }
   if (filters.location) {
     ElMessage.info(`地图钻取：位置 ${filters.location}`);
   }
