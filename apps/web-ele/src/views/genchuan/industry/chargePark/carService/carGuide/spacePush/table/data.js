@@ -5,14 +5,14 @@ export function useFormSchema() {
       fieldName: 'userName',
       label: '用户',
       component: 'Input',
-      componentProps: { placeholder: '请输入用户名' },
+      componentProps: { placeholder: '请输入用户名', clearable: true },
       isSearch: true,
     },
     {
-      fieldName: 'stationId',
-      label: '场站ID',
+      fieldName: 'stationName',
+      label: '场站名称',
       component: 'Input',
-      componentProps: { placeholder: '请输入场站ID' },
+      componentProps: { placeholder: '请输入场站名称', clearable: true },
       isSearch: true,
     },
     {
@@ -21,6 +21,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择推送状态',
+        clearable: true,
         options: [
           { label: '待推送', value: '待推送' },
           { label: '已推送', value: '已推送' },
@@ -32,7 +33,12 @@ export function useFormSchema() {
       fieldName: 'pushTime',
       label: '推送时间',
       component: 'DatePicker',
-      componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD HH:mm:ss' },
+      componentProps: {
+        type: 'daterange',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+        defaultTime: [new Date(2000, 0, 1, 0, 0, 0), new Date(2000, 0, 1, 23, 59, 59)],
+        clearable: true,
+      },
       isSearch: true,
     },
   ];

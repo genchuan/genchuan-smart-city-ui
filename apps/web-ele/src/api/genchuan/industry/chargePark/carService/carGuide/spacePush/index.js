@@ -41,6 +41,19 @@ export function countSpacePushByStatus() {
   return requestClient.get('/carservice/space-push/count-by-status');
 }
 
+// 按场站查询车位列表（空位信息钻取用）
+export async function getParkingSpacesByStation(stationId) {
+  try {
+    const res = await requestClient.get('/stationresource/parking-space-info/page', {
+      params: { stationId, pageNo: 1, pageSize: 200 },
+    });
+    return res?.list || [];
+  } catch (e) {
+    console.warn('获取车位列表失败', e);
+    return [];
+  }
+}
+
 export async function getUserList() {
   try {
     const res = await requestClient.get('/system/user/simple-list');

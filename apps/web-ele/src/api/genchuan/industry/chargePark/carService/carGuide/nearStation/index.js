@@ -1,8 +1,9 @@
 import { requestClient } from '#/api/request';
 
 // 周边场站统计图表（地图+柱状图+卡片）
-export function getNearStationChart() {
-  return requestClient.get('/carservice/near-station/chart');
+// params 支持 { lon, lat, startTime, endTime }；lon/lat 是"当前位置"参考点，柱状图以此计算各场站距离分桶
+export function getNearStationChart(params) {
+  return requestClient.get('/carservice/near-station/chart', { params });
 }
 
 // 分页查询周边场站记录
@@ -18,6 +19,17 @@ export function getNearStationDrillBar(params) {
 // 详情
 export function getNearStationDetail(params) {
   return requestClient.get('/carservice/near-station/get', { params });
+}
+
+// 某次查询返回的场站明细快照（点击列表"周边场站数"/"空位场站数"用）
+// params: { nearStationId, onlyHasEmpty }
+export function getNearStationResult(params) {
+  return requestClient.get('/carservice/near-station/result', { params });
+}
+
+// 获取用户详情（点击列表"用户"列用）
+export function getUserDetail(userId) {
+  return requestClient.get('/system/user/get', { params: { id: userId } });
 }
 
 // 导航（跳转到周边场站位置）

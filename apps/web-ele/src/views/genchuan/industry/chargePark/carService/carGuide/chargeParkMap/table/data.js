@@ -26,6 +26,7 @@ export function useFormSchema() {
         valueFormat: 'YYYY-MM-DD HH:mm:ss',
         startPlaceholder: '开始时间',
         endPlaceholder: '结束时间',
+        defaultTime: [new Date(2000, 0, 1, 0, 0, 0), new Date(2000, 0, 1, 23, 59, 59)],
       },
       isSearch: true,
     },

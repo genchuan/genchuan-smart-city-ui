@@ -116,20 +116,38 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.searchObj,
   };
-  if (dataObj.searchObj.planTime && Array.isArray(dataObj.searchObj.planTime)) {
-    params.planTimeBegin = dataObj.searchObj.planTime[0];
-    params.planTimeEnd = dataObj.searchObj.planTime[1];
-    delete params.planTime;
+  // planTime 是数组，后端按 ?planTime=start&planTime=end 接收（Spring repeat 格式），
+  // 也可以传逗号分隔字符串，统一转成逗号分隔以避免 LocalDateTime[] 多值绑定问题
+  if (Array.isArray(params.planTime) && params.planTime.length === 2) {
+    params.planTime = `${params.planTime[0]},${params.planTime[1]}`;
   }
+  // 客户端筛选标记（_successOnly），不传给后端
+  const successOnly = !!params._successOnly;
+  delete params._successOnly;
   const res = await getPathPlanPage(params);
-  dataObj.total = res.total;
-  dataObj.list = (res.list || []).map(v => ({
+  let list = res.list || [];
+  if (successOnly) list = list.filter(v => (v.pathLength || 0) > 0);
+  dataObj.total = successOnly ? list.length : res.total;
+  dataObj.list = list.map(v => ({
     ...v,
     createTime: formatTimestamp(v.createTime),
     updateTime: formatTimestamp(v.updateTime),
     planTime: formatTimestamp(v.planTime),
   }));
   return dataObj;
+};
+
+// 计算近 N 天时间区间
+const getRecentDaysRange = (days) => {
+  const fmt = (d) => {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - (days - 1));
+  start.setHours(0, 0, 0, 0);
+  return [fmt(start), fmt(end)];
 };
 
 // 搜索表单
@@ -243,8 +261,9 @@ const handleOpenDetail = async (row) => {
 
 const handleNavigate = async (row) => {
   try {
+    // 后端 CommonResult<String> 解包后 res 直接是 URL 字符串
     const res = await navigatePathPlan({ id: row.id });
-    const url = res?.data || res?.navigateUrl;
+    const url = typeof res === 'string' ? res : (res?.data || res?.navigateUrl);
     if (url) {
       window.open(url, '_blank');
       ElMessage.success('正在跳转导航...');
@@ -376,10 +395,17 @@ const handleChartRefresh = (event) => {
     }
     return;
   }
+  // 卡片点击：自动按近 7 天筛选
+  if (filters?.totalPlanCount || filters?.planSuccessRate) {
+    const newSearchObj = { planTime: getRecentDaysRange(7) };
+    if (filters.planSuccessRate) newSearchObj._successOnly = true;
+    dataObj.searchObj = newSearchObj;
+    dataObj.currentPage = 1;
+    gridApi.query();
+    return;
+  }
   const newSearchObj = { ...dataObj.searchObj };
-  if (filters?.date) newSearchObj.planTime = [filters.date, filters.date];
-  if (filters?.totalPlanCount) newSearchObj.totalPlanCount = true;
-  if (filters?.planSuccessRate) newSearchObj.planSuccessRate = true;
+  if (filters?.date) newSearchObj.planTime = [`${filters.date} 00:00:00`, `${filters.date} 23:59:59`];
   dataObj.searchObj = newSearchObj;
   dataObj.currentPage = 1;
   gridApi.query();

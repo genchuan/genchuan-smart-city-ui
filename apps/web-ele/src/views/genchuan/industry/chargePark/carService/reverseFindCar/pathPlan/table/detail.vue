@@ -1,6 +1,7 @@
 <script setup>
 import { computed, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
+import { formatTimestamp } from '#/utils';
 
 const props = defineProps({
   detailObj: { type: Object, required: true, default: () => ({}) },
@@ -23,13 +24,13 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-card-row"><div class="detail-row-left">用户：</div><div class="detail-row-right">{{ detailObj.userName || '-' }} (ID:{{ detailObj.userId || '-' }})</div></div>
       <div class="detail-card-row"><div class="detail-row-left">起点位置：</div><div class="detail-row-right">{{ detailObj.startLocationName || detailObj.startLocation || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">终点位置：</div><div class="detail-row-right">{{ detailObj.endLocationName || detailObj.endLocation || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">规划时间：</div><div class="detail-row-right">{{ detailObj.planTime || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">规划时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.planTime) || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">路径长度：</div><div class="detail-row-right">{{ detailObj.pathLength ? `${detailObj.pathLength}米` : '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">预计时长：</div><div class="detail-row-right">{{ detailObj.expectDuration ? `${detailObj.expectDuration}秒` : '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.creator || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ detailObj.createTime || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.createTime) || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updater || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">更新时间：</div><div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">更新时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.updateTime) || '-' }}</div></div>
     </div>
   </DetailDrawer>
 </template>

@@ -26,17 +26,31 @@ const state = reactive({
 
 const mapRef = ref(null);
 
+// 计算近 N 天的时间区间（含今天，从 N-1 天前 00:00:00 到现在）
+const getRecentDaysRange = (days) => {
+  const fmt = (d) => {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - (days - 1));
+  start.setHours(0, 0, 0, 0);
+  return { startTime: fmt(start), endTime: fmt(end) };
+};
+
 const fetchChartData = async () => {
   try {
-    const data = await getSpaceLocationChart({ timeRange: '近30天' });
+    const data = await getSpaceLocationChart(getRecentDaysRange(7));
     if (data) {
       state.cardList[0].value = data.totalQueryCount ?? 0;
       let rate = data.locationSuccessRate ?? 0;
       const percent = rate <= 1 ? (rate * 100).toFixed(1) : rate;
       state.cardList[1].value = `${percent}%`;
-      // 地图数据格式转换
+      // 地图数据格式转换：保留 record id 供点击跳详情
       state.mapData = (data.spaceLocationList || []).map(item => ({
-        id: item.spaceId || item.id,
+        id: item.id,
+        spaceId: item.spaceId,
         coordinate: `${item.lon},${item.lat}`,
         spaceNo: item.spaceNo,
         plateNo: item.plateNo,
@@ -51,19 +65,14 @@ const fetchChartData = async () => {
 
 const handleCardClick = (index) => {
   const card = state.cardList[index];
-  if (card.key === 'totalQueryCount') {
-    // 点击总查询量：可触发刷新列表（不额外筛选）
-    emit('refresh', { totalQueryCount: true });
-  } else if (card.key === 'locationSuccessRate') {
-    // 点击成功率：可触发刷新列表（不额外筛选）
-    emit('refresh', { locationSuccessRate: true });
-  }
+  if (card.key === 'totalQueryCount') emit('refresh', { totalQueryCount: true });
+  else if (card.key === 'locationSuccessRate') emit('refresh', { locationSuccessRate: true });
 };
 
 const handleMarkerClick = (item) => {
   if (item?.id) {
-    // 地图标注点击可跳转详情或筛选
-    emit('refresh', { spaceId: item.id });
+    // 把 record id 透出给父组件，让其打开详情抽屉
+    emit('refresh', { spaceLocationId: item.id });
   }
 };
 
