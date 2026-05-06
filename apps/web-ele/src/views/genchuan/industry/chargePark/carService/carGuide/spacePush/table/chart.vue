@@ -93,11 +93,7 @@ const renderLineChart = () => {
 };
 
 const handleCardClick = (type) => {
-  if (type === 'totalPush') {
-    emit('refresh', { cardType: 'totalPush' });
-  } else if (type === 'successRate') {
-    ElMessage.info('查看推送成功率明细趋势');
-  }
+  emit('refresh', { cardType: type });
 };
 
 onMounted(() => {

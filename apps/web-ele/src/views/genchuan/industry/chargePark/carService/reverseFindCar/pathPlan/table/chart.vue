@@ -20,9 +20,22 @@ const state = reactive({
 
 const mapComponentRef = ref(null);
 
+// 计算近 N 天的时间区间（含今天，从 N-1 天前 00:00:00 到现在）
+const getRecentDaysRange = (days) => {
+  const fmt = (d) => {
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
+  const end = new Date();
+  const start = new Date();
+  start.setDate(start.getDate() - (days - 1));
+  start.setHours(0, 0, 0, 0);
+  return { startTime: fmt(start), endTime: fmt(end) };
+};
+
 const fetchChartData = async () => {
   try {
-    const data = await getPathPlanChart({ timeRange: '近30天' });
+    const data = await getPathPlanChart(getRecentDaysRange(7));
     if (data) {
       state.cardList[0].value = data.totalPlanCount ?? 0;
       let rate = data.planSuccessRate ?? 0;

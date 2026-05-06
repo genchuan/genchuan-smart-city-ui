@@ -49,3 +49,9 @@ export async function getUserList() {
 export function getUserDetail(userId) {
   return requestClient.get('/system/user/get', { params: { id: userId } });
 }
+
+// 某次查询返回的场站明细快照（点击列表"查询结果数"列用）
+// params: { chargeParkMapId, onlyHasEmpty }
+export function getChargeParkMapResult(params) {
+  return requestClient.get('/carservice/charge-park-map/result', { params });
+}

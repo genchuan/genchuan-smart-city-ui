@@ -173,6 +173,12 @@ const initBarChart = () => {
     series: [{ type: 'bar', data: values, itemStyle: { borderRadius: [4, 4, 0, 0] } }],
   };
   barChart.setOption(option);
+  barChart.off('click');
+  barChart.on('click', (params) => {
+    if (params.componentType !== 'series') return;
+    const dim = inferDimension(currentBar.value.name);
+    if (dim) emit('refresh', { dimension: dim, type: params.name });
+  });
 };
 
 const initPieChart = () => {
@@ -193,6 +199,12 @@ const initPieChart = () => {
     }],
   };
   pieChart.setOption(option);
+  pieChart.off('click');
+  pieChart.on('click', (params) => {
+    if (params.componentType !== 'series') return;
+    const dim = inferDimension(currentPie.value.name);
+    if (dim) emit('refresh', { dimension: dim, type: params.name });
+  });
 };
 
 const onLeftChartTypeChange = () => {
@@ -216,6 +228,23 @@ const onPieIndexChange = () => {
 
 const handleMapMarkerClick = (location) => {
   emit('refresh', { location });
+};
+
+// 根据图表/卡片名称推断 dimension key（用于下钻）
+const inferDimension = (name) => {
+  const n = name || '';
+  if (n.includes('救援')) return 'rescue';
+  if (n.includes('预约')) return 'reserve';
+  if (n.includes('投诉')) return 'complaint';
+  if (n.includes('寻车') || n.includes('寻找')) return 'findCar';
+  if (n.includes('空位') || n.includes('推送')) return 'spacePush';
+  if (n.includes('话术')) return 'wording';
+  return null;
+};
+
+const onCardClick = (card) => {
+  if (!card.dimension) return;
+  emit('refresh', { dimension: card.dimension });
 };
 
 const handleResize = () => {
@@ -244,7 +273,8 @@ onUnmounted(() => {
         v-for="(card, index) in cardList"
         :key="card.key"
         class="stat-card"
-        :style="{ borderLeftColor: card.color }"
+        :style="{ borderLeftColor: card.color, cursor: card.dimension ? 'pointer' : 'default' }"
+        @click="onCardClick(card)"
       >
         <div class="card-header">
           <span class="card-title">{{ card.title }}</span>

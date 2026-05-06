@@ -61,7 +61,6 @@ const mapConfig = {
     title: 'stationName',
     fields: [
       { key: 'stationName', label: '场站名称' },
-      { key: 'address', label: '地址' },
       { key: 'statusName', label: '车位状态' },
       { key: 'emptySpace', label: '空闲车位数' },
     ],
@@ -105,17 +104,21 @@ const renderHeatmap = () => {
   minLat -= latMargin;
   maxLat += latMargin;
 
-  const gridSize = 40;
+  // 网格大小按点数自适应：12 个点用 ~10x10 网格，色块就足够大；点多时再细分
+  const gridSize = Math.max(8, Math.min(20, Math.ceil(Math.sqrt(currentHeatmapPoints.length) * 3)));
   const stepX = (maxLon - minLon) / gridSize;
   const stepY = (maxLat - minLat) / gridSize;
 
-  const gridData = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+  // 每个 cell 记录"使用率累加和"与"点数",最终取均值,避免落点多寡放大单元
+  const sumGrid = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+  const cntGrid = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
 
   currentHeatmapPoints.forEach(p => {
     const x = Math.floor((p.lon - minLon) / stepX);
     const y = Math.floor((p.lat - minLat) / stepY);
     if (x >= 0 && x < gridSize && y >= 0 && y < gridSize) {
-      gridData[y][x] += p.value || 1;
+      sumGrid[y][x] += p.value;
+      cntGrid[y][x] += 1;
     }
   });
 
@@ -123,9 +126,10 @@ const renderHeatmap = () => {
   let maxValue = 0;
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
-      const val = gridData[i][j];
-      if (val > 0) {
-        seriesData.push([j, i, val]);
+      const cnt = cntGrid[i][j];
+      if (cnt > 0) {
+        const val = sumGrid[i][j] / cnt;
+        seriesData.push([j, i, +val.toFixed(3)]);
         maxValue = Math.max(maxValue, val);
       }
     }
@@ -141,15 +145,21 @@ const renderHeatmap = () => {
       trigger: 'item',
       formatter: (params) => {
         if (params.data) {
-          return `经度范围: ${xAxisData[params.data[0]]}<br/>纬度范围: ${yAxisData[params.data[1]]}<br/>热度值: ${params.data[2]}`;
+          const pct = (params.data[2] * 100).toFixed(0);
+          return `经度: ${xAxisData[params.data[0]]}<br/>纬度: ${yAxisData[params.data[1]]}<br/>使用率: ${pct}%`;
         }
         return '';
       },
     },
+    // 使用率天然 0~1,固定标尺让色阶含义稳定:0%(冷)→50%(中)→100%(热)
     visualMap: {
       min: 0,
-      max: maxValue || 1,
+      max: 1,
       calculable: true,
+      orient: 'vertical',
+      left: 8,
+      bottom: 20,
+      text: ['100%', '0%'],
       inRange: { color: ['#50a3ba', '#eac736', '#d94e5d'] },
     },
     xAxis: { type: 'category', data: xAxisData, name: '经度', splitArea: { show: true } },
@@ -172,6 +182,8 @@ const renderHeatmap = () => {
       const north = parseFloat(yAxisData[yIdx + 1] || yAxisData[yIdx]);
       if (!isNaN(west) && !isNaN(east) && !isNaN(south) && !isNaN(north)) {
         mapRef.value?.drawBounds({ north, south, east, west });
+        // 同时通知列表按这个 bbox 过滤 queryLocation
+        emit('refresh', { bounds: { north, south, east, west } });
       }
     }
   });
@@ -199,7 +211,6 @@ const fetchChartData = async () => {
         coordinate: coordinate,
         statusName,
         stationName,
-        address: coordinate, // 地址显示坐标
         emptySpace,
         lon: item.lon,
         lat: item.lat,
@@ -207,11 +218,13 @@ const fetchChartData = async () => {
       };
     });
 
-    currentHeatmapPoints = rawHeatPoints.map(p => ({
-      lon: p.lon,
-      lat: p.lat,
-      value: p.value !== undefined ? p.value : 1
-    }));
+    currentHeatmapPoints = rawHeatPoints
+      .filter(p => p.lon != null && p.lat != null && !Number.isNaN(Number(p.lon)) && !Number.isNaN(Number(p.lat)))
+      .map(p => ({
+        lon: Number(p.lon),
+        lat: Number(p.lat),
+        value: p.value !== undefined ? Number(p.value) : 1,
+      }));
 
     await nextTick();
     renderHeatmap();
@@ -225,17 +238,28 @@ const handleCardClick = (type) => {
   emit('refresh', { cardType: type });
 };
 
-// 地图标注点击：不再发送场站ID筛选事件
+// 地图标注点击 → 通知列表打开"场站详情"弹窗
 const handleMarkerClick = (item) => {
-  console.log('点击了地图标记点:', item?.stationName);
+  if (!item) return;
+  emit('refresh', { stationDetail: {
+    stationName: item.stationName,
+    statusName: item.statusName,
+    emptySpace: item.emptySpace,
+    coordinate: item.coordinate,
+    lon: item.lon,
+    lat: item.lat,
+  }});
 };
 
-// 地址定位（支持坐标字符串和地址名称）
-const locateAddress = async (address) => {
-  if (!address) {
+// 地址定位（支持坐标字符串、{ coord, name } 对象、或地址名称）
+const locateAddress = async (input) => {
+  if (!input) {
     ElMessage.warning('地址为空');
     return;
   }
+  // 支持 { coord, name } 形式：coord 用于解析经纬度,name 作为 marker 标签
+  const coordStr = typeof input === 'object' ? (input.coord || '') : input;
+  const displayName = typeof input === 'object' ? (input.name || input.coord || '') : input;
 
   let retries = 0;
   const maxRetries = 20;
@@ -249,23 +273,23 @@ const locateAddress = async (address) => {
     return;
   }
 
-  const coordMatch = address.match(/^([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)$/);
+  const coordMatch = coordStr.match?.(/^([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)$/);
   if (coordMatch) {
     const lng = parseFloat(coordMatch[1]);
     const lat = parseFloat(coordMatch[2]);
     if (!isNaN(lng) && !isNaN(lat)) {
       mapRef.value.setCenter([lng, lat]);
       mapRef.value.setZoom(15);
-      mapRef.value.addTempMarker(lng, lat, `查询位置: ${address}`);
-      ElMessage.success(`已定位到坐标：${lng}, ${lat}`);
+      mapRef.value.addTempMarker(lng, lat, `查询位置: ${displayName}`);
+      ElMessage.success(`已定位到：${displayName}`);
       return;
     }
   }
 
-  const normalized = address.trim().toLowerCase();
+  const queryStr = String(displayName || coordStr).trim().toLowerCase();
   const found = mapData.value.find(item => {
-    const name = (item.stationName || item.address || '').trim().toLowerCase();
-    return name === normalized || name.includes(normalized);
+    const name = (item.stationName || '').trim().toLowerCase();
+    return name === queryStr || (queryStr && name.includes(queryStr));
   });
   if (found && found.coordinate) {
     const [lng, lat] = found.coordinate.split(',');
@@ -274,13 +298,13 @@ const locateAddress = async (address) => {
     if (!isNaN(lngNum) && !isNaN(latNum)) {
       mapRef.value.setCenter([lngNum, latNum]);
       mapRef.value.setZoom(15);
-      mapRef.value.addTempMarker(lngNum, latNum, found.stationName || found.address);
-      ElMessage.success(`已定位到：${found.stationName || found.address}`);
+      mapRef.value.addTempMarker(lngNum, latNum, found.stationName);
+      ElMessage.success(`已定位到：${found.stationName}`);
       return;
     }
   }
 
-  ElMessage.info(`无法定位“${address}”，请手动查找`);
+  ElMessage.info(`无法定位"${displayName}"，请手动查找`);
 };
 
 const handleLocateEvent = (event) => {
