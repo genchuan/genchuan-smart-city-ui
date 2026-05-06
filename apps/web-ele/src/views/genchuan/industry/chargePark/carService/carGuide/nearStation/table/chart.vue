@@ -2,7 +2,7 @@
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 import * as echarts from 'echarts';
 import { getRescueChartData } from '#/api/genchuan/industry/chargePark/carService/rescueService/rescueInfo/index.js';
-import MapComponent from '#/views/genchuan/industry/chargePark/carService/Mapindex.vue';
+import MapComponent from './Mapindex.vue';
 import { ElMessage, ElLoading } from 'element-plus';
 import { loadTMap } from '#/utils/genchuan/useTMap.ts';
 
@@ -37,12 +37,6 @@ const mapRef = ref(null);
 // 逆地理编码缓存
 const geocodeCache = new Map();
 
-/**
- * 通过腾讯地图 SDK 将坐标转换为地址
- * @param {number} lng 经度
- * @param {number} lat 纬度
- * @returns {Promise<string>} 地址字符串
- */
 async function reverseGeocode(lng, lat) {
   const key = `${lng},${lat}`;
   if (geocodeCache.has(key)) return geocodeCache.get(key);
@@ -60,7 +54,6 @@ async function reverseGeocode(lng, lat) {
   }
 }
 
-// 批量逆地理编码
 async function batchReverseGeocode(points) {
   const promises = points.map(async (point) => {
     const address = await reverseGeocode(point.lon, point.lat);
@@ -69,7 +62,6 @@ async function batchReverseGeocode(points) {
   return Promise.all(promises);
 }
 
-// 获取图表数据
 const fetchChartData = async () => {
   const loading = ElLoading.service({ text: '加载地图数据...', background: 'rgba(0,0,0,0.3)' });
   try {
@@ -104,7 +96,6 @@ const fetchChartData = async () => {
   }
 };
 
-// 折线图配置
 const getLineOption = () => ({
   backgroundColor: 'transparent',
   title: {
@@ -199,7 +190,7 @@ const handleAreaFilter = async () => {
   }
 };
 
-// 地址定位（增强：支持经纬度字符串和地址文本）
+// 地址定位（增强：支持经纬度字符串和地址文本，并添加临时标记）
 const locateAddress = async (address) => {
   if (!address) {
     ElMessage.warning('地址为空');
@@ -218,6 +209,7 @@ const locateAddress = async (address) => {
     return;
   }
 
+  // 解析经纬度坐标
   const coordMatch = address.match(/^([+-]?\d+(?:\.\d+)?)\s*,\s*([+-]?\d+(?:\.\d+)?)$/);
   if (coordMatch) {
     const lngNum = parseFloat(coordMatch[1]);
@@ -225,11 +217,14 @@ const locateAddress = async (address) => {
     if (!isNaN(lngNum) && !isNaN(latNum)) {
       mapRef.value.setCenter([lngNum, latNum]);
       mapRef.value.setZoom(15);
+      // 添加红色临时标记
+      mapRef.value.addTempMarker(lngNum, latNum, `查询位置: ${address}`);
       ElMessage.success(`已定位到坐标：${lngNum}, ${latNum}`);
       return;
     }
   }
 
+  // 尝试匹配地图数据中的位置名称
   const normalizedAddress = address.trim().toLowerCase();
   const found = state.mapData.find(item => {
     const itemLocation = item.location?.trim().toLowerCase() || '';
@@ -243,7 +238,8 @@ const locateAddress = async (address) => {
     if (!isNaN(lngNum) && !isNaN(latNum)) {
       mapRef.value.setCenter([lngNum, latNum]);
       mapRef.value.setZoom(15);
-      ElMessage.success(`已定位到：${found.location}`);
+      mapRef.value.addTempMarker(lngNum, latNum, found.location || found.deviceName);
+      ElMessage.success(`已定位到：${found.location || found.deviceName}`);
       return;
     }
   }
@@ -259,7 +255,8 @@ const handleDataChange = () => {
   fetchChartData();
 };
 
-const handleLocateAddress = (event) => {
+// 监听周边场站列表页触发的定位事件
+const handleNearStationLocate = (event) => {
   const address = event.detail;
   if (address) locateAddress(address);
 };
@@ -269,14 +266,15 @@ onMounted(() => {
     fetchChartData();
     window.addEventListener('resize', handleResize);
     window.addEventListener('rescue-data-changed', handleDataChange);
-    window.addEventListener('locate-address', handleLocateAddress);
+    // 监听周边场站定位事件
+    window.addEventListener('near-station-locate', handleNearStationLocate);
   });
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
   window.removeEventListener('rescue-data-changed', handleDataChange);
-  window.removeEventListener('locate-address', handleLocateAddress);
+  window.removeEventListener('near-station-locate', handleNearStationLocate);
   lineChartInstance?.dispose();
 });
 
