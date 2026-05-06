@@ -36,10 +36,14 @@ export function importAreaInfo(file, updateSupport = false) {
   });
 }
 
+export function getAreaInfoImportTemplate() {
+  return requestClient.download(`${baseUrl}/get-import-template`);
+}
+
 export function exportAreaInfo(params) {
   return requestClient.download(`${baseUrl}/export`, { params });
 }
 
-export function getAreaInfoChart() {
-  return requestClient.get(`${baseUrl}/chart`);
+export function getAreaInfoChart(params) {
+  return requestClient.get(`${baseUrl}/chart`, { params });
 }

@@ -27,12 +27,17 @@ export function disableStationConfig(data) {
   return requestClient.put(`${baseUrl}/disable`, data);
 }
 
+function firstDefined(...values) {
+  return values.find((value) => value !== undefined && value !== null);
+}
+
 export async function getStationConfigChart(params) {
   const res = await requestClient.get(`${baseUrl}/chart`, { params });
   if (!res) return res;
   const typePieList = (res.typePieList || res.pieData || []).map((item) => ({
     ...item,
-    value: item.value === undefined ? item.count : item.value,
+    name: firstDefined(item.name, item.type, item.label),
+    value: firstDefined(item.value, item.count, 0),
   }));
   const cardData = {
     ...res.cardData,

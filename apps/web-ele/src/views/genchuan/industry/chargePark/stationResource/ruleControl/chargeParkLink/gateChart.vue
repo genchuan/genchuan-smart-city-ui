@@ -41,14 +41,8 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits([
-  'cardClick',
-  'barClick',
-  'lineClick',
-  'pieClick',
-]);
+const emit = defineEmits(['cardClick', 'barClick', 'lineClick', 'pieClick']);
 
-// 动态计算是否显示各个图表
 const hasCards = computed(() => props.cards && props.cards.length > 0);
 const hasPie = computed(() => props.chartConfig.pie);
 const hasBar = computed(() => props.chartConfig.bar);
@@ -63,7 +57,6 @@ const chartCount = computed(() => {
   return count;
 });
 
-// 动态计算每个图表的flex值
 const chartFlex = computed(() => {
   if (chartCount.value === 0) return 0;
   return 3.5 / chartCount.value;
@@ -87,7 +80,7 @@ const chartFlex = computed(() => {
       <PieClick
         class="chart-panel-inner"
         :data="props.pieData"
-        :title-text="`${props.title}统计`"
+        :title-text="`${props.title}占比`"
         @pie-click="emit('pieClick', $event)"
       />
     </div>

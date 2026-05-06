@@ -19,6 +19,9 @@ export const pageConfig = {
   },
 };
 
+const typeOptions = ['通行规则', '收费规则', '联动规则'];
+const statusOptions = ['未生效', '已生效', '已禁用'];
+
 export const searchFields = [
   {
     field: 'stationId',
@@ -32,14 +35,14 @@ export const searchFields = [
     field: 'type',
     label: '配置类型',
     type: 'select',
-    options: ['通行规则', '收费规则', '联动规则'],
+    options: typeOptions,
     required: false,
   },
   {
     field: 'status',
     label: '状态',
     type: 'select',
-    options: ['未生效', '已生效'],
+    options: statusOptions,
     required: false,
   },
 ];
@@ -57,7 +60,7 @@ export const formFields = [
     field: 'type',
     label: '配置类型',
     type: 'select',
-    options: ['通行规则', '收费规则', '联动规则'],
+    options: typeOptions,
     required: true,
   },
   { field: 'content', label: '配置内容', type: 'textarea', required: true },
@@ -72,12 +75,25 @@ export const tableColumns = [
     field: 'stationId',
     label: '所属场站',
     minWidth: 140,
+    displayField: 'stationName',
     drillType: 'dialog',
     drillLabel: '场站详情',
   },
-  { field: 'type', label: '配置类型', minWidth: 140, drillType: 'filter' },
+  {
+    field: 'type',
+    label: '配置类型',
+    minWidth: 140,
+    options: typeOptions,
+    drillType: 'filter',
+  },
   { field: 'content', label: '配置内容', minWidth: 240 },
-  { field: 'status', label: '状态', minWidth: 120, drillType: 'filter' },
+  {
+    field: 'status',
+    label: '状态',
+    minWidth: 120,
+    options: statusOptions,
+    drillType: 'filter',
+  },
   {
     field: 'auditTime',
     label: '审核时间',
@@ -112,18 +128,38 @@ export const tableColumns = [
 
 export const detailFields = [
   { key: 'id', label: '配置ID', section: '基础信息' },
-  { key: 'stationId', label: '所属场站ID', section: '基础信息' },
+  { key: 'stationName', label: '所属场站', section: '基础信息' },
   { key: 'type', label: '配置类型', section: '基础信息' },
   { key: 'status', label: '状态', section: '基础信息' },
   { key: 'content', label: '配置内容', section: '配置详情' },
-  { key: 'auditTime', label: '审核时间', section: '状态信息' },
+  {
+    key: 'auditTime',
+    label: '审核时间',
+    section: '状态信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'auditUserId', label: '审核人ID', section: '状态信息' },
-  { key: 'syncTime', label: '同步时间', section: '状态信息' },
+  {
+    key: 'syncTime',
+    label: '同步时间',
+    section: '状态信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'remark', label: '备注', section: '配置详情' },
   { key: 'reserve1', label: '备用字段1', section: '配置详情' },
   { key: 'reserve2', label: '备用字段2', section: '配置详情' },
   { key: 'creator', label: '创建者', section: '审计信息' },
-  { key: 'createTime', label: '创建时间', section: '审计信息' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'updater', label: '更新者', section: '审计信息' },
-  { key: 'updateTime', label: '更新时间', section: '审计信息' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
 ];

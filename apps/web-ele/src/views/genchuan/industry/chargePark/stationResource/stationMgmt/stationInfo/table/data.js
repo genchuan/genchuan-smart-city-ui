@@ -2,6 +2,7 @@ export const pageConfig = {
   apiName: 'StationInfo',
   title: '场站信息',
   exportName: '场站信息数据.xlsx',
+  importTemplateName: '场站信息导入模板.xlsx',
   nameField: 'name',
   primaryField: 'stationNo',
   toolbar: ['create', 'import', 'export'],
@@ -20,6 +21,16 @@ export const pageConfig = {
   },
 };
 
+const stationTypeOptions = ['公共', '商业', '小区', '产业'];
+const operateTypeOptions = [
+  '直接管理',
+  '甲方代运营',
+  '本地化部署',
+  '横向对接',
+  '数据互通',
+];
+const statusOptions = ['未生效', '已生效', '已禁用'];
+
 export const searchFields = [
   { field: 'stationNo', label: '场站编号', type: 'input', required: false },
   { field: 'name', label: '场站名称', type: 'input', required: false },
@@ -27,7 +38,7 @@ export const searchFields = [
     field: 'type',
     label: '场站类型',
     type: 'select',
-    options: ['公共', '商业', '小区', '产业'],
+    options: stationTypeOptions,
     required: false,
   },
   { field: 'address', label: '场站地址', type: 'input', required: false },
@@ -43,7 +54,7 @@ export const searchFields = [
     field: 'operateType',
     label: '运营类型',
     type: 'select',
-    options: ['直接管理', '甲方代运营', '本地化部署', '横向对接', '数据互通'],
+    options: operateTypeOptions,
     required: false,
   },
   { field: 'userId', label: '负责人', type: 'number', required: false },
@@ -51,7 +62,7 @@ export const searchFields = [
     field: 'status',
     label: '状态',
     type: 'select',
-    options: ['未生效', '已生效', '已禁用'],
+    options: statusOptions,
     required: false,
   },
 ];
@@ -63,7 +74,7 @@ export const formFields = [
     field: 'type',
     label: '场站类型',
     type: 'select',
-    options: ['公共', '商业', '小区', '产业'],
+    options: stationTypeOptions,
     required: true,
   },
   { field: 'address', label: '场站地址', type: 'input', required: true },
@@ -87,12 +98,10 @@ export const formFields = [
     field: 'operateType',
     label: '运营类型',
     type: 'select',
-    options: ['直接管理', '甲方代运营', '本地化部署', '横向对接', '数据互通'],
+    options: operateTypeOptions,
     required: true,
   },
   { field: 'remark', label: '备注', type: 'textarea', required: false },
-  { field: 'reserve1', label: '备用字段1', type: 'input', required: false },
-  { field: 'reserve2', label: '备用字段2', type: 'input', required: false },
 ];
 
 export const tableColumns = [
@@ -102,10 +111,17 @@ export const tableColumns = [
     field: 'areaId',
     label: '所属片区',
     minWidth: 140,
+    displayField: 'areaName',
     drillType: 'areaDetail',
     drillLabel: '所属片区详情',
   },
-  { field: 'type', label: '场站类型', minWidth: 120, drillType: 'filter' },
+  {
+    field: 'type',
+    label: '场站类型',
+    minWidth: 120,
+    drillType: 'filter',
+    options: stationTypeOptions,
+  },
   { field: 'address', label: '场站地址', minWidth: 220 },
   {
     field: 'spaceTotal',
@@ -121,6 +137,7 @@ export const tableColumns = [
     label: '运营类型',
     minWidth: 120,
     drillType: 'filter',
+    options: operateTypeOptions,
   },
   {
     field: 'deviceCount',
@@ -136,7 +153,13 @@ export const tableColumns = [
     drillType: 'spaceList',
     drillLabel: '该场站下属车位列表',
   },
-  { field: 'status', label: '状态', minWidth: 120, drillType: 'filter' },
+  {
+    field: 'status',
+    label: '状态',
+    minWidth: 120,
+    drillType: 'filter',
+    options: statusOptions,
+  },
   {
     field: 'bindTime',
     label: '绑定时间',
@@ -145,8 +168,6 @@ export const tableColumns = [
   },
   { field: 'bindUserId', label: '绑定人', minWidth: 120, drillType: 'filter' },
   { field: 'remark', label: '备注', minWidth: 150 },
-  { field: 'reserve1', label: '备用字段1', minWidth: 140 },
-  { field: 'reserve2', label: '备用字段2', minWidth: 140 },
   { field: 'creator', label: '创建者', minWidth: 120 },
   {
     field: 'createTime',
@@ -164,7 +185,6 @@ export const tableColumns = [
 ];
 
 export const detailFields = [
-  { key: 'id', label: 'ID', section: '基础信息' },
   { key: 'stationNo', label: '场站编号', section: '基础信息' },
   { key: 'name', label: '场站名称', section: '基础信息' },
   { key: 'type', label: '场站类型', section: '基础信息' },
@@ -172,18 +192,31 @@ export const detailFields = [
   { key: 'spaceTotal', label: '泊位总数', section: '运营配置' },
   { key: 'userId', label: '负责人', section: '运营配置' },
   { key: 'feeStandard', label: '场站收费标准', section: '运营配置' },
-  { key: 'areaId', label: '所属片区ID', section: '运营配置' },
+  { key: 'areaName', label: '所属片区', section: '运营配置' },
   { key: 'operateType', label: '运营类型', section: '运营配置' },
   { key: 'status', label: '状态', section: '状态信息' },
-  { key: 'bindTime', label: '绑定时间', section: '状态信息' },
+  {
+    key: 'bindTime',
+    label: '绑定时间',
+    section: '状态信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'bindUserId', label: '绑定人', section: '状态信息' },
   { key: 'deviceCount', label: '设备绑定数', section: '运营配置' },
   { key: 'spaceCount', label: '车位绑定数', section: '运营配置' },
   { key: 'remark', label: '备注', section: '运营配置' },
-  { key: 'reserve1', label: '备用字段1', section: '运营配置' },
-  { key: 'reserve2', label: '备用字段2', section: '运营配置' },
   { key: 'creator', label: '创建者', section: '审计信息' },
-  { key: 'createTime', label: '创建时间', section: '审计信息' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'updater', label: '更新者', section: '审计信息' },
-  { key: 'updateTime', label: '更新时间', section: '审计信息' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
 ];

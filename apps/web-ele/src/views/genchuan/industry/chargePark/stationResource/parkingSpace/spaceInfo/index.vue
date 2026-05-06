@@ -56,6 +56,33 @@ const importUpdateSupport = ref(false);
 const chartData = ref({});
 const selectOptionsMap = ref({});
 
+function padTime(value) {
+  return String(value).padStart(2, '0');
+}
+
+function formatDateTime(value) {
+  if (value === undefined || value === null || value === '') return '--';
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${value.getFullYear()}-${padTime(value.getMonth() + 1)}-${padTime(value.getDate())} ${padTime(value.getHours())}:${padTime(value.getMinutes())}:${padTime(value.getSeconds())}`;
+  }
+  if (typeof value === 'number' || /^\d+$/.test(String(value))) {
+    const text = String(value);
+    const timestamp = Number(text.length === 10 ? `${text}000` : text);
+    const date = new Date(timestamp);
+    if (!Number.isNaN(date.getTime())) return formatDateTime(date);
+  }
+  const normalized = String(value)
+    .replace('T', ' ')
+    .replace(/\.\d+Z?$/, '');
+  const parsed = new Date(String(value).replaceAll('-', '/'));
+  if (!Number.isNaN(parsed.getTime())) return formatDateTime(parsed);
+  return normalized.length >= 19 ? normalized.slice(0, 19) : normalized;
+}
+
+const columnFormatters = {
+  formatDateTime: ({ cellValue }) => formatDateTime(cellValue),
+};
+
 function normalizeOptions(options = []) {
   return options.map((item) => {
     if (typeof item === 'object' && item !== null) {
@@ -262,12 +289,12 @@ const hasMap = computed(() => true);
 const chartCards = computed(() => {
   const cardData = chartData.value?.cardData || {};
   return (pageConfig.chart?.cards || []).map(
-    ([key, title, status, field], index) => ({
+    ([key, title, status, field, suffix], index) => ({
       key,
       title,
       status,
       field,
-      value: cardData[key] ?? 0,
+      value: `${cardData[key] ?? 0}${suffix || ''}`,
       color: ['#13ce66', '#4ECDC4', '#FFB020', '#FF6B6B'][index % 4],
     }),
   );
@@ -326,7 +353,11 @@ const mapData = computed(() =>
 );
 
 function getCellSlotName(column) {
-  if (column.drillType || column.field === primaryField) {
+  if (
+    column.type === 'image' ||
+    column.drillType ||
+    column.field === primaryField
+  ) {
     return `cell_${column.field}`;
   }
   return '';
@@ -580,7 +611,17 @@ function buildGridColumns() {
         sortable: true,
       };
       if (column.formatter) {
-        columnConfig.formatter = column.formatter;
+        columnConfig.formatter =
+          typeof column.formatter === 'string'
+            ? columnFormatters[column.formatter]
+            : column.formatter;
+      }
+      if (column.options?.length) {
+        columnConfig.filters = normalizeOptions(column.options).map((item) => ({
+          label: item.label,
+          value: item.value,
+        }));
+        columnConfig.filterMultiple = false;
       }
       const slotName = getCellSlotName(column);
       if (slotName) {
@@ -600,6 +641,9 @@ function buildGridColumns() {
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: buildGridColumns(),
+    filterConfig: {
+      remote: true,
+    },
     keepSource: true,
     pagerConfig: {
       pageSize: 10,
@@ -629,6 +673,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridEvents: {
     checkboxAll: handleCheckboxChange,
     checkboxChange: handleCheckboxChange,
+    filterChange: handleTableFilterChange,
   },
   showSearchForm: false,
 });
@@ -644,11 +689,22 @@ function handleCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
+function handleTableFilterChange({ column, values }) {
+  const field = column?.field;
+  if (!field) return;
+  const [value] = values || [];
+  if (isEmpty(value)) {
+    removeFilterTag(field);
+    return;
+  }
+  applySearchPatch({ [field]: value });
+}
+
 function handleRefresh() {
-  if (gridApi.reload) {
-    gridApi.reload();
-  } else {
+  if (gridApi.query) {
     gridApi.query();
+  } else {
+    gridApi.reload?.();
   }
   loadChart();
 }
@@ -694,8 +750,16 @@ function handleEdit(row) {
 
 async function handleOpenDetail(row) {
   const detailApi = pageApi[`get${apiName}Detail`];
-  detailObj.value =
+  const detail =
     typeof detailApi === 'function' ? (await detailApi(row.id)) || row : row;
+  const nextDetail = {
+    ...row,
+    ...detail,
+  };
+  if (isEmpty(nextDetail.stationName) && !isEmpty(nextDetail.stationId)) {
+    nextDetail.stationName = getOptionLabel('stationId', nextDetail.stationId);
+  }
+  detailObj.value = nextDetail;
   await nextTick();
   detailDrawerRef.value?.open();
 }
@@ -920,13 +984,17 @@ async function applySearchPatch(patch) {
     ...patch,
   });
   appliedQuery.value = nextQuery;
-  try {
-    await queryFormApi.setValues(nextQuery);
-  } catch (error) {
-    console.warn('Failed to set form values', error);
-  }
-  await nextTick();
   handleRefresh();
+  nextTick(() => {
+    try {
+      const result = queryFormApi.setValues(nextQuery);
+      Promise.resolve(result).catch((error) => {
+        console.warn('Failed to set form values', error);
+      });
+    } catch (error) {
+      console.warn('Failed to set form values', error);
+    }
+  });
 }
 
 function getFieldLabel(field) {
@@ -936,21 +1004,31 @@ function getFieldLabel(field) {
   return column?.label || field;
 }
 
+function getOptionLabel(field, value) {
+  const config = searchFields.find((item) => item.field === field);
+  const options = config ? getSelectFieldOptions(config) : [];
+  const option = options.find(
+    (item) => item.value === value || String(item.value) === String(value),
+  );
+  return option?.label || value;
+}
+
 function getTagDisplayText(field, value) {
   if (field === 'status') {
     if (value === 'enabled' || value === '已生效') return '已生效';
     if (value === 'disabled' || value === '已禁用') return '已禁用';
     if (value === 'wait' || value === '未生效') return '未生效';
   }
-  return value;
+  return getOptionLabel(field, value);
 }
 
-function removeFilterTag(field) {
+async function removeFilterTag(field) {
   const nextQuery = { ...appliedQuery.value };
   delete nextQuery[field];
   appliedQuery.value = nextQuery;
   try {
-    queryFormApi.setValues(nextQuery);
+    await queryFormApi.resetForm();
+    await queryFormApi.setValues(nextQuery);
   } catch (error) {
     console.warn('Failed to set form values', error);
   }
@@ -959,21 +1037,42 @@ function removeFilterTag(field) {
   });
 }
 
-function clearFilters() {
+async function clearFilters() {
   appliedQuery.value = {};
-  queryFormApi.resetForm();
+  await queryFormApi.resetForm();
   handleRefresh();
 }
 
 function getCellDisplayText(column, row) {
-  const value = row?.[column.field];
+  let value = column.displayField ? row?.[column.displayField] : undefined;
+  if (isEmpty(value)) {
+    value = row?.[column.field];
+  }
+  if (column.displayField && column.field === 'stationId') {
+    value = row?.[column.displayField] || getOptionLabel('stationId', value);
+  }
   if (!isEmpty(value)) {
-    return Array.isArray(value) ? value.join('、') : value;
+    const nextValue = Array.isArray(value) ? value.join('、') : value;
+    const formatted =
+      column.formatter === 'formatDateTime'
+        ? formatDateTime(nextValue)
+        : nextValue;
+    if (column.suffix && formatted !== '--') {
+      return `${formatted}${column.suffix}`;
+    }
+    return formatted;
   }
   if (column.field === primaryField) {
     return row?.[pageConfig.nameField] || row?.id || '--';
   }
   return '--';
+}
+
+function getImageUrl(value) {
+  if (!value || value === '--') return '';
+  if (/^https?:\/\//.test(value)) return value;
+  const baseUrl = import.meta.env.VITE_BASE_URL || '';
+  return `${baseUrl}${String(value).startsWith('/') ? '' : '/'}${value}`;
 }
 
 function handleCardClick(item) {
@@ -1010,16 +1109,53 @@ function applyChartSearch(field, value) {
   applySearchPatch({ [field]: value });
 }
 
+function getDrillValue(column, row) {
+  const field = column.drillValueField || column.field;
+  let value = row?.[field];
+  if (isEmpty(value) && column.displayField) {
+    value = row?.[column.displayField];
+  }
+  return value;
+}
+
+function getDrillFilterPatch(column, row) {
+  const field = column.drillField || column.field;
+  const candidates = [
+    column.drillValueField,
+    column.field,
+    field,
+    column.displayField,
+  ].filter(Boolean);
+
+  if (field.endsWith('Id')) {
+    candidates.push(field.replace(/Id$/, 'ID'));
+  } else if (field.endsWith('Name')) {
+    candidates.push(field.replace(/Name$/, 'Id'));
+  }
+
+  for (const key of new Set(candidates)) {
+    const value = row?.[key];
+    if (!isEmpty(value)) {
+      return { [field]: value };
+    }
+  }
+
+  const value = getDrillValue(column, row);
+  if (isEmpty(value)) return null;
+  return { [field]: value };
+}
+
 async function handleCellDrill(column, row) {
   const drillType =
     column.drillType || (column.field === primaryField ? 'detail' : '');
-  const rawValue = row?.[column.drillValueField || column.field];
+  const rawValue = getDrillValue(column, row);
   if (drillType === 'detail') {
     return handleOpenDetail(row);
   }
   if (drillType === 'filter') {
-    if (isEmpty(rawValue)) return;
-    return applySearchPatch({ [column.drillField || column.field]: rawValue });
+    const patch = getDrillFilterPatch(column, row);
+    if (!patch) return;
+    return applySearchPatch(patch);
   }
   if (drillType === 'download') {
     if (typeof rawValue === 'string' && rawValue) {
@@ -1203,7 +1339,16 @@ defineExpose({
               :key="column.field"
               #[column.slotName]="{ row }"
             >
+              <el-image
+                v-if="column.type === 'image' && getImageUrl(row[column.field])"
+                class="common-cell-image"
+                :src="getImageUrl(row[column.field])"
+                :preview-src-list="[getImageUrl(row[column.field])]"
+                fit="cover"
+                preview-teleported
+              />
               <el-text
+                v-else
                 class="common-align"
                 type="primary"
                 @click="handleCellDrill(column, row)"
@@ -1315,9 +1460,9 @@ defineExpose({
   .station-overview {
     display: flex;
     flex-wrap: nowrap;
-    gap: 12px;
+    gap: 8px;
     align-items: stretch;
-    padding-bottom: 12px;
+    padding-bottom: 8px;
   }
 
   .station-chart-wrap {
@@ -1330,16 +1475,16 @@ defineExpose({
     display: flex;
     flex: 1 1 auto;
     flex-wrap: nowrap;
-    gap: 12px;
+    gap: 8px;
     align-items: stretch;
     min-width: 0;
     padding: 0;
   }
 
   .station-chart-wrap :deep(.chart-box-left) {
-    flex: 0 0 300px;
+    flex: 1 1 300px;
     min-width: 300px;
-    max-width: 300px;
+    max-width: none;
     margin-left: 0;
   }
 
@@ -1386,5 +1531,12 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.common-cell-image {
+  width: 42px;
+  height: 42px;
+  vertical-align: middle;
+  border-radius: 4px;
 }
 </style>

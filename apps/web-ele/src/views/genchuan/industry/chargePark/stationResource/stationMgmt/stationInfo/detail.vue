@@ -78,11 +78,48 @@ const auditLogRows = computed(
   () => props.detailObj.auditLogList || props.detailObj.operationLogList || [],
 );
 
-function formatValue(value) {
+function padTime(value) {
+  return String(value).padStart(2, '0');
+}
+
+function formatDateTime(value) {
+  if (value === undefined || value === null || value === '') return '--';
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${value.getFullYear()}-${padTime(value.getMonth() + 1)}-${padTime(value.getDate())} ${padTime(value.getHours())}:${padTime(value.getMinutes())}:${padTime(value.getSeconds())}`;
+  }
+  if (typeof value === 'number' || /^\d+$/.test(String(value))) {
+    const text = String(value);
+    const timestamp = Number(text.length === 10 ? `${text}000` : text);
+    const date = new Date(timestamp);
+    if (!Number.isNaN(date.getTime())) return formatDateTime(date);
+  }
+  const normalized = String(value)
+    .replace('T', ' ')
+    .replace(/\.\d+Z?$/, '');
+  const parsed = new Date(String(value).replaceAll('-', '/'));
+  if (!Number.isNaN(parsed.getTime())) return formatDateTime(parsed);
+  return normalized.length >= 19 ? normalized.slice(0, 19) : normalized;
+}
+
+const builtinFormatters = {
+  formatDateTime,
+};
+
+function formatValue(field, value) {
   if (Array.isArray(value)) {
     return value.join('、');
   }
-  return isEmpty(value) ? '--' : value;
+  if (isEmpty(value)) {
+    return '--';
+  }
+  if (typeof field.formatter === 'function') {
+    return field.formatter(value);
+  }
+  const formatter =
+    typeof field.formatter === 'string'
+      ? builtinFormatters[field.formatter]
+      : null;
+  return formatter ? formatter(value) : value;
 }
 
 function open() {
@@ -120,7 +157,7 @@ defineExpose({
                 >
                   <span class="detail-label">{{ field.label }}:</span>
                   <span class="detail-value">
-                    {{ formatValue(props.detailObj[field.key]) }}
+                    {{ formatValue(field, props.detailObj[field.key]) }}
                   </span>
                 </div>
               </div>
@@ -186,8 +223,8 @@ defineExpose({
 }
 
 .detail-card {
-  padding: 20px;
-  margin-bottom: 16px;
+  padding: 16px;
+  margin-bottom: 12px;
   background-color: var(--el-bg-color, #fff);
   border: 1px solid var(--el-border-color-light, #ebeef5);
   border-radius: 4px;
@@ -195,8 +232,8 @@ defineExpose({
 }
 
 .detail-section {
-  padding-bottom: 16px;
-  margin-bottom: 16px;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
@@ -207,7 +244,7 @@ defineExpose({
 }
 
 .detail-section h4 {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   font-size: 15px;
   font-weight: 600;
   color: var(--el-text-color-primary);
@@ -216,7 +253,7 @@ defineExpose({
 .detail-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 
 .detail-item {
@@ -224,7 +261,7 @@ defineExpose({
   gap: 12px;
   align-items: center;
   min-width: 0;
-  padding: 4px 0;
+  padding: 2px 0;
 }
 
 .detail-label {

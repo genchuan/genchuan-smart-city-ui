@@ -34,13 +34,13 @@ const generating = ref(false);
 const detailDrawerRef = ref(null);
 
 const reportPeriodMap = {
-  day: '日报',
-  week: '周报',
-  montly: '月报',
-  season: '季报',
-  half: '半年报',
-  year: '年报',
-  customize: '自定义报表',
+  day: '\u65E5\u62A5',
+  week: '\u5468\u62A5',
+  montly: '\u6708\u62A5',
+  season: '\u5B63\u62A5',
+  half: '\u534A\u5E74\u62A5',
+  year: '\u5E74\u62A5',
+  customize: '\u81EA\u5B9A\u4E49\u62A5\u8868',
 };
 
 function currentReportPeriod() {
@@ -74,19 +74,17 @@ function createSchema(fields, isSearch = false) {
   return fields.map((field) => {
     let component;
     switch (field.type) {
-      case 'date': {
+      case 'date':
+      case 'datetime': {
         component = 'DatePicker';
-
         break;
       }
       case 'number': {
         component = 'InputNumber';
-
         break;
       }
       case 'select': {
         component = 'Select';
-
         break;
       }
       default: {
@@ -94,13 +92,12 @@ function createSchema(fields, isSearch = false) {
       }
     }
 
+    const isDateType = field.type === 'date' || field.type === 'datetime';
     const componentProps = {
       placeholder:
-        (field.type === 'select' ||
-        field.type === 'date' ||
-        field.type === 'datetime'
-          ? '请选择'
-          : '请输入') + field.label,
+        field.type === 'select' || isDateType
+          ? `\u8BF7\u9009\u62E9${field.label}`
+          : `\u8BF7\u8F93\u5165${field.label}`,
     };
 
     if (field.type === 'select') {
@@ -116,7 +113,7 @@ function createSchema(fields, isSearch = false) {
       componentProps.controls = false;
     }
 
-    if (field.type === 'date' || field.type === 'datetime') {
+    if (isDateType) {
       Object.assign(componentProps, {
         format:
           field.type === 'datetime' ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD',
@@ -139,7 +136,7 @@ function createSchema(fields, isSearch = false) {
 }
 
 const drawerTitle = computed(
-  () => pageConfig.generateButtonText || `生成${pageConfig.title}`,
+  () => pageConfig.generateButtonText || `\u751F\u6210${pageConfig.title}`,
 );
 
 function getCellSlotName(column) {
@@ -181,10 +178,10 @@ const [QueryForm, queryFormApi] = useVbenForm({
   schema: createSchema(searchFields, true),
   showCollapseButton: true,
   submitButtonOptions: {
-    content: '查询',
+    content: '\u67E5\u8BE2',
   },
   resetButtonOptions: {
-    content: '重置',
+    content: '\u91CD\u7F6E',
   },
 });
 
@@ -239,7 +236,7 @@ function buildGridColumns() {
     {
       fixed: 'right',
       slots: { default: 'actions' },
-      title: '操作',
+      title: '\u64CD\u4F5C',
       width: 180,
     },
   ];
@@ -278,7 +275,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-// 监听 appliedQuery 的变化，在某些情况下自动刷新列表
 watch(
   () => appliedQuery.value,
   () => {},
@@ -318,7 +314,7 @@ async function handleGenerate() {
     (field) => field.required && !values[field.field],
   );
   if (requiredField) {
-    ElMessage.warning(`请填写${requiredField.label}`);
+    ElMessage.warning(`\u8BF7\u586B\u5199${requiredField.label}`);
     return;
   }
 
@@ -328,7 +324,7 @@ async function handleGenerate() {
       ...values,
       reportCycle: values.reportCycle || currentReportPeriod(),
     });
-    ElMessage.success('报表生成成功');
+    ElMessage.success('\u751F\u6210\u6210\u529F');
     formDrawerApi.close();
     handleRefresh();
   } finally {
@@ -339,8 +335,10 @@ async function handleGenerate() {
 async function handleExport(extraParams = {}, isRowExport = false) {
   try {
     await ElMessageBox.confirm(
-      isRowExport ? '确认导出当前报表记录吗？' : '确认导出当前筛选结果吗？',
-      '导出确认',
+      isRowExport
+        ? '\u786E\u8BA4\u5BFC\u51FA\u5F53\u524D\u8BB0\u5F55\uFF1F'
+        : '\u786E\u8BA4\u5BFC\u51FA\u5F53\u524D\u5217\u8868\uFF1F',
+      '\u5BFC\u51FA\u786E\u8BA4',
       { type: 'warning' },
     );
   } catch {
@@ -356,7 +354,7 @@ async function handleExport(extraParams = {}, isRowExport = false) {
     fileName: pageConfig.exportName,
     source: blob,
   });
-  ElMessage.success('导出成功');
+  ElMessage.success('\u5BFC\u51FA\u6210\u529F');
 }
 
 async function handleOpenDetail(row) {
@@ -380,8 +378,8 @@ function handleRowAction(action, row) {
 function actionLabel(action) {
   return (
     {
-      detail: '查看',
-      exportRow: '导出',
+      detail: '\u67E5\u770B',
+      exportRow: '\u5BFC\u51FA',
     }[action] || action
   );
 }
@@ -404,9 +402,9 @@ function getFieldLabel(field) {
 
 function getTagDisplayText(field, value) {
   if (field === 'status') {
-    if (value === 'enabled' || value === '已生效') return '已生效';
-    if (value === 'disabled' || value === '已禁用') return '已禁用';
-    if (value === 'wait' || value === '未生效') return '未生效';
+    if (value === 'enabled') return '\u542F\u7528';
+    if (value === 'disabled') return '\u505C\u7528';
+    if (value === 'wait') return '\u5F85\u5904\u7406';
   }
   return value;
 }
@@ -434,7 +432,7 @@ function clearFilters() {
 function getCellDisplayText(column, row) {
   const value = row?.[column.field];
   if (!isEmpty(value)) {
-    return Array.isArray(value) ? value.join('、') : value;
+    return Array.isArray(value) ? value.join(', ') : value;
   }
   if (column.field === primaryField) {
     return row?.[pageConfig.nameField] || row?.id || '--';
@@ -448,30 +446,70 @@ async function applySearchPatch(patch) {
     ...patch,
   });
   appliedQuery.value = nextQuery;
-  try {
-    await queryFormApi.setValues(nextQuery);
-  } catch (error) {
-    console.warn('Failed to set form values', error);
-  }
-  await nextTick();
   handleRefresh();
+  nextTick(() => {
+    try {
+      const result = queryFormApi.setValues(nextQuery);
+      Promise.resolve(result).catch((error) => {
+        console.warn('Failed to set form values', error);
+      });
+    } catch (error) {
+      console.warn('Failed to set form values', error);
+    }
+  });
+}
+
+function getDrillValue(column, row) {
+  const field = column.drillValueField || column.field;
+  let value = row?.[field];
+  if (isEmpty(value) && column.displayField) {
+    value = row?.[column.displayField];
+  }
+  return value;
+}
+
+function getDrillFilterPatch(column, row) {
+  const field = column.drillField || column.field;
+  const candidates = [
+    column.drillValueField,
+    column.field,
+    field,
+    column.displayField,
+  ].filter(Boolean);
+
+  if (field.endsWith('Id')) {
+    candidates.push(field.replace(/Id$/, 'ID'));
+  } else if (field.endsWith('Name')) {
+    candidates.push(field.replace(/Name$/, 'Id'));
+  }
+
+  for (const key of new Set(candidates)) {
+    const value = row?.[key];
+    if (!isEmpty(value)) {
+      return { [field]: value };
+    }
+  }
+
+  const value = getDrillValue(column, row);
+  if (isEmpty(value)) return null;
+  return { [field]: value };
 }
 
 async function handleCellDrill(column, row) {
   const drillType =
     column.drillType || (column.field === primaryField ? 'detail' : '');
-  const rawValue = row?.[column.drillValueField || column.field];
   if (drillType === 'detail') {
     return handleOpenDetail(row);
   }
   if (drillType === 'filter') {
-    if (isEmpty(rawValue)) return;
-    return applySearchPatch({ [column.drillField || column.field]: rawValue });
+    const patch = getDrillFilterPatch(column, row);
+    if (!patch) return;
+    return applySearchPatch(patch);
   }
   if (drillType === 'dialog') {
     await handleOpenDetail(row);
     ElMessage.success(
-      `${column.drillLabel || column.label || '明细'}弹窗已打开`,
+      `${column.drillLabel || column.label || '\u6570\u636E'}\u5DF2\u6253\u5F00`,
     );
   }
 }
@@ -481,7 +519,6 @@ function handleFullScreen() {
     screenfull.toggle();
   }
 }
-// 暴露方法给父组件，支持同名称片区筛选展示
 defineExpose({
   handleFilterTagClick: (field, value) => {
     applySearchPatch({ [field]: value });
@@ -502,7 +539,7 @@ defineExpose({
 
     <DetailDrawer ref="detailDrawerRef" :detail-obj="detailObj" />
 
-    <SearchDrawer title="筛选">
+    <SearchDrawer title="\u7b5b\u9009\u6761\u4ef6">
       <QueryForm class="query-form" @reset="handleResetSearch" />
     </SearchDrawer>
 
@@ -534,22 +571,22 @@ defineExpose({
             @click="handleOpenGenerate"
           />
           <IconButton
-            content="筛选"
+            content="\u67e5\u8be2"
             icon-name="search"
             @click="handleOpenSearch"
           />
           <IconButton
-            content="导出"
+            content="\u5bfc\u51fa"
             icon-name="download"
             @click="handleExport()"
           />
           <IconButton
-            content="刷新"
+            content="\u5237\u65b0"
             icon-name="Refresh"
             @click="handleRefresh"
           />
           <IconButton
-            content="全屏"
+            content="\u5168\u5c4f"
             icon-name="FullScreen"
             @click="handleFullScreen"
           />
