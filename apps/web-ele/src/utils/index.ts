@@ -41,14 +41,12 @@ export function formatTimestamp(timestamp:string) {
     return '无效时间戳';
   }
 
-  // 2. 提取年月日时分秒（补零处理：确保两位数）
-  const year = date.getFullYear();
-  // 月份从 0 开始，需 +1
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const hours = String(date.getUTCHours()).padStart(2, '0');
+  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
 
   // 3. 拼接成目标格式
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;

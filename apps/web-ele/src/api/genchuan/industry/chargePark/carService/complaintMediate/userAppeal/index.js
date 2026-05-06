@@ -7,7 +7,15 @@ export function getUserAppealPage(params) {
 }
 
 export function exportUserAppeal(params) {
-  return requestClient.download('/carservice/user-appeal/export', params);
+  return requestClient.download('/carservice/user-appeal/export', {
+    params: { ...params, format: 'excel' },
+  });
+}
+
+export function exportUserAppealPdf(params) {
+  return requestClient.download('/carservice/user-appeal/export', {
+    params: { ...params, format: 'pdf' },
+  });
 }
 
 export function getUserAppealDetail(params) {
@@ -39,6 +47,14 @@ export function getUserAppealChartData(params) {
 }
 
 // ==================== 辅助接口 ====================
+
+export function getUserDetail(userId) {
+  return requestClient.get('/system/user/get', { params: { id: userId } });
+}
+
+export function getOrderDetail(orderId) {
+  return requestClient.get('/ordertrade/all-order/get', { params: { id: orderId } });
+}
 
 export async function getUserList() {
   try {

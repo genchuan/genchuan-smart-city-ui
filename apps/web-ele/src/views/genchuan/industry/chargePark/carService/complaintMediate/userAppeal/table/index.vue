@@ -1,6 +1,6 @@
 <template>
   <div class="park-lot-table-new">
-    <Grid @checkbox-change="handleCheckboxChange" @checkbox-all="handleCheckAllChange">
+    <Grid>
       <template #table-title>
         <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
           <el-tag v-for="filter in activeFilters" :key="filter.field" type="primary" closable @close="handleClearField(filter.field)">
@@ -12,7 +12,8 @@
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="批量审核" icon-name="check" @click="openBatchAudit" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="导出 Excel" icon-name="download" @click="handleExport" />
+          <IconButton content="导出 PDF" icon-name="document" @click="handleExportPdf" />
           <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
@@ -38,9 +39,11 @@
         <span v-else>-</span>
       </template>
       <template #content="{ row }">
-        <el-text @click="filterByContent(row.content)" type="primary" style="cursor: pointer">
-          {{ row.content }}
-        </el-text>
+        <el-tooltip content="点击筛选同类型申诉记录" placement="top">
+          <el-text @click="filterByContent(row.content)" type="primary" style="cursor: pointer">
+            {{ row.content }}
+          </el-text>
+        </el-tooltip>
       </template>
       <template #status="{ row }">
         <el-tag :type="{ 待审核: 'warning', 待处置: 'info', 处置中: 'primary', 已完成: 'success', 已关闭: 'danger' }[row.status]"
@@ -92,13 +95,17 @@
 
     <UserAppealDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="用户申诉详情" />
 
-    <RejectDrawer>
+    <el-dialog v-model="rejectDialogVisible" title="驳回申诉" width="480px" :close-on-click-modal="false">
       <el-form :model="rejectForm" label-width="100px">
         <el-form-item label="驳回理由" required>
-          <el-input v-model="rejectForm.rejectReason" type="textarea" rows="3" placeholder="请输入驳回理由" />
+          <el-input v-model="rejectForm.rejectReason" type="textarea" rows="3" maxlength="200" show-word-limit placeholder="请输入驳回理由（5-200 字）" />
         </el-form-item>
       </el-form>
-    </RejectDrawer>
+      <template #footer>
+        <el-button @click="rejectDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmReject">确认</el-button>
+      </template>
+    </el-dialog>
 
     <FeedbackDrawer>
       <el-form :model="feedbackForm" label-width="100px">
@@ -125,15 +132,9 @@
       </el-form>
     </BatchAuditDrawer>
 
-    <el-dialog v-model="userDetailVisible" title="用户详情" width="400px">
-      <p>用户ID：{{ currentUser.id }}</p>
-      <p>用户名称：{{ currentUser.name }}</p>
-    </el-dialog>
+    <UserDetailDrawer ref="userDetailDrawerRef" />
 
-    <el-dialog v-model="orderDetailVisible" title="订单详情" width="600px">
-      <p>订单ID：{{ currentOrderId }}</p>
-      <p>（此处可嵌入订单详情组件）</p>
-    </el-dialog>
+    <OrderDetailDrawer ref="orderDetailDrawerRef" />
   </div>
 </template>
 
@@ -149,6 +150,7 @@ import { formatTimestamp } from '#/utils';
 import {
   getUserAppealPage,
   exportUserAppeal,
+  exportUserAppealPdf,
   getUserAppealDetail,
   approveAppeal,
   rejectAppeal,
@@ -156,9 +158,13 @@ import {
   feedbackAppeal,
   batchAuditAppeal,
   getUserList,
+  getUserDetail,
+  getOrderDetail,
 } from '#/api/genchuan/industry/chargePark/carService/complaintMediate/userAppeal/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import UserAppealDetailDrawer from './detail.vue';
+import UserDetailDrawer from './userDetail.vue';
+import OrderDetailDrawer from './orderDetail.vue';
 
 const props = defineProps({
   secondShow: Boolean,
@@ -191,18 +197,50 @@ function getUserName(id) {
   return userMap.value.get(String(id)) || String(id);
 }
 
+const padDateTime = (s, isEnd) => {
+  if (!s) return s;
+  const v = String(s).trim();
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(v)) return v;
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(v)) return `${v}:${isEnd ? '59' : '00'}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return `${v} ${isEnd ? '23:59:59' : '00:00:00'}`;
+  return v;
+};
+
 const getTableData = async (pageObj) => {
+  const page = pageObj.page;
+  const userNameFilter = String(dataObj.searchObj.userName || '').trim().toLowerCase();
+  const hasClientFilter = !!userNameFilter;
+
   const params = {
-    pageNo: pageObj.page.currentPage,
-    pageSize: pageObj.page.pageSize,
+    pageNo: hasClientFilter ? 1 : page.currentPage,
+    pageSize: hasClientFilter ? 200 : page.pageSize,
     ...dataObj.searchObj,
   };
-  if (dataObj.searchObj.submitTime && Array.isArray(dataObj.searchObj.submitTime)) {
-    params.submitTime = dataObj.searchObj.submitTime;
+  delete params.userName;
+  if (dataObj.searchObj.submitTime && Array.isArray(dataObj.searchObj.submitTime) && dataObj.searchObj.submitTime.length === 2) {
+    params.submitTime = [
+      padDateTime(dataObj.searchObj.submitTime[0], false),
+      padDateTime(dataObj.searchObj.submitTime[1], true),
+    ];
   }
+
   const res = await getUserAppealPage(params);
-  dataObj.total = res.total;
-  dataObj.list = (res.list || []).map(v => ({
+  let list = res.list || [];
+  let total = res.total;
+
+  // 客户端过滤：用户名(取行上 userName 或 userMap 中 userId 对应的昵称)
+  if (hasClientFilter) {
+    list = list.filter(item => {
+      const uname = String(item.userName || getUserName(item.userId) || item.userId || '').toLowerCase();
+      return uname.includes(userNameFilter);
+    });
+    total = list.length;
+    const pStart = (page.currentPage - 1) * page.pageSize;
+    list = list.slice(pStart, pStart + page.pageSize);
+  }
+
+  dataObj.total = total;
+  dataObj.list = list.map(v => ({
     ...v,
     createTime: formatTimestamp(v.createTime),
     updateTime: formatTimestamp(v.updateTime),
@@ -257,6 +295,7 @@ const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchObj;
   if (obj.userId) filters.push({ label: `用户：${getUserName(obj.userId)}`, field: 'userId' });
+  if (obj.userName) filters.push({ label: `用户名称：${obj.userName}`, field: 'userName' });
   if (obj.orderId) filters.push({ label: `订单：${obj.orderId}`, field: 'orderId' });
   if (obj.status) filters.push({ label: `状态：${obj.status}`, field: 'status' });
   if (obj.submitTime && obj.submitTime.length === 2) {
@@ -264,6 +303,10 @@ const activeFilters = computed(() => {
   }
   return filters;
 });
+
+const handleRowCheckboxChange = ({ records }) => {
+  dataObj.selectedRows = records || [];
+};
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -276,6 +319,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     showOverflow: true,
     checkboxConfig: { reserve: true, highlight: true, checkField: 'isSelected' },
   },
+  gridEvents: {
+    checkboxAll: handleRowCheckboxChange,
+    checkboxChange: handleRowCheckboxChange,
+  },
   showSearchForm: false,
 });
 
@@ -283,6 +330,12 @@ function handleRefresh() { gridApi.query(); }
 async function handleExport() {
   const data = await exportUserAppeal(dataObj.searchObj);
   downloadFileFromBlobPart({ fileName: '用户申诉记录.xls', source: data });
+  ElMessage.success('导出成功');
+}
+
+async function handleExportPdf() {
+  const data = await exportUserAppealPdf(dataObj.searchObj);
+  downloadFileFromBlobPart({ fileName: '用户申诉记录.pdf', source: data });
   ElMessage.success('导出成功');
 }
 
@@ -294,33 +347,31 @@ const handleOpenDetail = async (row) => {
 };
 
 const handleApprove = async (row) => {
-  await confirm('确认通过该申诉吗？通过后状态将变为“待处置”。');
   await approveAppeal({ id: row.id, auditRemark: '' });
-  ElMessage.success('审核通过');
+  ElMessage.success('审核通过，状态更新为待处置');
   handleRefresh();
 };
 
 const rejectForm = reactive({ rejectReason: '' });
 let currentRejectRow = null;
-const [RejectDrawer, rejectDrawerApi] = useVbenDrawer({
-  modal: false, appendToMain: true, width: 500, title: '驳回申诉',
-  onCancel: () => rejectDrawerApi.close(),
-  onConfirm: async () => {
-    if (!rejectForm.rejectReason) return ElMessage.warning('请填写驳回理由');
-    await rejectAppeal({ id: currentRejectRow.id, rejectReason: rejectForm.rejectReason });
-    ElMessage.success('已驳回');
-    rejectDrawerApi.close();
-    handleRefresh();
-  },
-});
+const rejectDialogVisible = ref(false);
 const openReject = (row) => {
   currentRejectRow = row;
   rejectForm.rejectReason = '';
-  rejectDrawerApi.open();
+  rejectDialogVisible.value = true;
+};
+const confirmReject = async () => {
+  const reason = rejectForm.rejectReason.trim();
+  if (!reason) return ElMessage.warning('请填写驳回理由');
+  if (reason.length < 5) return ElMessage.warning('驳回理由至少 5 个字');
+  if (reason.length > 200) return ElMessage.warning('驳回理由不能超过 200 字');
+  await rejectAppeal({ id: currentRejectRow.id, rejectReason: reason });
+  ElMessage.success('已驳回，状态更新为已关闭');
+  rejectDialogVisible.value = false;
+  handleRefresh();
 };
 
 const handleExecute = async (row) => {
-  await confirm('确认认领该申诉吗？认领后状态将变为“处置中”。');
   await executeAppeal({ id: row.id });
   ElMessage.success('已认领，状态更新为处置中');
   handleRefresh();
@@ -334,7 +385,7 @@ const [FeedbackDrawer, feedbackDrawerApi] = useVbenDrawer({
   onConfirm: async () => {
     if (!feedbackForm.feedbackContent) return ElMessage.warning('请填写反馈内容');
     await feedbackAppeal({ id: currentFeedbackRow.id, feedbackContent: feedbackForm.feedbackContent });
-    ElMessage.success('反馈成功，状态已变更为已完成');
+    ElMessage.success('反馈成功，状态已变更为已关闭');
     feedbackDrawerApi.close();
     handleRefresh();
   },
@@ -390,20 +441,29 @@ const filterByContent = (content) => {
   gridApi.query();
 };
 
-const userDetailVisible = ref(false);
-const currentUser = ref({ id: '', name: '' });
-const showUserDetail = (userId) => {
-  if (!userId) return;
-  currentUser.value = { id: userId, name: getUserName(userId) };
-  userDetailVisible.value = true;
+const userDetailDrawerRef = ref(null);
+const showUserDetail = async (userId) => {
+  if (!userId) return ElMessage.warning('用户ID不存在');
+  try {
+    const userDetail = await getUserDetail(userId);
+    userDetailDrawerRef.value?.open(userDetail);
+  } catch (error) {
+    console.error('获取用户详情失败', error);
+    ElMessage.error('获取用户详情失败');
+  }
 };
 
-const orderDetailVisible = ref(false);
-const currentOrderId = ref(null);
-const showOrderDetail = (orderId) => {
-  if (!orderId) return;
-  currentOrderId.value = orderId;
-  orderDetailVisible.value = true;
+const orderDetailDrawerRef = ref(null);
+const showOrderDetail = async (orderId) => {
+  if (!orderId) return ElMessage.warning('订单ID不存在');
+  try {
+    const order = await getOrderDetail(orderId);
+    if (!order) return ElMessage.warning('该订单不存在');
+    orderDetailDrawerRef.value?.open(order);
+  } catch (error) {
+    console.error('获取订单详情失败', error);
+    ElMessage.error('获取订单详情失败');
+  }
 };
 
 const handleChartRefresh = (event) => {
@@ -423,24 +483,6 @@ const handleChartRefresh = (event) => {
   dataObj.searchObj = newSearchObj;
   dataObj.currentPage = 1;
   gridApi.query();
-};
-
-const handleCheckboxChange = ({ checked, row }) => {
-  if (checked) {
-    if (!dataObj.selectedRows.some(r => r.id === row.id)) dataObj.selectedRows.push(row);
-  } else {
-    const idx = dataObj.selectedRows.findIndex(r => r.id === row.id);
-    if (idx !== -1) dataObj.selectedRows.splice(idx, 1);
-  }
-};
-const handleCheckAllChange = ({ checked, rows }) => {
-  if (checked) {
-    const toAdd = rows.filter(r => r.status === '待审核' && !dataObj.selectedRows.some(ex => ex.id === r.id));
-    dataObj.selectedRows.push(...toAdd);
-  } else {
-    const currentPageIds = rows.map(r => r.id);
-    dataObj.selectedRows = dataObj.selectedRows.filter(r => !currentPageIds.includes(r.id));
-  }
 };
 
 const [SearchDrawer, searchDrawerApi] = useVbenDrawer({

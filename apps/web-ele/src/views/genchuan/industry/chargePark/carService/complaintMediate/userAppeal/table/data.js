@@ -1,7 +1,7 @@
 /** 用户申诉表单配置（搜索） */
 export function useFormSchema() {
   return [
-    { fieldName: 'userId', label: '用户ID', component: 'Input', componentProps: { placeholder: '请输入用户ID' }, isSearch: true },
+    { fieldName: 'userName', label: '用户名称', component: 'Input', componentProps: { placeholder: '请输入用户名称', clearable: true }, isSearch: true },
     { fieldName: 'orderId', label: '订单ID', component: 'Input', componentProps: { placeholder: '请输入订单ID' }, isSearch: true },
     { fieldName: 'status', label: '申诉状态', component: 'Select', componentProps: { placeholder: '请选择', options: [
           { label: '待审核', value: '待审核' },
@@ -10,7 +10,7 @@ export function useFormSchema() {
           { label: '已完成', value: '已完成' },
           { label: '已关闭', value: '已关闭' }
         ] }, isSearch: true },
-    { fieldName: 'submitTime', label: '提交时间', component: 'DatePicker', componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD HH:mm:ss' }, isSearch: true },
+    { fieldName: 'submitTime', label: '提交时间', component: 'DatePicker', componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD' }, isSearch: true },
   ];
 }
 
@@ -20,7 +20,7 @@ export function useGridColumns({ getUserName }) {
     { type: 'checkbox', width: 50, fixed: 'left' },
     { field: 'id', title: '申诉ID', minWidth: 100, sortable: true, slots: { default: 'id' } },
     { field: 'userId', title: '用户', minWidth: 120, sortable: true, slots: { default: 'user_name' }, formatter: ({ userId }) => getUserName(userId) },
-    { field: 'orderId', title: '关联订单', minWidth: 120, },
+    { field: 'orderId', title: '关联订单', minWidth: 120, slots: { default: 'orderId' } },
     { field: 'content', title: '申诉内容', minWidth: 250, sortable: true, slots: { default: 'content' } },
     { field: 'submitTime', title: '提交时间', minWidth: 160, sortable: true },
     { field: 'status', title: '申诉状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
