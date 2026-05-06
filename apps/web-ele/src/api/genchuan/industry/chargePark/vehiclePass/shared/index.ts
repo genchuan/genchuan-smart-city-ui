@@ -86,6 +86,36 @@ async function requestByMethod(
     : requestClient.put(url, payload);
 }
 
+export interface UserCarDetail {
+  id: number;
+  userId: number;
+  plateNo: string;
+  plateColor: string;
+  carType: string;
+  bindTime: string;
+  status: string;
+  auditorId?: number;
+  auditTime?: string;
+  auditRemark?: string;
+  remark?: string;
+  reserve1?: string;
+  reserve2?: string;
+  creator?: string;
+  createTime?: string;
+  updateTime?: string;
+}
+
+/**
+ * 根据车牌号获取车辆详情
+ */
+export async function getVehicleDetailByPlate(
+  plateNo: string,
+): Promise<UserCarDetail> {
+  return requestClient.get<UserCarDetail>('/vehiclepass/user-car/get-by-plate', {
+    params: { plateNo },
+  });
+}
+
 export function createVehiclePassApi(
   config: VehiclePassApiFactoryConfig,
 ): VehiclePassApiBundle {

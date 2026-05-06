@@ -432,7 +432,11 @@ const handleOpenDetail = async (row) => {
 };
 
 const handlePlateNoClick = (row) => {
-  vehicleDetailRef.value?.open(row.plateNo, row);
+  if (!row.plateNo) {
+    ElMessage.warning('该记录无车牌信息');
+    return;
+  }
+  vehicleDetailRef.value?.open(row.plateNo);
 };
 
 const handleSpaceNameClick = (row) => {
