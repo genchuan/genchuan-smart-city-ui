@@ -631,10 +631,10 @@ function handleCheckboxChange({ records }) {
 }
 
 function handleRefresh() {
-  if (gridApi.reload) {
-    gridApi.reload();
-  } else {
+  if (gridApi.query) {
     gridApi.query();
+  } else {
+    gridApi.reload?.();
   }
   loadChart();
 }
@@ -906,13 +906,17 @@ async function applySearchPatch(patch) {
     ...patch,
   });
   appliedQuery.value = nextQuery;
-  try {
-    await queryFormApi.setValues(nextQuery);
-  } catch (error) {
-    console.warn('Failed to set form values', error);
-  }
-  await nextTick();
   handleRefresh();
+  nextTick(() => {
+    try {
+      const result = queryFormApi.setValues(nextQuery);
+      Promise.resolve(result).catch((error) => {
+        console.warn('Failed to set form values', error);
+      });
+    } catch (error) {
+      console.warn('Failed to set form values', error);
+    }
+  });
 }
 
 function getFieldLabel(field) {
@@ -995,16 +999,53 @@ function handlePieClick(payload) {
   applyChartSearch(field, payload?.name);
 }
 
+function getDrillValue(column, row) {
+  const field = column.drillValueField || column.field;
+  let value = row?.[field];
+  if (isEmpty(value) && column.displayField) {
+    value = row?.[column.displayField];
+  }
+  return value;
+}
+
+function getDrillFilterPatch(column, row) {
+  const field = column.drillField || column.field;
+  const candidates = [
+    column.drillValueField,
+    column.field,
+    field,
+    column.displayField,
+  ].filter(Boolean);
+
+  if (field.endsWith('Id')) {
+    candidates.push(field.replace(/Id$/, 'ID'));
+  } else if (field.endsWith('Name')) {
+    candidates.push(field.replace(/Name$/, 'Id'));
+  }
+
+  for (const key of [...new Set(candidates)]) {
+    const value = row?.[key];
+    if (!isEmpty(value)) {
+      return { [field]: value };
+    }
+  }
+
+  const value = getDrillValue(column, row);
+  if (isEmpty(value)) return null;
+  return { [field]: value };
+}
+
 async function handleCellDrill(column, row) {
   const drillType =
     column.drillType || (column.field === primaryField ? 'detail' : '');
-  const rawValue = row?.[column.drillValueField || column.field];
+  const rawValue = getDrillValue(column, row);
   if (drillType === 'detail') {
     return handleOpenDetail(row);
   }
   if (drillType === 'filter') {
-    if (isEmpty(rawValue)) return;
-    return applySearchPatch({ [column.drillField || column.field]: rawValue });
+    const patch = getDrillFilterPatch(column, row);
+    if (!patch) return;
+    return applySearchPatch(patch);
   }
   if (drillType === 'download') {
     if (typeof rawValue === 'string' && rawValue) {
@@ -1063,10 +1104,10 @@ defineExpose({
         :bar-series-data="barSeriesData"
         :line-x-data="lineXData"
         :line-series-data="lineSeriesData"
-        @card-click="handleCardClick"
-        @bar-click="handleBarClick"
-        @line-click="handleLineClick"
-        @pie-click="handlePieClick"
+        @cardClick="handleCardClick"
+        @barClick="handleBarClick"
+        @lineClick="handleLineClick"
+        @pieClick="handlePieClick"
       />
     </div>
 

@@ -41,14 +41,8 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits([
-  'cardClick',
-  'barClick',
-  'lineClick',
-  'pieClick',
-]);
+const emit = defineEmits(['cardClick', 'barClick', 'lineClick', 'pieClick']);
 
-// 动态计算是否显示各个图表
 const hasCards = computed(() => props.cards && props.cards.length > 0);
 const hasPie = computed(() => props.chartConfig.pie);
 const hasBar = computed(() => props.chartConfig.bar);
@@ -63,7 +57,6 @@ const chartCount = computed(() => {
   return count;
 });
 
-// 动态计算每个图表的flex值
 const chartFlex = computed(() => {
   if (chartCount.value === 0) return 0;
   return 3.5 / chartCount.value;
@@ -87,8 +80,8 @@ const chartFlex = computed(() => {
       <PieClick
         class="chart-panel-inner"
         :data="props.pieData"
-        :title-text="`${props.title}统计`"
-        @pie-click="emit('pieClick', $event)"
+        :title-text="`${props.title}占比`"
+        @pieClick="emit('pieClick', $event)"
       />
     </div>
     <div v-if="hasBar" class="chart-wrapper" :style="{ flex: chartFlex }">
@@ -98,7 +91,7 @@ const chartFlex = computed(() => {
         :x-data="props.barXData"
         :series-data="props.barSeriesData"
         y-name="数量"
-        @bar-click="emit('barClick', $event)"
+        @barClick="emit('barClick', $event)"
       />
     </div>
     <div v-if="hasLine" class="chart-wrapper" :style="{ flex: chartFlex }">
@@ -108,7 +101,7 @@ const chartFlex = computed(() => {
         :x-data="props.lineXData"
         :series-data="props.lineSeriesData"
         y-name="数量"
-        @line-click="emit('lineClick', $event)"
+        @lineClick="emit('lineClick', $event)"
       />
     </div>
   </div>

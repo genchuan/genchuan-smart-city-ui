@@ -65,15 +65,15 @@ const chartCount = computed(() => {
 
 const chartFlex = computed(() => {
   if (chartCount.value === 0) return '0';
-  if (chartCount.value === 1) return '3.5 !important'; // 鍗曚釜鍥捐〃鍗犳弧鍓╀綑绌洪棿
-  if (chartCount.value === 2) return '1.75 !important'; // 涓や釜鍥捐〃骞冲垎
-  return '1.17 !important'; // 涓変釜鍥捐〃骞冲垎
+  if (chartCount.value === 1) return '3.5 !important'; // 单个图表占满剩余空间
+  if (chartCount.value === 2) return '1.75 !important'; // 两个图表平分
+  return '1.17 !important'; // 三个图表平分
 });
 </script>
 
 <template>
   <div class="park-chart-box">
-    <!-- 鍗＄墖鍖猴細鍥哄畾flex: 1 -->
+    <!-- 图表区域 -->
     <div
       v-if="hasCards"
       class="chart-box-left"
@@ -91,37 +91,37 @@ const chartFlex = computed(() => {
       />
     </div>
 
-    <!-- 楗煎浘锛氬姩鎬乫lex -->
+    <!-- 图表区域 -->
     <div v-if="hasPie" class="chart-wrapper" :style="{ flex: chartFlex }">
       <PieClick
         class="chart-panel-inner"
         :data="props.pieData"
-        :title-text="`${props.title}缁熻`"
-        @pie-click="emit('pieClick', $event)"
+        :title-text="`${props.title}占比`"
+        @pieClick="emit('pieClick', $event)"
       />
     </div>
 
-    <!-- 鏌辩姸鍥撅細鍔ㄦ€乫lex -->
+    <!-- 图表区域 -->
     <div v-if="hasBar" class="chart-wrapper" :style="{ flex: chartFlex }">
       <BarClick
         class="chart-panel-inner"
-        :title="`${props.title}鍒嗗竷`"
+        :title="`${props.title}分布`"
         :x-data="props.barXData"
         :series-data="props.barSeriesData"
-        y-name="鏁伴噺"
-        @bar-click="emit('barClick', $event)"
+        y-name="数量"
+        @barClick="emit('barClick', $event)"
       />
     </div>
 
-    <!-- 鎶樼嚎鍥撅細鍔ㄦ€乫lex -->
+    <!-- 图表区域 -->
     <div v-if="hasLine" class="chart-wrapper" :style="{ flex: chartFlex }">
       <LineChartClick
         class="chart-panel-inner"
-        :title="`${props.title}瓒嬪娍`"
+        :title="`${props.title}趋势`"
         :x-data="props.lineXData"
         :series-data="props.lineSeriesData"
-        y-name="鏁伴噺"
-        @line-click="emit('lineClick', $event)"
+        y-name="数量"
+        @lineClick="emit('lineClick', $event)"
       />
     </div>
   </div>

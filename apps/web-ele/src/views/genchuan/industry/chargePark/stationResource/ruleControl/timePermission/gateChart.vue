@@ -41,15 +41,10 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits([
-  'cardClick',
-  'barClick',
-  'lineClick',
-  'pieClick',
-]);
+const emit = defineEmits(['cardClick', 'barClick', 'lineClick', 'pieClick']);
 
-// 动态计算是否显示各个图表
 const hasCards = computed(() => props.cards && props.cards.length > 0);
+const isTwoCardLayout = computed(() => props.cards?.length === 2);
 const hasPie = computed(() => props.chartConfig.pie);
 const hasBar = computed(() => props.chartConfig.bar);
 const hasLine = computed(() => props.chartConfig.line);
@@ -63,7 +58,6 @@ const chartCount = computed(() => {
   return count;
 });
 
-// 动态计算每个图表的flex值
 const chartFlex = computed(() => {
   if (chartCount.value === 0) return 0;
   return 3.5 / chartCount.value;
@@ -72,7 +66,10 @@ const chartFlex = computed(() => {
 
 <template>
   <div class="park-chart-box">
-    <div v-if="hasCards" class="chart-box-left">
+    <div
+      v-if="hasCards"
+      :class="['chart-box-left', { 'is-two-card-layout': isTwoCardLayout }]"
+    >
       <IndicatorClick
         v-for="item in props.cards"
         :key="item.key"
@@ -87,8 +84,8 @@ const chartFlex = computed(() => {
       <PieClick
         class="chart-panel-inner"
         :data="props.pieData"
-        :title-text="`${props.title}统计`"
-        @pie-click="emit('pieClick', $event)"
+        :title-text="`${props.title}占比`"
+        @pieClick="emit('pieClick', $event)"
       />
     </div>
     <div v-if="hasBar" class="chart-wrapper" :style="{ flex: chartFlex }">
@@ -98,7 +95,7 @@ const chartFlex = computed(() => {
         :x-data="props.barXData"
         :series-data="props.barSeriesData"
         y-name="数量"
-        @bar-click="emit('barClick', $event)"
+        @barClick="emit('barClick', $event)"
       />
     </div>
     <div v-if="hasLine" class="chart-wrapper" :style="{ flex: chartFlex }">
@@ -108,7 +105,7 @@ const chartFlex = computed(() => {
         :x-data="props.lineXData"
         :series-data="props.lineSeriesData"
         y-name="数量"
-        @line-click="emit('lineClick', $event)"
+        @lineClick="emit('lineClick', $event)"
       />
     </div>
   </div>
@@ -126,6 +123,13 @@ const chartFlex = computed(() => {
     grid-template-rows: repeat(2, 1fr);
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
+
+    &.is-two-card-layout {
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+      grid-template-columns: 1fr;
+      width: 100%;
+      max-width: none;
+    }
 
     :deep(.stat-card) {
       height: 100% !important;

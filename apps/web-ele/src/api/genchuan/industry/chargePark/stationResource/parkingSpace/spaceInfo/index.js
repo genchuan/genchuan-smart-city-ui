@@ -36,6 +36,10 @@ export function importParkingSpaceInfo(file, updateSupport = false) {
   });
 }
 
+export function getParkingSpaceInfoImportTemplate() {
+  return requestClient.download(`${baseUrl}/get-import-template`);
+}
+
 export function exportParkingSpaceInfo(params) {
   return requestClient.download(`${baseUrl}/export`, { params });
 }

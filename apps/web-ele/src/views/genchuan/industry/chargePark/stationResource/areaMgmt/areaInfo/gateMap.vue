@@ -8,12 +8,12 @@ defineProps({
   },
 });
 
-const emit = defineEmits(['marker-click']);
+const emit = defineEmits(['markerClick']);
 </script>
 
 <template>
   <div class="station-map-panel">
-    <Map :data="data" @marker-click="emit('marker-click', $event)" />
+    <Map :data="data" @markerClick="emit('markerClick', $event)" />
   </div>
 </template>
 

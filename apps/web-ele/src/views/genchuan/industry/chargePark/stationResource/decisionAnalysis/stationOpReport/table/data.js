@@ -49,7 +49,7 @@ export const pageConfig = {
     cards: [
       ['totalAreaCount', '总片区数'],
       ['coverStationCount', '覆盖场站数'],
-      ['totalStationCount', '总站场数'],
+      ['totalStationCount', '总场站数'],
       ['normalOperateCount', '正常运营数'],
       ['totalSpaceCount', '总车位数'],
       ['availableSpaceCount', '可用车位数'],
@@ -137,7 +137,7 @@ export const tableColumns = [
   },
   {
     field: 'totalStationCount',
-    label: '总站场数',
+    label: '总场站数',
     minWidth: 130,
     drillType: 'dialog',
     drillLabel: '全场站明细',
@@ -229,7 +229,7 @@ export const detailFields = [
   { key: 'exportCount', label: '报表导出次数', section: '报表信息' },
   { key: 'totalAreaCount', label: '总片区数', section: '核心指标' },
   { key: 'coverStationCount', label: '覆盖场站数', section: '核心指标' },
-  { key: 'totalStationCount', label: '总站场数', section: '核心指标' },
+  { key: 'totalStationCount', label: '总场站数', section: '核心指标' },
   { key: 'normalOperateCount', label: '正常运营数', section: '核心指标' },
   { key: 'totalSpaceCount', label: '总车位数', section: '核心指标' },
   { key: 'availableSpaceCount', label: '可用车位数', section: '核心指标' },

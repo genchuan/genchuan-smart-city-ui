@@ -44,6 +44,6 @@ export function exportStationInfo(params) {
   return requestClient.download(`${baseUrl}/export`, { params });
 }
 
-export function getStationInfoChart() {
-  return requestClient.get(`${baseUrl}/chart`);
+export function getStationInfoChart(params) {
+  return requestClient.get(`${baseUrl}/chart`, { params });
 }

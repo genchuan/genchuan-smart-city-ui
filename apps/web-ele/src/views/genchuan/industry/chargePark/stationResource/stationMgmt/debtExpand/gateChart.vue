@@ -41,15 +41,10 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits([
-  'cardClick',
-  'barClick',
-  'lineClick',
-  'pieClick',
-]);
+const emit = defineEmits(['cardClick', 'barClick', 'lineClick', 'pieClick']);
 
-// 动态计算图表数量和flex值
 const hasCards = computed(() => props.cards.length > 0);
+const isTwoCardLayout = computed(() => props.cards.length === 2);
 const hasPie = computed(
   () => props.chartConfig.pie && props.pieData.length > 0,
 );
@@ -59,8 +54,9 @@ const hasBar = computed(
 const hasLine = computed(
   () => props.chartConfig.line && props.lineXData.length > 0,
 );
+const barYName = computed(() => props.chartConfig.bar?.[5] || '数量');
+const lineYName = computed(() => props.chartConfig.line?.[5] || '数量');
 
-// 计算图表总数（不包括卡片）
 const chartCount = computed(() => {
   let count = 0;
   if (hasPie.value) count++;
@@ -69,7 +65,6 @@ const chartCount = computed(() => {
   return count;
 });
 
-// 动态计算每个图表的flex值
 const chartFlex = computed(() => {
   if (chartCount.value === 0) return '0';
   if (chartCount.value === 1) return '3.5 !important'; // 单个图表占满剩余空间
@@ -80,8 +75,12 @@ const chartFlex = computed(() => {
 
 <template>
   <div class="park-chart-box">
-    <!-- 卡片区：固定flex: 1 -->
-    <div v-if="hasCards" class="chart-box-left" style="flex: 1 !important">
+    <!-- 图表区域 -->
+    <div
+      v-if="hasCards"
+      :class="['chart-box-left', { 'is-two-card-layout': isTwoCardLayout }]"
+      style="flex: 1 !important"
+    >
       <IndicatorClick
         v-for="item in props.cards"
         :key="item.key"
@@ -93,37 +92,37 @@ const chartFlex = computed(() => {
       />
     </div>
 
-    <!-- 饼图：动态flex -->
+    <!-- 图表区域 -->
     <div v-if="hasPie" class="chart-wrapper" :style="{ flex: chartFlex }">
       <PieClick
         class="chart-panel-inner"
         :data="props.pieData"
-        :title-text="`${props.title}统计`"
-        @pie-click="emit('pieClick', $event)"
+        :title-text="`${props.title}占比`"
+        @pieClick="emit('pieClick', $event)"
       />
     </div>
 
-    <!-- 柱状图：动态flex -->
+    <!-- 图表区域 -->
     <div v-if="hasBar" class="chart-wrapper" :style="{ flex: chartFlex }">
       <BarClick
         class="chart-panel-inner"
         :title="`${props.title}分布`"
         :x-data="props.barXData"
         :series-data="props.barSeriesData"
-        y-name="数量"
-        @bar-click="emit('barClick', $event)"
+        :y-name="barYName"
+        @barClick="emit('barClick', $event)"
       />
     </div>
 
-    <!-- 折线图：动态flex -->
+    <!-- 图表区域 -->
     <div v-if="hasLine" class="chart-wrapper" :style="{ flex: chartFlex }">
       <LineChartClick
         class="chart-panel-inner"
         :title="`${props.title}趋势`"
         :x-data="props.lineXData"
         :series-data="props.lineSeriesData"
-        y-name="数量"
-        @line-click="emit('lineClick', $event)"
+        :y-name="lineYName"
+        @lineClick="emit('lineClick', $event)"
       />
     </div>
   </div>
@@ -142,7 +141,14 @@ const chartFlex = computed(() => {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
     min-width: 280px;
-    max-width: 320px;
+    max-width: none;
+
+    &.is-two-card-layout {
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+      grid-template-columns: 1fr;
+      width: 100%;
+      max-width: none;
+    }
 
     :deep(.stat-card) {
       height: 100% !important;
