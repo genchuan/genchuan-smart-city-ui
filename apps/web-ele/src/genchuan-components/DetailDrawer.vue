@@ -62,11 +62,52 @@ const close = () => {
   emit('close');
 };
 
+function padTime(value) {
+  return String(value).padStart(2, '0');
+}
+
+function formatDateTime(value) {
+  if (value === undefined || value === null || value === '') return '--';
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${value.getFullYear()}-${padTime(value.getMonth() + 1)}-${padTime(value.getDate())} ${padTime(value.getHours())}:${padTime(value.getMinutes())}:${padTime(value.getSeconds())}`;
+  }
+  if (typeof value === 'number' || /^\d+$/.test(String(value))) {
+    const text = String(value);
+    const timestamp = Number(text.length === 10 ? `${text}000` : text);
+    const date = new Date(timestamp);
+    if (!Number.isNaN(date.getTime())) return formatDateTime(date);
+  }
+  const normalized = String(value)
+    .replace('T', ' ')
+    .replace(/\.\d+Z?$/, '');
+  const parsed = new Date(String(value).replaceAll('-', '/'));
+  if (!Number.isNaN(parsed.getTime())) return formatDateTime(parsed);
+  return normalized.length >= 19 ? normalized.slice(0, 19) : normalized;
+}
+
+const builtinFormatters = {
+  formatDateTime,
+};
+
 const formatValue = (field, value) => {
-  if (field.formatter) {
+  if (typeof field.formatter === 'function') {
     return field.formatter(value);
   }
-  return value;
+  const formatter =
+    typeof field.formatter === 'string'
+      ? builtinFormatters[field.formatter]
+      : null;
+  const nextValue = formatter ? formatter(value) : value;
+  if (
+    field.suffix &&
+    nextValue !== undefined &&
+    nextValue !== null &&
+    nextValue !== '' &&
+    nextValue !== '--'
+  ) {
+    return `${nextValue}${field.suffix}`;
+  }
+  return nextValue ?? '--';
 };
 
 // 获取完整图片URL
