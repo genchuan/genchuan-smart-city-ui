@@ -52,7 +52,10 @@ function validatePhone(rule, value, callback) {
 
 const rules = {
   name: [{ required: true, message: '请输入人员姓名', trigger: 'blur' }],
-  phone: [{ validator: validatePhone, trigger: 'blur' }],
+  phone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { validator: validatePhone, trigger: 'blur' }
+  ],
   area: [{ required: true, message: '请选择所属片区', trigger: 'change' }],
   status: [{ required: true, message: '请选择人员状态', trigger: 'change' }],
 };
@@ -137,7 +140,7 @@ defineExpose({
           show-word-limit
         />
       </ElFormItem>
-      <ElFormItem label="手机号" prop="phone">
+      <ElFormItem label="手机号" prop="phone" required>
         <ElInput
           v-model="form.phone"
           maxlength="11"
