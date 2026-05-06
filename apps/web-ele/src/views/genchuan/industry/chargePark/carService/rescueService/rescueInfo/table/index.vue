@@ -884,19 +884,18 @@ defineExpose({ handleRefresh, handleChartRefresh });
           </template>
           <template v-else-if="row.status === '已完成'">
             <IconButton
-              :content="
-                row.status !== '已完成'
-                  ? '仅已完成可评价'
-                  : row.archiveStatus === '已归档'
-                    ? '已归档不可评价'
-                    : '评价'
-              "
+              :content="row.status !== '已完成' ? '仅已完成可评价' : row.archiveStatus === '已归档' ? '已归档不可评价' : '评价'"
               :disabled="row.status !== '已完成' || row.archiveStatus === '已归档'"
               icon-name="star"
               @click="openEvaluateDrawer(row)"
             />
             <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-            <IconButton content="归档" icon-name="folder" @click="handleArchive(row)" />
+            <IconButton
+              :content="row.archiveStatus === '已归档' ? '已归档' : '归档'"
+              :disabled="row.archiveStatus === '已归档'"
+              icon-name="folder"
+              @click="row.archiveStatus !== '已归档' && handleArchive(row)"
+            />
           </template>
         </div>
       </template>

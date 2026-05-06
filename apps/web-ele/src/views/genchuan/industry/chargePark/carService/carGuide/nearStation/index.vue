@@ -84,3 +84,21 @@ const refreshChart = () => {
     </el-tabs>
   </div>
 </template>
+<style scoped lang="scss">
+.common-index {
+  // 图表容器下边距（参照 DetailDrawer 卡片间距）
+  :deep(.stats-four-visualization) {
+    margin-bottom: 8px;
+  }
+
+  // 图标按钮组上下边距，与图表和 tabs 自然分隔
+  .icon-change {
+    margin: 8px 0 16px 0;
+  }
+
+  // 确保 tabs 顶部无多余间距
+  .el-tabs {
+    margin-top: 0;
+  }
+}
+</style>
