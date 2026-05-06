@@ -96,7 +96,7 @@
           </template>
 
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="刷新" icon-name="Refresh" @click="handleRefresh" />
+
           <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
@@ -164,7 +164,6 @@
           </template>
           <template v-else-if="row.pileStatusName === '已调试'">
             <IconButton content="启用" icon-name="Check" @click="handleEnable(row)" />
-            <IconButton content="停用" icon-name="Close" :disabled="row.faultFlag" @click="handleDisable(row)" />
           </template>
           <template v-else-if="row.pileStatusName === '已启用'">
             <IconButton content="停用" icon-name="Close" :disabled="row.faultFlag" @click="handleDisable(row)" />
@@ -273,10 +272,18 @@ const tabsData = ref([
   { label: '已停用', name: '已停用', count: 0 },
 ]);
 
+// 合法状态值集合（1=已启用,2=已停用,3=未调试,4=已调试）
+const VALID_STATUSES = new Set([1, 2, 3, 4]);
+
 async function fetchStatusCount() {
   try {
     const res = await getStatusCount();
-    const statusMap = new Map(res.map(item => [Number(item.pileStatus), item.count]));
+    // 过滤非法状态，只统计 1-4
+    const validItems = (res || []).filter(item => {
+      const statusNum = Number(item.pileStatus);
+      return VALID_STATUSES.has(statusNum);
+    });
+    const statusMap = new Map(validItems.map(item => [Number(item.pileStatus), item.count]));
     const enableCount = statusMap.get(1) || 0;
     const disableCount = statusMap.get(2) || 0;
     const otherCount = (statusMap.get(3) || 0) + (statusMap.get(4) || 0);
@@ -294,15 +301,29 @@ function handleTabChange() {
 }
 
 function formatList(list) {
-  return (list || []).map(item => ({
-    ...item,
-    createTime: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-    updateTime: item.updateTime ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
-    pileStatusName: pileStatusMap.value.get(Number(item.pileStatus)) || item.pileStatusName || '未知',
-    chargeModeName: chargeModeMap.value.get(Number(item.chargeMode)) || item.chargeModeName || '未知',
-    qrcodeUrl: qrcodeUrlMap.value.get(item.id) || null,
-    qrcodeLoading: !qrcodeUrlMap.value.has(item.id),
-  }));
+  return (list || []).map(item => {
+    const rawStatus = Number(item.pileStatus);
+    let finalStatusName;
+
+    if (VALID_STATUSES.has(rawStatus)) {
+      // 优先使用字典映射，其次回退到后端原始名称
+      finalStatusName = pileStatusMap.value.get(rawStatus) || item.pileStatusName || '未知';
+    } else {
+      // 非法状态（0、null、其他）统一显示为“异常状态”，并输出警告
+      finalStatusName = '异常状态';
+      console.warn(`充电桩 ID=${item.id} 的状态值非法: ${item.pileStatus}，已显示为“异常状态”`);
+    }
+
+    return {
+      ...item,
+      createTime: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+      updateTime: item.updateTime ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+      pileStatusName: finalStatusName,
+      chargeModeName: chargeModeMap.value.get(Number(item.chargeMode)) || item.chargeModeName || '未知',
+      qrcodeUrl: qrcodeUrlMap.value.get(item.id) || null,
+      qrcodeLoading: !qrcodeUrlMap.value.has(item.id),
+    };
+  });
 }
 
 async function loadQrcodesForCurrentPage() {
@@ -415,7 +436,6 @@ const handleFieldClick = (fieldName, value) => {
       queryFormApi.setValues({ [fieldName]: numValue }, false);
     }
   } else if (fieldName === 'stationId') {
-    // value 已经是数字 ID，直接设置
     searchParams.value = { ...searchParams.value, [fieldName]: value };
     queryFormApi.setValues({ [fieldName]: value }, false);
   } else {
@@ -669,9 +689,15 @@ async function handleDisable(row) {
   try {
     await disablePile({ id: row.id, remark: '管理员停用' });
     ElMessage.success('已停用');
+    // 乐观更新本地状态（提升体验）
+    const target = dataObj.list.find(item => item.id === row.id);
+    if (target) {
+      target.pileStatus = 2;
+      target.pileStatusName = pileStatusMap.value.get(2) || '已停用';
+    }
     emit('refresh-chart');
-    handleRefresh();
-    fetchStatusCount();
+    await handleRefresh();      // 最终以后端数据为准
+    await fetchStatusCount();
   } catch (error) {
     ElMessage.error(error.message || '停用失败');
   } finally {
