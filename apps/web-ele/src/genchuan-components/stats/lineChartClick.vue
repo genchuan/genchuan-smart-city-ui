@@ -1,6 +1,7 @@
 <!-- /components/stats/line.vue -->
 <script setup>
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+
 import * as echarts from 'echarts';
 
 const props = defineProps({
@@ -131,7 +132,7 @@ const initChart = async () => {
           emphasis: {
             itemStyle: {
               shadowBlur: 10,
-              shadowColor: `rgba(${parseInt(seriesColor.slice(1, 3), 16)}, ${parseInt(seriesColor.slice(3, 5), 16)}, ${parseInt(seriesColor.slice(5, 7), 16)}, 0.3)`,
+              shadowColor: `rgba(${Number.parseInt(seriesColor.slice(1, 3), 16)}, ${Number.parseInt(seriesColor.slice(3, 5), 16)}, ${Number.parseInt(seriesColor.slice(5, 7), 16)}, 0.3)`,
             },
           },
           lineStyle: {
@@ -223,7 +224,7 @@ onUnmounted(() => {
       height: 330px;
       background-color: hsl(var(--card));
       border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
     "
   ></div>
 </template>

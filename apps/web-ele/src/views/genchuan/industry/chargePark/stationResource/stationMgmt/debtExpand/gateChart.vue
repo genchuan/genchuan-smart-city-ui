@@ -78,7 +78,8 @@ const chartFlex = computed(() => {
     <!-- 图表区域 -->
     <div
       v-if="hasCards"
-      :class="['chart-box-left', { 'is-two-card-layout': isTwoCardLayout }]"
+      class="chart-box-left"
+      :class="[{ 'is-two-card-layout': isTwoCardLayout }]"
       style="flex: 1 !important"
     >
       <IndicatorClick
@@ -98,7 +99,7 @@ const chartFlex = computed(() => {
         class="chart-panel-inner"
         :data="props.pieData"
         :title-text="`${props.title}占比`"
-        @pieClick="emit('pieClick', $event)"
+        @pie-click="emit('pieClick', $event)"
       />
     </div>
 
@@ -110,7 +111,7 @@ const chartFlex = computed(() => {
         :x-data="props.barXData"
         :series-data="props.barSeriesData"
         :y-name="barYName"
-        @barClick="emit('barClick', $event)"
+        @bar-click="emit('barClick', $event)"
       />
     </div>
 
@@ -122,7 +123,7 @@ const chartFlex = computed(() => {
         :x-data="props.lineXData"
         :series-data="props.lineSeriesData"
         :y-name="lineYName"
-        @lineClick="emit('lineClick', $event)"
+        @line-click="emit('lineClick', $event)"
       />
     </div>
   </div>

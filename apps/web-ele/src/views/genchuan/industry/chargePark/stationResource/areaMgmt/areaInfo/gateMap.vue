@@ -13,7 +13,7 @@ const emit = defineEmits(['markerClick']);
 
 <template>
   <div class="station-map-panel">
-    <Map :data="data" @markerClick="emit('markerClick', $event)" />
+    <Map :data="data" @marker-click="emit('markerClick', $event)" />
   </div>
 </template>
 

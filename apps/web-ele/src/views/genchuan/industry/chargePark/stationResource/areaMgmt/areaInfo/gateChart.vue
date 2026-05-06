@@ -97,7 +97,7 @@ const chartFlex = computed(() => {
         class="chart-panel-inner"
         :data="props.pieData"
         :title-text="`${props.title}占比`"
-        @pieClick="emit('pieClick', $event)"
+        @pie-click="emit('pieClick', $event)"
       />
     </div>
 
@@ -109,7 +109,7 @@ const chartFlex = computed(() => {
         :x-data="props.barXData"
         :series-data="props.barSeriesData"
         y-name="数量"
-        @barClick="emit('barClick', $event)"
+        @bar-click="emit('barClick', $event)"
       />
     </div>
 
@@ -121,7 +121,7 @@ const chartFlex = computed(() => {
         :x-data="props.lineXData"
         :series-data="props.lineSeriesData"
         y-name="数量"
-        @lineClick="emit('lineClick', $event)"
+        @line-click="emit('lineClick', $event)"
       />
     </div>
   </div>

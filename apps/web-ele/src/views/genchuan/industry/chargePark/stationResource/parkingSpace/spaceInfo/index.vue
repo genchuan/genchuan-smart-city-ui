@@ -1215,10 +1215,10 @@ defineExpose({
           :bar-series-data="barSeriesData"
           :line-x-data="lineXData"
           :line-series-data="lineSeriesData"
-          @cardClick="handleCardClick"
-          @barClick="handleBarClick"
-          @lineClick="handleLineClick"
-          @pieClick="handlePieClick"
+          @card-click="handleCardClick"
+          @bar-click="handleBarClick"
+          @line-click="handleLineClick"
+          @pie-click="handlePieClick"
         />
       </div>
       <div v-if="hasMap" class="station-map-wrap">
@@ -1536,7 +1536,7 @@ defineExpose({
 .common-cell-image {
   width: 42px;
   height: 42px;
-  border-radius: 4px;
   vertical-align: middle;
+  border-radius: 4px;
 }
 </style>

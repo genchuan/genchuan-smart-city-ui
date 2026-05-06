@@ -1023,7 +1023,7 @@ function getDrillFilterPatch(column, row) {
     candidates.push(field.replace(/Name$/, 'Id'));
   }
 
-  for (const key of [...new Set(candidates)]) {
+  for (const key of new Set(candidates)) {
     const value = row?.[key];
     if (!isEmpty(value)) {
       return { [field]: value };
@@ -1104,10 +1104,10 @@ defineExpose({
         :bar-series-data="barSeriesData"
         :line-x-data="lineXData"
         :line-series-data="lineSeriesData"
-        @cardClick="handleCardClick"
-        @barClick="handleBarClick"
-        @lineClick="handleLineClick"
-        @pieClick="handlePieClick"
+        @card-click="handleCardClick"
+        @bar-click="handleBarClick"
+        @line-click="handleLineClick"
+        @pie-click="handlePieClick"
       />
     </div>
 
