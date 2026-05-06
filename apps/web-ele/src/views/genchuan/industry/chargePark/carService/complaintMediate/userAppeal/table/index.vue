@@ -386,7 +386,7 @@ const [FeedbackDrawer, feedbackDrawerApi] = useVbenDrawer({
   onConfirm: async () => {
     if (!feedbackForm.feedbackContent) return ElMessage.warning('请填写反馈内容');
     await feedbackAppeal({ id: currentFeedbackRow.id, feedbackContent: feedbackForm.feedbackContent });
-    ElMessage.success('反馈成功，状态已变更为已关闭');
+    ElMessage.success('反馈成功，状态已变更为已完成');
     feedbackDrawerApi.close();
     handleRefresh();
   },
