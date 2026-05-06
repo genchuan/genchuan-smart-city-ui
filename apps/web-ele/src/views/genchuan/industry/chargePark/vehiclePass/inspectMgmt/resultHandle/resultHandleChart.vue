@@ -38,12 +38,7 @@ let pieChartInstance = null;
 
 async function loadChartData() {
   try {
-    const endTime = Date.now();
-    const startTime = endTime - 7 * 24 * 60 * 60 * 1000;
-
     const params = {
-      startTime: startTime.toString(),
-      endTime: endTime.toString(),
       areaId: props.parkId,
     };
 

@@ -18,7 +18,7 @@ export const reportTypeOptions = [
 
 export const generateStatusOptions = [
   { label: '未生成', value: '未生成' },
-  { label: '生成中', value: '生成中' },
+  { label: '生成失败', value: '生成失败' },
   { label: '已生成', value: '已生成' },
 ];
 
@@ -203,7 +203,7 @@ export function formatRate(value) {
 
 export function formatStatPeriod(start, end) {
   if (!start || !end) return '-';
-  return `${start} 至 ${end}`;
+  return `${formatDate(start)} 至 ${formatDate(end)}`;
 }
 
 export function getStationName(stationId) {
@@ -447,7 +447,7 @@ export function useSearchFormSchema() {
     {
       fieldName: 'statTimeRange',
       label: '统计时段',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
         placeholder: '请选择统计时段',
         type: 'datetimerange',

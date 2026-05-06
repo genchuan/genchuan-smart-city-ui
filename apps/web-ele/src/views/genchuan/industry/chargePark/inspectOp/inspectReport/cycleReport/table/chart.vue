@@ -107,7 +107,7 @@ const barLineChartOptions = computed(() => [
     value: 'device-trend',
     type: 'line',
     data: {
-      xAxis: state.lineData.map((item) => item.date),
+      xAxis: state.lineData.map((item) => item.date ?? item.time),
       series: state.lineData.map((item) => item.deviceUpdateNum),
     },
   },

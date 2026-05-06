@@ -13,10 +13,9 @@ import type {
 
 import { computed, nextTick, onMounted, ref } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
 
 import {
-  ElButton,
   ElDescriptions,
   ElDescriptionsItem,
   ElDialog,
@@ -24,11 +23,13 @@ import {
   ElMessage,
   ElTag,
 } from 'element-plus';
+import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import { MerchantLinkApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantLink';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { exportToExcel } from '#/utils/excel.js';
 
@@ -76,6 +77,9 @@ const merchantDetailCache = new Map<number, MerchantInfoDetailVO>();
 const merchantDialogVisible = ref(false);
 const merchantProfileLookup = ref(buildMerchantProfileLookup(merchantOptions));
 const merchantSelectOptions = ref<MerchantSelectOption[]>(merchantOptions);
+const filterLinkType = ref('');
+const filterStatus = ref('');
+const searchParams = ref<Record<string, any>>({});
 
 const detailData = computed(() => {
   if (!detailObj.value) {
@@ -102,6 +106,44 @@ const [Form, formApi] = useVbenForm({
   schema: useCreateSchema(merchantSelectOptions.value),
   showDefaultActions: false,
 });
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useSearchSchema(merchantSelectOptions.value).map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
 
 /** 校验接口地址 */
 function isValidHttpUrl(url: string) {
@@ -133,7 +175,16 @@ async function loadMerchantOptions() {
     );
   }
 
-  await gridApi.formApi.updateSchema([
+  await formApi.updateSchema([
+    {
+      fieldName: 'merchantId',
+      componentProps: {
+        options: merchantSelectOptions.value,
+      },
+    },
+  ]);
+
+  await queryFormApi.updateSchema([
     {
       fieldName: 'merchantId',
       componentProps: {
@@ -210,12 +261,25 @@ async function fetchMerchantLinkDetail(
 /** 查询商户对接列表 */
 async function queryMerchantLinkPage(
   { page }: any,
-  formValues: Record<string, any>,
+  formValues: Record<string, any> = {},
 ) {
+  const queryValues = {
+    ...searchParams.value,
+    ...formValues,
+  };
+
+  if (filterLinkType.value) {
+    queryValues.linkType = filterLinkType.value;
+  }
+
+  if (filterStatus.value) {
+    queryValues.status = filterStatus.value;
+  }
+
   const params: MerchantLinkPageReqVO = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    ...buildMerchantLinkQueryParams(formValues),
+    ...buildMerchantLinkQueryParams(queryValues),
   };
   const result = await MerchantLinkApi.getMerchantLinkPage(params);
   const list = Array.isArray(result?.list) ? result.list : [];
@@ -331,12 +395,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useSearchSchema(merchantSelectOptions.value),
-  },
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Form'], ['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
     height: 'auto',
     proxyConfig: {
@@ -353,10 +414,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   },
+  showSearchForm: false,
 });
 
-/** 刷新表格 */
+/** 刷新表格 - 同时清除所有快捷筛选 */
 function handleRefresh() {
+  filterLinkType.value = '';
+  filterStatus.value = '';
   return gridApi.query();
 }
 
@@ -370,14 +434,23 @@ async function handleReloadPage() {
 
 /** 重置筛选条件 */
 async function resetSearch() {
-  await gridApi.formApi.resetForm();
-  await handleRefresh();
+  searchParams.value = {};
+  filterLinkType.value = '';
+  filterStatus.value = '';
+  await queryFormApi.resetForm();
+  return gridApi.query();
 }
 
 /** 设置筛选条件 */
 async function setSearchValues(values: Record<string, any>) {
-  await gridApi.formApi.setValues(values);
-  await handleRefresh();
+  searchParams.value = {
+    ...searchParams.value,
+    ...values,
+  };
+  filterLinkType.value = '';
+  filterStatus.value = '';
+  await queryFormApi.setValues(searchParams.value);
+  return gridApi.query();
 }
 
 /** 重新计算表格布局 */
@@ -405,11 +478,22 @@ async function handleExport() {
   });
 
   try {
-    const formValues = await gridApi.formApi.getValues();
+    const exportValues = {
+      ...searchParams.value,
+    };
+
+    if (filterLinkType.value) {
+      exportValues.linkType = filterLinkType.value;
+    }
+
+    if (filterStatus.value) {
+      exportValues.status = filterStatus.value;
+    }
+
     const result = await MerchantLinkApi.getMerchantLinkPage({
       pageNo: 1,
       pageSize: 9999,
-      ...buildMerchantLinkQueryParams(formValues),
+      ...buildMerchantLinkQueryParams(exportValues),
     });
     const list = Array.isArray(result?.list) ? result.list : [];
 
@@ -482,6 +566,12 @@ async function handleLink(row: MerchantLinkRow) {
 
 /** 断开商户对接 */
 async function handleUnlink(row: MerchantLinkRow) {
+  try {
+    await confirm(`确认断开${row.merchantName}的对接吗？`);
+  } catch {
+    return;
+  }
+
   const loadingInstance = ElLoading.service({
     target: '.merchant-link-table',
     text: '断开中...',
@@ -533,53 +623,119 @@ async function handleOpenMerchant(row: MerchantLinkRow) {
 
   merchantDialogVisible.value = true;
 }
+
+/** 打开搜索抽屉 */
+async function handleSerachShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+/** 按对接类型筛选 */
+function handleFilterLinkType(linkType: string) {
+  filterLinkType.value = filterLinkType.value === linkType ? '' : linkType;
+  gridApi.query();
+}
+
+/** 按对接状态筛选 */
+function handleFilterStatus(status: MerchantLinkRow['status']) {
+  filterStatus.value = filterStatus.value === status ? '' : status;
+  gridApi.query();
+}
+
+/** 取消对接类型筛选 */
+function handleCancelLinkTypeFilter() {
+  filterLinkType.value = '';
+  gridApi.query();
+}
+
+/** 取消对接状态筛选 */
+function handleCancelStatusFilter() {
+  filterStatus.value = '';
+  gridApi.query();
+}
 </script>
 
 <template>
   <div class="merchant-link-table">
     <div class="merchant-link-grid-wrap">
-      <Grid table-title="商户对接列表">
+      <Grid>
+        <template #table-title>
+          <div
+            class="tabel-tabs"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 10px;
+              align-items: center;
+            "
+          >
+            <ElTag
+              v-if="filterLinkType"
+              type="success"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelLinkTypeFilter"
+            >
+              对接类型：{{ filterLinkType }}
+            </ElTag>
+            <ElTag
+              v-if="filterStatus"
+              type="warning"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelStatusFilter"
+            >
+              对接状态：{{ filterStatus }}
+            </ElTag>
+          </div>
+        </template>
+
         <template #toolbar-tools>
-          <TableAction
-            :actions="[
-              {
-                label: '新增',
-                type: 'primary',
-                icon: ACTION_ICON.ADD,
-                onClick: handleCreate,
-              },
-              {
-                label: '导出',
-                type: 'primary',
-                icon: ACTION_ICON.DOWNLOAD,
-                onClick: handleExport,
-              },
-              {
-                label: props.showStats ? '隐藏统计' : '显示统计',
-                type: 'primary',
-                icon: props.showStats
-                  ? 'lucide:chevron-up'
-                  : 'lucide:chevron-down',
-                onClick: props.toggleStats,
-              },
-            ]"
-          />
+          <div class="common-toolbar-tools">
+            <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+            <IconButton
+              content="导出"
+              icon-name="download"
+              @click="handleExport"
+            />
+            <IconButton
+              content="搜索"
+              icon-name="search"
+              @click="handleSerachShow"
+            />
+            <IconButton
+              :content="props.showStats ? '隐藏统计' : '显示统计'"
+              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+              @click="props.toggleStats"
+            />
+            <IconButton
+              content="全屏"
+              icon-name="FullScreen"
+              @click="() => screenfull.toggle()"
+            />
+          </div>
         </template>
 
         <template #merchantName="{ row }">
-          <ElButton type="primary" link @click="handleOpenMerchant(row)">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleOpenMerchant(row)"
+          >
             {{ row.merchantName }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #linkType="{ row }">
-          <ElButton
+          <el-text
+            class="common-align"
             type="primary"
-            link
-            @click="setSearchValues({ linkType: row.linkType })"
+            style="cursor: pointer"
+            @click="handleFilterLinkType(row.linkType)"
           >
             {{ row.linkType }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #apiKey="{ row }">
@@ -587,58 +743,47 @@ async function handleOpenMerchant(row: MerchantLinkRow) {
         </template>
 
         <template #status="{ row }">
-          <ElButton
-            type="primary"
-            link
-            @click="setSearchValues({ status: row.status })"
+          <ElTag
+            :type="getStatusTagType(row.status)"
+            style="cursor: pointer"
+            @click="handleFilterStatus(row.status)"
           >
-            <ElTag :type="getStatusTagType(row.status)">
-              {{ row.status }}
-            </ElTag>
-          </ElButton>
+            {{ row.status }}
+          </ElTag>
         </template>
 
         <template #actions="{ row }">
-          <TableAction
-            :actions="[
-              {
-                label: '对接',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.AUDIT,
-                ifShow: () => row.status === '未对接',
-                onClick: handleLink.bind(null, row),
-              },
-              {
-                label: '断开',
-                type: 'danger',
-                link: true,
-                icon: ACTION_ICON.DELETE,
-                ifShow: () => row.status === '已对接',
-                popConfirm: {
-                  title: `确认断开${row.merchantName}的对接吗？`,
-                  confirm: handleUnlink.bind(null, row),
-                },
-              },
-              {
-                label: '编辑',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.EDIT,
-                onClick: handleEdit.bind(null, row),
-              },
-              {
-                label: '查看',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.VIEW,
-                onClick: handleDetail.bind(null, row),
-              },
-            ]"
-          />
+          <div class="table-toolbar-tools">
+            <IconButton
+              v-if="row.status === '未对接'"
+              content="对接"
+              icon-name="Check"
+              @click="handleLink(row)"
+            />
+            <IconButton
+              v-if="row.status === '已对接'"
+              content="断开"
+              icon-name="Close"
+              @click="handleUnlink(row)"
+            />
+            <IconButton
+              content="编辑"
+              icon-name="Edit"
+              @click="handleEdit(row)"
+            />
+            <IconButton
+              content="详情"
+              icon-name="View"
+              @click="handleDetail(row)"
+            />
+          </div>
         </template>
       </Grid>
     </div>
+
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
 
     <FormDrawer
       :title="formMode === 'edit' ? textObj.editText : textObj.addText"

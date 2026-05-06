@@ -13,8 +13,9 @@ import type {
 
 import { computed, nextTick, onMounted, ref } from 'vue';
 
+import { confirm, useVbenDrawer } from '@vben/common-ui';
+
 import {
-  ElButton,
   ElDescriptions,
   ElDescriptionsItem,
   ElDialog,
@@ -24,10 +25,13 @@ import {
   ElSelect,
   ElTag,
 } from 'element-plus';
+import screenfull from 'screenfull';
 
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import { MerchantRechargeApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantRecharge';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
 import {
@@ -70,6 +74,10 @@ const merchantSelectOptions = ref<MerchantSelectOption[]>(merchantOptions);
 const payChannel = ref('微信');
 const payDialogVisible = ref(false);
 const payRowId = ref<null | number>(null);
+const filterAmount = ref('');
+const filterPayChannel = ref('');
+const filterStatus = ref('');
+const searchParams = ref<Record<string, any>>({});
 
 const detailData = computed(() => {
   if (!detailObj.value) {
@@ -83,6 +91,44 @@ const detailData = computed(() => {
     maskedMerchantPhone: maskPhone(detailObj.value.merchantPhone),
   };
 });
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useSearchSchema(merchantSelectOptions.value).map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
 
 /** 获取状态标签色 */
 function getStatusTagType(status: MerchantRechargeRow['status']) {
@@ -125,7 +171,7 @@ async function loadMerchantOptions() {
     );
   }
 
-  await gridApi.formApi.updateSchema([
+  await queryFormApi.updateSchema([
     {
       fieldName: 'merchantId',
       componentProps: {
@@ -206,12 +252,29 @@ async function fetchMerchantRechargeDetail(
 /** 查询商户充值列表 */
 async function queryMerchantRechargePage(
   { page }: any,
-  formValues: Record<string, any>,
+  formValues: Record<string, any> = {},
 ) {
+  const queryValues = {
+    ...searchParams.value,
+    ...formValues,
+  };
+
+  if (filterAmount.value) {
+    queryValues.amount = filterAmount.value;
+  }
+
+  if (filterPayChannel.value) {
+    queryValues.payChannel = filterPayChannel.value;
+  }
+
+  if (filterStatus.value) {
+    queryValues.status = filterStatus.value;
+  }
+
   const params: MerchantRechargePageReqVO = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    ...buildMerchantRechargeQueryParams(formValues),
+    ...buildMerchantRechargeQueryParams(queryValues),
   };
   const result = await MerchantRechargeApi.getMerchantRechargePage(params);
   const list = Array.isArray(result?.list) ? result.list : [];
@@ -225,12 +288,9 @@ async function queryMerchantRechargePage(
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useSearchSchema(merchantSelectOptions.value),
-  },
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Form'], ['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
     height: 'auto',
     proxyConfig: {
@@ -247,10 +307,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   },
+  showSearchForm: false,
 });
 
-/** 刷新表格 */
+/** 刷新表格 - 同时清除所有快捷筛选 */
 function handleRefresh() {
+  filterAmount.value = '';
+  filterPayChannel.value = '';
+  filterStatus.value = '';
   return gridApi.query();
 }
 
@@ -264,14 +328,25 @@ async function handleReloadPage() {
 
 /** 重置筛选条件 */
 async function resetSearch() {
-  await gridApi.formApi.resetForm();
-  await handleRefresh();
+  searchParams.value = {};
+  filterAmount.value = '';
+  filterPayChannel.value = '';
+  filterStatus.value = '';
+  await queryFormApi.resetForm();
+  return gridApi.query();
 }
 
 /** 设置筛选条件 */
 async function setSearchValues(values: Record<string, any>) {
-  await gridApi.formApi.setValues(values);
-  await handleRefresh();
+  searchParams.value = {
+    ...searchParams.value,
+    ...values,
+  };
+  filterAmount.value = '';
+  filterPayChannel.value = '';
+  filterStatus.value = '';
+  await queryFormApi.setValues(searchParams.value);
+  return gridApi.query();
 }
 
 /** 重新计算表格布局 */
@@ -299,10 +374,24 @@ async function handleExport() {
   });
 
   try {
-    const formValues = await gridApi.formApi.getValues();
+    const exportValues = {
+      ...searchParams.value,
+    };
+
+    if (filterAmount.value) {
+      exportValues.amount = filterAmount.value;
+    }
+
+    if (filterPayChannel.value) {
+      exportValues.payChannel = filterPayChannel.value;
+    }
+
+    if (filterStatus.value) {
+      exportValues.status = filterStatus.value;
+    }
 
     await MerchantRechargeApi.exportMerchantRecharge(
-      buildMerchantRechargeQueryParams(formValues),
+      buildMerchantRechargeQueryParams(exportValues),
     );
     ElMessage.success('导出成功');
   } catch (error) {
@@ -372,6 +461,12 @@ async function handleConfirm(row: MerchantRechargeRow) {
 
 /** 取消充值 */
 async function handleCancel(row: MerchantRechargeRow) {
+  try {
+    await confirm(`确认取消订单 ${row.orderNo} 吗？`);
+  } catch {
+    return;
+  }
+
   const loadingInstance = ElLoading.service({
     target: '.merchant-recharge-table',
     text: '取消中...',
@@ -423,113 +518,197 @@ async function handleOpenMerchant(row: MerchantRechargeRow) {
 
   merchantDialogVisible.value = true;
 }
+
+/** 打开搜索抽屉 */
+async function handleSerachShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+/** 按充值金额筛选 */
+function handleFilterAmount(amount: number) {
+  const amountText = String(amount);
+  filterAmount.value = filterAmount.value === amountText ? '' : amountText;
+  gridApi.query();
+}
+
+/** 按支付渠道筛选 */
+function handleFilterPayChannel(nextPayChannel: string) {
+  filterPayChannel.value =
+    filterPayChannel.value === nextPayChannel ? '' : nextPayChannel;
+  gridApi.query();
+}
+
+/** 按充值状态筛选 */
+function handleFilterStatus(status: MerchantRechargeRow['status']) {
+  filterStatus.value = filterStatus.value === status ? '' : status;
+  gridApi.query();
+}
+
+/** 取消充值金额筛选 */
+function handleCancelAmountFilter() {
+  filterAmount.value = '';
+  gridApi.query();
+}
+
+/** 取消支付渠道筛选 */
+function handleCancelPayChannelFilter() {
+  filterPayChannel.value = '';
+  gridApi.query();
+}
+
+/** 取消充值状态筛选 */
+function handleCancelStatusFilter() {
+  filterStatus.value = '';
+  gridApi.query();
+}
 </script>
 
 <template>
   <div class="merchant-recharge-table">
     <div class="merchant-recharge-grid-wrap">
-      <Grid table-title="商户充值列表">
+      <Grid>
+        <template #table-title>
+          <div
+            class="tabel-tabs"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 10px;
+              align-items: center;
+            "
+          >
+            <ElTag
+              v-if="filterAmount"
+              type="primary"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelAmountFilter"
+            >
+              充值金额：{{ filterAmount }}
+            </ElTag>
+            <ElTag
+              v-if="filterPayChannel"
+              type="success"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelPayChannelFilter"
+            >
+              支付渠道：{{ filterPayChannel }}
+            </ElTag>
+            <ElTag
+              v-if="filterStatus"
+              type="warning"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelStatusFilter"
+            >
+              充值状态：{{ filterStatus }}
+            </ElTag>
+          </div>
+        </template>
+
         <template #toolbar-tools>
-          <TableAction
-            :actions="[
-              {
-                label: '导出',
-                type: 'primary',
-                icon: ACTION_ICON.DOWNLOAD,
-                onClick: handleExport,
-              },
-              {
-                label: props.showStats ? '隐藏统计' : '显示统计',
-                type: 'primary',
-                icon: props.showStats
-                  ? 'lucide:chevron-up'
-                  : 'lucide:chevron-down',
-                onClick: props.toggleStats,
-              },
-            ]"
-          />
+          <div class="common-toolbar-tools">
+            <IconButton
+              content="导出"
+              icon-name="download"
+              @click="handleExport"
+            />
+            <IconButton
+              content="搜索"
+              icon-name="search"
+              @click="handleSerachShow"
+            />
+            <IconButton
+              :content="props.showStats ? '隐藏统计' : '显示统计'"
+              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+              @click="props.toggleStats"
+            />
+            <IconButton
+              content="全屏"
+              icon-name="FullScreen"
+              @click="() => screenfull.toggle()"
+            />
+          </div>
         </template>
 
         <template #merchantName="{ row }">
-          <ElButton type="primary" link @click="handleOpenMerchant(row)">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleOpenMerchant(row)"
+          >
             {{ row.merchantName }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #amount="{ row }">
-          <ElButton
+          <el-text
+            class="common-align"
             type="primary"
-            link
-            @click="setSearchValues({ amount: String(row.amount) })"
+            style="cursor: pointer"
+            @click="handleFilterAmount(row.amount)"
           >
             {{ row.amount.toFixed(2) }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #payChannel="{ row }">
-          <ElButton
+          <el-text
+            class="common-align"
             type="primary"
-            link
-            @click="setSearchValues({ payChannel: row.payChannel })"
+            style="cursor: pointer"
+            @click="handleFilterPayChannel(row.payChannel)"
           >
             {{ row.payChannel }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #status="{ row }">
-          <ElButton
-            type="primary"
-            link
-            @click="setSearchValues({ status: row.status })"
+          <ElTag
+            :type="getStatusTagType(row.status)"
+            style="cursor: pointer"
+            @click="handleFilterStatus(row.status)"
           >
-            <ElTag :type="getStatusTagType(row.status)">
-              {{ row.status }}
-            </ElTag>
-          </ElButton>
+            {{ row.status }}
+          </ElTag>
         </template>
 
         <template #actions="{ row }">
-          <TableAction
-            :actions="[
-              {
-                label: '查看',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.VIEW,
-                onClick: handleDetail.bind(null, row),
-              },
-              {
-                label: '支付',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.AUDIT,
-                ifShow: () => row.status === '待支付',
-                onClick: handleOpenPay.bind(null, row),
-              },
-              {
-                label: '确认',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.AUDIT,
-                ifShow: () => row.status === '已支付',
-                onClick: handleConfirm.bind(null, row),
-              },
-              {
-                label: '取消',
-                type: 'danger',
-                link: true,
-                icon: ACTION_ICON.DELETE,
-                ifShow: () => row.status === '待支付',
-                popConfirm: {
-                  title: `确认取消订单 ${row.orderNo} 吗？`,
-                  confirm: handleCancel.bind(null, row),
-                },
-              },
-            ]"
-          />
+          <div class="table-toolbar-tools">
+            <IconButton
+              content="详情"
+              icon-name="View"
+              @click="handleDetail(row)"
+            />
+            <IconButton
+              v-if="row.status === '待支付'"
+              content="支付"
+              icon-name="Check"
+              @click="handleOpenPay(row)"
+            />
+            <IconButton
+              v-if="row.status === '已支付'"
+              content="确认"
+              icon-name="Check"
+              @click="handleConfirm(row)"
+            />
+            <IconButton
+              v-if="row.status === '待支付'"
+              content="取消"
+              icon-name="Close"
+              @click="handleCancel(row)"
+            />
+          </div>
         </template>
       </Grid>
     </div>
+
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
 
     <DetailDrawer
       ref="detailDrawerRef"

@@ -22,20 +22,20 @@ const form = reactive({
 });
 
 const rules = {
-  processMode: [
-    {
-      required: true,
-      message: '请输入处置方式',
-      trigger: 'blur',
-    },
-  ],
-  // processUserId: [
+  // processMode: [
   //   {
   //     required: true,
-  //     message: '请选择处置人',
-  //     trigger: 'change',
+  //     message: '请输入处置方式',
+  //     trigger: 'blur',
   //   },
   // ],
+  processUserId: [
+    {
+      required: true,
+      message: '请选择处置人',
+      trigger: 'change',
+    },
+  ],
 };
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -75,9 +75,9 @@ async function submitProcess() {
   try {
     await processInspectReport({
       id: rowData.value.id,
-      processMode: form.processMode,
-      // processUserId: form.processUserId,
-      processResult: form.processResult,
+      // processMode: form.processMode,
+      processUserId: form.processUserId,
+      // processResult: form.processResult,
     });
     ElMessage.success('处置执行成功');
     emit('success');
@@ -103,15 +103,15 @@ defineExpose({
   <Drawer>
     <div class="process-tip">上报ID：{{ rowData.id || '-' }}</div>
     <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
-      <el-form-item label="处置方式" prop="processMode">
+      <!-- <el-form-item label="处置方式" prop="processMode">
         <el-input
           v-model="form.processMode"
           maxlength="100"
           placeholder="请输入处置方式"
           show-word-limit
         />
-      </el-form-item>
-      <!-- <el-form-item label="处置人" prop="processUserId">
+      </el-form-item> -->
+      <el-form-item label="处置人" prop="processUserId">
         <el-select
           v-model="form.processUserId"
           clearable
@@ -125,8 +125,8 @@ defineExpose({
             :value="item.value"
           />
         </el-select>
-      </el-form-item> -->
-      <el-form-item label="处置结果">
+      </el-form-item>
+      <!-- <el-form-item label="处置结果">
         <el-input
           v-model="form.processResult"
           maxlength="255"
@@ -135,7 +135,7 @@ defineExpose({
           show-word-limit
           type="textarea"
         />
-      </el-form-item>
+      </el-form-item> -->
     </el-form>
     <div class="drawer-footer">
       <el-button @click="drawerApi.close()">取消</el-button>

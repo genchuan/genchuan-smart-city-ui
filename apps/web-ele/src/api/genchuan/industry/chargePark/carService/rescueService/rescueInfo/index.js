@@ -5,9 +5,18 @@ export function getRescueInfoPage(params) {
   return requestClient.get('/carservice/rescue-info/page', { params });
 }
 
-// 导出救援信息
+// 导出救援信息(Excel)
 export function exportRescueInfoExcel(params) {
-  return requestClient.download('/carservice/rescue-info/export', params);
+  return requestClient.download('/carservice/rescue-info/export', {
+    params: { ...params, format: 'excel' },
+  });
+}
+
+// 导出救援信息(PDF)
+export function exportRescueInfoPdf(params) {
+  return requestClient.download('/carservice/rescue-info/export', {
+    params: { ...params, format: 'pdf' },
+  });
 }
 
 // 批量派发

@@ -2,14 +2,24 @@
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { MemberGroupVO } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberGroup';
 
-import { DocAlert, Page, useVbenModal } from '@vben/common-ui';
+import { ref } from 'vue';
+
+import {
+  confirm,
+  DocAlert,
+  Page,
+  useVbenDrawer,
+  useVbenModal,
+} from '@vben/common-ui';
 import { CommonStatusEnum } from '@vben/constants';
 
 import { ElLoading, ElMessage } from 'element-plus';
+import screenfull from 'screenfull';
 
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberGroupApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberGroup';
-import { $t } from '#/locales';
+import IconButton from '#/components/common/IconButton.vue';
 
 import { useGridColumns, useGridFormSchema } from './data';
 import Form from './modules/form.vue';
@@ -19,9 +29,55 @@ const [FormModal, formModalApi] = useVbenModal({
   destroyOnClose: true,
 });
 
+const searchParams = ref<Record<string, any>>({});
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useGridFormSchema().map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
+
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
+}
+
+/** 打开搜索抽屉 */
+async function handleSearchShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
 }
 
 /** 创建会员分组 */
@@ -37,6 +93,15 @@ function handleEdit(row: MemberGroupVO) {
 /** 生效/禁用会员分组 */
 async function handleToggleStatus(row: MemberGroupVO) {
   const isEnable = Number(row.status) === CommonStatusEnum.ENABLE;
+
+  try {
+    await confirm(
+      isEnable ? `确认禁用【${row.name}】吗？` : `确认生效【${row.name}】吗？`,
+    );
+  } catch {
+    return;
+  }
+
   const loadingInstance = ElLoading.service({
     text: `${isEnable ? '正在禁用' : '正在生效'}${row.name}`,
   });
@@ -52,20 +117,23 @@ async function handleToggleStatus(row: MemberGroupVO) {
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useGridFormSchema(),
-  },
   gridOptions: {
     columns: useGridColumns(),
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     height: 'auto',
     keepSource: true,
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
+          const queryValues = {
+            ...searchParams.value,
+            ...formValues,
+          };
+
           return await MemberGroupApi.getMemberGroupPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
-            ...formValues,
+            ...queryValues,
           });
         },
       },
@@ -79,6 +147,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   } as VxeTableGridOptions<MemberGroupVO>,
+  showSearchForm: false,
 });
 </script>
 
@@ -92,56 +161,50 @@ const [Grid, gridApi] = useVbenVxeGrid({
     </template>
 
     <FormModal @success="handleRefresh" />
-    <Grid table-title="会员分组列表">
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
+
+    <Grid>
       <template #toolbar-tools>
-        <TableAction
-          :actions="[
-            {
-              label: $t('ui.actionTitle.create', ['会员分组']),
-              type: 'primary',
-              icon: ACTION_ICON.ADD,
-              auth: ['member:group:create'],
-              onClick: handleCreate,
-            },
-          ]"
-        />
+        <div class="common-toolbar-tools">
+          <IconButton
+            v-access:code="['member:group:create']"
+            content="新增会员分组"
+            icon-name="Plus"
+            @click="handleCreate"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSearchShow"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
       </template>
       <template #actions="{ row }">
-        <TableAction
-          :actions="[
-            {
-              label: $t('common.edit'),
-              type: 'primary',
-              link: true,
-              icon: ACTION_ICON.EDIT,
-              auth: ['member:group:update'],
-              onClick: handleEdit.bind(null, row),
-            },
-            {
-              label:
-                Number(row.status) === CommonStatusEnum.ENABLE
-                  ? '禁用'
-                  : '生效',
-              type:
-                Number(row.status) === CommonStatusEnum.ENABLE
-                  ? 'danger'
-                  : 'primary',
-              link: true,
-              icon:
-                Number(row.status) === CommonStatusEnum.ENABLE
-                  ? ACTION_ICON.DELETE
-                  : ACTION_ICON.EDIT,
-              auth: ['member:group:update'],
-              popConfirm: {
-                title:
-                  Number(row.status) === CommonStatusEnum.ENABLE
-                    ? `确认禁用【${row.name}】吗？`
-                    : `确认生效【${row.name}】吗？`,
-                confirm: handleToggleStatus.bind(null, row),
-              },
-            },
-          ]"
-        />
+        <div class="table-toolbar-tools">
+          <IconButton
+            v-access:code="['member:group:update']"
+            content="编辑"
+            icon-name="Edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            v-access:code="['member:group:update']"
+            :content="
+              Number(row.status) === CommonStatusEnum.ENABLE ? '禁用' : '生效'
+            "
+            :icon-name="
+              Number(row.status) === CommonStatusEnum.ENABLE ? 'Close' : 'Check'
+            "
+            @click="handleToggleStatus(row)"
+          />
+        </div>
       </template>
     </Grid>
   </Page>

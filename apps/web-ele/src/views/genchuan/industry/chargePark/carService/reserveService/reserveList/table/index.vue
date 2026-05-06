@@ -79,15 +79,15 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.searchObj,
   };
-  if (dataObj.searchObj.reserveTime && Array.isArray(dataObj.searchObj.reserveTime)) {
-    params.reserveTimeBegin = dataObj.searchObj.reserveTime[0];
-    params.reserveTimeEnd = dataObj.searchObj.reserveTime[1];
-    delete params.reserveTime;
-  }
   if (dataObj.searchObj.statusList && Array.isArray(dataObj.searchObj.statusList)) {
     params.status = dataObj.searchObj.statusList.join(',');
     delete params.statusList;
   }
+  // 把 reserveTime 数组转为逗号分隔字符串，绕开 Spring 对 LocalDateTime[] 的多值 query 绑定问题
+  if (params.reserveTime && Array.isArray(params.reserveTime) && params.reserveTime.length === 2) {
+    params.reserveTime = `${params.reserveTime[0]},${params.reserveTime[1]}`;
+  }
+  console.log('[预约列表查询参数]', JSON.parse(JSON.stringify(params)));
   const res = await getReserveListPage(params);
   dataObj.total = res.total;
   dataObj.list = (res.list || []).map(v => ({
@@ -330,7 +330,7 @@ const handleChartRefresh = (event) => {
   delete newSearchObj.status;
   delete newSearchObj.statusList;
   if (filters?.date) {
-    newSearchObj.reserveTime = [filters.date, filters.date];
+    newSearchObj.reserveTime = [`${filters.date} 00:00:00`, `${filters.date} 23:59:59`];
   } else if (filters?.reserveType) {
     newSearchObj.reserveType = filters.reserveType;
   } else if (filters?.statusList) {

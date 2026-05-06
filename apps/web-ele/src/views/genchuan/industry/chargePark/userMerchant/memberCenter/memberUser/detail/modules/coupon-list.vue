@@ -4,16 +4,20 @@ import type { MallCouponApi } from '#/api/mall/promotion/coupon/coupon';
 
 import { ref } from 'vue';
 
+import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 
 import { ElLoading, ElMessage, ElTabPane, ElTabs } from 'element-plus';
+import screenfull from 'screenfull';
 
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   deleteCoupon,
   getCouponPage,
 } from '#/api/mall/promotion/coupon/coupon';
+import IconButton from '#/components/common/IconButton.vue';
 import {
   useGridColumns as useCouponGridColumns,
   useGridFormSchema as useCouponGridFormSchema,
@@ -25,6 +29,7 @@ const props = defineProps<{
 
 const activeTab = ref('all');
 const statusTabs = ref(getStatusTabs());
+const searchParams = ref<Record<string, any>>({});
 
 /** 列表的搜索表单（过滤掉会员相关字段） */
 function useGridFormSchema() {
@@ -60,32 +65,87 @@ function getStatusTabs() {
   return tabs;
 }
 
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useGridFormSchema().map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
+
+/** 刷新表格 */
+function handleRefresh() {
+  gridApi.query();
+}
+
+/** 打开搜索抽屉 */
+async function handleSearchShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
+
 /** Tab 切换 */
 function handleTabChange(tabName: any) {
   activeTab.value = tabName;
-  gridApi.query();
+  handleRefresh();
 }
 
 /** 删除优惠券 */
 async function handleDelete(row: MallCouponApi.Coupon) {
+  try {
+    await confirm(
+      '回收将会收回会员领取的待使用的优惠券，已使用的将无法回收，确定要回收所选优惠券吗？',
+    );
+  } catch {
+    return;
+  }
+
   const loadingInstance = ElLoading.service({
     text: '回收中...',
   });
   try {
     await deleteCoupon(row.id!);
     ElMessage.success('回收成功');
-    await gridApi.query();
+    await handleRefresh();
   } finally {
     loadingInstance.close();
   }
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useGridFormSchema(),
-  },
   gridOptions: {
     columns: useGridColumns(),
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
     pagerConfig: {
       pageSize: 10,
@@ -97,6 +157,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             userId: props.userId,
+            ...searchParams.value,
             ...formValues,
             // Tab状态过滤
             status:
@@ -115,10 +176,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   } as VxeTableGridOptions<MallCouponApi.Coupon>,
+  showSearchForm: false,
 });
 </script>
 
 <template>
+  <Drawer title="搜索">
+    <QueryForm class="query-form" />
+  </Drawer>
+
   <Grid>
     <template #toolbar-actions>
       <ElTabs
@@ -134,23 +200,30 @@ const [Grid, gridApi] = useVbenVxeGrid({
         />
       </ElTabs>
     </template>
+    <template #toolbar-tools>
+      <div class="common-toolbar-tools">
+        <IconButton
+          content="搜索"
+          icon-name="search"
+          @click="handleSearchShow"
+        />
+        <IconButton
+          content="全屏"
+          icon-name="FullScreen"
+          @click="() => screenfull.toggle()"
+        />
+      </div>
+    </template>
     <template #actions="{ row }">
-      <TableAction
-        :actions="[
-          {
-            label: '回收',
-            type: 'danger',
-            link: true,
-            icon: ACTION_ICON.DELETE,
-            auth: ['promotion:coupon:delete'],
-            popConfirm: {
-              title:
-                '回收将会收回会员领取的待使用的优惠券，已使用的将无法回收，确定要回收所选优惠券吗？',
-              confirm: handleDelete.bind(null, row),
-            },
-          },
-        ]"
-      />
+      <div class="table-toolbar-tools">
+        <IconButton
+          v-access:code="['promotion:coupon:delete']"
+          content="回收"
+          icon-name="Delete"
+          color="#F56C6C"
+          @click="handleDelete(row)"
+        />
+      </div>
     </template>
   </Grid>
 </template>

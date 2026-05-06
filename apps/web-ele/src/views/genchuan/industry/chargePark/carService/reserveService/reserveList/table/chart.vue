@@ -100,7 +100,6 @@ const handleResize = () => {
 const handleCardClick = (index) => {
   const card = state.cardList[index];
   if (card.key === 'totalReserveCount') emit('refresh', { totalReserveCount: true });
-  else if (card.key === 'reserveSuccessRate') emit('refresh', { reserveSuccessRate: true });
 };
 
 onMounted(() => {
@@ -120,7 +119,7 @@ onUnmounted(() => {
 <template>
   <div class="stats-four-visualization">
     <div class="cards-section">
-      <div v-for="(card, index) in state.cardList" :key="index" class="stat-card" :style="{ borderLeftColor: card.color }" @click="handleCardClick(index)">
+      <div v-for="(card, index) in state.cardList" :key="index" class="stat-card" :style="{ borderLeftColor: card.color, cursor: card.key === 'totalReserveCount' ? 'pointer' : 'default' }" @click="card.key === 'totalReserveCount' && handleCardClick(index)">
         <div class="card-header"><span class="card-title">{{ card.title }}</span><div class="card-indicator" :style="{ backgroundColor: card.color }"></div></div>
         <div class="card-body"><div class="card-value" :style="{ color: card.color }">{{ card.value }}</div></div>
       </div>
@@ -151,7 +150,6 @@ onUnmounted(() => {
   border-radius: 8px;
   border-left: 4px solid #4a90e2;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  cursor: pointer;
 }
 .card-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
 .card-title { font-size: 13px; color: #6e7e91; font-weight: 600; }

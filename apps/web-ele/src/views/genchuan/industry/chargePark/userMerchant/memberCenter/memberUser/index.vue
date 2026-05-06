@@ -5,12 +5,15 @@ import type { MemberUserApi } from '#/api/genchuan/industry/chargePark/userMerch
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { DocAlert, Page, useVbenModal } from '@vben/common-ui';
+import { DocAlert, Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { isEmpty } from '@vben/utils';
 
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import screenfull from 'screenfull';
+
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getUserPage } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
-import { $t } from '#/locales';
+import IconButton from '#/components/common/IconButton.vue';
 import { CouponSendForm } from '#/views/mall/promotion/coupon/components';
 
 import { useGridColumns, useGridFormSchema } from './data';
@@ -46,9 +49,55 @@ const [CouponSendFormModal, couponSendFormModalApi] = useVbenModal({
   destroyOnClose: true,
 });
 
+const searchParams = ref<Record<string, any>>({});
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useGridFormSchema().map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
+
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
+}
+
+/** 打开搜索抽屉 */
+async function handleSearchShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
 }
 
 /** 编辑会员 */
@@ -100,20 +149,23 @@ function handleViewDetail(row: MemberUserApi.User) {
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useGridFormSchema(),
-  },
   gridOptions: {
     columns: useGridColumns(),
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     height: 'auto',
     keepSource: true,
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
+          const queryValues = {
+            ...searchParams.value,
+            ...formValues,
+          };
+
           return await getUserPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
-            ...formValues,
+            ...queryValues,
           });
         },
       },
@@ -131,6 +183,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     checkboxAll: handleRowCheckboxChange,
     checkboxChange: handleRowCheckboxChange,
   },
+  showSearchForm: false,
 });
 </script>
 
@@ -148,64 +201,65 @@ const [Grid, gridApi] = useVbenVxeGrid({
     <BalanceFormModal @success="handleRefresh" />
     <LevelFormModal @success="handleRefresh" />
     <CouponSendFormModal />
-    <Grid table-title="会员列表">
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
+
+    <Grid>
       <template #toolbar-tools>
-        <TableAction
-          :actions="[
-            {
-              label: '发送优惠券',
-              type: 'primary',
-              icon: 'lucide:mouse-pointer-2',
-              disabled: isEmpty(checkedIds),
-              auth: ['promotion:coupon:send'],
-              onClick: handleSendCoupon,
-            },
-          ]"
-        />
+        <div class="common-toolbar-tools">
+          <IconButton
+            v-access:code="['promotion:coupon:send']"
+            content="发送优惠券"
+            icon-name="Mouse"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleSendCoupon"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSearchShow"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
       </template>
 
       <template #actions="{ row }">
-        <TableAction
-          :actions="[
-            {
-              label: $t('common.detail'),
-              type: 'primary',
-              link: true,
-              icon: ACTION_ICON.VIEW,
-              onClick: handleViewDetail.bind(null, row),
-            },
-          ]"
-          :drop-down-actions="[
-            {
-              label: $t('common.edit'),
-              type: 'primary',
-              link: true,
-              auth: ['member:user:update'],
-              onClick: handleEdit.bind(null, row),
-            },
-            {
-              label: '修改等级',
-              type: 'primary',
-              link: true,
-              auth: ['member:user:update-level'],
-              onClick: handleUpdateLevel.bind(null, row),
-            },
-            {
-              label: '修改积分',
-              type: 'primary',
-              link: true,
-              auth: ['member:user:update-point'],
-              onClick: handleUpdatePoint.bind(null, row),
-            },
-            {
-              label: '修改余额',
-              type: 'primary',
-              link: true,
-              auth: ['pay:wallet:update-balance'],
-              onClick: handleUpdateBalance.bind(null, row),
-            },
-          ]"
-        />
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleViewDetail(row)"
+          />
+          <IconButton
+            v-access:code="['member:user:update']"
+            content="编辑"
+            icon-name="Edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            v-access:code="['member:user:update-level']"
+            content="修改等级"
+            icon-name="Medal"
+            @click="handleUpdateLevel(row)"
+          />
+          <IconButton
+            v-access:code="['member:user:update-point']"
+            content="修改积分"
+            icon-name="Coin"
+            @click="handleUpdatePoint(row)"
+          />
+          <IconButton
+            v-access:code="['pay:wallet:update-balance']"
+            content="修改余额"
+            icon-name="Wallet"
+            @click="handleUpdateBalance(row)"
+          />
+        </div>
       </template>
     </Grid>
   </Page>
