@@ -2,15 +2,18 @@
 import { computed, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getReceiveRecordPage } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/receiveRecord';
+import {
+  exportReceiveRecord,
+  getReceiveRecordPage,
+} from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/receiveRecord';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { exportToExcel } from '#/utils/excel.js';
 import { formatDate } from '#/utils/genchuan/formatTime';
 import CheckRecordDrawer from '#/views/genchuan/industry/chargePark/marketOp/couponActivity/receiveRecord/components/CheckRecordDrawer.vue';
 
@@ -99,13 +102,22 @@ function handleRefresh() {
   filterStatus.value = '';
   filterSyncStatus.value = '';
   filterReceiveDate.value = '';
-  filterStatsType.value = '';
   gridApi.query();
 }
 
-/** 导出表格 */
+/** 导出表格 - 使用API导出 */
 async function handleExport() {
-  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  try {
+    const data = await exportReceiveRecord();
+    downloadFileFromBlobPart({
+      fileName: textObj.excelAllName,
+      source: data,
+    });
+    ElMessage.success('导出成功');
+  } catch (error) {
+    ElMessage.error('导出失败');
+    console.error(error);
+  }
 }
 
 /** 核查 - 打开核查抽屉 */
@@ -127,9 +139,8 @@ function handleRowCheckboxChange({ records }) {
 const filterStatus = ref('');
 const filterSyncStatus = ref('');
 
-// 统计组件钻取筛选变量
+// 统计组件钻取筛选变量 - 日期筛选
 const filterReceiveDate = ref('');
-const filterStatsType = ref('');
 
 const dataObj = reactive({
   totalShow: false,
@@ -162,6 +173,7 @@ const getTableData = async (pageObj) => {
       couponName: dataObj.searchParams.couponName,
       status: filterStatus.value || dataObj.searchParams.status,
       syncStatus: filterSyncStatus.value || dataObj.searchParams.syncStatus,
+      receiveDate: filterReceiveDate.value,
     };
 
     const response = await getReceiveRecordPage(params);
@@ -196,6 +208,15 @@ const getTableData = async (pageObj) => {
       }
       if (filterSyncStatus.value && v.syncStatus !== filterSyncStatus.value) {
         searchMatch = false;
+      }
+      // 应用日期筛选
+      if (filterReceiveDate.value) {
+        const recordDate = v.receiveTime
+          ? new Date(Number(v.receiveTime)).toISOString().split('T')[0]
+          : '';
+        if (recordDate !== filterReceiveDate.value) {
+          searchMatch = false;
+        }
       }
       return searchMatch;
     });
@@ -288,34 +309,32 @@ const handleCancelSyncStatusFilter = () => {
   gridApi.query();
 };
 
-// ==================== 统计组件钻取筛选处理 ====================
-
-/** 处理统计组件的钻取筛选 */
-const handleStatsFilter = (type, subType, value) => {
-  if (type === 'card') {
-    // 卡片点击 - 总领用量或核销率
-    filterStatsType.value = subType;
-    ElMessage.info(
-      `已筛选: ${subType === 'total' ? '总领用量' : '累计核销率'}`,
-    );
-  } else if (type === 'date') {
-    // 折线图节点点击 - 按日期筛选
-    filterReceiveDate.value = value;
-    ElMessage.info(`已筛选日期: ${value}`);
-  }
-  gridApi.query();
-};
-
-/** 取消日期筛选 */
+// 取消日期筛选
 const handleCancelDateFilter = () => {
   filterReceiveDate.value = '';
   gridApi.query();
 };
 
-/** 取消统计类型筛选 */
-const handleCancelStatsTypeFilter = () => {
-  filterStatsType.value = '';
-  gridApi.query();
+// ==================== 统计组件钻取筛选处理 ====================
+
+/** 处理统计组件的钻取筛选 */
+const handleStatsFilter = (type, subType, value) => {
+  if (type === 'card') {
+    // 卡片点击
+    if (subType === 'verifyRate') {
+      // 点击累计核销率 - 筛选"已核查"状态的领用记录（status=2表示已核查）
+      filterStatus.value = filterStatus.value === '2' ? '' : '2';
+      gridApi.query();
+    } else if (subType === 'total') {
+      // 点击总领用量 - 清除状态筛选，显示所有记录
+      filterStatus.value = '';
+      gridApi.query();
+    }
+  } else if (type === 'date') {
+    // 折线图节点点击 - 按日期筛选
+    filterReceiveDate.value = filterReceiveDate.value === value ? '' : value;
+    gridApi.query();
+  }
 };
 
 defineExpose({
@@ -422,18 +441,6 @@ const handleFullShow = () => {
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
             领用日期：{{ filterReceiveDate }}
-          </ElTag>
-          <!-- 统计组件-类型筛选标签 -->
-          <ElTag
-            v-if="filterStatsType"
-            type="info"
-            closable
-            @close="handleCancelStatsTypeFilter"
-            style="height: 32px; margin: 4px 0; line-height: 32px"
-          >
-            统计类型：{{
-              filterStatsType === 'total' ? '总领用量' : '累计核销率'
-            }}
           </ElTag>
         </div>
       </template>

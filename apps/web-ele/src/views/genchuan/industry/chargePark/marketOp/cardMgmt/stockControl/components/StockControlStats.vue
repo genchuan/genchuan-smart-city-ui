@@ -62,7 +62,7 @@ const initBarChart = () => {
       axisPointer: {
         type: 'shadow',
       },
-      formatter: '{b}: {c}张',
+      formatter: '{b}: {c}',
     },
     grid: {
       left: '3%',
@@ -80,6 +80,7 @@ const initBarChart = () => {
         color: '#9AA8B7',
         fontSize: 12,
         interval: 0,
+        rotate: xAxisData.length > 5 ? 30 : 0,
       },
       axisLine: {
         lineStyle: {
@@ -155,9 +156,12 @@ const initBarChart = () => {
 
   chartInstance.setOption(option);
 
-  // 点击事件
+  // 点击事件 - 传递完整的柱形数据对象
   chartInstance.on('click', (params) => {
-    emit('barClick', barData[params.dataIndex]?.cardId);
+    const clickedData = barData[params.dataIndex];
+    if (clickedData) {
+      emit('barClick', clickedData);
+    }
   });
 };
 
@@ -294,9 +298,12 @@ const initLineChart = () => {
 
   chartInstance.setOption(option);
 
-  // 点击事件
+  // 点击事件 - 传递日期
   chartInstance.on('click', (params) => {
-    emit('lineClick', lineData[params.dataIndex]?.date);
+    const clickedData = lineData[params.dataIndex];
+    if (clickedData) {
+      emit('lineClick', clickedData.date);
+    }
   });
 };
 
@@ -399,7 +406,7 @@ onUnmounted(() => {
   flex: 1;
   padding: 16px;
   cursor: pointer;
-  background-color: #fff;
+  background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);

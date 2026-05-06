@@ -1,6 +1,9 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue';
 
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj } from '@vben/hooks';
+
 import { ElMessage } from 'element-plus';
 
 import { getActivityConfigChart } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/activityConfig';
@@ -10,8 +13,20 @@ import Table from './table/index.vue';
 
 import '#/genchuan-components/page/index.scss';
 
+// 获取配置类型字典标签
+const getActivityConfigTypeLabel = (type) => {
+  const dict = getDictObj(DICT_TYPE.ACTIVITY_CONFIG_TYPE, String(type));
+  return dict ? dict.label : type;
+};
+
+// 获取适用人群字典标签
+const getActivityConfigUserGroupLabel = (userGroup) => {
+  const dict = getDictObj(DICT_TYPE.ACTIVITY_CONFIG_USER_GROUP, String(userGroup));
+  return dict ? dict.label : userGroup;
+};
+
 // 控制统计组件显示/隐藏的状态
-const showStats = ref(false);
+const showStats = ref(true);
 
 // 切换统计组件显示/隐藏状态
 const toggleStats = () => {
@@ -25,16 +40,23 @@ const toggleStats = () => {
 const statsData = ref({
   cards: [],
   pieData: [],
+  barData: [],
 });
 
 // 静态统计数据 - 接口失败时使用
 const staticStatsData = {
-  effectiveCount: 5,
-  participationRate: 75,
-  typeRatio: [
-    { type: '1', typeName: '满减券', count: 2 },
-    { type: '2', typeName: '折扣券', count: 2 },
-    { type: '3', typeName: '兑换券', count: 1 },
+  enableCount: 23,
+  joinRate: 0,
+  typeList: [
+    { type: '0', count: 8 },
+    { type: '1', count: 8 },
+    { type: '2', count: 4 },
+    { type: '3', count: 6 },
+  ],
+  userGroupList: [
+    { userGroup: '0', count: 6 },
+    { userGroup: '2', count: 15 },
+    { userGroup: '1', count: 5 },
   ],
 };
 
@@ -44,24 +66,31 @@ const assembleStatsData = (data) => {
   statsData.value.cards = [
     {
       title: '生效配置数',
-      value: data.effectiveCount || 0,
+      value: data.enableCount || 0,
       color: '#4A90E2',
-      filterType: 'effective',
+      filterType: 'enable',
     },
     {
       title: '活动参与率',
-      value: `${data.participationRate || 0}%`,
+      value: `${data.joinRate || 0}%`,
       color: '#50E3C2',
-      desc: '平均参与率',
-      filterType: 'participation',
+      desc: '参与占比',
+      filterType: 'join',
     },
   ];
 
-  // 组装饼图数据
-  statsData.value.pieData = (data.typeRatio || []).map((item) => ({
-    name: item.typeName,
+  // 组装饼图数据 - 配置类型分布
+  statsData.value.pieData = (data.typeList || []).map((item) => ({
+    name: getActivityConfigTypeLabel(item.type),
     value: item.count,
     type: item.type,
+  }));
+
+  // 组装柱状图数据 - 适用人群分布
+  statsData.value.barData = (data.userGroupList || []).map((item) => ({
+    name: getActivityConfigUserGroupLabel(item.userGroup),
+    value: item.count,
+    userGroup: item.userGroup,
   }));
 };
 
@@ -69,13 +98,13 @@ const assembleStatsData = (data) => {
 const fetchStatsData = async () => {
   try {
     const response = await getActivityConfigChart();
-    if (response && response.code === 200 && response.data) {
+    if (response && response.data) {
       const data = response.data;
 
       // 检查数据是否为空
       const hasData =
-        data.effectiveCount > 0 ||
-        (data.typeRatio && data.typeRatio.length > 0);
+        data.enableCount > 0 ||
+        (data.typeList && data.typeList.length > 0);
 
       if (hasData) {
         assembleStatsData(data);
@@ -91,7 +120,7 @@ const fetchStatsData = async () => {
     }
   } catch (error) {
     // 接口调用失败，错误信息打印到控制台，使用静态数据
-    console.error('获取统计数据失败，使用静态数据:', error);
+    console.error('获取统计数据失败，使用静态数据', error);
     assembleStatsData(staticStatsData);
   }
 };
@@ -99,22 +128,31 @@ const fetchStatsData = async () => {
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (card) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('card', card.filterType);
+  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
+    tableInstance.handleStatsFilter('card', card.filterType);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
 };
 
-// 处理饼图点击 - 钻取筛选
-const handlePieClick = async (typeName) => {
+// 处理饼图点击 - 钻取筛选（按配置类型）
+const handlePieClick = async (type) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    // 从饼图数据中找到对应的type值
-    const pieItem = statsData.value.pieData.find((item) => item.name === typeName);
-    if (pieItem) {
-      tableRef.value.handleStatsFilter('type', pieItem.type);
-    }
+  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
+    tableInstance.handleStatsFilter('type', type);
+  } else {
+    console.warn('tableRef not ready or handleStatsFilter not available');
+  }
+};
+
+// 处理柱状图点击 - 钻取筛选（按适用人群）
+const handleBarClick = async (userGroup) => {
+  await nextTick();
+  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
+    tableInstance.handleStatsFilter('userGroup', userGroup);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
@@ -156,6 +194,7 @@ onMounted(() => {
       :data="statsData"
       @card-click="handleCardClick"
       @pie-click="handlePieClick"
+      @bar-click="handleBarClick"
     />
     <!-- 箭头图标已屏蔽 -->
     <!--

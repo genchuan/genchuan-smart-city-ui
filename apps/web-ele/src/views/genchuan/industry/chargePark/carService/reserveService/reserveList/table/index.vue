@@ -1,5 +1,6 @@
 <script setup>
-import { reactive, ref, onMounted, onUnmounted, computed } from 'vue';
+import { reactive, ref, onMounted, onUnmounted, onActivated, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 import { ElMessage } from 'element-plus';
@@ -14,11 +15,13 @@ import {
   approveReserve,
   rejectReserve,
   cancelReserve,
+  completeReserve,
   evaluateReserve,
   getReserveDetail,
   getUserList,
   getStationList,
   getSpaceList,
+  createReserve,
 } from '#/api/genchuan/industry/chargePark/carService/reserveService/reserveList/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import ReserveDetailDrawer from './detail.vue';
@@ -83,14 +86,42 @@ const getTableData = async (pageObj) => {
     params.status = dataObj.searchObj.statusList.join(',');
     delete params.statusList;
   }
+  // userName / stationName / spaceName 都是前端模糊筛选（后端 PageReqVO 没有这些字段），不发给后端
+  const userNameFilter = (params.userName || '').trim().toLowerCase();
+  const stationNameFilter = (params.stationName || '').trim().toLowerCase();
+  const spaceNameFilter = (params.spaceName || '').trim().toLowerCase();
+  delete params.userName; delete params.stationName; delete params.spaceName;
   // 把 reserveTime 数组转为逗号分隔字符串，绕开 Spring 对 LocalDateTime[] 的多值 query 绑定问题
   if (params.reserveTime && Array.isArray(params.reserveTime) && params.reserveTime.length === 2) {
     params.reserveTime = `${params.reserveTime[0]},${params.reserveTime[1]}`;
   }
-  console.log('[预约列表查询参数]', JSON.parse(JSON.stringify(params)));
+  const hasNameFilter = userNameFilter || stationNameFilter || spaceNameFilter;
+  // 名称模糊筛选是前端做的，分页页面只能筛出当前页数据，结果会偏少。
+  // 简单兜底：有名称筛选时，把后端 pageSize 拉到 200 一次拿足够多再前端筛。
+  if (hasNameFilter) {
+    params.pageNo = 1;
+    params.pageSize = 200;
+  }
   const res = await getReserveListPage(params);
-  dataObj.total = res.total;
-  dataObj.list = (res.list || []).map(v => ({
+  let list = res.list || [];
+  let total = res.total;
+  if (hasNameFilter) {
+    list = list.filter(v => {
+      const u = String(getUserName(v.userId) ?? v.userId ?? '').toLowerCase();
+      const s = String(getStationName(v.stationId) ?? v.stationId ?? '').toLowerCase();
+      const p = String(getSpaceName(v.spaceId) ?? v.spaceId ?? '').toLowerCase();
+      if (userNameFilter && !u.includes(userNameFilter)) return false;
+      if (stationNameFilter && !s.includes(stationNameFilter)) return false;
+      if (spaceNameFilter && !p.includes(spaceNameFilter)) return false;
+      return true;
+    });
+    total = list.length;
+    // 客户端再做一次分页，保持表格分页器可用
+    const pStart = (pageObj.page.currentPage - 1) * pageObj.page.pageSize;
+    list = list.slice(pStart, pStart + pageObj.page.pageSize);
+  }
+  dataObj.total = total;
+  dataObj.list = list.map(v => ({
     ...v,
     createTime: formatTimestamp(v.createTime),
     updateTime: formatTimestamp(v.updateTime),
@@ -142,6 +173,7 @@ async function onSubmit(values, isReset = false) {
     dataObj.searchObj = { ...values };
     dataObj.currentPage = 1;
     gridApi.query();
+    searchDrawerApi?.close?.();
   }
 }
 
@@ -159,6 +191,9 @@ const handleClearField = async (fieldName) => {
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchObj;
+  if (obj.userName) filters.push({ label: `用户名称：${obj.userName}`, field: 'userName' });
+  if (obj.stationName) filters.push({ label: `场站名称：${obj.stationName}`, field: 'stationName' });
+  if (obj.spaceName) filters.push({ label: `车位名称：${obj.spaceName}`, field: 'spaceName' });
   if (obj.userId) filters.push({ label: `用户：${getUserName(obj.userId)}`, field: 'userId' });
   if (obj.stationId) filters.push({ label: `场站：${getStationName(obj.stationId)}`, field: 'stationId' });
   if (obj.spaceId) filters.push({ label: `车位：${getSpaceName(obj.spaceId)}`, field: 'spaceId' });
@@ -240,6 +275,68 @@ const openBatchAudit = () => {
   batchAuditDrawerApi.open();
 };
 
+// ==================== 新增预约抽屉 ====================
+const createForm = reactive({ userId: null, stationId: null, spaceId: null, reserveTime: '', reserveType: '停车预约' });
+const createFormRef = ref(null);
+const createRules = {
+  userId: [{ required: true, message: '请选择用户', trigger: 'change' }],
+  stationId: [{ required: true, message: '请选择场站', trigger: 'change' }],
+  spaceId: [{ required: true, message: '请选择车位', trigger: 'change' }],
+  reserveTime: [{ required: true, message: '请选择预约时间', trigger: 'change' }],
+  reserveType: [{ required: true, message: '请选择预约类型', trigger: 'change' }],
+};
+const userOptions = computed(() => [...userMap.value.entries()].map(([id, name]) => ({ label: name, value: id })));
+const stationOptions = computed(() => [...stationMap.value.entries()].map(([id, name]) => ({ label: name, value: id })));
+const spaceOptions = computed(() => [...spaceMap.value.entries()].map(([id, name]) => ({ label: name, value: id })));
+
+const [CreateDrawer, createDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  width: 500,
+  title: '新增预约',
+  onCancel: () => createDrawerApi.close(),
+  onConfirm: async () => {
+    // 1. 表单校验
+    let valid = false;
+    try {
+      valid = await createFormRef.value?.validate();
+    } catch (validateErr) {
+      console.warn('[新增预约] 表单校验未通过', validateErr);
+      ElMessage.warning('请填写所有必填字段');
+      return;
+    }
+    if (valid === false) {
+      ElMessage.warning('请填写所有必填字段');
+      return;
+    }
+    // 2. 提交
+    try {
+      console.log('[新增预约] 提交参数', JSON.parse(JSON.stringify(createForm)));
+      // 后端 LocalDateTime 反序列化器期望毫秒时间戳，把字符串转成 epoch ms
+      const payload = { ...createForm };
+      if (payload.reserveTime && typeof payload.reserveTime === 'string') {
+        payload.reserveTime = new Date(payload.reserveTime.replace(' ', 'T')).getTime();
+      }
+      await createReserve(payload);
+      ElMessage.success('预约创建成功，等待审核');
+      createDrawerApi.close();
+      handleRefresh();
+    } catch (err) {
+      console.error('[新增预约] 提交失败', err);
+      ElMessage.error('创建失败：' + (err?.msg || err?.message || '未知错误'));
+    }
+  },
+});
+
+const openCreate = (preset = {}) => {
+  createForm.userId = preset.userId ?? null;
+  createForm.stationId = preset.stationId ?? null;
+  createForm.spaceId = preset.spaceId ?? null;
+  createForm.reserveTime = preset.reserveTime ?? '';
+  createForm.reserveType = preset.reserveType ?? '停车预约';
+  createDrawerApi.open();
+};
+
 // ==================== 驳回抽屉 ====================
 const rejectForm = reactive({ rejectReason: '' });
 let currentRejectRow = null;
@@ -305,6 +402,14 @@ const handleCancel = async (row) => {
   handleRefresh();
 };
 
+// 完成（已生效 → 已完成）
+const handleComplete = async (row) => {
+  await confirm('确认标记该预约为已完成吗？完成后用户可对本次预约进行评价。');
+  await completeReserve({ id: row.id });
+  ElMessage.success('已标记为已完成');
+  handleRefresh();
+};
+
 // 审核人详情弹窗
 const auditorDetailVisible = ref(false);
 const currentAuditor = ref({});
@@ -341,9 +446,34 @@ const handleChartRefresh = (event) => {
   gridApi.query();
 };
 
+// 从外部页面（如周边场站"预订"按钮）携带 query 参数跳进来时，等基础数据加载完后自动打开新增弹窗并预填
+const route = useRoute();
+const router = useRouter();
+// 已处理过的 query 签名,避免 onMounted + onActivated 双触发或第二次激活时重复弹窗
+let consumedRouteSignature = '';
+async function autoOpenCreateFromRoute() {
+  const { stationId, userId, reserveType } = route.query || {};
+  if (!stationId && !userId) return;
+  const sig = `${stationId || ''}|${userId || ''}|${reserveType || ''}`;
+  if (sig === consumedRouteSignature) return; // 同一组 query 不重复处理
+  consumedRouteSignature = sig;
+  await fetchMappings();
+  openCreate({
+    stationId: stationId ? Number(stationId) : null,
+    userId: userId ? Number(userId) : null,
+    reserveType: reserveType || '停车预约',
+  });
+}
+
 onMounted(() => {
   fetchMappings();
   window.addEventListener('reserve-chart-refresh', handleChartRefresh);
+  autoOpenCreateFromRoute();
+});
+
+// 页面有 keep-alive,组件被缓存复用时 onMounted 不会再跑;用 onActivated 接住每次重新激活
+onActivated(() => {
+  autoOpenCreateFromRoute();
 });
 onUnmounted(() => {
   window.removeEventListener('reserve-chart-refresh', handleChartRefresh);
@@ -372,6 +502,7 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
+          <IconButton content="新增预约" icon-name="Plus" @click="openCreate" />
           <IconButton content="批量审核" icon-name="check" :disabled="isEmpty(checkedIds)" @click="openBatchAudit" />
           <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
@@ -429,6 +560,7 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
             <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           </template>
           <template v-else-if="row.status === '已生效'">
+            <IconButton content="完成" icon-name="check" @click="handleComplete(row)" />
             <IconButton content="取消" icon-name="delete" @click="handleCancel(row)" />
             <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           </template>
@@ -448,6 +580,36 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
     </SearchDrawer>
 
     <ReserveDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="预约详情" />
+
+    <!-- 新增预约抽屉 -->
+    <CreateDrawer>
+      <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-width="100px">
+        <el-form-item label="用户" prop="userId">
+          <el-select v-model="createForm.userId" placeholder="请选择用户" filterable clearable style="width: 100%">
+            <el-option v-for="o in userOptions" :key="o.value" :label="o.label" :value="o.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="场站" prop="stationId">
+          <el-select v-model="createForm.stationId" placeholder="请选择场站" filterable clearable style="width: 100%">
+            <el-option v-for="o in stationOptions" :key="o.value" :label="o.label" :value="o.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="车位" prop="spaceId">
+          <el-select v-model="createForm.spaceId" placeholder="请选择车位" filterable clearable style="width: 100%">
+            <el-option v-for="o in spaceOptions" :key="o.value" :label="o.label" :value="o.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="预约时间" prop="reserveTime">
+          <el-date-picker v-model="createForm.reserveTime" type="datetime" placeholder="选择预约时间" value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="预约类型" prop="reserveType">
+          <el-radio-group v-model="createForm.reserveType">
+            <el-radio label="停车预约">停车预约</el-radio>
+            <el-radio label="充电预约">充电预约</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+    </CreateDrawer>
 
     <!-- 批量审核抽屉 -->
     <BatchAuditDrawer>
@@ -500,5 +662,6 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
       <div>评价内容：{{ currentScoreDetail.evaluateContent || '无' }}</div>
       <div>评价时间：{{ currentScoreDetail.updateTime || '-' }}</div>
     </el-dialog>
+
   </div>
 </template>

@@ -2,11 +2,14 @@
 import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElButton, ElMessage, ElUpload } from 'element-plus';
-import * as XLSX from 'xlsx';
 
-import { importCouponMgmt } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
+import {
+  getCouponImportTemplate,
+  importCouponMgmt,
+} from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 
 const emit = defineEmits(['success']);
 
@@ -27,55 +30,18 @@ const validating = ref(false);
 const validationResult = ref(null);
 
 // 下载导入模板
-const downloadTemplate = () => {
-  // 创建模板数据 - 包含优惠券表格的所有字段
-  const templateData = [
-    [
-      '券名称',
-      '券类型',
-      '面额',
-      '使用条件',
-      '有效期',
-      '券描述',
-      '适用场站',
-    ],
-    [
-      '示例-充电满20减5券',
-      '0',
-      '5',
-      '充电消费满20元可用',
-      '2025-12-31 23:59:59',
-      '新用户专属满减券',
-      '1,2,3',
-    ],
-    [
-      '示例-充电9折券',
-      '1',
-      '0.9',
-      '充电消费无门槛',
-      '2025-12-31 23:59:59',
-      '会员专享折扣券',
-      '1,2',
-    ],
-  ];
-
-  // 使用xlsx库创建Excel文件
-  const worksheet = XLSX.utils.aoa_to_sheet(templateData);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, '导入模板');
-
-  // 生成Excel文件并下载
-  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-  const blob = new Blob([excelBuffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = '优惠券导入模板.xlsx';
-  document.body.append(link);
-  link.click();
-  link.remove();
-  ElMessage.success('模板下载成功');
+const downloadTemplate = async () => {
+  try {
+    const data = await getCouponImportTemplate();
+    downloadFileFromBlobPart({
+      fileName: '优惠券导入模板.xlsx',
+      source: data,
+    });
+    ElMessage.success('模板下载成功');
+  } catch (error) {
+    console.error('下载模板失败:', error);
+    ElMessage.error('下载模板失败，请稍后重试');
+  }
 };
 
 // 文件上传前校验
@@ -121,18 +87,35 @@ const handleImport = async () => {
     const response = await importCouponMgmt(file);
 
     // 根据接口返回结果处理
-    if (response) {
+    if (response && response.code !== undefined && response.code !== 0) {
+      // 接口返回错误信息
       validationResult.value = {
-        success: true,
-        message: response.message || '导入成功',
+        success: false,
+        message: response.msg || '导入失败',
+        total: 0,
+        successCount: 0,
+        failCount: 0,
+        errorRows: response.data?.errorRows || [],
+      };
+      ElMessage.error(response.msg || '导入失败');
+    } else if (response) {
+      // 导入成功或部分成功
+      validationResult.value = {
+        success: !response.failCount || response.failCount === 0,
+        message: response.msg || response.message || '导入成功',
         total: response.total || 0,
         successCount: response.successCount || 0,
         failCount: response.failCount || 0,
+        errorRows: response.data?.errorRows || response.errorRows || [],
       };
 
-      ElMessage.success(response.message || '导入成功');
-      emit('success');
-      modalApi.close();
+      if (validationResult.value.success) {
+        ElMessage.success(response.msg || response.message || '导入成功');
+        emit('success');
+        modalApi.close();
+      } else {
+        ElMessage.warning('部分数据导入失败，请查看校验结果');
+      }
     } else {
       validationResult.value = {
         success: false,
@@ -140,19 +123,22 @@ const handleImport = async () => {
         total: 0,
         successCount: 0,
         failCount: 0,
+        errorRows: [],
       };
       ElMessage.error('导入失败');
     }
   } catch (error) {
     console.error('导入失败:', error);
+    const errorMsg = error?.msg || error?.message || '导入失败，请检查文件格式';
     validationResult.value = {
       success: false,
-      message: error?.message || '导入失败，请检查文件格式',
+      message: errorMsg,
       total: 0,
       successCount: 0,
       failCount: 0,
+      errorRows: error?.data?.errorRows || [],
     };
-    ElMessage.error(error?.message || '导入失败，请检查文件格式');
+    ElMessage.error(errorMsg);
   } finally {
     validating.value = false;
   }
@@ -236,6 +222,19 @@ defineExpose({
             <span class="fail-count"
               >失败: {{ validationResult.failCount }}</span
             >
+          </div>
+          <!-- 错误行提示 -->
+          <div v-if="validationResult.errorRows && validationResult.errorRows.length > 0" class="error-rows">
+            <div class="error-rows-title">错误行详情：</div>
+            <ul class="error-rows-list">
+              <li v-for="(error, index) in validationResult.errorRows.slice(0, 10)" :key="index">
+                <span class="row-number">第{{ error.rowNum }}行：</span>
+                <span class="row-error">{{ error.message }}</span>
+              </li>
+              <li v-if="validationResult.errorRows.length > 10" class="more-errors">
+                还有 {{ validationResult.errorRows.length - 10 }} 条错误...
+              </li>
+            </ul>
           </div>
         </div>
       </div>
@@ -333,6 +332,45 @@ defineExpose({
   padding: 20px;
   color: var(--el-text-color-secondary);
   text-align: center;
+}
+
+.error-rows {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--el-border-color-light);
+}
+
+.error-rows-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--el-text-color-secondary);
+  margin-bottom: 8px;
+}
+
+.error-rows-list {
+  margin: 0;
+  padding-left: 16px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.error-rows-list li {
+  font-size: 12px;
+  color: var(--el-color-danger);
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.row-number {
+  font-weight: 500;
+}
+
+.row-error {
+  color: var(--el-color-danger);
+}
+
+.more-errors {
+  color: var(--el-text-color-secondary) !important;
 }
 
 :deep(.el-upload-dragger) {

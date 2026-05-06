@@ -123,8 +123,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
 /** 打开抽屉 */
 function open(data) {
-  drawerApi.open();
   drawerApi.setData(data);
+  drawerApi.open();
 }
 
 defineExpose({

@@ -20,11 +20,10 @@ export function getReceiveRecordPage(params) {
 
 /**
  * 导出领用记录
- * @param {Object} params - 请求参数
  * @returns {Promise}
  */
-export function exportReceiveRecord(params) {
-  return requestClient.get('/marketop/receive-record/export', { params });
+export function exportReceiveRecord() {
+  return requestClient.download('/marketop/receive-record/export');
 }
 
 // ==================== 列表行交互操作接口 ====================
@@ -54,12 +53,8 @@ export function checkReceiveRecord(data) {
 
 /**
  * 领用记录统计（折线图 + 卡片）
- * @param {Object} params - 请求参数
- * @param {string} params.startTime - 统计开始时间
- * @param {string} params.endTime - 统计结束时间
- * @param {number} params.stationId - 场站ID，支持按场站筛选
  * @returns {Promise}
  */
-export function getReceiveRecordChart(params) {
-  return requestClient.get('/marketop/receive-record/chart', { params });
+export function getReceiveRecordChart() {
+  return requestClient.get('/marketop/receive-record/chart');
 }

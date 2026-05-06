@@ -1,10 +1,10 @@
 /** 车位定位表单配置（搜索） */
 export function useFormSchema() {
   return [
-    { fieldName: 'userId', label: '用户ID', component: 'Input', componentProps: { placeholder: '请输入用户ID' }, isSearch: true },
-    { fieldName: 'plateNo', label: '车牌号码', component: 'Input', componentProps: { placeholder: '请输入车牌（支持模糊）' }, isSearch: true },
+    { fieldName: 'userName', label: '用户名称', component: 'Input', componentProps: { placeholder: '请输入用户名称' }, isSearch: true },
+    { fieldName: 'plateNo', label: '车牌号码', component: 'Input', componentProps: { placeholder: '请输入车牌' }, isSearch: true },
     { fieldName: 'locationResult', label: '定位结果', component: 'Select', componentProps: { placeholder: '请选择', options: [{ label: '成功', value: '成功' }, { label: '失败', value: '失败' }] }, isSearch: true },
-    { fieldName: 'queryTime', label: '查询时间', component: 'DatePicker', componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD HH:mm:ss' }, isSearch: true },
+    { fieldName: 'queryTime', label: '查询时间', component: 'DatePicker', componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD HH:mm:ss', defaultTime: [new Date(2000, 0, 1, 0, 0, 0), new Date(2000, 0, 1, 23, 59, 59)] }, isSearch: true },
   ];
 }
 

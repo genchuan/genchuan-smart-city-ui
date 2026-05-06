@@ -2,11 +2,14 @@
 import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElButton, ElMessage, ElUpload } from 'element-plus';
-import * as XLSX from 'xlsx';
 
-import { importExchangeCategory } from '#/api/genchuan/industry/chargePark/marketOp/exchangeMgmt/exchangeCategory';
+import {
+  getExchangeCategoryImportTemplate,
+  importExchangeCategory,
+} from '#/api/genchuan/industry/chargePark/marketOp/exchangeMgmt/exchangeCategory';
 
 const emit = defineEmits(['success']);
 
@@ -25,48 +28,23 @@ const fileList = ref([]);
 const uploadRef = ref();
 const validating = ref(false);
 const validationResult = ref(null);
+const errorRows = ref([]);
 
 // 下载导入模板
-const downloadTemplate = () => {
-  // 创建模板数据 - 包含兑换类目表格的所有字段
-  const templateData = [
-    [
-      '类目名称',
-      '类目描述',
-      '排序权重',
-      '适用范围',
-    ],
-    [
-      '示例-数码配件',
-      '各类充电、数码相关配件',
-      '1',
-      '0',
-    ],
-    [
-      '示例-生活用品',
-      '日常生活用品兑换',
-      '2',
-      '0',
-    ],
-  ];
-
-  // 使用xlsx库创建Excel文件
-  const worksheet = XLSX.utils.aoa_to_sheet(templateData);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, '导入模板');
-
-  // 生成Excel文件并下载
-  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-  const blob = new Blob([excelBuffer], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = '兑换类目导入模板.xlsx';
-  document.body.append(link);
-  link.click();
-  link.remove();
-  ElMessage.success('模板下载成功');
+const downloadTemplate = async () => {
+  try {
+    // 调用API下载导入模板
+    const data = await getExchangeCategoryImportTemplate();
+    // 使用downloadFileFromBlobPart触发浏览器下载
+    downloadFileFromBlobPart({
+      fileName: '兑换类目导入模板.xlsx',
+      source: data,
+    });
+    ElMessage.success('模板下载成功');
+  } catch (error) {
+    console.error('下载模板失败:', error);
+    ElMessage.error('下载模板失败，请稍后重试');
+  }
 };
 
 // 文件上传前校验
@@ -87,6 +65,7 @@ const beforeUpload = (file) => {
 // 文件变化
 const handleFileChange = (uploadFile) => {
   validationResult.value = null;
+  errorRows.value = [];
   fileList.value = [uploadFile];
 };
 
@@ -98,6 +77,7 @@ const handleImport = async () => {
   }
 
   validating.value = true;
+  errorRows.value = [];
 
   try {
     // 获取文件对象
@@ -112,16 +92,36 @@ const handleImport = async () => {
     const response = await importExchangeCategory(file);
 
     // 根据接口返回结果处理
-    if (response) {
+    // 检查是否是错误响应格式 {code: xxx, msg: 'xxx', data: null}
+    if (response && response.code !== undefined && response.code !== 0) {
+      // 接口返回错误信息
+      validationResult.value = {
+        success: false,
+        message: response.msg || '导入失败',
+        total: 0,
+        successCount: 0,
+        failCount: 0,
+      };
+      // 处理校验失败错误行提示
+      if (response.data && response.data.errorRows) {
+        errorRows.value = response.data.errorRows;
+      }
+      ElMessage.error(response.msg || '导入失败');
+    } else if (response) {
+      // 导入成功
       validationResult.value = {
         success: true,
-        message: response.message || '导入成功',
+        message: response.msg || response.message || '导入成功',
         total: response.total || 0,
         successCount: response.successCount || 0,
         failCount: response.failCount || 0,
       };
+      // 处理校验失败错误行提示
+      if (response.data && response.data.errorRows) {
+        errorRows.value = response.data.errorRows;
+      }
 
-      ElMessage.success(response.message || '导入成功');
+      ElMessage.success(response.msg || response.message || '导入成功');
       emit('success');
       modalApi.close();
     } else {
@@ -136,14 +136,20 @@ const handleImport = async () => {
     }
   } catch (error) {
     console.error('导入失败:', error);
+    // 处理错误响应，支持 {code, msg, data} 格式
+    const errorMsg = error?.msg || error?.message || '导入失败，请检查文件格式';
     validationResult.value = {
       success: false,
-      message: error?.message || '导入失败，请检查文件格式',
+      message: errorMsg,
       total: 0,
       successCount: 0,
       failCount: 0,
     };
-    ElMessage.error(error?.message || '导入失败，请检查文件格式');
+    // 处理校验失败错误行提示
+    if (error?.data && error.data.errorRows) {
+      errorRows.value = error.data.errorRows;
+    }
+    ElMessage.error(errorMsg);
   } finally {
     validating.value = false;
   }
@@ -152,6 +158,7 @@ const handleImport = async () => {
 const open = () => {
   fileList.value = [];
   validationResult.value = null;
+  errorRows.value = [];
   modalApi.open();
 };
 
@@ -227,6 +234,20 @@ defineExpose({
             <span class="fail-count"
               >失败: {{ validationResult.failCount }}</span
             >
+          </div>
+          <!-- 校验失败错误行提示 -->
+          <div v-if="errorRows && errorRows.length > 0" class="error-rows">
+            <div class="error-rows-title">错误行详情：</div>
+            <div class="error-rows-list">
+              <div
+                v-for="(error, index) in errorRows"
+                :key="index"
+                class="error-row-item"
+              >
+                <span class="error-row-num">第{{ error.row }}行:</span>
+                <span class="error-row-msg">{{ error.message }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -318,6 +339,42 @@ defineExpose({
 
 .fail-count {
   color: var(--el-color-danger);
+}
+
+/* 校验失败错误行提示样式 */
+.error-rows {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--el-border-color);
+}
+
+.error-rows-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-color-danger);
+  margin-bottom: 8px;
+}
+
+.error-rows-list {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.error-row-item {
+  font-size: 12px;
+  color: var(--el-text-color-regular);
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.error-row-num {
+  color: var(--el-color-danger);
+  font-weight: 500;
+  margin-right: 8px;
+}
+
+.error-row-msg {
+  color: var(--el-text-color-secondary);
 }
 
 .validating-tip {

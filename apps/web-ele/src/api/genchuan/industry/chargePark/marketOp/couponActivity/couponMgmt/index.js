@@ -30,7 +30,12 @@ export function getCouponMgmtPage(params) {
 export function createCouponMgmt(data) {
   return requestClient.post('/marketop/coupon-mgmt/create', data);
 }
-
+/** 下载导入优惠券模板
+ * @returns {Promise} 返回文件流
+ */
+export function getCouponImportTemplate() {
+  return requestClient.download('/marketop/coupon-mgmt/get-import-template');
+}
 /** 导入优惠券
  * @param {File} file - 导入文件，支持Excel格式
  * @returns {Promise}
@@ -103,12 +108,8 @@ export function updateCouponMgmt(data) {
 // ==================== 数据可视化图表接口 ====================
 
 /** 优惠券统计（折线图 + 柱状图 + 卡片）
- * @param {Object} params - 请求参数
- * @param {string} params.startTime - 统计开始时间
- * @param {string} params.endTime - 统计结束时间
- * @param {number} params.stationId - 场站ID，支持按场站筛选
  * @returns {Promise}
  */
-export function getCouponMgmtChart(params) {
-  return requestClient.get('/marketop/coupon-mgmt/chart', { params });
+export function getCouponMgmtChart() {
+  return requestClient.get('/marketop/coupon-mgmt/chart');
 }

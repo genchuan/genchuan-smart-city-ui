@@ -5,8 +5,9 @@ import type { UserCreditDetailVO } from '#/api/genchuan/industry/chargePark/user
 
 import { computed, onMounted, ref } from 'vue';
 
+import { useVbenDrawer } from '@vben/common-ui';
+
 import {
-  ElButton,
   ElDescriptions,
   ElDescriptionsItem,
   ElDialog,
@@ -14,10 +15,13 @@ import {
   ElMessage,
   ElTag,
 } from 'element-plus';
+import screenfull from 'screenfull';
 
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { UserCreditApi } from '#/api/genchuan/industry/chargePark/userMerchant/creditMgmt/userCredit';
 import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
 import {
@@ -53,8 +57,10 @@ const detailCache = new Map<number, UserCreditDetailVO>();
 const detailDrawerRef = ref<null | { open: () => void }>(null);
 const detailObj = ref<UserCreditRow>();
 const drillFilters = ref<{
+  creditLevel?: string;
   creditScore?: number | string;
 }>({});
+const searchParams = ref<Record<string, any>>({});
 const userDialogVisible = ref(false);
 const userProfileMap = ref<Record<number, UserProfileInfo>>({});
 const userSelectOptions = ref<UserSelectOption[]>([]);
@@ -71,6 +77,44 @@ const detailData = computed(() => {
     maskedPhone: maskPhone(detailObj.value.phone),
   };
 });
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useSearchSchema(userSelectOptions.value).map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
 
 /** 加载用户选项 */
 async function loadUserProfiles() {
@@ -95,8 +139,11 @@ async function loadUserProfiles() {
 
   userProfileMap.value = nextUserProfileMap;
   userSelectOptions.value = buildUserSelectOptions(profiles);
-  gridApi.formApi.setState({
-    schema: useSearchSchema(userSelectOptions.value),
+  queryFormApi.setState({
+    schema: useSearchSchema(userSelectOptions.value).map((item) => ({
+      ...item,
+      rules: undefined,
+    })),
   });
 }
 
@@ -166,14 +213,23 @@ async function fetchUserCreditDetail(
 /** 查询用户信用列表 */
 async function queryUserCreditPage(
   { page }: { page: { currentPage: number; pageSize: number } },
-  formValues: Record<string, any>,
+  formValues: Record<string, any> = {},
 ) {
   await ensureUserProfilesLoaded();
+
+  const queryValues = {
+    ...searchParams.value,
+    ...formValues,
+  };
+
+  if (drillFilters.value.creditLevel) {
+    queryValues.creditLevel = drillFilters.value.creditLevel;
+  }
 
   const result = await UserCreditApi.getUserCreditPage({
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    ...buildUserCreditQueryParams(formValues, drillFilters.value),
+    ...buildUserCreditQueryParams(queryValues, drillFilters.value),
   });
   const list = Array.isArray(result?.list) ? result.list : [];
 
@@ -190,12 +246,9 @@ async function queryUserCreditPage(
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useSearchSchema(userSelectOptions.value),
-  },
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Form'], ['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
     height: 'auto',
     proxyConfig: {
@@ -212,10 +265,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
       search: true,
     },
   },
+  showSearchForm: false,
 });
 
-/** 刷新表格 */
+/** 刷新表格 - 同时清除所有快捷筛选 */
 function handleRefresh() {
+  drillFilters.value = {};
   return gridApi.query();
 }
 
@@ -228,21 +283,21 @@ async function handleReloadPage() {
 
 /** 重置筛选条件 */
 async function resetSearch() {
-  drillFilters.value.creditScore = undefined;
-  await gridApi.formApi.resetForm();
-  await handleRefresh();
+  searchParams.value = {};
+  drillFilters.value = {};
+  await queryFormApi.resetForm();
+  return gridApi.query();
 }
 
 /** 设置筛选条件 */
 async function setSearchValues(values: Record<string, any>) {
-  const nextValues = { ...values };
-
-  drillFilters.value.creditScore = nextValues.creditScore || undefined;
-  delete nextValues.creditScore;
-
-  await gridApi.formApi.resetForm();
-  await gridApi.formApi.setValues(nextValues);
-  await handleRefresh();
+  searchParams.value = {
+    ...searchParams.value,
+    ...values,
+  };
+  drillFilters.value = {};
+  await queryFormApi.setValues(searchParams.value);
+  return gridApi.query();
 }
 
 /** 重新计算表格布局 */
@@ -259,11 +314,9 @@ defineExpose({
 
 /** 导出当前列表 */
 async function handleExport() {
-  const formValues = await gridApi.formApi.getValues();
-
   try {
     await UserCreditApi.exportUserCredit(
-      buildUserCreditQueryParams(formValues, drillFilters.value),
+      buildUserCreditQueryParams(searchParams.value, drillFilters.value),
     );
     ElMessage.success('导出成功');
   } catch (error) {
@@ -279,17 +332,17 @@ function handleOpenUser(row: UserCreditRow) {
 }
 
 /** 按信用分钻取列表 */
-async function handleFilterByScore(score: number) {
-  await setSearchValues({
-    creditScore: score,
-  });
+function handleFilterByScore(score: number) {
+  drillFilters.value.creditScore =
+    drillFilters.value.creditScore === score ? undefined : score;
+  gridApi.query();
 }
 
 /** 按信用等级钻取列表 */
-async function handleFilterByLevel(level: UserCreditRow['creditLevel']) {
-  await setSearchValues({
-    creditLevel: level,
-  });
+function handleFilterByLevel(level: UserCreditRow['creditLevel']) {
+  drillFilters.value.creditLevel =
+    drillFilters.value.creditLevel === level ? undefined : level;
+  gridApi.query();
 }
 
 /** 打开详情抽屉 */
@@ -325,6 +378,24 @@ async function handleRemind(row: UserCreditRow) {
   }
 }
 
+/** 打开搜索抽屉 */
+async function handleSerachShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+/** 取消信用分筛选 */
+function handleCancelScoreFilter() {
+  drillFilters.value.creditScore = undefined;
+  gridApi.query();
+}
+
+/** 取消信用等级筛选 */
+function handleCancelLevelFilter() {
+  drillFilters.value.creditLevel = undefined;
+  gridApi.query();
+}
+
 onMounted(() => {
   void ensureUserProfilesLoaded();
 });
@@ -333,79 +404,116 @@ onMounted(() => {
 <template>
   <div class="user-credit-table">
     <div class="user-credit-grid-wrap">
-      <Grid table-title="用户信用列表">
+      <Grid>
+        <template #table-title>
+          <div
+            class="tabel-tabs"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 10px;
+              align-items: center;
+            "
+          >
+            <ElTag
+              v-if="drillFilters.creditScore"
+              type="primary"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelScoreFilter"
+            >
+              信用分：{{ drillFilters.creditScore }}
+            </ElTag>
+            <ElTag
+              v-if="drillFilters.creditLevel"
+              type="warning"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelLevelFilter"
+            >
+              信用等级：{{ drillFilters.creditLevel }}
+            </ElTag>
+          </div>
+        </template>
+
         <template #toolbar-tools>
-          <TableAction
-            :actions="[
-              {
-                label: '导出',
-                type: 'primary',
-                icon: ACTION_ICON.DOWNLOAD,
-                onClick: handleExport,
-              },
-              {
-                label: props.showStats ? '隐藏统计' : '显示统计',
-                type: 'primary',
-                icon: props.showStats
-                  ? 'lucide:chevron-up'
-                  : 'lucide:chevron-down',
-                onClick: props.toggleStats,
-              },
-            ]"
-          />
+          <div class="common-toolbar-tools">
+            <IconButton
+              content="导出"
+              icon-name="download"
+              @click="handleExport"
+            />
+            <IconButton
+              content="搜索"
+              icon-name="search"
+              @click="handleSerachShow"
+            />
+            <IconButton
+              :content="props.showStats ? '隐藏统计' : '显示统计'"
+              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+              @click="props.toggleStats"
+            />
+            <IconButton
+              content="全屏"
+              icon-name="FullScreen"
+              @click="() => screenfull.toggle()"
+            />
+          </div>
         </template>
 
         <template #userName="{ row }">
-          <ElButton type="primary" link @click="handleOpenUser(row)">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleOpenUser(row)"
+          >
             {{ row.userName }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #creditScore="{ row }">
-          <ElButton
+          <el-text
+            class="common-align"
             type="primary"
-            link
+            style="cursor: pointer"
             @click="handleFilterByScore(row.creditScore)"
           >
             {{ row.creditScore }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #creditLevel="{ row }">
-          <ElButton
-            type="primary"
-            link
+          <ElTag
+            :type="getCreditLevelTagType(row.creditLevel)"
+            style="cursor: pointer"
             @click="handleFilterByLevel(row.creditLevel)"
           >
-            <ElTag :type="getCreditLevelTagType(row.creditLevel)">
-              {{ row.creditLevel }}
-            </ElTag>
-          </ElButton>
+            {{ row.creditLevel }}
+          </ElTag>
         </template>
 
         <template #actions="{ row }">
-          <TableAction
-            :actions="[
-              {
-                label: '查看',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.VIEW,
-                onClick: handleDetail.bind(null, row),
-              },
-              {
-                label: '提醒',
-                type: 'danger',
-                link: true,
-                icon: ACTION_ICON.AUDIT,
-                ifShow: () => row.creditStatus === '低信用',
-                onClick: handleRemind.bind(null, row),
-              },
-            ]"
-          />
+          <div class="table-toolbar-tools">
+            <IconButton
+              content="详情"
+              icon-name="View"
+              @click="handleDetail(row)"
+            />
+            <IconButton
+              v-if="row.creditStatus === '低信用'"
+              content="提醒"
+              icon-name="Warning"
+              @click="handleRemind(row)"
+            />
+          </div>
         </template>
       </Grid>
     </div>
+
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
 
     <DetailDrawer
       ref="detailDrawerRef"

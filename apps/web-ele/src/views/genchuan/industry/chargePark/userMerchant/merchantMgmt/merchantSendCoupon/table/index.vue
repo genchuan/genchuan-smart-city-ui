@@ -15,10 +15,9 @@ import type {
 
 import { computed, nextTick, onMounted, ref } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
 
 import {
-  ElButton,
   ElDescriptions,
   ElDescriptionsItem,
   ElDialog,
@@ -28,11 +27,13 @@ import {
   ElTableColumn,
   ElTag,
 } from 'element-plus';
+import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
-import { ACTION_ICON, TableAction, useVbenVxeGrid } from '#/adapter/vxe-table';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import { MerchantSendCouponApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantSendCoupon';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
 import {
@@ -88,6 +89,7 @@ const merchantSelectOptions = ref<MerchantSelectOption[]>(merchantOptions);
 const queryExtraValues = ref<Record<string, any>>({});
 const redemptionDialogVisible = ref(false);
 const couponSelectOptions = buildCouponSelectOptions();
+const searchParams = ref<Record<string, any>>({});
 
 const detailData = computed<Record<string, any> | undefined>(() => {
   if (!detailObj.value) {
@@ -117,6 +119,44 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  onCancel() {
+    drawerApi.close();
+  },
+  async onOpenChange() {},
+});
+
+const [QueryForm, queryFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  handleSubmit: onQuerySubmit,
+  layout: 'horizontal',
+  schema: useSearchSchema(merchantSelectOptions.value).map((item) => ({
+    ...item,
+    rules: undefined,
+  })),
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
+});
+
+/** 搜索表单提交 */
+async function onQuerySubmit(values: Record<string, any>) {
+  searchParams.value = { ...values };
+  await handleRefresh();
+  drawerApi.close();
+}
+
 /** 加载商户下拉 */
 async function loadMerchantOptions() {
   try {
@@ -137,7 +177,7 @@ async function loadMerchantOptions() {
     );
   }
 
-  await gridApi.formApi.updateSchema([
+  await queryFormApi.updateSchema([
     {
       fieldName: 'merchantId',
       componentProps: {
@@ -224,10 +264,16 @@ async function fetchMerchantSendCouponDetail(
 /** 查询商户发券列表 */
 async function queryMerchantSendCouponPage(
   { page }: any,
-  formValues: Record<string, any>,
+  formValues: Record<string, any> = {},
 ) {
   const params: MerchantSendCouponPageReqVO = {
-    ...buildMerchantSendCouponQueryParams(formValues, queryExtraValues.value),
+    ...buildMerchantSendCouponQueryParams(
+      {
+        ...searchParams.value,
+        ...formValues,
+      },
+      queryExtraValues.value,
+    ),
     pageNo: page.currentPage,
     pageSize: page.pageSize,
   };
@@ -314,12 +360,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
-  formOptions: {
-    schema: useSearchSchema(merchantSelectOptions.value),
-  },
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Form'], ['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
+    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
     height: 'auto',
     proxyConfig: {
@@ -340,6 +383,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     checkboxAll: handleRowCheckboxChange,
     checkboxChange: handleRowCheckboxChange,
   },
+  showSearchForm: false,
 });
 
 /** 清空勾选 */
@@ -351,6 +395,7 @@ function clearCheckedRows() {
 
 /** 刷新表格 */
 function handleRefresh() {
+  queryExtraValues.value = {};
   return gridApi.query();
 }
 
@@ -365,27 +410,33 @@ async function handleReloadPage() {
 
 /** 重置筛选条件 */
 async function resetSearch() {
+  searchParams.value = {};
   queryExtraValues.value = {};
   clearCheckedRows();
-  await gridApi.formApi.resetForm();
-  await handleRefresh();
+  await queryFormApi.resetForm();
+  return gridApi.query();
 }
 
 /** 设置筛选条件 */
 async function setSearchValues(values: Record<string, any>) {
+  searchParams.value = {
+    ...searchParams.value,
+    ...values,
+  };
   queryExtraValues.value = {};
   clearCheckedRows();
-  await gridApi.formApi.resetForm();
-  await gridApi.formApi.setValues(values);
-  await handleRefresh();
+  await queryFormApi.setValues(searchParams.value);
+  return gridApi.query();
 }
 
 /** 按发放数量筛选 */
 async function handleFilterBySendCount(sendCount: number) {
-  queryExtraValues.value = { sendCount };
+  queryExtraValues.value = {
+    sendCount:
+      queryExtraValues.value.sendCount === sendCount ? undefined : sendCount,
+  };
   clearCheckedRows();
-  await gridApi.formApi.resetForm();
-  await handleRefresh();
+  return gridApi.query();
 }
 
 /** 重新计算表格布局 */
@@ -413,10 +464,11 @@ async function handleExport() {
   });
 
   try {
-    const formValues = await gridApi.formApi.getValues();
-
     await MerchantSendCouponApi.exportMerchantSendCoupon(
-      buildMerchantSendCouponQueryParams(formValues, queryExtraValues.value),
+      buildMerchantSendCouponQueryParams(
+        searchParams.value,
+        queryExtraValues.value,
+      ),
     );
     ElMessage.success('导出成功');
   } catch (error) {
@@ -500,6 +552,12 @@ async function handleExecute(row: MerchantSendCouponRow) {
 
 /** 取消发券 */
 async function handleCancel(row: MerchantSendCouponRow) {
+  try {
+    await confirm(`确认取消 ${row.couponName} 发券任务吗？`);
+  } catch {
+    return;
+  }
+
   const loadingInstance = ElLoading.service({
     target: '.merchant-send-coupon-table',
     text: '取消中...',
@@ -579,113 +637,188 @@ async function handleOpenRedemption(row: MerchantSendCouponRow) {
   currentRedemptions.value = detail.row.redemptions;
   redemptionDialogVisible.value = true;
 }
+
+/** 打开搜索抽屉 */
+async function handleSerachShow() {
+  drawerApi.open();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+/** 按发券状态筛选 */
+function handleFilterStatus(status: MerchantSendCouponRow['status']) {
+  queryExtraValues.value = {
+    ...queryExtraValues.value,
+    status: queryExtraValues.value.status === status ? undefined : status,
+  };
+  clearCheckedRows();
+  gridApi.query();
+}
+
+/** 取消发放数量筛选 */
+function handleCancelSendCountFilter() {
+  queryExtraValues.value = {
+    ...queryExtraValues.value,
+    sendCount: undefined,
+  };
+  gridApi.query();
+}
+
+/** 取消发券状态筛选 */
+function handleCancelStatusFilter() {
+  queryExtraValues.value = {
+    ...queryExtraValues.value,
+    status: undefined,
+  };
+  gridApi.query();
+}
 </script>
 
 <template>
   <div class="merchant-send-coupon-table">
     <div class="merchant-send-coupon-grid-wrap">
-      <Grid table-title="商户发券列表">
+      <Grid>
+        <template #table-title>
+          <div
+            class="tabel-tabs"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 10px;
+              align-items: center;
+            "
+          >
+            <ElTag
+              v-if="queryExtraValues.sendCount"
+              type="primary"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelSendCountFilter"
+            >
+              发放数量：{{ queryExtraValues.sendCount }}
+            </ElTag>
+            <ElTag
+              v-if="queryExtraValues.status"
+              type="warning"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleCancelStatusFilter"
+            >
+              发券状态：{{ queryExtraValues.status }}
+            </ElTag>
+          </div>
+        </template>
+
         <template #toolbar-tools>
-          <TableAction
-            :actions="[
-              {
-                label: '导出',
-                type: 'primary',
-                icon: ACTION_ICON.DOWNLOAD,
-                onClick: handleExport,
-              },
-              {
-                label: checkedIds.length > 0 ? '执行选中任务' : '发券',
-                type: 'primary',
-                icon: ACTION_ICON.AUDIT,
-                onClick: handleSendAction,
-              },
-              {
-                label: props.showStats ? '隐藏统计' : '显示统计',
-                type: 'primary',
-                icon: props.showStats
-                  ? 'lucide:chevron-up'
-                  : 'lucide:chevron-down',
-                onClick: props.toggleStats,
-              },
-            ]"
-          />
+          <div class="common-toolbar-tools">
+            <IconButton
+              content="导出"
+              icon-name="download"
+              @click="handleExport"
+            />
+            <IconButton
+              :content="checkedIds.length > 0 ? '执行选中任务' : '发券'"
+              icon-name="Check"
+              @click="handleSendAction"
+            />
+            <IconButton
+              content="搜索"
+              icon-name="search"
+              @click="handleSerachShow"
+            />
+            <IconButton
+              :content="props.showStats ? '隐藏统计' : '显示统计'"
+              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+              @click="props.toggleStats"
+            />
+            <IconButton
+              content="全屏"
+              icon-name="FullScreen"
+              @click="() => screenfull.toggle()"
+            />
+          </div>
         </template>
 
         <template #merchantName="{ row }">
-          <ElButton type="primary" link @click="handleOpenMerchant(row)">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleOpenMerchant(row)"
+          >
             {{ row.merchantName }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #couponName="{ row }">
-          <ElButton type="primary" link @click="handleOpenCoupon(row)">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleOpenCoupon(row)"
+          >
             {{ row.couponName }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #sendCount="{ row }">
-          <ElButton
+          <el-text
+            class="common-align"
             type="primary"
-            link
+            style="cursor: pointer"
             @click="handleFilterBySendCount(row.sendCount)"
           >
             {{ row.sendCount }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #useCount="{ row }">
-          <ElButton type="primary" link @click="handleOpenRedemption(row)">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleOpenRedemption(row)"
+          >
             {{ row.useCount }}
-          </ElButton>
+          </el-text>
         </template>
 
         <template #status="{ row }">
-          <ElButton
-            type="primary"
-            link
-            @click="setSearchValues({ status: row.status })"
+          <ElTag
+            :type="getStatusTagType(row.status)"
+            style="cursor: pointer"
+            @click="handleFilterStatus(row.status)"
           >
-            <ElTag :type="getStatusTagType(row.status)">
-              {{ row.status }}
-            </ElTag>
-          </ElButton>
+            {{ row.status }}
+          </ElTag>
         </template>
 
         <template #actions="{ row }">
-          <TableAction
-            :actions="[
-              {
-                label: '执行',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.AUDIT,
-                ifShow: () => row.status === '待执行',
-                onClick: handleExecute.bind(null, row),
-              },
-              {
-                label: '查看',
-                type: 'primary',
-                link: true,
-                icon: ACTION_ICON.VIEW,
-                onClick: handleDetail.bind(null, row),
-              },
-              {
-                label: '取消',
-                type: 'danger',
-                link: true,
-                icon: ACTION_ICON.DELETE,
-                ifShow: () => row.status === '待执行',
-                popConfirm: {
-                  title: `确认取消 ${row.couponName} 发券任务吗？`,
-                  confirm: handleCancel.bind(null, row),
-                },
-              },
-            ]"
-          />
+          <div class="table-toolbar-tools">
+            <IconButton
+              v-if="row.status === '待执行'"
+              content="执行"
+              icon-name="Check"
+              @click="handleExecute(row)"
+            />
+            <IconButton
+              content="详情"
+              icon-name="View"
+              @click="handleDetail(row)"
+            />
+            <IconButton
+              v-if="row.status === '待执行'"
+              content="取消"
+              icon-name="Close"
+              @click="handleCancel(row)"
+            />
+          </div>
         </template>
       </Grid>
     </div>
+
+    <Drawer title="搜索">
+      <QueryForm class="query-form" />
+    </Drawer>
 
     <FormDrawer :title="textObj.addText">
       <Form class="mx-4" />

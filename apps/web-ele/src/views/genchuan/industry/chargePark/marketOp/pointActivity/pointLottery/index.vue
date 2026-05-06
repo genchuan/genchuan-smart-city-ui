@@ -52,7 +52,7 @@ const fetchStatsData = async () => {
     ];
 
     // 组装折线图数据
-    statsData.value.lineData = (response.trendList || []).map(item => ({
+    statsData.value.lineData = (response.trendList || []).map((item) => ({
       date: item.lotteryTime,
       count: item.count,
     }));
@@ -65,7 +65,9 @@ const fetchStatsData = async () => {
 // 获取表格组件实例（处理v-for中的ref数组情况）
 const getTableComponent = () => {
   // 在v-for中使用ref时，tableRef可能是数组
-  const tableComponent = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  const tableComponent = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
   return tableComponent;
 };
 
@@ -73,7 +75,10 @@ const getTableComponent = () => {
 const handleCardClick = async (type, value) => {
   await nextTick();
   const tableComponent = getTableComponent();
-  if (tableComponent && typeof tableComponent.handleStatsFilter === 'function') {
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
     tableComponent.handleStatsFilter('card', type, value);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
@@ -84,7 +89,10 @@ const handleCardClick = async (type, value) => {
 const handleLineClick = async (date) => {
   await nextTick();
   const tableComponent = getTableComponent();
-  if (tableComponent && typeof tableComponent.handleStatsFilter === 'function') {
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
     tableComponent.handleStatsFilter('date', null, date);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');

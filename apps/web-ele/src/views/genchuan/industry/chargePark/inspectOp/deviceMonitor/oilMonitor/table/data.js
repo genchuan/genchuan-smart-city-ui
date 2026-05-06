@@ -407,9 +407,9 @@ export function useGridColumns() {
 export const detailFields = [
   { key: 'id', label: '监测ID' },
   { key: 'spaceCode', label: '车位' },
-  { key: 'spaceId', label: '车位ID' },
+  // { key: 'spaceId', label: '车位ID' },
   { key: 'stationName', label: '所属场站' },
-  { key: 'stationId', label: '场站ID' },
+  // { key: 'stationId', label: '场站ID' },
   // { key: 'regionName', label: '所属区域' },
   { key: 'identifyTimeStr', label: '识别时间' },
   {

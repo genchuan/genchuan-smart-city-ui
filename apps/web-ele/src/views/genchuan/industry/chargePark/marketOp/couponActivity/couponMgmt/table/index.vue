@@ -133,6 +133,7 @@ function handleRefresh() {
   // 清除所有快捷筛选变量
   filterType.value = '';
   filterStatus.value = '';
+  filterDate.value = '';
   gridApi.query();
 }
 
@@ -246,6 +247,7 @@ function handleRowCheckboxChange({ records }) {
 // 快捷筛选变量
 const filterType = ref('');
 const filterStatus = ref('');
+const filterDate = ref('');
 
 const dataObj = reactive({
   totalShow: false,
@@ -276,6 +278,7 @@ const getTableData = async (pageObj) => {
       name: dataObj.searchParams.name,
       type: filterType.value || dataObj.searchParams.type,
       status: filterStatus.value || dataObj.searchParams.status,
+      date: filterDate.value || dataObj.searchParams.date,
       amount: dataObj.searchParams.amount,
       useCondition: dataObj.searchParams.useCondition,
       senderName: dataObj.searchParams.senderName,
@@ -322,7 +325,8 @@ const getTableData = async (pageObj) => {
     if (response && response.list && response.list.length > 0) {
       dataObj.useStaticData = false;
       dataObj.total = response.total;
-      dataObj.apilist = response.list.map((item) => ({
+      // 接口返回的list已经是分页后的数据，直接使用
+      dataObj.list = response.list.map((item) => ({
         ...item,
         createTimeStr: formatDate(item.createTime),
         updateTimeStr: formatDate(item.updateTime),
@@ -330,29 +334,31 @@ const getTableData = async (pageObj) => {
         verifyTimeStr: formatDate(item.verifyTime),
         validTimeStr: formatDate(item.validTime),
       }));
+      dataObj.apilist = dataObj.list;
+      return dataObj;
     } else {
       // 接口返回为空，使用静态数据
       console.log('分页接口返回为空，使用静态数据');
-      const staticData = dataList();
-      dataObj.apilist = staticData;
-      dataObj.total = staticData.length;
+      dataObj.useStaticData = true;
     }
   } catch (error) {
     // 接口调用失败，错误信息打印到控制台，使用静态数据
     console.error('分页接口调用失败，使用静态数据:', error);
-    const staticData = dataList();
-    dataObj.apilist = staticData;
-    dataObj.total = staticData.length;
+    dataObj.useStaticData = true;
   }
 
+  // 使用静态数据时的处理
+  const staticData = dataList();
+  dataObj.apilist = staticData;
+
   // 根据searchParams和快捷筛选变量筛选数据
-  const filteredList = dataObj.apilist.filter((v) => {
+  const filteredList = staticData.filter((v) => {
     let searchMatch = true;
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
       if (
         value &&
-        !['createTime', 'sendTime', 'validTime', 'verifyTime'].includes(key)
+        !['createTime', 'sendTime', 'validTime', 'verifyTime', 'date'].includes(key)
       ) {
         searchMatch =
           typeof value === 'string'
@@ -366,6 +372,12 @@ const getTableData = async (pageObj) => {
     }
     if (filterStatus.value && v.status !== filterStatus.value) {
       searchMatch = false;
+    }
+    if (filterDate.value) {
+      const sendTimeStr = v.sendTimeStr || '';
+      if (!sendTimeStr.includes(filterDate.value)) {
+        searchMatch = false;
+      }
     }
     return searchMatch;
   });
@@ -468,6 +480,11 @@ const handleCancelStatusFilter = () => {
   gridApi.query();
 };
 
+const handleCancelDateFilter = () => {
+  filterDate.value = '';
+  gridApi.query();
+};
+
 // 处理发放人点击 - 跳转操作人员详情
 const handleSenderClick = (row) => {
   ElMessage.info(`查看操作人员详情: ${row.senderName}`);
@@ -484,22 +501,27 @@ function handleStatsFilter(filterSource, filterValue) {
     case 'card': {
       // 点击卡片
       if (filterValue === 'send') {
+        // 按发放量筛选（暂时不做特殊处理）
         ElMessage.info('按发放量筛选');
       } else if (filterValue === 'verify') {
-        ElMessage.info('按核销率筛选');
+        // 累计核销率卡片 - 筛选"已使用"状态的券
+        // "已使用"状态的字典值为 '2'
+        filterStatus.value = filterStatus.value === '2' ? '' : '2';
+        gridApi.query();
       }
 
       break;
     }
     case 'date': {
       // 点击折线图 - 按日期筛选
-      ElMessage.info(`筛选日期: ${filterValue}`);
+      filterDate.value = filterDate.value === filterValue ? '' : filterValue;
+      gridApi.query();
 
       break;
     }
     case 'type': {
       // 点击柱状图 - 按券类型筛选
-      dataObj.searchParams = { ...dataObj.searchParams, type: filterValue };
+      filterType.value = filterType.value === filterValue ? '' : filterValue;
       gridApi.query();
 
       break;
@@ -577,6 +599,16 @@ const handleFullShow = () => {
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
             券状态：{{ getCouponStatusLabel(filterStatus) }}
+          </ElTag>
+          <!-- 日期筛选标签 -->
+          <ElTag
+            v-if="filterDate"
+            type="warning"
+            closable
+            @close="handleCancelDateFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            发放日期：{{ filterDate }}
           </ElTag>
         </div>
       </template>
@@ -681,7 +713,7 @@ const handleFullShow = () => {
             @click="handleVerify(row)"
           />
           <IconButton
-            v-if="row.status === '2' || row.status === '3'"
+            v-if="row.status === '3'"
             content="重新发放"
             icon-name="RefreshRight"
             @click="handleResend(row)"

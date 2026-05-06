@@ -33,6 +33,7 @@ import {
   useGridColumns,
   useSearchFormSchema,
 } from './data';
+import {downloadFileFromBlobPart} from '@vben/utils';
 
 const props = defineProps({
   secondShow: {
@@ -93,9 +94,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     if (!valid) return;
 
     const values = await formApi.getValues();
-    const loadingInstance = ElLoading.service({
-      text: formData.value?.id ? '保存中...' : '新增中...',
-    });
+    // const loadingInstance = ElLoading.service({
+    //   text: formData.value?.id ? '保存中...' : '新增中...',
+    // });
 
     try {
       if (formData.value?.id) {
@@ -138,7 +139,10 @@ function handleRefresh() {
 async function handleExport() {
   try {
     const data = await exportExchangeCategory();
-    exportToExcel(data, textObj.excelName, textObj.excelAllName);
+    downloadFileFromBlobPart({
+      fileName: textObj.excelAllName,
+      source: data,
+    });
     ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
@@ -424,6 +428,20 @@ const handleStatsFilter = (type, value) => {
       // 类目ID筛选 - 筛选特定类目
       dataObj.searchParams.id = value;
       console.log('钻取：筛选类目ID', value);
+      break;
+    }
+    case 'status': {
+      // 饼图点击 - 按类目状态筛选
+      filterStatus.value = value;
+      const statusName = getExchangeCategoryStatusLabel(value);
+      ElMessage.info(`已筛选类目状态: ${statusName}`);
+      break;
+    }
+    case 'scope': {
+      // 柱状图点击 - 按适用范围筛选
+      filterScope.value = value;
+      const scopeName = getExchangeCategoryScopeLabel(value);
+      ElMessage.info(`已筛选适用范围: ${scopeName}`);
       break;
     }
   }

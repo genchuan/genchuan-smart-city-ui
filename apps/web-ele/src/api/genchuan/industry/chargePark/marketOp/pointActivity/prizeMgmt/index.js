@@ -12,6 +12,12 @@ export function createPrizeMgmt(data) {
   return requestClient.post('/marketop/prize-mgmt/create', data);
 }
 
+/** 下载导入奖品模板
+ * @returns {Promise} 返回文件流
+ */
+export function getPrizeImportTemplate() {
+  return requestClient.download('/marketop/prize-mgmt/get-import-template');
+}
 /** 导入奖品 */
 export function importPrizeMgmt(file) {
   const formData = new FormData();
@@ -53,6 +59,6 @@ export function updatePrizeMgmt(data) {
 // ==================== 数据可视化图表接口 ====================
 
 /** 奖品统计（柱状图 + 卡片） */
-export function getPrizeMgmtChart(params) {
-  return requestClient.get('/marketop/prize-mgmt/chart', { params });
+export function getPrizeMgmtChart() {
+  return requestClient.get('/marketop/prize-mgmt/chart');
 }

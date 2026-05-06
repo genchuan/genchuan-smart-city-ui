@@ -3,14 +3,16 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { ElButton, ElMessage } from 'element-plus';
+import { ElMessage } from 'element-plus';
 
 import { shipExchangeOrder } from '#/api/genchuan/industry/chargePark/marketOp/exchangeMgmt/exchangeOrder';
 import { useVbenForm } from '#/adapter/form';
 
 const emit = defineEmits(['success']);
 
-const record = ref({});
+// 存储订单数据 - 使用普通变量避免响应式问题
+let orderId = null;
+let orderNo = '';
 const loading = ref(false);
 
 const [Form, formApi] = useVbenForm({
@@ -65,40 +67,76 @@ const [Modal, modalApi] = useVbenModal({
 
     const values = await formApi.getValues();
 
+    console.log('ShipDialog onConfirm orderId:', orderId);
+
+    // 检查id是否存在
+    if (!orderId) {
+      ElMessage.error('订单ID缺失，请重新打开弹窗');
+      return;
+    }
+
     try {
       loading.value = true;
       const logisticsInfo = `${values.logisticsCompany}：${values.trackingNo}`;
-      const response = await shipExchangeOrder({
-        id: record.value.id,
-        logisticsInfo,
-      });
 
-      if (response && response.code === 200) {
+      const requestData = {
+        id: orderId,
+        logisticsInfo,
+      };
+      console.log('ShipDialog request data:', requestData);
+
+      const response = await shipExchangeOrder(requestData);
+
+      console.log('ShipDialog response:', response);
+
+      // 判断成功：code为0或200，或者data为true，或者直接返回true
+      const isSuccess = response && (
+        response.code === 0 ||
+        response.code === 200 ||
+        response.data === true ||
+        response === true
+      );
+
+      if (isSuccess) {
         ElMessage.success('发货成功');
         modalApi.close();
         emit('success');
       } else {
-        ElMessage.error(response?.message || '发货失败');
+        const errorMsg = response?.msg || response?.message || '发货失败';
+        ElMessage.error(errorMsg);
       }
     } catch (error) {
       console.error('发货失败:', error);
-      ElMessage.error(error?.message || '发货失败');
+      // 如果报错但包含成功信息，也认为是成功
+      if (error?.response?.data?.code === 0 || error?.response?.data?.code === 200) {
+        ElMessage.success('发货成功');
+        modalApi.close();
+        emit('success');
+      } else {
+        ElMessage.error(error?.message || '发货失败');
+      }
     } finally {
       loading.value = false;
     }
   },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      const data = modalApi.getData();
-      record.value = data || {};
-      await formApi.resetForm();
-    }
-  },
 });
 
-// 打开弹窗
+// 打开弹窗 - 直接接收row数据并保存
 const open = (row) => {
-  modalApi.open(row);
+  console.log('ShipDialog open called with row:', row);
+  
+  // 直接保存传入的row数据到普通变量
+  if (row && row.id) {
+    orderId = row.id;
+    orderNo = row.no || '';
+    console.log('ShipDialog orderId saved:', orderId, 'orderNo:', orderNo);
+  } else {
+    console.error('ShipDialog open called without valid row.id');
+    orderId = null;
+    orderNo = '';
+  }
+  
+  modalApi.open();
 };
 
 defineExpose({

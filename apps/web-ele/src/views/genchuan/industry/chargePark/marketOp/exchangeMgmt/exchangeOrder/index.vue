@@ -6,10 +6,12 @@ import { ElMessage } from 'element-plus';
 import ExchangeOrderStats from './components/ExchangeOrderStats.vue';
 import Table from './table/index.vue';
 
+import { getExchangeOrderChart } from '#/api/genchuan/industry/chargePark/marketOp/exchangeMgmt/exchangeOrder';
+
 import '#/genchuan-components/page/index.scss';
 
 // 控制统计组件显示/隐藏的状态
-const showStats = ref(false);
+const showStats = ref(true);
 
 // 切换统计组件显示/隐藏状态
 const toggleStats = () => {
@@ -26,56 +28,97 @@ const statsData = ref({
   lineData: [],
 });
 
-// 获取统计数据 - 模拟数据
+// 获取统计数据 - 从API获取
 const fetchStatsData = async () => {
   try {
-    // 模拟统计数据
-    // 实际项目中应该从API获取数据
-    const mockData = {
-      // 今日订单量和今日兑换量
-      todayOrderCount: 15,
-      todayExchangeCount: 8,
-      // 类目订单分布
-      categoryDistribution: [
-        { categoryId: 1, name: '数码配件', value: 12 },
-        { categoryId: 2, name: '生活用品', value: 8 },
-        { categoryId: 3, name: '食品饮料', value: 15 },
-        { categoryId: 4, name: '虚拟商品', value: 5 },
-        { categoryId: 5, name: '汽车用品', value: 10 },
-        { categoryId: 6, name: '充电服务', value: 6 },
-      ],
-      // 近30天订单量趋势
-      dailyTrend: generateDailyTrendData(),
-    };
+    const response = await getExchangeOrderChart();
+    if (response) {
+      const {
+        todayOrderCount,
+        todayExchangeCount,
+        trendList,
+        typeList,
+      } = response;
 
-    // 组装卡片数据
-    statsData.value.cards = [
-      {
-        title: '今日订单量',
-        value: mockData.todayOrderCount,
-        color: '#4A90E2',
-        type: 'todayOrder',
-      },
-      {
-        title: '今日兑换量',
-        value: mockData.todayExchangeCount,
-        color: '#50E3C2',
-        type: 'todayExchange',
-      },
-    ];
+      // 组装卡片数据
+      statsData.value.cards = [
+        {
+          title: '今日订单量',
+          value: todayOrderCount || 0,
+          color: '#4A90E2',
+          type: 'todayOrder',
+        },
+        {
+          title: '今日兑换数',
+          value: todayExchangeCount || 0,
+          color: '#50E3C2',
+          type: 'todayExchange',
+        },
+      ];
 
-    // 组装柱状图数据 - 类目订单分布
-    statsData.value.barData = mockData.categoryDistribution;
+      // 组装柱状图数据 - 类目订单分布
+      statsData.value.barData = (typeList || []).map((item) => ({
+        categoryId: item.categoryId,
+        name: item.name,
+        value: item.count,
+      }));
 
-    // 组装折线图数据 - 订单量趋势
-    statsData.value.lineData = mockData.dailyTrend;
+      // 组装折线图数据 - 订单量趋势
+      statsData.value.lineData = (trendList || []).map((item) => {
+        const dateObj = new Date(item.date);
+        return {
+          date: `${dateObj.getMonth() + 1}/${dateObj.getDate()}`,
+          fullDate: item.date,
+          value: item.count,
+        };
+      });
+    } else {
+      // 接口返回数据不符合预期，使用模拟数据
+      useMockData();
+    }
   } catch (error) {
-    ElMessage.error('获取统计数据失败');
-    console.error(error);
+    console.error('获取统计数据失败:', error);
+    // 使用模拟数据作为后备
+    useMockData();
   }
 };
 
-// 生成近30天的模拟数据
+// 模拟数据（API失败时使用）
+const useMockData = () => {
+  const mockData = {
+    todayOrderCount: 15,
+    todayExchangeCount: 8,
+    categoryDistribution: [
+      { categoryId: 1, name: '数码配件', value: 12 },
+      { categoryId: 2, name: '生活用品', value: 8 },
+      { categoryId: 3, name: '食品饮料', value: 15 },
+      { categoryId: 4, name: '虚拟商品', value: 5 },
+      { categoryId: 5, name: '汽车用品', value: 10 },
+      { categoryId: 6, name: '充电服务', value: 6 },
+    ],
+    dailyTrend: generateDailyTrendData(),
+  };
+
+  statsData.value.cards = [
+    {
+      title: '今日订单量',
+      value: mockData.todayOrderCount,
+      color: '#4A90E2',
+      type: 'todayOrder',
+    },
+    {
+      title: '今日兑换数',
+      value: mockData.todayExchangeCount,
+      color: '#50E3C2',
+      type: 'todayExchange',
+    },
+  ];
+
+  statsData.value.barData = mockData.categoryDistribution;
+  statsData.value.lineData = mockData.dailyTrend;
+};
+
+// 生成30天的模拟数据
 const generateDailyTrendData = () => {
   const data = [];
   const today = new Date();
@@ -84,7 +127,6 @@ const generateDailyTrendData = () => {
     date.setDate(date.getDate() - i);
     const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
     const fullDateStr = date.toISOString().split('T')[0];
-    // 随机生成订单数量 (5-20之间)
     const value = Math.floor(Math.random() * 16) + 5;
     data.push({
       date: dateStr,
@@ -95,21 +137,40 @@ const generateDailyTrendData = () => {
   return data;
 };
 
+// 获取表格组件实例（处理v-for中的ref数组情况）
+const getTableComponent = () => {
+  // 在v-for中使用ref时，tableRef可能是数组
+  const tableComponent = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
+  return tableComponent;
+};
+
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (cardType) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('card', cardType);
+  const tableComponent = getTableComponent();
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
+    tableComponent.handleStatsFilter('card', cardType);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
 };
 
 // 处理柱状图点击 - 钻取筛选类目
-const handleBarClick = async (categoryId) => {
+// data: { categoryId, name, value }
+const handleBarClick = async (data) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('categoryId', categoryId);
+  const tableComponent = getTableComponent();
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
+    // 传入完整的类目数据，包括categoryId和name
+    tableComponent.handleStatsFilter('category', data);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
@@ -118,8 +179,12 @@ const handleBarClick = async (categoryId) => {
 // 处理折线图点击 - 钻取跳转对应日期的订单明细
 const handleLineClick = async (date) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('date', date);
+  const tableComponent = getTableComponent();
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
+    tableComponent.handleStatsFilter('date', date);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
@@ -208,7 +273,6 @@ onMounted(() => {
           :second-show="item.secondShow"
           :show-stats="showStatsValue"
           :toggle-stats="toggleStats"
-          :key="item.label"
         />
       </el-tab-pane>
     </el-tabs>

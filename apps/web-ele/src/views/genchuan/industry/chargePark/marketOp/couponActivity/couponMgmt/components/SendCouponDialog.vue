@@ -1,11 +1,21 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj } from '@vben/hooks';
 
 import { useVbenModal } from '@vben/common-ui';
 
 import { ElMessage } from 'element-plus';
 
 import { sendCouponMgmt } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
+
+// 获取优惠券类型标签
+const getCouponTypeLabel = computed(() => {
+  if (!rowData.value?.type) return '';
+  const dict = getDictObj(DICT_TYPE.COUPON_MGMT_TYPE, String(rowData.value.type));
+  return dict ? dict.label : rowData.value.type;
+});
 
 const emit = defineEmits(['success']);
 
@@ -86,7 +96,7 @@ defineExpose({
         </div>
         <div class="info-item">
           <span class="info-label">券类型：</span>
-          <span class="info-value">{{ rowData?.typeName }}</span>
+          <span class="info-value">{{ getCouponTypeLabel }}</span>
         </div>
         <div class="info-item">
           <span class="info-label">面额：</span>

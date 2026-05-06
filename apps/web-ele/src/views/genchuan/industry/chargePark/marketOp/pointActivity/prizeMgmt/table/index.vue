@@ -557,13 +557,13 @@ defineExpose({
             @click="handleEdit(row)"
           />
           <IconButton
-            v-if="row.status === '0'"
+            v-if="row.status === '1'"
             content="启用"
             icon-name="CircleCheck"
             @click="handleEnableConfirm(row)"
           />
           <IconButton
-            v-if="row.status === '1'"
+            v-if="row.status === '0'"
             content="禁用"
             icon-name="CircleClose"
             color="#F56C6C"

@@ -1,7 +1,10 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
+import { DICT_TYPE } from '@vben/constants';
 import { useVbenDrawer } from '@vben/common-ui';
+import { getDictObj } from '@vben/hooks';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -9,6 +12,7 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  batchExportCardOrder,
   exportCardOrder,
   getCardOrderPage,
 } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardOrder';
@@ -116,13 +120,41 @@ function handleRefresh() {
 async function handleExport() {
   try {
     const data = await exportCardOrder();
-    exportToExcel(data, textObj.excelName, textObj.excelAllName);
+    downloadFileFromBlobPart({
+      fileName: textObj.excelAllName,
+      source: data,
+    });
     ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
     // 使用静态数据导出
     exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  }
+}
+
+/** 批量导出表格 */
+async function handleBatchExport() {
+  try {
+    // 获取选中的行数据
+    const selectedRows = gridApi.grid.getCheckboxRecords();
+    if (!selectedRows || selectedRows.length === 0) {
+      ElMessage.warning('请先勾选需要导出的订单');
+      return;
+    }
+
+    // 提取选中的订单ID列表
+    const ids = selectedRows.map((row) => row.id);
+
+    const data = await batchExportCardOrder({ ids });
+    downloadFileFromBlobPart({
+      fileName: textObj.excelAllName,
+      source: data,
+    });
+    ElMessage.success('批量导出成功');
+  } catch (error) {
+    console.error('批量导出失败:', error);
+    ElMessage.error('批量导出失败');
   }
 }
 
@@ -159,6 +191,15 @@ const filterInvoiceStatus = ref('');
 const filterCardType = ref('');
 const filterOrderDate = ref('');
 
+// 卡种类型到cardId的映射（根据字典值）
+const typeToCardIdMap = {
+  '0': 1, // 日卡
+  '1': 2, // 周卡
+  '2': 3, // 月卡
+  '3': 4, // 季卡
+  '4': 5, // 年卡
+};
+
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -180,13 +221,17 @@ const getTableData = async (pageObj) => {
 
   try {
     // 构建API请求参数
+    // 将type映射为cardId
+    const cardId = filterCardType.value
+      ? typeToCardIdMap[filterCardType.value] || filterCardType.value
+      : dataObj.searchParams.cardId;
     const params = {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
       no: dataObj.searchParams.no,
       userId: dataObj.searchParams.userId,
       userName: dataObj.searchParams.userName,
-      cardId: filterCardType.value || dataObj.searchParams.cardId,
+      cardId: cardId,
       cardName: dataObj.searchParams.cardName,
       amountMin: dataObj.searchParams.amountMin,
       amountMax: dataObj.searchParams.amountMax,
@@ -357,9 +402,20 @@ const handleStatsFilter = (type, subType, value) => {
     case 'cardType': {
       // 柱状图点击 - 按卡种类型筛选
       filterCardType.value = subType;
-      const cardName =
-        dataObj.apilist.find((v) => v.cardId === subType)?.cardName || subType;
-      ElMessage.info(`已筛选卡种: ${cardName}`);
+      // 使用字典获取卡种类型标签
+      const dict = getDictObj(DICT_TYPE.CARD_CONFIG_TYPE, String(subType));
+      const cardName = dict ? dict.label : subType;
+      ElMessage.info(`已筛选卡种类型: ${cardName}`);
+
+      break;
+    }
+    case 'payStatus': {
+      // 柱状图点击 - 按支付状态筛选
+      filterPayStatus.value = subType;
+      // 使用字典获取支付状态标签
+      const dict = getDictObj(DICT_TYPE.CARD_ORDER_PAY_STATUS, String(subType));
+      const payStatusName = dict ? dict.label : subType;
+      ElMessage.info(`已筛选支付状态: ${payStatusName}`);
 
       break;
     }
@@ -484,8 +540,7 @@ const handleFullShow = () => {
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
             卡种类型：{{
-              dataObj.apilist.find((v) => v.cardId === filterCardType)
-                ?.cardName || filterCardType
+              getDictObj(DICT_TYPE.CARD_CONFIG_TYPE, String(filterCardType))?.label || filterCardType
             }}
           </ElTag>
           <!-- 统计组件-日期筛选标签 -->
@@ -506,6 +561,11 @@ const handleFullShow = () => {
             content="导出"
             icon-name="download"
             @click="handleExport"
+          />
+          <IconButton
+            content="批量导出"
+            icon-name="download"
+            @click="handleBatchExport"
           />
           <IconButton
             content="搜索"

@@ -12,6 +12,13 @@ import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
+export const textObj = {
+  addText: '新增车辆',
+  editText: '编辑车辆',
+  excelAllName: '用户车辆列表.xlsx',
+  excelName: '用户车辆',
+};
+
 export type UserCarStatus = '已绑定' | '已解绑' | '已驳回' | '待审核';
 
 export interface BindingLog {

@@ -452,6 +452,7 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入券名称',
+        disabled: true,
       },
       rules: 'required',
     },
@@ -467,6 +468,7 @@ export function useFormSchema() {
           { label: '时长', value: '2' },
           { label: '立减', value: '3' },
         ],
+        disabled: true,
       },
       rules: 'required',
     },
@@ -478,6 +480,7 @@ export function useFormSchema() {
         placeholder: '请输入面额',
         min: 0,
         precision: 2,
+        disabled: true,
       },
       rules: 'required',
     },
@@ -487,6 +490,7 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入使用条件',
+        disabled: true,
       },
     },
     {
@@ -496,6 +500,7 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择有效期',
         valueFormat: 'x',
+        disabled: true,
       },
       rules: 'required',
     },

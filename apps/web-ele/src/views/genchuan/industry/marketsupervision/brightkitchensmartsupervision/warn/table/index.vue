@@ -28,7 +28,7 @@ import {
   deleteParkLot,
   updateParkLot,
 } from '#/api/genchuan/industry/park/index.js';
-import { $t } from '#/locales';
+import { $t } from '#/locales'; 
 import { formatTimestamp } from '#/utils';
 import { exportToExcel } from '#/utils/excel.js';
 
@@ -239,10 +239,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     pagerConfig: dataObj,
     toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-      search: true,
-    },
+        'class-name': 'common-tool-bar-config',
+        refresh: true,
+        search: true,
+      },
     showOverflow: true,
   },
   gridEvents: {
@@ -251,6 +251,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
   },
   showSearchForm: false,
 });
+
+// 图片预览弹窗
+const previewDialogVisible = ref(false);
+const previewImageUrl = ref('');
+
+const handlePreviewImage = (url) => {
+  previewImageUrl.value = url;
+  previewDialogVisible.value = true;
+};
 
 const activeName = ref('');
 // 修改打开详情的方法，调用组件的open方法
@@ -538,6 +547,11 @@ const cancelEnterpriseSelect = () => {
           @click="openImg(row.driveInPhoto)"
         />
       </template>
+      <template #srcUrl="{ row }">
+        <div class="image-item">
+            <img :src="row.srcUrl" :alt="row.srcUrl" @click="handlePreviewImage(row.srcUrl)" style="cursor: pointer;" />
+        </div> 
+      </template>
       <template #driveOutPhoto="{ row }">
         <ElImage
           style="width: 100px; height: 100px"
@@ -575,6 +589,11 @@ const cancelEnterpriseSelect = () => {
         <div class="common-total" @click="changeTotalShow"></div>
       </template>
     </Grid>
+
+    <!-- 图片预览弹窗 -->
+    <ElDialog v-model="previewDialogVisible" title="图片预览" width="800px" append-to-body>
+      <ElImage :src="previewImageUrl" fit="contain" style="width: 100%; height: 600px;" />
+    </ElDialog>
   </div>
 </template>
 <style scoped>
@@ -590,7 +609,23 @@ const cancelEnterpriseSelect = () => {
 .enterprise-select-container {
   padding: 10px 0;
 }
+.image-item {
+  width: 150px;
+  height:50px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid #eee;
+}
 
+.image-item img {
+  width: 80%;
+  height: 80%;
+  object-fit: cover;
+}
 .enterprise-search {
   margin-bottom: 8px;
 }

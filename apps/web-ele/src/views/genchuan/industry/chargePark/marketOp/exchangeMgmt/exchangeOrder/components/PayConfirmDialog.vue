@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
@@ -35,17 +35,35 @@ const handleConfirm = async () => {
   try {
     loading.value = true;
     const response = await payExchangeOrder({ id: record.value.id });
-    
-    if (response && response.code === 200) {
+
+    console.log('Pay response:', response);
+
+    // 判断成功：code为0或200，或者data为true
+    const isSuccess = response && (
+      response.code === 0 ||
+      response.code === 200 ||
+      response.data === true ||
+      response === true
+    );
+
+    if (isSuccess) {
       ElMessage.success('支付成功');
       modalApi.close();
       emit('success');
     } else {
-      ElMessage.error(response?.message || '支付失败');
+      const errorMsg = response?.msg || response?.message || '支付失败';
+      ElMessage.error(errorMsg);
     }
   } catch (error) {
     console.error('支付失败:', error);
-    ElMessage.error(error?.message || '支付失败');
+    // 如果报错但包含成功信息，也认为是成功
+    if (error?.response?.data?.code === 0 || error?.response?.data?.code === 200) {
+      ElMessage.success('支付成功');
+      modalApi.close();
+      emit('success');
+    } else {
+      ElMessage.error(error?.message || '支付失败');
+    }
   } finally {
     loading.value = false;
   }

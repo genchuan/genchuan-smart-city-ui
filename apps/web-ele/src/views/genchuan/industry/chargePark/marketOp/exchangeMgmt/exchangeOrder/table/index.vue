@@ -2,12 +2,13 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import {downloadFileFromBlobPart} from '@vben/utils';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import {
+  batchExportExchangeOrder,
   cancelExchangeOrder,
   exportExchangeOrder,
   getExchangeOrderDetail,
@@ -97,9 +98,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     if (!valid) return;
 
     const values = await formApi.getValues();
-    const loadingInstance = ElLoading.service({
-      text: formData.value?.id ? '保存中...' : '新增中...',
-    });
+    // const loadingInstance = ElLoading.service({
+    //   text: formData.value?.id ? '保存中...' : '新增中...',
+    // });
 
     try {
       // 实际项目中应该调用API
@@ -135,6 +136,9 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 function handleRefresh() {
   // 清除快捷筛选
   filterPayStatus.value = '';
+  filterCategoryId.value = '';
+  filterCategoryName.value = '';
+  filterDate.value = '';
   gridApi.query();
 }
 
@@ -142,13 +146,35 @@ function handleRefresh() {
 async function handleExport() {
   try {
     const data = await exportExchangeOrder();
-    exportToExcel(data, textObj.excelName, textObj.excelAllName);
+    downloadFileFromBlobPart({
+      fileName: textObj.excelAllName,
+      source: data,
+    });
     ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
     // 使用静态数据导出
     exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  }
+}
+
+/** 批量导出表格 */
+async function handleBatchExport() {
+  if (!checkedIds.value || checkedIds.value.length === 0) {
+    ElMessage.warning('请先勾选需要导出的订单');
+    return;
+  }
+  try {
+    const data = await batchExportExchangeOrder({ ids: checkedIds.value });
+    downloadFileFromBlobPart({
+      fileName: `批量导出兑换订单_${checkedIds.value.length}条.xlsx`,
+      source: data,
+    });
+    ElMessage.success('批量导出成功');
+  } catch (error) {
+    console.error('批量导出失败:', error);
+    ElMessage.error('批量导出失败');
   }
 }
 
@@ -221,6 +247,9 @@ function handleRowCheckboxChange({ records }) {
 
 // 快捷筛选变量
 const filterPayStatus = ref('');
+const filterCategoryId = ref('');
+const filterCategoryName = ref('');
+const filterDate = ref('');
 
 const dataObj = reactive({
   totalShow: false,
@@ -260,47 +289,50 @@ const getTableData = async (pageObj) => {
     };
 
     const response = await getExchangeOrderPage(params);
-    if (response && response.code === 200 && response.data) {
-      const { list, total } = response.data;
+    if (response) {
+      const { list, total } = response;
       dataObj.total = total || 0;
       dataObj.list = list || [];
       return dataObj;
+    } else {
+      // 接口返回数据不符合预期，使用静态数据
+      console.log('接口返回数据不符合预期，使用静态数据');
     }
   } catch (error) {
     // 接口请求失败，使用静态数据
-    console.error('分页接口请求失败，使用静态数据:', error);
-
-    // 根据searchParams和快捷筛选变量筛选静态数据
-    const filteredList = dataObj.apilist.filter((v) => {
-      let searchMatch = true;
-      Object.keys(dataObj.searchParams).forEach((key) => {
-        const value = dataObj.searchParams[key];
-        if (value && !['createTime', 'payTime', 'shipTime', 'archiveTime'].includes(key)) {
-          if (key === 'costPointMin') {
-            searchMatch = searchMatch && v.costPoint >= value;
-          } else if (key === 'costPointMax') {
-            searchMatch = searchMatch && v.costPoint <= value;
-          } else {
-            searchMatch =
-              typeof value === 'string'
-                ? searchMatch && v[key]?.toString().includes(value)
-                : searchMatch && v[key] === value;
-          }
-        }
-      });
-      // 应用快捷筛选变量
-      if (filterPayStatus.value && v.payStatus !== filterPayStatus.value) {
-        searchMatch = false;
-      }
-      return searchMatch;
-    });
-
-    dataObj.total = filteredList.length;
-    dataObj.list = filteredList.slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+    console.error('分页接口请求失败，使用静态数据', error);
   }
+
+  // 根据searchParams和快捷筛选变量筛选静态数据
+  const filteredList = dataObj.apilist.filter((v) => {
+    let searchMatch = true;
+    Object.keys(dataObj.searchParams).forEach((key) => {
+      const value = dataObj.searchParams[key];
+      if (value && !['createTime', 'payTime', 'shipTime', 'archiveTime'].includes(key)) {
+        if (key === 'costPointMin') {
+          searchMatch = searchMatch && v.costPoint >= value;
+        } else if (key === 'costPointMax') {
+          searchMatch = searchMatch && v.costPoint <= value;
+        } else {
+          searchMatch =
+            typeof value === 'string'
+              ? searchMatch && v[key]?.toString().includes(value)
+              : searchMatch && v[key] === value;
+        }
+      }
+    });
+    // 应用快捷筛选变量
+    if (filterPayStatus.value && v.payStatus !== filterPayStatus.value) {
+      searchMatch = false;
+    }
+    return searchMatch;
+  });
+
+  dataObj.total = filteredList.length;
+  dataObj.list = filteredList.slice(
+    (page.currentPage - 1) * page.pageSize,
+    page.currentPage * page.pageSize,
+  );
   return dataObj;
 };
 
@@ -371,6 +403,21 @@ const handleCancelPayStatusFilter = () => {
   gridApi.query();
 };
 
+// 取消类目筛选
+const handleCancelCategoryFilter = () => {
+  filterCategoryId.value = '';
+  filterCategoryName.value = '';
+  delete dataObj.searchParams.categoryId;
+  gridApi.query();
+};
+
+// 取消日期筛选
+const handleCancelDateFilter = () => {
+  filterDate.value = '';
+  delete dataObj.searchParams.createTime;
+  gridApi.query();
+};
+
 // ==================== 统计组件钻取筛选处理 ====================
 
 // 处理统计组件的钻取筛选
@@ -378,6 +425,9 @@ const handleStatsFilter = (type, value) => {
   // 清空之前的筛选
   dataObj.searchParams = {};
   filterPayStatus.value = '';
+  filterCategoryId.value = '';
+  filterCategoryName.value = '';
+  filterDate.value = '';
 
   switch (type) {
     case 'card':
@@ -388,7 +438,7 @@ const handleStatsFilter = (type, value) => {
         dataObj.searchParams.createTime = [today.getTime(), today.getTime() + 86400000];
         console.log('钻取：筛选今日订单');
       } else if (value === 'todayExchange') {
-        // 今日兑换量 - 筛选今日已完成的订单
+        // 今日兑换数 - 筛选今日已完成的订单
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         dataObj.searchParams.createTime = [today.getTime(), today.getTime() + 86400000];
@@ -396,14 +446,20 @@ const handleStatsFilter = (type, value) => {
         console.log('钻取：筛选今日已完成订单');
       }
       break;
-    case 'categoryId':
-      // 类目ID筛选 - 通过商品名称筛选（因为表格中没有categoryId字段）
-      // 实际项目中可以根据categoryId查询对应的categoryName来筛选
-      console.log('钻取：筛选类目ID', value);
+    case 'category':
+      // 类目筛选 - value包含categoryId和name
+      if (value) {
+        filterCategoryId.value = value.categoryId;
+        filterCategoryName.value = value.name;
+        // 同时设置到searchParams中用于API请求
+        dataObj.searchParams.categoryId = value.categoryId;
+        console.log('钻取：筛选类目', value.name, 'ID:', value.categoryId);
+      }
       break;
     case 'date':
       // 日期筛选 - 筛选特定日期的订单
       if (value) {
+        filterDate.value = value;
         const date = new Date(value);
         date.setHours(0, 0, 0, 0);
         dataObj.searchParams.createTime = [date.getTime(), date.getTime() + 86400000];
@@ -510,15 +566,41 @@ const handleFullShow = () => {
           >
             支付状态：{{ getExchangeOrderPayStatusLabel(filterPayStatus) }}
           </ElTag>
+          <!-- 类目筛选标签 -->
+          <ElTag
+            v-if="filterCategoryId"
+            type="success"
+            closable
+            @close="handleCancelCategoryFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            类目：{{ filterCategoryName }}
+          </ElTag>
+          <!-- 日期筛选标签 -->
+          <ElTag
+            v-if="filterDate"
+            type="warning"
+            closable
+            @close="handleCancelDateFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            日期：{{ filterDate }}
+          </ElTag>
         </div>
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+<!--          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />-->
           <IconButton
             content="导出"
             icon-name="download"
             @click="handleExport"
+          />
+          <IconButton
+            content="批量导出"
+            icon-name="Download"
+            :disabled="!checkedIds || checkedIds.length === 0"
+            @click="handleBatchExport"
           />
 <!--          <IconButton-->
 <!--            content="批量删除"-->
@@ -584,7 +666,7 @@ const handleFullShow = () => {
           style="cursor: pointer"
           @click="handleFilterByPayStatus(row.payStatus)"
         >
-          {{ row.payStatusName }}
+          {{ getExchangeOrderPayStatusLabel(row.payStatus) }}
         </ElTag>
       </template>
       <!-- 生成时间 - 格式化显示 -->
@@ -676,10 +758,10 @@ const handleFullShow = () => {
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：兑换订单数量: {{ dataObj.list.length }}; 已支付:
-            {{ dataObj.list.filter((v) => v.payStatus === '1').length }}; 已完成:
-            {{ dataObj.list.filter((v) => v.payStatus === '2').length }}; 待支付:
-            {{ dataObj.list.filter((v) => v.payStatus === '0').length }}; 已取消:
+            本页统计：兑换订单数量 {{ dataObj.list.length }}; 已支付
+            {{ dataObj.list.filter((v) => v.payStatus === '1').length }}; 已完成
+            {{ dataObj.list.filter((v) => v.payStatus === '2').length }}; 待支付
+            {{ dataObj.list.filter((v) => v.payStatus === '0').length }}; 已取消
             {{ dataObj.list.filter((v) => v.payStatus === '3').length }}
           </span>
         </div>

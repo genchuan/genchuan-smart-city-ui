@@ -264,8 +264,9 @@ export function useGridColumns() {
     {
       field: 'srcUrl',
       title: '图片地址',
-      minWidth: 250,
+      minWidth: 150,
       sortable: false, 
+      slots: { default: 'srcUrl' }, // 预留格式化插槽，用于显示图片
     },
     {
       field: 'srcToken',
