@@ -11,7 +11,8 @@
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="导出 Excel" icon-name="download" @click="handleExport" />
+          <IconButton content="导出 PDF" icon-name="document" @click="handleExportPdf" />
           <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
@@ -31,15 +32,19 @@
         </el-text>
       </template>
       <template #content="{ row }">
-        <el-text @click="filterByContent(row.content)" type="primary" style="cursor: pointer">
-          {{ row.content }}
-        </el-text>
+        <el-tooltip content="点击筛选同类型意见记录" placement="top">
+          <el-text @click="filterByContent(row.content)" type="primary" style="cursor: pointer">
+            {{ row.content }}
+          </el-text>
+        </el-tooltip>
       </template>
       <template #status="{ row }">
-        <el-tag :type="{ 待处理: 'warning', 处理中: 'primary', 已完成: 'success' }[row.status]"
-                @click="filterByStatus(row.status)" style="cursor: pointer">
-          {{ row.status }}
-        </el-tag>
+        <el-tooltip content="点击筛选同状态意见记录" placement="top">
+          <el-tag :type="{ 待处理: 'warning', 处理中: 'primary', 已完成: 'success', 已关闭: 'info' }[row.status]"
+                  @click="filterByStatus(row.status)" style="cursor: pointer">
+            {{ row.status }}
+          </el-tag>
+        </el-tooltip>
       </template>
       <template #handle_user_name="{ row }">
         <el-text v-if="row.handleUserId" @click="showUserDetail(row.handleUserId)" type="primary" style="cursor: pointer">
@@ -68,7 +73,7 @@
             <IconButton content="反馈" icon-name="Star" @click="openFeedback(row)" />
             <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           </template>
-          <template v-else-if="row.status === '已完成'">
+          <template v-else>
             <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           </template>
         </div>
@@ -97,10 +102,7 @@
       </el-form>
     </FeedbackDrawer>
 
-    <el-dialog v-model="userDetailVisible" title="用户详情" width="400px">
-      <p>用户ID：{{ currentUser.id }}</p>
-      <p>用户名称：{{ currentUser.name }}</p>
-    </el-dialog>
+    <UserDetailDrawer ref="userDetailDrawerRef" />
   </div>
 </template>
 
@@ -116,14 +118,17 @@ import { formatTimestamp } from '#/utils';
 import {
   getSuggestionPage,
   exportSuggestionExcel,
+  exportSuggestionPdf,
   getSuggestionDetail,
   handleSuggestion,
   updateProgress,
   feedbackSuggestion,
   getUserList,
+  getUserDetail,
 } from '#/api/genchuan/industry/chargePark/carService/complaintMediate/suggestion/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import SuggestionDetailDrawer from './detail.vue';
+import UserDetailDrawer from './userDetail.vue';
 
 const props = defineProps({
   secondShow: Boolean,
@@ -155,16 +160,27 @@ function getUserName(id) {
   return userMap.value.get(String(id)) || String(id);
 }
 
+const padDateTime = (s, isEnd) => {
+  if (!s) return s;
+  const v = String(s).trim();
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(v)) return v;
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(v)) return `${v}:${isEnd ? '59' : '00'}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return `${v} ${isEnd ? '23:59:59' : '00:00:00'}`;
+  return v;
+};
+
 const getTableData = async (pageObj) => {
   const params = {
     pageNo: pageObj.page.currentPage,
     pageSize: pageObj.page.pageSize,
     ...dataObj.searchObj,
   };
-  if (dataObj.searchObj.submitTime && Array.isArray(dataObj.searchObj.submitTime)) {
-    params.submitTimeBegin = dataObj.searchObj.submitTime[0];
-    params.submitTimeEnd = dataObj.searchObj.submitTime[1];
-    delete params.submitTime;
+  if (dataObj.searchObj.submitTime && Array.isArray(dataObj.searchObj.submitTime) && dataObj.searchObj.submitTime.length === 2) {
+    // 后端 LocalDateTime[] + @DateTimeFormat("yyyy-MM-dd HH:mm:ss")，必须补齐时分秒
+    params.submitTime = [
+      padDateTime(dataObj.searchObj.submitTime[0], false),
+      padDateTime(dataObj.searchObj.submitTime[1], true),
+    ];
   }
   if (dataObj.searchObj.statusList && Array.isArray(dataObj.searchObj.statusList)) {
     params.status = dataObj.searchObj.statusList.join(',');
@@ -215,22 +231,25 @@ async function onSubmit(values, isReset = false) {
   else { dataObj.searchObj = { ...values }; dataObj.currentPage = 1; gridApi.query(); }
 }
 
-const handleClearField = async (fieldName) => {
+const handleClearField = (fieldName) => {
   const newSearchObj = { ...dataObj.searchObj };
   delete newSearchObj[fieldName];
   dataObj.searchObj = newSearchObj;
-  const currentFormValues = await QueryFormApi.getValues();
-  delete currentFormValues[fieldName];
-  await QueryFormApi.setValues(currentFormValues, false);
   dataObj.currentPage = 1;
   gridApi.query();
+  // Drawer 表单可能未挂载，setValues 仅做软同步，失败不影响列表刷新
+  Promise.resolve(QueryFormApi.setValues?.({ [fieldName]: null }, false)).catch(() => {});
 };
 
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchObj;
   if (obj.userId) filters.push({ label: `用户：${getUserName(obj.userId)}`, field: 'userId' });
+  if (obj.content) filters.push({ label: `意见内容：${obj.content}`, field: 'content' });
   if (obj.status) filters.push({ label: `状态：${obj.status}`, field: 'status' });
+  if (obj.statusList && obj.statusList.length) {
+    filters.push({ label: `状态：${obj.statusList.join('、')}`, field: 'statusList' });
+  }
   if (obj.submitTime && obj.submitTime.length === 2) {
     filters.push({ label: `提交时间：${obj.submitTime[0]} 至 ${obj.submitTime[1]}`, field: 'submitTime' });
   }
@@ -254,6 +273,12 @@ function handleRefresh() { gridApi.query(); }
 async function handleExport() {
   const data = await exportSuggestionExcel(dataObj.searchObj);
   downloadFileFromBlobPart({ fileName: '意见建议记录.xls', source: data });
+  ElMessage.success('导出成功');
+}
+
+async function handleExportPdf() {
+  const data = await exportSuggestionPdf(dataObj.searchObj);
+  downloadFileFromBlobPart({ fileName: '意见建议记录.pdf', source: data });
   ElMessage.success('导出成功');
 }
 
@@ -298,7 +323,7 @@ const [FeedbackDrawer, feedbackDrawerApi] = useVbenDrawer({
   onConfirm: async () => {
     if (!feedbackForm.feedbackContent) return ElMessage.warning('请填写反馈内容');
     await feedbackSuggestion({ id: currentFeedbackRow.id, feedbackContent: feedbackForm.feedbackContent });
-    ElMessage.success('反馈成功，状态已变更为已完成');
+    ElMessage.success('反馈成功，状态已变更为已关闭');
     feedbackDrawerApi.close();
     handleRefresh();
   },
@@ -310,22 +335,26 @@ const openFeedback = (row) => {
 };
 
 const filterByStatus = (status) => {
-  dataObj.searchObj.status = status;
+  dataObj.searchObj = { ...dataObj.searchObj, status };
   dataObj.currentPage = 1;
   gridApi.query();
 };
 const filterByContent = (content) => {
-  dataObj.searchObj.content = content;
+  dataObj.searchObj = { ...dataObj.searchObj, content };
   dataObj.currentPage = 1;
   gridApi.query();
 };
 
-const userDetailVisible = ref(false);
-const currentUser = ref({ id: '', name: '' });
-const showUserDetail = (userId) => {
-  if (!userId) return;
-  currentUser.value = { id: userId, name: getUserName(userId) };
-  userDetailVisible.value = true;
+const userDetailDrawerRef = ref(null);
+const showUserDetail = async (userId) => {
+  if (!userId) return ElMessage.warning('用户ID不存在');
+  try {
+    const userDetail = await getUserDetail(userId);
+    userDetailDrawerRef.value?.open(userDetail);
+  } catch (error) {
+    console.error('获取用户详情失败', error);
+    ElMessage.error('获取用户详情失败');
+  }
 };
 
 const handleChartRefresh = (event) => {
