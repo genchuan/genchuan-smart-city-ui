@@ -452,9 +452,9 @@ export const detailFields = [
   { key: 'id', label: '监测ID' },
   { key: 'deviceCode', label: '设备编号' },
   { key: 'deviceName', label: '设备名称' },
-  { key: 'deviceId', label: '设备ID' },
+  // { key: 'deviceId', label: '设备ID' },
   { key: 'stationName', label: '所属场站' },
-  { key: 'stationId', label: '场站ID' },
+  // { key: 'stationId', label: '场站ID' },
   // { key: 'regionName', label: '所属区域' },
   {
     key: 'monitorStatus',
