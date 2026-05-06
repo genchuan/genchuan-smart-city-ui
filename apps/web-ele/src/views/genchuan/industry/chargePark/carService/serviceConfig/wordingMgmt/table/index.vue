@@ -11,7 +11,7 @@
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="add" @click="openCreate" />
+          <IconButton content="新增" icon-name="Plus" @click="openCreate" />
           <IconButton content="保存" icon-name="check" @click="handleSaveAll" />
           <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
           <IconButton

@@ -35,7 +35,7 @@
         </el-text>
       </template>
       <template #statTime="{ row }">
-        <el-text @click="filterByStatTime(row.statTime)" style="cursor: pointer">
+        <el-text @click="filterByStatTime(row)" type="primary" style="cursor: pointer">
           {{ row.statTime }}
         </el-text>
       </template>
@@ -220,17 +220,23 @@ const activeFilters = computed(() => {
   return filters;
 });
 
-const handleClearField = async (fieldName) => {
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchObj };
+  const formPatch = {};
   if (fieldName === 'statTime') {
-    delete dataObj.searchObj.statStartTime;
-    delete dataObj.searchObj.statEndTime;
-    await queryFormApi.setValues({ statStartTime: null, statEndTime: null }, false);
+    delete next.statStartTime;
+    delete next.statEndTime;
+    formPatch.statStartTime = null;
+    formPatch.statEndTime = null;
   } else {
-    delete dataObj.searchObj[fieldName];
-    await queryFormApi.setValues({ [fieldName]: null }, false);
+    delete next[fieldName];
+    formPatch[fieldName] = null;
   }
+  dataObj.searchObj = next;
   dataObj.currentPage = 1;
   gridApi.query();
+  // Drawer 表单可能未挂载，setValues 仅做软同步，失败不影响列表刷新
+  Promise.resolve(queryFormApi.setValues?.(formPatch, false)).catch(() => {});
 };
 
 const filterByField = (field, value) => {
@@ -239,19 +245,44 @@ const filterByField = (field, value) => {
   gridApi.query();
 };
 
-const filterByStatTime = (statTime) => {
-  const match = statTime.match(/^(\d{4})-(\d{2})$/);
-  if (match) {
-    const year = match[1];
-    const month = match[2];
-    const start = `${year}-${month}-01 00:00:00`;
-    const end = `${year}-${month}-${new Date(year, month, 0).getDate()} 23:59:59`;
-    dataObj.searchObj = { ...dataObj.searchObj, statStartTime: start, statEndTime: end };
-    delete dataObj.searchObj.statTime;
-  } else {
-    ElMessage.warning('该统计时段格式暂不支持筛选');
-    return;
+// 把日期补成完整 datetime，后端 @DateTimeFormat("yyyy-MM-dd HH:mm:ss") 严格匹配
+const padDateTime = (s, isEnd) => {
+  if (!s) return s;
+  const v = String(s).trim();
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(v)) return v;
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(v)) return `${v}:${isEnd ? '59' : '00'}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return `${v} ${isEnd ? '23:59:59' : '00:00:00'}`;
+  return v;
+};
+
+const filterByStatTime = (row) => {
+  let start = row?.statStartTime;
+  let end = row?.statEndTime;
+  if (!start || !end) {
+    const s = String(row?.statTime || '').trim();
+    if (!s) return ElMessage.warning('该统计时段为空，无法筛选');
+    const parts = s.split(/\s*(?:至|~|—|-{2,})\s*/);
+    if (parts.length === 2) {
+      [start, end] = parts;
+    } else if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      // 单日（如日报显示成 2026-05-01）
+      start = s;
+      end = s;
+    } else {
+      const m = s.match(/^(\d{4})-(\d{2})$/);
+      if (m) {
+        const y = m[1];
+        const mo = m[2];
+        start = `${y}-${mo}-01`;
+        end = `${y}-${mo}-${new Date(+y, +mo, 0).getDate()}`;
+      }
+    }
   }
+  if (!start || !end) return ElMessage.warning('该统计时段格式暂不支持筛选');
+  start = padDateTime(start, false);
+  end = padDateTime(end, true);
+  dataObj.searchObj = { ...dataObj.searchObj, statStartTime: start, statEndTime: end };
+  delete dataObj.searchObj.statTime;
   dataObj.currentPage = 1;
   gridApi.query();
 };
