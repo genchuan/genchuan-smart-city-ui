@@ -1,6 +1,7 @@
 <script setup>
 import { computed, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
+import { formatTimestamp } from '#/utils';
 
 const props = defineProps({
   detailObj: { type: Object, required: true, default: () => ({}) },
@@ -8,6 +9,12 @@ const props = defineProps({
 });
 const { detailObj, title } = toRefs(props);
 const drawerTitle = computed(() => title.value || `话术${detailObj.value?.id || ''}详情`);
+
+const fmtTime = (v) => {
+  if (v == null || v === '') return '-';
+  const r = formatTimestamp(v);
+  return r || '-';
+};
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false, appendToMain: true, footer: false, width: 750,
@@ -23,11 +30,18 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-card-row"><div class="detail-row-left">话术名称：</div><div class="detail-row-right">{{ detailObj.name || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">话术内容：</div><div class="detail-row-right">{{ detailObj.content || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">话术类型：</div><div class="detail-row-right">{{ detailObj.type || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.status || '-' }}</div></div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">状态：</div>
+        <div class="detail-row-right">
+          <el-tag v-if="detailObj.status" :type="detailObj.status === '已生效' ? 'success' : 'info'">{{ detailObj.status }}</el-tag>
+          <span v-else>-</span>
+        </div>
+      </div>
+      <div class="detail-card-row"><div class="detail-row-left">匹配记录：</div><div class="detail-row-right">{{ detailObj.matchCount != null ? `已匹配 ${detailObj.matchCount} 次` : '暂无' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.creator || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ detailObj.createTime || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ fmtTime(detailObj.createTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updater || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">更新时间：</div><div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">更新时间：</div><div class="detail-row-right">{{ fmtTime(detailObj.updateTime) }}</div></div>
     </div>
   </DetailDrawer>
 </template>

@@ -279,15 +279,14 @@ async function onSubmit(values, isReset = false) {
   else { dataObj.searchObj = { ...values }; dataObj.currentPage = 1; gridApi.query(); }
 }
 
-const handleClearField = async (fieldName) => {
-  const newSearchObj = { ...dataObj.searchObj };
-  delete newSearchObj[fieldName];
-  dataObj.searchObj = newSearchObj;
-  const currentFormValues = await QueryFormApi.getValues();
-  delete currentFormValues[fieldName];
-  await QueryFormApi.setValues(currentFormValues, false);
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchObj };
+  delete next[fieldName];
+  dataObj.searchObj = next;
   dataObj.currentPage = 1;
   gridApi.query();
+  // Drawer 表单可能未挂载，setValues 仅做软同步，失败不影响列表刷新
+  Promise.resolve(QueryFormApi.setValues?.({ [fieldName]: null }, false)).catch(() => {});
 };
 
 const activeFilters = computed(() => {
