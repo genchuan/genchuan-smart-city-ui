@@ -1,5 +1,6 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+
 import * as echarts from 'echarts';
 
 const props = defineProps({
@@ -9,14 +10,12 @@ const props = defineProps({
   yName: { type: String, default: '' },
 });
 
-// 定义事件
 const emit = defineEmits(['barClick']);
 
 const chartRef = ref(null);
 let chartInstance = null;
 let resizeTimer = null;
 
-// 防抖函数
 const debounce = (fn, delay = 300) => {
   return (...args) => {
     clearTimeout(resizeTimer);
@@ -24,46 +23,40 @@ const debounce = (fn, delay = 300) => {
   };
 };
 
-// 动态生成颜色数组，确保多系列时每个系列有不同的颜色
 const generateColors = (seriesCount) => {
-  // 预设优雅配色方案（可根据需要扩展）
   const defaultColors = [
-    '#50c48a', // 绿色
-    '#f5a623', // 橙色
-    '#f15a6e', // 粉色
-    '#8b5cf6', // 紫色
-    '#34b7eb', // 天蓝
-    '#ff9a9e', // 浅粉
-    '#6c5ce7'  // 深紫
+    '#50c48a',
+    '#f5a623',
+    '#f15a6e',
+    '#8b5cf6',
+    '#34b7eb',
+    '#ff9a9e',
+    '#6c5ce7',
   ];
 
   if (seriesCount <= defaultColors.length) {
     return defaultColors.slice(0, seriesCount);
   }
 
-  // 如果系列数量超出预设颜色，动态生成互补色
   const colors = [...defaultColors];
   for (let i = defaultColors.length; i < seriesCount; i++) {
-    // 使用HSL生成差异化颜色
     const hue = (i * 35) % 360;
     colors.push(`hsl(${hue}, 70%, 60%)`);
   }
   return colors;
 };
 
-// 检查容器尺寸是否有效
 const checkContainerValid = () => {
   if (!chartRef.value) return false;
   const rect = chartRef.value.getBoundingClientRect();
   return rect.width > 0 && rect.height > 0;
 };
 
-// 初始化图表
 const initChart = async () => {
   await nextTick();
 
   if (!checkContainerValid()) {
-    console.warn('ECharts容器无效，200ms后重试');
+    console.warn('ECharts container is invalid, retry later');
     setTimeout(initChart, 200);
     return;
   }
@@ -72,17 +65,14 @@ const initChart = async () => {
     try {
       chartInstance.dispose();
     } catch (error) {
-      console.warn('销毁旧ECharts实例失败：', error);
+      console.warn('Failed to dispose ECharts instance', error);
     }
     chartInstance = null;
   }
 
   try {
     chartInstance = echarts.init(chartRef.value);
-
-    // 动态生成与系列数量匹配的颜色数组
-    const seriesCount = props.seriesData.length;
-    const colorPalette = generateColors(seriesCount);
+    const colorPalette = generateColors(props.seriesData.length);
 
     const option = {
       title: {
@@ -126,7 +116,6 @@ const initChart = async () => {
           lineStyle: { color: '#F0F6FC', type: 'dashed' },
         },
       },
-      // 关键修改：使用动态生成的调色板，确保多系列时每个系列颜色不同
       color: colorPalette,
       series: props.seriesData.map((seriesItem) => ({
         name: seriesItem.name,
@@ -154,7 +143,6 @@ const initChart = async () => {
       lazyUpdate: false,
     });
 
-    // 绑定点击事件
     chartInstance.off('click');
     chartInstance.on('click', (params) => {
       if (params.componentType === 'series' && params.data) {
@@ -165,12 +153,11 @@ const initChart = async () => {
       }
     });
   } catch (error) {
-    console.error('ECharts初始化失败：', error);
+    console.error('Failed to initialize ECharts', error);
     chartInstance = null;
   }
 };
 
-// 监听数据变化重绘
 watch(
   [() => props.xData, () => props.seriesData, () => props.title],
   () => {
@@ -178,10 +165,9 @@ watch(
       initChart();
     }
   },
-  { deep: true, immediate: false }
+  { deep: true, immediate: false },
 );
 
-// 窗口自适应
 const resizeHandler = debounce(() => {
   if (chartInstance && checkContainerValid()) {
     chartInstance.resize();
