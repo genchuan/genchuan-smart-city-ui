@@ -297,7 +297,9 @@ const activeFilters = computed(() => {
   if (obj.userId) filters.push({ label: `用户：${getUserName(obj.userId)}`, field: 'userId' });
   if (obj.userName) filters.push({ label: `用户名称：${obj.userName}`, field: 'userName' });
   if (obj.orderId) filters.push({ label: `订单：${obj.orderId}`, field: 'orderId' });
+  if (obj.content) filters.push({ label: `申诉内容：${obj.content}`, field: 'content' });
   if (obj.status) filters.push({ label: `状态：${obj.status}`, field: 'status' });
+  if (obj.statusList && obj.statusList.length) filters.push({ label: `状态：${obj.statusList.join('、')}`, field: 'statusList' });
   if (obj.submitTime && obj.submitTime.length === 2) {
     filters.push({ label: `提交时间：${obj.submitTime[0]} 至 ${obj.submitTime[1]}`, field: 'submitTime' });
   }
@@ -431,12 +433,13 @@ const openBatchAudit = () => {
 };
 
 const filterByStatus = (status) => {
-  dataObj.searchObj.status = status;
+  dataObj.searchObj = { ...dataObj.searchObj, status };
+  delete dataObj.searchObj.statusList;
   dataObj.currentPage = 1;
   gridApi.query();
 };
 const filterByContent = (content) => {
-  dataObj.searchObj.content = content;
+  dataObj.searchObj = { ...dataObj.searchObj, content };
   dataObj.currentPage = 1;
   gridApi.query();
 };
@@ -469,14 +472,15 @@ const showOrderDetail = async (orderId) => {
 const handleChartRefresh = (event) => {
   const filters = event.detail;
   const newSearchObj = { ...dataObj.searchObj };
+  delete newSearchObj.status;
+  delete newSearchObj.statusList;
   if (filters?.date) {
     newSearchObj.submitTime = [filters.date, filters.date];
-    delete newSearchObj.status;
   } else if (filters?.statusList) {
     if (filters.statusList.includes('待处理')) {
-      newSearchObj.status = '待审核,待处置';
+      newSearchObj.statusList = ['待审核', '待处置'];
     } else if (filters.statusList.includes('已完成')) {
-      newSearchObj.status = '已完成';
+      newSearchObj.statusList = ['已关闭'];
     }
     delete newSearchObj.submitTime;
   }
