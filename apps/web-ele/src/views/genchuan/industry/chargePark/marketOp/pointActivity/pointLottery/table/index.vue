@@ -6,8 +6,6 @@ import { DICT_TYPE } from '@vben/constants';
 import { getDictObj } from '@vben/hooks';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
-import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-
 import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
@@ -19,7 +17,34 @@ import {
 } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointLottery';
 import { getPrizeMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/prizeMgmt';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
+
+import CheckDrawer from '../components/CheckDrawer.vue';
+import {
+  dataList,
+  detailFields,
+  getPointLotteryStatusTagType,
+  getPointLotterySyncStatusTagType,
+  textObj,
+  useGridColumns,
+  useSearchFormSchema,
+} from './data';
+
+const props = defineProps({
+  secondShow: {
+    type: Boolean,
+    default: false,
+  },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
+  },
+});
 
 // 奖品详情字段配置
 const prizeDetailFields = [
@@ -63,32 +88,6 @@ const prizeDetailFields = [
   { key: 'updateTimeStr', label: '更新时间' },
 ];
 
-import CheckDrawer from '../components/CheckDrawer.vue';
-import {
-  dataList,
-  detailFields,
-  getPointLotteryStatusTagType,
-  getPointLotterySyncStatusTagType,
-  textObj,
-  useGridColumns,
-  useSearchFormSchema,
-} from './data';
-
-const props = defineProps({
-  secondShow: {
-    type: Boolean,
-    default: false,
-  },
-  showStats: {
-    type: Boolean,
-    default: false,
-  },
-  toggleStats: {
-    type: Function,
-    default: () => {},
-  },
-});
-
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -112,7 +111,9 @@ const prizeDetailData = ref({ id: '' });
 
 // 奖品详情标题计算属性
 const prizeDetailTitle = computed(() => {
-  return prizeDetailData.value?.name ? `${prizeDetailData.value.name}详情` : '奖品详情';
+  return prizeDetailData.value?.name
+    ? `${prizeDetailData.value.name}详情`
+    : '奖品详情';
 });
 
 const [Form, formApi] = useVbenForm({
@@ -184,9 +185,15 @@ async function handleOpenPrizeDetail(row) {
       // 格式化时间字段（处理null值）
       const formattedDetail = {
         ...prizeDetail,
-        createTimeStr: prizeDetail.createTime ? formatDate(prizeDetail.createTime) : '-',
-        syncTimeStr: prizeDetail.syncTime ? formatDate(prizeDetail.syncTime) : '-',
-        updateTimeStr: prizeDetail.updateTime ? formatDate(prizeDetail.updateTime) : '-',
+        createTimeStr: prizeDetail.createTime
+          ? formatDate(prizeDetail.createTime)
+          : '-',
+        syncTimeStr: prizeDetail.syncTime
+          ? formatDate(prizeDetail.syncTime)
+          : '-',
+        updateTimeStr: prizeDetail.updateTime
+          ? formatDate(prizeDetail.updateTime)
+          : '-',
       };
       prizeDetailData.value = formattedDetail;
       // 使用nextTick确保DOM更新后再打开抽屉

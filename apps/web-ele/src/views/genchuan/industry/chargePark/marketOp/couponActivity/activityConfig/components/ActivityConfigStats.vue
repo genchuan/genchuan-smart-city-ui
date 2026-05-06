@@ -10,14 +10,17 @@ const props = defineProps({
     default: () => ({
       cards: [],
       pieData: [],
+      barData: [],
     }),
   },
 });
 
-const emit = defineEmits(['cardClick', 'pieClick']);
+const emit = defineEmits(['cardClick', 'pieClick', 'barClick']);
 
 const pieChartRef = ref(null);
+const barChartRef = ref(null);
 const pieChartInstance = ref(null);
+const barChartInstance = ref(null);
 
 const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B'];
 
@@ -133,18 +136,165 @@ const initPieChart = () => {
 
   chartInstance.setOption(option);
 
+  // 点击事件 - 传递type值
   chartInstance.on('click', (params) => {
-    emit('pieClick', params.name);
+    const pieItem = props.data.pieData.find((item) => item.name === params.name);
+    if (pieItem) {
+      emit('pieClick', pieItem.type);
+    }
+  });
+};
+
+const initBarChart = () => {
+  if (!barChartRef.value) return;
+
+  if (barChartInstance.value) {
+    barChartInstance.value.dispose();
+  }
+
+  const chartInstance = echarts.init(barChartRef.value);
+  barChartInstance.value = chartInstance;
+
+  const barData = props.data.barData || [];
+  const xAxisData = barData.map((item) => item.name);
+  const countData = barData.map((item) => item.value);
+
+  const option = {
+    backgroundColor: 'transparent',
+    title: {
+      text: '适用人群分布',
+      left: 'center',
+      top: 10,
+      textStyle: {
+        color: '#6E7E91',
+        fontSize: 16,
+        fontWeight: 500,
+      },
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#E8F4FD',
+      borderWidth: 1,
+      textStyle: {
+        color: '#6E7E91',
+      },
+      axisPointer: {
+        type: 'shadow',
+      },
+      formatter: '{b}: {c}',
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '10%',
+      top: '20%',
+      containLabel: true,
+      backgroundColor: 'transparent',
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: true,
+      data: xAxisData,
+      axisLabel: {
+        color: '#6E7E91',
+        fontSize: 12,
+        interval: 0,
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#E8F4FD',
+        },
+      },
+      axisTick: {
+        lineStyle: {
+          color: '#E8F4FD',
+        },
+      },
+      splitLine: {
+        show: false,
+      },
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: {
+        color: '#9AA8B7',
+        fontSize: 11,
+      },
+      axisLine: {
+        lineStyle: {
+          color: '#E8F4FD',
+        },
+      },
+      axisTick: {
+        lineStyle: {
+          color: '#E8F4FD',
+        },
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#F0F6FC',
+          type: 'dashed',
+        },
+      },
+    },
+    series: [
+      {
+        name: '配置数量',
+        type: 'bar',
+        data: countData,
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#A17FE0' },
+            { offset: 1, color: '#FF6B8B' },
+          ]),
+          borderRadius: [4, 4, 0, 0],
+        },
+        barWidth: '40%',
+        label: {
+          show: true,
+          position: 'top',
+          color: '#6E7E91',
+          fontSize: 12,
+          formatter: '{c}',
+        },
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowColor: 'rgba(161, 127, 224, 0.3)',
+          },
+          label: {
+            show: true,
+            fontSize: 14,
+            fontWeight: 'bold',
+          },
+        },
+      },
+    ],
+  };
+
+  chartInstance.setOption(option);
+
+  // 点击事件 - 传递userGroup值
+  chartInstance.on('click', (params) => {
+    const barItem = props.data.barData[params.dataIndex];
+    if (barItem) {
+      emit('barClick', barItem.userGroup);
+    }
   });
 };
 
 const initCharts = () => {
   initPieChart();
+  initBarChart();
 };
 
 const handleResize = () => {
   if (pieChartInstance.value) {
     pieChartInstance.value.resize();
+  }
+  if (barChartInstance.value) {
+    barChartInstance.value.resize();
   }
 };
 
@@ -169,6 +319,9 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
   if (pieChartInstance.value) {
     pieChartInstance.value.dispose();
+  }
+  if (barChartInstance.value) {
+    barChartInstance.value.dispose();
   }
 });
 </script>
@@ -202,6 +355,8 @@ onUnmounted(() => {
     <div class="charts-wrapper">
       <!-- 饼图区域 -->
       <div class="activity-type-chart" ref="pieChartRef"></div>
+      <!-- 柱状图区域 -->
+      <div class="activity-user-chart" ref="barChartRef"></div>
     </div>
   </div>
 </template>
@@ -212,6 +367,7 @@ onUnmounted(() => {
   flex-wrap: nowrap;
   width: 100%;
   height: auto;
+  padding-bottom: 0.5rem;
   min-height: 280px;
   overflow: hidden;
 }
@@ -229,7 +385,7 @@ onUnmounted(() => {
   flex: 1;
   padding: 16px;
   cursor: pointer;
-  background-color: #fff;
+  background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
@@ -291,9 +447,14 @@ onUnmounted(() => {
 }
 
 .activity-type-chart {
-  flex: 1;
+  flex: 0 0 50%;
   min-width: 0;
   height: 280px;
-  margin-left: 0 !important;
+}
+
+.activity-user-chart {
+  flex: 0 0 50%;
+  min-width: 0;
+  height: 280px;
 }
 </style>

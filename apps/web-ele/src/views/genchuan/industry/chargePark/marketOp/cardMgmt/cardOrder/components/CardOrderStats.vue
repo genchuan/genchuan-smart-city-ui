@@ -24,7 +24,7 @@ const lineChartInstance = ref(null);
 
 const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B'];
 
-// 初始化柱状图 - 卡种类型分布
+// 初始化柱状图 - 支付状态分布
 const initBarChart = () => {
   if (!barChartRef.value) return;
 
@@ -36,13 +36,13 @@ const initBarChart = () => {
   barChartInstance.value = chartInstance;
 
   const barData = props.data.barData || [];
-  const xAxisData = barData.map((item) => item.cardName);
+  const xAxisData = barData.map((item) => item.payStatusName || item.payStatus);
   const countData = barData.map((item) => item.count);
 
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '卡种类型分布',
+      text: '支付状态分布',
       left: 'center',
       top: 10,
       textStyle: {
@@ -155,9 +155,11 @@ const initBarChart = () => {
 
   chartInstance.setOption(option);
 
-  // 点击事件
+  // 点击事件 - 传递 payStatus 值用于钻取筛选
   chartInstance.on('click', (params) => {
-    emit('barClick', barData[params.dataIndex]?.cardId);
+    const item = barData[params.dataIndex];
+    // 传递 payStatus，用于钻取筛选
+    emit('barClick', item?.payStatus);
   });
 };
 
@@ -179,7 +181,7 @@ const initLineChart = () => {
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '订单量趋势（近30天）',
+      text: '订单量趋势（30天）',
       left: 'center',
       top: 10,
       textStyle: {
@@ -398,7 +400,7 @@ onUnmounted(() => {
   flex: 1;
   padding: 16px;
   cursor: pointer;
-  background-color: #fff;
+  background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);

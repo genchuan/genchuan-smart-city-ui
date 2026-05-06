@@ -393,7 +393,6 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 8px;
   width: 200px;
-
 }
 
 .stat-card {

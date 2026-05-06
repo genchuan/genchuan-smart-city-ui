@@ -83,7 +83,8 @@ const handleConfirm = async () => {
         throw new Error('未知的操作类型');
     }
 
-    if (response && response.code === 200) {
+    // 判断响应是否成功（根据接口返回格式 {code: 0, msg: "成功", data: true}）
+    if (response && (response.code === 0 || response.code === undefined)) {
       const successMessages = {
         activate: '生效成功',
         disable: '禁用成功',
@@ -93,7 +94,7 @@ const handleConfirm = async () => {
       modalApi.close();
       emit('success');
     } else {
-      ElMessage.error(response?.message || '操作失败');
+      ElMessage.error(response?.msg || response?.message || '操作失败');
     }
   } catch (error) {
     console.error('操作失败:', error);

@@ -291,8 +291,12 @@ const getTableData = async (pageObj) => {
       type: filterType.value || dataObj.searchParams.type,
       status: filterStatus.value || dataObj.searchParams.status,
       date: filterDate.value || undefined, // 日期筛选（用于折线图钻取）
-      startTime: !filterDate.value ? dataObj.searchParams.timeRange?.[0] : undefined,
-      endTime: !filterDate.value ? dataObj.searchParams.timeRange?.[1] : undefined,
+      startTime: filterDate.value
+        ? undefined
+        : dataObj.searchParams.timeRange?.[0],
+      endTime: filterDate.value
+        ? undefined
+        : dataObj.searchParams.timeRange?.[1],
     };
 
     const response = await getPointActivityPage(queryParams);

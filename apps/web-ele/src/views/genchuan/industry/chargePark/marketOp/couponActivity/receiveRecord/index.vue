@@ -3,13 +3,15 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { ElMessage } from 'element-plus';
 
+import { getReceiveRecordChart } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/receiveRecord';
+
 import ReceiveRecordStats from './components/ReceiveRecordStats.vue';
 import Table from './table/index.vue';
 
 import '#/genchuan-components/page/index.scss';
 
 // 控制统计组件显示/隐藏的状态
-const showStats = ref(false);
+const showStats = ref(true);
 
 // 切换统计组件显示/隐藏状态
 const toggleStats = () => {
@@ -25,59 +27,83 @@ const statsData = ref({
   lineData: [],
 });
 
-// 获取统计数据（模拟数据，实际应从API获取）
+// 静态统计数据 - 接口失败时使用（按照接口返回格式）
+const staticStatsData = {
+  receiveCount: 36,
+  verifyRate: 0.1111,
+  trendList: [
+    { date: '2026-04-21', count: 1 },
+    { date: '2026-04-22', count: 35 },
+    { date: '2026-04-23', count: 0 },
+    { date: '2026-04-24', count: 0 },
+    { date: '2026-04-25', count: 0 },
+    { date: '2026-04-26', count: 0 },
+    { date: '2026-04-27', count: 0 },
+    { date: '2026-04-28', count: 0 },
+  ],
+};
+
+// 组装统计数据
+const assembleStatsData = (data) => {
+  // 组装卡片数据
+  statsData.value.cards = [
+    {
+      title: '总领用量',
+      value: data.receiveCount || 0,
+      color: '#4A90E2',
+      type: 'total',
+    },
+    {
+      title: '累计核销率',
+      value: `${((data.verifyRate || 0) * 100).toFixed(2)}%`,
+      color: '#50E3C2',
+      type: 'verifyRate',
+    },
+  ];
+
+  // 组装折线图数据 - 领用量趋势
+  statsData.value.lineData = (data.trendList || []).map((item) => ({
+    date: item.date,
+    count: item.count,
+  }));
+};
+
+// 获取统计数据
 const fetchStatsData = async () => {
   try {
-    // TODO: 替换为实际API调用
-    // const response = await getReceiveRecordStats();
+    const response = await getReceiveRecordChart();
+    if (response && response.data) {
+      const data = response.data;
 
-    // 模拟统计数据
-    const mockData = {
-      totalReceiveCount: 8560,
-      verifyRate: '68.5%',
-      trendData: [],
-    };
+      // 检查数据是否为空
+      const hasData =
+        data.receiveCount > 0 || (data.trendList && data.trendList.length > 0);
 
-    // 生成近30天的模拟数据
-    const today = new Date();
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      mockData.trendData.push({
-        date: date.toISOString().split('T')[0],
-        count: Math.floor(Math.random() * 150) + 200,
-      });
+      if (hasData) {
+        assembleStatsData(data);
+      } else {
+        // 接口返回数据为空，使用静态数据
+        console.log('统计接口返回数据为空，使用静态数据');
+        assembleStatsData(staticStatsData);
+      }
+    } else {
+      // 接口返回异常，使用静态数据
+      console.log('统计接口返回异常，使用静态数据');
+      assembleStatsData(staticStatsData);
     }
-
-    // 组装卡片数据
-    statsData.value.cards = [
-      {
-        title: '总领用量',
-        value: mockData.totalReceiveCount,
-        color: '#4A90E2',
-        type: 'total',
-      },
-      {
-        title: '累计核销率',
-        value: mockData.verifyRate,
-        color: '#50E3C2',
-        type: 'verifyRate',
-      },
-    ];
-
-    // 组装折线图数据
-    statsData.value.lineData = mockData.trendData;
   } catch (error) {
-    ElMessage.error('获取统计数据失败');
-    console.error(error);
+    // 接口调用失败，错误信息打印到控制台，使用静态数据
+    console.error('获取统计数据失败，使用静态数据', error);
+    assembleStatsData(staticStatsData);
   }
 };
 
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (type, value) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('card', type, value);
+  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
+    tableInstance.handleStatsFilter('card', type, value);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
@@ -86,8 +112,9 @@ const handleCardClick = async (type, value) => {
 // 处理折线图点击 - 钻取筛选
 const handleLineClick = async (date) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('date', null, date);
+  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
+    tableInstance.handleStatsFilter('date', null, date);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }

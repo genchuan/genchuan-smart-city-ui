@@ -10,14 +10,17 @@ const props = defineProps({
     default: () => ({
       cards: [],
       pieData: [],
+      barData: [],
     }),
   },
 });
 
-const emit = defineEmits(['cardClick', 'pieClick']);
+const emit = defineEmits(['cardClick', 'pieClick', 'barClick']);
 
 const pieChartRef = ref(null);
+const barChartRef = ref(null);
 const pieChartInstance = ref(null);
+const barChartInstance = ref(null);
 
 const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B'];
 
@@ -51,7 +54,7 @@ const initPieChart = () => {
       textStyle: {
         color: '#6E7E91',
       },
-      formatter: '{b}: {c} ({d}%)',
+      formatter: '{b}: {c}%',
     },
     color: freshColors,
     legend: {
@@ -85,7 +88,7 @@ const initPieChart = () => {
               params.name.length > 4
                 ? `${params.name.slice(0, 4)}...`
                 : params.name;
-            return `{name|${name}}\n{percent|${params.percent}%}`;
+            return `{name|${name}}\n{percent|${params.value}%}`;
           },
           rich: {
             name: {
@@ -134,17 +137,146 @@ const initPieChart = () => {
   chartInstance.setOption(option);
 
   chartInstance.on('click', (params) => {
-    emit('pieClick', params.name);
+    // 从饼图数据中找到对应的type
+    const pieItem = props.data.pieData.find((item) => item.name === params.name);
+    if (pieItem) {
+      emit('pieClick', pieItem.type);
+    }
+  });
+};
+
+// 初始化柱状图 - 适用范围分布
+const initBarChart = () => {
+  if (!barChartRef.value) return;
+
+  if (barChartInstance.value) {
+    barChartInstance.value.dispose();
+  }
+
+  const chartInstance = echarts.init(barChartRef.value);
+  barChartInstance.value = chartInstance;
+
+  const barData = props.data.barData || [];
+  const xAxisData = barData.map((item) => item.scopeName || item.scope);
+  const countData = barData.map((item) => item.count);
+
+  const option = {
+    backgroundColor: 'transparent',
+    title: {
+      text: '适用范围分布',
+      left: 'center',
+      top: 10,
+      textStyle: {
+        color: '#6E7E91',
+        fontSize: 16,
+        fontWeight: 500,
+      },
+    },
+    tooltip: {
+      trigger: 'axis',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      borderColor: '#E8F4FD',
+      borderWidth: 1,
+      textStyle: {
+        color: '#6E7E91',
+      },
+      formatter: '{b}: {c}',
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      top: '15%',
+      containLabel: true,
+    },
+    xAxis: {
+      type: 'category',
+      data: xAxisData,
+      axisLine: {
+        lineStyle: {
+          color: '#E8F4FD',
+        },
+      },
+      axisLabel: {
+        color: '#6E7E91',
+        fontSize: 12,
+        interval: 0,
+        rotate: xAxisData.length > 5 ? 30 : 0,
+      },
+      axisTick: {
+        show: false,
+      },
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: {
+        show: false,
+      },
+      axisLabel: {
+        color: '#6E7E91',
+        fontSize: 12,
+      },
+      splitLine: {
+        lineStyle: {
+          color: '#F0F4F8',
+          type: 'dashed',
+        },
+      },
+    },
+    series: [
+      {
+        name: '配置数',
+        type: 'bar',
+        data: countData,
+        barWidth: '50%',
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#4A90E2' },
+            { offset: 1, color: '#50E3C2' },
+          ]),
+          borderRadius: [4, 4, 0, 0],
+        },
+        emphasis: {
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: '#357ABD' },
+              { offset: 1, color: '#3DCCB0' },
+            ]),
+          },
+        },
+        label: {
+          show: true,
+          position: 'top',
+          color: '#6E7E91',
+          fontSize: 12,
+          fontWeight: 'bold',
+        },
+      },
+    ],
+  };
+
+  chartInstance.setOption(option);
+
+  // 点击事件 - 传递 scope 值用于钻取筛选
+  chartInstance.on('click', (params) => {
+    const item = barData[params.dataIndex];
+    if (item) {
+      emit('barClick', item.scope);
+    }
   });
 };
 
 const initCharts = () => {
   initPieChart();
+  initBarChart();
 };
 
 const handleResize = () => {
   if (pieChartInstance.value) {
     pieChartInstance.value.resize();
+  }
+  if (barChartInstance.value) {
+    barChartInstance.value.resize();
   }
 };
 
@@ -169,6 +301,9 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
   if (pieChartInstance.value) {
     pieChartInstance.value.dispose();
+  }
+  if (barChartInstance.value) {
+    barChartInstance.value.dispose();
   }
 });
 </script>
@@ -202,6 +337,8 @@ onUnmounted(() => {
     <div class="charts-wrapper">
       <!-- 饼图区域 -->
       <div class="activity-type-chart" ref="pieChartRef"></div>
+      <!-- 柱状图区域 -->
+      <div class="activity-type-chart" ref="barChartRef"></div>
     </div>
   </div>
 </template>
@@ -212,6 +349,7 @@ onUnmounted(() => {
   flex-wrap: nowrap;
   width: 100%;
   height: auto;
+  padding-bottom: 0.5rem;
   min-height: 280px;
   overflow: hidden;
 }
@@ -229,7 +367,7 @@ onUnmounted(() => {
   flex: 1;
   padding: 16px;
   cursor: pointer;
-  background-color: #fff;
+  background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);

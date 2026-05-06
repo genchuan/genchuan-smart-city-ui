@@ -1,6 +1,9 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue';
 
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj } from '@vben/hooks';
+
 import { getPrizeMgmtChart } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/prizeMgmt';
 
 import PrizeMgmtStats from './components/PrizeMgmtStats.vue';
@@ -9,7 +12,7 @@ import Table from './table/index.vue';
 import '#/genchuan-components/page/index.scss';
 
 // 控制统计组件显示/隐藏的状态
-const showStats = ref(false);
+const showStats = ref(true);
 
 // 切换统计组件显示/隐藏状态
 const toggleStats = () => {
@@ -25,13 +28,19 @@ const statsData = ref({
   barData: [],
 });
 
+// 获取奖品类型字典标签
+const getTypeLabel = (type) => {
+  const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_TYPE, String(type));
+  return dict ? dict.label : type;
+};
+
 // 静态统计数据 - 接口失败时使用
 const staticStatsData = {
-  typeDistribution: [
-    { name: '优惠券', value: 3 },
-    { name: '积分', value: 2 },
-    { name: '实物', value: 2 },
-    { name: '虚拟', value: 1 },
+  typeList: [
+    { type: '0', count: 3 },
+    { type: '1', count: 2 },
+    { type: '2', count: 2 },
+    { type: '3', count: 1 },
   ],
   prizeCount: 8,
   sendCount: 10270,
@@ -49,7 +58,7 @@ const assembleStatsData = (data) => {
       desc: '全部奖品',
     },
     {
-      title: '累计奖品发放量',
+      title: '累计奖品发放数',
       value: data.sendCount || 0,
       color: '#50E3C2',
       filterType: 'distribute',
@@ -58,9 +67,10 @@ const assembleStatsData = (data) => {
   ];
 
   // 组装柱状图数据 - 奖品类型分布
-  statsData.value.barData = (data.typeDistribution || []).map((item) => ({
-    name: item.name,
-    value: item.value,
+  statsData.value.barData = (data.typeList || []).map((item) => ({
+    name: getTypeLabel(item.type),
+    value: item.count,
+    type: item.type,
   }));
 };
 
@@ -68,12 +78,12 @@ const assembleStatsData = (data) => {
 const fetchStatsData = async () => {
   try {
     const response = await getPrizeMgmtChart();
-    if (response && response.code === 200 && response.data) {
-      const data = response.data;
-      
+    if (response) {
+      const data = response.data || response;
+
       // 检查数据是否为空
-      const hasData = data.prizeCount > 0 || (data.typeDistribution && data.typeDistribution.length > 0);
-      
+      const hasData = data.prizeCount > 0 || (data.typeList && data.typeList.length > 0);
+
       if (hasData) {
         assembleStatsData(data);
       } else {
@@ -88,7 +98,7 @@ const fetchStatsData = async () => {
     }
   } catch (error) {
     // 接口调用失败，错误信息打印到控制台，使用静态数据
-    console.error('获取统计数据失败，使用静态数据:', error);
+    console.error('获取统计数据失败，使用静态数据', error);
     assembleStatsData(staticStatsData);
   }
 };
@@ -96,16 +106,20 @@ const fetchStatsData = async () => {
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (card) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('card', card.filterType);
+  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
+    tableInstance.handleStatsFilter('card', card.filterType);
   }
 };
 
+const tableRef = ref(null);
+
 // 处理柱状图点击 - 钻取筛选
-const handleBarClick = async (typeName) => {
+const handleBarClick = async (type, typeName) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('type', typeName);
+  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
+    tableInstance.handleStatsFilter('type', type);
   }
 };
 
@@ -115,8 +129,6 @@ const changeArrowStatus = () => {
     v.secondShow = secondShow.value;
   });
 };
-
-const tableRef = ref(null);
 
 // 使用computed确保showStats是响应式的
 const showStatsValue = computed(() => showStats.value);

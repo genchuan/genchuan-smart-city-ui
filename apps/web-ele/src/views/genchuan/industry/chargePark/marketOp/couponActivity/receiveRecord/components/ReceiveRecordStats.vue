@@ -234,6 +234,7 @@ onUnmounted(() => {
   flex-wrap: nowrap;
   width: 100%;
   height: auto;
+  padding-bottom: 0.5rem;
   overflow: hidden;
   padding-bottom: 0.5rem;
 }
@@ -253,7 +254,7 @@ onUnmounted(() => {
   flex: 1;
   padding: 16px;
   cursor: pointer;
-  background-color: #fff;
+  background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);

@@ -105,6 +105,8 @@ function handleRefresh() {
   // 清除快捷筛选
   filterStatus.value = '';
   filterWarnStatus.value = '';
+  filterCardId.value = '';
+  filterDate.value = '';
   gridApi.query();
 }
 
@@ -117,8 +119,7 @@ async function handleExport() {
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
-    // 使用静态数据导出
-    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+    // 使用静态数据导�?    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
   }
 }
 
@@ -142,9 +143,11 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
-// 快捷筛选变量
+// 快捷筛选变�?
 const filterStatus = ref('');
 const filterWarnStatus = ref('');
+const filterCardId = ref('');
+const filterDate = ref('');
 
 const dataObj = reactive({
   totalShow: false,
@@ -170,21 +173,28 @@ const getTableData = async (pageObj) => {
     const params = {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      cardId: dataObj.searchParams.cardId,
+      cardId: filterCardId.value || dataObj.searchParams.cardId,
       status: filterStatus.value || dataObj.searchParams.status,
       warnStatus: filterWarnStatus.value || dataObj.searchParams.warnStatus,
+      // 日期筛选参数
+      date: filterDate.value || undefined,
     };
 
     const response = await getStockControlPage(params);
     if (response) {
       const { list, total } = response;
       dataObj.total = total || 0;
-      dataObj.list = list || [];
+      // 处理列表数据，将status和warnStatus转换为对应的名称
+      dataObj.list = (list || []).map((item) => ({
+        ...item,
+        statusName: getStockControlStatusLabel(item.status),
+        warnStatusName: getStockControlWarnStatusLabel(item.warnStatus),
+      }));
       return dataObj;
     }
   } catch (error) {
     // 接口请求失败，使用静态数据
-    console.error('分页接口请求失败，使用静态数据:', error);
+    console.error('分页接口请求失败，使用静态数据', error);
 
     // 根据searchParams和快捷筛选变量筛选静态数据
     const filteredList = dataObj.apilist.filter((v) => {
@@ -209,6 +219,9 @@ const getTableData = async (pageObj) => {
         searchMatch = false;
       }
       if (filterWarnStatus.value && v.warnStatus !== filterWarnStatus.value) {
+        searchMatch = false;
+      }
+      if (filterCardId.value && v.cardId !== Number(filterCardId.value)) {
         searchMatch = false;
       }
       return searchMatch;
@@ -302,6 +315,18 @@ const handleCancelWarnStatusFilter = () => {
   gridApi.query();
 };
 
+// 取消卡种筛选
+const handleCancelCardIdFilter = () => {
+  filterCardId.value = '';
+  gridApi.query();
+};
+
+// 取消日期筛选
+const handleCancelDateFilter = () => {
+  filterDate.value = '';
+  gridApi.query();
+};
+
 // ==================== 详情弹窗处理 ====================
 
 const handleOpenDetail = (row) => {
@@ -342,7 +367,10 @@ const handleFullShow = () => {
 // 处理统计组件的钻取筛选
 const handleStatsFilter = (type, value) => {
   // 清空之前的筛选
-  dataObj.searchParams = {};
+  filterStatus.value = '';
+  filterWarnStatus.value = '';
+  filterCardId.value = '';
+  filterDate.value = '';
 
   switch (type) {
     case 'card': {
@@ -356,15 +384,19 @@ const handleStatsFilter = (type, value) => {
       }
       break;
     }
+    case 'status': {
+      // 直接设置状态筛选（用于预警库存数卡片点击）
+      filterStatus.value = value;
+      break;
+    }
     case 'cardId': {
       // 卡种筛选
-      dataObj.searchParams.cardId = value;
+      filterCardId.value = value;
       break;
     }
     case 'date': {
-      // 日期筛选 - 这里可以根据实际需求实现
-      // 目前只是示例，实际项目中需要根据API支持情况调整
-      console.log('Date filter:', value);
+      // 日期筛选
+      filterDate.value = value;
       break;
     }
   }
@@ -401,13 +433,13 @@ defineExpose({
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
-      <!-- 快捷筛选标签 -->
+      <!-- 快捷筛选标�?-->
       <template #table-title>
         <div
           class="tabel-tabs"
           style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
         >
-          <!-- 库存状态筛选标签 -->
+          <!-- 库存状态筛选标�?-->
           <ElTag
             v-if="filterStatus"
             type="primary"
@@ -417,7 +449,7 @@ defineExpose({
           >
             库存状态：{{ getStockControlStatusLabel(filterStatus) }}
           </ElTag>
-          <!-- 告警状态筛选标签 -->
+          <!-- 告警状态筛选标�?-->
           <ElTag
             v-if="filterWarnStatus"
             type="success"
@@ -426,6 +458,26 @@ defineExpose({
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
             告警状态：{{ getStockControlWarnStatusLabel(filterWarnStatus) }}
+          </ElTag>
+          <!-- 卡种筛选标签 -->
+          <ElTag
+            v-if="filterCardId"
+            type="warning"
+            closable
+            @close="handleCancelCardIdFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            卡种ID：{{ filterCardId }}
+          </ElTag>
+          <!-- 日期筛选标签 -->
+          <ElTag
+            v-if="filterDate"
+            type="info"
+            closable
+            @close="handleCancelDateFilter"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            日期：{{ filterDate }}
           </ElTag>
         </div>
       </template>
@@ -464,7 +516,7 @@ defineExpose({
           {{ row.cardName }}
         </el-text>
       </template>
-      <!-- 库存状态 - 点击筛选同状态 -->
+      <!-- 库存状�?- 点击筛选同状�?-->
       <template #statusName="{ row }">
         <ElTag
           :type="getStockControlStatusTagType(row.status)"
@@ -474,7 +526,7 @@ defineExpose({
           {{ row.statusName }}
         </ElTag>
       </template>
-      <!-- 更新时间 - 格式化显示 -->
+      <!-- 更新时间 - 格式化显�?-->
       <template #updateTime="{ row }">
         <span>{{
           row.updateTime
@@ -507,7 +559,7 @@ defineExpose({
           {{ row.replenishCount }}
         </el-text>
       </template>
-      <!-- 告警状态 - 点击筛选同告警状态 -->
+      <!-- 告警状�?- 点击筛选同告警状�?-->
       <template #warnStatusName="{ row }">
         <ElTag
           :type="getStockControlWarnStatusTagType(row.warnStatus)"
@@ -517,7 +569,7 @@ defineExpose({
           {{ row.warnStatusName }}
         </ElTag>
       </template>
-      <!-- 同步时间 - 格式化显示 -->
+      <!-- 同步时间 - 格式化显�?-->
       <template #syncTime="{ row }">
         <span>{{
           row.syncTime
@@ -527,7 +579,7 @@ defineExpose({
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <!-- 正常库存: 查看、调配 -->
+          <!-- 正常库存: 查看、调配-->
           <template v-if="row.status === '0'">
             <IconButton
               content="调配"
@@ -540,7 +592,7 @@ defineExpose({
               @click="handleOpenDetail(row)"
             />
           </template>
-          <!-- 低库存: 补货、查看、调配 -->
+          <!-- 低库存 补货、查看、调配-->
           <template v-else-if="row.status === '1'">
             <IconButton
               content="补货"
@@ -593,7 +645,7 @@ defineExpose({
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：库存管控数量: {{ dataObj.list.length }}; 正常库存:
+            本页统计：库存管控数量 {{ dataObj.list.length }}; 正常库存:
             {{ dataObj.list.filter((v) => v.status === '0').length }}; 低库存:
             {{ dataObj.list.filter((v) => v.status === '1').length }}; 预警库存:
             {{ dataObj.list.filter((v) => v.status === '2').length }}

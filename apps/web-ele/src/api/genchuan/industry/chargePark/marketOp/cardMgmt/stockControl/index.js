@@ -68,12 +68,8 @@ export function warnStockControl(data) {
 // ==================== 数据可视化图表接口 ====================
 
 /** 库存统计（折线图 + 柱状图 + 卡片）
- * @param {Object} params - 请求参数
- * @param {string} params.startTime - 统计开始时间
- * @param {string} params.endTime - 统计结束时间
- * @param {number} params.stationId - 场站ID，支持按场站筛选
  * @returns {Promise}
  */
-export function getStockControlChart(params) {
-  return requestClient.get('/marketop/stock-control/chart', { params });
+export function getStockControlChart() {
+  return requestClient.get('/marketop/stock-control/chart');
 }

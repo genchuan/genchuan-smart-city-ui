@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
@@ -17,6 +17,8 @@ import {
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
+import DrillDownDialog from '../components/DrillDownDialog.vue';
+import FilterRuleDialog from '../components/FilterRuleDialog.vue';
 
 import {
   dataList,
@@ -28,6 +30,7 @@ import {
   useGridColumns,
   useSearchFormSchema,
 } from './data';
+import {downloadFileFromBlobPart} from '@vben/utils';
 
 const props = defineProps({
   secondShow: {
@@ -41,6 +44,10 @@ const props = defineProps({
   toggleStats: {
     type: Function,
     default: () => {},
+  },
+  activeReportCycle: {
+    type: String,
+    default: '',
   },
 });
 
@@ -61,6 +68,22 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
 const detailDrawerRef = ref(null);
 const formData = ref();
+
+// 钻取弹窗引用
+const drillDownDialogRef = ref(null);
+const filterRuleDialogRef = ref(null);
+
+// 处理字段钻取
+const handleFieldDrill = (type, row) => {
+  if (!drillDownDialogRef.value) return;
+  drillDownDialogRef.value.open(type, row.reportCycle, row.statTime);
+};
+
+// 处理筛选规则查看
+const handleFilterRuleView = (row) => {
+  if (!filterRuleDialogRef.value) return;
+  filterRuleDialogRef.value.open(row.filterRule);
+};
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -128,19 +151,18 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
-  const loadingInstance = ElLoading.service({
-    text: '正在导出数据...',
-  });
   try {
     // 调用导出API
-    await exportCycleReport();
+    const data = await exportCycleReport();
+    downloadFileFromBlobPart({
+      fileName: textObj.excelAllName,
+      source: data,
+    });
     ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     // 如果API调用失败，使用本地导出
     exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
-  } finally {
-    loadingInstance.close();
   }
 }
 
@@ -210,6 +232,20 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+// 当前激活的筛选标签
+const activeFilterTags = reactive({
+  generateStatus: '',
+});
+
+// 移除筛选标签
+const removeFilterTag = (type) => {
+  if (type === 'generateStatus') {
+    activeFilterTags.generateStatus = '';
+    delete dataObj.searchParams.generateStatus;
+    handleRefresh();
+  }
+};
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -223,11 +259,23 @@ const getTableData = async (pageObj) => {
     const params = {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      reportCycle: dataObj.searchParams.reportCycle,
-      generateStatus: dataObj.searchParams.generateStatus,
-      operator: dataObj.searchParams.operator,
-      filterRule: dataObj.searchParams.filterRule,
     };
+
+    // 只有当reportCycle有值时才添加到参数中
+    if (dataObj.searchParams.reportCycle) {
+      params.reportCycle = dataObj.searchParams.reportCycle;
+    }
+
+    // 添加其他可选参数
+    if (dataObj.searchParams.generateStatus) {
+      params.generateStatus = dataObj.searchParams.generateStatus;
+    }
+    if (dataObj.searchParams.operator) {
+      params.operator = dataObj.searchParams.operator;
+    }
+    if (dataObj.searchParams.filterRule) {
+      params.filterRule = dataObj.searchParams.filterRule;
+    }
 
     // 处理统计时段
     if (
@@ -433,13 +481,14 @@ const handleFullShow = () => {
 const handleStatsFilter = (type, value) => {
   // 清空之前的筛选
   dataObj.searchParams = {};
+  // 清空筛选标签
+  activeFilterTags.generateStatus = '';
 
   switch (type) {
     case 'bar': {
       // 柱状图钻取 - 根据活动类型筛选
       if (value) {
         console.log('钻取：活动类型', value);
-        ElMessage.info(`已筛选活动类型：${value}`);
       }
       break;
     }
@@ -448,68 +497,46 @@ const handleStatsFilter = (type, value) => {
       switch (value) {
         case 'activityCount': {
           console.log('钻取：活动数卡片');
-          ElMessage.info('已筛选活动数相关报表');
-
           break;
         }
         case 'cardOrderCount': {
           console.log('钻取：卡种订单量卡片');
-          ElMessage.info('已筛选卡种订单量相关报表');
-
           break;
         }
         case 'couponSendCount': {
           console.log('钻取：优惠券发放量卡片');
-          ElMessage.info('已筛选优惠券发放量相关报表');
-
           break;
         }
         case 'couponVerifyRate': {
           console.log('钻取：核销率卡片');
-          ElMessage.info('已筛选核销率相关报表');
-
           break;
         }
         case 'exchangeCount': {
           console.log('钻取：兑换量卡片');
-          ElMessage.info('已筛选兑换量相关报表');
-
           break;
         }
         case 'joinUserCount': {
           console.log('钻取：参与用户数卡片');
-          ElMessage.info('已筛选参与用户数相关报表');
-
           break;
         }
         case 'lotteryCount': {
           console.log('钻取：抽奖量卡片');
-          ElMessage.info('已筛选抽奖量相关报表');
-
           break;
         }
         case 'revenue': {
           console.log('钻取：营收卡片');
-          ElMessage.info('已筛选营收相关报表');
-
           break;
         }
         case 'totalStock': {
           console.log('钻取：总库存卡片');
-          ElMessage.info('已筛选总库存相关报表');
-
           break;
         }
         case 'warnStockCount': {
           console.log('钻取：预警库存数卡片');
-          ElMessage.info('已筛选预警库存数相关报表');
-
           break;
         }
         case 'winningRate': {
           console.log('钻取：中奖率卡片');
-          ElMessage.info('已筛选中奖率相关报表');
-
           break;
         }
         // No default
@@ -524,7 +551,6 @@ const handleStatsFilter = (type, value) => {
           `${value} 23:59:59`,
         ];
         console.log('钻取：日期', value);
-        ElMessage.info(`已筛选日期：${value}`);
       }
       break;
     }
@@ -532,7 +558,18 @@ const handleStatsFilter = (type, value) => {
       // 饼图钻取 - 根据规则类型筛选
       if (value) {
         console.log('钻取：规则类型', value);
-        ElMessage.info(`已筛选规则类型：${value}`);
+      }
+      break;
+    }
+    case 'reportCycle': {
+      // 报表周期标签点击 - 根据报表周期筛选
+      if (value) {
+        dataObj.searchParams.reportCycle = value;
+        console.log('钻取：报表周期', value);
+      } else {
+        // 取消筛选
+        delete dataObj.searchParams.reportCycle;
+        console.log('取消报表周期筛选');
       }
       break;
     }
@@ -544,9 +581,6 @@ const handleStatsFilter = (type, value) => {
 
 // 导出单条报表
 const handleExportRow = async (row) => {
-  const loadingInstance = ElLoading.service({
-    text: `正在导出报表：${row.reportCycle}...`,
-  });
   try {
     // 调用导出API
     await exportCycleReport();
@@ -554,10 +588,26 @@ const handleExportRow = async (row) => {
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败，请稍后重试');
-  } finally {
-    loadingInstance.close();
   }
 };
+
+// 监听 activeReportCycle prop 变化
+watch(
+  () => props.activeReportCycle,
+  (newVal, oldVal) => {
+    // 只有在值真正改变时才更新，避免F5刷新时触发
+    if (newVal !== oldVal) {
+      if (newVal) {
+        dataObj.searchParams.reportCycle = newVal;
+      } else {
+        delete dataObj.searchParams.reportCycle;
+      }
+      // 刷新表格
+      gridApi.query();
+    }
+  },
+  { immediate: false }
+);
 
 defineExpose({
   handleStatsFilter,
@@ -580,6 +630,24 @@ defineExpose({
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
+      <!-- 快捷筛选标签 -->
+      <template #table-title>
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
+          <!-- 生成状态筛选标签 -->
+          <ElTag
+            v-if="activeFilterTags.generateStatus"
+            type="primary"
+            closable
+            @close="removeFilterTag('generateStatus')"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            生成状态：{{ activeFilterTags.generateStatus }}
+          </ElTag>
+        </div>
+      </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton
@@ -634,141 +702,150 @@ defineExpose({
         </ElTag>
       </template>
 
-      <!-- 活动数 - 点击钻取 -->
+      <!-- 活动数 - 点击钻取活动明细 -->
       <template #activityCount="{ row }">
         <span
           style="color: #409eff; cursor: pointer"
-          @click="handleStatsFilter('card', 'activityCount')"
+          @click="handleFieldDrill('activity', row)"
         >
           {{ row.activityCount }}
         </span>
       </template>
 
-      <!-- 参与用户数 - 点击钻取 -->
+      <!-- 参与用户数 - 点击钻取用户明细 -->
       <template #joinUserCount="{ row }">
         <span
           style="color: #409eff; cursor: pointer"
-          @click="handleStatsFilter('card', 'joinUserCount')"
+          @click="handleFieldDrill('joinUser', row)"
         >
           {{ row.joinUserCount }}
         </span>
       </template>
 
-      <!-- 抽奖量 - 点击钻取 -->
+      <!-- 抽奖量 - 点击钻取抽奖明细 -->
       <template #lotteryCount="{ row }">
         <span
           style="color: #409eff; cursor: pointer"
-          @click="handleStatsFilter('card', 'lotteryCount')"
+          @click="handleFieldDrill('lottery', row)"
         >
           {{ row.lotteryCount }}
         </span>
       </template>
 
-      <!-- 中奖率 - 点击钻取 -->
+      <!-- 中奖率 - 点击钻取中奖明细 -->
       <template #winningRate="{ row }">
         <span
           style="color: #409eff; cursor: pointer"
-          @click="handleStatsFilter('card', 'winningRate')"
+          @click="handleFieldDrill('winning', row)"
         >
           {{ row.winningRate }}
         </span>
       </template>
 
-      <!-- 优惠券发放量 - 点击钻取 -->
+      <!-- 优惠券发放量 - 点击钻取优惠券发放明细 -->
       <template #couponSendCount="{ row }">
         <span
           style="color: #409eff; cursor: pointer"
-          @click="handleStatsFilter('card', 'couponSendCount')"
+          @click="handleFieldDrill('couponSend', row)"
         >
           {{ row.couponSendCount }}
         </span>
       </template>
 
-      <!-- 核销率 - 点击钻取 -->
+      <!-- 核销率 - 点击钻取优惠券核销明细 -->
       <template #couponVerifyRate="{ row }">
         <span
           style="color: #409eff; cursor: pointer"
-          @click="handleStatsFilter('card', 'couponVerifyRate')"
+          @click="handleFieldDrill('couponVerify', row)"
         >
           {{ row.couponVerifyRate }}
         </span>
       </template>
 
-      <!-- 卡种订单量 - 点击钻取 -->
+      <!-- 卡种订单量 - 点击钻取卡种订单明细 -->
       <template #cardOrderCount="{ row }">
         <span
           style="color: #409eff; cursor: pointer"
-          @click="handleStatsFilter('card', 'cardOrderCount')"
+          @click="handleFieldDrill('cardOrder', row)"
         >
           {{ row.cardOrderCount }}
         </span>
       </template>
 
-      <!-- 营收 - 点击钻取 -->
+      <!-- 营收 - 点击钻取营收明细 -->
       <template #revenue="{ row }">
         <span
           style="color: #409eff; cursor: pointer"
-          @click="handleStatsFilter('card', 'revenue')"
+          @click="handleFieldDrill('revenue', row)"
         >
           ¥{{ row.revenue?.toFixed(2) }}
         </span>
       </template>
 
-      <!-- 兑换量 - 点击钻取 -->
+      <!-- 兑换量 - 点击钻取积分兑换明细 -->
       <template #exchangeCount="{ row }">
         <span
           style="color: #409eff; cursor: pointer"
-          @click="handleStatsFilter('card', 'exchangeCount')"
+          @click="handleFieldDrill('exchange', row)"
         >
           {{ row.exchangeCount }}
         </span>
       </template>
 
-      <!-- 总库存 - 点击钻取 -->
+      <!-- 总库存 - 点击钻取卡种库存总览 -->
       <template #totalStock="{ row }">
         <span
           style="color: #409eff; cursor: pointer"
-          @click="handleStatsFilter('card', 'totalStock')"
+          @click="handleFieldDrill('stock', row)"
         >
           {{ row.totalStock }}
         </span>
       </template>
 
-      <!-- 预警库存数 - 点击钻取 -->
+      <!-- 预警库存数 - 点击钻取预警卡种库存明细 -->
       <template #warnStockCount="{ row }">
         <span
           style="color: #f56c6c; cursor: pointer"
-          @click="handleStatsFilter('card', 'warnStockCount')"
+          @click="handleFieldDrill('warnStock', row)"
         >
           {{ row.warnStockCount }}
         </span>
       </template>
 
-      <!-- 生成状态 -->
+      <!-- 生成状态 - 点击筛选同生成状态 -->
       <template #generateStatus="{ row }">
-        <ElTag :type="getGenerateStatusTagType(row.generateStatus)">
+        <ElTag
+          :type="getGenerateStatusTagType(row.generateStatus)"
+          style="cursor: pointer"
+          @click="
+            dataObj.searchParams.generateStatus = row.generateStatus;
+            activeFilterTags.generateStatus = row.generateStatus;
+            handleRefresh();
+          "
+        >
           {{ row.generateStatus }}
         </ElTag>
       </template>
 
-      <!-- 操作人 - 点击筛选 -->
+      <!-- 操作人 - 点击跳转操作人员详情 -->
       <template #operator="{ row }">
         <span
           style="color: #409eff; cursor: pointer"
-          @click="
-            dataObj.searchParams.operator = row.operator;
-            handleRefresh();
-          "
+          @click="handleFieldDrill('operator', row)"
         >
           {{ row.operator }}
         </span>
       </template>
 
-      <!-- 筛选规则 - 点击查看详情 -->
+      <!-- 筛选规则 - 点击查看详情弹窗 -->
       <template #filterRule="{ row }">
-        <el-tooltip :content="row.filterRule" placement="top">
-          <span class="filter-rule-text">{{ row.filterRule }}</span>
-        </el-tooltip>
+        <span
+          class="filter-rule-text"
+          style="color: #409eff; cursor: pointer"
+          @click="handleFilterRuleView(row)"
+        >
+          {{ row.filterRule }}
+        </span>
       </template>
 
       <template #actions="{ row }">
@@ -801,6 +878,11 @@ defineExpose({
         </div>
       </template>
     </Grid>
+
+    <!-- 钻取明细弹窗 -->
+    <DrillDownDialog ref="drillDownDialogRef" />
+    <!-- 筛选规则详情弹窗 -->
+    <FilterRuleDialog ref="filterRuleDialogRef" />
   </div>
 </template>
 

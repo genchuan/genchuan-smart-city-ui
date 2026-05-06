@@ -1,8 +1,12 @@
 <script setup>
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
+
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj } from '@vben/hooks';
 
 import { ElMessage } from 'element-plus';
 
+import { getCardOrderChart } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardOrder';
 import CardOrderStats from './components/CardOrderStats.vue';
 import Table from './table/index.vue';
 
@@ -10,11 +14,12 @@ import '#/genchuan-components/page/index.scss';
 
 // 控制统计组件显示/隐藏的状态
 const showStats = ref(false);
+const isStatsLoaded = ref(false);
 
 // 切换统计组件显示/隐藏状态
 const toggleStats = () => {
   showStats.value = !showStats.value;
-  if (showStats.value) {
+  if (showStats.value && !isStatsLoaded.value) {
     fetchStatsData();
   }
 };
@@ -26,88 +31,96 @@ const statsData = ref({
   lineData: [],
 });
 
-// 获取统计数据 - 模拟数据
+// 获取支付状态标签文本
+function getPayStatusLabel(payStatus) {
+  const dict = getDictObj(DICT_TYPE.CARD_ORDER_PAY_STATUS, String(payStatus));
+  return dict ? dict.label : payStatus;
+}
+
+// 获取统计数据 - 从API获取
 const fetchStatsData = async () => {
   try {
-    // 模拟统计数据
-    const mockData = {
-      // 今日订单量和今日营收
-      todayOrderCount: 156,
-      todayRevenue: 25880.00,
-      // 卡种类型分布
-      cardTypeDistribution: [
-        { cardId: 1, cardName: '日卡', count: 45 },
-        { cardId: 2, cardName: '周卡', count: 38 },
-        { cardId: 3, cardName: '月卡', count: 42 },
-        { cardId: 4, cardName: '季卡', count: 18 },
-        { cardId: 5, cardName: '年卡', count: 13 },
-      ],
-      // 近30天订单趋势
-      dailyTrend: generateDailyTrendData(),
-    };
+    const response = await getCardOrderChart();
+    console.log('统计接口返回数据:', response);
+    if (!response) {
+      throw new Error('获取统计数据失败');
+    }
 
     // 组装卡片数据
     statsData.value.cards = [
       {
         title: '今日订单量',
-        value: mockData.todayOrderCount,
+        value: response.todayOrderCount || 0,
         color: '#4A90E2',
         type: 'todayOrder',
       },
       {
         title: '今日营收',
-        value: '¥' + mockData.todayRevenue.toFixed(2),
+        value: '¥' + (response.todayRevenue || 0).toFixed(2),
         color: '#50E3C2',
         type: 'todayRevenue',
       },
     ];
 
-    // 组装柱状图数据 - 卡种类型分布
-    statsData.value.barData = mockData.cardTypeDistribution;
+    // 组装柱状图数据 - 支付状态分布
+    // 将支付状态代码映射为字典标签
+    statsData.value.barData = (response.payStatusCountList || []).map((item) => ({
+      payStatus: item.payStatus,
+      payStatusName: getPayStatusLabel(item.payStatus),
+      count: item.count,
+    }));
 
     // 组装折线图数据 - 订单量趋势
-    statsData.value.lineData = mockData.dailyTrend;
+    statsData.value.lineData = (response.trendList || []).map((item) => ({
+      date: item.date,
+      fullDate: item.date,
+      count: item.count,
+    }));
+
+    // 数据加载完成后显示统计组件
+    isStatsLoaded.value = true;
+    showStats.value = true;
   } catch (error) {
     ElMessage.error('获取统计数据失败');
-    console.error(error);
+    console.error('获取统计数据失败:', error);
+    // 即使失败也显示统计组件（显示空数据）
+    isStatsLoaded.value = true;
+    showStats.value = true;
   }
 };
 
-// 生成近30天的模拟数据
-const generateDailyTrendData = () => {
-  const data = [];
-  const today = new Date();
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-    const fullDate = date.toISOString().split('T')[0];
-    // 随机生成订单量 (20-80之间)
-    const count = Math.floor(Math.random() * 60) + 20;
-    data.push({
-      date: dateStr,
-      fullDate: fullDate,
-      count,
-    });
-  }
-  return data;
+// 获取表格组件实例（处理v-for中的ref数组情况）
+const getTableComponent = () => {
+  // 在v-for中使用ref时，tableRef可能是数组
+  const tableComponent = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
+  return tableComponent;
 };
 
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (cardType, value) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('card', cardType, value);
+  const tableComponent = getTableComponent();
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
+    tableComponent.handleStatsFilter('card', cardType, value);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
 };
 
-// 处理柱状图点击 - 钻取筛选卡种类型
-const handleBarClick = async (cardId) => {
+// 处理柱状图点击 - 钻取筛选支付状态
+const handleBarClick = async (payStatus) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('cardType', cardId);
+  const tableComponent = getTableComponent();
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
+    tableComponent.handleStatsFilter('payStatus', payStatus);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
@@ -116,8 +129,12 @@ const handleBarClick = async (cardId) => {
 // 处理折线图点击 - 钻取跳转对应日期的订单明细
 const handleLineClick = async (date) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('date', date);
+  const tableComponent = getTableComponent();
+  if (
+    tableComponent &&
+    typeof tableComponent.handleStatsFilter === 'function'
+  ) {
+    tableComponent.handleStatsFilter('date', date);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
@@ -148,14 +165,24 @@ const secondShow = ref(false);
 
 // 组件挂载时获取统计数据
 onMounted(() => {
+  console.log('组件挂载，开始获取统计数据');
   fetchStatsData();
 });
+
+// 监听 statsData 变化，确保图表能正确渲染
+watch(
+  () => statsData.value,
+  (newVal) => {
+    console.log('statsData 变化:', newVal);
+  },
+  { deep: true }
+);
 </script>
 <template>
   <div class="common-index">
     <!-- 统计可视化组件，根据showStats状态显示/隐藏 -->
     <CardOrderStats
-      v-if="showStats"
+      v-if="showStats && isStatsLoaded"
       :data="statsData"
       @card-click="handleCardClick"
       @bar-click="handleBarClick"

@@ -26,10 +26,12 @@ export function exportCardOrder() {
 }
 
 /** 批量导出卡种订单数据
+ * @param {Object} params - 请求参数
+ * @param {Array<number>} params.ids - 订单ID列表
  * @returns {Promise}
  */
-export function batchExportCardOrder() {
-  return requestClient.download('/marketop/card-order/batch-export');
+export function batchExportCardOrder(params) {
+  return requestClient.download('/marketop/card-order/batch-export', { params });
 }
 
 // ==================== 列表行交互操作接口 ====================
@@ -44,21 +46,22 @@ export function getCardOrderDetail(params) {
 }
 
 /** 支付订单
- * @param {Object} data - 请求参数
- * @param {number} data.id - 订单ID
+ * @param {Object} params - 请求参数
+ * @param {number} params.id - 订单ID
  * @returns {Promise}
  */
-export function payCardOrder(data) {
-  return requestClient.put('/marketop/card-order/pay', data);
+export function payCardOrder(params) {
+  return requestClient.put('/marketop/card-order/pay', null,{
+    params,
+  });
 }
-
 /** 激活订单
  * @param {Object} data - 请求参数
  * @param {number} data.id - 订单ID
  * @returns {Promise}
  */
 export function activeCardOrder(data) {
-  return requestClient.put('/marketop/card-order/active', data);
+  return requestClient.put('/marketop/card-order/activate', data);
 }
 
 /** 开票
@@ -84,12 +87,8 @@ export function cancelCardOrder(data) {
 // ==================== 数据可视化图表接口 ====================
 
 /** 卡种订单统计（折线图 + 柱状图 + 卡片）
- * @param {Object} params - 请求参数
- * @param {string} params.startTime - 统计开始时间
- * @param {string} params.endTime - 统计结束时间
- * @param {number} params.stationId - 场站ID，支持按场站筛选
  * @returns {Promise}
  */
-export function getCardOrderChart(params) {
-  return requestClient.get('/marketop/card-order/chart', { params });
+export function getCardOrderChart() {
+  return requestClient.get('/marketop/card-order/chart');
 }

@@ -1,15 +1,18 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue';
 
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj } from '@vben/hooks';
 import { ElMessage } from 'element-plus';
 
 import RuleConfigStats from './components/RuleConfigStats.vue';
 import Table from './table/index.vue';
+import { getRuleConfigChart } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/ruleConfig';
 
 import '#/genchuan-components/page/index.scss';
 
 // 控制统计组件显示/隐藏的状态
-const showStats = ref(false);
+const showStats = ref(true);
 
 // 切换统计组件显示/隐藏状态
 const toggleStats = () => {
@@ -23,66 +26,144 @@ const toggleStats = () => {
 const statsData = ref({
   cards: [],
   pieData: [],
+  barData: [],
 });
 
-// 获取统计数据（模拟数据，实际应从API获取）
+// 获取规则类型字典标签
+const getTypeLabel = (type) => {
+  const dict = getDictObj(DICT_TYPE.RULE_CONFIG_TYPE, String(type));
+  return dict ? dict.label : type;
+};
+
+// 获取适用场景字典标签
+const getSceneLabel = (scene) => {
+  const dict = getDictObj(DICT_TYPE.RULE_CONFIG_SCENE, String(scene));
+  return dict ? dict.label : scene;
+};
+
+// 获取统计数据
 const fetchStatsData = async () => {
   try {
-    // TODO: 替换为实际API调用
-    // const response = await getRuleConfigChart();
+    const response = await getRuleConfigChart();
+    if (!response) {
+      throw new Error('获取统计数据失败');
+    }
 
-    // 模拟统计数据
-    const mockData = {
-      activeCount: 5,
-      matchRate: '78.5%',
-      typeDistribution: [
-        { name: '获取规则', value: 3 },
-        { name: '消耗规则', value: 2 },
-        { name: '赠送规则', value: 3 },
-      ],
-    };
+    const data = response.data || response;
 
     // 组装卡片数据
     statsData.value.cards = [
       {
         title: '生效配置数',
-        value: mockData.activeCount,
+        value: data.enableCount || 0,
         color: '#4A90E2',
         type: 'active',
         desc: '已生效的规则数量',
       },
       {
         title: '规则匹配率',
-        value: mockData.matchRate,
+        value: `${(data.matchRate || 0).toFixed(2)}%`,
         color: '#50E3C2',
         type: 'matchRate',
         desc: '规则匹配成功率',
       },
     ];
 
-    // 组装饼图数据
-    statsData.value.pieData = mockData.typeDistribution;
+    // 组装饼图数据（使用 typeCountList）
+    statsData.value.pieData = (data.typeCountList || []).map((item) => ({
+      name: getTypeLabel(item.type),
+      value: item.count,
+      type: item.type,
+    }));
+
+    // 组装柱状图数据（使用 sceneCountList）
+    statsData.value.barData = (data.sceneCountList || []).map((item) => ({
+      name: getSceneLabel(item.scene),
+      value: item.count,
+      scene: item.scene,
+    }));
   } catch (error) {
     ElMessage.error('获取统计数据失败');
     console.error(error);
+
+    // 使用模拟数据作为备用
+    const mockData = {
+      enableCount: 5,
+      matchRate: 0.785,
+      typeCountList: [
+        { type: '0', count: 3 },
+        { type: '1', count: 2 },
+        { type: '2', count: 3 },
+      ],
+      sceneCountList: [
+        { scene: '0', count: 8 },
+        { scene: '1', count: 3 },
+        { scene: '2', count: 5 },
+        { scene: '3', count: 8 },
+      ],
+    };
+
+    statsData.value.cards = [
+      {
+        title: '生效配置数',
+        value: mockData.enableCount,
+        color: '#4A90E2',
+        type: 'active',
+        desc: '已生效的规则数量',
+      },
+      {
+        title: '规则匹配率',
+        value: `${(mockData.matchRate * 100).toFixed(1)}%`,
+        color: '#50E3C2',
+        type: 'matchRate',
+        desc: '规则匹配成功率',
+      },
+    ];
+
+    statsData.value.pieData = mockData.typeCountList.map((item) => ({
+      name: getTypeLabel(item.type),
+      value: item.count,
+      type: item.type,
+    }));
+
+    statsData.value.barData = mockData.sceneCountList.map((item) => ({
+      name: getSceneLabel(item.scene),
+      value: item.count,
+      scene: item.scene,
+    }));
   }
 };
 
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (type, value) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('card', type, value);
+  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
+    tableInstance.handleStatsFilter('card', type, value);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
 };
 
+const tableRef = ref(null);
+
 // 处理饼图点击 - 钻取筛选
-const handlePieClick = async (typeName) => {
+const handlePieClick = async (type, typeName) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('type', null, typeName);
+  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
+    tableInstance.handleStatsFilter('type', type, typeName);
+  } else {
+    console.warn('tableRef not ready or handleStatsFilter not available');
+  }
+};
+
+// 处理柱状图点击 - 钻取筛选
+const handleBarClick = async (scene, sceneName) => {
+  await nextTick();
+  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
+    tableInstance.handleStatsFilter('scene', scene, sceneName);
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
@@ -94,8 +175,6 @@ const changeArrowStatus = () => {
     v.secondShow = secondShow.value;
   });
 };
-
-const tableRef = ref(null);
 
 // 使用computed确保showStats是响应式的
 const showStatsValue = computed(() => showStats.value);
@@ -124,6 +203,7 @@ onMounted(() => {
       :data="statsData"
       @card-click="handleCardClick"
       @pie-click="handlePieClick"
+      @bar-click="handleBarClick"
     />
     <!-- 箭头图标已屏蔽 -->
     <!--

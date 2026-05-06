@@ -86,6 +86,7 @@ const [Form, formApi] = useVbenForm({
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
+  title: getTitle,
   onCancel() {
     formDrawerApi.close();
   },
@@ -156,18 +157,19 @@ async function handleEdit(row) {
   try {
     const response = await getCardConfigDetail({ id: row.id });
     if (response && response.code === 200 && response.data) {
-      formDrawerApi.open();
+      // 先设置数据，再打开抽屉，确保标题正确显示
       formDrawerApi.setData(response.data);
+      formDrawerApi.open();
     } else {
       // 使用静态数据
-      formDrawerApi.open();
       formDrawerApi.setData(row);
+      formDrawerApi.open();
     }
   } catch (error) {
     console.error('获取详情失败:', error);
     // 使用静态数据
-    formDrawerApi.open();
     formDrawerApi.setData(row);
+    formDrawerApi.open();
   } finally {
     loadingInstance.close();
   }
@@ -395,15 +397,24 @@ const handleStatsFilter = (type, value) => {
   if (type === 'card') {
     // 卡片点击 - 生效配置数或累计卡种销量
     filterStatsType.value = value;
-    ElMessage.info(
-      `已筛选: ${value === 'effective' ? '生效配置' : '销量统计'}`,
-    );
+    // ElMessage.info(
+    //   `已筛选: ${value === 'effective' ? '生效配置' : '销量统计'}`,
+    // );
   } else if (type === 'type') {
     // 饼图点击 - 按卡种类型筛选
     filterType.value = value;
-    const typeName =
-      dataObj.apilist.find((v) => v.type === value)?.typeName || value;
+    const typeName = getCardConfigTypeLabel(value);
     ElMessage.info(`已筛选卡种类型: ${typeName}`);
+  } else if (type === 'scope') {
+    // 柱状图点击 - 按适用范围筛选
+    filterScope.value = value;
+    const scopeName = getCardConfigScopeLabel(value);
+    ElMessage.info(`已筛选适用范围: ${scopeName}`);
+  } else if (type === 'status') {
+    // 卡片点击 - 按配置状态筛选（生效配置数）
+    filterStatus.value = value;
+    const statusName = getCardConfigStatusLabel(value);
+    ElMessage.info(`已筛选配置状态: ${statusName}`);
   }
   gridApi.query();
 };

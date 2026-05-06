@@ -98,7 +98,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     }
     const values = await formApi.getValues();
     const loadingInstance = ElLoading.service({
-      text: formData.value?.id ? '保存中...' : '创建中...',
+      text: formData.value?.id ? '保存..' : '创建..',
     });
     try {
       if (formData.value?.id) {
@@ -129,7 +129,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
 });
 
-/** 刷新表格 - 同时清除所有快捷筛选 */
+/** 刷新表格 - 同时清除所有快捷筛选*/
 function handleRefresh() {
   // 清除所有快捷筛选变量
   filterType.value = '';
@@ -146,17 +146,17 @@ const handleStatsFilter = (type, subType, value) => {
   if (type === 'card') {
     // 卡片点击 - 生效配置数或规则匹配率
     filterStatsType.value = subType;
-    ElMessage.info(`已筛选: ${subType === 'active' ? '生效配置' : '规则匹配率'}`);
+    ElMessage.info(`已筛选 ${subType === 'active' ? '生效配置' : '规则匹配率'}`);
   } else if (type === 'type') {
     // 饼图扇区点击 - 按类型筛选
-    // 根据类型名称找到对应的类型值
-    const typeMap = {
-      '获取规则': '0',
-      '消耗规则': '1',
-      '赠送规则': '2',
-    };
-    filterType.value = typeMap[value] || '';
+    // subType 是类型编码，value 是类型名称
+    filterType.value = subType || '';
     ElMessage.info(`已筛选规则类型: ${value}`);
+  } else if (type === 'scene') {
+    // 柱状图柱形点击 - 按适用场景筛选
+    // subType 是场景编码，value 是场景名称
+    filterScene.value = subType || '';
+    ElMessage.info(`已筛选适用场景: ${value}`);
   }
   gridApi.query();
 };
@@ -223,10 +223,10 @@ function handleDisable(row) {
   });
 }
 
-/** 处理状态变更确认 */
+/** 处理状态变更确认*/
 async function handleStatusConfirm({ row, actionType }) {
   const loadingInstance = ElLoading.service({
-    text: actionType === 'activate' ? '生效中...' : '禁用中...',
+    text: actionType === 'activate' ? '生效..' : '禁用',
   });
   try {
     if (actionType === 'activate') {
@@ -250,12 +250,12 @@ function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
-// 快捷筛选变量
+// 快捷筛选变
 const filterType = ref('');
 const filterStatus = ref('');
 const filterScene = ref('');
 
-// 统计组件钻取筛选变量
+// 统计组件钻取筛选
 const filterStatsType = ref('');
 
 const dataObj = reactive({
@@ -266,7 +266,7 @@ const dataObj = reactive({
   pageSize: 10,
   list: [],
   searchParams: {},
-  // 静态数据备份
+  // 静态数据备用
   staticData: dataList(),
   useStaticData: false,
 });
@@ -325,7 +325,7 @@ const getTableData = async (pageObj) => {
       throw new Error('接口返回数据为空');
     }
   } catch (error) {
-    console.error('获取规则配置数据失败，使用静态数据:', error);
+    console.error('获取规则配置数据失败，使用静态数据', error);
     dataObj.useStaticData = true;
     // 使用静态数据
     const staticData = dataObj.staticData;
@@ -410,7 +410,7 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 
-// ==================== 快捷筛选处理 ====================
+// ==================== 快捷筛选处理====================
 
 // 处理规则类型点击
 const handleTypeClick = (type) => {
@@ -452,7 +452,7 @@ function getTypeLabel(type) {
   return dict ? dict.label : type;
 }
 
-/** 获取规则状态标签文本 */
+/** 获取规则状态标签文字*/
 function getStatusLabel(status) {
   const dict = getDictObj(DICT_TYPE.RULE_CONFIG_STATUS, String(status));
   return dict ? dict.label : status;
@@ -477,7 +477,7 @@ function getSceneLabel(scene) {
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
-    <!--   状态变更确认弹窗 -->
+    <!--   状态变更确认弹窗-->
     <StatusConfirmDialog
       ref="statusConfirmDialogRef"
       @confirm="handleStatusConfirm"
@@ -487,13 +487,13 @@ function getSceneLabel(scene) {
     </Drawer>
 
     <Grid>
-      <!-- 快捷筛选标签 -->
+      <!-- 快捷筛选标签-->
       <template #table-title>
         <div
           class="tabel-tabs"
           style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
         >
-          <!-- 规则类型筛选标签 -->
+          <!-- 规则类型筛选标签-->
           <ElTag
             v-if="filterType"
             type="primary"
@@ -503,7 +503,7 @@ function getSceneLabel(scene) {
           >
             规则类型：{{ getTypeLabel(filterType) }}
           </ElTag>
-          <!-- 规则状态筛选标签 -->
+          <!-- 规则状态筛选标签-->
           <ElTag
             v-if="filterStatus"
             type="success"
@@ -513,7 +513,7 @@ function getSceneLabel(scene) {
           >
             规则状态：{{ getStatusLabel(filterStatus) }}
           </ElTag>
-          <!-- 适用场景筛选标签 -->
+          <!-- 适用场景筛选标签-->
           <ElTag
             v-if="filterScene"
             type="warning"
@@ -523,7 +523,7 @@ function getSceneLabel(scene) {
           >
             适用场景：{{ getSceneLabel(filterScene) }}
           </ElTag>
-          <!-- 统计组件筛选标签 -->
+          <!-- 统计组件筛选标签-->
           <ElTag
             v-if="filterStatsType"
             type="info"
@@ -538,11 +538,11 @@ function getSceneLabel(scene) {
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
+<!--          <IconButton-->
+<!--            content="导出"-->
+<!--            icon-name="download"-->
+<!--            @click="handleExport"-->
+<!--          />-->
           <IconButton
             content="搜索"
             icon-name="search"
@@ -581,10 +581,10 @@ function getSceneLabel(scene) {
           {{ getTypeLabel(row.type) }}
         </ElTag>
       </template>
-      <!-- 赠送比例插槽 - 点击筛选同比例规则配置 -->
+      <!-- 赠送比例插槽- 点击筛选同比例规则配置 -->
       <template #giftRatio="{ row }">
         <el-text
-          @click="ElMessage.info(`筛选赠送比例: ${row.giftRatio}`)"
+          @click="ElMessage.info(`筛选赠送比例 ${row.giftRatio}`)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -592,7 +592,7 @@ function getSceneLabel(scene) {
           {{ row.giftRatio }}
         </el-text>
       </template>
-      <!-- 规则状态插槽 - 点击筛选同状态规则配置 -->
+      <!-- 规则状态插槽- 点击筛选同状态规则配插槽-->
       <template #status="{ row }">
         <ElTag
           @click="handleStatusClick(row.status)"
@@ -612,7 +612,7 @@ function getSceneLabel(scene) {
           {{ getSceneLabel(row.scene) }}
         </ElTag>
       </template>
-      <!-- 审核人插槽 - 点击跳转操作人员详情弹窗 -->
+      <!-- 审核人插槽- 点击跳转操作人员详情弹窗 -->
       <template #auditorName="{ row }">
         <el-text
           v-if="row.auditorName"
@@ -636,7 +636,7 @@ function getSceneLabel(scene) {
           {{ row.matchCount }}
         </el-text>
       </template>
-      <!-- 行操作按钮 -->
+      <!-- 行操作按状态-->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
@@ -673,8 +673,8 @@ function getSceneLabel(scene) {
             <ArrowUp />
           </el-icon>
           <span>
-            本页统计：规则配置数量: {{ dataObj.list.length }}; 已生效:
-            {{ dataObj.list.filter((v) => v.status === '1').length }}; 未生效:
+            本页统计：规则配置数量 {{ dataObj.list.length }}; 已生效
+            {{ dataObj.list.filter((v) => v.status === '1').length }}; 未生效
             {{ dataObj.list.filter((v) => v.status === '0').length }}
           </span>
         </div>

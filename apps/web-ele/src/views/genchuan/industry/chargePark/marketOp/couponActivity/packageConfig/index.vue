@@ -1,6 +1,9 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue';
 
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj } from '@vben/hooks';
+
 import { getPackageConfigChart } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/packageConfig';
 
 import PackageConfigStats from './components/PackageConfigStats.vue';
@@ -8,8 +11,14 @@ import Table from './table/index.vue';
 
 import '#/genchuan-components/page/index.scss';
 
+// 获取券包类型字典标签
+const getPackageConfigTypeLabel = (type) => {
+  const dict = getDictObj(DICT_TYPE.PACKAGE_CONFIG_TYPE, String(type));
+  return dict ? dict.label : type;
+};
+
 // 控制统计组件显示/隐藏的状态
-const showStats = ref(false);
+const showStats = ref(true);
 
 // 切换统计组件显示/隐藏状态
 const toggleStats = () => {
@@ -25,15 +34,15 @@ const statsData = ref({
   barData: [],
 });
 
-// 静态统计数据 - 接口失败时使用
+// 静态统计数据 - 接口失败时使用（按照接口返回格式）
 const staticStatsData = {
-  typeDistribution: [
-    { name: '新手包', value: 2 },
-    { name: '节日包', value: 2 },
-    { name: '日常包', value: 4 },
+  enableCount: 12,
+  salesCount: 16,
+  typeList: [
+    { type: '0', count: 7 },
+    { type: '1', count: 4 },
+    { type: '2', count: 5 },
   ],
-  effectiveCount: 5,
-  totalSaleCount: 985,
 };
 
 // 组装统计数据
@@ -42,24 +51,25 @@ const assembleStatsData = (data) => {
   statsData.value.cards = [
     {
       title: '生效配置数',
-      value: data.effectiveCount || 0,
+      value: data.enableCount || 0,
       color: '#4A90E2',
-      filterType: 'effective',
+      filterType: 'enable',
       desc: '已生效的券包配置',
     },
     {
       title: '累计券包销量',
-      value: data.totalSaleCount || 0,
+      value: data.salesCount || 0,
       color: '#50E3C2',
       filterType: 'sale',
       desc: '累计销售数量',
     },
   ];
 
-  // 组装柱状图数据 - 券包类型分布
-  statsData.value.barData = (data.typeDistribution || []).map((item) => ({
-    name: item.name,
-    value: item.value,
+  // 组装柱状图数据 - 券包类型分布（使用字典标签）
+  statsData.value.barData = (data.typeList || []).map((item) => ({
+    name: getPackageConfigTypeLabel(item.type),
+    value: item.count,
+    type: item.type, // 保留原始类型值用于钻取
   }));
 };
 
@@ -67,11 +77,12 @@ const assembleStatsData = (data) => {
 const fetchStatsData = async () => {
   try {
     const response = await getPackageConfigChart();
-    if (response && response.code === 200 && response.data) {
+    if (response && response.data) {
       const data = response.data;
 
       // 检查数据是否为空
-      const hasData = data.effectiveCount > 0 || (data.typeDistribution && data.typeDistribution.length > 0);
+      const hasData =
+        data.enableCount > 0 || (data.typeList && data.typeList.length > 0);
 
       if (hasData) {
         assembleStatsData(data);
@@ -87,7 +98,7 @@ const fetchStatsData = async () => {
     }
   } catch (error) {
     // 接口调用失败，错误信息打印到控制台，使用静态数据
-    console.error('获取统计数据失败，使用静态数据:', error);
+    console.error('获取统计数据失败，使用静态数据', error);
     assembleStatsData(staticStatsData);
   }
 };
@@ -95,16 +106,22 @@ const fetchStatsData = async () => {
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (card) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('card', card.filterType);
+  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
+    tableInstance.handleStatsFilter('card', card.filterType);
+  } else {
+    console.warn('tableRef not ready or handleStatsFilter not available');
   }
 };
 
-// 处理柱状图点击 - 钻取筛选
-const handleBarClick = async (typeName) => {
+// 处理柱状图点击 - 钻取筛选（按券包类型）
+const handleBarClick = async (type) => {
   await nextTick();
-  if (tableRef.value && typeof tableRef.value.handleStatsFilter === 'function') {
-    tableRef.value.handleStatsFilter('type', typeName);
+  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
+    tableInstance.handleStatsFilter('type', type);
+  } else {
+    console.warn('tableRef not ready or handleStatsFilter not available');
   }
 };
 
