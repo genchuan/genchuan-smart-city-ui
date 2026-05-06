@@ -74,6 +74,17 @@ export function useFormSchema() {
       isSearch: true,
     },
     {
+      fieldName: 'stationName',
+      label: '场站名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入场站名称',
+        maxLength: 50,
+      },
+      labelWidth: 120,
+      isSearch: true,
+    },
+    {
       fieldName: 'createOrderTimeStart',
       label: '订单生成时间',
       component: 'DatePicker',
@@ -230,6 +241,12 @@ export function useGridColumns() {
       minWidth: 120,
       sortable: true,
       slots: { default: 'plateNo' },
+    },
+    {
+      field: 'stationName',
+      title: '场站名称',
+      minWidth: 150,
+      sortable: true,
     },
     {
       field: 'parkDuration',
