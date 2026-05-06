@@ -38,6 +38,10 @@ import { UserCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/user
 import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import {
+  buildActiveFilterTags,
+  type ActiveFilterTag,
+} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildPlateAuthQueryParams,
@@ -99,6 +103,50 @@ const vehicleDialogVisible = ref(false);
 // 快捷筛选变量
 const filterStatus = ref('');
 const searchParams = ref<Record<string, any>>({});
+
+const quickFilterConfigs = {
+  status: {
+    label: '认证状态',
+    type: 'warning',
+  },
+} as const;
+
+const searchFilterConfigs = {
+  applyTime: {
+    formatter: (value: any[]) => value.join(' 至 '),
+    label: '申请时间',
+    type: 'danger',
+  },
+  plateNo: {
+    label: '车牌号码',
+    type: 'primary',
+  },
+  status: {
+    label: '认证状态',
+    type: 'warning',
+  },
+  userId: {
+    label: '所属用户',
+    type: 'info',
+  },
+} as const;
+
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: quickFilterConfigs,
+      source: 'quick',
+      values: {
+        status: filterStatus.value,
+      },
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
+);
 
 // 搜索抽屉
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -333,7 +381,7 @@ async function fetchPlateAuthDetail(
 /** 刷新表格 */
 function handleRefresh() {
   filterStatus.value = '';
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 联动刷新页面 */
@@ -354,7 +402,7 @@ async function resetSearch() {
   checkedRows.value = [];
   filterStatus.value = '';
   await queryFormApi.resetForm();
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 设置筛选条件 */
@@ -364,8 +412,8 @@ async function setSearchValues(values: Record<string, any>) {
     ...values,
   };
   filterStatus.value = '';
-  await queryFormApi.setValues(searchParams.value);
-  return gridApi.query();
+  await syncQueryFormValues();
+  return gridApi.reload();
 }
 
 /** 重新计算表格布局 */
@@ -625,19 +673,40 @@ async function handleOpenCar(row: PlateAuthRow) {
 /** 打开搜索抽屉 */
 async function handleSerachShow() {
   drawerApi.open();
+  await syncQueryFormValues();
+}
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
   await queryFormApi.setValues(searchParams.value);
 }
 
 /** 按状态筛选 */
 function handleFilterStatus(status: string) {
   filterStatus.value = filterStatus.value === status ? '' : status;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消状态筛选 */
 function handleCancelStatusFilter() {
   filterStatus.value = '';
-  gridApi.query();
+  gridApi.reload();
+}
+
+/** 移除筛选标签 */
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'quick') {
+    if (tag.key === 'status') {
+      handleCancelStatusFilter();
+    }
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
 }
 
 const handleOpenDetail = (row: PlateAuthRow) => {
@@ -684,13 +753,14 @@ async function handleOpenOperator(row: PlateAuthRow) {
             "
           >
             <ElTag
-              v-if="filterStatus"
-              type="warning"
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
               closable
               style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelStatusFilter"
+              @close="handleRemoveFilterTag(tag)"
             >
-              认证状态：{{ filterStatus }}
+              {{ tag.label }}：{{ tag.value }}
             </ElTag>
           </div>
         </template>

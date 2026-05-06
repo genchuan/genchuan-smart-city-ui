@@ -33,6 +33,10 @@ import { UserCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/user
 import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import {
+  buildActiveFilterTags,
+  type ActiveFilterTag,
+} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildUserCarQueryParams,
@@ -102,6 +106,41 @@ const filterStatus = ref('');
 const filterPlateColor = ref('');
 const searchParams = ref<Record<string, any>>({});
 
+const quickFilterConfigs = {
+  plateColor: {
+    label: '车牌颜色',
+    type: 'success',
+  },
+  status: {
+    label: '绑定状态',
+    type: 'warning',
+  },
+} as const;
+
+const searchFilterConfigs = {
+  bindTime: {
+    formatter: (value: any[]) => value.join(' 至 '),
+    label: '绑定时间',
+    type: 'danger',
+  },
+  carType: {
+    label: '车辆类型',
+    type: 'info',
+  },
+  plateNo: {
+    label: '车牌号码',
+    type: 'primary',
+  },
+  status: {
+    label: '绑定状态',
+    type: 'warning',
+  },
+  userId: {
+    label: '所属用户',
+    type: 'info',
+  },
+} as const;
+
 const [Form, formApi] = useVbenForm({
   commonConfig: {
     componentProps: {
@@ -114,6 +153,24 @@ const [Form, formApi] = useVbenForm({
   schema: useCreateSchema(userSelectOptions.value),
   showDefaultActions: false,
 });
+
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: quickFilterConfigs,
+      source: 'quick',
+      values: {
+        plateColor: filterPlateColor.value,
+        status: filterStatus.value,
+      },
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
+);
 
 /** 获取车辆详情 */
 async function fetchUserCarDetail(
@@ -370,7 +427,7 @@ async function loadUserOptions() {
 function handleRefresh() {
   filterStatus.value = '';
   filterPlateColor.value = '';
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 联动刷新页面 */
@@ -386,7 +443,7 @@ async function resetSearch() {
   filterStatus.value = '';
   filterPlateColor.value = '';
   await queryFormApi.resetForm();
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 设置筛选条件 */
@@ -397,8 +454,8 @@ async function setSearchValues(values: Record<string, any>) {
   };
   filterStatus.value = '';
   filterPlateColor.value = '';
-  await queryFormApi.setValues(searchParams.value);
-  return gridApi.query();
+  await syncQueryFormValues();
+  return gridApi.reload();
 }
 
 /** 重新计算表格布局 */
@@ -691,32 +748,55 @@ async function handleImportCars() {
 /** 打开搜索抽屉 */
 async function handleSerachShow() {
   drawerApi.open();
+  await syncQueryFormValues();
+}
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
   await queryFormApi.setValues(searchParams.value);
 }
 
 /** 按状态筛选 */
 function handleFilterStatus(status: string) {
   filterStatus.value = filterStatus.value === status ? '' : status;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 按车牌颜色筛选 */
 function handleFilterPlateColor(plateColor: string) {
   filterPlateColor.value =
     filterPlateColor.value === plateColor ? '' : plateColor;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消状态筛选 */
 function handleCancelStatusFilter() {
   filterStatus.value = '';
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消车牌颜色筛选 */
 function handleCancelPlateColorFilter() {
   filterPlateColor.value = '';
-  gridApi.query();
+  gridApi.reload();
+}
+
+/** 移除筛选标签 */
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'quick') {
+    if (tag.key === 'status') {
+      handleCancelStatusFilter();
+    } else if (tag.key === 'plateColor') {
+      handleCancelPlateColorFilter();
+    }
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
 }
 
 const handleOpenDetail = (row: UserCarRow) => {
@@ -738,25 +818,15 @@ const handleOpenDetail = (row: UserCarRow) => {
               align-items: center;
             "
           >
-            <!-- 状态筛选标签 -->
             <ElTag
-              v-if="filterStatus"
-              type="warning"
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
               closable
-              @close="handleCancelStatusFilter"
               style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleRemoveFilterTag(tag)"
             >
-              绑定状态：{{ filterStatus }}
-            </ElTag>
-            <!-- 车牌颜色筛选标签 -->
-            <ElTag
-              v-if="filterPlateColor"
-              type="success"
-              closable
-              @close="handleCancelPlateColorFilter"
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-            >
-              车牌颜色：{{ filterPlateColor }}
+              {{ tag.label }}：{{ tag.value }}
             </ElTag>
           </div>
         </template>
@@ -925,9 +995,7 @@ const handleOpenDetail = (row: UserCarRow) => {
     />
 
     <ElDialog v-model="importDialogVisible" title="导入车辆" width="520px">
-      <div class="import-tip">
-        提供标准模板下载，上传后按文档要求模拟导入校验。
-      </div>
+      <div class="import-tip">下载模板后上传文件即可。</div>
       <div class="import-actions">
         <ElButton @click="handleDownloadTemplate">下载模板</ElButton>
       </div>

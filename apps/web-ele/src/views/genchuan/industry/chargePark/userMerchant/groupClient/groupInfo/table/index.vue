@@ -29,6 +29,10 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { GroupInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupInfo';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import {
+  buildActiveFilterTags,
+  type ActiveFilterTag,
+} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildGroupInfoQueryParams,
@@ -71,6 +75,50 @@ const drillFilters = ref({
   status: '',
 });
 const searchParams = ref<Record<string, any>>({});
+
+const drillFilterConfigs = {
+  contact: {
+    label: '联系人',
+    type: 'info',
+  },
+  groupType: {
+    label: '集团类型',
+    type: 'success',
+  },
+  phone: {
+    formatter: (value: any) => maskPhone(String(value)),
+    label: '联系手机号',
+    type: 'primary',
+  },
+  status: {
+    label: '集团状态',
+    type: 'warning',
+  },
+} as const;
+
+const searchFilterConfigs = {
+  contact: {
+    label: '联系人',
+    type: 'info',
+  },
+  groupType: {
+    label: '集团类型',
+    type: 'success',
+  },
+  name: {
+    label: '集团名称',
+    type: 'info',
+  },
+  registerTime: {
+    formatter: (value: any[]) => value.join(' 至 '),
+    label: '注册时间',
+    type: 'danger',
+  },
+  status: {
+    label: '集团状态',
+    type: 'warning',
+  },
+} as const;
 const formData = ref<GroupInfoRow>();
 const formMode = ref<'create' | 'edit'>('create');
 const formSource = ref<GroupInfoDetailVO>();
@@ -96,6 +144,21 @@ const detailData = computed(() => {
     auditLogsSummary: formatAuditLogs(detailObj.value.auditLogs),
   };
 });
+
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: drillFilterConfigs,
+      source: 'drill',
+      values: drillFilters.value,
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
+);
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -327,7 +390,7 @@ function handleRefresh() {
     phone: '',
     status: '',
   };
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 联动刷新页面 */
@@ -347,7 +410,7 @@ async function resetSearch() {
     status: '',
   };
   await queryFormApi.resetForm();
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 设置筛选条件 */
@@ -362,8 +425,8 @@ async function setSearchValues(values: Record<string, any>) {
     phone: '',
     status: '',
   };
-  await queryFormApi.setValues(searchParams.value);
-  return gridApi.query();
+  await syncQueryFormValues();
+  return gridApi.reload();
 }
 
 /** 重新计算表格布局 */
@@ -632,6 +695,11 @@ async function handleImportGroups() {
 /** 打开搜索抽屉 */
 async function handleSerachShow() {
   drawerApi.open();
+  await syncQueryFormValues();
+}
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
   await queryFormApi.setValues(searchParams.value);
 }
 
@@ -639,51 +707,73 @@ async function handleSerachShow() {
 function handleFilterContact(contact: string) {
   drillFilters.value.contact =
     drillFilters.value.contact === contact ? '' : contact;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 按手机号筛选 */
 function handleFilterPhone(phone: string) {
   drillFilters.value.phone = drillFilters.value.phone === phone ? '' : phone;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 按集团类型筛选 */
 function handleFilterGroupType(groupType: string) {
   drillFilters.value.groupType =
     drillFilters.value.groupType === groupType ? '' : groupType;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 按集团状态筛选 */
 function handleFilterStatus(status: GroupInfoRow['status']) {
   drillFilters.value.status =
     drillFilters.value.status === status ? '' : status;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消联系人筛选 */
 function handleCancelContactFilter() {
   drillFilters.value.contact = '';
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消手机号筛选 */
 function handleCancelPhoneFilter() {
   drillFilters.value.phone = '';
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消集团类型筛选 */
 function handleCancelGroupTypeFilter() {
   drillFilters.value.groupType = '';
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消集团状态筛选 */
 function handleCancelStatusFilter() {
   drillFilters.value.status = '';
-  gridApi.query();
+  gridApi.reload();
+}
+
+/** 移除筛选标签 */
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'drill') {
+    if (tag.key === 'contact') {
+      handleCancelContactFilter();
+    } else if (tag.key === 'phone') {
+      handleCancelPhoneFilter();
+    } else if (tag.key === 'groupType') {
+      handleCancelGroupTypeFilter();
+    } else if (tag.key === 'status') {
+      handleCancelStatusFilter();
+    }
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
 }
 
 /** 获取集团状态标签颜色 */
@@ -721,40 +811,14 @@ function getStatusTagType(status: GroupInfoRow['status']) {
             "
           >
             <ElTag
-              v-if="drillFilters.contact"
-              type="info"
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
               closable
               style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelContactFilter"
+              @close="handleRemoveFilterTag(tag)"
             >
-              联系人：{{ drillFilters.contact }}
-            </ElTag>
-            <ElTag
-              v-if="drillFilters.phone"
-              type="primary"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelPhoneFilter"
-            >
-              联系手机号：{{ maskPhone(drillFilters.phone) }}
-            </ElTag>
-            <ElTag
-              v-if="drillFilters.groupType"
-              type="success"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelGroupTypeFilter"
-            >
-              集团类型：{{ drillFilters.groupType }}
-            </ElTag>
-            <ElTag
-              v-if="drillFilters.status"
-              type="warning"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelStatusFilter"
-            >
-              集团状态：{{ drillFilters.status }}
+              {{ tag.label }}：{{ tag.value }}
             </ElTag>
           </div>
         </template>
@@ -939,9 +1003,7 @@ function getStatusTagType(status: GroupInfoRow['status']) {
     />
 
     <ElDialog v-model="importDialogVisible" title="导入集团" width="520px">
-      <div class="import-tip">
-        提供标准模板下载，上传后按文档要求调用真实导入接口。
-      </div>
+      <div class="import-tip">下载模板后上传文件即可。</div>
       <div class="import-actions">
         <ElButton @click="handleDownloadTemplate">下载模板</ElButton>
       </div>

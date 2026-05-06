@@ -10,7 +10,7 @@ import type {
 
 import type { GroupCarDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupCar';
 
-import { nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 
@@ -32,6 +32,10 @@ import { GroupCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/gro
 import { GroupInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupInfo';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import {
+  buildActiveFilterTags,
+  type ActiveFilterTag,
+} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildGroupCarQueryParams,
@@ -72,6 +76,41 @@ const drillFilters = ref({
   status: '',
 });
 const searchParams = ref<Record<string, any>>({});
+
+const drillFilterConfigs = {
+  plateColor: {
+    label: '车牌颜色',
+    type: 'success',
+  },
+  status: {
+    label: '绑定状态',
+    type: 'warning',
+  },
+} as const;
+
+const searchFilterConfigs = {
+  bindTime: {
+    formatter: (value: any[]) => value.join(' 至 '),
+    label: '绑定时间',
+    type: 'danger',
+  },
+  carType: {
+    label: '车辆类型',
+    type: 'info',
+  },
+  groupId: {
+    label: '所属集团',
+    type: 'info',
+  },
+  plateNo: {
+    label: '车牌号码',
+    type: 'primary',
+  },
+  status: {
+    label: '绑定状态',
+    type: 'warning',
+  },
+} as const;
 const formData = ref<GroupCarRow>();
 const formMode = ref<'create' | 'edit'>('create');
 const formSource = ref<GroupCarDetailVO>();
@@ -86,6 +125,21 @@ const rejectReason = ref('');
 const rejectRow = ref<GroupCarRow>();
 
 const detailData = ref();
+
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: drillFilterConfigs,
+      source: 'drill',
+      values: drillFilters.value,
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
+);
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -377,7 +431,7 @@ function handleRefresh() {
     plateColor: '',
     status: '',
   };
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 联动刷新页面 */
@@ -396,7 +450,7 @@ async function resetSearch() {
     status: '',
   };
   await queryFormApi.resetForm();
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 设置筛选条件 */
@@ -409,8 +463,8 @@ async function setSearchValues(values: Record<string, any>) {
     plateColor: '',
     status: '',
   };
-  await queryFormApi.setValues(searchParams.value);
-  return gridApi.query();
+  await syncQueryFormValues();
+  return gridApi.reload();
 }
 
 /** 重新计算表格布局 */
@@ -667,7 +721,7 @@ async function handleRebind(row: GroupCarRow) {
 function handleFilterByPlateColor(plateColor: string) {
   drillFilters.value.plateColor =
     drillFilters.value.plateColor === plateColor ? '' : plateColor;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 下载导入模板 */
@@ -717,6 +771,11 @@ async function handleImportCars() {
 /** 打开搜索抽屉 */
 async function handleSerachShow() {
   drawerApi.open();
+  await syncQueryFormValues();
+}
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
   await queryFormApi.setValues(searchParams.value);
 }
 
@@ -724,19 +783,37 @@ async function handleSerachShow() {
 function handleFilterStatus(status: GroupCarRow['status']) {
   drillFilters.value.status =
     drillFilters.value.status === status ? '' : status;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消车牌颜色筛选 */
 function handleCancelPlateColorFilter() {
   drillFilters.value.plateColor = '';
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消绑定状态筛选 */
 function handleCancelStatusFilter() {
   drillFilters.value.status = '';
-  gridApi.query();
+  gridApi.reload();
+}
+
+/** 移除筛选标签 */
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'drill') {
+    if (tag.key === 'plateColor') {
+      handleCancelPlateColorFilter();
+    } else if (tag.key === 'status') {
+      handleCancelStatusFilter();
+    }
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
 }
 </script>
 
@@ -755,22 +832,14 @@ function handleCancelStatusFilter() {
             "
           >
             <ElTag
-              v-if="drillFilters.plateColor"
-              type="success"
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
               closable
               style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelPlateColorFilter"
+              @close="handleRemoveFilterTag(tag)"
             >
-              车牌颜色：{{ drillFilters.plateColor }}
-            </ElTag>
-            <ElTag
-              v-if="drillFilters.status"
-              type="warning"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelStatusFilter"
-            >
-              绑定状态：{{ drillFilters.status }}
+              {{ tag.label }}：{{ tag.value }}
             </ElTag>
           </div>
         </template>
@@ -939,9 +1008,7 @@ function handleCancelStatusFilter() {
     />
 
     <ElDialog v-model="importDialogVisible" title="导入集团车辆" width="520px">
-      <div class="import-tip">
-        提供标准模板下载，上传后按文档要求调用真实导入接口。
-      </div>
+      <div class="import-tip">下载模板后上传文件即可。</div>
       <div class="import-actions">
         <ElButton @click="handleDownloadTemplate">下载模板</ElButton>
       </div>
