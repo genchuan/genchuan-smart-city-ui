@@ -1,5 +1,6 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+
 import * as echarts from 'echarts';
 
 const props = defineProps({
@@ -65,15 +66,15 @@ const initChart = async () => {
     const option = {
       title: props.showTitle
         ? {
-          text: props.titleText,
-          left: 'center',
-          top: 10,
-          textStyle: { fontSize: 15, fontWeight: 300, color: '#6E7E91' },
-        }
+            text: props.titleText,
+            left: 'center',
+            top: 10,
+            textStyle: { fontSize: 15, fontWeight: 300, color: '#6E7E91' },
+          }
         : null,
       tooltip: {
         trigger: 'item',
-        formatter: '{b}<br/>数量：{c} 个<br/>占比：{d}%',
+        formatter: '{b}<br/>数量：{c}<br/>占比：{d}%',
         textStyle: { fontSize: 12 },
       },
       legend: {
@@ -127,19 +128,19 @@ const initChart = async () => {
 
     chartInstance.setOption(option, { notMerge: false, lazyUpdate: false });
 
-    // 绑定点击事件
     chartInstance.off('click');
     chartInstance.on('click', (params) => {
       if (params.componentType === 'series' && params.data) {
-        emit('pieClick', {
+        const payload = {
           name: params.name,
           value: params.value,
           percent: params.percent,
-        });
+        };
+        emit('pieClick', payload);
       }
     });
   } catch (error) {
-    console.error('ECharts初始化失败：', error);
+    console.error('ECharts 初始化失败', error);
     chartInstance = null;
   }
 };

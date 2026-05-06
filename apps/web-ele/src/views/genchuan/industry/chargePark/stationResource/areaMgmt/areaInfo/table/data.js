@@ -2,6 +2,7 @@ export const pageConfig = {
   apiName: 'AreaInfo',
   title: '片区信息',
   exportName: '片区信息数据.xlsx',
+  importTemplateName: '片区信息导入模板.xlsx',
   nameField: 'name',
   primaryField: 'areaNo',
   toolbar: ['create', 'import', 'export'],
@@ -20,6 +21,8 @@ export const pageConfig = {
   },
 };
 
+const statusOptions = ['未生效', '已生效', '已禁用'];
+
 export const searchFields = [
   { field: 'areaNo', label: '片区编号', type: 'input', required: false },
   { field: 'name', label: '片区名称', type: 'input', required: false },
@@ -30,7 +33,7 @@ export const searchFields = [
     field: 'status',
     label: '状态',
     type: 'select',
-    options: ['未生效', '已生效', '已禁用'],
+    options: statusOptions,
     required: false,
   },
 ];
@@ -54,8 +57,6 @@ export const formFields = [
     placeholder: '请输入手机号或座机号',
   },
   { field: 'remark', label: '备注', type: 'textarea', required: false },
-  { field: 'reserve1', label: '备用字段1', type: 'input', required: false },
-  { field: 'reserve2', label: '备用字段2', type: 'input', required: false },
 ];
 
 export const tableColumns = [
@@ -76,7 +77,13 @@ export const tableColumns = [
     drillType: 'stationList',
     drillLabel: '该片区场站列表',
   },
-  { field: 'status', label: '状态', minWidth: 120, drillType: 'filter' },
+  {
+    field: 'status',
+    label: '状态',
+    minWidth: 120,
+    options: statusOptions,
+    drillType: 'filter',
+  },
   {
     field: 'bindTime',
     label: '绑定时间',
@@ -85,8 +92,6 @@ export const tableColumns = [
   },
   { field: 'bindUserId', label: '绑定人', minWidth: 120, drillType: 'filter' },
   { field: 'remark', label: '备注', minWidth: 150 },
-  { field: 'reserve1', label: '备用字段1', minWidth: 140 },
-  { field: 'reserve2', label: '备用字段2', minWidth: 140 },
   { field: 'creator', label: '创建者', minWidth: 120, drillType: 'filter' },
   {
     field: 'createTime',
@@ -104,7 +109,6 @@ export const tableColumns = [
 ];
 
 export const detailFields = [
-  { key: 'id', label: 'ID', section: '基础信息' },
   { key: 'areaNo', label: '片区编号', section: '基础信息' },
   { key: 'name', label: '片区名称', section: '基础信息' },
   { key: 'district', label: '所属行政区划', section: '基础信息' },
@@ -112,13 +116,26 @@ export const detailFields = [
   { key: 'phone', label: '联系电话', section: '联系信息' },
   { key: 'stationCount', label: '覆盖场站数', section: '统计信息' },
   { key: 'remark', label: '备注', section: '详细信息' },
-  { key: 'reserve1', label: '备用字段1', section: '详细信息' },
-  { key: 'reserve2', label: '备用字段2', section: '详细信息' },
   { key: 'status', label: '状态', section: '状态信息' },
-  { key: 'bindTime', label: '绑定时间', section: '状态信息' },
+  {
+    key: 'bindTime',
+    label: '绑定时间',
+    section: '状态信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'bindUserId', label: '绑定人', section: '状态信息' },
   { key: 'creator', label: '创建者', section: '审计信息' },
-  { key: 'createTime', label: '创建时间', section: '审计信息' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'updater', label: '更新者', section: '审计信息' },
-  { key: 'updateTime', label: '更新时间', section: '审计信息' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
 ];

@@ -130,7 +130,7 @@ const areaBarXData = computed(() =>
   createBarXData(areaBarList.value, ['areaName']),
 );
 const areaBarSeriesData = computed(() =>
-  createBarSeriesData(areaBarList.value, ['stationCount'], '各片区场站数量'),
+  createBarSeriesData(areaBarList.value, ['stationCount'], '片区场站数'),
 );
 
 const typeBarXData = computed(() =>
@@ -140,7 +140,7 @@ const typeBarSeriesData = computed(() =>
   createBarSeriesData(
     stationTypeBarList.value,
     ['stationCount', 'value'],
-    '各类型场站数量',
+    '类型场站数',
   ),
 );
 
@@ -151,7 +151,7 @@ const orderBarSeriesData = computed(() =>
   createBarSeriesData(
     stationOrderBarList.value,
     ['orderCount', 'value'],
-    '各场站订单量',
+    '订单量',
   ),
 );
 
@@ -173,7 +173,7 @@ const lineXData = computed(() =>
 const lineSeriesData = computed(() => [
   {
     data: (chartData.value?.lineData || []).map((item) => item.orderCount ?? 0),
-    name: '本报表周期订单趋势',
+    name: '订单量',
     type: 'line',
     smooth: true,
   },
@@ -181,7 +181,7 @@ const lineSeriesData = computed(() => [
     data: (chartData.value?.lineData || []).map(
       (item) => item.expandProgress ?? 0,
     ),
-    name: '拓场进度趋势',
+    name: '拓展进度',
     type: 'line',
     smooth: true,
   },
@@ -189,7 +189,7 @@ const lineSeriesData = computed(() => [
     data: (chartData.value?.lineData || []).map(
       (item) => item.permissionUseCount ?? 0,
     ),
-    name: '权限使用趋势',
+    name: '权限使用次数',
     type: 'line',
     smooth: true,
   },
@@ -220,7 +220,6 @@ onMounted(loadChart);
 
 <template>
   <div v-loading="loading" class="park-chart-box">
-    <!-- 统一卡片区 -->
     <div v-if="hasCards" class="chart-box-left">
       <IndicatorClick
         v-for="item in chartCards"
@@ -232,7 +231,6 @@ onMounted(loadChart);
     </div>
 
     <div class="charts-wrapper">
-      <!-- 地图区域 -->
       <div v-if="hasMap" class="chart-wrapper map-wrapper">
         <StatsMap
           :data="mapData"
@@ -241,29 +239,26 @@ onMounted(loadChart);
         />
       </div>
 
-      <!-- 柱状图1：各片区场站数量 -->
       <div v-if="hasAreaBar" class="chart-wrapper">
         <BarClick
           class="chart-panel-inner"
-          title="各片区场站数量分布"
+          title="各片区场站数分布"
           :x-data="areaBarXData"
           :series-data="areaBarSeriesData"
           y-name="数量"
         />
       </div>
 
-      <!-- 柱状图2：各类型场站数量 -->
       <div v-if="hasTypeBar" class="chart-wrapper">
         <BarClick
           class="chart-panel-inner"
-          title="各类型场站数量分布"
+          title="各类型场站数分布"
           :x-data="typeBarXData"
           :series-data="typeBarSeriesData"
           y-name="数量"
         />
       </div>
 
-      <!-- 柱状图3：各场站订单量 -->
       <div v-if="hasOrderBar" class="chart-wrapper">
         <BarClick
           class="chart-panel-inner"
@@ -274,25 +269,23 @@ onMounted(loadChart);
         />
       </div>
 
-      <!-- 柱状图4：追缴完成率分布 -->
       <div v-if="hasRecoveryBar" class="chart-wrapper">
         <BarClick
           class="chart-panel-inner"
-          title="各场站追缴完成率分布"
+          title="各场站追缴完成率"
           :x-data="recoveryBarXData"
           :series-data="recoveryBarSeriesData"
-          y-name="百分比(%)"
+          y-name="完成率(%)"
         />
       </div>
 
-      <!-- 折线图区域 -->
       <div v-if="hasLine" class="chart-wrapper line-wrapper">
         <LineChartClick
           class="chart-panel-inner"
           title="周期订单及业务趋势"
           :x-data="lineXData"
           :series-data="lineSeriesData"
-          y-name="数值"
+          y-name="数量"
         />
       </div>
     </div>
