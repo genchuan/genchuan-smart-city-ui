@@ -11,7 +11,6 @@ export function useFormSchema() {
         min: 0,
       },
       labelWidth: 120,
-
     },
     {
       fieldName: 'orderNo',
@@ -53,8 +52,7 @@ export function useFormSchema() {
         placeholder: '请选择预约结束时间',
         format: 'YYYY-MM-DD HH:mm:ss',
       },
-      labelWidth: 120,
-
+      labelWidth: 120, 
     },
     {
       fieldName: 'actualStartTime',
@@ -66,7 +64,7 @@ export function useFormSchema() {
       },
       labelWidth: 120,
     },
-    
+
     {
       fieldName: 'actualEndTime',
       label: '实际使用结束时间',
@@ -89,13 +87,24 @@ export function useFormSchema() {
       labelWidth: 120,
 
     },
+     {
+      fieldName: 'stationName',
+      label: '场站名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入场站名称',
+        maxLength: 50,
+      },
+      labelWidth: 120,
+      isSearch: true,
+    },
     {
       fieldName: 'status',
       label: '支付状态',
       component: 'Select',
       componentProps: {
         placeholder: '请选择支付状态',
-        options: [  
+        options: [
           { label: '充电中', value: 'charging' },
           { label: '待支付', value: 'pending_pay' },
           { label: '已支付', value: 'paid' },
@@ -107,7 +116,7 @@ export function useFormSchema() {
       labelWidth: 120,
       isSearch: true,
     },
-     {
+    {
       fieldName: 'createOrderTimeStart',
       label: '订单生成时间',
       component: 'DatePicker',
@@ -283,6 +292,12 @@ export function useGridColumns() {
       field: 'plateNo',
       title: '车牌',
       minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'stationName',
+      title: '场站名称',
+      minWidth: 150,
       sortable: true,
     },
     {

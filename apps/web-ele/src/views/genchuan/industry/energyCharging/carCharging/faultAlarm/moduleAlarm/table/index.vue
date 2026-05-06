@@ -237,6 +237,8 @@ function formatList(list) {
     ...item,
     alarmTime: item.alarmTime ? dayjs(item.alarmTime).format('YYYY-MM-DD HH:mm:ss') : '-',
     repairTime: item.repairTime ? dayjs(item.repairTime).format('YYYY-MM-DD HH:mm:ss') : null,
+    createTime: item.createTime ? dayjs(item.createTime).format('YYYY-MM-DD HH:mm:ss') : '-',
+    updateTime: item.updateTime ? dayjs(item.updateTime).format('YYYY-MM-DD HH:mm:ss') : '-',
     abnormalName: item.abnormalName || '-',
     alarmLevelName: item.alarmLevelName || '-',
     alarmStatusName: item.alarmStatusName || '-',

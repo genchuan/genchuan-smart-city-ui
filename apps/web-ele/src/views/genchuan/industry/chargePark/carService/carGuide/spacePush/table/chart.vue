@@ -162,7 +162,7 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   border-radius: 8px;
-  background: #fff;
+  background-color: var(--el-bg-color, #fff);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 .chart-container {

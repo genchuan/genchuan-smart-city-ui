@@ -43,12 +43,8 @@ const currentTab = computed(
     <component :is="currentTab.gateChart" />
     <el-tabs v-model="activeName" class="common-tabs" type="card">
       <el-tab-pane v-for="item in tabs" :key="item.label" :name="item.label">
-        <template #label>
-          <div class="table-first">
-            <span>{{ item.label }}</span>
-          </div>
-        </template>
-        <component :is="item.component" />
+        <template #label>{{ item.label }}</template>
+        <component :is="item.component" v-if="activeName === item.label" />
       </el-tab-pane>
     </el-tabs>
   </div>

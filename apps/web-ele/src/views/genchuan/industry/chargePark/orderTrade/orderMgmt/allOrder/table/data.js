@@ -55,14 +55,15 @@ export function useFormSchema() {
       labelWidth: 120,
     },
     {
-      fieldName: 'creator',
-      label: '创建者',
+      fieldName: 'stationName',
+      label: '场站名称',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入创建者',
+        placeholder: '请输入场站名称',
         maxLength: 50,
       },
       labelWidth: 120,
+      isSearch: true,
     },
     {
       fieldName: 'updater',
@@ -141,6 +142,12 @@ export function useGridColumns() {
       minWidth: 200,
       sortable: true,
       slots: { default: 'orderNo' },
+    },
+    {
+      field: 'stationName',
+      title: '场站名称',
+      minWidth: 150,
+      sortable: true,
     },
     {
       field: 'plateNo',

@@ -13,8 +13,12 @@ import {
   navigateToSpace,
   getUserList,
 } from '#/api/genchuan/industry/chargePark/carService/reverseFindCar/spaceLocation/index.js';
+// 新增：获取用户详情接口（复用充停地图的API）
+import { getUserDetail } from '#/api/genchuan/industry/chargePark/carService/carGuide/chargeParkMap/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import SpaceLocationDetailDrawer from './detail.vue';
+// 新增：用户详情抽屉组件
+import UserDetailDrawer from '#/views/genchuan/industry/chargePark/carService/carGuide/chargeParkMap/table/userDetail.vue';
 
 // 新增 props 和 emit
 const props = defineProps({
@@ -56,11 +60,8 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.searchObj,
   };
-  // userName 是前端模糊筛选（后端没有该字段），不传给后端
   const userNameFilter = (params.userName || '').trim().toLowerCase();
   delete params.userName;
-  // queryTime 保持数组：axios 全局 paramsSerializer 是 'repeat' 模式，
-  // 会序列化为 ?queryTime=start&queryTime=end，匹配后端 LocalDateTime[] queryTime 字段
   const res = await getSpaceLocationPage(params);
   let list = res.list || [];
   let total = res.total;
@@ -133,7 +134,6 @@ const handleClearField = async (fieldName) => {
   gridApi.query();
 };
 
-// 活跃筛选标签
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchObj;
@@ -174,7 +174,23 @@ const handleOpenDetail = async (row) => {
   detailDrawerRef.value.open();
 };
 
-// 浏览器当前位置：首次取到后缓存，后续复用，避免连点出现"忽好忽坏"
+// 新增：用户详情抽屉
+const userDetailDrawerRef = ref(null);
+const openUserDetail = async (userId) => {
+  if (!userId) {
+    ElMessage.warning('用户ID不存在');
+    return;
+  }
+  try {
+    const userDetail = await getUserDetail(userId);
+    userDetailDrawerRef.value?.open(userDetail);
+  } catch (error) {
+    console.error('获取用户详情失败', error);
+    ElMessage.error('获取用户详情失败');
+  }
+};
+
+// 浏览器当前位置
 let cachedLngLat = null;
 const getCurrentLngLat = () => new Promise(resolve => {
   if (cachedLngLat) return resolve(cachedLngLat);
@@ -202,7 +218,6 @@ const handleNavigate = async (row) => {
       ElMessage.warning('该记录无可用的车位坐标，无法导航');
       return;
     }
-    // 后端只传了 ?to=，前端补充浏览器定位的 from + 高德官方推荐参数（src/coordinate/callnative），让 PC 端能直接画出路线
     const from = await getCurrentLngLat();
     const sep = url.includes('?') ? '&' : '?';
     const extra = (from ? `from=${from}&` : '') + 'src=carservice&coordinate=gaode&callnative=0';
@@ -231,7 +246,6 @@ const getRecentDaysRange = (days) => {
 // 图表刷新事件
 const handleChartRefresh = async (event) => {
   const filters = event.detail || {};
-  // 地图标注点击：打开车位详情弹窗
   if (filters.spaceLocationId) {
     try {
       const res = await getSpaceLocationDetail({ id: filters.spaceLocationId });
@@ -243,14 +257,12 @@ const handleChartRefresh = async (event) => {
     }
     return;
   }
-  // 卡片点击：表格按近 7 天筛选（成功率卡片不再附加"仅成功"过滤，展示完整 11 条）
   if (filters.totalQueryCount || filters.locationSuccessRate) {
     dataObj.searchObj = { queryTime: getRecentDaysRange(7) };
     dataObj.currentPage = 1;
     gridApi.query();
     return;
   }
-  // 兼容老入口
   const newSearchObj = { ...dataObj.searchObj };
   if (filters.date) newSearchObj.queryTime = [filters.date, filters.date];
   if (filters.locationResult) newSearchObj.locationResult = filters.locationResult;
@@ -277,7 +289,6 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
 });
 
 const handleExport = async () => {
-  // 后端没有 /export 端点，前端循环分页拉全部数据（pageSize 上限 200）后用 xlsx 库本地生成
   try {
     const PAGE_SIZE = 200;
     let pageNo = 1;
@@ -289,7 +300,7 @@ const handleExport = async () => {
       const total = res?.total ?? list.length;
       if (part.length < PAGE_SIZE || list.length >= total) break;
       pageNo++;
-      if (pageNo > 100) break; // 安全上限：最多 2 万条
+      if (pageNo > 100) break;
     }
     if (!list.length) {
       ElMessage.warning('暂无数据可导出');
@@ -340,7 +351,6 @@ const handleExport = async () => {
         <div class="common-toolbar-tools">
           <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
-          <!-- 新增展开/收缩按钮 -->
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
             :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
@@ -354,8 +364,9 @@ const handleExport = async () => {
       <template #id="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
       </template>
+      <!-- 修改用户列：点击打开用户详情 -->
       <template #user_name="{ row }">
-        <el-text @click="() => handleClearField('userId') || (dataObj.searchObj.userId = row.userId) || gridApi.query()" type="primary" style="cursor: pointer">
+        <el-text @click="openUserDetail(row.userId)" type="primary" style="cursor: pointer">
           {{ getUserName(row.userId) }}
         </el-text>
       </template>
@@ -389,6 +400,8 @@ const handleExport = async () => {
     </SearchDrawer>
 
     <SpaceLocationDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="车位定位详情" />
+
+    <!-- 新增：用户详情抽屉 -->
+    <UserDetailDrawer ref="userDetailDrawerRef" />
   </div>
 </template>
-

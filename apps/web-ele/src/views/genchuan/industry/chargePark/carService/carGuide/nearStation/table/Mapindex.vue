@@ -36,6 +36,7 @@ const props = defineProps({
 const mapRef = ref(null);
 let map = null;
 let markerLayer = null;
+let tempMarkerLayer = null;      // 临时标记层
 let infoWindow = null;
 let TMapInstance = null;
 let boundsPolygon = null;
@@ -90,6 +91,7 @@ const initMap = async () => {
     });
     infoWindow.close();
     initMarkerLayer();
+    initTempMarkerLayer();      // 初始化临时标记层
     renderMarkers();
   } catch (error) {
     console.error('地图初始化失败:', error);
@@ -106,6 +108,58 @@ const initMarkerLayer = () => {
     geometries: [],
   });
   markerLayer.on('click', onMarkerClick);
+};
+
+// 初始化临时标记层（红色图钉）
+const initTempMarkerLayer = () => {
+  tempMarkerLayer = new TMapInstance.MultiMarker({
+    id: 'temp-marker-layer',
+    map,
+    enableCollision: false,
+    styles: {
+      temp: new TMapInstance.MarkerStyle({
+        width: 30,
+        height: 42,
+        anchor: { x: 15, y: 42 },
+        src: '/static/imgs/marker-red.png',   // 请确保该图片路径存在
+      }),
+    },
+    geometries: [],
+  });
+  tempMarkerLayer.on('click', (evt) => {
+    const { position, properties } = evt.geometry;
+    if (infoWindow && properties) {
+      infoWindow.setPosition(position);
+      infoWindow.setContent(`<div style="padding:8px;">${properties.title || '查询位置'}</div>`);
+      infoWindow.open();
+    }
+  });
+};
+
+// 添加临时标记
+const addTempMarker = (lng, lat, title = '查询位置') => {
+  if (!tempMarkerLayer || !TMapInstance) return;
+  clearTempMarkers();
+  const position = new TMapInstance.LatLng(lat, lng);
+  const geometry = {
+    id: `temp_${Date.now()}`,
+    styleId: 'temp',
+    position,
+    properties: { title, coordinate: `${lng},${lat}` },
+  };
+  tempMarkerLayer.add([geometry]);
+  if (infoWindow) {
+    infoWindow.setPosition(position);
+    infoWindow.setContent(`<div style="padding:8px;">${title}</div>`);
+    infoWindow.open();
+  }
+};
+
+// 清除临时标记
+const clearTempMarkers = () => {
+  if (tempMarkerLayer) {
+    tempMarkerLayer.setGeometries([]);
+  }
 };
 
 const generateInfoWindowContent = (properties) => {
@@ -235,9 +289,13 @@ const resize = () => { if (map) map.resize(); };
 
 defineExpose({
   setCenter, setZoom, getCenter, getZoom, getBounds, resize, drawBounds, clearBounds,
+  addTempMarker, clearTempMarkers,
 });
 
-watch(() => props.data, renderMarkers, { deep: true });
+watch(() => props.data, () => {
+  clearTempMarkers();   // 数据变化时清除临时标记
+  renderMarkers();
+}, { deep: true });
 
 onMounted(() => {
   initMap();
@@ -247,6 +305,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('resize', resize);
   if (markerLayer) markerLayer.destroy?.();
+  if (tempMarkerLayer) tempMarkerLayer.destroy?.();
   if (infoWindow) infoWindow.destroy?.();
   if (map && map.destroy) map.destroy();
 });

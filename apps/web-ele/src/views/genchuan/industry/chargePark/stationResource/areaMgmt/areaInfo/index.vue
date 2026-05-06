@@ -56,6 +56,33 @@ const importLoading = ref(false);
 const importResult = ref(null);
 const importUpdateSupport = ref(false);
 
+function padTime(value) {
+  return String(value).padStart(2, '0');
+}
+
+function formatDateTime(value) {
+  if (value === undefined || value === null || value === '') return '--';
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${value.getFullYear()}-${padTime(value.getMonth() + 1)}-${padTime(value.getDate())} ${padTime(value.getHours())}:${padTime(value.getMinutes())}:${padTime(value.getSeconds())}`;
+  }
+  if (typeof value === 'number' || /^\d+$/.test(String(value))) {
+    const text = String(value);
+    const timestamp = Number(text.length === 10 ? `${text}000` : text);
+    const date = new Date(timestamp);
+    if (!Number.isNaN(date.getTime())) return formatDateTime(date);
+  }
+  const normalized = String(value)
+    .replace('T', ' ')
+    .replace(/\.\d+Z?$/, '');
+  const parsed = new Date(String(value).replaceAll('-', '/'));
+  if (!Number.isNaN(parsed.getTime())) return formatDateTime(parsed);
+  return normalized.length >= 19 ? normalized.slice(0, 19) : normalized;
+}
+
+const columnFormatters = {
+  formatDateTime: ({ cellValue }) => formatDateTime(cellValue),
+};
+
 const stationListFields = stationDetailFields.filter((field) =>
   [
     'address',
@@ -243,7 +270,11 @@ function createSchema(fields, isSearch = false) {
     }
 
     if (field.type === 'number') {
-      componentProps.controls = false;
+      Object.assign(componentProps, {
+        controls: false,
+        min: 0,
+        precision: 0,
+      });
     }
 
     if (field.type === 'date') {
@@ -283,13 +314,16 @@ const hasMap = computed(() => true);
 
 const chartCards = computed(() => {
   const cardData = chartData.value?.cardData || {};
-  return (pageConfig.chart?.cards || []).map(([key, title, status], index) => ({
-    key,
-    title,
-    status,
-    value: cardData[key] ?? 0,
-    color: ['#13ce66', '#4ECDC4', '#FFB020', '#FF6B6B'][index % 4],
-  }));
+  return (pageConfig.chart?.cards || []).map(
+    ([key, title, status, field, suffix], index) => ({
+      key,
+      title,
+      status,
+      field,
+      value: `${cardData[key] ?? 0}${suffix || ''}`,
+      color: ['#13ce66', '#4ECDC4', '#FFB020', '#FF6B6B'][index % 4],
+    }),
+  );
 });
 
 const pieData = computed(() => {
@@ -562,7 +596,18 @@ function buildGridColumns() {
 
       // 添加formatter支持
       if (column.formatter) {
-        columnConfig.formatter = column.formatter;
+        columnConfig.formatter =
+          typeof column.formatter === 'string'
+            ? columnFormatters[column.formatter]
+            : column.formatter;
+      }
+
+      if (column.options?.length) {
+        columnConfig.filters = normalizeOptions(column.options).map((item) => ({
+          label: item.label,
+          value: item.value,
+        }));
+        columnConfig.filterMultiple = false;
       }
 
       const slotName = getCellSlotName(column);
@@ -583,8 +628,14 @@ function buildGridColumns() {
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: buildGridColumns(),
+    filterConfig: {
+      remote: true,
+    },
     height: 'auto',
     keepSource: true,
+    pagerConfig: {
+      pageSize: 10,
+    },
     proxyConfig: {
       ajax: {
         query: async ({ page }) => {
@@ -610,12 +661,24 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridEvents: {
     checkboxAll: handleCheckboxChange,
     checkboxChange: handleCheckboxChange,
+    filterChange: handleTableFilterChange,
   },
   showSearchForm: false,
 });
 
 function handleCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
+}
+
+function handleTableFilterChange({ column, values }) {
+  const field = column?.field;
+  if (!field) return;
+  const [value] = values || [];
+  if (isEmpty(value)) {
+    removeFilterTag(field);
+    return;
+  }
+  applySearchPatch({ [field]: value });
 }
 
 function handleRefresh() {
@@ -632,7 +695,8 @@ async function loadChart() {
   }
   chartLoading.value = true;
   try {
-    chartData.value = (await pageApi[`get${apiName}Chart`]()) || {};
+    chartData.value =
+      (await pageApi[`get${apiName}Chart`](appliedQuery.value)) || {};
   } finally {
     chartLoading.value = false;
   }
@@ -665,8 +729,12 @@ function handleEdit(row) {
 
 async function handleOpenDetail(row) {
   const detailApi = pageApi[`get${apiName}Detail`];
-  detailObj.value =
+  const detail =
     typeof detailApi === 'function' ? (await detailApi(row.id)) || row : row;
+  detailObj.value = {
+    ...row,
+    ...detail,
+  };
   await nextTick();
   detailDrawerRef.value?.open();
 }
@@ -681,15 +749,13 @@ async function handleStatusChange(action, row) {
     return;
   }
 
-  if (action === 'disable' || row.status === '已禁用') {
-    await ElMessageBox.confirm(
-      `确认${label}当前${pageConfig.title}吗？`,
-      '操作提示',
-      {
-        type: 'warning',
-      },
-    );
-  }
+  await ElMessageBox.confirm(
+    `确认${label}当前${pageConfig.title}吗？`,
+    '操作提示',
+    {
+      type: 'warning',
+    },
+  );
 
   try {
     await actionApi({ ids: [row.id] });
@@ -889,19 +955,69 @@ async function applySearchPatch(patch) {
     ...patch,
   });
   appliedQuery.value = nextQuery;
-  await queryFormApi.setValues(nextQuery);
   handleRefresh();
+  nextTick(() => {
+    try {
+      const result = queryFormApi.setValues(nextQuery);
+      Promise.resolve(result).catch((error) => {
+        console.warn('Failed to set form values', error);
+      });
+    } catch (error) {
+      console.warn('Failed to set form values', error);
+    }
+  });
+}
+
+function getFieldLabel(field) {
+  const column =
+    tableColumns.find((c) => c.field === field) ||
+    searchFields.find((f) => f.field === field);
+  return column?.label || field;
+}
+
+function getOptionLabel(field, value) {
+  const config = searchFields.find((item) => item.field === field);
+  const options = config ? normalizeOptions(config.options || []) : [];
+  const option = options.find(
+    (item) => item.value === value || String(item.value) === String(value),
+  );
+  return option?.label || value;
+}
+
+function getTagDisplayText(field, value) {
+  return getOptionLabel(field, value);
 }
 
 function getCellDisplayText(column, row) {
   const value = row?.[column.field];
   if (!isEmpty(value)) {
-    return Array.isArray(value) ? value.join('、') : value;
+    const nextValue = Array.isArray(value) ? value.join('、') : value;
+    const formatted =
+      column.formatter === 'formatDateTime'
+        ? formatDateTime(nextValue)
+        : nextValue;
+    if (column.suffix && formatted !== '--') {
+      return `${formatted}${column.suffix}`;
+    }
+    return formatted;
   }
   if (column.field === primaryField) {
     return row?.[pageConfig.nameField] || row?.id || '--';
   }
   return '--';
+}
+
+async function removeFilterTag(field) {
+  const nextQuery = { ...appliedQuery.value };
+  delete nextQuery[field];
+  appliedQuery.value = nextQuery;
+  try {
+    await queryFormApi.resetForm();
+    await queryFormApi.setValues(nextQuery);
+  } catch (error) {
+    console.warn('Failed to set form values', error);
+  }
+  handleRefresh();
 }
 
 async function openDrillDrawer(title, data, fields) {
@@ -999,16 +1115,53 @@ function handlePieClick(payload) {
   applySearchPatch({ [field]: payload?.name });
 }
 
+function getDrillValue(column, row) {
+  const field = column.drillValueField || column.field;
+  let value = row?.[field];
+  if (isEmpty(value) && column.displayField) {
+    value = row?.[column.displayField];
+  }
+  return value;
+}
+
+function getDrillFilterPatch(column, row) {
+  const field = column.drillField || column.field;
+  const candidates = [
+    column.drillValueField,
+    column.field,
+    field,
+    column.displayField,
+  ].filter(Boolean);
+
+  if (field.endsWith('Id')) {
+    candidates.push(field.replace(/Id$/, 'ID'));
+  } else if (field.endsWith('Name')) {
+    candidates.push(field.replace(/Name$/, 'Id'));
+  }
+
+  for (const key of new Set(candidates)) {
+    const value = row?.[key];
+    if (!isEmpty(value)) {
+      return { [field]: value };
+    }
+  }
+
+  const value = getDrillValue(column, row);
+  if (isEmpty(value)) return null;
+  return { [field]: value };
+}
+
 async function handleCellDrill(column, row) {
   const drillType =
     column.drillType || (column.field === primaryField ? 'detail' : '');
-  const rawValue = row?.[column.drillValueField || column.field];
+  const rawValue = getDrillValue(column, row);
   if (drillType === 'detail') {
     return handleOpenDetail(row);
   }
   if (drillType === 'filter') {
-    if (isEmpty(rawValue)) return;
-    return applySearchPatch({ [column.drillField || column.field]: rawValue });
+    const patch = getDrillFilterPatch(column, row);
+    if (!patch) return;
+    return applySearchPatch(patch);
   }
   if (drillType === 'stationList') {
     return handleOpenStationList(row);
@@ -1106,6 +1259,24 @@ onMounted(() => {
             </div>
           </template>
           <Grid>
+            <template #table-title>
+              <div
+                v-if="Object.keys(appliedQuery).length > 0"
+                class="filter-tags-container"
+                style="display: flex; flex-wrap: wrap; align-items: center"
+              >
+                <el-tag
+                  v-for="(val, key) in appliedQuery"
+                  :key="key"
+                  type="success"
+                  closable
+                  style="height: 32px; margin: 4px 8px 4px 0; line-height: 32px"
+                  @close="removeFilterTag(key)"
+                >
+                  {{ getFieldLabel(key) }}: {{ getTagDisplayText(key, val) }}
+                </el-tag>
+              </div>
+            </template>
             <template #toolbar-tools>
               <div class="common-toolbar-tools">
                 <IconButton
@@ -1283,9 +1454,9 @@ onMounted(() => {
   .station-overview {
     display: flex;
     flex-wrap: nowrap;
-    gap: 12px;
+    gap: 8px;
     align-items: stretch;
-    padding-bottom: 12px;
+    padding-bottom: 8px;
   }
 
   .station-chart-wrap {
@@ -1298,16 +1469,16 @@ onMounted(() => {
     display: flex;
     flex: 1 1 auto;
     flex-wrap: nowrap;
-    gap: 12px;
+    gap: 8px;
     align-items: stretch;
     min-width: 0;
     padding: 0;
   }
 
   .station-chart-wrap :deep(.chart-box-left) {
-    flex: 0 0 300px;
+    flex: 1 1 300px;
     min-width: 300px;
-    max-width: 300px;
+    max-width: none;
     margin-left: 0;
   }
 

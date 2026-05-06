@@ -48,7 +48,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() { },
+  onConfirm() { 
+    queryFormApi.submit();
+  },
   async onOpenChange() { },
 });
 
@@ -289,7 +291,7 @@ const createLabel = (item) => {
 const handleClick = () => {
   gridApi.query();
 };
-const handleSerachShow = () => {
+const handleSearchShow = () => {
   drawerApi.open();
 };
 const handleFullShow = () => {
@@ -699,7 +701,7 @@ const alarmColumns = [
           <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
           <IconButton content="批量删除" icon-name="delete" color="#F56C6C" :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch" />
-          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
           <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
             @click="arrowChange" />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />

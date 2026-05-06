@@ -389,7 +389,7 @@ onUnmounted(() => {
   display: flex;
   gap: 20px;
   padding: 20px;
-  background-color: #fff;
+  background-color: hsl(var(--card));
   border-radius: 8px;
 
   @media (max-width: 1200px) {

@@ -2,6 +2,7 @@ export const pageConfig = {
   apiName: 'DebtExpand',
   title: '联合追缴拓场',
   exportName: '联合追缴拓场数据.xlsx',
+  importTemplateName: '联合追缴拓场导入模板.xlsx',
   nameField: 'stationId',
   primaryField: 'id',
   toolbar: ['create', 'import', 'export'],
@@ -13,12 +14,22 @@ export const pageConfig = {
   chart: {
     cards: [
       ['expandFinishCount', '拓场完成数'],
-      ['recoveryRate', '追缴完成率'],
+      ['recoveryRate', '可追缴完成率', undefined, undefined, '%'],
     ],
-    line: ['progressLineList', 'date', 'progress', '拓场进度趋势'],
-    bar: ['recoveryBarList', 'name', 'value', '追缴成功率'],
+    line: [
+      'progressLineList',
+      'date',
+      'progress',
+      '拓场进度趋势',
+      'createTime',
+    ],
+    bar: ['recoveryBarList', 'name', 'value', '可追缴完成率', 'stationId', '%'],
   },
 };
+
+const typeOptions = ['社会停车场拓场', '联合追缴'];
+const rangeOptions = ['本区域', '跨区域', '全平台'];
+const statusOptions = ['未生效', '已生效', '已禁用'];
 
 export const searchFields = [
   {
@@ -33,21 +44,21 @@ export const searchFields = [
     field: 'type',
     label: '合作类型',
     type: 'select',
-    options: ['社会停车场拓场', '联合追缴'],
+    options: typeOptions,
     required: false,
   },
   {
     field: 'range',
     label: '追缴范围',
     type: 'select',
-    options: ['本区域', '跨区域', '全平台'],
+    options: rangeOptions,
     required: false,
   },
   {
     field: 'status',
     label: '状态',
     type: 'select',
-    options: ['未生效', '已生效', '已禁用'],
+    options: statusOptions,
     required: false,
   },
 ];
@@ -65,14 +76,14 @@ export const formFields = [
     field: 'type',
     label: '合作类型',
     type: 'select',
-    options: ['社会停车场拓场', '联合追缴'],
+    options: typeOptions,
     required: true,
   },
   {
     field: 'range',
     label: '追缴范围',
     type: 'select',
-    options: ['本区域', '跨区域', '全平台'],
+    options: rangeOptions,
     required: true,
   },
   { field: 'remark', label: '备注', type: 'textarea', required: false },
@@ -86,11 +97,24 @@ export const tableColumns = [
     field: 'stationId',
     label: '合作场站',
     minWidth: 140,
+    displayField: 'stationName',
     drillType: 'dialog',
     drillLabel: '场站详情',
   },
-  { field: 'type', label: '合作类型', minWidth: 140, drillType: 'filter' },
-  { field: 'range', label: '追缴范围', minWidth: 140, drillType: 'filter' },
+  {
+    field: 'type',
+    label: '合作类型',
+    minWidth: 140,
+    options: typeOptions,
+    drillType: 'filter',
+  },
+  {
+    field: 'range',
+    label: '追缴范围',
+    minWidth: 140,
+    options: rangeOptions,
+    drillType: 'filter',
+  },
   {
     field: 'progress',
     label: '拓场进度',
@@ -98,7 +122,13 @@ export const tableColumns = [
     drillType: 'dialog',
     drillLabel: '拓场进度明细',
   },
-  { field: 'status', label: '状态', minWidth: 120, drillType: 'filter' },
+  {
+    field: 'status',
+    label: '状态',
+    minWidth: 120,
+    options: statusOptions,
+    drillType: 'filter',
+  },
   {
     field: 'auditTime',
     label: '审核时间',
@@ -112,7 +142,7 @@ export const tableColumns = [
     minWidth: 180,
     formatter: 'formatDateTime',
   },
-  { field: 'recoveryRate', label: '追缴完成率', minWidth: 130 },
+  { field: 'recoveryRate', label: '可追缴完成率', minWidth: 130, suffix: '%' },
   { field: 'remark', label: '备注', minWidth: 150 },
   { field: 'reserve1', label: '备用字段1', minWidth: 140 },
   { field: 'reserve2', label: '备用字段2', minWidth: 140 },
@@ -134,20 +164,45 @@ export const tableColumns = [
 
 export const detailFields = [
   { key: 'id', label: '拓场编号', section: '基础信息' },
-  { key: 'stationId', label: '合作场站ID', section: '基础信息' },
+  { key: 'stationName', label: '合作场站', section: '基础信息' },
   { key: 'status', label: '状态', section: '基础信息' },
   { key: 'type', label: '合作类型', section: '拓场信息' },
   { key: 'range', label: '追缴范围', section: '拓场信息' },
   { key: 'progress', label: '拓场进度', section: '拓场信息' },
-  { key: 'recoveryRate', label: '追缴完成率', section: '拓场信息' },
-  { key: 'finishTime', label: '完成时间', section: '拓场信息' },
-  { key: 'auditTime', label: '审核时间', section: '状态信息' },
+  {
+    key: 'recoveryRate',
+    label: '可追缴完成率',
+    section: '拓场信息',
+    suffix: '%',
+  },
+  {
+    key: 'finishTime',
+    label: '完成时间',
+    section: '拓场信息',
+    formatter: 'formatDateTime',
+  },
+  {
+    key: 'auditTime',
+    label: '审核时间',
+    section: '状态信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'auditUserId', label: '审核人ID', section: '状态信息' },
   { key: 'remark', label: '备注', section: '拓场信息' },
   { key: 'reserve1', label: '备用字段1', section: '拓场信息' },
   { key: 'reserve2', label: '备用字段2', section: '拓场信息' },
   { key: 'creator', label: '创建者', section: '审计信息' },
-  { key: 'createTime', label: '创建时间', section: '审计信息' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'updater', label: '更新者', section: '审计信息' },
-  { key: 'updateTime', label: '更新时间', section: '审计信息' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
 ];

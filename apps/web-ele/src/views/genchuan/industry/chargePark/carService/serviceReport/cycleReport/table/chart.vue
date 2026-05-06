@@ -349,8 +349,8 @@ onUnmounted(() => {
   width: 100%;
   /* 固定高度与示例一致，移除多余 padding */
   min-height: 320px;
-  background: #fff;
   border-radius: 8px;
+  background-color: var(--el-bg-color, #fff);
 }
 .cards-section {
   display: grid;
@@ -364,7 +364,6 @@ onUnmounted(() => {
   border-radius: 8px;
   border-left: 4px solid #4a90e2;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  background: #f9fafb;
   transition: all 0.3s;
 }
 .stat-card:hover {
@@ -405,9 +404,9 @@ onUnmounted(() => {
   flex: 1;
   position: relative;
   border-radius: 8px;
-  background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   overflow: hidden;
+  background-color: var(--el-bg-color, #fff);
 }
 .chart-select-wrapper {
   position: absolute;

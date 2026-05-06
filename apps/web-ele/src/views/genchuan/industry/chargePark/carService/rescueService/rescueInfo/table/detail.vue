@@ -51,7 +51,7 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">救援位置:</div>
-        <div class="detail-row-right">{{ detailObj.location || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.locationName || detailObj.location || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">救援类型:</div>
