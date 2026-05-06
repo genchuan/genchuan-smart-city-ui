@@ -20,7 +20,7 @@ export function useGridColumns({ getUserName }) {
     { type: 'checkbox', width: 50, fixed: 'left' },
     { field: 'id', title: '申诉ID', minWidth: 100, sortable: true, slots: { default: 'id' } },
     { field: 'userId', title: '用户', minWidth: 120, sortable: true, slots: { default: 'user_name' }, formatter: ({ userId }) => getUserName(userId) },
-    { field: 'orderId', title: '关联订单', minWidth: 120, slots: { default: 'orderId' } },
+    { field: 'orderId', title: '关联订单', minWidth: 120, },
     { field: 'content', title: '申诉内容', minWidth: 250, sortable: true, slots: { default: 'content' } },
     { field: 'submitTime', title: '提交时间', minWidth: 160, sortable: true },
     { field: 'status', title: '申诉状态', minWidth: 100, sortable: true, slots: { default: 'status' } },

@@ -18,7 +18,7 @@ export function useGridColumns({ getUserName, getMerchantName }) {
     { field: 'id', title: '调解ID', minWidth: 100, sortable: true, slots: { default: 'id' } },
     { field: 'userId', title: '用户', minWidth: 120, sortable: true, slots: { default: 'user_name' }, formatter: ({ userId }) => getUserName(userId) },
     { field: 'merchantId', title: '商户', minWidth: 120, slots: { default: 'merchant_name' }, formatter: ({ merchantId }) => getMerchantName(merchantId) },
-    { field: 'content', title: '纠纷内容', minWidth: 250, sortable: true, slots: { default: 'content' } },
+    { field: 'content', title: '纠纷内容', minWidth: 250, sortable: true, },
     { field: 'submitTime', title: '发起时间', minWidth: 160, sortable: true },
     { field: 'status', title: '调解状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
     { field: 'mediateUserId', title: '调解人', minWidth: 120, slots: { default: 'mediate_user_name' }, formatter: ({ mediateUserId }) => getUserName(mediateUserId) },
