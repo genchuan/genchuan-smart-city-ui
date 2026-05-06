@@ -170,13 +170,17 @@ const padDateTime = (s, isEnd) => {
 };
 
 const getTableData = async (pageObj) => {
+  const page = pageObj.page;
+  const userNameFilter = String(dataObj.searchObj.userName || '').trim().toLowerCase();
+  const hasClientFilter = !!userNameFilter;
+
   const params = {
-    pageNo: pageObj.page.currentPage,
-    pageSize: pageObj.page.pageSize,
+    pageNo: hasClientFilter ? 1 : page.currentPage,
+    pageSize: hasClientFilter ? 200 : page.pageSize,
     ...dataObj.searchObj,
   };
+  delete params.userName;
   if (dataObj.searchObj.submitTime && Array.isArray(dataObj.searchObj.submitTime) && dataObj.searchObj.submitTime.length === 2) {
-    // 后端 LocalDateTime[] + @DateTimeFormat("yyyy-MM-dd HH:mm:ss")，必须补齐时分秒
     params.submitTime = [
       padDateTime(dataObj.searchObj.submitTime[0], false),
       padDateTime(dataObj.searchObj.submitTime[1], true),
@@ -186,9 +190,24 @@ const getTableData = async (pageObj) => {
     params.status = dataObj.searchObj.statusList.join(',');
     delete params.statusList;
   }
+
   const res = await getSuggestionPage(params);
-  dataObj.total = res.total;
-  dataObj.list = (res.list || []).map(v => ({
+  let list = res.list || [];
+  let total = res.total;
+
+  // 客户端过滤：用户名(取行上 userName 或 userMap 中 userId 对应的昵称)
+  if (hasClientFilter) {
+    list = list.filter(item => {
+      const uname = String(item.userName || getUserName(item.userId) || item.userId || '').toLowerCase();
+      return uname.includes(userNameFilter);
+    });
+    total = list.length;
+    const pStart = (page.currentPage - 1) * page.pageSize;
+    list = list.slice(pStart, pStart + page.pageSize);
+  }
+
+  dataObj.total = total;
+  dataObj.list = list.map(v => ({
     ...v,
     createTime: formatTimestamp(v.createTime),
     updateTime: formatTimestamp(v.updateTime),
@@ -245,6 +264,7 @@ const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchObj;
   if (obj.userId) filters.push({ label: `用户：${getUserName(obj.userId)}`, field: 'userId' });
+  if (obj.userName) filters.push({ label: `用户名称：${obj.userName}`, field: 'userName' });
   if (obj.content) filters.push({ label: `意见内容：${obj.content}`, field: 'content' });
   if (obj.status) filters.push({ label: `状态：${obj.status}`, field: 'status' });
   if (obj.statusList && obj.statusList.length) {
