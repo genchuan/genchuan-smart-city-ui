@@ -32,7 +32,7 @@
         </div>
         <div class="detail-card-row">
           <div class="detail-row-left">创建时间：</div>
-          <div class="detail-row-right">{{ fmtTime(userData.createTime) }}</div>
+          <div class="detail-row-right">{{ formatTimestamp(userData.createTime) }}</div>
         </div>
       </div>
       <el-empty v-else description="暂无数据" />
@@ -43,13 +43,21 @@
 <script setup>
 import { ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
+import { ElEmpty, ElTag } from 'element-plus';
 
-const fmtTime = (timestamp) => {
+// 时间戳格式化函数
+const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(timestamp);
+  // 检查是否为有效日期
   if (isNaN(date.getTime())) return '-';
-  const pad = (n) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
 const loading = ref(false);
@@ -65,8 +73,15 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   },
 });
 
-const open = (data) => { userData.value = data; detailDrawerApi.open(); };
-const close = () => { detailDrawerApi.close(); userData.value = null; };
+const open = async (data) => {
+  userData.value = data;
+  detailDrawerApi.open();
+};
+
+const close = () => {
+  detailDrawerApi.close();
+  userData.value = null;
+};
 
 defineExpose({ open, close });
 </script>
@@ -85,7 +100,9 @@ defineExpose({ open, close });
   align-items: flex-start;
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0;
-  &:last-child { border-bottom: none; }
+  &:last-child {
+    border-bottom: none;
+  }
   &:hover {
     background-color: #f5f7fa;
     border-radius: 4px;

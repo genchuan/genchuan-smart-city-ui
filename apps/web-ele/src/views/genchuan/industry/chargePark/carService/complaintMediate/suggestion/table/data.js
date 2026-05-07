@@ -16,6 +16,7 @@ export function useFormSchema() {
 /** 意见建议表格列配置（带钻取交互） */
 export function useGridColumns({ getUserName }) {
   return [
+    { type: 'checkbox', width: 40 },
     { field: 'id', title: '意见ID', minWidth: 100, sortable: true, slots: { default: 'id' } },
     { field: 'userId', title: '用户', minWidth: 120, sortable: true, slots: { default: 'user_name' }, formatter: ({ userId }) => getUserName(userId) },
     { field: 'content', title: '意见内容', minWidth: 250, sortable: true, slots: { default: 'content' } },

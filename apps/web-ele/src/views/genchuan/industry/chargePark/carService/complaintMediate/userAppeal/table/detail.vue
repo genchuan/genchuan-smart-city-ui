@@ -34,10 +34,9 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-card-row"><div class="detail-row-left">申诉状态：</div><div class="detail-row-right">{{ detailObj.status || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">审核人：</div><div class="detail-row-right">{{ detailObj.auditUserName || '-' }} (ID:{{ detailObj.auditUserId || '-' }})</div></div>
       <div class="detail-card-row"><div class="detail-row-left">审核时间：</div><div class="detail-row-right">{{ fmtTime(detailObj.auditTime) }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">审核备注：</div><div class="detail-row-right">{{ detailObj.auditRemark || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">驳回理由：</div><div class="detail-row-right">{{ detailObj.rejectReason || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">处置人：</div><div class="detail-row-right">{{ detailObj.handleUserName || '-' }} (ID:{{ detailObj.handleUserId || '-' }})</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">处置进度：</div><div class="detail-row-right">{{ detailObj.progress || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">处置时间：</div><div class="detail-row-right">{{ fmtTime(detailObj.handleTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">反馈内容：</div><div class="detail-row-right">{{ detailObj.feedbackContent || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">反馈时间：</div><div class="detail-row-right">{{ fmtTime(detailObj.feedbackTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.creator || '-' }}</div></div>

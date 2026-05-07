@@ -11,6 +11,7 @@ export function useFormSchema() {
 /** 路径规划表格列配置（带钻取交互） */
 export function useGridColumns({ getUserName }) {
   return [
+    { type: 'checkbox', width: 40 },
     { field: 'id', title: '规划ID', minWidth: 100, sortable: true, slots: { default: 'id' } },
     { field: 'userId', title: '用户', minWidth: 120, sortable: true, slots: { default: 'user_name' }, formatter: ({ userId }) => getUserName(userId) },
     { field: 'startLocationName', title: '起点', minWidth: 180, sortable: true, slots: { default: 'start_location' } },

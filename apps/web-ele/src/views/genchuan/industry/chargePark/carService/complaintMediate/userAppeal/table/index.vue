@@ -78,7 +78,7 @@
             <IconButton content="执行" icon-name="check" @click="handleExecute(row)" />
             <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           </template>
-          <template v-else-if="row.status === '处置中'">
+          <template v-else-if="row.status === '已完成' || row.status === '处置中'">
             <IconButton content="反馈" icon-name="Star" @click="openFeedback(row)" />
             <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           </template>
@@ -246,6 +246,7 @@ const getTableData = async (pageObj) => {
     updateTime: formatTimestamp(v.updateTime),
     submitTime: formatTimestamp(v.submitTime),
     auditTime: formatTimestamp(v.auditTime),
+    handleTime: formatTimestamp(v.handleTime),
     feedbackTime: formatTimestamp(v.feedbackTime),
   }));
   return dataObj;
@@ -374,7 +375,7 @@ const confirmReject = async () => {
 
 const handleExecute = async (row) => {
   await executeAppeal({ id: row.id });
-  ElMessage.success('已认领，状态更新为处置中');
+  ElMessage.success('已认领，状态更新为已完成');
   handleRefresh();
 };
 
@@ -386,7 +387,7 @@ const [FeedbackDrawer, feedbackDrawerApi] = useVbenDrawer({
   onConfirm: async () => {
     if (!feedbackForm.feedbackContent) return ElMessage.warning('请填写反馈内容');
     await feedbackAppeal({ id: currentFeedbackRow.id, feedbackContent: feedbackForm.feedbackContent });
-    ElMessage.success('反馈成功，状态已变更为已完成');
+    ElMessage.success('反馈成功，状态已变更为已关闭');
     feedbackDrawerApi.close();
     handleRefresh();
   },
