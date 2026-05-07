@@ -66,7 +66,6 @@ export function getColumnsByStatus(status) {
     { field: 'interveneTime', title: '干预时间', minWidth: 180, slots: { default: 'interveneTime' } },
     { field: 'interveneContent', title: '干预内容', minWidth: 200 },
     { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];

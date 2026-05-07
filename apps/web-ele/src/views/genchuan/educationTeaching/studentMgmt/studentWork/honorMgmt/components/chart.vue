@@ -1,36 +1,33 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-
-import { ElDatePicker, ElOption, ElSelect } from 'element-plus';
-
-import {
-  getHonorCount,
-  getHonorMgmtChart,
-} from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/honorMgmt/data.js';
-import Bar from '#/genchuan-components/stats/barClick.vue';
+import {reactive, onMounted, ref, computed} from 'vue';
+import {ElMessage, ElSelect, ElOption, ElDatePicker} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
+import Bar from '#/genchuan-components/stats/barClick.vue';
+import {
+  getHonorMgmtChart,
+  getHonorCount,
+} from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/honorMgmt/data.js';
 
-const emit = defineEmits(['barSelect', 'cardSelect']);
 const mockClassData = [
-  { name: '计算机1班', count: 45 },
-  { name: '计算机2班', count: 42 },
-  { name: '软件1班', count: 48 },
-  { name: '软件2班', count: 50 },
-  { name: '电子1班', count: 40 },
+  {name: '计算机1班', count: 45},
+  {name: '计算机2班', count: 42},
+  {name: '软件1班', count: 48},
+  {name: '软件2班', count: 50},
+  {name: '电子1班', count: 40},
 ];
 const mockTypeData = [
-  { name: '优秀学生', count: 128 },
-  { name: '奖学金', count: 86 },
-  { name: '竞赛获奖', count: 92 },
-  { name: '其他', count: 22 },
+  {name: '优秀学生', count: 128},
+  {name: '奖学金', count: 86},
+  {name: '竞赛获奖', count: 92},
+  {name: '其他', count: 22},
 ];
 
 const loading = ref(true);
 const overviewData = ref({});
-const chartData = ref({ class: [], type: [] });
+const chartData = ref({class: [], type: []});
 
 const activeDimension = ref('type');
-const barTitleMap = { type: '各类型荣誉数量', class: '各班级荣誉数量' };
+const barTitleMap = {type: '各类型荣誉数量', class: '各班级荣誉数量'};
 const barYName = '荣誉数量';
 
 // 时间范围选择器相关（只针对荣誉数量接口）
@@ -52,8 +49,8 @@ const formatLocalDateTime = (date) => {
 const currentBarData = computed(() => {
   const raw = chartData.value[activeDimension.value] || [];
   return {
-    xData: raw.map((item) => item.name),
-    seriesData: [{ name: '荣誉数量', data: raw.map((item) => item.count) }],
+    xData: raw.map(item => item.name),
+    seriesData: [{name: '荣誉数量', data: raw.map(item => item.count)}]
   };
 });
 
@@ -64,22 +61,14 @@ const cardList = computed(() => {
   const todayPush = overviewData.value.todayPushCount || 0;
   const excellent = overviewData.value.excellentStudentCount || 0;
   return [
-    { title: '荣誉记录总数', value: total, color: '#409EFF', status: 'total' },
-    { title: '待审核数', value: pending, color: '#E6A23C', status: 'pending' },
-    {
-      title: '今日推送数',
-      value: todayPush,
-      color: '#67C23A',
-      status: 'todayPush',
-    },
-    {
-      title: '优秀学生数',
-      value: excellent,
-      color: '#F56C6C',
-      status: 'excellent',
-    },
+    {title: '荣誉记录总数', value: total, color: '#409EFF', status: 'total'},
+    {title: '待审核数', value: pending, color: '#E6A23C', status: 'pending'},
+    {title: '今日推送数', value: todayPush, color: '#67C23A', status: 'todayPush'},
+    {title: '优秀学生数', value: excellent, color: '#F56C6C', status: 'excellent'},
   ];
 });
+
+const emit = defineEmits(['barSelect', 'cardSelect']);
 
 const handleCardClick = (cardInfo) => {
   emit('cardSelect', cardInfo.status);
@@ -87,9 +76,9 @@ const handleCardClick = (cardInfo) => {
 
 const handleBarClick = (name) => {
   if (activeDimension.value === 'class') {
-    emit('barSelect', { field: 'className', value: name });
+    emit('barSelect', {field: 'className', value: name});
   } else {
-    emit('barSelect', { field: 'honorType', value: name });
+    emit('barSelect', {field: 'honorType', value: name});
   }
 };
 
@@ -103,7 +92,7 @@ const changeDimension = async (dimension) => {
 const fetchChartData = async (dimension) => {
   try {
     const params = {
-      dimension,
+      dimension: dimension,
     };
 
     // 只有当时间范围存在时才添加参数
@@ -125,8 +114,7 @@ const fetchChartData = async (dimension) => {
     chartData.value[dimension] = data;
   } catch (error) {
     console.warn(`获取${dimension}荣誉数量失败，使用模拟数据`, error);
-    chartData.value[dimension] =
-      dimension === 'class' ? mockClassData : mockTypeData;
+    chartData.value[dimension] = dimension === 'class' ? mockClassData : mockTypeData;
   }
 };
 
@@ -144,8 +132,8 @@ const loadAllChartData = async () => {
     // 初始化时不传时间参数，让后端返回全部数据
     const [overviewRes, classRes, typeRes] = await Promise.allSettled([
       getHonorMgmtChart({}),
-      getHonorCount({ dimension: 'class' }),
-      getHonorCount({ dimension: 'type' }),
+      getHonorCount({dimension: 'class'}),
+      getHonorCount({dimension: 'type'}),
     ]);
     if (overviewRes.status === 'fulfilled') {
       overviewData.value = overviewRes.value;
@@ -160,10 +148,8 @@ const loadAllChartData = async () => {
         competitionCount: 92,
       };
     }
-    chartData.value.class =
-      classRes.status === 'fulfilled' ? classRes.value : mockClassData;
-    chartData.value.type =
-      typeRes.status === 'fulfilled' ? typeRes.value : mockTypeData;
+    chartData.value.class = classRes.status === 'fulfilled' ? classRes.value : mockClassData;
+    chartData.value.type = typeRes.status === 'fulfilled' ? typeRes.value : mockTypeData;
   } catch (error) {
     console.error('加载图表数据失败', error);
     overviewData.value = {
@@ -174,7 +160,7 @@ const loadAllChartData = async () => {
       scholarshipCount: 86,
       competitionCount: 92,
     };
-    chartData.value = { class: mockClassData, type: mockTypeData };
+    chartData.value = {class: mockClassData, type: mockTypeData};
   } finally {
     loading.value = false;
   }
@@ -188,28 +174,19 @@ onMounted(() => {
 <template>
   <div v-loading="loading" class="chart-box">
     <div class="box-left">
-      <Indicator
-        class="left-card"
-        v-for="item in cardList"
-        :key="item.title"
-        v-bind="item"
-        @click="handleCardClick"
-      />
+      <Indicator class="left-card" v-for="item in cardList" :key="item.title" v-bind="item"
+                 @click="handleCardClick"/>
     </div>
     <div class="chart-wrapper bar-chart-container">
       <div class="bar-select-wrapper">
-        <ElSelect
-          v-model="activeDimension"
-          size="small"
-          @change="changeDimension"
-        >
-          <ElOption label="各类型荣誉数量" value="type" />
-          <ElOption label="各班级荣誉数量" value="class" />
-        </ElSelect>
+        <el-select v-model="activeDimension" size="small" @change="changeDimension">
+          <el-option label="各类型荣誉数量" value="type"/>
+          <el-option label="各班级荣誉数量" value="class"/>
+        </el-select>
       </div>
       <!-- 时间范围选择器（只针对荣誉数量接口） -->
       <div class="date-range-wrapper">
-        <ElDatePicker
+        <el-date-picker
           v-model="dateRange"
           type="daterange"
           range-separator="-"
@@ -217,33 +194,9 @@ onMounted(() => {
           end-placeholder="结束时间"
           size="small"
           :shortcuts="[
-            {
-              text: '近三个月',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setMonth(start.getMonth() - 3);
-                return [start, end];
-              },
-            },
-            {
-              text: '近半年',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setMonth(start.getMonth() - 6);
-                return [start, end];
-              },
-            },
-            {
-              text: '近一年',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setFullYear(start.getFullYear() - 1);
-                return [start, end];
-              },
-            },
+            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
+            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
+            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
           ]"
           @change="handleDateRangeChange"
         />
@@ -261,12 +214,12 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .chart-box {
+  padding-bottom: 0.5rem;
   display: flex;
   flex-wrap: wrap;
-  width: 100% !important;
-  padding-right: 15px;
-  padding-bottom: 0.5rem;
   padding-left: 15px;
+  padding-right: 15px;
+  width: 100% !important;
 
   .box-left {
     display: grid !important;
@@ -282,11 +235,11 @@ onMounted(() => {
   }
 
   .chart-wrapper {
-    position: relative;
     display: flex;
-    flex: 2;
     flex-direction: column;
     min-width: 280px;
+    position: relative;
+    flex: 2;
   }
 
   .bar-select-wrapper {

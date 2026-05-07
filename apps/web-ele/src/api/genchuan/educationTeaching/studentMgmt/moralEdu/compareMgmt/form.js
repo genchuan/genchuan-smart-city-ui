@@ -51,7 +51,6 @@ export function getColumns() {
     { field: 'awardTime', title: '授予时间', minWidth: 180, slots: { default: 'awardTime' } },
     { field: 'scoreUser', title: '打分人', minWidth: 100 },
     { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];

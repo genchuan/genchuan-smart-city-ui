@@ -1,6 +1,7 @@
 <script setup>
-import { computed, defineProps, toRefs } from 'vue';
+import { computed, defineProps, toRefs, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
+import { ElTable, ElTableColumn } from 'element-plus';
 
 const props = defineProps({
   detailObj: { type: Object, required: true, default: () => ({}) },
@@ -10,6 +11,7 @@ const emit = defineEmits(['refresh']);
 
 const { detailObj, title } = toRefs(props);
 
+// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -24,8 +26,8 @@ const formatTimestamp = (timestamp) => {
 };
 
 const drawerTitle = computed(() => {
-  const name = detailObj.value?.studentId || '入团申请';
-  return title.value || `学号${name}入团详情`;
+  const name = detailObj.value?.studentName ? `${detailObj.value.studentName} 家长回复详情` : '回复详情';
+  return title.value || name;
 });
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
@@ -42,40 +44,22 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <div class="detail-section">🏫 入团申请信息</div>
-      <div class="detail-card-row"><div class="detail-row-left">社团名称：</div><div class="detail-row-right">{{ detailObj.clubName || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">社团类型：</div><div class="detail-row-right">{{ detailObj.clubType || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">学号：</div><div class="detail-row-right">{{ detailObj.studentId || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">班级：</div><div class="detail-row-right">{{ detailObj.className || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.status || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">备注：</div><div class="detail-row-right">{{ detailObj.remark || '-' }}</div></div>
+      <!-- 家长回复信息 -->
+      <div class="detail-section">💬 家长回复</div>
+      <div class="detail-card-row"><div class="detail-row-left">学生姓名：</div><div class="detail-row-right">{{ detailObj.studentName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">家长姓名：</div><div class="detail-row-right">{{ detailObj.parentName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">回复内容：</div><div class="detail-row-right">{{ detailObj.parentReplyContent || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">回复时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.parentReplyTime) }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">阅读状态：</div><div class="detail-row-right">{{ detailObj.readStatus || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">回复状态：</div><div class="detail-row-right">{{ detailObj.replyStatus || '-' }}</div></div>
 
-      <div class="detail-section">🎪 场馆申请信息</div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">场馆申请状态：</div>
-        <div class="detail-row-right">{{ detailObj.venueApplyStatus || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">申请场馆：</div>
-        <div class="detail-row-right">{{ detailObj.venueName || '-' }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">申请时间：</div>
-        <div class="detail-row-right">{{ formatTimestamp(detailObj.applyTime) }}</div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">申请原因：</div>
-        <div class="detail-row-right">{{ detailObj.applyReason || '-' }}</div>
-      </div>
+      <!-- 老师回复信息 -->
+      <div class="detail-section">📝 老师回复</div>
+      <div class="detail-card-row"><div class="detail-row-left">回复内容：</div><div class="detail-row-right">{{ detailObj.teacherReplyContent || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">回复时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.teacherReplyTime) }}</div></div>
 
-      <div class="detail-section">📝 审核记录</div>
-      <div class="detail-card-row"><div class="detail-row-left">审核人：</div><div class="detail-row-right">{{ detailObj.auditUser || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">审核时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.auditTime) }}</div></div>
-
-      <div class="detail-section">📂 建档记录</div>
-      <div class="detail-card-row"><div class="detail-row-left">建档时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.archiveTime) }}</div></div>
-
-      <div class="detail-section">📝 操作日志</div>
+      <!-- 操作日志 -->
+      <div class="detail-section">📋 操作日志</div>
       <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.creator || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.createTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updater || '-' }}</div></div>

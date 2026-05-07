@@ -44,7 +44,6 @@ export function getColumns() {
     { field: 'adjustTime', title: '调整时间', minWidth: 180, slots: { default: 'adjustTime' } },
     { field: 'finishRate', title: '分配完成率', minWidth: 120, slots: { default: 'finishRate' } },
     { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];

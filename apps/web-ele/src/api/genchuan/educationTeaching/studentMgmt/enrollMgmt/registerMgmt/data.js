@@ -135,7 +135,7 @@ export function getRegisterMgmtChart(params) {
 // 各专业报名/录取人数统计
 export function getRegisterMgmtEnrollCount(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.get('/studentmgmt/register-mgmt/chart/enrollCount', { params: convertedParams }).catch(err => {
+  return requestClient.get('/studentmgmt/register-mgmt/enrollCount', { params: convertedParams }).catch(err => {
     console.warn('专业统计接口失败，使用模拟数据', err);
     return Promise.resolve({
       majorEnrollData: [

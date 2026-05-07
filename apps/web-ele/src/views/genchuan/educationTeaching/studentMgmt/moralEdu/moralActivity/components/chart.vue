@@ -1,22 +1,18 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-
-import { ElDatePicker, ElOption, ElSelect } from 'element-plus';
-
-import {
-  getMoralActivityChart,
-  getMoralActivityCount,
-} from '#/api/genchuan/educationTeaching/studentMgmt/moralEdu/moralActivity/data.js';
+import { ref, computed, onMounted } from 'vue';
+import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import LineChart from '#/genchuan-components/stats/lineChartClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
+import {
+  getMoralActivityCount,
+  getMoralActivityChart,
+} from '#/api/genchuan/educationTeaching/studentMgmt/moralEdu/moralActivity/data.js';
 
-// ========== 事件发射 ==========
-const emit = defineEmits(['barSelect']);
 const loading = ref(true);
-const chartData = ref({}); // 柱状图数据（活动类型数量/参与人数）
-const trendData = ref({}); // 折线图数据（月度趋势）
-const overviewData = ref({}); // 饼图数据（状态分布、类型分布）
+const chartData = ref({});       // 柱状图数据（活动类型数量/参与人数）
+const trendData = ref({});       // 折线图数据（月度趋势）
+const overviewData = ref({});    // 饼图数据（状态分布、类型分布）
 
 // 时间范围选择器相关（针对两个接口）
 // 默认值：开始时间 2024-01-01，结束时间 2026-12-31
@@ -44,7 +40,7 @@ const barOptions = computed(() => [
       const activityCountList = chartData.value.activityCountList || [];
       return {
         xData: typeList,
-        seriesData: [{ name: '活动数量', data: activityCountList }],
+        seriesData: [{name: '活动数量', data: activityCountList}]
       };
     },
     yName: '活动数量',
@@ -57,7 +53,7 @@ const barOptions = computed(() => [
       const joinCountList = chartData.value.joinCountList || [];
       return {
         xData: typeList,
-        seriesData: [{ name: '参与人数', data: joinCountList }],
+        seriesData: [{name: '参与人数', data: joinCountList}]
       };
     },
     yName: '参与人数',
@@ -65,19 +61,12 @@ const barOptions = computed(() => [
 ]);
 
 const activeBarIndex = ref(0);
-const currentBarData = computed(
-  () =>
-    barOptions.value[activeBarIndex.value]?.getData() || {
-      xData: [],
-      seriesData: [],
-    },
-);
-const currentBarTitle = computed(
-  () => barOptions.value[activeBarIndex.value]?.title || '',
-);
-const currentYName = computed(
-  () => barOptions.value[activeBarIndex.value]?.yName || '',
-);
+const currentBarData = computed(() => barOptions.value[activeBarIndex.value]?.getData() || {
+  xData: [],
+  seriesData: []
+});
+const currentBarTitle = computed(() => barOptions.value[activeBarIndex.value]?.title || '');
+const currentYName = computed(() => barOptions.value[activeBarIndex.value]?.yName || '');
 
 const handleBarChange = (index) => {
   activeBarIndex.value = index;
@@ -91,10 +80,8 @@ const lineOptions = computed(() => [
     getData: () => {
       const monthTrend = trendData.value.monthTrend || [];
       return {
-        xData: monthTrend.map((item) => item.date),
-        seriesData: [
-          { name: '活动数量', data: monthTrend.map((item) => item.totalCount) },
-        ],
+        xData: monthTrend.map(item => item.date),
+        seriesData: [{name: '活动数量', data: monthTrend.map(item => item.totalCount)}]
       };
     },
     yName: '活动数量',
@@ -105,10 +92,8 @@ const lineOptions = computed(() => [
     getData: () => {
       const joinTrend = trendData.value.joinTrend || [];
       return {
-        xData: joinTrend.map((item) => item.date),
-        seriesData: [
-          { name: '参与人数', data: joinTrend.map((item) => item.totalCount) },
-        ],
+        xData: joinTrend.map(item => item.date),
+        seriesData: [{name: '参与人数', data: joinTrend.map(item => item.totalCount)}]
       };
     },
     yName: '参与人数',
@@ -116,19 +101,12 @@ const lineOptions = computed(() => [
 ]);
 
 const activeLineIndex = ref(0);
-const currentLineData = computed(
-  () =>
-    lineOptions.value[activeLineIndex.value]?.getData() || {
-      xData: [],
-      seriesData: [],
-    },
-);
-const currentLineTitle = computed(
-  () => lineOptions.value[activeLineIndex.value]?.title || '',
-);
-const currentLineYName = computed(
-  () => lineOptions.value[activeLineIndex.value]?.yName || '',
-);
+const currentLineData = computed(() => lineOptions.value[activeLineIndex.value]?.getData() || {
+  xData: [],
+  seriesData: []
+});
+const currentLineTitle = computed(() => lineOptions.value[activeLineIndex.value]?.title || '');
+const currentLineYName = computed(() => lineOptions.value[activeLineIndex.value]?.yName || '');
 
 const handleLineChange = (index) => {
   activeLineIndex.value = index;
@@ -140,15 +118,11 @@ const pieOptions = computed(() => [
     title: '活动状态分布',
     type: 'status',
     getData: () => {
-      const status = overviewData.value.statusCount || {
-        ongoing: 0,
-        ended: 0,
-        unpublished: 0,
-      };
+      const status = overviewData.value.statusCount || {ongoing: 0, ended: 0, unpublished: 0};
       return [
-        { name: '未发布', value: status.unpublished || 0 },
-        { name: '进行中', value: status.ongoing || 0 },
-        { name: '已结束', value: status.ended || 0 },
+        {name: '未发布', value: status.unpublished || 0},
+        {name: '进行中', value: status.ongoing || 0},
+        {name: '已结束', value: status.ended || 0},
       ];
     },
   },
@@ -159,46 +133,45 @@ const pieOptions = computed(() => [
       const typeCount = overviewData.value.activityTypeCount || {
         party_league: 0,
         volunteer: 0,
-        other: 0,
+        other: 0
       };
       return [
-        { name: '党团活动', value: typeCount.party_league || 0 },
-        { name: '志愿活动', value: typeCount.volunteer || 0 },
-        { name: '其他', value: typeCount.other || 0 },
+        {name: '党团活动', value: typeCount.party_league || 0},
+        {name: '志愿活动', value: typeCount.volunteer || 0},
+        {name: '其他', value: typeCount.other || 0},
       ];
     },
   },
 ]);
 
 const activePieIndex = ref(0);
-const currentPieData = computed(
-  () => pieOptions.value[activePieIndex.value]?.getData() || [],
-);
-const currentPieTitle = computed(
-  () => pieOptions.value[activePieIndex.value]?.title || '',
-);
+const currentPieData = computed(() => pieOptions.value[activePieIndex.value]?.getData() || []);
+const currentPieTitle = computed(() => pieOptions.value[activePieIndex.value]?.title || '');
 
 const handlePieChange = (index) => {
   activePieIndex.value = index;
 };
 
+// ========== 事件发射 ==========
+const emit = defineEmits(['barSelect']);
+
 // 柱状图点击：筛选对应类型的活动记录
 const handleBarClick = (typeName) => {
-  emit('barSelect', { field: 'activityType', value: typeName });
+  emit('barSelect', {field: 'activityType', value: typeName});
 };
 
 // 折线图点击：筛选对应月份的活动记录
 const handleLineClick = (month) => {
-  emit('barSelect', { field: 'month', value: month });
+  emit('barSelect', {field: 'month', value: month});
 };
 
 // 饼图点击：根据当前饼图类型发射筛选事件
 const handlePieClick = (item) => {
   const currentType = pieOptions.value[activePieIndex.value]?.type;
   if (currentType === 'status') {
-    emit('barSelect', { field: 'status', value: item.name });
+    emit('barSelect', {field: 'status', value: item.name});
   } else if (currentType === 'activityType') {
-    emit('barSelect', { field: 'activityType', value: item.name });
+    emit('barSelect', {field: 'activityType', value: item.name});
   }
 };
 
@@ -260,17 +233,17 @@ const loadActivityChart = async () => {
   } catch (error) {
     console.warn('图表总览接口失败，使用模拟数据', error);
     const mockData = {
-      statusCount: { ongoing: 3, ended: 5, unpublished: 2 },
-      activityTypeCount: { party_league: 4, volunteer: 3, other: 3 },
+      statusCount: {ongoing: 3, ended: 5, unpublished: 2},
+      activityTypeCount: {party_league: 4, volunteer: 3, other: 3},
       monthTrend: [
-        { date: '2025-03', totalCount: 2 },
-        { date: '2025-04', totalCount: 1 },
-        { date: '2025-06', totalCount: 1 },
+        {date: '2025-03', totalCount: 2},
+        {date: '2025-04', totalCount: 1},
+        {date: '2025-06', totalCount: 1},
       ],
       joinTrend: [
-        { date: '2025-03', totalCount: 1 },
-        { date: '2025-04', totalCount: 1 },
-        { date: '2025-05', totalCount: 1 },
+        {date: '2025-03', totalCount: 1},
+        {date: '2025-04', totalCount: 1},
+        {date: '2025-05', totalCount: 1},
       ],
     };
     overviewData.value = mockData;
@@ -283,7 +256,10 @@ const handleDateRangeChange = async () => {
   if (dateRange.value && dateRange.value.length === 2) {
     loading.value = true;
     try {
-      await Promise.all([loadActivityCount(), loadActivityChart()]);
+      await Promise.all([
+        loadActivityCount(),
+        loadActivityChart(),
+      ]);
     } finally {
       loading.value = false;
     }
@@ -297,7 +273,7 @@ const loadData = async () => {
     // 初始化时不传时间参数，让后端返回全部数据
     const [countRes, chartRes] = await Promise.allSettled([
       getMoralActivityCount({}),
-      getMoralActivityChart({}),
+      getMoralActivityChart({})
     ]);
     if (countRes.status === 'fulfilled') {
       chartData.value = countRes.value;
@@ -315,17 +291,17 @@ const loadData = async () => {
     } else {
       console.warn('图表总览接口失败，使用模拟数据');
       const mockData = {
-        statusCount: { ongoing: 3, ended: 5, unpublished: 2 },
-        activityTypeCount: { party_league: 4, volunteer: 3, other: 3 },
+        statusCount: {ongoing: 3, ended: 5, unpublished: 2},
+        activityTypeCount: {party_league: 4, volunteer: 3, other: 3},
         monthTrend: [
-          { date: '2025-03', totalCount: 2 },
-          { date: '2025-04', totalCount: 1 },
-          { date: '2025-06', totalCount: 1 },
+          {date: '2025-03', totalCount: 2},
+          {date: '2025-04', totalCount: 1},
+          {date: '2025-06', totalCount: 1},
         ],
         joinTrend: [
-          { date: '2025-03', totalCount: 1 },
-          { date: '2025-04', totalCount: 1 },
-          { date: '2025-05', totalCount: 1 },
+          {date: '2025-03', totalCount: 1},
+          {date: '2025-04', totalCount: 1},
+          {date: '2025-05', totalCount: 1},
         ],
       };
       overviewData.value = mockData;
@@ -339,17 +315,17 @@ const loadData = async () => {
       joinCountList: [200, 280, 50],
     };
     const mockData = {
-      statusCount: { ongoing: 3, ended: 5, unpublished: 2 },
-      activityTypeCount: { party_league: 4, volunteer: 3, other: 3 },
+      statusCount: {ongoing: 3, ended: 5, unpublished: 2},
+      activityTypeCount: {party_league: 4, volunteer: 3, other: 3},
       monthTrend: [
-        { date: '2025-03', totalCount: 2 },
-        { date: '2025-04', totalCount: 1 },
-        { date: '2025-06', totalCount: 1 },
+        {date: '2025-03', totalCount: 2},
+        {date: '2025-04', totalCount: 1},
+        {date: '2025-06', totalCount: 1},
       ],
       joinTrend: [
-        { date: '2025-03', totalCount: 1 },
-        { date: '2025-04', totalCount: 1 },
-        { date: '2025-05', totalCount: 1 },
+        {date: '2025-03', totalCount: 1},
+        {date: '2025-04', totalCount: 1},
+        {date: '2025-05', totalCount: 1},
       ],
     };
     overviewData.value = mockData;
@@ -369,22 +345,18 @@ onMounted(() => {
     <!-- 饼图区域 -->
     <div class="chart-area">
       <div class="chart-select-wrapper">
-        <ElSelect
-          v-model="activePieIndex"
-          size="small"
-          @change="handlePieChange"
-        >
-          <ElOption
+        <el-select v-model="activePieIndex" size="small" @change="handlePieChange">
+          <el-option
             v-for="(opt, idx) in pieOptions"
             :key="idx"
             :label="opt.title"
             :value="idx"
           />
-        </ElSelect>
+        </el-select>
       </div>
       <!-- 时间范围选择器（只针对两个接口） -->
       <div class="date-range-wrapper">
-        <ElDatePicker
+        <el-date-picker
           v-model="dateRange"
           type="daterange"
           range-separator="-"
@@ -392,33 +364,9 @@ onMounted(() => {
           end-placeholder="结束时间"
           size="small"
           :shortcuts="[
-            {
-              text: '近三个月',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setMonth(start.getMonth() - 3);
-                return [start, end];
-              },
-            },
-            {
-              text: '近半年',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setMonth(start.getMonth() - 6);
-                return [start, end];
-              },
-            },
-            {
-              text: '近一年',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setFullYear(start.getFullYear() - 1);
-                return [start, end];
-              },
-            },
+            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
+            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
+            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
           ]"
           @change="handleDateRangeChange"
         />
@@ -433,18 +381,14 @@ onMounted(() => {
     <!-- 柱状图区域 -->
     <div class="chart-area bar-chart-container">
       <div class="chart-select-wrapper">
-        <ElSelect
-          v-model="activeBarIndex"
-          size="small"
-          @change="handleBarChange"
-        >
-          <ElOption
+        <el-select v-model="activeBarIndex" size="small" @change="handleBarChange">
+          <el-option
             v-for="(opt, idx) in barOptions"
             :key="idx"
             :label="opt.title"
             :value="idx"
           />
-        </ElSelect>
+        </el-select>
       </div>
       <Bar
         :title="currentBarTitle"
@@ -458,18 +402,14 @@ onMounted(() => {
     <!-- 折线图区域 -->
     <div class="chart-area">
       <div class="chart-select-wrapper">
-        <ElSelect
-          v-model="activeLineIndex"
-          size="small"
-          @change="handleLineChange"
-        >
-          <ElOption
+        <el-select v-model="activeLineIndex" size="small" @change="handleLineChange">
+          <el-option
             v-for="(opt, idx) in lineOptions"
             :key="idx"
             :label="opt.title"
             :value="idx"
           />
-        </ElSelect>
+        </el-select>
       </div>
       <LineChart
         :title="currentLineTitle"
@@ -484,12 +424,12 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .chart-box {
+  padding-bottom: 0.5rem;
   display: flex;
   flex-wrap: wrap;
-  width: 100% !important;
-  padding-right: 15px;
-  padding-bottom: 0.5rem;
   padding-left: 15px;
+  padding-right: 15px;
+  width: 100% !important;
 
   .chart-area {
     position: relative;
