@@ -61,9 +61,9 @@ export function assignBedMgmt(data) {
   });
 }
 
-// 调整床位（单个）
+// 调整床位（单个）- 修正为 Query 参数形式
 export function adjustBedMgmt(data) {
-  return requestClient.put('/studentmgmt/bed-mgmt/adjust', data).catch(err => {
+  return requestClient.put('/studentmgmt/bed-mgmt/adjust', null, { params: data }).catch(err => {
     console.warn('调整接口失败，模拟成功', err);
     return Promise.resolve(true);
   });

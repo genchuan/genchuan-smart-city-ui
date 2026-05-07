@@ -11,12 +11,11 @@ import {
 
 const loading = ref(true);
 const chartData = ref({});
-const distributionData = ref({});
+const distributionData = ref({}); // 保持后端返回的原始结构
 
-// 时间范围选择器绑定的值（数组格式 [startDate, endDate]）
+// 时间范围选择器
 const timeRange = ref([]);
 
-// 获取默认时间范围（最近30天，结束时间为当天）
 const getDefaultTimeRange = () => {
   const end = new Date();
   const start = new Date();
@@ -24,8 +23,6 @@ const getDefaultTimeRange = () => {
   return [start, end];
 };
 
-// 格式化单个日期时间为后端要求的格式（带 T 分隔，如 "2023-01-01T00:00:00"）
-// isEnd: 是否为结束时间（结束时间用 23:59:59，起始用 00:00:00）
 const formatDateTime = (date, isEnd = false) => {
   if (!date) return '';
   const d = new Date(date);
@@ -36,7 +33,6 @@ const formatDateTime = (date, isEnd = false) => {
   return `${year}-${month}-${day}T${time}`;
 };
 
-// 生成 timeRange 字符串（格式："起始时间,结束时间"）
 const getTimeRangeParam = () => {
   if (timeRange.value && timeRange.value.length === 2) {
     const startStr = formatDateTime(timeRange.value[0], false);
@@ -47,12 +43,11 @@ const getTimeRangeParam = () => {
   return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
 };
 
-// 日期范围变化时重新加载数据
 const handleDateRangeChange = () => {
   loadData();
 };
 
-// ========== 卡片数据 ==========
+// 卡片数据
 const cardList = computed(() => {
   const total = chartData.value.totalTreatCount || 0;
   const pending = chartData.value.pendingAuditCount || 0;
@@ -61,47 +56,50 @@ const cardList = computed(() => {
   const emergency = chartData.value.emergencyCount || 0;
   const other = chartData.value.otherCount || 0;
   return [
-    {title: '总就诊次数', value: total, color: '#409EFF', status: 'total'},
-    {title: '待审核预约数', value: pending, color: '#E6A23C', status: 'pending'},
-    {title: '已完成就诊数', value: finished, color: '#67C23A', status: 'finished'},
-    {title: '门诊就诊数', value: outpatient, color: '#909399', status: 'outpatient'},
-    {title: '急诊就诊数', value: emergency, color: '#F56C6C', status: 'emergency'},
-    {title: '其他就诊数', value: other, color: '#909399', status: 'other'},
+    { title: '总就诊次数', value: total, color: '#409EFF', status: 'total' },
+    { title: '待审核预约数', value: pending, color: '#E6A23C', status: 'pending' },
+    { title: '已完成就诊数', value: finished, color: '#67C23A', status: 'finished' },
+    { title: '门诊就诊数', value: outpatient, color: '#909399', status: 'outpatient' },
+    { title: '急诊就诊数', value: emergency, color: '#F56C6C', status: 'emergency' },
+    { title: '其他就诊数', value: other, color: '#909399', status: 'other' },
   ];
 });
 
-// 折线图数据
+// 近一周就诊趋势折线图
 const lineData = computed(() => {
   const trend = chartData.value.recentWeekTreatTrend || [];
   return {
     xAxis: trend.map(item => item.date),
-    series: [{name: '就诊次数', data: trend.map(item => item.count)}],
+    series: [{ name: '就诊次数', data: trend.map(item => item.count) }],
   };
 });
 
-// 饼图配置
+// 就诊类型分布饼图数据（后端字段 type → name）
+const treatTypePieData = computed(() => {
+  const data = distributionData.value.treatTypeDistribution || [];
+  return data.map(item => ({
+    name: item.type,   // 后端返回 type
+    value: item.value,
+  }));
+});
+
+// 年级分布饼图数据（后端字段 grade → name）
+const gradePieData = computed(() => {
+  const data = distributionData.value.gradeDistribution || [];
+  return data.map(item => ({
+    name: item.grade,  // 后端返回 grade
+    value: item.value,
+  }));
+});
+
+// 饼图切换选项
 const pieOptions = computed(() => [
-  {
-    title: '就诊类型分布',
-    type: 'treatType',
-    getData: () => {
-      const dist = distributionData.value.treatTypeDistribution || [];
-      return dist.map(item => ({name: item.name, value: item.value}));
-    },
-  },
-  {
-    title: '就诊学生年级分布',
-    type: 'grade',
-    getData: () => {
-      const dist = distributionData.value.gradeDistribution || [];
-      return dist.map(item => ({name: item.name, value: item.value}));
-    },
-  },
+  { type: 'treatType', title: '就诊类型分布', data: treatTypePieData.value },
+  { type: 'grade', title: '就诊学生年级分布', data: gradePieData.value },
 ]);
 
 const activePieIndex = ref(0);
-const currentPieData = computed(() => pieOptions.value[activePieIndex.value]?.getData() || []);
-const currentPieTitle = computed(() => pieOptions.value[activePieIndex.value]?.title || '');
+const currentPie = computed(() => pieOptions.value[activePieIndex.value] || pieOptions.value[0]);
 
 const handlePieChange = (index) => {
   activePieIndex.value = index;
@@ -113,32 +111,31 @@ const handleCardClick = (cardInfo) => {
   emit('cardSelect', cardInfo.status);
 };
 
-const handlePieClick = (item) => {
-  const currentType = pieOptions.value[activePieIndex.value]?.type;
-  if (currentType === 'treatType') {
-    emit('pieSelect', {field: 'treatType', value: item.name});
-  } else if (currentType === 'grade') {
-    emit('pieSelect', {field: 'grade', value: item.name});
-  }
+const handlePieClick = (params) => {
+  emit('pieSelect', {
+    name: params.name,
+    type: currentPie.value.type,
+  });
 };
 
 const handleLineClick = (params) => {
-  emit('lineSelect', {field: 'date', value: params.xValue});
+  emit('lineSelect', { field: 'date', value: params.xValue });
 };
 
-// 加载数据
+// 加载数据 - 保持原始数据结构不变
 const loadData = async () => {
   loading.value = true;
   try {
     const timeRangeParam = getTimeRangeParam();
     const [chartRes, distRes] = await Promise.allSettled([
-      getTreatMgmtChart({timeRange: timeRangeParam}),
-      getTreatMgmtDistribution({timeRange: timeRangeParam}),
+      getTreatMgmtChart({ timeRange: timeRangeParam }),
+      getTreatMgmtDistribution({ timeRange: timeRangeParam }),
     ]);
+
     if (chartRes.status === 'fulfilled') {
       chartData.value = chartRes.value;
     } else {
-      console.warn('就诊看板接口失败，使用模拟数据', chartRes.reason);
+      // 模拟数据（保持与真实接口相同的字段）
       chartData.value = {
         totalTreatCount: 86,
         pendingAuditCount: 12,
@@ -147,30 +144,32 @@ const loadData = async () => {
         emergencyCount: 18,
         otherCount: 6,
         recentWeekTreatTrend: [
-          {date: '2025-03-25', count: 8},
-          {date: '2025-03-26', count: 12},
-          {date: '2025-03-27', count: 10},
-          {date: '2025-03-28', count: 9},
-          {date: '2025-03-29', count: 7},
-          {date: '2025-03-30', count: 5},
-          {date: '2025-03-31', count: 6},
+          { date: '2025-03-25', count: 8 },
+          { date: '2025-03-26', count: 12 },
+          { date: '2025-03-27', count: 10 },
+          { date: '2025-03-28', count: 9 },
+          { date: '2025-03-29', count: 7 },
+          { date: '2025-03-30', count: 5 },
+          { date: '2025-03-31', count: 6 },
         ],
       };
     }
+
     if (distRes.status === 'fulfilled') {
+      // 直接保存后端返回的原始数据，不做修改
       distributionData.value = distRes.value;
     } else {
-      console.warn('分布统计接口失败，使用模拟数据', distRes.reason);
+      // 模拟数据也使用 type/grade 字段，保持与真实接口一致
       distributionData.value = {
         treatTypeDistribution: [
-          {name: '门诊', value: 62},
-          {name: '急诊', value: 18},
-          {name: '其他', value: 6},
+          { type: '门诊', value: 62 },
+          { type: '急诊', value: 18 },
+          { type: '其他', value: 6 },
         ],
         gradeDistribution: [
-          {name: '高一', value: 25},
-          {name: '高二', value: 30},
-          {name: '高三', value: 31},
+          { grade: '高一', value: 25 },
+          { grade: '高二', value: 30 },
+          { grade: '高三', value: 31 },
         ],
       };
     }
@@ -199,7 +198,7 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 折线图区域（包含日期选择器） -->
+    <!-- 折线图区域（含日期选择器） -->
     <div class="line-chart-container" style="flex: 1.5 !important; position: relative;">
       <div class="date-range-wrapper">
         <el-date-picker
@@ -231,10 +230,14 @@ onMounted(() => {
     <div class="chart-area">
       <div class="chart-select-wrapper">
         <el-select v-model="activePieIndex" size="small" @change="handlePieChange">
-          <el-option v-for="(opt, idx) in pieOptions" :key="idx" :label="opt.title" :value="idx"/>
+          <el-option v-for="(opt, idx) in pieOptions" :key="idx" :label="opt.title" :value="idx" />
         </el-select>
       </div>
-      <Pie :title-text="currentPieTitle" :data="currentPieData" @pie-click="handlePieClick"/>
+      <Pie
+        :title-text="currentPie.title"
+        :data="currentPie.data"
+        @pie-click="handlePieClick"
+      />
     </div>
   </div>
 </template>
@@ -260,7 +263,6 @@ onMounted(() => {
     }
   }
 
-  /* 折线图容器特殊样式，用于绝对定位日期选择器 */
   .line-chart-container {
     position: relative;
     flex: 1.5;
@@ -290,7 +292,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的日期选择器样式 */
   :deep(.el-date-editor) {
     --el-date-editor-width: 240px;
 

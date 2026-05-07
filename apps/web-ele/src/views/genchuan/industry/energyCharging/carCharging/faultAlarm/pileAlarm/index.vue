@@ -1,12 +1,12 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {computed, reactive, ref, watch} from 'vue';
+import {confirm, useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { $t } from '#/locales';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {$t} from '#/locales';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import AlarmDetailDrawer from './components/alarmDetail.vue';
 import PileDetailDrawer from './components/pileDetail.vue';
 import {
@@ -147,14 +147,14 @@ const gridColumns = ref(getColumnsByStatus(activeName.value));
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map((item) => item.id);
   checkedRows.value = records;
 }
 
 const searchParams = ref({});
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -293,7 +293,7 @@ function handleRefresh() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportPileAlarm();
       downloadFileFromBlobPart({
@@ -310,17 +310,22 @@ async function handleExport() {
   }
 }
 
+// ---------- 批量派单（修复后） ----------
 async function handleBatchDispatch() {
   if (checkedIds.value.length === 0) {
     ElMessage.warning('请至少选择一条告警记录');
     return;
   }
-  const selectedRows = checkedRows.value.filter(
-    (row) => row.alarmStatus === '未派单',
-  );
+
+  // 校验是否全部为“未派单”状态
+  const invalidRows = checkedRows.value.filter(row => row.alarmStatus !== '未派单');
+  if (invalidRows.length > 0) {
+    ElMessage.warning('只允许未派单状态批量派单，请重新选择');
+    return;
+  }
 
   try {
-    const { value: handler } = await ElMessageBox.prompt(
+    const {value: handler} = await ElMessageBox.prompt(
       '请输入处理人员',
       '派单',
       {
@@ -330,20 +335,14 @@ async function handleBatchDispatch() {
       },
     );
     if (handler) {
-      const loading = ElLoading.service({ text: '派单中...' });
+      const loading = ElLoading.service({text: '派单中...'});
       try {
-        const promises = selectedRows.map((row) =>
-          dispatchPileAlarm({ id: row.id, handleUserId: handler }),
+        const promises = checkedRows.value.map((row) =>
+          dispatchPileAlarm({id: row.id, handleUserId: handler}),
         );
         const results = await Promise.all(promises);
         const allSuccess = results.every((res) => res === true);
         if (allSuccess) {
-          selectedRows.forEach((row) => {
-            row.alarmStatus = '已派单';
-            row.handleUser = handler;
-            row.handleUser = handler;
-            row.handleUserName = handler;
-          });
           ElMessage.success('派单成功');
           handleRefresh();
         } else {
@@ -353,20 +352,27 @@ async function handleBatchDispatch() {
         loading.close();
       }
     }
-  } catch {}
+  } catch {
+    // 用户取消输入
+  }
 }
 
+// ---------- 批量处置（修复后） ----------
 async function handleBatchDispose() {
   if (checkedIds.value.length === 0) {
     ElMessage.warning('请至少选择一条告警记录');
     return;
   }
-  const selectedRows = checkedRows.value.filter(
-    (row) => row.alarmStatus === '已派单',
-  );
+
+  // 校验是否全部为“已派单”状态
+  const invalidRows = checkedRows.value.filter(row => row.alarmStatus !== '已派单');
+  if (invalidRows.length > 0) {
+    ElMessage.warning('只允许已派单状态批量处置，请重新选择');
+    return;
+  }
 
   try {
-    const { value: measure } = await ElMessageBox.prompt(
+    const {value: measure} = await ElMessageBox.prompt(
       '请输入处置措施',
       '处置',
       {
@@ -376,30 +382,14 @@ async function handleBatchDispose() {
       },
     );
     if (measure) {
-      const loading = ElLoading.service({ text: '处置中...' });
+      const loading = ElLoading.service({text: '处置中...'});
       try {
-        const promises = selectedRows.map((row) =>
-          handlePileAlarm({ id: row.id, disposeMeasure: measure }),
+        const promises = checkedRows.value.map((row) =>
+          handlePileAlarm({id: row.id, disposeMeasure: measure}),
         );
         const results = await Promise.all(promises);
         const allSuccess = results.every((res) => res === true);
         if (allSuccess) {
-          const now = new Date()
-            .toLocaleString('zh-CN', {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: false,
-            })
-            .replace(/\//g, '-');
-          selectedRows.forEach((row) => {
-            row.alarmStatus = '处置中';
-            row.disposeMeasure = measure;
-            row.disposeTime = now;
-          });
           ElMessage.success('处置成功');
           handleRefresh();
         } else {
@@ -409,7 +399,9 @@ async function handleBatchDispose() {
         loading.close();
       }
     }
-  } catch {}
+  } catch {
+    // 用户取消输入
+  }
 }
 
 async function handleBatchClose() {
@@ -431,10 +423,10 @@ async function handleBatchClose() {
         type: 'warning',
       },
     );
-    const loading = ElLoading.service({ text: '销单中...' });
+    const loading = ElLoading.service({text: '销单中...'});
     try {
       const promises = selectedRows.map((row) =>
-        closePileAlarm({ id: row.id }),
+        closePileAlarm({id: row.id}),
       );
       const results = await Promise.all(promises);
       const allSuccess = results.every((res) => res === true);
@@ -462,12 +454,13 @@ async function handleBatchClose() {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 async function handleRowDispatch(row) {
   try {
-    const { value: handler } = await ElMessageBox.prompt(
+    const {value: handler} = await ElMessageBox.prompt(
       '请输入处理人员',
       '派单',
       {
@@ -477,7 +470,7 @@ async function handleRowDispatch(row) {
       },
     );
     if (handler) {
-      const loading = ElLoading.service({ text: '派单中...' });
+      const loading = ElLoading.service({text: '派单中...'});
       try {
         const res = await dispatchPileAlarm({
           id: row.id,
@@ -497,12 +490,13 @@ async function handleRowDispatch(row) {
         loading.close();
       }
     }
-  } catch {}
+  } catch {
+  }
 }
 
 async function handleRowDispose(row) {
   try {
-    const { value: measure } = await ElMessageBox.prompt(
+    const {value: measure} = await ElMessageBox.prompt(
       '请输入处置措施',
       '处置',
       {
@@ -512,7 +506,7 @@ async function handleRowDispose(row) {
       },
     );
     if (measure) {
-      const loading = ElLoading.service({ text: '处置中...' });
+      const loading = ElLoading.service({text: '处置中...'});
       try {
         const res = await handlePileAlarm({
           id: row.id,
@@ -541,7 +535,8 @@ async function handleRowDispose(row) {
         loading.close();
       }
     }
-  } catch {}
+  } catch {
+  }
 }
 
 async function handleRowClose(row) {
@@ -555,9 +550,9 @@ async function handleRowClose(row) {
         type: 'warning',
       },
     );
-    const loading = ElLoading.service({ text: '销单中...' });
+    const loading = ElLoading.service({text: '销单中...'});
     try {
-      const res = await closePileAlarm({ id: row.id });
+      const res = await closePileAlarm({id: row.id});
       if (res === true) {
         row.alarmStatus = '已销单';
         row.disposeTime = new Date()
@@ -579,20 +574,21 @@ async function handleRowClose(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 async function handleRowRemark(row) {
   try {
-    const { value: remark } = await ElMessageBox.prompt('请输入备注', '备注', {
+    const {value: remark} = await ElMessageBox.prompt('请输入备注', '备注', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       inputValue: row.remark || '',
     });
     if (remark !== null) {
-      const loading = ElLoading.service({ text: '保存备注中...' });
+      const loading = ElLoading.service({text: '保存备注中...'});
       try {
-        const res = await remarkPileAlarm({ id: row.id, remark });
+        const res = await remarkPileAlarm({id: row.id, remark});
         if (res === true) {
           row.remark = remark;
           ElMessage.success('备注添加成功');
@@ -604,18 +600,19 @@ async function handleRowRemark(row) {
         loading.close();
       }
     }
-  } catch {}
+  } catch {
+  }
 }
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
-    componentProps: { class: 'w-full' },
+    componentProps: {class: 'w-full'},
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -625,17 +622,17 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
   gridEvents: {
@@ -649,7 +646,7 @@ watch(activeName, (newVal) => {
   tagFilters.value = {};
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({ columns: gridColumns.value });
+  else gridApi.setGridOptions?.({columns: gridColumns.value});
   gridApi.reload();
 });
 
@@ -687,7 +684,7 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 </script>
 
 <template>
@@ -701,7 +698,7 @@ defineExpose({ handleFilterTagClick, clearFilters });
       :detail-obj="dataObj.pileDetail"
     />
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <Grid>
       <template #table-title>
@@ -785,7 +782,7 @@ defineExpose({ handleFilterTagClick, clearFilters });
           @click="handleFilterTagClick('station', row.stationName)"
           type="primary"
           style="cursor: pointer"
-          >{{ row.stationName }}
+        >{{ row.stationName }}
         </el-text>
       </template>
       <template #faultType="{ row }">
@@ -793,7 +790,7 @@ defineExpose({ handleFilterTagClick, clearFilters });
           @click="handleFilterTagClick('faultType', row.faultType)"
           type="primary"
           style="cursor: pointer"
-          >{{ row.faultType }}
+        >{{ row.faultType }}
         </el-text>
       </template>
       <template #alarmLevel="{ row }">
@@ -807,7 +804,7 @@ defineExpose({ handleFilterTagClick, clearFilters });
           "
           @click="handleFilterTagClick('alarmLevel', row.alarmLevel)"
           style="cursor: pointer"
-          >{{ row.alarmLevel }}
+        >{{ row.alarmLevel }}
         </el-tag>
       </template>
       <template #alarmTime="{ row }">
@@ -834,7 +831,7 @@ defineExpose({ handleFilterTagClick, clearFilters });
           "
           type="primary"
           style="cursor: pointer"
-          >{{ row.handleUserName || row.handleUser || '-' }}
+        >{{ row.handleUserName || row.handleUser || '-' }}
         </el-text>
       </template>
       <template #alarmStatus="{ row }">
@@ -842,7 +839,7 @@ defineExpose({ handleFilterTagClick, clearFilters });
           :type="getStatusType(row.alarmStatus)"
           @click="handleFilterTagClick('alarmStatus', row.alarmStatus)"
           style="cursor: pointer"
-          >{{ row.alarmStatus }}
+        >{{ row.alarmStatus }}
         </el-tag>
       </template>
       <template #disposeTime="{ row }">

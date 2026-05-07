@@ -106,13 +106,13 @@ export function useAdjustFormSchema() {
       rules: 'required',
       labelWidth: '100',
     },
-    {
-      fieldName: 'remark',
-      label: '调整原因',
-      component: 'Input',
-      componentProps: { placeholder: '请输入调整原因', type: 'textarea', rows: 2 },
-      labelWidth: '100',
-    },
+    // {
+    //   fieldName: 'remark',
+    //   label: '调整原因',
+    //   component: 'Input',
+    //   componentProps: { placeholder: '请输入调整原因', type: 'textarea', rows: 2 },
+    //   labelWidth: '100',
+    // },
   ];
 }
 

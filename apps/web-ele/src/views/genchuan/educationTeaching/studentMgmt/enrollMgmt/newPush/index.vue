@@ -1,4 +1,3 @@
-<!-- 文件3: src/views/genchuan/educationTeaching/studentMgmt/enrollMgmt/newPush/index.vue -->
 <script setup>
 import { reactive, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
@@ -9,7 +8,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { downloadFileFromBlobPart } from '@vben/utils';
 import NewPushDetailDrawer from './components/newPushDetail.vue';
 import {
-  getMockList,
+  // getMockList 已删除，不再导入
   getNewPushPage,
   createNewPushConfig,
   pushNewPush,
@@ -24,7 +23,7 @@ import {
   useConfigFormSchema,
 } from '#/api/genchuan/educationTeaching/studentMgmt/enrollMgmt/newPush/form.js';
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // 标签筛选
@@ -93,7 +92,7 @@ const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -138,7 +137,7 @@ const getFinishRateType = (rate) => {
   return `${rate}%`;
 };
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -179,37 +178,10 @@ const getTableData = async ({ page }) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          case 'taskName':
-            itemValue = item.taskName;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据并提示用户
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取推送任务列表失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -228,10 +200,10 @@ function handleReset() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportNewPush(searchParams.value);
-      downloadFileFromBlobPart({ fileName: `${textObj.excelName}.xls`, source: data });
+      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -259,10 +231,10 @@ async function handleBatchPush() {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '推送中...' });
+    const loading = ElLoading.service({text: '推送中...'});
     try {
       const ids = unPushedRows.map(row => row.id);
-      const res = await pushNewPush({ ids });
+      const res = await pushNewPush({ids});
       if (res && res !== false) {
         ElMessage.success('批量推送成功');
         handleRefresh();
@@ -272,7 +244,8 @@ async function handleBatchPush() {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 配置（新增）
@@ -304,9 +277,9 @@ async function handlePush(row) {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '推送中...' });
+    const loading = ElLoading.service({text: '推送中...'});
     try {
-      const res = await pushNewPush({ ids: [row.id] });
+      const res = await pushNewPush({ids: [row.id]});
       if (res && res !== false) {
         ElMessage.success('推送成功');
         handleRefresh();
@@ -316,21 +289,22 @@ async function handlePush(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 配置表单
 const [ConfigForm, configFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: isEditMode.value ? '保存中...' : '配置中...' });
+    const loading = ElLoading.service({text: isEditMode.value ? '保存中...' : '配置中...'});
     try {
       let res;
       if (isEditMode.value) {
-        res = await updateNewPush({ ...values, id: currentEditId.value });
+        res = await updateNewPush({...values, id: currentEditId.value});
       } else {
-        res = await createNewPushConfig({ ...values, status: '未推送' });
+        res = await createNewPushConfig({...values, status: '未推送'});
       }
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '编辑成功' : '配置成功');
@@ -346,7 +320,7 @@ const [ConfigForm, configFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useConfigFormSchema(isEditMode.value),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
 });
 
 // 修复的核心：在抽屉打开时重置表单并加载编辑数据
@@ -361,7 +335,7 @@ const [ConfigDrawer, configDrawerApi] = useVbenDrawer({
       // 如果是编辑模式，则填充数据
       if (isEditMode.value && currentEditId.value) {
         try {
-          const detail = await getNewPushDetail({ id: currentEditId.value });
+          const detail = await getNewPushDetail({id: currentEditId.value});
           await configFormApi.setValues({
             taskName: detail.taskName,
             pushContent: detail.pushContent,
@@ -387,9 +361,9 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -399,20 +373,20 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -420,17 +394,18 @@ const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <NewPushDetailDrawer ref="newPushDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <NewPushDetailDrawer ref="newPushDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                         @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <ConfigDrawer :title="isEditMode ? textObj.editText : textObj.configText">
-      <ConfigForm />
+      <ConfigForm/>
     </ConfigDrawer>
     <Grid>
       <template #table-title>
@@ -447,13 +422,14 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton :content="textObj.configText" icon-name="Plus" @click="handleConfig" />
-          <IconButton :content="textObj.pushText" icon-name="Checked" @click="handleBatchPush" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton :content="textObj.configText" icon-name="Plus" @click="handleConfig"/>
+          <IconButton :content="textObj.pushText" icon-name="Checked" @click="handleBatchPush"/>
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
         </div>
       </template>
 
@@ -464,23 +440,29 @@ defineExpose({ handleFilterTagClick, clearFilters });
         </el-text>
       </template>
       <template #pushContent="{ row }">
-        <el-text>{{ row.pushContent?.substring(0, 50) || '-' }}{{ row.pushContent?.length > 50 ? '...' : '' }}</el-text>
+        <el-text>{{
+            row.pushContent?.substring(0, 50) || '-'
+          }}{{ row.pushContent?.length > 50 ? '...' : '' }}
+        </el-text>
       </template>
       <template #finishRate="{ row }">
         <el-text>{{ getFinishRateType(row.finishRate) }}</el-text>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer">
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer">
           {{ row.status }}
         </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer">
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer">
           {{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer">
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
+                 type="primary" style="cursor: pointer">
           {{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
@@ -496,9 +478,11 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '未推送'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
-          <IconButton v-if="row.status === '未推送'" content="推送" icon-name="Checked" @click="handlePush(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
+          <IconButton v-if="row.status === '未推送'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '未推送'" content="推送" icon-name="Checked"
+                      @click="handlePush(row)"/>
         </div>
       </template>
     </Grid>

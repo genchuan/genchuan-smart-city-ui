@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption } from 'element-plus';
+import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
@@ -12,6 +12,45 @@ import {
 const loading = ref(true);
 const chartData = ref({});
 const distributionData = ref({});
+
+// 时间范围选择器绑定的值（数组格式 [startDate, endDate]）
+const timeRange = ref([]);
+
+// 获取默认时间范围（最近30天，结束时间为当天）
+const getDefaultTimeRange = () => {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 30);
+  return [start, end];
+};
+
+// 格式化单个日期时间为后端要求的格式（带 T 分隔，如 "2023-01-01T00:00:00"）
+// isEnd: 是否为结束时间（结束时间用 23:59:59，起始用 00:00:00）
+const formatDateTime = (date, isEnd = false) => {
+  if (!date) return '';
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const time = isEnd ? '23:59:59' : '00:00:00';
+  return `${year}-${month}-${day}T${time}`;
+};
+
+// 生成 timeRange 字符串（格式："起始时间,结束时间"）
+const getTimeRangeParam = () => {
+  if (timeRange.value && timeRange.value.length === 2) {
+    const startStr = formatDateTime(timeRange.value[0], false);
+    const endStr = formatDateTime(timeRange.value[1], true);
+    return `${startStr},${endStr}`;
+  }
+  const [defaultStart, defaultEnd] = getDefaultTimeRange();
+  return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
+};
+
+// 日期范围变化时重新加载数据
+const handleDateRangeChange = () => {
+  loadData();
+};
 
 // 卡片数据
 const cardList = computed(() => {
@@ -36,13 +75,16 @@ const lineData = computed(() => {
   };
 });
 
-// 班级人数饼图数据
+// 班级人数饼图数据（兼容后端返回的 value 字段和模拟数据的 studentCount 字段）
 const classPieData = computed(() => {
   const data = distributionData.value.classStudentCount || [];
-  return data.map(item => ({ name: item.className, value: item.studentCount }));
+  return data.map(item => ({
+    name: item.className,
+    value: item.value ?? item.studentCount,  // 优先使用 value，兼容 studentCount
+  }));
 });
 
-// 专业分班占比饼图数据
+// 专业分班占比饼图数据（后端直接使用 value 字段）
 const majorPieData = computed(() => {
   const data = distributionData.value.majorAssignRate || [];
   return data.map(item => ({ name: item.name, value: item.value }));
@@ -70,7 +112,7 @@ const handleCardClick = (cardInfo) => {
 const handlePieClick = (params) => {
   emit('pieSelect', {
     name: params.name,
-    type: currentPie.value.type,  // 'class' 或 'major'
+    type: currentPie.value.type,
   });
 };
 
@@ -81,9 +123,10 @@ const handleLineClick = (params) => {
 const loadData = async () => {
   loading.value = true;
   try {
+    const timeRangeParam = getTimeRangeParam();
     const [chartRes, distRes] = await Promise.allSettled([
-      getClassAssignChart({}),
-      getClassAssignDistribution({}),
+      getClassAssignChart({ timeRange: timeRangeParam }),
+      getClassAssignDistribution({ timeRange: timeRangeParam }),
     ]);
     if (chartRes.status === 'fulfilled') {
       chartData.value = chartRes.value;
@@ -133,6 +176,7 @@ const loadData = async () => {
 };
 
 onMounted(() => {
+  timeRange.value = getDefaultTimeRange();
   loadData();
 });
 </script>
@@ -149,14 +193,35 @@ onMounted(() => {
       />
     </div>
 
-    <lineChart
-      style="flex: 1.5 !important;"
-      title="近一周分班趋势"
-      :x-data="lineData.xAxis"
-      :series-data="lineData.series"
-      y-name="分班学生数"
-      @line-click="handleLineClick"
-    />
+    <!-- 折线图区域（含日期选择器） -->
+    <div class="line-chart-container" style="flex: 1.5 !important; position: relative;">
+      <!-- 日期范围选择器（紧凑样式，位于右上角） -->
+      <div class="date-range-wrapper">
+        <el-date-picker
+          v-model="timeRange"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="起始"
+          end-placeholder="结束"
+          size="small"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          :shortcuts="[
+            { text: '近7天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 7); return [start, end]; } },
+            { text: '近30天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 30); return [start, end]; } },
+            { text: '近90天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 90); return [start, end]; } }
+          ]"
+          @change="handleDateRangeChange"
+        />
+      </div>
+      <lineChart
+        title="近一周分班趋势"
+        :x-data="lineData.xAxis"
+        :series-data="lineData.series"
+        y-name="分班学生数"
+        @line-click="handleLineClick"
+      />
+    </div>
 
     <div class="chart-area">
       <div class="chart-select-wrapper">
@@ -206,6 +271,38 @@ onMounted(() => {
     top: 8px;
     right: 10px;
     z-index: 10;
+  }
+
+  /* 折线图容器特殊样式，用于绝对定位日期选择器 */
+  .line-chart-container {
+    position: relative;
+    flex: 1.5;
+    min-width: 280px;
+    margin-left: 12px;
+  }
+
+  .date-range-wrapper {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    z-index: 10;
+  }
+
+  /* 紧凑的时间选择器样式 */
+  :deep(.el-date-editor) {
+    --el-date-editor-width: 240px;
+
+    .el-range__icon {
+      margin-right: 2px;
+    }
+
+    .el-range-separator {
+      padding: 0 4px;
+    }
+
+    .el-range__close-icon {
+      margin-left: 2px;
+    }
   }
 }
 </style>
