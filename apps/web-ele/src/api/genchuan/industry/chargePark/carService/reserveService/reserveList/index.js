@@ -48,6 +48,18 @@ export function getReserveChartData(params) {
 
 // ==================== 辅助接口 ====================
 
+export function getUserDetail(userId) {
+  return requestClient.get('/system/user/get', { params: { id: userId } });
+}
+
+export function getStationDetail(stationId) {
+  return requestClient.get('/stationresource/station-info/get', { params: { id: stationId } });
+}
+
+export function getSpaceDetail(spaceId) {
+  return requestClient.get('/stationresource/parking-space-info/get', { params: { id: spaceId } });
+}
+
 export async function getUserList() {
   try {
     const res = await requestClient.get('/system/user/simple-list');

@@ -26,9 +26,10 @@
         <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
       </template>
       <template #user_name="{ row }">
-        <el-text @click="() => { handleClearField('userId'); dataObj.searchObj.userId = row.userId; gridApi.query(); }" type="primary" style="cursor: pointer">
-          {{ getUserName(row.userId) }}
+        <el-text v-if="row.userId" @click="showUserDetail(row.userId)" type="primary" style="cursor: pointer">
+          {{ getUserName(row.userId) || row.userId }}
         </el-text>
+        <span v-else>-</span>
       </template>
       <template #start_location="{ row }">
         <el-text @click="handleLocationClick(row, 'start')" type="primary" style="cursor: pointer">
@@ -56,6 +57,7 @@
 
     <SearchDrawer title="搜索"><QueryForm class="query-form" /></SearchDrawer>
     <PathPlanDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="路径规划详情" />
+    <UserDetailDrawer ref="userDetailDrawerRef" />
   </div>
 </template>
 
@@ -74,9 +76,11 @@ import {
   getPathPlanDetail,
   navigatePathPlan,
   getUserList,
+  getUserDetail,
 } from '#/api/genchuan/industry/chargePark/carService/reverseFindCar/pathPlan/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import PathPlanDetailDrawer from './detail.vue';
+import UserDetailDrawer from '#/views/genchuan/industry/chargePark/carService/carGuide/nearStation/table/userDetail.vue';
 
 const props = defineProps({
   secondShow: Boolean,
@@ -111,23 +115,37 @@ function getUserName(id) { return userMap.value.get(id) || id; }
 
 // 获取表格数据
 const getTableData = async (pageObj) => {
+  const page = pageObj.page;
+  const userNameFilter = String(dataObj.searchObj.userName || '').trim().toLowerCase();
+  const hasClientFilter = !!userNameFilter;
+
   const params = {
-    pageNo: pageObj.page.currentPage,
-    pageSize: pageObj.page.pageSize,
+    pageNo: hasClientFilter ? 1 : page.currentPage,
+    pageSize: hasClientFilter ? 200 : page.pageSize,
     ...dataObj.searchObj,
   };
-  // planTime 是数组，后端按 ?planTime=start&planTime=end 接收（Spring repeat 格式），
-  // 也可以传逗号分隔字符串，统一转成逗号分隔以避免 LocalDateTime[] 多值绑定问题
+  delete params.userName;
   if (Array.isArray(params.planTime) && params.planTime.length === 2) {
     params.planTime = `${params.planTime[0]},${params.planTime[1]}`;
   }
-  // 客户端筛选标记（_successOnly），不传给后端
   const successOnly = !!params._successOnly;
   delete params._successOnly;
+
   const res = await getPathPlanPage(params);
   let list = res.list || [];
-  if (successOnly) list = list.filter(v => (v.pathLength || 0) > 0);
-  dataObj.total = successOnly ? list.length : res.total;
+  let total = res.total;
+  if (successOnly) { list = list.filter(v => (v.pathLength || 0) > 0); total = list.length; }
+  // 客户端按用户名模糊匹配
+  if (hasClientFilter) {
+    list = list.filter(item => {
+      const uname = String(item.userName || getUserName(item.userId) || item.userId || '').toLowerCase();
+      return uname.includes(userNameFilter);
+    });
+    total = list.length;
+    const pStart = (page.currentPage - 1) * page.pageSize;
+    list = list.slice(pStart, pStart + page.pageSize);
+  }
+  dataObj.total = total;
   dataObj.list = list.map(v => ({
     ...v,
     createTime: formatTimestamp(v.createTime),
@@ -189,6 +207,7 @@ const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchObj;
   if (obj.userId) filters.push({ label: `用户：${getUserName(obj.userId)}`, field: 'userId' });
+  if (obj.userName) filters.push({ label: `用户名称：${obj.userName}`, field: 'userName' });
   if (obj.startLocation) filters.push({ label: `起点：${obj.startLocation}`, field: 'startLocation' });
   if (obj.endLocation) filters.push({ label: `终点：${obj.endLocation}`, field: 'endLocation' });
   if (obj.planTime && obj.planTime.length === 2) filters.push({ label: `规划时间：${obj.planTime[0]} 至 ${obj.planTime[1]}`, field: 'planTime' });
@@ -223,6 +242,19 @@ async function handleExport() {
     ElMessage.error('导出失败，请稍后重试');
   }
 }
+
+// 用户详情抽屉
+const userDetailDrawerRef = ref(null);
+const showUserDetail = async (userId) => {
+  if (!userId) return ElMessage.warning('用户ID不存在');
+  try {
+    const userDetail = await getUserDetail(userId);
+    userDetailDrawerRef.value?.open(userDetail);
+  } catch (error) {
+    console.error('获取用户详情失败', error);
+    ElMessage.error('获取用户详情失败');
+  }
+};
 
 const detailDrawerRef = ref(null);
 const handleOpenDetail = async (row) => {

@@ -14,7 +14,7 @@ export function useGridColumns({ getUserName }) {
     { type: 'checkbox', width: 40 },
     { field: 'id', title: '定位ID', minWidth: 100, sortable: true, slots: { default: 'id' } },
     { field: 'userId', title: '用户', minWidth: 120, sortable: true, slots: { default: 'user_name' }, formatter: ({ userId }) => getUserName(userId) },
-    { field: 'plateNo', title: '车牌号码', minWidth: 120, sortable: true},
+    { field: 'plateNo', title: '车牌号码', minWidth: 120, sortable: true, slots: { default: 'plate_no' } },
     { field: 'queryTime', title: '查询时间', minWidth: 160, sortable: true },
     { field: 'locationResult', title: '定位结果', minWidth: 100, sortable: true, slots: { default: 'location_result' } },
     { field: 'responseDuration', title: '响应时长', minWidth: 100, sortable: true, },

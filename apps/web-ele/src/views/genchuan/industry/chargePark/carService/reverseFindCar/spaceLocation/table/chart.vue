@@ -47,15 +47,17 @@ const fetchChartData = async () => {
       let rate = data.locationSuccessRate ?? 0;
       const percent = rate <= 1 ? (rate * 100).toFixed(1) : rate;
       state.cardList[1].value = `${percent}%`;
-      // 地图数据格式转换：保留 record id 供点击跳详情
-      state.mapData = (data.spaceLocationList || []).map(item => ({
-        id: item.id,
-        spaceId: item.spaceId,
-        coordinate: `${item.lon},${item.lat}`,
-        spaceNo: item.spaceNo,
-        plateNo: item.plateNo,
-        locationResult: item.locationResult || '成功',
-      }));
+      // 地图数据格式转换：仅保留"成功"定位（与"定位成功率"卡片语义一致），保留 record id 供点击跳详情
+      state.mapData = (data.spaceLocationList || [])
+        .filter(item => (item.locationResult || '成功') === '成功')
+        .map(item => ({
+          id: item.id,
+          spaceId: item.spaceId,
+          coordinate: `${item.lon},${item.lat}`,
+          spaceNo: item.spaceNo,
+          plateNo: item.plateNo,
+          locationResult: item.locationResult || '成功',
+        }));
     }
   } catch (error) {
     console.error('获取车位定位统计数据失败', error);
