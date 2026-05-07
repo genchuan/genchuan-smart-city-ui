@@ -10,7 +10,8 @@ const statusMap = {
 const statusReverse = {
   'pending_confirm': '待确认',
   'pending_audit': '待审核',
-  'approved': '已通过'
+  'approved': '已通过',
+  'passed': '已通过'
 };
 
 // 通用转换函数：后端 → 前端（将英文转为中文）

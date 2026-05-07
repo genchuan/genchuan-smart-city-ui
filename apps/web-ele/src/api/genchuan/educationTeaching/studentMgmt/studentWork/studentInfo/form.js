@@ -62,7 +62,6 @@ export function getColumnsByStatus(status) {
     { field: 'status', title: '学籍状态', minWidth: 100, slots: { default: 'status' } },
     { field: 'phone', title: '联系电话', minWidth: 130 },
     { field: 'parentPhone', title: '家长联系电话', minWidth: 150 },
-    { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];

@@ -122,7 +122,7 @@ export function archiveClubMgmt(data) {
 
 export function venueApplyClubMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/club-mgmt/venueApply', convertedData).catch(err => {
+  return requestClient.put('/studentmgmt/club-mgmt/venueApply', null, { params: convertedData }).catch(err => {
     console.warn('场馆申请接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -171,9 +171,9 @@ export function getClubMgmtChart(params) {
       pendingAuditCount: 1,
       venueApplyCount: 9,
       clubTypeDistribution: [
-        { count: 4, name: "", type: "1" },
-        { count: 3, name: "", type: "2" },
-        { count: 2, name: "", type: "3" }
+        {count: 4, name: "文体", type: "1"},
+        {count: 3, name: "学术", type: "2"},
+        {count: 2, name: "志愿", type: "3"}
       ],
       monthlyApplyTrend: [
         { month: "2024-09", count: 7 },

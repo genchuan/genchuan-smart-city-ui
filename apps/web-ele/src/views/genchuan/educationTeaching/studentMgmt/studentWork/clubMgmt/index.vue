@@ -493,10 +493,31 @@ const [VenueForm, venueFormApi] = useVbenForm({
   handleSubmit: async (values) => {
     const loading = ElLoading.service({text: '提交场馆申请中...'});
     try {
+      let applyTimeStr = values.applyTime;
+      if (typeof applyTimeStr === 'number') {
+        const date = new Date(applyTimeStr);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        applyTimeStr = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      } else if (typeof applyTimeStr === 'string' && applyTimeStr.includes('T')) {
+        const date = new Date(applyTimeStr);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        applyTimeStr = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      }
+
       const res = await venueApplyClubMgmt({
         id: currentVenueRow.value.id,
         venueName: values.venueName,
-        applyTime: values.applyTime,
+        applyTime: applyTimeStr,
         applyReason: values.applyReason,
       });
       if (res && res !== false) {
@@ -506,6 +527,9 @@ const [VenueForm, venueFormApi] = useVbenForm({
       } else {
         ElMessage.error('提交失败');
       }
+    } catch (error) {
+      console.error('场馆申请失败:', error);
+      ElMessage.error(error?.message || '提交失败');
     } finally {
       loading.close();
     }
