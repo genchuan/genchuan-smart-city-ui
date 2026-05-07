@@ -17,121 +17,8 @@
         style="margin-top: 12px; justify-content: flex-end;"
       />
     </div>
-    <!-- 正常模式：完整详情（基础信息卡片 + 所有维度 Tab） -->
+    <!-- 正常模式：完整详情（仅展示各维度明细 Tab） -->
     <div v-else-if="detailData" class="detail-container">
-      <!-- 卡片式信息区 -->
-      <div class="detail-card">
-        <div class="detail-card-row">
-          <div class="detail-row-left">报表周期：</div>
-          <div class="detail-row-right">{{ detailData.reportCycle || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">统计时段：</div>
-          <div class="detail-row-right">{{ detailData.statTime || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">救援完成率：</div>
-          <div class="detail-row-right">{{ formatPercent(detailData.rescueCompleteRate) }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">预约成功率：</div>
-          <div class="detail-row-right">{{ formatPercent(detailData.reserveSuccessRate) }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">投诉处理率：</div>
-          <div class="detail-row-right">{{ formatPercent(detailData.complaintHandleRate) }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">寻车定位成功率：</div>
-          <div class="detail-row-right">{{ formatPercent(detailData.findCarSuccessRate) }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">空位推送成功率：</div>
-          <div class="detail-row-right">{{ formatPercent(detailData.spacePushSuccessRate) }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">生效话术数：</div>
-          <div class="detail-row-right">{{ detailData.effectiveWordingCount ?? '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">救援总量：</div>
-          <div class="detail-row-right">{{ detailData.rescueTotal ?? '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">预约总量：</div>
-          <div class="detail-row-right">{{ detailData.reserveTotal ?? '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">投诉总量：</div>
-          <div class="detail-row-right">{{ detailData.complaintTotal ?? '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">空位推送总量：</div>
-          <div class="detail-row-right">{{ detailData.spacePushTotal ?? '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">生成状态：</div>
-          <div class="detail-row-right">{{ detailData.generateStatus || '-' }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">报表生成时间：</div>
-          <div class="detail-row-right">{{ formatTimestamp(detailData.generateTime) }}</div>
-        </div>
-        <div class="detail-card-row">
-          <div class="detail-row-left">操作人：</div>
-          <div class="detail-row-right">{{ detailData.operator || '-' }}</div>
-        </div>
-
-        <!-- 指标卡片区域：同比增长率、环比增长率、服务状态占比（样式与chart.vue中的stat-card一致） -->
-        <div class="indicator-cards">
-          <!-- 同比增长率卡片 -->
-          <div class="indicator-card" :style="{ borderLeftColor: getGrowthColor(detailData.yearOnYearGrowthRate) }">
-            <div class="card-header">
-              <span class="card-title">同比增长率</span>
-              <div class="card-indicator" :style="{ backgroundColor: getGrowthColor(detailData.yearOnYearGrowthRate) }"></div>
-            </div>
-            <div class="card-body">
-              <div class="card-value" :style="{ color: getGrowthColor(detailData.yearOnYearGrowthRate) }">
-                {{ formatPercent(detailData.yearOnYearGrowthRate) }}
-              </div>
-            </div>
-          </div>
-
-          <!-- 环比增长率卡片 -->
-          <div class="indicator-card" :style="{ borderLeftColor: getGrowthColor(detailData.monthOnMonthGrowthRate) }">
-            <div class="card-header">
-              <span class="card-title">环比增长率</span>
-              <div class="card-indicator" :style="{ backgroundColor: getGrowthColor(detailData.monthOnMonthGrowthRate) }"></div>
-            </div>
-            <div class="card-body">
-              <div class="card-value" :style="{ color: getGrowthColor(detailData.monthOnMonthGrowthRate) }">
-                {{ formatPercent(detailData.monthOnMonthGrowthRate) }}
-              </div>
-            </div>
-          </div>
-
-          <!-- 服务状态占比卡片（包含进度条） -->
-          <div class="indicator-card" style="border-left-color: #409EFF">
-            <div class="card-header">
-              <span class="card-title">服务状态占比</span>
-              <div class="card-indicator" style="background-color: #409EFF"></div>
-            </div>
-            <div class="card-body status-ratio-body">
-              <div class="status-ratio-content">
-                <div v-if="detailData.serviceStatusRatio" class="status-ratio-bars">
-                  <div v-for="item in parseStatusRatio(detailData.serviceStatusRatio)" :key="item.name" class="ratio-bar-item">
-                    <span class="ratio-label">{{ item.name }}</span>
-                    <el-progress :percentage="item.value" :stroke-width="8" :show-text="false" />
-                    <span class="ratio-percent">{{ item.value }}%</span>
-                  </div>
-                </div>
-                <span v-else class="card-value">-</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- 各维度明细 Tabs（一行标签，切换展示对应明细）-->
       <el-tabs v-model="activeTab" type="card" class="detail-tabs">
         <el-tab-pane v-for="s in detailSections" :key="s.name" :name="s.name" :label="`${s.title}（${getTotal(s.name, s.dataKey)}）`">
@@ -159,6 +46,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
+import { ElEmpty, ElPagination, ElTable, ElTableColumn, ElTabs, ElTabPane } from 'element-plus';
 import { formatTimestamp } from '#/utils';
 import { getSpacePushPage } from '#/api/genchuan/industry/chargePark/carService/carGuide/spacePush/index.js';
 
@@ -325,8 +213,9 @@ defineExpose({
   open: (initialTab, filterType) => {
     if (initialTab) activeTab.value = initialTab;
     typeFilter.value = filterType ? { dimension: initialTab, type: filterType } : null;
-    // 有 filterType 表示从图表/卡片下钻进来 → 进入下钻模式（只显示纯列表）
-    drillMode.value = !!filterType;
+    // 传了 initialTab(维度) 进入下钻模式：只展示该维度的列表（卡片/图表点击）
+    // 不传 initialTab(列表行 查看) 进入正常模式：展示完整详情
+    drillMode.value = !!initialTab;
     if (initialTab && pageStates[initialTab]) {
       pageStates[initialTab].currentPage = 1;
     }

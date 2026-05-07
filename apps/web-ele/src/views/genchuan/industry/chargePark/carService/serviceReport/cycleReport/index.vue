@@ -40,7 +40,7 @@ const handleChartRefresh = (filters) => {
       <el-icon class="tabel-tab-icon" v-if="!secondShow" @click="changeArrowStatus"><ArrowUp /></el-icon>
     </div>
     <el-tabs v-model="activeName" class="common-tabs" type="card">
-      <el-tab-pane v-for="item in tabArray" :key="item.label" :name="item.label">
+      <el-tab-pane v-for="item in tabArray" :key="item.label" :name="item.label" lazy>
         <template #label>
           <div class="table-first"><span>{{ item.label }}</span></div>
         </template>

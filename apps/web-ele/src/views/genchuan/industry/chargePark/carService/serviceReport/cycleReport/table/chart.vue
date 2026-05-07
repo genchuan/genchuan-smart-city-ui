@@ -91,6 +91,12 @@ const getDefaultParams = () => {
   };
 };
 
+// 当前卡片/图表所用的窗口（与 getDefaultParams 同口径），下钻时随事件向外抛
+const currentWindow = () => {
+  const p = getDefaultParams();
+  return { startTime: p.statStartTime, endTime: p.statEndTime };
+};
+
 const fetchData = async () => {
   loading.value = true;
   try {
@@ -177,7 +183,7 @@ const initBarChart = () => {
   barChart.on('click', (params) => {
     if (params.componentType !== 'series') return;
     const dim = inferDimension(currentBar.value.name);
-    if (dim) emit('refresh', { dimension: dim, type: params.name });
+    if (dim) emit('refresh', { dimension: dim, type: params.name, ...currentWindow() });
   });
 };
 
@@ -203,7 +209,7 @@ const initPieChart = () => {
   pieChart.on('click', (params) => {
     if (params.componentType !== 'series') return;
     const dim = inferDimension(currentPie.value.name);
-    if (dim) emit('refresh', { dimension: dim, type: params.name });
+    if (dim) emit('refresh', { dimension: dim, type: params.name, ...currentWindow() });
   });
 };
 
@@ -244,7 +250,7 @@ const inferDimension = (name) => {
 
 const onCardClick = (card) => {
   if (!card.dimension) return;
-  emit('refresh', { dimension: card.dimension });
+  emit('refresh', { dimension: card.dimension, ...currentWindow() });
 };
 
 const handleResize = () => {

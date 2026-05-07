@@ -139,8 +139,10 @@ async function openUserDetail(userId) {
 }
 
 const checkedIds = ref([]);
+const checkedRows = ref([]);
 const handleRowCheckboxChange = ({ records }) => {
-  checkedIds.value = records.map((item) => item.id);
+  checkedRows.value = records || [];
+  checkedIds.value = checkedRows.value.map((item) => item.id);
 };
 const dataObj = reactive({
   detailObj: {},
@@ -507,17 +509,28 @@ async function confirmDispatch() {
 const batchDispatchForm = reactive({ rescueUserId: '', dispatchRemark: '' });
 const openBatchDispatchDrawer = () => {
   if (isEmpty(checkedIds.value)) return ElMessage.warning('请至少选择一个待派发的救援任务');
+  // 仅"待派发"状态可以批量派发，其它状态后端会拒绝
+  const invalid = checkedRows.value.filter((r) => r.status !== '待派发');
+  if (invalid.length) {
+    return ElMessage.warning('只能批量派发"待派发"状态的任务，请取消勾选其它状态');
+  }
   batchDispatchForm.rescueUserId = '';
   batchDispatchForm.dispatchRemark = '';
   batchDispatchDrawerApi.open();
 };
 async function confirmBatchDispatch() {
   if (!batchDispatchForm.rescueUserId) return ElMessage.warning('请选择救援人员');
-  await batchDispatchRescue({ ids: checkedIds.value, ...batchDispatchForm });
-  ElMessage.success('批量派发成功');
-  batchDispatchDrawerApi.close();
-  checkedIds.value = [];
-  handleRefresh();
+  try {
+    await batchDispatchRescue({ ids: checkedIds.value, ...batchDispatchForm });
+    ElMessage.success('批量派发成功');
+    batchDispatchDrawerApi.close();
+    checkedIds.value = [];
+    checkedRows.value = [];
+    handleRefresh();
+  } catch (err) {
+    const msg = err?.response?.data?.msg || err?.msg || err?.message || '批量派发失败';
+    ElMessage.error(msg);
+  }
 }
 
 // 认领
@@ -993,7 +1006,7 @@ defineExpose({ handleRefresh, handleChartRefresh });
     <EvaluateDrawer>
       <el-form :model="evaluateForm" label-width="100px">
         <el-form-item label="评分" required>
-          <el-rate v-model="evaluateForm.score" :max="5" show-text />
+          <el-rate v-model="evaluateForm.score" :max="5" show-text :texts="['很差', '失望', '一般', '满意', '惊喜']" />
         </el-form-item>
         <el-form-item label="评价内容">
           <el-input v-model="evaluateForm.evaluateContent" type="textarea" rows="3" />

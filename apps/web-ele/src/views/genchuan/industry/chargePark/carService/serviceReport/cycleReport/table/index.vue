@@ -726,7 +726,12 @@ const handleChartDrill = async (event) => {
       return;
     }
     const latestReport = dataObj.list[0];
-    const res = await getCycleReportDetail({ id: latestReport.id });
+    // 把图表卡片当前窗口（startTime/endTime）透传给后端,
+    // 让明细按卡片同窗口实时查询,避免落入报表自身窗口外没数据
+    const params = { id: latestReport.id };
+    if (filters.startTime) params.startTime = filters.startTime;
+    if (filters.endTime) params.endTime = filters.endTime;
+    const res = await getCycleReportDetail(params);
     currentDetail.value = res || latestReport;
     detailDrawerRef.value?.open(filters.dimension, filters.type);
     return;

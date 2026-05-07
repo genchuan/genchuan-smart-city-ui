@@ -642,7 +642,7 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
     <EvaluateDrawer>
       <el-form :model="evaluateForm" label-width="100px">
         <el-form-item label="评分" required>
-          <el-rate v-model="evaluateForm.score" :max="5" show-text />
+          <el-rate v-model="evaluateForm.score" :max="5" show-text :texts="['很差', '失望', '一般', '满意', '惊喜']" />
         </el-form-item>
         <el-form-item label="评价内容">
           <el-input v-model="evaluateForm.evaluateContent" type="textarea" rows="3" />
