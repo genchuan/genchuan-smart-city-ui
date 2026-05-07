@@ -1,47 +1,59 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { getRectifyReviewChart, getRectifyReviewStatistics } from '#/api/genchuan/industry/marketsupervision';
+import { ElMessage } from 'element-plus';
 
 import * as echarts from 'echarts';
 import { ElOption, ElSelect } from 'element-plus';
 
 const state = reactive({
   cardList: [
-    { title: '复审台账总数', value: 10, color: '#4A90E2' },
-    { title: '待复审数', value: 10, color: '#50E3C2' },
-    { title: '已下发数', value: 8, color: '#FF9F40' },
-    { title: '已撤销数', value: 7, color: '#A17FE0' },
-    { title: '已下发整改完成率', value: 3, color: '#FF6B8B' },
-    { title: '复审完成率', value: 1, color: '#FFD93D' },
+    { title: '复审台账总数', value: 0, color: '#4A90E2' },
+    { title: '待复审数', value: 0, color: '#50E3C2' },
+    { title: '已下发数', value: 0, color: '#FF9F40' },
+    { title: '已撤销数', value: 0, color: '#A17FE0' },
+    { title: '已完成数', value: 0, color: '#FF6B8B' },
+    { title: '复审完成率', value: 0, color: '#FFD93D', suffix: '%' },
   ],
-  mapConfig: {
-    markerIcons: {
-      normal: '/static/imgs/dataHub/map/marker-blue.png',
-      yellow: '/static/imgs/dataHub/map/marker-yellow.png',
-      red: '/static/imgs/dataHub/map/marker-red.png',
-    },
-    statusIconMap: {
-      green: 'normal',
-      orange: 'yellow',
-      red: 'red',
-      blue: 'normal',
-      gray: 'normal',
-    },
-    statusKeyMap: {
-      正常: 'green',
-      异常: 'red',
-      离线: 'red',
-      维护中: 'orange',
-      停用: 'red',
-      建设中: 'gray',
-    },
-    infoWindowConfig: {
-      title: 'locationName',
-      fields: [
-        { key: 'id', label: '井盖编号' },
-        { key: 'statusName', label: '状态', bold: true },
-        { key: 'riskLevel', label: '风险等级' },
-      ],
-    },
+});
+
+// 第一个饼图的数据（复审状态占比）
+const firstChartData = ref([
+  {
+    label: '复审状态占比',
+    data: [
+      { name: '待复审', value: 0 },
+      { name: '已下发', value: 0 },
+      { name: '已撤销', value: 0 },
+      { name: '已完成', value: 0 },
+    ],
+  },
+]);
+
+// 第二个饼图的数据（违规等级占比）
+const secondChartData = ref([
+  {
+    label: '违规等级占比',
+    data: [
+      { name: '一般违规', value: 0 },
+      { name: '严重违规', value: 0 },
+      { name: '特别严重', value: 0 },
+    ],
+  },
+]);
+
+// 柱状图数据（月度新增数量）
+const barChartData = ref({
+  label: '月度整改复审新增数量',
+  type: 'bar',
+  data: {
+    xAxis: [],
+    series: [
+      {
+        name: '新增数量',
+        data: [],
+      },
+    ],
   },
 });
 
@@ -53,126 +65,54 @@ let pieChartInstance1 = null;
 let pieChartInstance2 = null;
 let barLineChartInstance = null;
 
-// 饼图切换状态
-const firstChartIndex = ref(0);
-const secondChartIndex = ref(1);
-const chartIndex = ref(0);
+// 获取统计数据
+const fetchStatisticsData = async () => {
+  try {
+    const res = await getRectifyReviewStatistics();
+    // 更新卡片数据
+    state.cardList[0].value = res.totalCount || 0;
+    state.cardList[1].value = res.pendingReviewCount || 0;
+    state.cardList[2].value = res.issuedCount || 0;
+    state.cardList[3].value = res.canceledCount || 0;
+    state.cardList[4].value = res.completedCount || 0;
+    state.cardList[5].value = res.completedRatio || 0;
 
-// 第一个饼图的数据
-const firstChartData = [
-  {
-    label: '复审状态占比',
-    data: [
-      { name: '待复审', value: 10 },
-      { name: '已复审', value: 8 },
-      { name: '已撤销', value: 2 },
-    ],
-  },
-  {
-    label: '违规等级占比',
-    data: [
-      { name: '一般违规', value: 5 },
-      { name: '严重违规', value: 3 },
-      { name: '特别严重', value: 2 },
-    ],
-  },
-];
+    // 更新第一个饼图数据（复审状态占比）
+    firstChartData.value[0].data = [
+      { name: '待复审', value: res.pendingReviewCount || 0 },
+      { name: '已下发', value: res.issuedCount || 0 },
+      { name: '已撤销', value: res.canceledCount || 0 },
+      { name: '已完成', value: res.completedCount || 0 },
+    ];
 
-// 第二个饼图的数据
-const secondChartData = [
-  {
-    label: '已下发台账送达状态占比',
-    data: [
-      { name: '已送达', value: 8 },
-      { name: '未送达', value: 2 },
-    ],
-  },
-  {
-    label: '送达方式占比',
-    data: [
-      { name: '快递送达', value: 5 },
-      { name: '现场送达', value: 3 },
-      { name: '电子送达', value: 2 },
-    ],
-  },
-];
-
-// 所有折线图和柱状图的数据
-const allChartsData = [
-  {
-    label: '不同月份复审台账新增数量及复审完成数量对比',
-    type: 'bar',
-    stack: 'total',
-    data: {
-      xAxis: ['1月', '2月', '3月', '4月', '5月', '6月'],
-      series: [
-        {
-          name: '新增数量',
-          data: [12, 15, 18, 14, 16, 20],
-        },
-        {
-          name: '完成数量',
-          data: [10, 13, 15, 12, 14, 18],
-        },
-      ],
-    },
-  },
-  {
-    label: '不同区域/复审人的复审完成数量及整改完成率对比',
-    type: 'bar',
-    data: {
-      xAxis: ['福州', '厦门', '泉州', '莆田', '宁德', '龙岩'],
-      series: [
-        {
-          name: '复审完成数量',
-          data: [15, 18, 12, 14, 16, 13],
-        },
-        {
-          name: '整改完成率(%)',
-          data: [85, 92, 78, 88, 90, 82],
-        },
-      ],
-    },
-  },
-  {
-    label: '近3个月复审台账企业整改完成率趋势',
-    type: 'line',
-    data: {
-      xAxis: [
-        '第1周',
-        '第2周',
-        '第3周',
-        '第4周',
-        '第5周',
-        '第6周',
-        '第7周',
-        '第8周',
-        '第9周',
-        '第10周',
-        '第11周',
-        '第12周',
-      ],
-      series: [75, 78, 80, 82, 85, 87, 88, 90, 92, 93, 94, 95],
-    },
-  },
-];
-
-// 切换第一个饼图
-const handlePie1Change = (index) => {
-  firstChartIndex.value = index;
-  initPieChart1();
+    // 更新第二个饼图数据（违规等级占比）
+    secondChartData.value[0].data = [
+      { name: '一般违规', value: res.levelNormalCount || 0 },
+      { name: '严重违规', value: res.levelSeriousCount || 0 },
+      { name: '特别严重', value: res.levelVerySeriousCount || 0 },
+    ];
+  } catch (error) {
+    console.error('获取统计数据失败:', error);
+    ElMessage.error('获取统计数据失败');
+  }
 };
 
-// 切换第二个饼图
-const handlePie2Change = (index) => {
-  secondChartIndex.value = index;
-  initPieChart2();
-};
-
-// 切换图表
-const handleBarLineChange = (index) => {
-  chartIndex.value = index;
-  initBarLineChart();
+// 获取柱状图数据
+const fetchChartData = async () => {
+  try {
+    const res = await getRectifyReviewChart();
+    const list = res.list || [];
+    
+    // 更新柱状图数据
+    barChartData.value.data.xAxis = list.map(item => item.time || '');
+    barChartData.value.data.series[0].data = list.map(item => item.count || 0);
+  } catch (error) {
+    console.error('获取图表数据失败:', error);
+    ElMessage.error('获取图表数据失败');
+    // 模拟数据
+    barChartData.value.data.xAxis = ['2026-03', '2026-04'];
+    barChartData.value.data.series[0].data = [34, 22];
+  }
 };
 
 // 获取圆环图配置
@@ -541,7 +481,7 @@ function hexToRgb(hex) {
 
 // 初始化第一个圆环图
 const initPieChart1 = () => {
-  if (pieChartRef1.value && firstChartData[firstChartIndex.value]) {
+  if (pieChartRef1.value && firstChartData.value[0]) {
     try {
       if (pieChartInstance1) {
         pieChartInstance1.dispose();
@@ -549,11 +489,11 @@ const initPieChart1 = () => {
       }
 
       if (
-        firstChartData[firstChartIndex.value].data &&
-        firstChartData[firstChartIndex.value].data.length > 0
+        firstChartData.value[0].data &&
+        firstChartData.value[0].data.length > 0
       ) {
         pieChartInstance1 = echarts.init(pieChartRef1.value);
-        const option = getPieOption(firstChartData[firstChartIndex.value]);
+        const option = getPieOption(firstChartData.value[0]);
         pieChartInstance1.setOption(option);
       }
     } catch (error) {
@@ -564,7 +504,7 @@ const initPieChart1 = () => {
 
 // 初始化第二个圆环图
 const initPieChart2 = () => {
-  if (pieChartRef2.value && secondChartData[secondChartIndex.value]) {
+  if (pieChartRef2.value && secondChartData.value[0]) {
     try {
       if (pieChartInstance2) {
         pieChartInstance2.dispose();
@@ -572,11 +512,11 @@ const initPieChart2 = () => {
       }
 
       if (
-        secondChartData[secondChartIndex.value].data &&
-        secondChartData[secondChartIndex.value].data.length > 0
+        secondChartData.value[0].data &&
+        secondChartData.value[0].data.length > 0
       ) {
         pieChartInstance2 = echarts.init(pieChartRef2.value);
-        const option = getPieOption(secondChartData[secondChartIndex.value]);
+        const option = getPieOption(secondChartData.value[0]);
         pieChartInstance2.setOption(option);
       }
     } catch (error) {
@@ -585,19 +525,10 @@ const initPieChart2 = () => {
   }
 };
 
-// 初始化柱状/折线图
+// 初始化柱状图
 const initBarLineChart = () => {
-  if (
-    !barLineChartRef.value ||
-    !allChartsData[chartIndex.value] ||
-    !allChartsData[chartIndex.value].data
-  )
-    return;
-  if (
-    !allChartsData[chartIndex.value].data.xAxis ||
-    allChartsData[chartIndex.value].data.xAxis.length === 0
-  )
-    return;
+  if (!barLineChartRef.value || !barChartData.value.data) return;
+  if (!barChartData.value.data.xAxis || barChartData.value.data.xAxis.length === 0) return;
 
   try {
     if (barLineChartInstance) {
@@ -606,10 +537,10 @@ const initBarLineChart = () => {
     }
 
     barLineChartInstance = echarts.init(barLineChartRef.value);
-    const option = getBarLineOption(allChartsData[chartIndex.value]);
+    const option = getBarLineOption(barChartData.value);
     barLineChartInstance.setOption(option);
   } catch (error) {
-    console.error('初始化柱状/折线图失败:', error);
+    console.error('初始化柱状图失败:', error);
   }
 };
 
@@ -620,6 +551,15 @@ const initCharts = () => {
   initBarLineChart();
 };
 
+// 获取数据并初始化图表
+const fetchDataAndInitCharts = async () => {
+  await fetchStatisticsData();
+  await fetchChartData();
+  nextTick(() => {
+    initCharts();
+  });
+};
+
 // 处理窗口大小变化
 const handleResize = () => {
   pieChartInstance1?.resize();
@@ -628,9 +568,7 @@ const handleResize = () => {
 };
 
 onMounted(() => {
-  nextTick(() => {
-    initCharts();
-  });
+  fetchDataAndInitCharts();
   window.addEventListener('resize', handleResize);
 });
 
@@ -672,7 +610,7 @@ onUnmounted(() => {
         </div>
         <div class="card-body">
           <div class="card-value" :style="{ color: card.color || '#4A90E2' }">
-            {{ card.value }}
+            {{ card.value }}{{ card.suffix || '' }}
           </div>
         </div>
       </div>
@@ -682,69 +620,18 @@ onUnmounted(() => {
     <div class="right-section">
       <!-- 图表视图 - 两个圆环图 + 一个较宽图表 -->
       <div class="charts-section">
-        <!-- 第一个圆环图展示区（带切换） -->
+        <!-- 第一个圆环图展示区 -->
         <div class="pie-chart-area">
-          <!-- 下拉切换按钮 -->
-          <div v-if="firstChartData.length > 1" class="chart-select-wrapper">
-            <ElSelect
-              v-model="firstChartIndex"
-              size="small"
-              class="chart-select"
-              @change="handlePie1Change"
-            >
-              <ElOption
-                v-for="(option, idx) in firstChartData"
-                :key="idx"
-                :label="option.label"
-                :value="idx"
-              />
-            </ElSelect>
-          </div>
           <div ref="pieChartRef1" class="chart-container"></div>
         </div>
 
-        <!-- 第二个圆环图展示区（带切换） -->
+        <!-- 第二个圆环图展示区 -->
         <div class="pie-chart-area">
-          <!-- 下拉切换按钮 -->
-          <div v-if="secondChartData.length > 1" class="chart-select-wrapper">
-            <ElSelect
-              v-model="secondChartIndex"
-              size="small"
-              class="chart-select"
-              @change="handlePie2Change"
-            >
-              <ElOption
-                v-for="(option, idx) in secondChartData"
-                :key="idx"
-                :label="option.label"
-                :value="idx"
-              />
-            </ElSelect>
-          </div>
           <div ref="pieChartRef2" class="chart-container"></div>
         </div>
 
-        <!-- 柱状/折线图展示区（更宽） -->
+        <!-- 柱状图展示区（更宽） -->
         <div class="bar-line-chart-area">
-          <!-- 下拉切换按钮 -->
-          <div
-            v-if="allChartsData.length > 1"
-            class="chart-select-wrapper bar-line-select"
-          >
-            <ElSelect
-              v-model="chartIndex"
-              size="small"
-              class="chart-select"
-              @change="handleBarLineChange"
-            >
-              <ElOption
-                v-for="(option, idx) in allChartsData"
-                :key="idx"
-                :label="option.label"
-                :value="idx"
-              />
-            </ElSelect>
-          </div>
           <div ref="barLineChartRef" class="chart-container"></div>
         </div>
       </div>

@@ -5,7 +5,31 @@ export function getWarnList(params) {
   });
 } 
  
+/** 月度整改复审统计柱状图 */
+export function getRectifyReviewChart(params) {
+  return requestClient.get('/kitchen/rectify-review/chart-month-bar', {
+    params,
+  });
+}
+/** 月度整改复审统计图标+卡片 */
+export function getRectifyReviewStatistics(params) {
+  return requestClient.get('/kitchen/rectify-review/chart-statistics', {
+    params,
+  });
+}
 
+/** 月度处罚复审统计柱状图 */
+export function getPunishReviewChart(params) {
+  return requestClient.get('/kitchen/punish-review-ledger/chart-month-bar', {
+    params,
+  });
+}
+/** 月度处罚复审统计图标+卡片 */
+export function getPunishReviewStatistics(params) {
+  return requestClient.get('/kitchen/punish-review-ledger/chart-statistics', {
+    params,
+  });
+}
 /** excel导出 */
 export function exporReviewExcel(id) {
   return requestClient.download(`/kitchen/rectify-review/export-excel?idList=${id}`);
