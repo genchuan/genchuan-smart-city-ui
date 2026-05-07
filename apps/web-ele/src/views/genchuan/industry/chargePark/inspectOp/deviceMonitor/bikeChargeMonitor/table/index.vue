@@ -278,8 +278,9 @@ async function handleLocate(row) {
       id: row.id,
       deviceCode: response?.deviceCode || row.deviceCode,
       stationName: response?.stationName || row.stationName,
-      longitude: response?.longitude ?? row.longitude,
-      latitude: response?.latitude ?? row.latitude,
+      longitude: response?.longitude ?? response?.lon ?? row.longitude,
+      latitude: response?.latitude ?? response?.lat ?? row.latitude,
+      status: response?.monitorStatus ?? getMonitorStatusLabel(row.monitorStatus),
     };
 
     emit('locateDevice', location);

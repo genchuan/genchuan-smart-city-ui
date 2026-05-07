@@ -20,14 +20,14 @@ const state = reactive({
       title: '围栏数',
       value: 0,
       desc: '全部电子围栏',
-      filterType: 'all',
+      status: 'all',
       color: '#2f80ed',
     },
     {
       title: '告警触发数',
       value: 0,
       desc: '越界告警累计',
-      filterType: 'alarmed',
+      status: 'alarmed',
       color: '#e74c3c',
     },
   ],
@@ -126,11 +126,12 @@ async function fetchChartData() {
 }
 
 function handleCardClick(card) {
-  if (card.filterType === 'alarmed') {
+  if (card.status === 'alarmed') {
     emit('alarmFilter');
     return;
+  } else {
+     emit('statusFilter', '');
   }
-  emit('statusFilter', '');
 }
 
 function handleFenceClick(item) {
@@ -152,7 +153,7 @@ onMounted(() => {
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
-        :status="card.filterType"
+        :status="card.status"
         :title="card.title"
         :value="card.value"
         @click="handleCardClick"

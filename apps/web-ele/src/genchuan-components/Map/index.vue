@@ -49,6 +49,11 @@ const props = defineProps({
       ],
     }),
   },
+  /** 非 0 时优先缩放到 data[0]（用于表格「定位」与看板首条目标点一致） */
+  locateFocusKey: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const emit = defineEmits(['markerClick']);
@@ -188,6 +193,7 @@ const onMarkerClick = (evt) => {
   const { position, properties } = evt.geometry;
   if (!infoWindow || !properties) return;
 
+  console.log('onMarkerClick', position, properties);
   infoWindow.setPosition(position);
   infoWindow.setContent(generateInfoWindowContent(properties));
   infoWindow.open();
@@ -292,6 +298,25 @@ const renderMarkers = () => {
     polylineLayer.setGeometries(areaLines);
   }
 
+  const focusFirst =
+    props.locateFocusKey && props.data[0]?.coordinate;
+  if (focusFirst) {
+    const [lng, lat] = props.data[0].coordinate.split(',').map(Number);
+    if (!Number.isNaN(lng) && !Number.isNaN(lat)) {
+      const position = new TMapInstance.LatLng(lat, lng);
+      map.setCenter(position);
+      map.setZoom(16);
+      if (infoWindow) {
+        infoWindow.setPosition(position);
+        infoWindow.setContent(
+          generateInfoWindowContent(props.data[0]),
+        );
+        infoWindow.open();
+      }
+      return;
+    }
+  }
+
   if (!bounds.isEmpty()) {
     map.fitBounds(bounds, { padding: 100 });
   }
@@ -313,6 +338,7 @@ const handleResize = () => {
 };
 
 watch(() => props.data, renderMarkers, { deep: true });
+watch(() => props.locateFocusKey, renderMarkers);
 
 onMounted(() => {
   initMap();

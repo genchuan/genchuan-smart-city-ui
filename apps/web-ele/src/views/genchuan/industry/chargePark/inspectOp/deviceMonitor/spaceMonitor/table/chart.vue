@@ -70,9 +70,9 @@ const state = reactive({
     infoWindowConfig: {
       title: 'spaceCode',
       fields: [
-        // { key: 'stationName', label: '所属场站' },
+        { key: 'stationName', label: '所属场站' },
         // { key: 'regionName', label: '所属区域' },
-        { key: 'monitorStatus', label: '监测状态', bold: true },
+        // { key: 'monitorStatus', label: '监测状态', bold: true },
       ],
     },
   },
@@ -96,23 +96,41 @@ const mapData = computed(() => {
     };
   });
 
-  if (!props.locatedSpace?.longitude || !props.locatedSpace?.latitude) {
+  const s = props.locatedSpace;
+  const lon = s?.longitude ?? s?.lon;
+  const lat = s?.latitude ?? s?.lat;
+  if (
+    s == null ||
+    lon === '' ||
+    lat === '' ||
+    lon == null ||
+    lat == null
+  ) {
     return baseData;
   }
 
   const located = {
-    id: props.locatedSpace.id || props.locatedSpace.spaceCode,
-    spaceCode: props.locatedSpace.spaceCode || '目标车位',
-    stationName: props.locatedSpace.stationName || '-',
-    regionName: props.locatedSpace.regionName || '-',
-    monitorStatus: props.locatedSpace.monitorStatus
-      ? getMonitorStatusLabel(props.locatedSpace.monitorStatus)
+    id: s.id || s.spaceCode,
+    spaceCode: s.spaceCode || '目标车位',
+    stationName: s.stationName || '-',
+    regionName: s.regionName || '-',
+    monitorStatus: s.monitorStatus
+      ? getMonitorStatusLabel(s.monitorStatus)
       : '定位',
     statusName: '定位',
-    coordinate: `${props.locatedSpace.longitude},${props.locatedSpace.latitude}`,
+    coordinate: `${Number(lon)},${Number(lat)}`,
   };
 
   return [located, ...baseData.filter((item) => item.id !== located.id)];
+});
+
+const mapLocateFocusKey = computed(() => {
+  const s = props.locatedSpace;
+  if (!s?.locateKey) return 0;
+  const lon = s.longitude ?? s.lon;
+  const lat = s.latitude ?? s.lat;
+  if (lon == null || lat == null || lon === '' || lat === '') return 0;
+  return s.locateKey;
 });
 
 function normalizeChartData(data) {
@@ -315,6 +333,7 @@ onUnmounted(() => {
         <MapComponent
           :data="mapData"
           :info-window-config="state.mapConfig.infoWindowConfig"
+          :locate-focus-key="mapLocateFocusKey"
           :marker-icons="state.mapConfig.markerIcons"
           :status-icon-map="state.mapConfig.statusIconMap"
           :status-key-map="state.mapConfig.statusKeyMap"

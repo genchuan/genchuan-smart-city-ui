@@ -59,7 +59,7 @@ async function handleConfirm() {
   try {
     await currentAction.value.api({
       id: rowData.value.id,
-      auditRemark: '情况属实，安排处置',
+      // auditRemark: '情况属实，安排处置',
     });
     ElMessage.success(currentAction.value.successMessage);
     emit('success');
