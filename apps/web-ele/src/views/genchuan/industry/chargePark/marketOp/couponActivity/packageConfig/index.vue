@@ -106,7 +106,9 @@ const fetchStatsData = async () => {
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (card) => {
   await nextTick();
-  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  const tableInstance = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
   if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
     tableInstance.handleStatsFilter('card', card.filterType);
   } else {
@@ -117,7 +119,9 @@ const handleCardClick = async (card) => {
 // 处理柱状图点击 - 钻取筛选（按券包类型）
 const handleBarClick = async (type) => {
   await nextTick();
-  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  const tableInstance = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
   if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
     tableInstance.handleStatsFilter('type', type);
   } else {

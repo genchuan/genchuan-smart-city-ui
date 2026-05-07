@@ -4,8 +4,6 @@ import { computed, nextTick, onMounted, ref } from 'vue';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj } from '@vben/hooks';
 
-import { ElMessage } from 'element-plus';
-
 import { getActivityConfigChart } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/activityConfig';
 
 import ActivityConfigStats from './components/ActivityConfigStats.vue';
@@ -21,7 +19,10 @@ const getActivityConfigTypeLabel = (type) => {
 
 // 获取适用人群字典标签
 const getActivityConfigUserGroupLabel = (userGroup) => {
-  const dict = getDictObj(DICT_TYPE.ACTIVITY_CONFIG_USER_GROUP, String(userGroup));
+  const dict = getDictObj(
+    DICT_TYPE.ACTIVITY_CONFIG_USER_GROUP,
+    String(userGroup),
+  );
   return dict ? dict.label : userGroup;
 };
 
@@ -103,8 +104,7 @@ const fetchStatsData = async () => {
 
       // 检查数据是否为空
       const hasData =
-        data.enableCount > 0 ||
-        (data.typeList && data.typeList.length > 0);
+        data.enableCount > 0 || (data.typeList && data.typeList.length > 0);
 
       if (hasData) {
         assembleStatsData(data);
@@ -128,7 +128,9 @@ const fetchStatsData = async () => {
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (card) => {
   await nextTick();
-  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  const tableInstance = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
   if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
     tableInstance.handleStatsFilter('card', card.filterType);
   } else {
@@ -139,7 +141,9 @@ const handleCardClick = async (card) => {
 // 处理饼图点击 - 钻取筛选（按配置类型）
 const handlePieClick = async (type) => {
   await nextTick();
-  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  const tableInstance = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
   if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
     tableInstance.handleStatsFilter('type', type);
   } else {
@@ -150,7 +154,9 @@ const handlePieClick = async (type) => {
 // 处理柱状图点击 - 钻取筛选（按适用人群）
 const handleBarClick = async (userGroup) => {
   await nextTick();
-  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  const tableInstance = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
   if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
     tableInstance.handleStatsFilter('userGroup', userGroup);
   } else {

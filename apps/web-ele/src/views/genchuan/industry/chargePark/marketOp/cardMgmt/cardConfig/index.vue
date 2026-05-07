@@ -7,6 +7,7 @@ import { getDictObj } from '@vben/hooks';
 import { ElMessage } from 'element-plus';
 
 import { getCardConfigChart } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardConfig';
+
 import CardConfigStats from './components/CardConfigStats.vue';
 import Table from './table/index.vue';
 
@@ -203,11 +204,7 @@ onMounted(() => {
       </el-icon>
     </div>
     -->
-    <el-tabs
-      v-model="activeName"
-      class="common-tabs"
-      type="card"
-    >
+    <el-tabs v-model="activeName" class="common-tabs" type="card">
       <el-tab-pane
         v-for="item in tabArray"
         :key="item.label"

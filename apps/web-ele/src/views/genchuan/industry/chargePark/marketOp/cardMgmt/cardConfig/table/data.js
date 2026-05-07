@@ -303,7 +303,7 @@ export function useFormSchema() {
   ];
 }
 
-/** 卡种配置搜索表单配置 - 覆盖所有表格展示字段 */
+/** 卡种配置搜索表单配置 - 仅包含接口支持的参数 */
 export function useSearchFormSchema() {
   return [
     {
@@ -342,93 +342,6 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择配置状态',
         options: getDictOptions(DICT_TYPE.CARD_CONFIG_STATUS, 'string'),
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'priceMin',
-      label: '价格最小值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最小价格',
-        clearable: true,
-        min: 0,
-        precision: 2,
-      },
-    },
-    {
-      fieldName: 'priceMax',
-      label: '价格最大值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最大价格',
-        clearable: true,
-        min: 0,
-        precision: 2,
-      },
-    },
-    {
-      fieldName: 'auditorName',
-      label: '审核人',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入审核人',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'saleCountMin',
-      label: '销量最小值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最小销量',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'saleCountMax',
-      label: '销量最大值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最大销量',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'createTime',
-      label: '创建时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择创建时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'auditTime',
-      label: '审核时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择审核时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'effectTime',
-      label: '生效时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择生效时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
         clearable: true,
       },
     },

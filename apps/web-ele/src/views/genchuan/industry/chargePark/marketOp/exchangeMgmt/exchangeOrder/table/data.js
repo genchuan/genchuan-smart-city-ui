@@ -1,202 +1,71 @@
 import { DICT_TYPE } from '@vben/constants';
-import { getDictObj, getDictOptions } from '@vben/hooks';
+import { getDictOptions } from '@vben/hooks';
 
 import { formatDate } from '#/utils/genchuan/formatTime';
-import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 
-/** 获取支付状态Tag类型 - 使用封装的字典颜色工具 */
+/** 兑换订单状态标签类型 */
 export const getExchangeOrderPayStatusTagType = (status) => {
-  const dict = getDictObj(DICT_TYPE.EXCHANGE_ORDER_PAY_STATUS, String(status));
-  return getDictTagTypeFromDict(dict, 'primary');
+  const typeMap = {
+    '0': 'warning', // 待支付
+    '1': 'success', // 已支付
+    '2': 'info', // 已完成
+    '3': 'danger', // 已取消
+  };
+  return typeMap[status] || 'info';
 };
 
-/** 获取支付状态标签 */
+/** 兑换订单状态标签文本 */
 export const getExchangeOrderPayStatusLabel = (status) => {
-  const dict = getDictObj(DICT_TYPE.EXCHANGE_ORDER_PAY_STATUS, String(status));
-  return dict ? dict.label : status;
+  const labelMap = {
+    '0': '待支付',
+    '1': '已支付',
+    '2': '已完成',
+    '3': '已取消',
+  };
+  return labelMap[status] || status;
 };
 
-/** 兑换订单表格初始数据 - 按接口文档格式生成，字典值与系统字典一致 */
-export const dataList = () => {
-  return [
-    {
-      id: 1,
-      no: 'EO-20250401001',
-      userId: 1001,
-      userName: '张三',
-      categoryId: 1,
-      categoryName: '数码配件',
-      goodsName: '充电线',
-      costPoint: 500,
-      payStatus: '1',
-      payStatusName: '已支付',
-      createTime: 1743472800000,
-      payTime: 1743472860000,
-      shipTime: 1743490800000,
-      logisticsInfo: '圆通快递：YT1234567890',
-      archiveTime: null,
-      reserve1: null,
-      reserve2: null,
-      creator: 'system',
-      updater: 'system',
-      updateTime: 1743490800000,
-    },
-    {
-      id: 2,
-      no: 'EO-20250401002',
-      userId: 1002,
-      userName: '李四',
-      categoryId: 2,
-      categoryName: '生活用品',
-      goodsName: '保温杯',
-      costPoint: 800,
-      payStatus: '2',
-      payStatusName: '已完成',
-      createTime: 1743476400000,
-      payTime: 1743476460000,
-      shipTime: 1743494400000,
-      logisticsInfo: '顺丰快递：SF1234567890',
-      archiveTime: 1744081200000,
-      reserve1: null,
-      reserve2: null,
-      creator: 'system',
-      updater: 'system',
-      updateTime: 1744081200000,
-    },
-    {
-      id: 3,
-      no: 'EO-20250401003',
-      userId: 1003,
-      userName: '王五',
-      categoryId: 3,
-      categoryName: '食品饮料',
-      goodsName: '矿泉水',
-      costPoint: 100,
-      payStatus: '0',
-      payStatusName: '待支付',
-      createTime: 1743480000000,
-      payTime: null,
-      shipTime: null,
-      logisticsInfo: null,
-      archiveTime: null,
-      reserve1: null,
-      reserve2: null,
-      creator: 'system',
-      updater: 'system',
-      updateTime: 1743480000000,
-    },
-    {
-      id: 4,
-      no: 'EO-20250401004',
-      userId: 1004,
-      userName: '赵六',
-      categoryId: 4,
-      categoryName: '虚拟商品',
-      goodsName: '会员卡',
-      costPoint: 1000,
-      payStatus: '3',
-      payStatusName: '已取消',
-      createTime: 1743483600000,
-      payTime: null,
-      shipTime: null,
-      logisticsInfo: null,
-      archiveTime: 1743487200000,
-      reserve1: '用户主动取消',
-      reserve2: null,
-      creator: 'system',
-      updater: 'system',
-      updateTime: 1743487200000,
-    },
-    {
-      id: 5,
-      no: 'EO-20250401005',
-      userId: 1005,
-      userName: '孙七',
-      categoryId: 1,
-      categoryName: '数码配件',
-      goodsName: '充电宝',
-      costPoint: 1500,
-      payStatus: '1',
-      payStatusName: '已支付',
-      createTime: 1743487200000,
-      payTime: 1743487260000,
-      shipTime: null,
-      logisticsInfo: null,
-      archiveTime: null,
-      reserve1: null,
-      reserve2: null,
-      creator: 'system',
-      updater: 'system',
-      updateTime: 1743487260000,
-    },
-    {
-      id: 6,
-      no: 'EO-20250401006',
-      userId: 1006,
-      userName: '周八',
-      categoryId: 5,
-      categoryName: '汽车用品',
-      goodsName: '车载充电器',
-      costPoint: 600,
-      payStatus: '2',
-      payStatusName: '已完成',
-      createTime: 1743490800000,
-      payTime: 1743490860000,
-      shipTime: 1743508800000,
-      logisticsInfo: '中通快递：ZT1234567890',
-      archiveTime: 1744095600000,
-      reserve1: null,
-      reserve2: null,
-      creator: 'system',
-      updater: 'system',
-      updateTime: 1744095600000,
-    },
-    {
-      id: 7,
-      no: 'EO-20250401007',
-      userId: 1007,
-      userName: '吴九',
-      categoryId: 6,
-      categoryName: '充电服务',
-      goodsName: '充电优惠券',
-      costPoint: 200,
-      payStatus: '1',
-      payStatusName: '已支付',
-      createTime: 1743494400000,
-      payTime: 1743494460000,
-      shipTime: null,
-      logisticsInfo: null,
-      archiveTime: null,
-      reserve1: null,
-      reserve2: null,
-      creator: 'system',
-      updater: 'system',
-      updateTime: 1743494460000,
-    },
-    {
-      id: 8,
-      no: 'EO-20250401008',
-      userId: 1008,
-      userName: '郑十',
-      categoryId: 2,
-      categoryName: '生活用品',
-      goodsName: '毛巾套装',
-      costPoint: 300,
-      payStatus: '0',
-      payStatusName: '待支付',
-      createTime: 1743498000000,
-      payTime: null,
-      shipTime: null,
-      logisticsInfo: null,
-      archiveTime: null,
-      reserve1: null,
-      reserve2: null,
-      creator: 'system',
-      updater: 'system',
-      updateTime: 1743498000000,
-    },
-  ];
+/** 兑换订单发货状态标签类型 */
+export const getExchangeOrderShipStatusTagType = (status) => {
+  const typeMap = {
+    '0': 'warning', // 未发货
+    '1': 'success', // 已发货
+  };
+  return typeMap[status] || 'info';
 };
+
+/** 兑换订单发货状态标签文本 */
+export const getExchangeOrderShipStatusLabel = (status) => {
+  const labelMap = {
+    '0': '未发货',
+    '1': '已发货',
+  };
+  return labelMap[status] || status;
+};
+
+/** 兑换订单详情字段配置 - 使用formatter格式化时间和状态字段 */
+export const detailFields = [
+  { key: 'no', label: '订单编号' },
+  { key: 'userName', label: '用户名称' },
+  { key: 'categoryName', label: '类目名称' },
+  { key: 'goodsName', label: '商品名称' },
+  { key: 'costPoint', label: '消耗积分' },
+  {
+    key: 'payStatus',
+    label: '支付状态',
+    type: 'tag',
+    formatter: (value) => getExchangeOrderPayStatusLabel(value),
+    tagType: (value) => getExchangeOrderPayStatusTagType(value),
+  },
+  { key: 'createTime', label: '生成时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
+  { key: 'payTime', label: '支付时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
+  { key: 'shipTime', label: '发货时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
+  { key: 'logisticsInfo', label: '物流信息', formatter: (value) => value || '-' },
+  { key: 'archiveTime', label: '归档时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
+  { key: 'creator', label: '创建者' },
+  { key: 'updater', label: '更新者', formatter: (value) => value || '-' },
+  { key: 'updateTime', label: '更新时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
+];
 
 /** 兑换订单表单配置 */
 export function useFormSchema() {
@@ -208,7 +77,6 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入订单编号',
       },
-      rules: 'required',
     },
     {
       fieldName: 'userId',
@@ -217,7 +85,6 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入用户ID',
       },
-      rules: 'required',
     },
     {
       fieldName: 'categoryId',
@@ -226,7 +93,6 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入类目ID',
       },
-      rules: 'required',
     },
     {
       fieldName: 'goodsName',
@@ -235,7 +101,6 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请输入商品名称',
       },
-      rules: 'required',
     },
     {
       fieldName: 'costPoint',
@@ -243,9 +108,7 @@ export function useFormSchema() {
       component: 'InputNumber',
       componentProps: {
         placeholder: '请输入消耗积分',
-        min: 0,
       },
-      rules: 'required',
     },
     {
       fieldName: 'payStatus',
@@ -255,7 +118,6 @@ export function useFormSchema() {
         placeholder: '请选择支付状态',
         options: getDictOptions(DICT_TYPE.EXCHANGE_ORDER_PAY_STATUS, 'string'),
       },
-      rules: 'required',
     },
     {
       fieldName: 'logisticsInfo',
@@ -268,7 +130,7 @@ export function useFormSchema() {
   ];
 }
 
-/** 兑换订单搜索表单配置 - 仅包含表格展示字段 */
+/** 兑换订单搜索表单配置 - 仅包含接口支持的参数 */
 export function useSearchFormSchema() {
   return [
     {
@@ -281,41 +143,24 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'userName',
-      label: '用户名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入用户名称',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'goodsName',
-      label: '商品名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入商品名称',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'costPointMin',
-      label: '消耗积分最小值',
+      fieldName: 'userId',
+      label: '用户ID',
       component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入最小消耗积分',
+        placeholder: '请输入用户ID',
         clearable: true,
-        min: 0,
       },
     },
     {
-      fieldName: 'costPointMax',
-      label: '消耗积分最大值',
-      component: 'InputNumber',
+      fieldName: 'categoryId',
+      label: '商品类目',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入最大消耗积分',
+        placeholder: '请选择商品类目',
+        options: [],
         clearable: true,
-        min: 0,
+        filterable: true,
+        remote: true,
       },
     },
     {
@@ -334,51 +179,6 @@ export function useSearchFormSchema() {
       component: 'DatePicker',
       componentProps: {
         placeholder: '请选择生成时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'payTime',
-      label: '支付时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择支付时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'shipTime',
-      label: '发货时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择发货时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'logisticsInfo',
-      label: '物流信息',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入物流信息',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'archiveTime',
-      label: '归档时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择归档时间',
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'timestamp',
         type: 'datetimerange',
@@ -409,20 +209,20 @@ export function useGridColumns() {
     {
       field: 'goodsName',
       title: '商品名称',
-      minWidth: 180,
+      minWidth: 150,
       sortable: true,
       slots: { default: 'goodsName' },
     },
     {
       field: 'costPoint',
       title: '消耗积分',
-      minWidth: 120,
+      minWidth: 100,
       sortable: true,
     },
     {
       field: 'payStatusName',
       title: '支付状态',
-      minWidth: 120,
+      minWidth: 100,
       sortable: true,
       slots: { default: 'payStatusName' },
     },
@@ -462,42 +262,233 @@ export function useGridColumns() {
       slots: { default: 'archiveTime' },
     },
     {
+      field: 'action',
       title: '操作',
-      width: 100,
+      width: 200,
       fixed: 'right',
       slots: { default: 'actions' },
     },
   ];
 }
 
+/** 兑换订单静态数据 - 时间戳格式 */
+export const dataList = () => [
+  {
+    id: 1,
+    no: 'EO20260316035',
+    userId: 1001,
+    userName: '张三',
+    categoryId: 1,
+    categoryName: '美妆个护',
+    goodsName: '牙膏套装（旅行装）',
+    costPoint: 110,
+    payStatus: '3',
+    payStatusName: '已取消',
+    createTime: 1773754689000,
+    payTime: null,
+    shipTime: null,
+    logisticsInfo: null,
+    archiveTime: null,
+    creator: 'system',
+    updater: 'system',
+    updateTime: 1773754689000,
+  },
+  {
+    id: 2,
+    no: 'EO20260315034',
+    userId: 1002,
+    userName: '李四',
+    categoryId: 2,
+    categoryName: '办公文具',
+    goodsName: 'A5笔记本×3本',
+    costPoint: 90,
+    payStatus: '2',
+    payStatusName: '已完成',
+    createTime: 1773754689000,
+    payTime: 1743164530000,
+    shipTime: 1744460468000,
+    logisticsInfo: null,
+    archiveTime: null,
+    creator: 'system',
+    updater: 'system',
+    updateTime: 1773754689000,
+  },
+  {
+    id: 3,
+    no: 'EO20260314033',
+    userId: 1003,
+    userName: '王五',
+    categoryId: 3,
+    categoryName: '虚拟卡券',
+    goodsName: '双倍积分卡（7天）',
+    costPoint: 300,
+    payStatus: '2',
+    payStatusName: '已完成',
+    createTime: 1773754689000,
+    payTime: 1742967201000,
+    shipTime: null,
+    logisticsInfo: '虚拟商品，无需物流',
+    archiveTime: 1742967201000,
+    creator: 'system',
+    updater: 'system',
+    updateTime: 1773754689000,
+  },
+  {
+    id: 4,
+    no: 'EO20260313032',
+    userId: 1004,
+    userName: '赵六',
+    categoryId: 4,
+    categoryName: '数码配件',
+    goodsName: 'USB集线器（4口）',
+    costPoint: 130,
+    payStatus: '2',
+    payStatusName: '已完成',
+    createTime: 1773754689000,
+    payTime: 1742890533000,
+    shipTime: 1742983200000,
+    logisticsInfo: '顺丰快递 SF7890123456',
+    archiveTime: 1743415200000,
+    creator: 'system',
+    updater: 'system',
+    updateTime: 1773754689000,
+  },
+  {
+    id: 5,
+    no: 'EO20260312031',
+    userId: 1005,
+    userName: '钱七',
+    categoryId: 5,
+    categoryName: '数码配件',
+    goodsName: '桌面无线充电器',
+    costPoint: 600,
+    payStatus: '1',
+    payStatusName: '已支付',
+    createTime: 1773754689000,
+    payTime: 1744458968000,
+    shipTime: null,
+    logisticsInfo: null,
+    archiveTime: null,
+    creator: 'system',
+    updater: 'system',
+    updateTime: 1773754689000,
+  },
+  {
+    id: 6,
+    no: 'EO20260311030',
+    userId: 1006,
+    userName: '孙八',
+    categoryId: 6,
+    categoryName: '车载用品',
+    goodsName: '行车记录仪',
+    costPoint: 1500,
+    payStatus: '3',
+    payStatusName: '已取消',
+    createTime: 1773754689000,
+    payTime: null,
+    shipTime: null,
+    logisticsInfo: null,
+    archiveTime: null,
+    creator: 'system',
+    updater: 'system',
+    updateTime: 1773754689000,
+  },
+  {
+    id: 7,
+    no: 'EO20260310029',
+    userId: 1007,
+    userName: '周九',
+    categoryId: 7,
+    categoryName: '图书音像',
+    goodsName: '编程入门书籍',
+    costPoint: 150,
+    payStatus: '1',
+    payStatusName: '已支付',
+    createTime: 1773754689000,
+    payTime: 1744459539000,
+    shipTime: null,
+    logisticsInfo: null,
+    archiveTime: null,
+    creator: 'system',
+    updater: 'system',
+    updateTime: 1773754689000,
+  },
+  {
+    id: 8,
+    no: 'EO20260309028',
+    userId: 1008,
+    userName: '吴十',
+    categoryId: 8,
+    categoryName: '生活用品',
+    goodsName: '保温饭盒三层',
+    costPoint: 280,
+    payStatus: '0',
+    payStatusName: '待支付',
+    createTime: 1773754689000,
+    payTime: null,
+    shipTime: null,
+    logisticsInfo: null,
+    archiveTime: null,
+    creator: 'system',
+    updater: 'system',
+    updateTime: 1773754689000,
+  },
+  {
+    id: 9,
+    no: 'EO20260308027',
+    userId: 1009,
+    userName: '郑十一',
+    categoryId: 9,
+    categoryName: '美食零食',
+    goodsName: '进口巧克力礼盒',
+    costPoint: 500,
+    payStatus: '1',
+    payStatusName: '已支付',
+    createTime: 1773754689000,
+    payTime: 1742447057000,
+    shipTime: null,
+    logisticsInfo: null,
+    archiveTime: null,
+    creator: 'system',
+    updater: 'system',
+    updateTime: 1773754689000,
+  },
+  {
+    id: 10,
+    no: 'EO20260307026',
+    userId: 1010,
+    userName: '王十二',
+    categoryId: 10,
+    categoryName: '数码配件',
+    goodsName: '三合一充电线',
+    costPoint: 160,
+    payStatus: '1',
+    payStatusName: '已支付',
+    createTime: 1773754689000,
+    payTime: 1742305735000,
+    shipTime: null,
+    logisticsInfo: null,
+    archiveTime: null,
+    creator: 'system',
+    updater: 'system',
+    updateTime: 1773754689000,
+  },
+];
+
+/** 兑换订单文本对象 */
 export const textObj = {
-  editText: '编辑订单',
-  addText: '新增订单',
-  excelName: '兑换订单列表',
-  excelAllName: '兑换订单数据.xlsx',
-  total: ' 总计: 兑换订单数量8;已支付:3;已完成:2;待支付:2;已取消:1',
+  total: '共 35 条记录',
+  addText: '新增兑换订单',
+  editText: '编辑兑换订单',
+  excelName: '兑换订单',
+  excelAllName: '兑换订单列表',
 };
 
-/** 详情抽屉字段配置 - 使用与表格相同的字典颜色逻辑 */
-export const detailFields = [
-  { key: 'no', label: '订单编号' },
-  { key: 'userName', label: '用户名称' },
-  { key: 'categoryName', label: '类目名称' },
-  { key: 'goodsName', label: '商品名称' },
-  { key: 'costPoint', label: '消耗积分' },
-  {
-    key: 'payStatus',
-    label: '支付状态',
-    type: 'tag',
-    formatter: (value) => getExchangeOrderPayStatusLabel(value),
-    tagType: (value) => getExchangeOrderPayStatusTagType(value),
-  },
-  { key: 'createTime', label: '生成时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
-  { key: 'payTime', label: '支付时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
-  { key: 'shipTime', label: '发货时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
-  { key: 'logisticsInfo', label: '物流信息', formatter: (value) => value || '-' },
-  { key: 'archiveTime', label: '归档时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
-  { key: 'creator', label: '创建者' },
-  { key: 'updater', label: '更新者' },
-  { key: 'updateTime', label: '更新时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
-];
+/** 兑换订单数据对象 */
+export const dataObj = {
+  apilist: dataList(),
+  list: dataList(),
+  total: dataList().length,
+  currentPage: 1,
+  pageSize: 10,
+};

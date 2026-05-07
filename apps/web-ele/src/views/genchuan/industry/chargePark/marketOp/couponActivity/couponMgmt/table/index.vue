@@ -358,7 +358,9 @@ const getTableData = async (pageObj) => {
       const value = dataObj.searchParams[key];
       if (
         value &&
-        !['createTime', 'sendTime', 'validTime', 'verifyTime', 'date'].includes(key)
+        !['createTime', 'date', 'sendTime', 'validTime', 'verifyTime'].includes(
+          key,
+        )
       ) {
         searchMatch =
           typeof value === 'string'

@@ -218,7 +218,7 @@ const CHGPARKMGT_DICT = {
   // 营销运营管理
   // 积分活动
   POINT_ACTIVITY_TYPE: 'point_activity_type', // 活动类型
-  POINT_ACTIVITY_STATUS: 'point_activity_status', // 车位类型
+  POINT_ACTIVITY_STATUS: 'point_activity_status', // 状态
   // 积分抽奖
   POINT_LOTTERY_SYNC_STATUS: 'point_lottery_sync_status', // 同步状态
   POINT_LOTTERY_STATUS: 'point_lottery_status', // 记录状态

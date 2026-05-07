@@ -146,7 +146,9 @@ const handleStatsFilter = (type, subType, value) => {
   if (type === 'card') {
     // 卡片点击 - 生效配置数或规则匹配率
     filterStatsType.value = subType;
-    ElMessage.info(`已筛选 ${subType === 'active' ? '生效配置' : '规则匹配率'}`);
+    ElMessage.info(
+      `已筛选 ${subType === 'active' ? '生效配置' : '规则匹配率'}`,
+    );
   } else if (type === 'type') {
     // 饼图扇区点击 - 按类型筛选
     // subType 是类型编码，value 是类型名称
@@ -297,13 +299,19 @@ const getTableData = async (pageObj) => {
     };
 
     // 处理创建时间范围
-    if (dataObj.searchParams.createTime && dataObj.searchParams.createTime.length === 2) {
+    if (
+      dataObj.searchParams.createTime &&
+      dataObj.searchParams.createTime.length === 2
+    ) {
       queryParams.createTimeStart = dataObj.searchParams.createTime[0];
       queryParams.createTimeEnd = dataObj.searchParams.createTime[1];
     }
 
     // 处理生效时间范围
-    if (dataObj.searchParams.effectTime && dataObj.searchParams.effectTime.length === 2) {
+    if (
+      dataObj.searchParams.effectTime &&
+      dataObj.searchParams.effectTime.length === 2
+    ) {
       queryParams.effectTimeStart = dataObj.searchParams.effectTime[0];
       queryParams.effectTimeEnd = dataObj.searchParams.effectTime[1];
     }
@@ -531,18 +539,20 @@ function getSceneLabel(scene) {
             @close="handleCancelStatsTypeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
-            统计筛选：{{ filterStatsType === 'active' ? '生效配置' : '规则匹配率' }}
+            统计筛选：{{
+              filterStatsType === 'active' ? '生效配置' : '规则匹配率'
+            }}
           </ElTag>
         </div>
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-<!--          <IconButton-->
-<!--            content="导出"-->
-<!--            icon-name="download"-->
-<!--            @click="handleExport"-->
-<!--          />-->
+          <!--          <IconButton-->
+          <!--            content="导出"-->
+          <!--            icon-name="download"-->
+          <!--            @click="handleExport"-->
+          <!--          />-->
           <IconButton
             content="搜索"
             icon-name="search"
@@ -686,5 +696,4 @@ function getSceneLabel(scene) {
   </div>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

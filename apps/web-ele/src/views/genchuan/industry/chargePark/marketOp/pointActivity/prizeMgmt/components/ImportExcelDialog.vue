@@ -224,14 +224,29 @@ defineExpose({
             >
           </div>
           <!-- 错误行提示 -->
-          <div v-if="validationResult.errorRows && validationResult.errorRows.length > 0" class="error-rows">
+          <div
+            v-if="
+              validationResult.errorRows &&
+              validationResult.errorRows.length > 0
+            "
+            class="error-rows"
+          >
             <div class="error-rows-title">错误行详情：</div>
             <ul class="error-rows-list">
-              <li v-for="(error, index) in validationResult.errorRows.slice(0, 10)" :key="index">
+              <li
+                v-for="(error, index) in validationResult.errorRows.slice(
+                  0,
+                  10,
+                )"
+                :key="index"
+              >
                 <span class="row-number">第{{ error.rowNum }}行：</span>
                 <span class="row-error">{{ error.message }}</span>
               </li>
-              <li v-if="validationResult.errorRows.length > 10" class="more-errors">
+              <li
+                v-if="validationResult.errorRows.length > 10"
+                class="more-errors"
+              >
                 还有 {{ validationResult.errorRows.length - 10 }} 条错误...
               </li>
             </ul>
@@ -335,30 +350,30 @@ defineExpose({
 }
 
 .error-rows {
-  margin-top: 12px;
   padding-top: 12px;
+  margin-top: 12px;
   border-top: 1px dashed var(--el-border-color-light);
 }
 
 .error-rows-title {
+  margin-bottom: 8px;
   font-size: 13px;
   font-weight: 500;
   color: var(--el-text-color-secondary);
-  margin-bottom: 8px;
 }
 
 .error-rows-list {
-  margin: 0;
-  padding-left: 16px;
   max-height: 150px;
+  padding-left: 16px;
+  margin: 0;
   overflow-y: auto;
 }
 
 .error-rows-list li {
-  font-size: 12px;
-  color: var(--el-color-danger);
   margin-bottom: 4px;
+  font-size: 12px;
   line-height: 1.5;
+  color: var(--el-color-danger);
 }
 
 .row-number {

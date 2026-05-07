@@ -131,9 +131,9 @@ defineExpose({
 }
 
 .confirm-message {
+  margin-bottom: 10px;
   font-size: 14px;
   color: #303133;
-  margin-bottom: 10px;
 }
 
 .tip {

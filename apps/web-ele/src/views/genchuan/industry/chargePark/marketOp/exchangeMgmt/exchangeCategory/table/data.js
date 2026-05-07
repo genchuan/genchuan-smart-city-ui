@@ -202,7 +202,7 @@ export function useFormSchema() {
   ];
 }
 
-/** 兑换类目搜索表单配置 - 覆盖所有表格展示字段 */
+/** 兑换类目搜索表单配置 - 仅包含接口支持的参数 */
 export function useSearchFormSchema() {
   return [
     {
@@ -232,100 +232,6 @@ export function useSearchFormSchema() {
         placeholder: '请选择类目状态',
         options: getDictOptions(DICT_TYPE.EXCHANGE_CATEGORY_STATUS, 'string'),
         clearable: true,
-      },
-    },
-    {
-      fieldName: 'description',
-      label: '类目描述',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入类目描述',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'goodsCountMin',
-      label: '商品数量最小值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最小商品数量',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'goodsCountMax',
-      label: '商品数量最大值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最大商品数量',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'auditorName',
-      label: '审核人',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入审核人',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'createTime',
-      label: '创建时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择创建时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'auditTime',
-      label: '审核时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择审核时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'effectTime',
-      label: '生效时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择生效时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'sortMin',
-      label: '排序权重最小值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最小排序权重',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'sortMax',
-      label: '排序权重最大值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最大排序权重',
-        clearable: true,
-        min: 0,
       },
     },
   ];
