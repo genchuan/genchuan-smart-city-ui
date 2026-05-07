@@ -384,11 +384,6 @@ const handleStatsFilter = (type, value) => {
       }
       break;
     }
-    case 'status': {
-      // 直接设置状态筛选（用于预警库存数卡片点击）
-      filterStatus.value = value;
-      break;
-    }
     case 'cardId': {
       // 卡种筛选
       filterCardId.value = value;
@@ -397,6 +392,11 @@ const handleStatsFilter = (type, value) => {
     case 'date': {
       // 日期筛选
       filterDate.value = value;
+      break;
+    }
+    case 'status': {
+      // 直接设置状态筛选（用于预警库存数卡片点击）
+      filterStatus.value = value;
       break;
     }
   }

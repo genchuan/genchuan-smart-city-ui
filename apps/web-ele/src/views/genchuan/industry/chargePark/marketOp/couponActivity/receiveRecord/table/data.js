@@ -276,7 +276,7 @@ export function useFormSchema() {
   ];
 }
 
-/** 领用记录搜索表单配置 - 仅显示表格中已显示字段 */
+/** 领用记录搜索表单配置 - 根据ReceiveRecordPageReqVO参数配置 */
 export function useSearchFormSchema() {
   return [
     {
@@ -289,21 +289,24 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'userName',
-      label: '用户名称',
-      component: 'Input',
+      fieldName: 'userId',
+      label: '用户ID',
+      component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入用户名称',
+        placeholder: '请输入用户ID',
         clearable: true,
       },
     },
     {
-      fieldName: 'couponName',
-      label: '优惠券名称',
-      component: 'Input',
+      fieldName: 'couponId',
+      label: '优惠券',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入优惠券名称',
+        placeholder: '请选择优惠券',
+        options: [],
         clearable: true,
+        filterable: true,
+        remote: true,
       },
     },
     {
@@ -325,49 +328,6 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择记录状态',
         options: getDictOptions(DICT_TYPE.RECEIVE_RECORD_STATUS, 'string'),
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'verifyTime',
-      label: '核销时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择核销时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'checkResult',
-      label: '核查结果',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入核查结果',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'syncStatus',
-      label: '同步状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择同步状态',
-        options: getDictOptions(DICT_TYPE.RECEIVE_RECORD_SYNC_STATUS, 'string'),
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'archiveTime',
-      label: '归档时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择归档时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
         clearable: true,
       },
     },

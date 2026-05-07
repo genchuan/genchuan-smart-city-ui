@@ -3,7 +3,7 @@ import { requestClient } from '#/api/request.js';
 // ==================== 列表页交互操作接口 ====================
 
 /** 分页查询活动配置列表
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {string} params.name - 活动名称，支持模糊查询
  * @param {string} params.type - 配置类型（新用户/节假日/店庆/日常）
  * @param {string} params.userGroup - 适用人群（新用户/老用户/全部）
@@ -17,7 +17,7 @@ export function getActivityConfigPage(params) {
 }
 
 /** 新增活动配置
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {string} data.name - 活动名称，唯一
  * @param {string} data.type - 配置类型（新用户/节假日/店庆/日常）
  * @param {string} data.joinCondition - 参与条件
@@ -31,7 +31,7 @@ export function createActivityConfig(data) {
 }
 
 /** 编辑活动配置
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 配置ID
  * @param {string} data.name - 活动名称，唯一
  * @param {string} data.type - 配置类型（新用户/节假日/店庆/日常）
@@ -46,7 +46,7 @@ export function updateActivityConfig(data) {
 }
 
 /** 保存活动配置（新增或编辑）
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 配置ID，新增时为空，编辑时必填
  * @param {string} data.name - 活动名称，唯一
  * @param {string} data.type - 配置类型（新用户/节假日/店庆/日常）
@@ -71,7 +71,7 @@ export function getActivityConfigDetail(id) {
 }
 
 /** 生效活动配置
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 配置ID
  * @returns {Promise}
  */
@@ -80,7 +80,7 @@ export function activateActivityConfig(data) {
 }
 
 /** 禁用活动配置
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 配置ID
  * @returns {Promise}
  */

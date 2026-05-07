@@ -3,7 +3,7 @@ import { requestClient } from '#/api/request.js';
 // ==================== 列表页交互操作接口 ====================
 
 /** 分页查询兑换类目列表
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {string} params.name - 类目名称，支持模糊查询
  * @param {string} params.scope - 适用范围（全平台 / 指定场站）
  * @param {string} params.status - 类目状态（未生效 / 已生效 / 已禁用）
@@ -16,7 +16,7 @@ export function getExchangeCategoryPage(params) {
 }
 
 /** 新增兑换类目
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {string} data.name - 类目名称，唯一
  * @param {string} data.scope - 适用范围（全平台 / 指定场站）
  * @param {number} data.sort - 排序权重，默认0
@@ -60,7 +60,7 @@ export function exportExchangeCategory() {
 // ==================== 列表行交互操作接口 ====================
 
 /** 获取兑换类目详情
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {number} params.id - 类目ID
  * @returns {Promise}
  */
@@ -69,34 +69,40 @@ export function getExchangeCategoryDetail(params) {
 }
 
 /** 生效兑换类目
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {number} params.id - 类目ID
  * @returns {Promise}
  */
 export function activateExchangeCategory(params) {
-  return requestClient.put('/marketop/exchange-category/enable', null, { params });
+  return requestClient.put('/marketop/exchange-category/enable', null, {
+    params,
+  });
 }
 
 /** 禁用兑换类目
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {number} params.id - 类目ID
  * @returns {Promise}
  */
 export function disableExchangeCategory(params) {
-  return requestClient.put('/marketop/exchange-category/disable', null, { params });
+  return requestClient.put('/marketop/exchange-category/disable', null, {
+    params,
+  });
 }
 
 /** 启用兑换类目
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {number} params.id - 类目ID
  * @returns {Promise}
  */
 export function enableExchangeCategory(params) {
-  return requestClient.put('/marketop/exchange-category/enable', null, { params });
+  return requestClient.put('/marketop/exchange-category/enable', null, {
+    params,
+  });
 }
 
 /** 编辑兑换类目
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 类目ID
  * @param {string} data.name - 类目名称
  * @param {string} data.scope - 适用范围

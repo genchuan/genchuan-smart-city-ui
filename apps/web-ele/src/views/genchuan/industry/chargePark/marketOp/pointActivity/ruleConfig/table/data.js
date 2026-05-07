@@ -223,7 +223,7 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择规则类型',
-        options: () => getDictOptions(DICT_TYPE.RULE_CONFIG_TYPE, 'string'),
+        options: getDictOptions(DICT_TYPE.RULE_CONFIG_TYPE, 'string'),
         clearable: true,
       },
     },
@@ -233,7 +233,7 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择适用场景',
-        options: () => getDictOptions(DICT_TYPE.RULE_CONFIG_SCENE, 'string'),
+        options: getDictOptions(DICT_TYPE.RULE_CONFIG_SCENE, 'string'),
         clearable: true,
       },
     },
@@ -254,7 +254,7 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择规则状态',
-        options: () => getDictOptions(DICT_TYPE.RULE_CONFIG_STATUS, 'string'),
+        options: getDictOptions(DICT_TYPE.RULE_CONFIG_STATUS, 'string'),
         clearable: true,
       },
     },

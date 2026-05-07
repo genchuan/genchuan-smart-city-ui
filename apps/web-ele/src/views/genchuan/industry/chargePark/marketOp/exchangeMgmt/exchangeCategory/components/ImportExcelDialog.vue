@@ -343,16 +343,16 @@ defineExpose({
 
 /* 校验失败错误行提示样式 */
 .error-rows {
-  margin-top: 12px;
   padding-top: 12px;
+  margin-top: 12px;
   border-top: 1px dashed var(--el-border-color);
 }
 
 .error-rows-title {
+  margin-bottom: 8px;
   font-size: 13px;
   font-weight: 600;
   color: var(--el-color-danger);
-  margin-bottom: 8px;
 }
 
 .error-rows-list {
@@ -361,16 +361,16 @@ defineExpose({
 }
 
 .error-row-item {
-  font-size: 12px;
-  color: var(--el-text-color-regular);
   margin-bottom: 4px;
+  font-size: 12px;
   line-height: 1.5;
+  color: var(--el-text-color-regular);
 }
 
 .error-row-num {
-  color: var(--el-color-danger);
-  font-weight: 500;
   margin-right: 8px;
+  font-weight: 500;
+  color: var(--el-color-danger);
 }
 
 .error-row-msg {

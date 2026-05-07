@@ -371,7 +371,7 @@ export function useFormSchema() {
   ];
 }
 
-/** 活动配置搜索表单配置 - 覆盖所有表格展示字段 */
+/** 活动配置搜索表单配置 - 根据ActivityConfigPageReqVO参数配置 */
 export function useSearchFormSchema() {
   return [
     {
@@ -394,24 +394,6 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'joinCondition',
-      label: '参与条件',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入参与条件',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'ruleContent',
-      label: '规则内容',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入规则内容',
-        clearable: true,
-      },
-    },
-    {
       fieldName: 'userGroup',
       label: '适用人群',
       component: 'Select',
@@ -428,100 +410,6 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择配置状态',
         options: getDictOptions(DICT_TYPE.ACTIVITY_CONFIG_STATUS, 'string'),
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'auditorName',
-      label: '审核人',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入审核人',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'joinCount',
-      label: '参与人数',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入参与人数',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'description',
-      label: '活动描述',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入活动描述',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'creator',
-      label: '创建者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入创建者',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'updater',
-      label: '更新者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入更新者',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'createTime',
-      label: '创建时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择创建时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'updateTime',
-      label: '更新时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择更新时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'auditTime',
-      label: '审核时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择审核时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'effectTime',
-      label: '生效时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择生效时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
         clearable: true,
       },
     },

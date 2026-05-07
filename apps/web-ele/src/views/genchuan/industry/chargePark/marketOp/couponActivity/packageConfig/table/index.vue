@@ -176,29 +176,35 @@ async function handleExport() {
 
       // 准备Excel数据
       const excelData = formattedList.map((item) => ({
-        '券包名称': item.name,
-        '券包类型': item.typeName,
-        '包含优惠券': item.couponNames || '-',
-        '价格': `¥${item.price}`,
-        '适用范围': item.scopeName,
-        '配置状态': item.statusName,
-        '创建时间': item.createTimeStr,
-        '审核人': item.auditorName || '-',
-        '审核时间': item.auditTimeStr,
-        '销量': item.saleCount || 0,
-        '生效时间': item.effectTimeStr,
-        '券包描述': item.description || '-',
+        券包名称: item.name,
+        券包类型: item.typeName,
+        包含优惠券: item.couponNames || '-',
+        价格: `¥${item.price}`,
+        适用范围: item.scopeName,
+        配置状态: item.statusName,
+        创建时间: item.createTimeStr,
+        审核人: item.auditorName || '-',
+        审核时间: item.auditTimeStr,
+        销量: item.saleCount || 0,
+        生效时间: item.effectTimeStr,
+        券包描述: item.description || '-',
       }));
 
       // 转换为CSV格式
       const headers = Object.keys(excelData[0] || {});
       const csvContent = [
         headers.join(','),
-        ...excelData.map((row) => headers.map((h) => `"${(row[h] || '').toString().replace(/"/g, '""')}"`).join(',')),
+        ...excelData.map((row) =>
+          headers
+            .map((h) => `"${(row[h] || '').toString().replace(/"/g, '""')}"`)
+            .join(','),
+        ),
       ].join('\n');
 
       // 创建Blob并下载
-      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob(['\uFEFF' + csvContent], {
+        type: 'text/csv;charset=utf-8;',
+      });
       downloadFileFromBlobPart({
         fileName: textObj.excelAllName,
         source: blob,

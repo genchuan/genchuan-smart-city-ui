@@ -82,7 +82,8 @@ const fetchStatsData = async () => {
       const data = response.data || response;
 
       // 检查数据是否为空
-      const hasData = data.prizeCount > 0 || (data.typeList && data.typeList.length > 0);
+      const hasData =
+        data.prizeCount > 0 || (data.typeList && data.typeList.length > 0);
 
       if (hasData) {
         assembleStatsData(data);
@@ -106,7 +107,9 @@ const fetchStatsData = async () => {
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (card) => {
   await nextTick();
-  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  const tableInstance = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
   if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
     tableInstance.handleStatsFilter('card', card.filterType);
   }
@@ -117,7 +120,9 @@ const tableRef = ref(null);
 // 处理柱状图点击 - 钻取筛选
 const handleBarClick = async (type, typeName) => {
   await nextTick();
-  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  const tableInstance = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
   if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
     tableInstance.handleStatsFilter('type', type);
   }

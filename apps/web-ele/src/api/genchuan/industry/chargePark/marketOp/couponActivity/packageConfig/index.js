@@ -4,7 +4,7 @@ import { requestClient } from '#/api/request.js';
 
 /**
  * 分页查询券包配置列表
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {string} params.name - 券包名称，支持模糊查询
  * @param {string} params.type - 券包类型（新手包/节日包/日常包）
  * @param {string} params.scope - 适用范围（全平台/指定场站/指定用户）
@@ -19,7 +19,7 @@ export function getPackageConfigPage(params) {
 
 /**
  * 新增券包配置
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {string} data.name - 券包名称，唯一
  * @param {string} data.type - 券包类型（新手包/节日包/日常包）
  * @param {string} data.couponIds - 包含优惠券ID列表，逗号分隔
@@ -34,7 +34,7 @@ export function createPackageConfig(data) {
 
 /**
  * 编辑券包配置
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 配置ID
  * @param {string} data.name - 券包名称，唯一
  * @param {string} data.type - 券包类型（新手包/节日包/日常包）
@@ -50,7 +50,7 @@ export function updatePackageConfig(data) {
 
 /**
  * 保存券包配置（新增或编辑）
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 配置ID，新增时为空，编辑时必填
  * @param {string} data.name - 券包名称，唯一
  * @param {string} data.type - 券包类型（新手包/节日包/日常包）
@@ -68,7 +68,7 @@ export function savePackageConfig(data) {
 
 /**
  * 获取券包配置详情
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {number} params.id - 配置ID
  * @returns {Promise}
  */
@@ -78,7 +78,7 @@ export function getPackageConfigDetail(params) {
 
 /**
  * 生效券包配置
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 配置ID
  * @returns {Promise}
  */
@@ -88,7 +88,7 @@ export function activatePackageConfig(data) {
 
 /**
  * 禁用券包配置
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 配置ID
  * @returns {Promise}
  */

@@ -100,7 +100,9 @@ defineExpose({
             </span>
           </div>
         </div>
-        <p class="confirm-tip">重新发放后，该优惠券状态将更新为未领取，重新开放领取</p>
+        <p class="confirm-tip">
+          重新发放后，该优惠券状态将更新为未领取，重新开放领取
+        </p>
       </div>
     </div>
   </Modal>
@@ -135,9 +137,9 @@ defineExpose({
 }
 
 .info-item {
-  margin-bottom: 8px;
   display: flex;
   align-items: center;
+  margin-bottom: 8px;
 }
 
 .info-item:last-child {
@@ -145,15 +147,15 @@ defineExpose({
 }
 
 .info-label {
-  color: var(--el-text-color-secondary);
   flex-shrink: 0;
   width: 80px;
+  color: var(--el-text-color-secondary);
 }
 
 .info-value {
+  flex: 1;
   font-weight: 500;
   color: var(--el-text-color-primary);
-  flex: 1;
 }
 
 .info-value.highlight {
