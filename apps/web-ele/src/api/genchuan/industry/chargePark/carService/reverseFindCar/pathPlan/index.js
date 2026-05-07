@@ -32,6 +32,10 @@ export function getPathPlanChart(params) {
 
 // ==================== 辅助接口 ====================
 
+export function getUserDetail(userId) {
+  return requestClient.get('/system/user/get', { params: { id: userId } });
+}
+
 export async function getUserList() {
   try {
     const res = await requestClient.get('/system/user/simple-list');

@@ -26,9 +26,10 @@
         <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
       </template>
       <template #user_name="{ row }">
-        <el-text @click="() => { handleClearField('userId'); dataObj.searchObj.userId = row.userId; gridApi.query(); }" type="primary" style="cursor: pointer">
-          {{ getUserName(row.userId) }}
+        <el-text v-if="row.userId" @click="showUserDetail(row.userId)" type="primary" style="cursor: pointer">
+          {{ getUserName(row.userId) || row.userId }}
         </el-text>
+        <span v-else>-</span>
       </template>
       <template #start_location="{ row }">
         <el-text @click="handleLocationClick(row, 'start')" type="primary" style="cursor: pointer">
@@ -56,6 +57,7 @@
 
     <SearchDrawer title="搜索"><QueryForm class="query-form" /></SearchDrawer>
     <PathPlanDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="路径规划详情" />
+    <UserDetailDrawer ref="userDetailDrawerRef" />
   </div>
 </template>
 
@@ -74,9 +76,11 @@ import {
   getPathPlanDetail,
   navigatePathPlan,
   getUserList,
+  getUserDetail,
 } from '#/api/genchuan/industry/chargePark/carService/reverseFindCar/pathPlan/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import PathPlanDetailDrawer from './detail.vue';
+import UserDetailDrawer from '#/views/genchuan/industry/chargePark/carService/carGuide/nearStation/table/userDetail.vue';
 
 const props = defineProps({
   secondShow: Boolean,
@@ -238,6 +242,19 @@ async function handleExport() {
     ElMessage.error('导出失败，请稍后重试');
   }
 }
+
+// 用户详情抽屉
+const userDetailDrawerRef = ref(null);
+const showUserDetail = async (userId) => {
+  if (!userId) return ElMessage.warning('用户ID不存在');
+  try {
+    const userDetail = await getUserDetail(userId);
+    userDetailDrawerRef.value?.open(userDetail);
+  } catch (error) {
+    console.error('获取用户详情失败', error);
+    ElMessage.error('获取用户详情失败');
+  }
+};
 
 const detailDrawerRef = ref(null);
 const handleOpenDetail = async (row) => {

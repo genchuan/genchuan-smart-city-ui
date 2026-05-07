@@ -277,7 +277,10 @@ const handleChartRefresh = async (event) => {
     return;
   }
   if (filters.totalQueryCount || filters.locationSuccessRate) {
-    dataObj.searchObj = { queryTime: getRecentDaysRange(7) };
+    const next = { queryTime: getRecentDaysRange(7) };
+    // 成功率卡片只展示成功定位记录,与卡片语义对齐
+    if (filters.locationSuccessRate) next.locationResult = '成功';
+    dataObj.searchObj = next;
     dataObj.currentPage = 1;
     gridApi.query();
     return;

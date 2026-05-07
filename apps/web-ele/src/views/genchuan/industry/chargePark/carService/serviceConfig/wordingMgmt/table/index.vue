@@ -12,7 +12,6 @@
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="openCreate" />
-          <IconButton content="保存" icon-name="check" @click="handleSaveAll" />
           <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
@@ -103,7 +102,6 @@ import {
   getWordingMgmtPage,
   createWordingMgmt,
   updateWordingMgmt,
-  saveWordingMgmt,
   enableWordingMgmt,
   disableWordingMgmt,
   getWordingMgmtDetail,
@@ -250,20 +248,6 @@ const openEdit = (row) => {
   editForm.content = row.content;
   editForm.type = row.type;
   editDrawerApi.open();
-};
-
-const handleSaveAll = async () => {
-  const tableData = gridApi.getTableData().tableData;
-  const items = tableData.map(row => ({
-    id: row.id || null,
-    name: row.name,
-    content: row.content,
-    type: row.type,
-  }));
-  if (items.length === 0) return ElMessage.warning('暂无数据可保存');
-  await saveWordingMgmt({ items });
-  ElMessage.success('保存成功');
-  handleRefresh();
 };
 
 const handleEnable = async (row) => {
