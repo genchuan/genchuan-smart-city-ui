@@ -157,6 +157,6 @@ onUnmounted(() => {
 .card-body { flex:1; display: flex; align-items: center; }
 .card-value { font-size: 22px; font-weight: 700; }
 .right-section { flex:1; display: flex; gap: 16px; height: 320px; }
-.chart-box { flex:1; height: 100%; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.chart-box { flex:1; height: 100%; border-radius: 8px;   background-color: var(--el-bg-color, #fff);box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .chart-container { width: 100%; height: 100%; }
 </style>

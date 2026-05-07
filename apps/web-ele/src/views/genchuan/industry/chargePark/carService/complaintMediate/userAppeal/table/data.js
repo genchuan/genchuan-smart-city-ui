@@ -1,7 +1,7 @@
 /** 用户申诉表单配置（搜索） */
 export function useFormSchema() {
   return [
-    { fieldName: 'userId', label: '用户ID', component: 'Input', componentProps: { placeholder: '请输入用户ID' }, isSearch: true },
+    { fieldName: 'userName', label: '用户名称', component: 'Input', componentProps: { placeholder: '请输入用户名称', clearable: true }, isSearch: true },
     { fieldName: 'orderId', label: '订单ID', component: 'Input', componentProps: { placeholder: '请输入订单ID' }, isSearch: true },
     { fieldName: 'status', label: '申诉状态', component: 'Select', componentProps: { placeholder: '请选择', options: [
           { label: '待审核', value: '待审核' },
@@ -10,7 +10,7 @@ export function useFormSchema() {
           { label: '已完成', value: '已完成' },
           { label: '已关闭', value: '已关闭' }
         ] }, isSearch: true },
-    { fieldName: 'submitTime', label: '提交时间', component: 'DatePicker', componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD HH:mm:ss' }, isSearch: true },
+    { fieldName: 'submitTime', label: '提交时间', component: 'DatePicker', componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD' }, isSearch: true },
   ];
 }
 

@@ -118,7 +118,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 /** 刷新表格 */
 function handleRefresh() {
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 打开搜索抽屉 */

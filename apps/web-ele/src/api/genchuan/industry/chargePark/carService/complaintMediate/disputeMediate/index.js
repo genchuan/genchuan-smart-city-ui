@@ -7,7 +7,15 @@ export function getDisputeMediatePage(params) {
 }
 
 export function exportDisputeMediate(params) {
-  return requestClient.download('/carservice/dispute-mediate/export', params);
+  return requestClient.download('/carservice/dispute-mediate/export', {
+    params: { ...params, format: 'excel' },
+  });
+}
+
+export function exportDisputeMediatePdf(params) {
+  return requestClient.download('/carservice/dispute-mediate/export', {
+    params: { ...params, format: 'pdf' },
+  });
 }
 
 export function getDisputeMediateDetail(params) {
@@ -32,6 +40,14 @@ export function getDisputeMediateChartData(params) {
 
 // ==================== 辅助接口 ====================
 
+export function getUserDetail(userId) {
+  return requestClient.get('/system/user/get', { params: { id: userId } });
+}
+
+export function getMerchantDetail(merchantId) {
+  return requestClient.get('/usermerchant/merchant-info/get', { params: { id: merchantId } });
+}
+
 export async function getUserList() {
   try {
     const res = await requestClient.get('/system/user/simple-list');
@@ -46,8 +62,11 @@ export async function getUserList() {
 
 export async function getMerchantList() {
   try {
-    const res = await requestClient.get('/system/merchant/simple-list');
-    return (res || []).map(merchant => ({
+    // 后端无 simple-list 接口，借用 page 一次拉满
+    const res = await requestClient.get('/usermerchant/merchant-info/page', {
+      params: { pageNo: 1, pageSize: 100 },
+    });
+    return (res?.list || []).map(merchant => ({
       merchantId: merchant.id,
       merchantName: merchant.name,
     }));

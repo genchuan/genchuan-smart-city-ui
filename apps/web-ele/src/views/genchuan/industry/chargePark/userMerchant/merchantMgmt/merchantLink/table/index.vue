@@ -31,6 +31,10 @@ import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant
 import { MerchantLinkApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantLink';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import {
+  buildActiveFilterTags,
+  type ActiveFilterTag,
+} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 import { exportToExcel } from '#/utils/excel.js';
 
 import {
@@ -81,6 +85,50 @@ const filterLinkType = ref('');
 const filterStatus = ref('');
 const searchParams = ref<Record<string, any>>({});
 
+function getMerchantOptionLabel(value: any) {
+  const merchantId = Number(value);
+  return (
+    merchantSelectOptions.value.find((item) => item.value === merchantId)
+      ?.label || String(value)
+  );
+}
+
+const quickFilterConfigs = {
+  linkType: {
+    label: '对接类型',
+    type: 'success',
+  },
+  status: {
+    label: '对接状态',
+    type: 'warning',
+  },
+} as const;
+
+const searchFilterConfigs = {
+  apiUrl: {
+    label: '接口地址',
+    type: 'info',
+  },
+  effectTime: {
+    formatter: (value: any[]) => value.join(' 至 '),
+    label: '生效时间',
+    type: 'danger',
+  },
+  linkType: {
+    label: '对接类型',
+    type: 'success',
+  },
+  merchantId: {
+    formatter: getMerchantOptionLabel,
+    label: '商户名称',
+    type: 'info',
+  },
+  status: {
+    label: '对接状态',
+    type: 'warning',
+  },
+} as const;
+
 const detailData = computed(() => {
   if (!detailObj.value) {
     return null;
@@ -93,6 +141,24 @@ const detailData = computed(() => {
     syncLogSummary: formatSyncLogs(detailObj.value.syncLogs),
   };
 });
+
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: quickFilterConfigs,
+      source: 'quick',
+      values: {
+        linkType: filterLinkType.value,
+        status: filterStatus.value,
+      },
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
+);
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -421,7 +487,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 function handleRefresh() {
   filterLinkType.value = '';
   filterStatus.value = '';
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 联动刷新页面 */
@@ -438,7 +504,7 @@ async function resetSearch() {
   filterLinkType.value = '';
   filterStatus.value = '';
   await queryFormApi.resetForm();
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 设置筛选条件 */
@@ -449,8 +515,8 @@ async function setSearchValues(values: Record<string, any>) {
   };
   filterLinkType.value = '';
   filterStatus.value = '';
-  await queryFormApi.setValues(searchParams.value);
-  return gridApi.query();
+  await syncQueryFormValues();
+  return gridApi.reload();
 }
 
 /** 重新计算表格布局 */
@@ -627,31 +693,54 @@ async function handleOpenMerchant(row: MerchantLinkRow) {
 /** 打开搜索抽屉 */
 async function handleSerachShow() {
   drawerApi.open();
+  await syncQueryFormValues();
+}
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
   await queryFormApi.setValues(searchParams.value);
 }
 
 /** 按对接类型筛选 */
 function handleFilterLinkType(linkType: string) {
   filterLinkType.value = filterLinkType.value === linkType ? '' : linkType;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 按对接状态筛选 */
 function handleFilterStatus(status: MerchantLinkRow['status']) {
   filterStatus.value = filterStatus.value === status ? '' : status;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消对接类型筛选 */
 function handleCancelLinkTypeFilter() {
   filterLinkType.value = '';
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消对接状态筛选 */
 function handleCancelStatusFilter() {
   filterStatus.value = '';
-  gridApi.query();
+  gridApi.reload();
+}
+
+/** 移除筛选标签 */
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'quick') {
+    if (tag.key === 'linkType') {
+      handleCancelLinkTypeFilter();
+    } else if (tag.key === 'status') {
+      handleCancelStatusFilter();
+    }
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
 }
 </script>
 
@@ -670,22 +759,14 @@ function handleCancelStatusFilter() {
             "
           >
             <ElTag
-              v-if="filterLinkType"
-              type="success"
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
               closable
               style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelLinkTypeFilter"
+              @close="handleRemoveFilterTag(tag)"
             >
-              对接类型：{{ filterLinkType }}
-            </ElTag>
-            <ElTag
-              v-if="filterStatus"
-              type="warning"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelStatusFilter"
-            >
-              对接状态：{{ filterStatus }}
+              {{ tag.label }}：{{ tag.value }}
             </ElTag>
           </div>
         </template>

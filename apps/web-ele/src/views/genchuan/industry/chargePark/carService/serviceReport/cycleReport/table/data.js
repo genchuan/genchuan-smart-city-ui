@@ -1,3 +1,4 @@
+// 筛选搜索表单
 export function useFormSchema() {
   return [
     { fieldName: 'reportCycle', label: '报表周期', component: 'Select', componentProps: { options: [
@@ -5,8 +6,8 @@ export function useFormSchema() {
           { label: '季报', value: '季报' }, { label: '半年报', value: '半年报' }, { label: '年报', value: '年报' },
           { label: '自定义报表', value: '自定义报表' }
         ] }, isSearch: true },
-    { fieldName: 'statStartTime', label: '统计开始时间', component: 'DatePicker', componentProps: { type: 'datetime' }, isSearch: true },
-    { fieldName: 'statEndTime', label: '统计结束时间', component: 'DatePicker', componentProps: { type: 'datetime' }, isSearch: true },
+    { fieldName: 'statStartTime', label: '统计开始时间', component: 'DatePicker', componentProps: { type: 'datetime', valueFormat: 'YYYY-MM-DD HH:mm:ss' }, isSearch: true },
+    { fieldName: 'statEndTime', label: '统计结束时间', component: 'DatePicker', componentProps: { type: 'datetime', valueFormat: 'YYYY-MM-DD HH:mm:ss' }, isSearch: true },
     { fieldName: 'generateStatus', label: '生成状态', component: 'Select', componentProps: { options: [
           { label: '已生成', value: '已生成' }, { label: '生成中', value: '生成中' }, { label: '生成失败', value: '生成失败' }
         ] }, isSearch: true },

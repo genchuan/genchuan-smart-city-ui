@@ -567,13 +567,13 @@ export function buildStatsData(users: UserRow[]) {
       {
         title: '总用户数',
         value: users.length,
-        desc: '点击字段可进行钻取筛选',
+        desc: '累计注册用户',
         color: '#2F80ED',
       },
       {
         title: '近30天新增',
         value: newUserCount,
-        desc: '文档要求的核心卡片指标',
+        desc: '近30天注册用户',
         color: '#27AE60',
       },
     ],
@@ -609,13 +609,13 @@ export function buildStatsDataFromApi(data?: Partial<UserInfoChartVO>) {
       {
         title: '总用户数',
         value: data?.totalUserCount ?? 0,
-        desc: '点击字段可进行钻取筛选',
+        desc: '累计注册用户',
         color: '#2F80ED',
       },
       {
         title: '近30天新增',
         value: data?.newUserCount ?? 0,
-        desc: '文档要求的核心卡片指标',
+        desc: '近30天注册用户',
         color: '#27AE60',
       },
     ],

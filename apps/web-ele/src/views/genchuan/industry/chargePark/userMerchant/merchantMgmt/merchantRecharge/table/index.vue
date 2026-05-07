@@ -33,6 +33,10 @@ import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant
 import { MerchantRechargeApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantRecharge';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import {
+  buildActiveFilterTags,
+  type ActiveFilterTag,
+} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildMerchantOptionsFromApi,
@@ -79,6 +83,54 @@ const filterPayChannel = ref('');
 const filterStatus = ref('');
 const searchParams = ref<Record<string, any>>({});
 
+function getMerchantOptionLabel(value: any) {
+  const merchantId = Number(value);
+  return (
+    merchantSelectOptions.value.find((item) => item.value === merchantId)
+      ?.label || String(value)
+  );
+}
+
+const quickFilterConfigs = {
+  amount: {
+    label: '充值金额',
+    type: 'primary',
+  },
+  payChannel: {
+    label: '支付渠道',
+    type: 'success',
+  },
+  status: {
+    label: '充值状态',
+    type: 'warning',
+  },
+} as const;
+
+const searchFilterConfigs = {
+  amount: {
+    label: '充值金额',
+    type: 'primary',
+  },
+  merchantId: {
+    formatter: getMerchantOptionLabel,
+    label: '商户名称',
+    type: 'info',
+  },
+  payChannel: {
+    label: '支付渠道',
+    type: 'success',
+  },
+  payTime: {
+    formatter: (value: any[]) => value.join(' 至 '),
+    label: '支付时间',
+    type: 'danger',
+  },
+  status: {
+    label: '充值状态',
+    type: 'warning',
+  },
+} as const;
+
 const detailData = computed(() => {
   if (!detailObj.value) {
     return null;
@@ -91,6 +143,25 @@ const detailData = computed(() => {
     maskedMerchantPhone: maskPhone(detailObj.value.merchantPhone),
   };
 });
+
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: quickFilterConfigs,
+      source: 'quick',
+      values: {
+        amount: filterAmount.value,
+        payChannel: filterPayChannel.value,
+        status: filterStatus.value,
+      },
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
+);
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -315,7 +386,7 @@ function handleRefresh() {
   filterAmount.value = '';
   filterPayChannel.value = '';
   filterStatus.value = '';
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 联动刷新页面 */
@@ -333,7 +404,7 @@ async function resetSearch() {
   filterPayChannel.value = '';
   filterStatus.value = '';
   await queryFormApi.resetForm();
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 设置筛选条件 */
@@ -345,8 +416,8 @@ async function setSearchValues(values: Record<string, any>) {
   filterAmount.value = '';
   filterPayChannel.value = '';
   filterStatus.value = '';
-  await queryFormApi.setValues(searchParams.value);
-  return gridApi.query();
+  await syncQueryFormValues();
+  return gridApi.reload();
 }
 
 /** 重新计算表格布局 */
@@ -522,6 +593,11 @@ async function handleOpenMerchant(row: MerchantRechargeRow) {
 /** 打开搜索抽屉 */
 async function handleSerachShow() {
   drawerApi.open();
+  await syncQueryFormValues();
+}
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
   await queryFormApi.setValues(searchParams.value);
 }
 
@@ -529,38 +605,58 @@ async function handleSerachShow() {
 function handleFilterAmount(amount: number) {
   const amountText = String(amount);
   filterAmount.value = filterAmount.value === amountText ? '' : amountText;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 按支付渠道筛选 */
 function handleFilterPayChannel(nextPayChannel: string) {
   filterPayChannel.value =
     filterPayChannel.value === nextPayChannel ? '' : nextPayChannel;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 按充值状态筛选 */
 function handleFilterStatus(status: MerchantRechargeRow['status']) {
   filterStatus.value = filterStatus.value === status ? '' : status;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消充值金额筛选 */
 function handleCancelAmountFilter() {
   filterAmount.value = '';
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消支付渠道筛选 */
 function handleCancelPayChannelFilter() {
   filterPayChannel.value = '';
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消充值状态筛选 */
 function handleCancelStatusFilter() {
   filterStatus.value = '';
-  gridApi.query();
+  gridApi.reload();
+}
+
+/** 移除筛选标签 */
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'quick') {
+    if (tag.key === 'amount') {
+      handleCancelAmountFilter();
+    } else if (tag.key === 'payChannel') {
+      handleCancelPayChannelFilter();
+    } else if (tag.key === 'status') {
+      handleCancelStatusFilter();
+    }
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
 }
 </script>
 
@@ -579,31 +675,14 @@ function handleCancelStatusFilter() {
             "
           >
             <ElTag
-              v-if="filterAmount"
-              type="primary"
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
               closable
               style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelAmountFilter"
+              @close="handleRemoveFilterTag(tag)"
             >
-              充值金额：{{ filterAmount }}
-            </ElTag>
-            <ElTag
-              v-if="filterPayChannel"
-              type="success"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelPayChannelFilter"
-            >
-              支付渠道：{{ filterPayChannel }}
-            </ElTag>
-            <ElTag
-              v-if="filterStatus"
-              type="warning"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelStatusFilter"
-            >
-              充值状态：{{ filterStatus }}
+              {{ tag.label }}：{{ tag.value }}
             </ElTag>
           </div>
         </template>

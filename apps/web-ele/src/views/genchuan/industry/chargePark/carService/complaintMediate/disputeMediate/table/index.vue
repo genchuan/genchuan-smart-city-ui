@@ -11,7 +11,8 @@
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="导出 Excel" icon-name="download" @click="handleExport" />
+          <IconButton content="导出 PDF" icon-name="document" @click="handleExportPdf" />
           <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
@@ -37,12 +38,14 @@
         <span v-else>-</span>
       </template>
       <template #content="{ row }">
-        <el-text @click="filterByContent(row.content)" type="primary" style="cursor: pointer">
-          {{ row.content }}
-        </el-text>
+        <el-tooltip content="点击筛选同类型纠纷记录" placement="top">
+          <el-text @click="filterByContent(row.content)" type="primary" style="cursor: pointer">
+            {{ row.content }}
+          </el-text>
+        </el-tooltip>
       </template>
       <template #status="{ row }">
-        <el-tag :type="{ 待调解: 'warning', 调解中: 'primary', 已完成: 'success' }[row.status]"
+        <el-tag :type="{ 待调解: 'warning', 调解中: 'primary', 已完成: 'success', 已关闭: 'info' }[row.status]"
                 @click="filterByStatus(row.status)" style="cursor: pointer">
           {{ row.status }}
         </el-tag>
@@ -51,6 +54,22 @@
         <el-text v-if="row.mediateUserId" @click="showUserDetail(row.mediateUserId)" type="primary" style="cursor: pointer">
           {{ row.mediateUserName || getUserName(row.mediateUserId) }}
         </el-text>
+        <span v-else>-</span>
+      </template>
+      <template #progress="{ row }">
+        <el-tooltip v-if="row.progress" content="点击筛选同进度的调解记录" placement="top">
+          <el-text @click="filterByProgress(row.progress)" type="primary" style="cursor: pointer">
+            {{ row.progress }}
+          </el-text>
+        </el-tooltip>
+        <span v-else>-</span>
+      </template>
+      <template #confirmResult="{ row }">
+        <el-tooltip v-if="row.confirmResult" content="点击筛选同确认结果的调解记录" placement="top">
+          <el-text @click="filterByConfirmResult(row.confirmResult)" type="primary" style="cursor: pointer">
+            {{ row.confirmResult }}
+          </el-text>
+        </el-tooltip>
         <span v-else>-</span>
       </template>
 
@@ -94,15 +113,9 @@
       </el-form>
     </ConfirmDrawer>
 
-    <el-dialog v-model="userDetailVisible" title="用户详情" width="400px">
-      <p>用户ID：{{ currentUser.id }}</p>
-      <p>用户名称：{{ currentUser.name }}</p>
-    </el-dialog>
+    <UserDetailDrawer ref="userDetailDrawerRef" />
 
-    <el-dialog v-model="merchantDetailVisible" title="商户详情" width="400px">
-      <p>商户ID：{{ currentMerchant.id }}</p>
-      <p>商户名称：{{ currentMerchant.name }}</p>
-    </el-dialog>
+    <MerchantDetailDrawer ref="merchantDetailDrawerRef" />
   </div>
 </template>
 
@@ -118,15 +131,20 @@ import { formatTimestamp } from '#/utils';
 import {
   getDisputeMediatePage,
   exportDisputeMediate,
+  exportDisputeMediatePdf,
   getDisputeMediateDetail,
   mediateDispute,
   updateDisputeProgress,
   confirmDispute,
   getUserList,
+  getUserDetail,
   getMerchantList,
+  getMerchantDetail,
 } from '#/api/genchuan/industry/chargePark/carService/complaintMediate/disputeMediate/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import DisputeMediateDetailDrawer from './detail.vue';
+import UserDetailDrawer from './userDetail.vue';
+import MerchantDetailDrawer from './merchantDetail.vue';
 
 const props = defineProps({
   secondShow: Boolean,
@@ -175,18 +193,54 @@ function getMerchantName(id) {
   return merchantMap.value.get(String(id)) || String(id);
 }
 
+const padDateTime = (s, isEnd) => {
+  if (!s) return s;
+  const v = String(s).trim();
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(v)) return v;
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(v)) return `${v}:${isEnd ? '59' : '00'}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return `${v} ${isEnd ? '23:59:59' : '00:00:00'}`;
+  return v;
+};
+
 const getTableData = async (pageObj) => {
+  const page = pageObj.page;
+  const userNameFilter = String(dataObj.searchObj.userName || '').trim().toLowerCase();
+  const merchantNameFilter = String(dataObj.searchObj.merchantName || '').trim().toLowerCase();
+  const hasClientFilter = !!userNameFilter || !!merchantNameFilter;
+
   const params = {
-    pageNo: pageObj.page.currentPage,
-    pageSize: pageObj.page.pageSize,
+    pageNo: hasClientFilter ? 1 : page.currentPage,
+    pageSize: hasClientFilter ? 200 : page.pageSize,
     ...dataObj.searchObj,
   };
-  if (dataObj.searchObj.submitTime && Array.isArray(dataObj.searchObj.submitTime)) {
-    params.submitTime = dataObj.searchObj.submitTime;
+  delete params.userName;
+  delete params.merchantName;
+  if (dataObj.searchObj.submitTime && Array.isArray(dataObj.searchObj.submitTime) && dataObj.searchObj.submitTime.length === 2) {
+    params.submitTime = [
+      padDateTime(dataObj.searchObj.submitTime[0], false),
+      padDateTime(dataObj.searchObj.submitTime[1], true),
+    ];
   }
+
   const res = await getDisputeMediatePage(params);
-  dataObj.total = res.total;
-  dataObj.list = (res.list || []).map(v => ({
+  let list = res.list || [];
+  let total = res.total;
+
+  if (hasClientFilter) {
+    list = list.filter(item => {
+      const uname = String(item.userName || getUserName(item.userId) || item.userId || '').toLowerCase();
+      const mname = String(item.merchantName || getMerchantName(item.merchantId) || item.merchantId || '').toLowerCase();
+      if (userNameFilter && !uname.includes(userNameFilter)) return false;
+      if (merchantNameFilter && !mname.includes(merchantNameFilter)) return false;
+      return true;
+    });
+    total = list.length;
+    const pStart = (page.currentPage - 1) * page.pageSize;
+    list = list.slice(pStart, pStart + page.pageSize);
+  }
+
+  dataObj.total = total;
+  dataObj.list = list.map(v => ({
     ...v,
     createTime: formatTimestamp(v.createTime),
     updateTime: formatTimestamp(v.updateTime),
@@ -225,22 +279,26 @@ async function onSubmit(values, isReset = false) {
   else { dataObj.searchObj = { ...values }; dataObj.currentPage = 1; gridApi.query(); }
 }
 
-const handleClearField = async (fieldName) => {
-  const newSearchObj = { ...dataObj.searchObj };
-  delete newSearchObj[fieldName];
-  dataObj.searchObj = newSearchObj;
-  const currentFormValues = await QueryFormApi.getValues();
-  delete currentFormValues[fieldName];
-  await QueryFormApi.setValues(currentFormValues, false);
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchObj };
+  delete next[fieldName];
+  dataObj.searchObj = next;
   dataObj.currentPage = 1;
   gridApi.query();
+  // Drawer 表单可能未挂载，setValues 仅做软同步，失败不影响列表刷新
+  Promise.resolve(QueryFormApi.setValues?.({ [fieldName]: null }, false)).catch(() => {});
 };
 
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchObj;
   if (obj.userId) filters.push({ label: `用户：${getUserName(obj.userId)}`, field: 'userId' });
+  if (obj.userName) filters.push({ label: `用户名称：${obj.userName}`, field: 'userName' });
   if (obj.merchantId) filters.push({ label: `商户：${getMerchantName(obj.merchantId)}`, field: 'merchantId' });
+  if (obj.merchantName) filters.push({ label: `商户名称：${obj.merchantName}`, field: 'merchantName' });
+  if (obj.content) filters.push({ label: `纠纷内容：${obj.content}`, field: 'content' });
+  if (obj.progress) filters.push({ label: `调解进度：${obj.progress}`, field: 'progress' });
+  if (obj.confirmResult) filters.push({ label: `确认结果：${obj.confirmResult}`, field: 'confirmResult' });
   if (obj.status) filters.push({ label: `状态：${obj.status}`, field: 'status' });
   if (obj.submitTime && obj.submitTime.length === 2) {
     filters.push({ label: `发起时间：${obj.submitTime[0]} 至 ${obj.submitTime[1]}`, field: 'submitTime' });
@@ -268,6 +326,12 @@ async function handleExport() {
   ElMessage.success('导出成功');
 }
 
+async function handleExportPdf() {
+  const data = await exportDisputeMediatePdf(dataObj.searchObj);
+  downloadFileFromBlobPart({ fileName: '纠纷调解记录.pdf', source: data });
+  ElMessage.success('导出成功');
+}
+
 const detailDrawerRef = ref(null);
 const handleOpenDetail = async (row) => {
   const res = await getDisputeMediateDetail({ id: row.id });
@@ -276,7 +340,6 @@ const handleOpenDetail = async (row) => {
 };
 
 const handleMediate = async (row) => {
-  await confirm('确认认领该纠纷吗？认领后状态将变为“调解中”。');
   await mediateDispute({ id: row.id });
   ElMessage.success('认领成功，状态更新为调解中');
   handleRefresh();
@@ -309,7 +372,7 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
   onConfirm: async () => {
     if (!confirmForm.confirmResult) return ElMessage.warning('请填写调解结果');
     await confirmDispute({ id: currentConfirmRow.id, confirmResult: confirmForm.confirmResult });
-    ElMessage.success('调解完成，状态已变更为已完成');
+    ElMessage.success('调解完成，状态已变更为已关闭');
     confirmDrawerApi.close();
     handleRefresh();
   },
@@ -326,25 +389,43 @@ const filterByStatus = (status) => {
   gridApi.query();
 };
 const filterByContent = (content) => {
-  dataObj.searchObj.content = content;
+  dataObj.searchObj = { ...dataObj.searchObj, content };
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+const filterByProgress = (progress) => {
+  dataObj.searchObj = { ...dataObj.searchObj, progress };
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+const filterByConfirmResult = (confirmResult) => {
+  dataObj.searchObj = { ...dataObj.searchObj, confirmResult };
   dataObj.currentPage = 1;
   gridApi.query();
 };
 
-const userDetailVisible = ref(false);
-const currentUser = ref({ id: '', name: '' });
-const showUserDetail = (userId) => {
-  if (!userId) return;
-  currentUser.value = { id: userId, name: getUserName(userId) };
-  userDetailVisible.value = true;
+const userDetailDrawerRef = ref(null);
+const showUserDetail = async (userId) => {
+  if (!userId) return ElMessage.warning('用户ID不存在');
+  try {
+    const userDetail = await getUserDetail(userId);
+    userDetailDrawerRef.value?.open(userDetail);
+  } catch (error) {
+    console.error('获取用户详情失败', error);
+    ElMessage.error('获取用户详情失败');
+  }
 };
 
-const merchantDetailVisible = ref(false);
-const currentMerchant = ref({ id: '', name: '' });
-const showMerchantDetail = (merchantId) => {
-  if (!merchantId) return;
-  currentMerchant.value = { id: merchantId, name: getMerchantName(merchantId) };
-  merchantDetailVisible.value = true;
+const merchantDetailDrawerRef = ref(null);
+const showMerchantDetail = async (merchantId) => {
+  if (!merchantId) return ElMessage.warning('商户ID不存在');
+  try {
+    const merchantDetail = await getMerchantDetail(merchantId);
+    merchantDetailDrawerRef.value?.open(merchantDetail);
+  } catch (error) {
+    console.error('获取商户详情失败', error);
+    ElMessage.error('获取商户详情失败');
+  }
 };
 
 const handleChartRefresh = (event) => {
