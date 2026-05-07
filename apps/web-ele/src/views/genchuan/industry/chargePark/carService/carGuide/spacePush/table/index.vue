@@ -38,9 +38,10 @@
         <el-text @click="openDetail(row)" type="primary">{{ row.id }}</el-text>
       </template>
       <template #userName="{ row }">
-        <el-text @click="handleUserClick(row.userId, row.userName)" type="primary" style="cursor: pointer">
-          {{ row.userName || '-' }}
+        <el-text v-if="row.userId" @click="handleUserClick(row.userId, row.userName)" type="primary" style="cursor: pointer">
+          {{ row.userName || getUserNameById(row.userId) || row.userId }}
         </el-text>
+        <span v-else>-</span>
       </template>
       <template #stationName="{ row }">
         <el-text @click="addQuickFilter('stationId', row.stationId, `场站ID: ${row.stationId}`)" type="primary" style="cursor: pointer">
@@ -92,6 +93,7 @@
 
     <!-- 详情抽屉 -->
     <DetailDrawer ref="detailDrawerRef" :detail-data="currentDetail" />
+    <UserDetailDrawer ref="userDetailDrawerRef" />
 
     <!-- 批量推送确认弹窗 -->
     <el-dialog v-model="batchPushVisible" title="批量推送确认" width="400px">
@@ -159,10 +161,12 @@ import {
   batchPushSpace,
   pushSpace,
   getUserList,
+  getUserDetail,
   getParkingSpacesByStation,
 } from '#/api/genchuan/industry/chargePark/carService/carGuide/spacePush/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import DetailDrawer from './detail.vue';
+import UserDetailDrawer from './userDetail.vue';
 
 // 新增 props 和 emit
 const props = defineProps({
@@ -388,10 +392,17 @@ const addQuickFilter = (field, value, label) => {
   ElMessage.success(`已添加筛选：${label}`);
 };
 
-// 用户点击钻取
-const handleUserClick = (userId, userName) => {
-  if (!userId) return;
-  addQuickFilter('userId', userId, `用户：${userName || getUserNameById(userId)}`);
+// 用户点击 → 打开右侧用户详情抽屉
+const userDetailDrawerRef = ref(null);
+const handleUserClick = async (userId) => {
+  if (!userId) return ElMessage.warning('用户ID不存在');
+  try {
+    const userDetail = await getUserDetail(userId);
+    userDetailDrawerRef.value?.open(userDetail);
+  } catch (error) {
+    console.error('获取用户详情失败', error);
+    ElMessage.error('获取用户详情失败');
+  }
 };
 
 // 活动筛选标签（从 searchParams 派生）
