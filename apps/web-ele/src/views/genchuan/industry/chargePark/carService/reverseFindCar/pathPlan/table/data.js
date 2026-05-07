@@ -1,7 +1,7 @@
 /** 路径规划表单配置（搜索） */
 export function useFormSchema() {
   return [
-    { fieldName: 'userId', label: '用户ID', component: 'Input', componentProps: { placeholder: '请输入用户ID' }, isSearch: true },
+    { fieldName: 'userName', label: '用户名称', component: 'Input', componentProps: { placeholder: '请输入用户名称', clearable: true }, isSearch: true },
     { fieldName: 'startLocation', label: '起点位置', component: 'Input', componentProps: { placeholder: '请输入起点（支持模糊）' }, isSearch: true },
     { fieldName: 'endLocation', label: '终点位置', component: 'Input', componentProps: { placeholder: '请输入终点（支持模糊）' }, isSearch: true },
     { fieldName: 'planTime', label: '规划时间', component: 'DatePicker', componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD HH:mm:ss' }, isSearch: true },

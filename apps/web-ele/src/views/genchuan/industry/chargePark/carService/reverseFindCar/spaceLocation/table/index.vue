@@ -12,6 +12,7 @@ import {
   getSpaceLocationDetail,
   navigateToSpace,
   getUserList,
+  getCarByPlateNo,
 } from '#/api/genchuan/industry/chargePark/carService/reverseFindCar/spaceLocation/index.js';
 // 新增：获取用户详情接口（复用充停地图的API）
 import { getUserDetail } from '#/api/genchuan/industry/chargePark/carService/carGuide/chargeParkMap/index.js';
@@ -19,6 +20,7 @@ import { useFormSchema, useGridColumns } from './data';
 import SpaceLocationDetailDrawer from './detail.vue';
 // 新增：用户详情抽屉组件
 import UserDetailDrawer from '#/views/genchuan/industry/chargePark/carService/carGuide/chargeParkMap/table/userDetail.vue';
+import VehicleDetailDrawer from './vehicleDetail.vue';
 
 // 新增 props 和 emit
 const props = defineProps({
@@ -190,6 +192,23 @@ const openUserDetail = async (userId) => {
   }
 };
 
+// 车牌点击 → 车辆详情抽屉
+const vehicleDetailDrawerRef = ref(null);
+const handlePlateClick = async (plateNo) => {
+  if (!plateNo) return;
+  try {
+    const car = await getCarByPlateNo(plateNo);
+    if (!car) {
+      ElMessage.warning('未查询到该车牌的车辆信息');
+      return;
+    }
+    vehicleDetailDrawerRef.value?.open(car);
+  } catch (error) {
+    console.error('获取车辆详情失败', error);
+    ElMessage.error('获取车辆详情失败');
+  }
+};
+
 // 浏览器当前位置
 let cachedLngLat = null;
 const getCurrentLngLat = () => new Promise(resolve => {
@@ -311,7 +330,7 @@ const handleExport = async () => {
       { field: 'id', title: '定位ID' },
       { field: 'userId', title: '用户ID', formatter: (v) => getUserName(v) },
       { field: 'plateNo', title: '车牌号码' },
-      { field: 'queryTime', title: '查询时间' },
+      { field: 'queryTime', title: '查询时间', formatter: (v) => formatTimestamp(v) },
       { field: 'locationResult', title: '定位结果' },
       { field: 'responseDuration', title: '响应时长(ms)' },
     ];
@@ -371,9 +390,10 @@ const handleExport = async () => {
         </el-text>
       </template>
       <template #plate_no="{ row }">
-        <el-text @click="() => handleClearField('plateNo') || (dataObj.searchObj.plateNo = row.plateNo) || gridApi.query()" type="primary" style="cursor: pointer">
-          {{ row.plateNo || '-' }}
+        <el-text v-if="row.plateNo" @click="handlePlateClick(row.plateNo)" type="primary" style="cursor: pointer">
+          {{ row.plateNo }}
         </el-text>
+        <span v-else>-</span>
       </template>
       <template #location_result="{ row }">
         <el-tag :type="row.locationResult === '成功' ? 'success' : 'danger'" @click="() => handleClearField('locationResult') || (dataObj.searchObj.locationResult = row.locationResult) || gridApi.query()" style="cursor: pointer">
@@ -403,5 +423,6 @@ const handleExport = async () => {
 
     <!-- 新增：用户详情抽屉 -->
     <UserDetailDrawer ref="userDetailDrawerRef" />
+    <VehicleDetailDrawer ref="vehicleDetailDrawerRef" />
   </div>
 </template>

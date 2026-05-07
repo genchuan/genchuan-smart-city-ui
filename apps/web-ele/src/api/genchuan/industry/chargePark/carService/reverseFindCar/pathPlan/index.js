@@ -7,7 +7,15 @@ export function getPathPlanPage(params) {
 }
 
 export function exportPathPlanExcel(params) {
-  return requestClient.download('/carservice/path-plan/export', params);
+  return requestClient.download('/carservice/path-plan/export', {
+    params: { ...params, format: 'excel' },
+  });
+}
+
+export function exportPathPlanPdf(params) {
+  return requestClient.download('/carservice/path-plan/export', {
+    params: { ...params, format: 'pdf' },
+  });
 }
 
 export function getPathPlanDetail(params) {
