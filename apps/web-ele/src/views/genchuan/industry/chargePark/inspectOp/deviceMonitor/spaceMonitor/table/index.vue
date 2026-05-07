@@ -262,7 +262,10 @@ function changeTotalShow() {
 async function handleOpenDetail(row) {
   try {
     const response = await getSpaceMonitorDetail(row.id);
-    dataObj.detailObj = normalizeSpaceMonitorRow(response || row);
+    dataObj.detailObj = {
+      ...normalizeSpaceMonitorRow(response || row),
+      stationName: row.stationName,
+    };
   } catch (error) {
     console.error('获取车位监测详情失败，使用行数据:', error);
     dataObj.detailObj = row;

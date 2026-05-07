@@ -261,7 +261,10 @@ function changeTotalShow() {
 async function handleOpenDetail(row) {
   try {
     const response = await getBikeChargeMonitorDetail(row.id);
-    dataObj.detailObj = normalizeBikeChargeMonitorRow(response || row);
+    dataObj.detailObj = {
+      ...normalizeBikeChargeMonitorRow(response || row),
+      stationName: row.stationName,
+    }
   } catch (error) {
     console.error('获取两轮充电监测详情失败，使用行数据:', error);
     dataObj.detailObj = row;
