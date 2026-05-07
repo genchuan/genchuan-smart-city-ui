@@ -6,7 +6,7 @@ export function useFormSchema() {
     { fieldName: 'status', label: '调解状态', component: 'Select', componentProps: { placeholder: '请选择', options: [
           { label: '待调解', value: '待调解' },
           { label: '调解中', value: '调解中' },
-          { label: '已关闭', value: '已关闭' }
+          { label: '已完成', value: '已完成' }
         ] }, isSearch: true },
     { fieldName: 'submitTime', label: '发起时间', component: 'DatePicker', componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD' }, isSearch: true },
   ];
