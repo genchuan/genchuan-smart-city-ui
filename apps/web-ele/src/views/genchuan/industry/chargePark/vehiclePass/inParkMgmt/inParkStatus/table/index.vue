@@ -406,9 +406,13 @@ const handleOpenDetail = async (row) => {
   }
 };
 
-// 车牌点击 - 跳转车辆详情
+// 车牌点击 - 查看车辆详情
 const handleCarNoClick = (row) => {
-  vehicleDetailRef.value?.open(row.carNo, row);
+  if (!row.carNo) {
+    ElMessage.warning('该记录无车牌信息');
+    return;
+  }
+  vehicleDetailRef.value?.open(row.carNo);
 };
 
 // 车位点击 - 跳转车位详情

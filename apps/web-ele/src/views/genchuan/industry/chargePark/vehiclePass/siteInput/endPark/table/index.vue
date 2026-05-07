@@ -538,7 +538,11 @@ const handleCancel = (row) => {
 
 // 点击车牌打开车辆详情
 const handlePlateNoClick = (row) => {
-  vehicleDetailRef.value?.open(row.plateNo, row);
+  if (!row.plateNo) {
+    ElMessage.warning('该记录无车牌信息');
+    return;
+  }
+  vehicleDetailRef.value?.open(row.plateNo);
 };
 
 // 点击车位打开泊位详情

@@ -454,6 +454,7 @@ onUnmounted(() => {
 .chart-box {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
   gap: 15px;
   width: 100% !important;
   padding-right: 15px;
@@ -465,12 +466,13 @@ onUnmounted(() => {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 12px;
     width: 100%;
-    margin-top: 10px !important;
+    height: 330px;
 
     .left-card {
       display: flex;
       flex-direction: column;
-      height: 102px;
+      flex: 1;
+      flex: 1;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;
