@@ -11,6 +11,7 @@ export function useFormSchema() {
 /** 车位定位表格列配置（带钻取交互） */
 export function useGridColumns({ getUserName }) {
   return [
+    { type: 'checkbox', width: 40 },
     { field: 'id', title: '定位ID', minWidth: 100, sortable: true, slots: { default: 'id' } },
     { field: 'userId', title: '用户', minWidth: 120, sortable: true, slots: { default: 'user_name' }, formatter: ({ userId }) => getUserName(userId) },
     { field: 'plateNo', title: '车牌号码', minWidth: 120, sortable: true},

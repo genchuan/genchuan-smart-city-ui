@@ -270,7 +270,7 @@ const getStationName = (row) => {
 };
 onMounted(async () => {
   try {
-    const res = await getSpacePushPage({ pageNo: 1, pageSize: 1000 });
+    const res = await getSpacePushPage({ pageNo: 1, pageSize: 200 });
     const list = res?.list || [];
     const newMap = {};
     list.forEach(item => {

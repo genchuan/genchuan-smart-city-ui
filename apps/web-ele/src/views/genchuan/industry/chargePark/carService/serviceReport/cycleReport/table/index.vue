@@ -190,6 +190,7 @@ import CycleReportDetailDrawer from './detail.vue';
 const props = defineProps({
   secondShow: Boolean,
   arrowShow: { type: Boolean, default: false },
+  cycleType: { type: String, default: '' }, // 新增：标签页传递的周期类型
 });
 const emit = defineEmits(['arrow-change']);
 const arrowChange = () => emit('arrow-change');
@@ -261,7 +262,7 @@ const openSearchDrawer = () => {
   searchDrawerApi.open();
 };
 
-// 提交筛选：复用 padDateTime 处理统计时间，与列表中的统计时段筛选逻辑一致
+// 提交筛选：复用 padDateTime 处理统计时间
 async function onSubmit(values) {
   let startTime = values.statStartTime;
   let endTime = values.statEndTime;
@@ -287,7 +288,8 @@ async function onSubmit(values) {
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchObj;
-  if (obj.reportCycle) filters.push({ label: `报表周期：${obj.reportCycle}`, field: 'reportCycle' });
+  // 隐藏报表周期标签
+  // if (obj.reportCycle) filters.push({ label: `报表周期：${obj.reportCycle}`, field: 'reportCycle' });
   if (obj.statStartTime || obj.statEndTime) {
     const start = obj.statStartTime || '';
     const end = obj.statEndTime || '';
@@ -510,7 +512,7 @@ const handleExportList = async () => {
     return;
   }
   await ElMessageBox.confirm('确认导出当前列表数据吗？', '提示', { type: 'info' });
-  const params = { ...dataObj.searchObj, pageNo: 1, pageSize: 10000 };
+  const params = { ...dataObj.searchObj, pageNo: 1, pageSize: 200 };
   const blob = await exportCycleReport(params);
   downloadFileFromBlobPart({ fileName: '周期报表列表.xlsx', source: blob });
   ElMessage.success('导出成功');
@@ -733,6 +735,19 @@ const handleChartDrill = async (event) => {
     ElMessage.info(`地图钻取：位置 ${filters.location}`);
   }
 };
+
+// ========== 监听外部标签页切换，更新报表周期筛选 ==========
+watch(() => props.cycleType, (newVal, oldVal) => {
+  const newSearchObj = { ...dataObj.searchObj };
+  if (newVal === '') {
+    delete newSearchObj.reportCycle;
+  } else {
+    newSearchObj.reportCycle = newVal;
+  }
+  dataObj.searchObj = newSearchObj;
+  dataObj.currentPage = 1;
+  gridApi.query();
+}, { immediate: true });
 
 onMounted(() => {
   window.addEventListener('cycle-report-chart-refresh', handleChartDrill);
