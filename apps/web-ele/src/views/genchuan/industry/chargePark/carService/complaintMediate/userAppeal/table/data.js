@@ -6,7 +6,6 @@ export function useFormSchema() {
     { fieldName: 'status', label: '申诉状态', component: 'Select', componentProps: { placeholder: '请选择', options: [
           { label: '待审核', value: '待审核' },
           { label: '待处置', value: '待处置' },
-          { label: '处置中', value: '处置中' },
           { label: '已完成', value: '已完成' },
           { label: '已关闭', value: '已关闭' }
         ] }, isSearch: true },
@@ -27,7 +26,7 @@ export function useGridColumns({ getUserName }) {
     { field: 'auditUserId', title: '审核人', minWidth: 120, slots: { default: 'audit_user_name' }, formatter: ({ auditUserId }) => getUserName(auditUserId) },
     { field: 'auditTime', title: '审核时间', minWidth: 160, sortable: true },
     { field: 'handleUserId', title: '处置人', minWidth: 120, slots: { default: 'handle_user_name' }, formatter: ({ handleUserId }) => getUserName(handleUserId) },
-    { field: 'progress', title: '处置进度', minWidth: 150, slots: { default: 'progress' } },
+    { field: 'handleTime', title: '处置时间', minWidth: 160, sortable: true },
     { field: 'feedbackContent', title: '反馈内容', minWidth: 200, slots: { default: 'feedbackContent' } },
     { field: 'feedbackTime', title: '反馈时间', minWidth: 160, sortable: true },
     { title: '操作', width: 220, fixed: 'right', slots: { default: 'actions' } },
