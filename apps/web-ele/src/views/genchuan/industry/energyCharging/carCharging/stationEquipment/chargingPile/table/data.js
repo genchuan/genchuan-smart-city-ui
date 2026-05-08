@@ -97,14 +97,15 @@ export function useQuerySchema() {
       componentProps: { placeholder: '请输入生产厂家' },
     },
     {
-      fieldName: 'stationId',
+      fieldName: 'stationName',
       label: '所属场站',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择所属场站',
-        options: [],
-        valueField: 'value',
-        labelField: 'label',
+        placeholder: '请输入所属场站',
+        clearable: true,
+        // options: [],
+        // valueField: 'value',
+        // labelField: 'label',
       },
     },
     {
