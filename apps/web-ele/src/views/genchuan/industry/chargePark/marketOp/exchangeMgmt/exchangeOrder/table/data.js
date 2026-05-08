@@ -6,10 +6,10 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 /** 兑换订单状态标签类型 */
 export const getExchangeOrderPayStatusTagType = (status) => {
   const typeMap = {
-    '0': 'warning', // 待支付
-    '1': 'success', // 已支付
-    '2': 'info', // 已完成
-    '3': 'danger', // 已取消
+    0: 'warning', // 待支付
+    1: 'success', // 已支付
+    2: 'info', // 已完成
+    3: 'danger', // 已取消
   };
   return typeMap[status] || 'info';
 };
@@ -17,10 +17,10 @@ export const getExchangeOrderPayStatusTagType = (status) => {
 /** 兑换订单状态标签文本 */
 export const getExchangeOrderPayStatusLabel = (status) => {
   const labelMap = {
-    '0': '待支付',
-    '1': '已支付',
-    '2': '已完成',
-    '3': '已取消',
+    0: '待支付',
+    1: '已支付',
+    2: '已完成',
+    3: '已取消',
   };
   return labelMap[status] || status;
 };
@@ -28,8 +28,8 @@ export const getExchangeOrderPayStatusLabel = (status) => {
 /** 兑换订单发货状态标签类型 */
 export const getExchangeOrderShipStatusTagType = (status) => {
   const typeMap = {
-    '0': 'warning', // 未发货
-    '1': 'success', // 已发货
+    0: 'warning', // 未发货
+    1: 'success', // 已发货
   };
   return typeMap[status] || 'info';
 };
@@ -37,8 +37,8 @@ export const getExchangeOrderShipStatusTagType = (status) => {
 /** 兑换订单发货状态标签文本 */
 export const getExchangeOrderShipStatusLabel = (status) => {
   const labelMap = {
-    '0': '未发货',
-    '1': '已发货',
+    0: '未发货',
+    1: '已发货',
   };
   return labelMap[status] || status;
 };
@@ -57,14 +57,43 @@ export const detailFields = [
     formatter: (value) => getExchangeOrderPayStatusLabel(value),
     tagType: (value) => getExchangeOrderPayStatusTagType(value),
   },
-  { key: 'createTime', label: '生成时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
-  { key: 'payTime', label: '支付时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
-  { key: 'shipTime', label: '发货时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
-  { key: 'logisticsInfo', label: '物流信息', formatter: (value) => value || '-' },
-  { key: 'archiveTime', label: '归档时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
+  {
+    key: 'createTime',
+    label: '生成时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
+  {
+    key: 'payTime',
+    label: '支付时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
+  {
+    key: 'shipTime',
+    label: '发货时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
+  {
+    key: 'logisticsInfo',
+    label: '物流信息',
+    formatter: (value) => value || '-',
+  },
+  {
+    key: 'archiveTime',
+    label: '归档时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
   { key: 'creator', label: '创建者' },
   { key: 'updater', label: '更新者', formatter: (value) => value || '-' },
-  { key: 'updateTime', label: '更新时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
 ];
 
 /** 兑换订单表单配置 */
@@ -78,14 +107,14 @@ export function useFormSchema() {
         placeholder: '请输入订单编号',
       },
     },
-    {
-      fieldName: 'userId',
-      label: '用户ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入用户ID',
-      },
-    },
+    // {
+    //   fieldName: 'userId',
+    //   label: '用户ID',
+    //   component: 'InputNumber',
+    //   componentProps: {
+    //     placeholder: '请输入用户ID',
+    //   },
+    // },
     {
       fieldName: 'categoryId',
       label: '类目ID',
@@ -142,15 +171,15 @@ export function useSearchFormSchema() {
         clearable: true,
       },
     },
-    {
-      fieldName: 'userId',
-      label: '用户ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入用户ID',
-        clearable: true,
-      },
-    },
+    // {
+    //   fieldName: 'userId',
+    //   label: '用户ID',
+    //   component: 'InputNumber',
+    //   componentProps: {
+    //     placeholder: '请输入用户ID',
+    //     clearable: true,
+    //   },
+    // },
     {
       fieldName: 'categoryId',
       label: '商品类目',
@@ -284,14 +313,14 @@ export const dataList = () => [
     costPoint: 110,
     payStatus: '3',
     payStatusName: '已取消',
-    createTime: 1773754689000,
+    createTime: 1_773_754_689_000,
     payTime: null,
     shipTime: null,
     logisticsInfo: null,
     archiveTime: null,
     creator: 'system',
     updater: 'system',
-    updateTime: 1773754689000,
+    updateTime: 1_773_754_689_000,
   },
   {
     id: 2,
@@ -304,14 +333,14 @@ export const dataList = () => [
     costPoint: 90,
     payStatus: '2',
     payStatusName: '已完成',
-    createTime: 1773754689000,
-    payTime: 1743164530000,
-    shipTime: 1744460468000,
+    createTime: 1_773_754_689_000,
+    payTime: 1_743_164_530_000,
+    shipTime: 1_744_460_468_000,
     logisticsInfo: null,
     archiveTime: null,
     creator: 'system',
     updater: 'system',
-    updateTime: 1773754689000,
+    updateTime: 1_773_754_689_000,
   },
   {
     id: 3,
@@ -324,14 +353,14 @@ export const dataList = () => [
     costPoint: 300,
     payStatus: '2',
     payStatusName: '已完成',
-    createTime: 1773754689000,
-    payTime: 1742967201000,
+    createTime: 1_773_754_689_000,
+    payTime: 1_742_967_201_000,
     shipTime: null,
     logisticsInfo: '虚拟商品，无需物流',
-    archiveTime: 1742967201000,
+    archiveTime: 1_742_967_201_000,
     creator: 'system',
     updater: 'system',
-    updateTime: 1773754689000,
+    updateTime: 1_773_754_689_000,
   },
   {
     id: 4,
@@ -344,14 +373,14 @@ export const dataList = () => [
     costPoint: 130,
     payStatus: '2',
     payStatusName: '已完成',
-    createTime: 1773754689000,
-    payTime: 1742890533000,
-    shipTime: 1742983200000,
+    createTime: 1_773_754_689_000,
+    payTime: 1_742_890_533_000,
+    shipTime: 1_742_983_200_000,
     logisticsInfo: '顺丰快递 SF7890123456',
-    archiveTime: 1743415200000,
+    archiveTime: 1_743_415_200_000,
     creator: 'system',
     updater: 'system',
-    updateTime: 1773754689000,
+    updateTime: 1_773_754_689_000,
   },
   {
     id: 5,
@@ -364,14 +393,14 @@ export const dataList = () => [
     costPoint: 600,
     payStatus: '1',
     payStatusName: '已支付',
-    createTime: 1773754689000,
-    payTime: 1744458968000,
+    createTime: 1_773_754_689_000,
+    payTime: 1_744_458_968_000,
     shipTime: null,
     logisticsInfo: null,
     archiveTime: null,
     creator: 'system',
     updater: 'system',
-    updateTime: 1773754689000,
+    updateTime: 1_773_754_689_000,
   },
   {
     id: 6,
@@ -384,14 +413,14 @@ export const dataList = () => [
     costPoint: 1500,
     payStatus: '3',
     payStatusName: '已取消',
-    createTime: 1773754689000,
+    createTime: 1_773_754_689_000,
     payTime: null,
     shipTime: null,
     logisticsInfo: null,
     archiveTime: null,
     creator: 'system',
     updater: 'system',
-    updateTime: 1773754689000,
+    updateTime: 1_773_754_689_000,
   },
   {
     id: 7,
@@ -404,14 +433,14 @@ export const dataList = () => [
     costPoint: 150,
     payStatus: '1',
     payStatusName: '已支付',
-    createTime: 1773754689000,
-    payTime: 1744459539000,
+    createTime: 1_773_754_689_000,
+    payTime: 1_744_459_539_000,
     shipTime: null,
     logisticsInfo: null,
     archiveTime: null,
     creator: 'system',
     updater: 'system',
-    updateTime: 1773754689000,
+    updateTime: 1_773_754_689_000,
   },
   {
     id: 8,
@@ -424,14 +453,14 @@ export const dataList = () => [
     costPoint: 280,
     payStatus: '0',
     payStatusName: '待支付',
-    createTime: 1773754689000,
+    createTime: 1_773_754_689_000,
     payTime: null,
     shipTime: null,
     logisticsInfo: null,
     archiveTime: null,
     creator: 'system',
     updater: 'system',
-    updateTime: 1773754689000,
+    updateTime: 1_773_754_689_000,
   },
   {
     id: 9,
@@ -444,14 +473,14 @@ export const dataList = () => [
     costPoint: 500,
     payStatus: '1',
     payStatusName: '已支付',
-    createTime: 1773754689000,
-    payTime: 1742447057000,
+    createTime: 1_773_754_689_000,
+    payTime: 1_742_447_057_000,
     shipTime: null,
     logisticsInfo: null,
     archiveTime: null,
     creator: 'system',
     updater: 'system',
-    updateTime: 1773754689000,
+    updateTime: 1_773_754_689_000,
   },
   {
     id: 10,
@@ -464,14 +493,14 @@ export const dataList = () => [
     costPoint: 160,
     payStatus: '1',
     payStatusName: '已支付',
-    createTime: 1773754689000,
-    payTime: 1742305735000,
+    createTime: 1_773_754_689_000,
+    payTime: 1_742_305_735_000,
     shipTime: null,
     logisticsInfo: null,
     archiveTime: null,
     creator: 'system',
     updater: 'system',
-    updateTime: 1773754689000,
+    updateTime: 1_773_754_689_000,
   },
 ];
 

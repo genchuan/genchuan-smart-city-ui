@@ -1,8 +1,8 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
-import { formatDate } from '#/utils/genchuan/formatTime';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 /** 获取支付状态Tag类型 - 使用封装的字典颜色工具 */
 export const getCardOrderPayStatusTagType = (payStatus) => {
@@ -12,7 +12,10 @@ export const getCardOrderPayStatusTagType = (payStatus) => {
 
 /** 获取开票状态Tag类型 - 使用封装的字典颜色工具 */
 export const getCardOrderInvoiceStatusTagType = (invoiceStatus) => {
-  const dict = getDictObj(DICT_TYPE.CARD_ORDER_INVOICE_STATUS, String(invoiceStatus));
+  const dict = getDictObj(
+    DICT_TYPE.CARD_ORDER_INVOICE_STATUS,
+    String(invoiceStatus),
+  );
   return getDictTagTypeFromDict(dict, 'primary');
 };
 
@@ -24,7 +27,10 @@ export const getCardOrderPayStatusLabel = (payStatus) => {
 
 /** 获取开票状态标签 */
 export const getCardOrderInvoiceStatusLabel = (invoiceStatus) => {
-  const dict = getDictObj(DICT_TYPE.CARD_ORDER_INVOICE_STATUS, String(invoiceStatus));
+  const dict = getDictObj(
+    DICT_TYPE.CARD_ORDER_INVOICE_STATUS,
+    String(invoiceStatus),
+  );
   return dict ? dict.label : invoiceStatus;
 };
 
@@ -38,11 +44,11 @@ export const dataList = () => {
       userName: '张三',
       cardId: 1,
       cardName: '日卡',
-      amount: 99.00,
+      amount: 99,
       payStatus: '1',
       payStatusName: '已支付',
-      payTime: 1743472800000,
-      activeTime: 1743472860000,
+      payTime: 1_743_472_800_000,
+      activeTime: 1_743_472_860_000,
       invoiceStatus: '0',
       invoiceStatusName: '未开票',
       archiveTime: null,
@@ -50,8 +56,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1743472800000,
-      updateTime: 1743472860000,
+      createTime: 1_743_472_800_000,
+      updateTime: 1_743_472_860_000,
     },
     {
       id: 2,
@@ -60,7 +66,7 @@ export const dataList = () => {
       userName: '李四',
       cardId: 2,
       cardName: '周卡',
-      amount: 199.00,
+      amount: 199,
       payStatus: '0',
       payStatusName: '待支付',
       payTime: null,
@@ -72,8 +78,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1743476400000,
-      updateTime: 1743476400000,
+      createTime: 1_743_476_400_000,
+      updateTime: 1_743_476_400_000,
     },
     {
       id: 3,
@@ -82,20 +88,20 @@ export const dataList = () => {
       userName: '王五',
       cardId: 3,
       cardName: '月卡',
-      amount: 399.00,
+      amount: 399,
       payStatus: '2',
       payStatusName: '已完成',
-      payTime: 1743480000000,
-      activeTime: 1743480060000,
+      payTime: 1_743_480_000_000,
+      activeTime: 1_743_480_060_000,
       invoiceStatus: '1',
       invoiceStatusName: '已开票',
-      archiveTime: 1743566400000,
+      archiveTime: 1_743_566_400_000,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1743480000000,
-      updateTime: 1743566400000,
+      createTime: 1_743_480_000_000,
+      updateTime: 1_743_566_400_000,
     },
     {
       id: 4,
@@ -104,7 +110,7 @@ export const dataList = () => {
       userName: '赵六',
       cardId: 1,
       cardName: '日卡',
-      amount: 99.00,
+      amount: 99,
       payStatus: '3',
       payStatusName: '已取消',
       payTime: null,
@@ -116,8 +122,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1743483600000,
-      updateTime: 1743483600000,
+      createTime: 1_743_483_600_000,
+      updateTime: 1_743_483_600_000,
     },
     {
       id: 5,
@@ -126,11 +132,11 @@ export const dataList = () => {
       userName: '孙七',
       cardId: 4,
       cardName: '季卡',
-      amount: 999.00,
+      amount: 999,
       payStatus: '1',
       payStatusName: '已支付',
-      payTime: 1743487200000,
-      activeTime: 1743487260000,
+      payTime: 1_743_487_200_000,
+      activeTime: 1_743_487_260_000,
       invoiceStatus: '0',
       invoiceStatusName: '未开票',
       archiveTime: null,
@@ -138,8 +144,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1743487200000,
-      updateTime: 1743487260000,
+      createTime: 1_743_487_200_000,
+      updateTime: 1_743_487_260_000,
     },
     {
       id: 6,
@@ -148,20 +154,20 @@ export const dataList = () => {
       userName: '周八',
       cardId: 5,
       cardName: '年卡',
-      amount: 2999.00,
+      amount: 2999,
       payStatus: '2',
       payStatusName: '已完成',
-      payTime: 1743490800000,
-      activeTime: 1743490860000,
+      payTime: 1_743_490_800_000,
+      activeTime: 1_743_490_860_000,
       invoiceStatus: '1',
       invoiceStatusName: '已开票',
-      archiveTime: 1743577200000,
+      archiveTime: 1_743_577_200_000,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1743490800000,
-      updateTime: 1743577200000,
+      createTime: 1_743_490_800_000,
+      updateTime: 1_743_577_200_000,
     },
     {
       id: 7,
@@ -170,11 +176,11 @@ export const dataList = () => {
       userName: '吴九',
       cardId: 2,
       cardName: '周卡',
-      amount: 199.00,
+      amount: 199,
       payStatus: '1',
       payStatusName: '已支付',
-      payTime: 1743494400000,
-      activeTime: 1743494460000,
+      payTime: 1_743_494_400_000,
+      activeTime: 1_743_494_460_000,
       invoiceStatus: '0',
       invoiceStatusName: '未开票',
       archiveTime: null,
@@ -182,8 +188,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1743494400000,
-      updateTime: 1743494460000,
+      createTime: 1_743_494_400_000,
+      updateTime: 1_743_494_460_000,
     },
     {
       id: 8,
@@ -192,7 +198,7 @@ export const dataList = () => {
       userName: '郑十',
       cardId: 3,
       cardName: '月卡',
-      amount: 399.00,
+      amount: 399,
       payStatus: '0',
       payStatusName: '待支付',
       payTime: null,
@@ -204,8 +210,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1743498000000,
-      updateTime: 1743498000000,
+      createTime: 1_743_498_000_000,
+      updateTime: 1_743_498_000_000,
     },
   ];
 };
@@ -288,15 +294,15 @@ export function useSearchFormSchema() {
         clearable: true,
       },
     },
-    {
-      fieldName: 'userId',
-      label: '用户ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入用户ID',
-        clearable: true,
-      },
-    },
+    // {
+    //   fieldName: 'userId',
+    //   label: '用户ID',
+    //   component: 'InputNumber',
+    //   componentProps: {
+    //     placeholder: '请输入用户ID',
+    //     clearable: true,
+    //   },
+    // },
     {
       fieldName: 'cardId',
       label: '卡种',
@@ -448,9 +454,24 @@ export const detailFields = [
     formatter: (value) => getCardOrderPayStatusLabel(value),
     tagType: (value) => getCardOrderPayStatusTagType(value),
   },
-  { key: 'createTime', label: '生成时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
-  { key: 'payTime', label: '支付时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
-  { key: 'activeTime', label: '激活时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
+  {
+    key: 'createTime',
+    label: '生成时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
+  {
+    key: 'payTime',
+    label: '支付时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
+  {
+    key: 'activeTime',
+    label: '激活时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
   {
     key: 'invoiceStatus',
     label: '开票状态',
@@ -458,7 +479,12 @@ export const detailFields = [
     formatter: (value) => getCardOrderInvoiceStatusLabel(value),
     tagType: (value) => getCardOrderInvoiceStatusTagType(value),
   },
-  { key: 'archiveTime', label: '归档时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
+  {
+    key: 'archiveTime',
+    label: '归档时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
   { key: 'creator', label: '创建者' },
   { key: 'updater', label: '更新者' },
 ];
