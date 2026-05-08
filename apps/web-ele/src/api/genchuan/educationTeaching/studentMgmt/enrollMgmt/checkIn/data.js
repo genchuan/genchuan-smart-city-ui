@@ -1,18 +1,83 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+// 状态映射（后端英文 → 前端中文）
+const statusMap = {
+  '待确认': 'pending_confirm',
+  '待审核': 'pending_audit',
+  '已报到': 'checked_in'
+};
+const statusReverse = {
+  'pending_confirm': '待确认',
+  'pending_audit': '待审核',
+  'checked_in': '已报到'
+};
+
+// 账号状态映射
+const accountStatusMap = {
+  '未创建': 'not_created',
+  '已创建': 'created'
+};
+const accountStatusReverse = {
+  'not_created': '未创建',
+  'created': '已创建'
+};
+
+// 通用转换函数：后端 → 前端（将英文转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
+  }
+  if (result.accountStatus && accountStatusReverse[result.accountStatus]) {
+    result.accountStatus = accountStatusReverse[result.accountStatus];
+  }
+  return result;
+}
+
+// 通用转换函数：前端 → 后端（将中文转为英文）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
+  if (result.accountStatus && accountStatusMap[result.accountStatus]) {
+    result.accountStatus = accountStatusMap[result.accountStatus];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 报到管理接口 ====================
 
 // 分页查询
 export function getCheckInPage(params) {
-  return requestClient.get('/studentmgmt/check-in/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    return { list: dataList(), total: dataList().length };
-  });
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/check-in/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败', err);
+      // 分页接口已联调成功，不再使用模拟数据，返回空列表
+      return { list: [], total: 0 };
+    });
 }
 
 // 补充信息
 export function supplyCheckIn(data) {
-  return requestClient.put('/studentmgmt/check-in/supply', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/check-in/supply', convertedData).catch(err => {
     console.warn('补充接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -36,7 +101,8 @@ export function auditCheckIn(data) {
 
 // 导出
 export function exportCheckIn(params) {
-  return requestClient.download('/studentmgmt/check-in/export-excel', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/check-in/export-excel', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
@@ -45,11 +111,11 @@ export function exportCheckIn(params) {
 // 详情
 export function getCheckInDetail(params) {
   return requestClient.get('/studentmgmt/check-in/get', { params })
+    .then(res => convertEnToZh(res))
     .catch(err => {
-      console.warn('详情接口失败，使用模拟数据', err);
-      const mockList = getMockList();
-      const detail = mockList.find(item => item.id === params.id) || mockList[0];
-      return Promise.resolve(detail);
+      console.warn('详情接口失败', err);
+      // 不再使用模拟数据，直接抛出错误让调用方处理
+      return Promise.reject(err);
     });
 }
 
@@ -72,7 +138,7 @@ export function getCheckInChart(params) {
 
 // 报到核心指标统计（卡片）
 export function getCheckInIndex(params) {
-  return requestClient.get('/studentmgmt/check-in/chart/checkinIndex', { params }).catch(err => {
+  return requestClient.get('/studentmgmt/check-in/checkinIndex', { params }).catch(err => {
     console.warn('指标接口失败，使用模拟数据', err);
     return Promise.resolve({
       totalRegisterCount: 320,
@@ -83,117 +149,3 @@ export function getCheckInIndex(params) {
     });
   });
 }
-
-// 模拟数据（原始值使用英文，通过转换函数对外提供中文）
-export const getMockList = () => {
-  return [
-    {
-      id: 1,
-      studentId: 1001,
-      studentName: '张三',
-      examScore: 498.5,
-      supplyInfo: '特长：篮球',
-      confirmTime: 1735689600000,
-      auditUser: '张老师',
-      auditTime: 1735776000000,
-      accountCreateTime: 1735862400000,
-      accountStatus: '已创建',
-      status: '已报到',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1735603200000,
-      updateTime: 1735689600000,
-    },
-    {
-      id: 2,
-      studentId: 1002,
-      studentName: '李四',
-      examScore: 587.0,
-      supplyInfo: '',
-      confirmTime: null,
-      auditUser: null,
-      auditTime: null,
-      accountCreateTime: null,
-      accountStatus: '未创建',
-      status: '待确认',
-      remark: '',
-      creator: 'teacher_li',
-      updater: 'teacher_li',
-      createTime: 1735603200000,
-      updateTime: 1735603200000,
-    },
-    {
-      id: 3,
-      studentId: 1003,
-      studentName: '王五',
-      examScore: 392.0,
-      supplyInfo: '少数民族',
-      confirmTime: 1738281600000,
-      auditUser: null,
-      auditTime: null,
-      accountCreateTime: null,
-      accountStatus: '未创建',
-      status: '待审核',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1738195200000,
-      updateTime: 1738281600000,
-    },
-    {
-      id: 4,
-      studentId: 1004,
-      studentName: '赵六',
-      examScore: null,
-      supplyInfo: '',
-      confirmTime: null,
-      auditUser: null,
-      auditTime: null,
-      accountCreateTime: null,
-      accountStatus: '未创建',
-      status: '待确认',
-      remark: '',
-      creator: 'teacher_zhang',
-      updater: 'teacher_zhang',
-      createTime: 1738195200000,
-      updateTime: 1738195200000,
-    },
-    {
-      id: 5,
-      studentId: 1005,
-      studentName: '孙七',
-      examScore: 495.0,
-      supplyInfo: '市级三好学生',
-      confirmTime: 1738886400000,
-      auditUser: '李老师',
-      auditTime: 1738972800000,
-      accountCreateTime: 1739059200000,
-      accountStatus: '已创建',
-      status: '已报到',
-      remark: '',
-      creator: 'admin',
-      updater: 'admin',
-      createTime: 1738800000000,
-      updateTime: 1738886400000,
-    },
-    {
-      id: 6,
-      studentId: 1006,
-      studentName: '周八',
-      examScore: 588.0,
-      supplyInfo: '',
-      confirmTime: null,
-      auditUser: null,
-      auditTime: null,
-      accountCreateTime: null,
-      accountStatus: '未创建',
-      status: '待确认',
-      remark: '',
-      creator: 'teacher_wang',
-      updater: 'teacher_wang',
-      createTime: 1738800000000,
-      updateTime: 1738800000000,
-    },
-  ];
-};

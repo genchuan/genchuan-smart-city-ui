@@ -2,10 +2,10 @@
 export function useFormSchema() {
   return [
     {
-      fieldName: 'studentName',
-      label: '学生姓名',
+      fieldName: 'studentId',
+      label: '学号',
       component: 'Input',
-      componentProps: { placeholder: '请输入学生姓名' },
+      componentProps: { placeholder: '请输入学号' },
       labelWidth: '100',
     },
     {
@@ -30,7 +30,7 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentName', title: '学生姓名', minWidth: 100, slots: { default: 'studentName' } },
+    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
     { field: 'examScore', title: '中考成绩', minWidth: 100 },
     { field: 'supplyInfo', title: '补充信息', minWidth: 150, slots: { default: 'supplyInfo' } },
     { field: 'confirmTime', title: '报到确认时间', minWidth: 180, slots: { default: 'confirmTime' } },
@@ -39,7 +39,6 @@ export function getColumns() {
     { field: 'accountCreateTime', title: '账号创建时间', minWidth: 180, slots: { default: 'accountCreateTime' } },
     { field: 'accountStatus', title: '账号状态', minWidth: 100, slots: { default: 'accountStatus' } },
     { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];
@@ -61,7 +60,7 @@ export function useSupplyFormSchema() {
       fieldName: 'examScore',
       label: '中考成绩',
       component: 'InputNumber',
-      componentProps: { placeholder: '请输入中考成绩', min: 0, max: 120, step: 0.5, style: 'width: 100%' },
+      componentProps: { placeholder: '请输入中考成绩', min: 0, max: 1000, step: 0.5, style: 'width: 100%' },
       labelWidth: '100',
     },
     {
@@ -69,13 +68,6 @@ export function useSupplyFormSchema() {
       label: '补充信息',
       component: 'Input',
       componentProps: { placeholder: '请输入补充信息', type: 'textarea', rows: 3 },
-      labelWidth: '100',
-    },
-    {
-      fieldName: 'remark',
-      label: '备注',
-      component: 'Input',
-      componentProps: { placeholder: '请输入备注', type: 'textarea', rows: 2 },
       labelWidth: '100',
     },
   ];

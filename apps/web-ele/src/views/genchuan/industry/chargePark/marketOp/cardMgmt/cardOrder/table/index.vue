@@ -1,8 +1,8 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { DICT_TYPE } from '@vben/constants';
 import { useVbenDrawer } from '@vben/common-ui';
+import { DICT_TYPE } from '@vben/constants';
 import { getDictObj } from '@vben/hooks';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
@@ -193,11 +193,11 @@ const filterOrderDate = ref('');
 
 // 卡种类型到cardId的映射（根据字典值）
 const typeToCardIdMap = {
-  '0': 1, // 日卡
-  '1': 2, // 周卡
-  '2': 3, // 月卡
-  '3': 4, // 季卡
-  '4': 5, // 年卡
+  0: 1, // 日卡
+  1: 2, // 周卡
+  2: 3, // 月卡
+  3: 4, // 季卡
+  4: 5, // 年卡
 };
 
 const dataObj = reactive({
@@ -231,7 +231,7 @@ const getTableData = async (pageObj) => {
       no: dataObj.searchParams.no,
       userId: dataObj.searchParams.userId,
       userName: dataObj.searchParams.userName,
-      cardId: cardId,
+      cardId,
       cardName: dataObj.searchParams.cardName,
       amountMin: dataObj.searchParams.amountMin,
       amountMax: dataObj.searchParams.amountMax,
@@ -409,6 +409,13 @@ const handleStatsFilter = (type, subType, value) => {
 
       break;
     }
+    case 'date': {
+      // 折线图节点点击 - 按日期筛选
+      filterOrderDate.value = subType;
+      ElMessage.info(`已筛选日期: ${subType}`);
+
+      break;
+    }
     case 'payStatus': {
       // 柱状图点击 - 按支付状态筛选
       filterPayStatus.value = subType;
@@ -416,13 +423,6 @@ const handleStatsFilter = (type, subType, value) => {
       const dict = getDictObj(DICT_TYPE.CARD_ORDER_PAY_STATUS, String(subType));
       const payStatusName = dict ? dict.label : subType;
       ElMessage.info(`已筛选支付状态: ${payStatusName}`);
-
-      break;
-    }
-    case 'date': {
-      // 折线图节点点击 - 按日期筛选
-      filterOrderDate.value = subType;
-      ElMessage.info(`已筛选日期: ${subType}`);
 
       break;
     }
@@ -540,7 +540,8 @@ const handleFullShow = () => {
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
             卡种类型：{{
-              getDictObj(DICT_TYPE.CARD_CONFIG_TYPE, String(filterCardType))?.label || filterCardType
+              getDictObj(DICT_TYPE.CARD_CONFIG_TYPE, String(filterCardType))
+                ?.label || filterCardType
             }}
           </ElTag>
           <!-- 统计组件-日期筛选标签 -->

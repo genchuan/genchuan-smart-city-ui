@@ -35,7 +35,15 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['cardClick', 'pieClick', 'barClick', 'lineClick', 'pieChartChange', 'barChartChange', 'lineChartChange']);
+const emit = defineEmits([
+  'cardClick',
+  'pieClick',
+  'barClick',
+  'lineClick',
+  'pieChartChange',
+  'barChartChange',
+  'lineChartChange',
+]);
 
 const pieChartRef = ref(null);
 const barChartRef = ref(null);
@@ -44,7 +52,14 @@ const pieChartInstance = ref(null);
 const barChartInstance = ref(null);
 const lineChartInstance = ref(null);
 
-const freshColors = ['#4A90E2', '#50E3C2', '#FF9F40', '#A17FE0', '#FF6B8B', '#FFD93D'];
+const freshColors = [
+  '#4A90E2',
+  '#50E3C2',
+  '#FF9F40',
+  '#A17FE0',
+  '#FF6B8B',
+  '#FFD93D',
+];
 
 // 当前选中的图表索引
 const currentPieIndex = ref(0);
@@ -140,9 +155,16 @@ const initPieChart = () => {
       formatter: '{b}: {c} ({d}%)',
     },
     color: freshColors,
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '15%',
+      top: '18%',
+      containLabel: true,
+    },
     legend: {
       orient: 'horizontal',
-      bottom: 5,
+      bottom: '3%',
       type: 'scroll',
       left: 'center',
       textStyle: {
@@ -277,8 +299,8 @@ const initBarChart = () => {
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '15%',
-      top: '20%',
+      bottom: '8%',
+      top: '18%',
       containLabel: true,
       backgroundColor: 'transparent',
     },
@@ -288,9 +310,15 @@ const initBarChart = () => {
       data: xAxisData,
       axisLabel: {
         color: '#9AA8B7',
-        fontSize: 11,
-        rotate: 30,
+        fontSize: 10,
+        rotate: 45,
         interval: 0,
+        formatter: function(value) {
+          if (value.length > 4) {
+            return value.substring(0, 4) + '...';
+          }
+          return value;
+        },
       },
       axisLine: {
         lineStyle: {
@@ -387,7 +415,13 @@ const initLineChart = () => {
   }
 
   const chartData = currentLineData.value;
-  if (!chartData || !chartData.data || !chartData.data.xAxis || chartData.data.xAxis.length === 0) return;
+  if (
+    !chartData ||
+    !chartData.data ||
+    !chartData.data.xAxis ||
+    chartData.data.xAxis.length === 0
+  )
+    return;
 
   const chartInstance = echarts.init(lineChartRef.value);
   lineChartInstance.value = chartInstance;
@@ -423,8 +457,8 @@ const initLineChart = () => {
     grid: {
       left: '3%',
       right: '4%',
-      bottom: '10%',
-      top: '20%',
+      bottom: '8%',
+      top: '18%',
       containLabel: true,
       backgroundColor: 'transparent',
     },
@@ -434,7 +468,7 @@ const initLineChart = () => {
       data: xAxisData,
       axisLabel: {
         color: '#9AA8B7',
-        fontSize: 11,
+        fontSize: 10,
         rotate: 45,
         interval: 'auto',
       },
@@ -675,8 +709,8 @@ onUnmounted(() => {
   flex-wrap: nowrap;
   width: 100%;
   height: auto;
-  padding-bottom: 0.5rem;
   min-height: 280px;
+  padding-bottom: 0.5rem;
   overflow: hidden;
 }
 
@@ -754,19 +788,24 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   flex: 1 1 0;
+  align-items: center;
   min-width: 0;
   height: 280px;
+  padding: 4px;
+  box-sizing: border-box;
 }
 
 .chart-area {
   position: relative;
   flex: 0 0 28%;
   min-width: 0;
-  height: 280px;
+  height: 272px;
+  box-sizing: border-box;
 }
 
 .line-chart-area {
   flex: 1;
+  height: 272px;
 }
 
 .chart-select-wrapper {

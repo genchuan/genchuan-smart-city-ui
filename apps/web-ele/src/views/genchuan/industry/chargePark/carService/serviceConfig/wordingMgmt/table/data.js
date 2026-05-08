@@ -17,6 +17,7 @@ export function useFormSchema() {
 /** 话术管理表格列配置（带钻取交互） */
 export function useGridColumns() {
   return [
+    { type: 'checkbox', width: 40 },
     { field: 'id', title: '话术ID', minWidth: 100, sortable: true, slots: { default: 'id' } },
     { field: 'name', title: '话术名称', minWidth: 150, sortable: true, slots: { default: 'name' } },
     { field: 'content', title: '话术内容', minWidth: 300 },

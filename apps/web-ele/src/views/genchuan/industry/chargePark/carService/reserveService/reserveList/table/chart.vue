@@ -100,6 +100,7 @@ const handleResize = () => {
 const handleCardClick = (index) => {
   const card = state.cardList[index];
   if (card.key === 'totalReserveCount') emit('refresh', { totalReserveCount: true });
+  else if (card.key === 'reserveSuccessRate') emit('refresh', { reserveSuccessRate: true });
 };
 
 onMounted(() => {
@@ -119,7 +120,7 @@ onUnmounted(() => {
 <template>
   <div class="stats-four-visualization">
     <div class="cards-section">
-      <div v-for="(card, index) in state.cardList" :key="index" class="stat-card" :style="{ borderLeftColor: card.color, cursor: card.key === 'totalReserveCount' ? 'pointer' : 'default' }" @click="card.key === 'totalReserveCount' && handleCardClick(index)">
+      <div v-for="(card, index) in state.cardList" :key="index" class="stat-card" :style="{ borderLeftColor: card.color, cursor: 'pointer' }" @click="handleCardClick(index)">
         <div class="card-header"><span class="card-title">{{ card.title }}</span><div class="card-indicator" :style="{ backgroundColor: card.color }"></div></div>
         <div class="card-body"><div class="card-value" :style="{ color: card.color }">{{ card.value }}</div></div>
       </div>
@@ -157,6 +158,6 @@ onUnmounted(() => {
 .card-body { flex:1; display: flex; align-items: center; }
 .card-value { font-size: 22px; font-weight: 700; }
 .right-section { flex:1; display: flex; gap: 16px; height: 320px; }
-.chart-box { flex:1; height: 100%; border-radius: 8px; background: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+.chart-box { flex:1; height: 100%; border-radius: 8px;   background-color: var(--el-bg-color, #fff);box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
 .chart-container { width: 100%; height: 100%; }
 </style>

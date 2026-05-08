@@ -23,6 +23,10 @@ import { UserCreditApi } from '#/api/genchuan/industry/chargePark/userMerchant/c
 import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import {
+  buildActiveFilterTags,
+  type ActiveFilterTag,
+} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildUserCreditQueryParams,
@@ -64,6 +68,48 @@ const searchParams = ref<Record<string, any>>({});
 const userDialogVisible = ref(false);
 const userProfileMap = ref<Record<number, UserProfileInfo>>({});
 const userSelectOptions = ref<UserSelectOption[]>([]);
+
+const drillFilterConfigs = {
+  creditLevel: {
+    label: '信用等级',
+    type: 'warning',
+  },
+  creditScore: {
+    label: '信用分',
+    type: 'primary',
+  },
+} as const;
+
+const searchFilterConfigs = {
+  createTime: {
+    formatter: (value: any[]) => value.join(' 至 '),
+    label: '创建时间',
+    type: 'danger',
+  },
+  creditLevel: {
+    label: '信用等级',
+    type: 'warning',
+  },
+  userId: {
+    label: '所属用户',
+    type: 'info',
+  },
+} as const;
+
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: drillFilterConfigs,
+      source: 'drill',
+      values: drillFilters.value,
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
+);
 
 const detailData = computed(() => {
   if (!detailObj.value) {
@@ -271,7 +317,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 /** 刷新表格 - 同时清除所有快捷筛选 */
 function handleRefresh() {
   drillFilters.value = {};
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 联动刷新页面 */
@@ -286,7 +332,7 @@ async function resetSearch() {
   searchParams.value = {};
   drillFilters.value = {};
   await queryFormApi.resetForm();
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 设置筛选条件 */
@@ -297,7 +343,7 @@ async function setSearchValues(values: Record<string, any>) {
   };
   drillFilters.value = {};
   await queryFormApi.setValues(searchParams.value);
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 重新计算表格布局 */
@@ -335,14 +381,14 @@ function handleOpenUser(row: UserCreditRow) {
 function handleFilterByScore(score: number) {
   drillFilters.value.creditScore =
     drillFilters.value.creditScore === score ? undefined : score;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 按信用等级钻取列表 */
 function handleFilterByLevel(level: UserCreditRow['creditLevel']) {
   drillFilters.value.creditLevel =
     drillFilters.value.creditLevel === level ? undefined : level;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 打开详情抽屉 */
@@ -381,19 +427,42 @@ async function handleRemind(row: UserCreditRow) {
 /** 打开搜索抽屉 */
 async function handleSerachShow() {
   drawerApi.open();
+  await syncQueryFormValues();
+}
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
   await queryFormApi.setValues(searchParams.value);
 }
 
 /** 取消信用分筛选 */
 function handleCancelScoreFilter() {
   drillFilters.value.creditScore = undefined;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消信用等级筛选 */
 function handleCancelLevelFilter() {
   drillFilters.value.creditLevel = undefined;
-  gridApi.query();
+  gridApi.reload();
+}
+
+/** 移除筛选标签 */
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'drill') {
+    if (tag.key === 'creditScore') {
+      handleCancelScoreFilter();
+    } else if (tag.key === 'creditLevel') {
+      handleCancelLevelFilter();
+    }
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
 }
 
 onMounted(() => {
@@ -416,22 +485,14 @@ onMounted(() => {
             "
           >
             <ElTag
-              v-if="drillFilters.creditScore"
-              type="primary"
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
               closable
               style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelScoreFilter"
+              @close="handleRemoveFilterTag(tag)"
             >
-              信用分：{{ drillFilters.creditScore }}
-            </ElTag>
-            <ElTag
-              v-if="drillFilters.creditLevel"
-              type="warning"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelLevelFilter"
-            >
-              信用等级：{{ drillFilters.creditLevel }}
+              {{ tag.label }}：{{ tag.value }}
             </ElTag>
           </div>
         </template>

@@ -394,27 +394,41 @@ const handleCancelStatusFilter = () => {
 
 /** 处理统计组件的钻取筛选 */
 const handleStatsFilter = (type, value) => {
-  if (type === 'card') {
-    // 卡片点击 - 生效配置数或累计卡种销量
-    filterStatsType.value = value;
-    // ElMessage.info(
-    //   `已筛选: ${value === 'effective' ? '生效配置' : '销量统计'}`,
-    // );
-  } else if (type === 'type') {
-    // 饼图点击 - 按卡种类型筛选
-    filterType.value = value;
-    const typeName = getCardConfigTypeLabel(value);
-    ElMessage.info(`已筛选卡种类型: ${typeName}`);
-  } else if (type === 'scope') {
-    // 柱状图点击 - 按适用范围筛选
-    filterScope.value = value;
-    const scopeName = getCardConfigScopeLabel(value);
-    ElMessage.info(`已筛选适用范围: ${scopeName}`);
-  } else if (type === 'status') {
-    // 卡片点击 - 按配置状态筛选（生效配置数）
-    filterStatus.value = value;
-    const statusName = getCardConfigStatusLabel(value);
-    ElMessage.info(`已筛选配置状态: ${statusName}`);
+  switch (type) {
+    case 'card': {
+      // 卡片点击 - 生效配置数或累计卡种销量
+      filterStatsType.value = value;
+      // ElMessage.info(
+      //   `已筛选: ${value === 'effective' ? '生效配置' : '销量统计'}`,
+      // );
+
+      break;
+    }
+    case 'scope': {
+      // 柱状图点击 - 按适用范围筛选
+      filterScope.value = value;
+      const scopeName = getCardConfigScopeLabel(value);
+      ElMessage.info(`已筛选适用范围: ${scopeName}`);
+
+      break;
+    }
+    case 'status': {
+      // 卡片点击 - 按配置状态筛选（生效配置数）
+      filterStatus.value = value;
+      const statusName = getCardConfigStatusLabel(value);
+      ElMessage.info(`已筛选配置状态: ${statusName}`);
+
+      break;
+    }
+    case 'type': {
+      // 饼图点击 - 按卡种类型筛选
+      filterType.value = value;
+      const typeName = getCardConfigTypeLabel(value);
+      ElMessage.info(`已筛选卡种类型: ${typeName}`);
+
+      break;
+    }
+    // No default
   }
   gridApi.query();
 };

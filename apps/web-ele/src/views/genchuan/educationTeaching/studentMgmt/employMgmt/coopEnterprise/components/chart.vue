@@ -32,20 +32,8 @@ const pieData = computed(() => {
   return dist.map(item => ({ name: item.name, value: item.value }));
 });
 
-// ========== 图表切换选项（柱状图×2 + 折线图） ==========
+// ========== 图表切换选项（只保留“各系部合作数量分布”和“合作趋势”） ==========
 const chartOptions = computed(() => [
-  {
-    type: 'bar',
-    title: '各系部合作企业',
-    getData: () => {
-      const deptStats = chartData.value.deptCoopCount || [];
-      return {
-        xData: deptStats.map(item => item.deptName),
-        seriesData: [{ name: '合作企业数', data: deptStats.map(item => item.count) }],
-      };
-    },
-    yName: '合作企业数',
-  },
   {
     type: 'bar',
     title: '各系部合作数量分布',
@@ -180,7 +168,7 @@ onMounted(() => {
     <div class="chart-area">
       <div class="chart-select-wrapper">
         <el-select v-model="activeChartIndex" size="small" @change="handleChartChange">
-          <el-option v-for="(opt, idx) in chartOptions" :key="idx" :label="opt.title" :value="idx" />
+          <el-option v-for="(opt, idx) in chartOptions" :key="idx" :label="opt.title" :value="idx"/>
         </el-select>
       </div>
 

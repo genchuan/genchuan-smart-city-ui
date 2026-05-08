@@ -50,7 +50,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-card-row"><div class="detail-row-left">消息内容：</div><div class="detail-row-right">{{ detailObj.content || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">发布人：</div><div class="detail-row-right">{{ detailObj.sendUser || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">发布时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.sendTime) }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">家长反馈内容：</div><div class="detail-row-right">{{ detailObj.replyContent || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">反馈内容：</div><div class="detail-row-right">{{ detailObj.replyContent || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">反馈时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.replyTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">互动率：</div><div class="detail-row-right">{{ detailObj.interactRate ? detailObj.interactRate + '%' : '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.status || '-' }}</div></div>

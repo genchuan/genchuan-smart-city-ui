@@ -35,6 +35,10 @@ import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant
 import { MerchantSendCouponApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantSendCoupon';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import {
+  buildActiveFilterTags,
+  type ActiveFilterTag,
+} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildCouponProfile,
@@ -91,6 +95,46 @@ const redemptionDialogVisible = ref(false);
 const couponSelectOptions = buildCouponSelectOptions();
 const searchParams = ref<Record<string, any>>({});
 
+function getMerchantOptionLabel(value: any) {
+  const merchantId = Number(value);
+  return (
+    merchantSelectOptions.value.find((item) => item.value === merchantId)
+      ?.label || String(value)
+  );
+}
+
+const extraFilterConfigs = {
+  sendCount: {
+    label: '发放数量',
+    type: 'primary',
+  },
+  status: {
+    label: '发券状态',
+    type: 'warning',
+  },
+} as const;
+
+const searchFilterConfigs = {
+  couponName: {
+    label: '优惠券名称',
+    type: 'info',
+  },
+  execTime: {
+    formatter: (value: any[]) => value.join(' 至 '),
+    label: '执行时间',
+    type: 'danger',
+  },
+  merchantId: {
+    formatter: getMerchantOptionLabel,
+    label: '商户名称',
+    type: 'info',
+  },
+  status: {
+    label: '发券状态',
+    type: 'warning',
+  },
+} as const;
+
 const detailData = computed<Record<string, any> | undefined>(() => {
   if (!detailObj.value) {
     return undefined;
@@ -105,6 +149,21 @@ const detailData = computed<Record<string, any> | undefined>(() => {
     useCountDisplay: `${detailObj.value.useCount} 张`,
   };
 });
+
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: extraFilterConfigs,
+      source: 'extra',
+      values: queryExtraValues.value,
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
+);
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -396,7 +455,7 @@ function clearCheckedRows() {
 /** 刷新表格 */
 function handleRefresh() {
   queryExtraValues.value = {};
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 联动刷新页面 */
@@ -414,7 +473,7 @@ async function resetSearch() {
   queryExtraValues.value = {};
   clearCheckedRows();
   await queryFormApi.resetForm();
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 设置筛选条件 */
@@ -425,8 +484,8 @@ async function setSearchValues(values: Record<string, any>) {
   };
   queryExtraValues.value = {};
   clearCheckedRows();
-  await queryFormApi.setValues(searchParams.value);
-  return gridApi.query();
+  await syncQueryFormValues();
+  return gridApi.reload();
 }
 
 /** 按发放数量筛选 */
@@ -436,7 +495,7 @@ async function handleFilterBySendCount(sendCount: number) {
       queryExtraValues.value.sendCount === sendCount ? undefined : sendCount,
   };
   clearCheckedRows();
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 重新计算表格布局 */
@@ -641,6 +700,11 @@ async function handleOpenRedemption(row: MerchantSendCouponRow) {
 /** 打开搜索抽屉 */
 async function handleSerachShow() {
   drawerApi.open();
+  await syncQueryFormValues();
+}
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
   await queryFormApi.setValues(searchParams.value);
 }
 
@@ -651,7 +715,7 @@ function handleFilterStatus(status: MerchantSendCouponRow['status']) {
     status: queryExtraValues.value.status === status ? undefined : status,
   };
   clearCheckedRows();
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消发放数量筛选 */
@@ -660,7 +724,7 @@ function handleCancelSendCountFilter() {
     ...queryExtraValues.value,
     sendCount: undefined,
   };
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消发券状态筛选 */
@@ -669,7 +733,25 @@ function handleCancelStatusFilter() {
     ...queryExtraValues.value,
     status: undefined,
   };
-  gridApi.query();
+  gridApi.reload();
+}
+
+/** 移除筛选标签 */
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'extra') {
+    if (tag.key === 'sendCount') {
+      handleCancelSendCountFilter();
+    } else if (tag.key === 'status') {
+      handleCancelStatusFilter();
+    }
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
 }
 </script>
 
@@ -688,22 +770,14 @@ function handleCancelStatusFilter() {
             "
           >
             <ElTag
-              v-if="queryExtraValues.sendCount"
-              type="primary"
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
               closable
               style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelSendCountFilter"
+              @close="handleRemoveFilterTag(tag)"
             >
-              发放数量：{{ queryExtraValues.sendCount }}
-            </ElTag>
-            <ElTag
-              v-if="queryExtraValues.status"
-              type="warning"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelStatusFilter"
-            >
-              发券状态：{{ queryExtraValues.status }}
+              {{ tag.label }}：{{ tag.value }}
             </ElTag>
           </div>
         </template>

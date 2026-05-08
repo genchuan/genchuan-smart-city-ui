@@ -359,7 +359,7 @@ export const senderOptions = [
   { label: '运营管理员', value: '2' },
 ];
 
-/** 积分抽奖搜索表单配置 - 只包含表格显示的字段 */
+/** 积分抽奖搜索表单配置 - 根据PointLotteryPageReqVO参数配置 */
 export function useSearchFormSchema() {
   return [
     {
@@ -373,26 +373,27 @@ export function useSearchFormSchema() {
     },
     {
       fieldName: 'userId',
-      label: '用户名称',
-      component: 'Select',
+      label: '用户ID',
+      component: 'InputNumber',
       componentProps: {
-        placeholder: '请选择用户',
-        options: userOptions,
+        placeholder: '请输入用户ID',
         clearable: true,
       },
     },
     {
       fieldName: 'prizeId',
-      label: '奖品名称',
+      label: '奖品',
       component: 'Select',
       componentProps: {
         placeholder: '请选择奖品',
-        options: prizeOptions,
+        options: [],
         clearable: true,
+        filterable: true,
+        remote: true,
       },
     },
     {
-      fieldName: 'lotteryTimeRange',
+      fieldName: 'lotteryTime',
       label: '抽奖时间',
       component: 'DatePicker',
       componentProps: {
@@ -404,63 +405,12 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'costPoint',
-      label: '消耗积分',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入消耗积分',
-        min: 0,
-        clearable: true,
-      },
-    },
-    {
       fieldName: 'status',
       label: '记录状态',
       component: 'Select',
       componentProps: {
         placeholder: '请选择记录状态',
         options: getDictOptions(DICT_TYPE.POINT_LOTTERY_STATUS, 'string'),
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'sendTimeRange',
-      label: '发放时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择发放时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'senderId',
-      label: '发放人',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择发放人',
-        options: senderOptions,
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'checkResult',
-      label: '核查结果',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入核查结果关键词',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'syncStatus',
-      label: '同步状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择同步状态',
-        options: getDictOptions(DICT_TYPE.POINT_LOTTERY_SYNC_STATUS, 'string'),
         clearable: true,
       },
     },

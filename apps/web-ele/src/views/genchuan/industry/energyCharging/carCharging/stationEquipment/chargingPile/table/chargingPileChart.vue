@@ -53,7 +53,6 @@ const cards = ref([
   { title: '总充电桩数', key: 'totalCount', color: '#4A90E2', statusValue: 'total' },
   { title: '运行中数量', key: 'enableCount', color: '#67C23A', statusValue: 'enable' },
   { title: '故障数量', key: 'faultCount', color: '#F56C6C', statusValue: 'fault' },
-  { title: '停用数量', key: 'disabledCount', color: '#E6A23C', statusValue: 'disabled' },
 ]);
 
 const lineChartRef = ref(null);
@@ -64,10 +63,28 @@ let barChartInstance = null;
 const fetchOverview = async () => {
   try {
     const [chartData, statusCounts] = await Promise.all([getChartData(), getStatusCount()]);
-    const { totalCount = 0, faultCount = 0 } = chartData.cardInfo || {};
-    const statusMap = new Map((statusCounts || []).map(item => [item.pileStatus, item.count]));
-    const enableCount = statusMap.get('已启用') || 0;
-    const disabledCount = statusMap.get('已停用') || 0;
+
+    // 从 cardInfo 中获取原始值（包含后端直接返回的 enableCount）
+    const {
+      totalCount = 0,
+      enableCount: chartEnableCount = 0,
+      faultCount = 0,
+      disabledCount: chartDisabledCount = 0
+    } = chartData.cardInfo || {};
+
+    // 构建 statusCounts 的映射（兼容可能的数字/字符串状态码）
+    const statusMap = new Map();
+    (statusCounts || []).forEach(item => {
+      // 根据实际返回的数据格式调整 key：可能是 '已启用' 或 1 或 '1'
+      const key = item.pileStatus !== undefined ? String(item.pileStatus) : '';
+      statusMap.set(key, item.count);
+    });
+
+    // 优先使用 statusCounts 的值，如果没有则回退到 chartData 的值
+    // 支持多种可能的 key：中文名称、数字字符串、数字
+    const enableCount = statusMap.get('已启用') ?? statusMap.get('1') ?? statusMap.get(1) ?? chartEnableCount;
+    const disabledCount = statusMap.get('已停用') ?? statusMap.get('2') ?? statusMap.get(2) ?? chartDisabledCount;
+
     state.cardInfo = {
       totalCount,
       enableCount,
@@ -75,13 +92,15 @@ const fetchOverview = async () => {
       disabledCount,
     };
 
+    // 处理运行时长趋势（将毫秒转为小时）
     state.runTimeTrend = (chartData.runTimeTrendList || []).map(item => ({
       time: item.time,
       runTime: typeof item.runTime === 'number' && item.runTime > 1000 ? item.runTime / 3600000 : item.runTime,
     }));
 
+    // 处理柱状图数据：优先使用 typeNameName（显示名称），降级使用 typeName
     state.typeBarList = (chartData.typeBarList || []).map(item => ({
-      typeName: item.typeName,
+      typeName: item.typeNameName || item.typeName,
       count: item.count,
     }));
 
@@ -223,7 +242,7 @@ const updateLineChart = () => {
       const point = state.runTimeTrend[params.dataIndex];
       if (point && point.runTime !== undefined) {
         emit('drill-down', {
-          type: 'trend',  // 修改为 trend 与外层 case 匹配
+          type: 'trend',
           data: {
             runTime: point.runTime,
             time: point.time
@@ -247,7 +266,7 @@ const updateBarChart = () => {
       const typeItem = state.typeBarList[params.dataIndex];
       if (typeItem) {
         emit('drill-down', {
-          type: 'type',  // 修改为 type 与外层 case 匹配
+          type: 'type',
           data: { typeName: typeItem.typeName },
         });
       }
@@ -309,8 +328,8 @@ defineExpose({ fetchOverview });
 }
 .cards-section {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto;
   gap: 12px;
   flex-shrink: 0;
   width: 260px;

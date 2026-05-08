@@ -69,7 +69,7 @@ async function onQuerySubmit(values: Record<string, any>) {
 
 /** 刷新表格 */
 function handleRefresh() {
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 打开搜索抽屉 */

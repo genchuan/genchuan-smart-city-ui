@@ -5,8 +5,8 @@ import { useVbenModal } from '@vben/common-ui';
 
 import { ElMessage } from 'element-plus';
 
-import { invoiceCardOrder } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardOrder';
 import { useVbenForm } from '#/adapter/form';
+import { invoiceCardOrder } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardOrder';
 
 const emit = defineEmits(['success']);
 
@@ -67,7 +67,7 @@ const [Modal, modalApi] = useVbenModal({
     const values = await formApi.getValues();
     try {
       // 简单校验邮箱格式
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const emailRegex = /^[^\s@]+@[^\s@][^\s.@]*\.[^\s@]+$/;
       if (!emailRegex.test(values.email)) {
         ElMessage.error('请输入正确的邮箱格式');
         return;
@@ -87,7 +87,8 @@ const [Modal, modalApi] = useVbenModal({
       emit('success');
     } catch (error) {
       console.error('开票失败:', error);
-      const errorMsg = error?.response?.data?.msg || error?.message || '开票失败，请稍后重试';
+      const errorMsg =
+        error?.response?.data?.msg || error?.message || '开票失败，请稍后重试';
       ElMessage.error(errorMsg);
     }
   },
@@ -112,9 +113,13 @@ defineExpose({
 
 <template>
   <Modal>
-    <div style="padding: 20px;">
-      <p style="margin-bottom: 20px;">为订单 <strong>{{ currentRow.no }}</strong> 开具发票</p>
-      <p style="margin-bottom: 20px; color: #666;">订单金额：¥{{ currentRow.amount?.toFixed(2) }}</p>
+    <div style="padding: 20px">
+      <p style="margin-bottom: 20px">
+        为订单 <strong>{{ currentRow.no }}</strong> 开具发票
+      </p>
+      <p style="margin-bottom: 20px; color: #666">
+        订单金额：¥{{ currentRow.amount?.toFixed(2) }}
+      </p>
       <Form />
     </div>
   </Modal>

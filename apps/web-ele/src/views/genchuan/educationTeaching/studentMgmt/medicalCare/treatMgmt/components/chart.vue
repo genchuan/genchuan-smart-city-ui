@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption } from 'element-plus';
+import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
@@ -10,10 +10,44 @@ import {
 } from '#/api/genchuan/educationTeaching/studentMgmt/medicalCare/treatMgmt/data.js';
 
 const loading = ref(true);
-const chartData = ref({});      // 卡片 + 折线图
-const distributionData = ref({}); // 饼图数据
+const chartData = ref({});
+const distributionData = ref({}); // 保持后端返回的原始结构
 
-// ========== 卡片数据 ==========
+// 时间范围选择器
+const timeRange = ref([]);
+
+const getDefaultTimeRange = () => {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 30);
+  return [start, end];
+};
+
+const formatDateTime = (date, isEnd = false) => {
+  if (!date) return '';
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const time = isEnd ? '23:59:59' : '00:00:00';
+  return `${year}-${month}-${day}T${time}`;
+};
+
+const getTimeRangeParam = () => {
+  if (timeRange.value && timeRange.value.length === 2) {
+    const startStr = formatDateTime(timeRange.value[0], false);
+    const endStr = formatDateTime(timeRange.value[1], true);
+    return `${startStr},${endStr}`;
+  }
+  const [defaultStart, defaultEnd] = getDefaultTimeRange();
+  return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
+};
+
+const handleDateRangeChange = () => {
+  loadData();
+};
+
+// 卡片数据
 const cardList = computed(() => {
   const total = chartData.value.totalTreatCount || 0;
   const pending = chartData.value.pendingAuditCount || 0;
@@ -31,7 +65,7 @@ const cardList = computed(() => {
   ];
 });
 
-// ========== 折线图数据（近一周就诊趋势） ==========
+// 近一周就诊趋势折线图
 const lineData = computed(() => {
   const trend = chartData.value.recentWeekTreatTrend || [];
   return {
@@ -40,65 +74,68 @@ const lineData = computed(() => {
   };
 });
 
-// ========== 饼图配置（支持切换：就诊类型分布 / 年级分布） ==========
+// 就诊类型分布饼图数据（后端字段 type → name）
+const treatTypePieData = computed(() => {
+  const data = distributionData.value.treatTypeDistribution || [];
+  return data.map(item => ({
+    name: item.type,   // 后端返回 type
+    value: item.value,
+  }));
+});
+
+// 年级分布饼图数据（后端字段 grade → name）
+const gradePieData = computed(() => {
+  const data = distributionData.value.gradeDistribution || [];
+  return data.map(item => ({
+    name: item.grade,  // 后端返回 grade
+    value: item.value,
+  }));
+});
+
+// 饼图切换选项
 const pieOptions = computed(() => [
-  {
-    title: '就诊类型分布',
-    type: 'treatType',
-    getData: () => {
-      const dist = distributionData.value.treatTypeDistribution || [];
-      return dist.map(item => ({ name: item.name, value: item.value }));
-    },
-  },
-  {
-    title: '就诊学生年级分布',
-    type: 'grade',
-    getData: () => {
-      const dist = distributionData.value.gradeDistribution || [];
-      return dist.map(item => ({ name: item.name, value: item.value }));
-    },
-  },
+  { type: 'treatType', title: '就诊类型分布', data: treatTypePieData.value },
+  { type: 'grade', title: '就诊学生年级分布', data: gradePieData.value },
 ]);
 
 const activePieIndex = ref(0);
-const currentPieData = computed(() => pieOptions.value[activePieIndex.value]?.getData() || []);
-const currentPieTitle = computed(() => pieOptions.value[activePieIndex.value]?.title || '');
+const currentPie = computed(() => pieOptions.value[activePieIndex.value] || pieOptions.value[0]);
 
 const handlePieChange = (index) => {
   activePieIndex.value = index;
 };
 
-// ========== 事件发射 ==========
 const emit = defineEmits(['cardSelect', 'pieSelect', 'lineSelect']);
 
 const handleCardClick = (cardInfo) => {
   emit('cardSelect', cardInfo.status);
 };
 
-const handlePieClick = (item) => {
-  const currentType = pieOptions.value[activePieIndex.value]?.type;
-  if (currentType === 'treatType') {
-    emit('pieSelect', { field: 'treatType', value: item.name });
-  } else if (currentType === 'grade') {
-    emit('pieSelect', { field: 'grade', value: item.name });
-  }
+const handlePieClick = (params) => {
+  emit('pieSelect', {
+    name: params.name,
+    type: currentPie.value.type,
+  });
 };
 
 const handleLineClick = (params) => {
   emit('lineSelect', { field: 'date', value: params.xValue });
 };
 
-// ========== 加载数据 ==========
+// 加载数据 - 保持原始数据结构不变
 const loadData = async () => {
   loading.value = true;
   try {
+    const timeRangeParam = getTimeRangeParam();
     const [chartRes, distRes] = await Promise.allSettled([
-      getTreatMgmtChart({}),
-      getTreatMgmtDistribution({}),
+      getTreatMgmtChart({ timeRange: timeRangeParam }),
+      getTreatMgmtDistribution({ timeRange: timeRangeParam }),
     ]);
+
     if (chartRes.status === 'fulfilled') {
       chartData.value = chartRes.value;
     } else {
+      // 模拟数据（保持与真实接口相同的字段）
       chartData.value = {
         totalTreatCount: 86,
         pendingAuditCount: 12,
@@ -117,19 +154,22 @@ const loadData = async () => {
         ],
       };
     }
+
     if (distRes.status === 'fulfilled') {
+      // 直接保存后端返回的原始数据，不做修改
       distributionData.value = distRes.value;
     } else {
+      // 模拟数据也使用 type/grade 字段，保持与真实接口一致
       distributionData.value = {
         treatTypeDistribution: [
-          { name: '门诊', value: 62 },
-          { name: '急诊', value: 18 },
-          { name: '其他', value: 6 },
+          { type: '门诊', value: 62 },
+          { type: '急诊', value: 18 },
+          { type: '其他', value: 6 },
         ],
         gradeDistribution: [
-          { name: '高一', value: 25 },
-          { name: '高二', value: 30 },
-          { name: '高三', value: 31 },
+          { grade: '高一', value: 25 },
+          { grade: '高二', value: 30 },
+          { grade: '高三', value: 31 },
         ],
       };
     }
@@ -141,6 +181,7 @@ const loadData = async () => {
 };
 
 onMounted(() => {
+  timeRange.value = getDefaultTimeRange();
   loadData();
 });
 </script>
@@ -156,21 +197,47 @@ onMounted(() => {
         @click="handleCardClick"
       />
     </div>
-    <lineChart
-      style="flex: 1.5 !important;"
-      title="近一周就诊趋势"
-      :x-data="lineData.xAxis"
-      :series-data="lineData.series"
-      y-name="就诊次数"
-      @line-click="handleLineClick"
-    />
+
+    <!-- 折线图区域（含日期选择器） -->
+    <div class="line-chart-container" style="flex: 1.5 !important; position: relative;">
+      <div class="date-range-wrapper">
+        <el-date-picker
+          v-model="timeRange"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="起始"
+          end-placeholder="结束"
+          size="small"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          :shortcuts="[
+            { text: '近7天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 7); return [start, end]; } },
+            { text: '近30天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 30); return [start, end]; } },
+            { text: '近90天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 90); return [start, end]; } }
+          ]"
+          @change="handleDateRangeChange"
+        />
+      </div>
+      <lineChart
+        title="近一周就诊趋势"
+        :x-data="lineData.xAxis"
+        :series-data="lineData.series"
+        y-name="就诊次数"
+        @line-click="handleLineClick"
+      />
+    </div>
+
     <div class="chart-area">
       <div class="chart-select-wrapper">
         <el-select v-model="activePieIndex" size="small" @change="handlePieChange">
           <el-option v-for="(opt, idx) in pieOptions" :key="idx" :label="opt.title" :value="idx" />
         </el-select>
       </div>
-      <Pie :title-text="currentPieTitle" :data="currentPieData" @pie-click="handlePieClick" />
+      <Pie
+        :title-text="currentPie.title"
+        :data="currentPie.data"
+        @pie-click="handlePieClick"
+      />
     </div>
   </div>
 </template>
@@ -196,11 +263,26 @@ onMounted(() => {
     }
   }
 
+  .line-chart-container {
+    position: relative;
+    flex: 1.5;
+    min-width: 280px;
+    margin-left: 12px;
+  }
+
+  .date-range-wrapper {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    z-index: 10;
+  }
+
   .chart-area {
     position: relative;
     flex: 1;
     min-width: 280px;
     height: 100%;
+    margin-left: 12px;
   }
 
   .chart-select-wrapper {
@@ -208,6 +290,22 @@ onMounted(() => {
     top: 8px;
     right: 10px;
     z-index: 10;
+  }
+
+  :deep(.el-date-editor) {
+    --el-date-editor-width: 240px;
+
+    .el-range__icon {
+      margin-right: 2px;
+    }
+
+    .el-range-separator {
+      padding: 0 4px;
+    }
+
+    .el-range__close-icon {
+      margin-left: 2px;
+    }
   }
 }
 </style>

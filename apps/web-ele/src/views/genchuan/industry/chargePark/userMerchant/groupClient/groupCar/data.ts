@@ -443,7 +443,7 @@ export function buildStatsData(cars: GroupCarRow[]) {
       {
         title: '绑定车辆数',
         value: bindCount,
-        desc: '点击表格字段可进行钻取筛选',
+        desc: '累计绑定车辆',
         color: '#2F80ED',
       },
       {
@@ -478,7 +478,7 @@ export function buildStatsDataFromApi(data?: Partial<GroupCarChartVO>) {
       {
         title: '绑定车辆数',
         value: data?.bindCarCount ?? 0,
-        desc: '点击表格字段可进行钻取筛选',
+        desc: '累计绑定车辆',
         color: '#2F80ED',
       },
       {

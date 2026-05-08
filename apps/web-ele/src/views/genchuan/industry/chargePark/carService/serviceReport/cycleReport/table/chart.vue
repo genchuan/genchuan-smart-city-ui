@@ -91,6 +91,12 @@ const getDefaultParams = () => {
   };
 };
 
+// 当前卡片/图表所用的窗口（与 getDefaultParams 同口径），下钻时随事件向外抛
+const currentWindow = () => {
+  const p = getDefaultParams();
+  return { startTime: p.statStartTime, endTime: p.statEndTime };
+};
+
 const fetchData = async () => {
   loading.value = true;
   try {
@@ -177,7 +183,7 @@ const initBarChart = () => {
   barChart.on('click', (params) => {
     if (params.componentType !== 'series') return;
     const dim = inferDimension(currentBar.value.name);
-    if (dim) emit('refresh', { dimension: dim, type: params.name });
+    if (dim) emit('refresh', { dimension: dim, type: params.name, ...currentWindow() });
   });
 };
 
@@ -203,7 +209,7 @@ const initPieChart = () => {
   pieChart.on('click', (params) => {
     if (params.componentType !== 'series') return;
     const dim = inferDimension(currentPie.value.name);
-    if (dim) emit('refresh', { dimension: dim, type: params.name });
+    if (dim) emit('refresh', { dimension: dim, type: params.name, ...currentWindow() });
   });
 };
 
@@ -244,7 +250,7 @@ const inferDimension = (name) => {
 
 const onCardClick = (card) => {
   if (!card.dimension) return;
-  emit('refresh', { dimension: card.dimension });
+  emit('refresh', { dimension: card.dimension, ...currentWindow() });
 };
 
 const handleResize = () => {
@@ -349,8 +355,8 @@ onUnmounted(() => {
   width: 100%;
   /* 固定高度与示例一致，移除多余 padding */
   min-height: 320px;
-  background: #fff;
   border-radius: 8px;
+  background-color: var(--el-bg-color, #fff);
 }
 .cards-section {
   display: grid;
@@ -364,7 +370,6 @@ onUnmounted(() => {
   border-radius: 8px;
   border-left: 4px solid #4a90e2;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  background: #f9fafb;
   transition: all 0.3s;
 }
 .stat-card:hover {
@@ -405,9 +410,9 @@ onUnmounted(() => {
   flex: 1;
   position: relative;
   border-radius: 8px;
-  background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   overflow: hidden;
+  background-color: var(--el-bg-color, #fff);
 }
 .chart-select-wrapper {
   position: absolute;

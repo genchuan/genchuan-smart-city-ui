@@ -16,6 +16,10 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { CreditConfigApi } from '#/api/genchuan/industry/chargePark/userMerchant/creditMgmt/creditConfig';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import {
+  buildActiveFilterTags,
+  type ActiveFilterTag,
+} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildCreditConfigQueryParams,
@@ -54,6 +58,45 @@ const drillFilters = ref({
   status: '',
 });
 const searchParams = ref<Record<string, any>>({});
+
+const drillFilterConfigs = {
+  configType: {
+    label: '配置类型',
+    type: 'success',
+  },
+  levelThreshold: {
+    label: '等级阈值',
+    type: 'primary',
+  },
+  ruleDesc: {
+    label: '加减分规则',
+    type: 'info',
+  },
+  status: {
+    label: '配置状态',
+    type: 'warning',
+  },
+} as const;
+
+const searchFilterConfigs = {
+  configType: {
+    label: '配置类型',
+    type: 'success',
+  },
+  effectTime: {
+    formatter: (value: any[]) => value.join(' 至 '),
+    label: '生效时间',
+    type: 'danger',
+  },
+  ruleDesc: {
+    label: '加减分规则',
+    type: 'info',
+  },
+  status: {
+    label: '配置状态',
+    type: 'warning',
+  },
+} as const;
 const formData = ref<CreditConfigRow>();
 const formMode = ref<'create' | 'edit'>('create');
 const formSource = ref<CreditConfigVO>();
@@ -69,6 +112,21 @@ const detailData = computed(() => {
     auditLogsSummary: formatAuditLogs(detailObj.value.auditLogs),
   };
 });
+
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: drillFilterConfigs,
+      source: 'drill',
+      values: drillFilters.value,
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
+);
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -346,7 +404,7 @@ function handleRefresh() {
     ruleDesc: '',
     status: '',
   };
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 联动刷新页面 */
@@ -366,7 +424,7 @@ async function resetSearch() {
     status: '',
   };
   await queryFormApi.resetForm();
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 设置筛选条件 */
@@ -381,8 +439,8 @@ async function setSearchValues(values: Record<string, any>) {
     ruleDesc: '',
     status: '',
   };
-  await queryFormApi.setValues(searchParams.value);
-  return gridApi.query();
+  await syncQueryFormValues();
+  return gridApi.reload();
 }
 
 /** 重新计算表格布局 */
@@ -488,6 +546,11 @@ async function handleDisable(row: CreditConfigRow) {
 /** 打开搜索抽屉 */
 async function handleSerachShow() {
   drawerApi.open();
+  await syncQueryFormValues();
+}
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
   await queryFormApi.setValues(searchParams.value);
 }
 
@@ -495,39 +558,62 @@ async function handleSerachShow() {
 function handleFilterRuleDesc(ruleDesc: string) {
   drillFilters.value.ruleDesc =
     drillFilters.value.ruleDesc === ruleDesc ? '' : ruleDesc;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 按等级阈值筛选 */
 function handleFilterLevelThreshold(levelThreshold: string) {
   drillFilters.value.levelThreshold =
     drillFilters.value.levelThreshold === levelThreshold ? '' : levelThreshold;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 按配置状态筛选 */
 function handleFilterStatus(status: CreditConfigRow['status']) {
   drillFilters.value.status =
     drillFilters.value.status === status ? '' : status;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消规则筛选 */
 function handleCancelRuleDescFilter() {
   drillFilters.value.ruleDesc = '';
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消等级阈值筛选 */
 function handleCancelLevelThresholdFilter() {
   drillFilters.value.levelThreshold = '';
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消配置状态筛选 */
 function handleCancelStatusFilter() {
   drillFilters.value.status = '';
-  gridApi.query();
+  gridApi.reload();
+}
+
+/** 移除筛选标签 */
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'drill') {
+    if (tag.key === 'ruleDesc') {
+      handleCancelRuleDescFilter();
+    } else if (tag.key === 'levelThreshold') {
+      handleCancelLevelThresholdFilter();
+    } else if (tag.key === 'status') {
+      handleCancelStatusFilter();
+    } else if (tag.key === 'configType') {
+      drillFilters.value.configType = '';
+      gridApi.reload();
+    }
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
 }
 </script>
 
@@ -546,31 +632,14 @@ function handleCancelStatusFilter() {
             "
           >
             <ElTag
-              v-if="drillFilters.ruleDesc"
-              type="info"
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
               closable
               style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelRuleDescFilter"
+              @close="handleRemoveFilterTag(tag)"
             >
-              加减分规则：{{ drillFilters.ruleDesc }}
-            </ElTag>
-            <ElTag
-              v-if="drillFilters.levelThreshold"
-              type="primary"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelLevelThresholdFilter"
-            >
-              等级阈值：{{ drillFilters.levelThreshold }}
-            </ElTag>
-            <ElTag
-              v-if="drillFilters.status"
-              type="warning"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelStatusFilter"
-            >
-              配置状态：{{ drillFilters.status }}
+              {{ tag.label }}：{{ tag.value }}
             </ElTag>
           </div>
         </template>

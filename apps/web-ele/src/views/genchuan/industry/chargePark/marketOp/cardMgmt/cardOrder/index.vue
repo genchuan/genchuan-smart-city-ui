@@ -7,6 +7,7 @@ import { getDictObj } from '@vben/hooks';
 import { ElMessage } from 'element-plus';
 
 import { getCardOrderChart } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardOrder';
+
 import CardOrderStats from './components/CardOrderStats.vue';
 import Table from './table/index.vue';
 
@@ -56,7 +57,7 @@ const fetchStatsData = async () => {
       },
       {
         title: '今日营收',
-        value: '¥' + (response.todayRevenue || 0).toFixed(2),
+        value: `¥${(response.todayRevenue || 0).toFixed(2)}`,
         color: '#50E3C2',
         type: 'todayRevenue',
       },
@@ -64,11 +65,13 @@ const fetchStatsData = async () => {
 
     // 组装柱状图数据 - 支付状态分布
     // 将支付状态代码映射为字典标签
-    statsData.value.barData = (response.payStatusCountList || []).map((item) => ({
-      payStatus: item.payStatus,
-      payStatusName: getPayStatusLabel(item.payStatus),
-      count: item.count,
-    }));
+    statsData.value.barData = (response.payStatusCountList || []).map(
+      (item) => ({
+        payStatus: item.payStatus,
+        payStatusName: getPayStatusLabel(item.payStatus),
+        count: item.count,
+      }),
+    );
 
     // 组装折线图数据 - 订单量趋势
     statsData.value.lineData = (response.trendList || []).map((item) => ({
@@ -175,7 +178,7 @@ watch(
   (newVal) => {
     console.log('statsData 变化:', newVal);
   },
-  { deep: true }
+  { deep: true },
 );
 </script>
 <template>
@@ -207,11 +210,7 @@ watch(
       </el-icon>
     </div>
     -->
-    <el-tabs
-      v-model="activeName"
-      class="common-tabs"
-      type="card"
-    >
+    <el-tabs v-model="activeName" class="common-tabs" type="card">
       <el-tab-pane
         v-for="item in tabArray"
         :key="item.label"

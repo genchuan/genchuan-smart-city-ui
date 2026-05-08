@@ -137,7 +137,9 @@ const fetchStatsData = async () => {
 // 处理卡片点击 - 钻取筛选
 const handleCardClick = async (type, value) => {
   await nextTick();
-  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  const tableInstance = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
   if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
     tableInstance.handleStatsFilter('card', type, value);
   } else {
@@ -150,7 +152,9 @@ const tableRef = ref(null);
 // 处理饼图点击 - 钻取筛选
 const handlePieClick = async (type, typeName) => {
   await nextTick();
-  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  const tableInstance = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
   if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
     tableInstance.handleStatsFilter('type', type, typeName);
   } else {
@@ -161,7 +165,9 @@ const handlePieClick = async (type, typeName) => {
 // 处理柱状图点击 - 钻取筛选
 const handleBarClick = async (scene, sceneName) => {
   await nextTick();
-  const tableInstance = Array.isArray(tableRef.value) ? tableRef.value[0] : tableRef.value;
+  const tableInstance = Array.isArray(tableRef.value)
+    ? tableRef.value[0]
+    : tableRef.value;
   if (tableInstance && typeof tableInstance.handleStatsFilter === 'function') {
     tableInstance.handleStatsFilter('scene', scene, sceneName);
   } else {

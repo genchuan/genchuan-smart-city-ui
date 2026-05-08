@@ -1,39 +1,82 @@
 import { requestClient } from '#/api/request';
 
-// ==================== 沟通管理接口 ====================
-export function getCommunicateMgmtPage(params) {
-  return requestClient.get('/studentmgmt/communicate-mgmt/page', { params }).catch(err => {
-    console.warn('分页接口失败', err);
-    // 分页接口已联调成功，不再使用模拟数据，返回空列表
-    return { list: [], total: 0 };
-  });
+// ==================== 映射表 ====================
+// 状态映射（前端中文 ↔ 后端英文）
+const statusMap = {
+  '未发布': 'unpublished',
+  '已发布': 'published'
+};
+const statusReverse = {
+  'unpublished': '未发布',
+  'published': '已发布'
+};
+
+// 通用转换函数：后端 → 前端（将英文转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
+  }
+  return result;
 }
 
-// 新增消息
+// 通用转换函数：前端 → 后端（将中文转为英文）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
+// ==================== 沟通管理接口 ====================
+export function getCommunicateMgmtPage(params) {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/communicate-mgmt/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败', err);
+      return { list: [], total: 0 };
+    });
+}
+
 export function createCommunicateMgmt(data) {
-  return requestClient.post('/studentmgmt/communicate-mgmt/create', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/communicate-mgmt/create', convertedData).catch(err => {
     console.warn('新增接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
-// 发布（批量）
 export function publishCommunicateMgmt(data) {
+  // 发布接口不需要转换 status（前端传入 ids 和 sendTime）
   return requestClient.put('/studentmgmt/communicate-mgmt/publish', data).catch(err => {
     console.warn('发布接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
-// 反馈（批量）
 export function feedbackCommunicateMgmt(data) {
+  // 反馈接口不需要转换
   return requestClient.put('/studentmgmt/communicate-mgmt/feedback', data).catch(err => {
     console.warn('反馈接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
-// 回复（单个）
 export function replyCommunicateMgmt(data) {
   return requestClient.put('/studentmgmt/communicate-mgmt/reply', data).catch(err => {
     console.warn('回复接口失败，模拟成功', err);
@@ -41,33 +84,32 @@ export function replyCommunicateMgmt(data) {
   });
 }
 
-// 编辑消息
 export function updateCommunicateMgmt(data) {
-  return requestClient.put('/studentmgmt/communicate-mgmt/update', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/communicate-mgmt/update', convertedData).catch(err => {
     console.warn('编辑接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
 }
 
-// 导出
 export function exportCommunicateMgmt(params) {
-  return requestClient.download('/studentmgmt/communicate-mgmt/export-excel', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/communicate-mgmt/export-excel', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
 }
 
-// 详情
 export function getCommunicateMgmtDetail(params) {
-  return requestClient.get('/studentmgmt/communicate-mgmt/get', { params }).catch(err => {
-    console.warn('详情接口失败', err);
-    // 不再使用模拟数据，直接抛出错误让调用方处理
-    return Promise.reject(err);
-  });
+  return requestClient.get('/studentmgmt/communicate-mgmt/get', { params })
+    .then(res => convertEnToZh(res))
+    .catch(err => {
+      console.warn('详情接口失败', err);
+      return Promise.reject(err);
+    });
 }
 
 // ==================== 图表接口 ====================
-// 家校协同互动看板（卡片 + 折线图）
 export function getCommunicateMgmtChart(params) {
   return requestClient.get('/studentmgmt/communicate-mgmt/chart', { params }).catch(err => {
     console.warn('看板接口失败，使用模拟数据', err);
@@ -90,7 +132,6 @@ export function getCommunicateMgmtChart(params) {
   });
 }
 
-// 互动核心指标统计（柱状图）
 export function getCommunicateMgmtInteractIndex(params) {
   return requestClient.get('/studentmgmt/communicate-mgmt/chart/interactIndex', { params }).catch(err => {
     console.warn('核心指标接口失败，使用模拟数据', err);

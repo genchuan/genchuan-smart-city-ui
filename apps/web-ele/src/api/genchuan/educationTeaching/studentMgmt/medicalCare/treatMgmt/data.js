@@ -178,7 +178,7 @@ export function getTreatMgmtChart(params) {
 
 export function getTreatMgmtDistribution(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.get('/studentmgmt/treat-mgmt/chart/treatDistribution', { params: convertedParams }).catch(err => {
+  return requestClient.get('/studentmgmt/treat-mgmt/treatDistribution', { params: convertedParams }).catch(err => {
     console.warn('分布统计接口失败，使用模拟数据', err);
     return Promise.resolve({
       treatTypeDistribution: [

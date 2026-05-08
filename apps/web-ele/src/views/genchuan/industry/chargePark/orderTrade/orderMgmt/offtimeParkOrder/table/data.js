@@ -11,7 +11,6 @@ export function useFormSchema() {
         min: 0,
       },
       labelWidth: 120,
-
     },
     {
       fieldName: 'orderNo',

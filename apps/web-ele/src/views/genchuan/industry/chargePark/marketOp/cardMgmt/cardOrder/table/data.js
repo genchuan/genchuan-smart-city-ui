@@ -276,7 +276,7 @@ export function useFormSchema() {
   ];
 }
 
-/** 卡种订单搜索表单配置 - 覆盖所有表格展示字段 */
+/** 卡种订单搜索表单配置 - 根据CardOrderPageReqVO参数配置 */
 export function useSearchFormSchema() {
   return [
     {
@@ -289,43 +289,24 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'userName',
-      label: '用户名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入用户名称',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'cardName',
-      label: '卡种名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入卡种名称',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'amountMin',
-      label: '订单金额最小值',
+      fieldName: 'userId',
+      label: '用户ID',
       component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入最小金额',
+        placeholder: '请输入用户ID',
         clearable: true,
-        min: 0,
-        precision: 2,
       },
     },
     {
-      fieldName: 'amountMax',
-      label: '订单金额最大值',
-      component: 'InputNumber',
+      fieldName: 'cardId',
+      label: '卡种',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入最大金额',
+        placeholder: '请选择卡种',
+        options: [],
         clearable: true,
-        min: 0,
-        precision: 2,
+        filterable: true,
+        remote: true,
       },
     },
     {
@@ -350,46 +331,10 @@ export function useSearchFormSchema() {
     },
     {
       fieldName: 'createTime',
-      label: '生成时间',
+      label: '订单时间',
       component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择生成时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'payTime',
-      label: '支付时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择支付时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'activeTime',
-      label: '激活时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择激活时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'archiveTime',
-      label: '归档时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择归档时间',
+        placeholder: '请选择订单时间',
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'timestamp',
         type: 'datetimerange',

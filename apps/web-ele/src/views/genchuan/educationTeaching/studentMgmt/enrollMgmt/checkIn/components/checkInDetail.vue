@@ -24,8 +24,8 @@ const formatTimestamp = (timestamp) => {
 };
 
 const drawerTitle = computed(() => {
-  const name = detailObj.value?.studentName ? `${detailObj.value.studentName} 报到详情` : '报到详情';
-  return title.value || name;
+  const id = detailObj.value?.studentId ? `学号 ${detailObj.value.studentId} 报到详情` : '报到详情';
+  return title.value || id;
 });
 
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
@@ -44,7 +44,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
     <div class="detail-card">
       <!-- 报到基础信息 -->
       <div class="detail-section">📋 报到基础信息</div>
-      <div class="detail-card-row"><div class="detail-row-left">学生姓名：</div><div class="detail-row-right">{{ detailObj.studentName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">学号：</div><div class="detail-row-right">{{ detailObj.studentId || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">中考成绩：</div><div class="detail-row-right">{{ detailObj.examScore || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">补充信息：</div><div class="detail-row-right">{{ detailObj.supplyInfo || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">报到确认时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.confirmTime) }}</div></div>

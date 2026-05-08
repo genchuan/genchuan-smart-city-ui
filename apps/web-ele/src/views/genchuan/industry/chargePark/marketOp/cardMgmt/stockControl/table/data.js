@@ -239,7 +239,7 @@ export function useFormSchema() {
   ];
 }
 
-/** 库存管控搜索表单配置 - 覆盖所有表格展示字段 */
+/** 库存管控搜索表单配置 - 根据StockControlPageReqVO参数配置 */
 export function useSearchFormSchema() {
   return [
     {
@@ -248,17 +248,10 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择卡种',
-        options: [
-          { label: '日卡 - 停车专用', value: 1 },
-          { label: '周卡 - 充电优惠', value: 2 },
-          { label: '月卡 - 充电通用', value: 3 },
-          { label: '季卡 - 充停通用', value: 4 },
-          { label: '年卡 - 充停通用', value: 5 },
-          { label: '日卡 - 充停通用', value: 6 },
-          { label: '周卡 - 停车专用', value: 7 },
-          { label: '月卡 - 停车专用', value: 8 },
-        ],
+        options: [],
         clearable: true,
+        filterable: true,
+        remote: true,
       },
     },
     {
@@ -278,70 +271,6 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择告警状态',
         options: getDictOptions(DICT_TYPE.STOCK_CONTROL_WARN_STATUS, 'string'),
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'currentStockMin',
-      label: '当前库存最小值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最小库存',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'currentStockMax',
-      label: '当前库存最大值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最大库存',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'syncTime',
-      label: '同步时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择同步时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'warnThresholdMin',
-      label: '预警阈值最小值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最小预警阈值',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'warnThresholdMax',
-      label: '预警阈值最大值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最大预警阈值',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'updateTime',
-      label: '更新时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择更新时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
         clearable: true,
       },
     },

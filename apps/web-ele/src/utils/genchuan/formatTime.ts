@@ -385,12 +385,11 @@ export async function delay(time) {
  * @returns {string} 格式化后的日期字符串
  */
 export function formatArrayDate(dateArray) {
-  if (!dateArray || !Array.isArray(dateArray) || dateArray.length < 3) return '--';
+  if (!dateArray || !Array.isArray(dateArray) || dateArray.length < 3)
+    return '--';
 
   const year = dateArray[0];
   const month = String(dateArray[1]).padStart(2, '0');
   const day = String(dateArray[2]).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
-
-

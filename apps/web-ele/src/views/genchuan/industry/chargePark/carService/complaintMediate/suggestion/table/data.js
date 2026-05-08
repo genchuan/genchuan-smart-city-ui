@@ -1,15 +1,22 @@
 /** 意见建议表单配置（搜索） */
 export function useFormSchema() {
   return [
-    { fieldName: 'userId', label: '用户ID', component: 'Input', componentProps: { placeholder: '请输入用户ID' }, isSearch: true },
-    { fieldName: 'status', label: '处理状态', component: 'Select', componentProps: { placeholder: '请选择', options: [{ label: '待处理', value: '待处理' }, { label: '处理中', value: '处理中' }, { label: '已完成', value: '已完成' }] }, isSearch: true },
-    { fieldName: 'submitTime', label: '提交时间', component: 'DatePicker', componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD HH:mm:ss' }, isSearch: true },
+    {
+      fieldName: 'userName',
+      label: '用户名称',
+      component: 'Input',
+      componentProps: { placeholder: '请输入用户名称', clearable: true },
+      isSearch: true,
+    },
+    { fieldName: 'status', label: '处理状态', component: 'Select', componentProps: { placeholder: '请选择', options: [{ label: '待处理', value: '待处理' }, { label: '处理中', value: '处理中' }, { label: '已完成', value: '已完成' }, { label: '已关闭', value: '已关闭' }] }, isSearch: true },
+    { fieldName: 'submitTime', label: '提交时间', component: 'DatePicker', componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD' }, isSearch: true },
   ];
 }
 
 /** 意见建议表格列配置（带钻取交互） */
 export function useGridColumns({ getUserName }) {
   return [
+    { type: 'checkbox', width: 40 },
     { field: 'id', title: '意见ID', minWidth: 100, sortable: true, slots: { default: 'id' } },
     { field: 'userId', title: '用户', minWidth: 120, sortable: true, slots: { default: 'user_name' }, formatter: ({ userId }) => getUserName(userId) },
     { field: 'content', title: '意见内容', minWidth: 250, sortable: true, slots: { default: 'content' } },

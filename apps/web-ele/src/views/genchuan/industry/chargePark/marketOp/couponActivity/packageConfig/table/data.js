@@ -293,7 +293,7 @@ export function useFormSchema() {
   ];
 }
 
-/** 券包配置搜索表单配置 - 覆盖所有表格展示字段 */
+/** 券包配置搜索表单配置 - 根据PackageConfigPageReqVO参数配置 */
 export function useSearchFormSchema() {
   return [
     {
@@ -316,37 +316,6 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'couponNames',
-      label: '包含优惠券',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入优惠券名称',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'priceMin',
-      label: '最低价格',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最低价格',
-        min: 0,
-        precision: 2,
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'priceMax',
-      label: '最高价格',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最高价格',
-        min: 0,
-        precision: 2,
-        clearable: true,
-      },
-    },
-    {
       fieldName: 'scope',
       label: '适用范围',
       component: 'Select',
@@ -363,71 +332,6 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择配置状态',
         options: getDictOptions(DICT_TYPE.PACKAGE_CONFIG_STATUS, 'string'),
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'createTime',
-      label: '创建时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择创建时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'auditorName',
-      label: '审核人',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入审核人',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'auditTime',
-      label: '审核时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择审核时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'saleCountMin',
-      label: '最低销量',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最低销量',
-        min: 0,
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'saleCountMax',
-      label: '最高销量',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最高销量',
-        min: 0,
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'effectTime',
-      label: '生效时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择生效时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
         clearable: true,
       },
     },

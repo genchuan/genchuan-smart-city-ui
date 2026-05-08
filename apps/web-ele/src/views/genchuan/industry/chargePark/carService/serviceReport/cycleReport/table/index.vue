@@ -18,7 +18,7 @@
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="生成" icon-name="Plus" @click="openCreateDrawer" />
-          <IconButton content="筛选" icon-name="search" @click="() => queryFormApi.openDrawer?.()" />
+          <IconButton content="筛选" icon-name="search" @click="openSearchDrawer" />
           <IconButton content="导出" icon-name="download" @click="handleExportList" />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
@@ -82,6 +82,7 @@
       </template>
     </Grid>
 
+    <!-- 生成报表抽屉 -->
     <CreateDrawer>
       <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-width="100px">
         <el-form-item label="统计类型" prop="statType" required>
@@ -109,30 +110,59 @@
       </el-form>
     </CreateDrawer>
 
+    <!-- 报表详情抽屉 -->
     <CycleReportDetailDrawer ref="detailDrawerRef" :detail-data="currentDetail" />
 
-    <CompareDrawer :title="compareTitle">
+    <!-- 同比/环比分析抽屉（优化后：两行居中对齐） -->
+    <CompareDrawer :title="compareTitle" @open="onCompareDrawerOpen">
       <div v-if="compareData" class="compare-chart-container">
         <div class="compare-period">
-          <el-tag type="info">当前周期：{{ compareData.current?.statWindow || '-' }}</el-tag>
-          <el-tag type="info" style="margin-left: 12px">对比周期：{{ compareData.previous?.statWindow || '-' }}</el-tag>
+          <div class="period-item">
+            <el-tag type="info" effect="plain">当前周期：{{ compareData.current?.statWindow || '-' }}</el-tag>
+          </div>
+          <div class="period-item">
+            <el-tag type="info" effect="plain">对比周期：{{ compareData.previous?.statWindow || '-' }}</el-tag>
+          </div>
         </div>
-        <div class="chart-title">比率指标对比 (%)</div>
-        <div ref="rateChartRef" class="compare-chart"></div>
-        <div class="chart-title" style="margin-top: 24px">总量指标对比</div>
-        <div ref="totalChartRef" class="compare-chart"></div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <span>📊 比率指标对比</span>
+            <span class="unit">(%)</span>
+          </div>
+          <div ref="rateChartRef" class="compare-chart"></div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-header">
+            <span>📈 总量指标对比</span>
+          </div>
+          <div ref="totalChartRef" class="compare-chart"></div>
+        </div>
       </div>
       <el-empty v-else description="暂无数据" />
     </CompareDrawer>
 
-    <DimensionDetailDrawer ref="dimensionDrawerRef" />
+    <!-- 操作人详情抽屉（复用报表详情卡片样式） -->
+    <OperatorDrawer :title="operatorDrawerTitle" @open="onOperatorDrawerOpen">
+      <div class="detail-container" style="padding:0;">
+        <div class="detail-card">
+          <div class="detail-card-row">
+            <div class="detail-row-left">账号：</div>
+            <div class="detail-row-right">{{ currentOperator.username || '-' }}</div>
+          </div>
+          <div class="detail-card-row">
+            <div class="detail-row-left">姓名：</div>
+            <div class="detail-row-right">{{ currentOperator.name || '-' }}</div>
+          </div>
+        </div>
+      </div>
+    </OperatorDrawer>
 
-    <el-dialog v-model="operatorDialogVisible" title="操作人详情" width="400px">
-      <p>账号：{{ currentOperator.username || '-' }}</p>
-      <p>姓名：{{ currentOperator.name || '-' }}</p>
-    </el-dialog>
-
-    <QueryForm.Drawer title="筛选" />
+    <!-- 筛选抽屉（仿救援服务，统计时间复用 padDateTime 逻辑） -->
+    <SearchDrawer title="筛选">
+      <QueryForm class="search-form" />
+    </SearchDrawer>
   </div>
 </template>
 
@@ -151,7 +181,6 @@ import {
   exportCycleReport,
   compareYoy,
   compareMom,
-  getDimensionDetail,
   rowExportCycleReport,
   getUserInfo,
 } from '#/api/genchuan/industry/chargePark/carService/serviceReport/cycleReport/index.js';
@@ -161,6 +190,7 @@ import CycleReportDetailDrawer from './detail.vue';
 const props = defineProps({
   secondShow: Boolean,
   arrowShow: { type: Boolean, default: false },
+  cycleType: { type: String, default: '' }, // 新增：标签页传递的周期类型
 });
 const emit = defineEmits(['arrow-change']);
 const arrowChange = () => emit('arrow-change');
@@ -176,7 +206,9 @@ const dataObj = reactive({
 const currentDetail = ref(null);
 const compareData = ref(null);
 const compareTitle = ref('增长率分析');
-const operatorDialogVisible = ref(false);
+
+// 操作人相关
+const operatorDrawerTitle = ref('操作人详情');
 const currentOperator = ref({ id: '', username: '', name: '' });
 
 const rateChartRef = ref(null);
@@ -184,9 +216,24 @@ const totalChartRef = ref(null);
 let rateChart = null;
 let totalChart = null;
 
+// ========== 日期时间补全函数（复用列表筛选逻辑） ==========
+const padDateTime = (s, isEnd) => {
+  if (!s) return s;
+  const v = String(s).trim();
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(v)) return v;
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(v)) return `${v}:${isEnd ? '59' : '00'}`;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return `${v} ${isEnd ? '23:59:59' : '00:00:00'}`;
+  return v;
+};
+
+// ========== 筛选表单抽屉（使用 useVbenForm） ==========
 const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {
+    componentProps: { class: 'w-full' },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
   handleSubmit: onSubmit,
   layout: 'horizontal',
   schema: useFormSchema(),
@@ -201,16 +248,48 @@ const [QueryForm, queryFormApi] = useVbenForm({
   },
 });
 
+// 筛选抽屉（独立抽屉，仿救援服务）
+const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  width: 500,
+  title: '筛选',
+  onCancel: () => searchDrawerApi.close(),
+});
+
+const openSearchDrawer = () => {
+  searchDrawerApi.open();
+};
+
+// 提交筛选：复用 padDateTime 处理统计时间
 async function onSubmit(values) {
-  dataObj.searchObj = { ...values };
+  let startTime = values.statStartTime;
+  let endTime = values.statEndTime;
+  if (startTime) {
+    startTime = padDateTime(startTime, false);
+  }
+  if (endTime) {
+    endTime = padDateTime(endTime, true);
+  }
+  const processedValues = {
+    ...values,
+    statStartTime: startTime,
+    statEndTime: endTime,
+  };
+  dataObj.searchObj = { ...processedValues };
   dataObj.currentPage = 1;
   gridApi.query();
+  searchDrawerApi.close();
 }
+// ========== 筛选表单结束 ==========
 
+// 获取已选筛选条件标签
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchObj;
-  if (obj.reportCycle) filters.push({ label: `报表周期：${obj.reportCycle}`, field: 'reportCycle' });
+  // 隐藏报表周期标签
+  // if (obj.reportCycle) filters.push({ label: `报表周期：${obj.reportCycle}`, field: 'reportCycle' });
   if (obj.statStartTime || obj.statEndTime) {
     const start = obj.statStartTime || '';
     const end = obj.statEndTime || '';
@@ -235,7 +314,6 @@ const handleClearField = (fieldName) => {
   dataObj.searchObj = next;
   dataObj.currentPage = 1;
   gridApi.query();
-  // Drawer 表单可能未挂载，setValues 仅做软同步，失败不影响列表刷新
   Promise.resolve(queryFormApi.setValues?.(formPatch, false)).catch(() => {});
 };
 
@@ -243,16 +321,6 @@ const filterByField = (field, value) => {
   dataObj.searchObj = { ...dataObj.searchObj, [field]: value };
   dataObj.currentPage = 1;
   gridApi.query();
-};
-
-// 把日期补成完整 datetime，后端 @DateTimeFormat("yyyy-MM-dd HH:mm:ss") 严格匹配
-const padDateTime = (s, isEnd) => {
-  if (!s) return s;
-  const v = String(s).trim();
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(v)) return v;
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(v)) return `${v}:${isEnd ? '59' : '00'}`;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return `${v} ${isEnd ? '23:59:59' : '00:00:00'}`;
-  return v;
 };
 
 const filterByStatTime = (row) => {
@@ -265,7 +333,6 @@ const filterByStatTime = (row) => {
     if (parts.length === 2) {
       [start, end] = parts;
     } else if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
-      // 单日（如日报显示成 2026-05-01）
       start = s;
       end = s;
     } else {
@@ -360,7 +427,6 @@ const createRules = {
   ],
 };
 
-// 根据统计类型自动计算时间区间
 const fmt = (d) => {
   const pad = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
@@ -368,7 +434,7 @@ const fmt = (d) => {
 const computeRange = (type) => {
   const now = new Date();
   const y = now.getFullYear();
-  const m = now.getMonth(); // 0-11
+  const m = now.getMonth();
   const d = now.getDate();
   let start, end;
   switch (type) {
@@ -377,18 +443,17 @@ const computeRange = (type) => {
       end = new Date(y, m, d, 23, 59, 59);
       break;
     case '周报': {
-      // ISO 周：周一为第一天
-      const day = now.getDay() || 7; // 周日 0 → 7
+      const day = now.getDay() || 7;
       start = new Date(y, m, d - day + 1, 0, 0, 0);
       end = new Date(y, m, d - day + 7, 23, 59, 59);
       break;
     }
     case '月报':
       start = new Date(y, m, 1, 0, 0, 0);
-      end = new Date(y, m + 1, 0, 23, 59, 59); // 下月 0 号 = 本月最后一天
+      end = new Date(y, m + 1, 0, 23, 59, 59);
       break;
     case '季报': {
-      const qStart = Math.floor(m / 3) * 3; // 0,3,6,9
+      const qStart = Math.floor(m / 3) * 3;
       start = new Date(y, qStart, 1, 0, 0, 0);
       end = new Date(y, qStart + 3, 0, 23, 59, 59);
       break;
@@ -440,7 +505,6 @@ const openCreateDrawer = () => {
 };
 
 const handleExportList = async () => {
-  // 有选中：前端导出选中行（CSV）；无选中：调后端导出全列表
   if (checkedRows.value.length > 0) {
     await ElMessageBox.confirm(`确认导出选中的 ${checkedRows.value.length} 条数据吗？`, '提示', { type: 'info' });
     await exportRowsAsXlsx(checkedRows.value);
@@ -448,13 +512,12 @@ const handleExportList = async () => {
     return;
   }
   await ElMessageBox.confirm('确认导出当前列表数据吗？', '提示', { type: 'info' });
-  const params = { ...dataObj.searchObj, pageNo: 1, pageSize: 10000 };
+  const params = { ...dataObj.searchObj, pageNo: 1, pageSize: 200 };
   const blob = await exportCycleReport(params);
   downloadFileFromBlobPart({ fileName: '周期报表列表.xlsx', source: blob });
   ElMessage.success('导出成功');
 };
 
-// 前端 XLSX 生成 + 下载（选中导出走这条路，无需后端接口改动）
 const exportRowsAsXlsx = async (rows) => {
   const XLSX = await import('xlsx');
   const cols = [
@@ -477,7 +540,6 @@ const exportRowsAsXlsx = async (rows) => {
     { field: 'monthOnMonthGrowthRate', title: '环比增长率(%)' },
     { field: 'serviceStatusRatio', title: '服务状态占比' },
   ];
-  // 行数据 → [{标题: 值, ...}]
   const data = rows.map(r => {
     const o = {};
     cols.forEach(c => { o[c.title] = r[c.field] ?? ''; });
@@ -486,7 +548,6 @@ const exportRowsAsXlsx = async (rows) => {
   const ws = XLSX.utils.json_to_sheet(data, { header: cols.map(c => c.title) });
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '周期报表');
-  // 文件名：所选行如果全是同一周期类型，用该类型；否则统称"多类型"
   const cycles = [...new Set(rows.map(r => r.reportCycle).filter(Boolean))];
   const prefix = cycles.length === 1 ? cycles[0] : `周期报表_多类型`;
   const ts = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
@@ -517,6 +578,13 @@ const [CompareDrawer, compareDrawerApi] = useVbenDrawer({
   onCancel: () => compareDrawerApi.close(),
 });
 
+const onCompareDrawerOpen = () => {
+  nextTick(() => {
+    rateChart?.resize();
+    totalChart?.resize();
+  });
+};
+
 const renderCompareCharts = () => {
   if (!compareData.value) return;
   const { current, previous } = compareData.value;
@@ -537,24 +605,30 @@ const renderCompareCharts = () => {
   ];
 
   const rateCategories = rateMetrics.map(m => m.name);
-  const currentRateData = rateMetrics.map(m => current[m.key] ?? 0);
-  const previousRateData = rateMetrics.map(m => previous[m.key] ?? 0);
+  const currentRateData = rateMetrics.map(m => Number(current[m.key]) || 0);
+  const previousRateData = rateMetrics.map(m => Number(previous[m.key]) || 0);
 
   const totalCategories = totalMetrics.map(m => m.name);
-  const currentTotalData = totalMetrics.map(m => current[m.key] ?? 0);
-  const previousTotalData = totalMetrics.map(m => previous[m.key] ?? 0);
+  const currentTotalData = totalMetrics.map(m => Number(current[m.key]) || 0);
+  const previousTotalData = totalMetrics.map(m => Number(previous[m.key]) || 0);
 
   if (rateChartRef.value) {
     if (rateChart) rateChart.dispose();
     rateChart = echarts.init(rateChartRef.value);
     rateChart.setOption({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      legend: { data: ['当前周期', '对比周期'] },
-      xAxis: { type: 'category', data: rateCategories, axisLabel: { rotate: 30 } },
-      yAxis: { type: 'value', name: '百分比 (%)' },
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: '{b}<br/>当前周期: {c0}%<br/>对比周期: {c1}%' },
+      legend: { data: ['当前周期', '对比周期'], type: 'scroll', top: 0 },
+      grid: { top: 50, bottom: 50, left: 60, right: 30, containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: rateCategories,
+        axisLabel: { rotate: 30, margin: 10, interval: 0, fontSize: 11 },
+        axisLine: { lineStyle: { color: '#aaa' } }
+      },
+      yAxis: { type: 'value', name: '百分比 (%)', nameLocation: 'middle', nameGap: 45 },
       series: [
-        { name: '当前周期', type: 'bar', data: currentRateData, itemStyle: { color: '#409EFF', borderRadius: [4,4,0,0] } },
-        { name: '对比周期', type: 'bar', data: previousRateData, itemStyle: { color: '#E6A23C', borderRadius: [4,4,0,0] } },
+        { name: '当前周期', type: 'bar', data: currentRateData, itemStyle: { color: '#409EFF', borderRadius: [4,4,0,0] }, label: { show: true, position: 'top', formatter: '{c}%' } },
+        { name: '对比周期', type: 'bar', data: previousRateData, itemStyle: { color: '#E6A23C', borderRadius: [4,4,0,0] }, label: { show: true, position: 'top', formatter: '{c}%' } },
       ],
     });
   }
@@ -563,16 +637,37 @@ const renderCompareCharts = () => {
     if (totalChart) totalChart.dispose();
     totalChart = echarts.init(totalChartRef.value);
     totalChart.setOption({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      legend: { data: ['当前周期', '对比周期'] },
-      xAxis: { type: 'category', data: totalCategories, axisLabel: { rotate: 30 } },
-      yAxis: { type: 'value', name: '数量' },
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: { type: 'shadow' },
+        formatter: (params) => {
+          let str = params[0].axisValue + '<br/>';
+          params.forEach(p => {
+            str += `${p.marker}${p.seriesName}: ${p.value.toLocaleString()}<br/>`;
+          });
+          return str;
+        }
+      },
+      legend: { data: ['当前周期', '对比周期'], type: 'scroll', top: 0 },
+      grid: { top: 50, bottom: 50, left: 70, right: 30, containLabel: true },
+      xAxis: {
+        type: 'category',
+        data: totalCategories,
+        axisLabel: { rotate: 30, margin: 10, interval: 0, fontSize: 11 },
+        axisLine: { lineStyle: { color: '#aaa' } }
+      },
+      yAxis: { type: 'value', name: '数量', nameLocation: 'middle', nameGap: 55, axisLabel: { formatter: (val) => val.toLocaleString() } },
       series: [
-        { name: '当前周期', type: 'bar', data: currentTotalData, itemStyle: { color: '#409EFF', borderRadius: [4,4,0,0] } },
-        { name: '对比周期', type: 'bar', data: previousTotalData, itemStyle: { color: '#E6A23C', borderRadius: [4,4,0,0] } },
+        { name: '当前周期', type: 'bar', data: currentTotalData, itemStyle: { color: '#409EFF', borderRadius: [4,4,0,0] }, label: { show: true, position: 'top', formatter: (p) => p.value.toLocaleString() } },
+        { name: '对比周期', type: 'bar', data: previousTotalData, itemStyle: { color: '#E6A23C', borderRadius: [4,4,0,0] }, label: { show: true, position: 'top', formatter: (p) => p.value.toLocaleString() } },
       ],
     });
   }
+
+  nextTick(() => {
+    rateChart?.resize();
+    totalChart?.resize();
+  });
 };
 
 watch(compareData, () => {
@@ -587,20 +682,23 @@ const handleCompare = async (id, type) => {
 };
 
 const dimensionDrawerRef = ref(null);
-const dimensionTitleMap = {
-  rescue: '救援明细',
-  reserve: '预约明细',
-  complaint: '投诉明细',
-  findCar: '寻车明细',
-  spacePush: '空位推送明细',
-  wording: '话术明细',
-};
 const openDimensionDetail = async (reportId, dimension) => {
-  // 复用详情抽屉，自动定位到对应维度 Tab
   const res = await getCycleReportDetail({ id: reportId });
   currentDetail.value = res;
   detailDrawerRef.value?.open(dimension);
 };
+
+// 操作人详情抽屉
+const [OperatorDrawer, operatorDrawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  width: 400,
+  title: operatorDrawerTitle,
+  onCancel: () => operatorDrawerApi.close(),
+});
+
+const onOperatorDrawerOpen = () => {};
 
 const showOperatorDetail = async (userId, userName) => {
   if (!userId) {
@@ -617,7 +715,7 @@ const showOperatorDetail = async (userId, userName) => {
   } catch {
     currentOperator.value = { id: userId, username: '', name: userName || '' };
   }
-  operatorDialogVisible.value = true;
+  operatorDrawerApi.open();
 };
 
 const handleChartDrill = async (event) => {
@@ -628,8 +726,12 @@ const handleChartDrill = async (event) => {
       return;
     }
     const latestReport = dataObj.list[0];
-    // 复用详情抽屉，定位到对应维度 Tab；若来自柱子/扇区，携带 type 做类型过滤
-    const res = await getCycleReportDetail({ id: latestReport.id });
+    // 把图表卡片当前窗口（startTime/endTime）透传给后端,
+    // 让明细按卡片同窗口实时查询,避免落入报表自身窗口外没数据
+    const params = { id: latestReport.id };
+    if (filters.startTime) params.startTime = filters.startTime;
+    if (filters.endTime) params.endTime = filters.endTime;
+    const res = await getCycleReportDetail(params);
     currentDetail.value = res || latestReport;
     detailDrawerRef.value?.open(filters.dimension, filters.type);
     return;
@@ -638,6 +740,19 @@ const handleChartDrill = async (event) => {
     ElMessage.info(`地图钻取：位置 ${filters.location}`);
   }
 };
+
+// ========== 监听外部标签页切换，更新报表周期筛选 ==========
+watch(() => props.cycleType, (newVal, oldVal) => {
+  const newSearchObj = { ...dataObj.searchObj };
+  if (newVal === '') {
+    delete newSearchObj.reportCycle;
+  } else {
+    newSearchObj.reportCycle = newVal;
+  }
+  dataObj.searchObj = newSearchObj;
+  dataObj.currentPage = 1;
+  gridApi.query();
+}, { immediate: true });
 
 onMounted(() => {
   window.addEventListener('cycle-report-chart-refresh', handleChartDrill);
@@ -651,20 +766,115 @@ onUnmounted(() => {
 
 <style scoped>
 .compare-chart-container {
-  padding: 16px;
+  padding: 20px;
+  background: #f5f7fa;
+  min-height: 500px;
 }
+
 .compare-period {
-  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+  background: #fff;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.period-item {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.period-item .el-tag {
+  width: auto;
+  max-width: 90%;
+  justify-content: center;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 1.4;
+  padding: 8px 12px;
+  font-size: 13px;
   text-align: center;
 }
-.chart-title {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 12px;
-  color: #303133;
+
+.chart-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s;
 }
+
+.chart-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.chart-header {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 16px;
+  padding-left: 8px;
+  border-left: 4px solid #409EFF;
+}
+
+.chart-header .unit {
+  font-size: 12px;
+  font-weight: normal;
+  color: #909399;
+  margin-left: 6px;
+}
+
 .compare-chart {
   width: 100%;
-  height: 350px;
+  min-height: 360px;
+  height: auto;
+}
+
+@media (max-width: 768px) {
+  .compare-chart {
+    min-height: 260px;
+  }
+}
+
+/* 以下样式复用报表详情（detail.vue）中的卡片样式，用于操作人详情 */
+.detail-container {
+  padding: 20px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.detail-card {
+  background-color: #f9fafb;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  padding: 0 16px;
+}
+.detail-card-row {
+  display: flex;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.detail-card-row:last-child {
+  border-bottom: none;
+}
+.detail-row-left {
+  width: 120px;
+  flex-shrink: 0;
+  font-weight: 500;
+  color: #606266;
+}
+.detail-row-right {
+  flex: 1;
+  color: #303133;
+  word-break: break-all;
+}
+
+/* 筛选抽屉内表单间距 */
+.search-form {
+  padding: 16px;
 }
 </style>

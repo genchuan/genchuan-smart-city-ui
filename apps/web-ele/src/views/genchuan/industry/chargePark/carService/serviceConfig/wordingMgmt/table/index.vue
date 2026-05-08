@@ -12,7 +12,6 @@
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="openCreate" />
-          <IconButton content="保存" icon-name="check" @click="handleSaveAll" />
           <IconButton content="搜索" icon-name="search" @click="handleSearchShow" />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
@@ -27,20 +26,26 @@
         <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
       </template>
       <template #name="{ row }">
-        <el-text @click="filterByName(row.name)" type="primary" style="cursor: pointer">
-          {{ row.name }}
-        </el-text>
+        <el-tooltip content="点击筛选同名称的话术记录" placement="top">
+          <el-text @click="filterByName(row.name)" type="primary" style="cursor: pointer">
+            {{ row.name }}
+          </el-text>
+        </el-tooltip>
       </template>
       <template #type="{ row }">
-        <el-tag @click="filterByType(row.type)" style="cursor: pointer">
-          {{ row.type }}
-        </el-tag>
+        <el-tooltip content="点击筛选同类型的话术记录" placement="top">
+          <el-tag @click="filterByType(row.type)" style="cursor: pointer">
+            {{ row.type }}
+          </el-tag>
+        </el-tooltip>
       </template>
       <template #status="{ row }">
-        <el-tag :type="row.status === '已生效' ? 'success' : 'info'"
-                @click="filterByStatus(row.status)" style="cursor: pointer">
-          {{ row.status }}
-        </el-tag>
+        <el-tooltip content="点击筛选同状态的话术记录" placement="top">
+          <el-tag :type="row.status === '已生效' ? 'success' : 'info'"
+                  @click="filterByStatus(row.status)" style="cursor: pointer">
+            {{ row.status }}
+          </el-tag>
+        </el-tooltip>
       </template>
 
       <template #actions="{ row }">
@@ -66,10 +71,10 @@
     <EditDrawer>
       <el-form :model="editForm" label-width="100px">
         <el-form-item label="话术名称" required>
-          <el-input v-model="editForm.name" placeholder="请输入话术名称（唯一）" />
+          <el-input v-model="editForm.name" :disabled="isEdit" placeholder="请输入话术名称（唯一）" maxlength="50" show-word-limit />
         </el-form-item>
         <el-form-item label="话术内容" required>
-          <el-input v-model="editForm.content" type="textarea" rows="4" placeholder="请输入话术内容" />
+          <el-input v-model="editForm.content" type="textarea" rows="4" placeholder="请输入话术内容" maxlength="500" show-word-limit />
         </el-form-item>
         <el-form-item label="话术类型" required>
           <el-select v-model="editForm.type" placeholder="请选择">
@@ -97,7 +102,6 @@ import {
   getWordingMgmtPage,
   createWordingMgmt,
   updateWordingMgmt,
-  saveWordingMgmt,
   enableWordingMgmt,
   disableWordingMgmt,
   getWordingMgmtDetail,
@@ -168,15 +172,14 @@ async function onSubmit(values, isReset = false) {
   else { dataObj.searchObj = { ...values }; dataObj.currentPage = 1; gridApi.query(); }
 }
 
-const handleClearField = async (fieldName) => {
-  const newSearchObj = { ...dataObj.searchObj };
-  delete newSearchObj[fieldName];
-  dataObj.searchObj = newSearchObj;
-  const currentFormValues = await QueryFormApi.getValues();
-  delete currentFormValues[fieldName];
-  await QueryFormApi.setValues(currentFormValues, false);
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchObj };
+  delete next[fieldName];
+  dataObj.searchObj = next;
   dataObj.currentPage = 1;
   gridApi.query();
+  // Drawer 表单可能未挂载，setValues 仅做软同步，失败不影响列表刷新
+  Promise.resolve(QueryFormApi.setValues?.({ [fieldName]: null }, false)).catch(() => {});
 };
 
 const activeFilters = computed(() => {
@@ -214,8 +217,11 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
     if (!editForm.name) return ElMessage.warning('请输入话术名称');
     if (!editForm.content) return ElMessage.warning('请输入话术内容');
     if (!editForm.type) return ElMessage.warning('请选择话术类型');
-    const isUnique = await checkNameUnique({ name: editForm.name, id: editForm.id || undefined });
-    if (!isUnique) return ElMessage.warning('话术名称已存在');
+    // 仅新增时校验唯一；编辑时名称为禁用项无需重复校验
+    if (!isEdit.value) {
+      const isUnique = await checkNameUnique({ name: editForm.name });
+      if (!isUnique) return ElMessage.warning('话术名称已存在');
+    }
     if (isEdit.value) {
       await updateWordingMgmt(editForm);
       ElMessage.success('编辑成功');
@@ -244,20 +250,6 @@ const openEdit = (row) => {
   editDrawerApi.open();
 };
 
-const handleSaveAll = async () => {
-  const tableData = gridApi.getTableData().tableData;
-  const items = tableData.map(row => ({
-    id: row.id || null,
-    name: row.name,
-    content: row.content,
-    type: row.type,
-  }));
-  if (items.length === 0) return ElMessage.warning('暂无数据可保存');
-  await saveWordingMgmt({ items });
-  ElMessage.success('保存成功');
-  handleRefresh();
-};
-
 const handleEnable = async (row) => {
   await enableWordingMgmt({ id: row.id });
   ElMessage.success('已生效');
@@ -278,17 +270,17 @@ const handleOpenDetail = async (row) => {
 };
 
 const filterByType = (type) => {
-  dataObj.searchObj.type = type;
+  dataObj.searchObj = { ...dataObj.searchObj, type };
   dataObj.currentPage = 1;
   gridApi.query();
 };
 const filterByStatus = (status) => {
-  dataObj.searchObj.status = status;
+  dataObj.searchObj = { ...dataObj.searchObj, status };
   dataObj.currentPage = 1;
   gridApi.query();
 };
 const filterByName = (name) => {
-  dataObj.searchObj.name = name;
+  dataObj.searchObj = { ...dataObj.searchObj, name };
   dataObj.currentPage = 1;
   gridApi.query();
 };
