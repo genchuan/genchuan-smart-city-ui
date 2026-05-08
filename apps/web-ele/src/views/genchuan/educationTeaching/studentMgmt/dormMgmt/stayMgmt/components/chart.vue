@@ -149,14 +149,6 @@ onMounted(() => {
       :data="pieData"
       @pie-click="handlePieClick"
     />
-    <Bar
-      style="flex: 1 !important;"
-      title="各班级留宿统计"
-      :x-data="barData.xData"
-      :series-data="barData.seriesData"
-      y-name="留宿人数"
-      @bar-click="handleBarClick"
-    />
   </div>
 </template>
 

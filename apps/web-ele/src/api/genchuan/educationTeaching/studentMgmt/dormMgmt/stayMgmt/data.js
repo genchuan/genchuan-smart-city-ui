@@ -5,12 +5,11 @@ import { requestClient } from '#/api/request';
 const statusMap = {
   '待确认': 'pending_confirm',
   '待审核': 'pending_audit',
-  '已通过': 'approved'
+  '已通过': 'passed'
 };
 const statusReverse = {
   'pending_confirm': '待确认',
   'pending_audit': '待审核',
-  'approved': '已通过',
   'passed': '已通过'
 };
 
@@ -128,27 +127,38 @@ export function getStudentOptions(params) {
 // ==================== 图表接口 ====================
 export function getStayMgmtChart(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.get('/studentmgmt/stay-mgmt/chart', { params: convertedParams }).catch(err => {
-    console.warn('看板接口失败，使用模拟数据', err);
-    return Promise.resolve({
-      totalStayCount: 156,
-      pendingConfirmCount: 15,
-      pendingAuditCount: 8,
-      passedCount: 133,
-      weekendTrend: [
-        { date: '2025-03-02', count: 22 },
-        { date: '2025-03-09', count: 18 },
-        { date: '2025-03-16', count: 25 },
-        { date: '2025-03-23', count: 20 },
-        { date: '2025-03-30', count: 28 },
-      ],
-      statusDistribution: [
-        { status: '待确认', count: 15 },
-        { status: '待审核', count: 8 },
-        { status: '已通过', count: 133 },
-      ],
+  return requestClient.get('/studentmgmt/stay-mgmt/chart', { params: convertedParams })
+    .then(res => {
+      // 转换 statusDistribution 中的 status 字段
+      if (res && res.statusDistribution && Array.isArray(res.statusDistribution)) {
+        res.statusDistribution = res.statusDistribution.map(item => ({
+          ...item,
+          status: statusReverse[item.status] || item.status
+        }));
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('看板接口失败，使用模拟数据', err);
+      return Promise.resolve({
+        totalStayCount: 156,
+        pendingConfirmCount: 15,
+        pendingAuditCount: 8,
+        passedCount: 133,
+        weekendTrend: [
+          { date: '2025-03-02', count: 22 },
+          { date: '2025-03-09', count: 18 },
+          { date: '2025-03-16', count: 25 },
+          { date: '2025-03-23', count: 20 },
+          { date: '2025-03-30', count: 28 },
+        ],
+        statusDistribution: [
+          { status: '待确认', count: 15 },
+          { status: '待审核', count: 8 },
+          { status: '已通过', count: 133 },
+        ],
+      });
     });
-  });
 }
 
 export function getStayMgmtCount(params) {

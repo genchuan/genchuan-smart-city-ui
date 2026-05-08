@@ -135,7 +135,7 @@ export function getClassAssignChart(params) {
 
 // 班级人数/专业分班占比统计
 export function getClassAssignDistribution(params) {
-  return requestClient.get('/studentmgmt/class-assign/chart/classDistribution', { params }).catch(err => {
+  return requestClient.get('/studentmgmt/class-assign/classDistribution', { params }).catch(err => {
     console.warn('分布统计接口失败，使用模拟数据', err);
     return Promise.resolve({
       classStudentCount: [
