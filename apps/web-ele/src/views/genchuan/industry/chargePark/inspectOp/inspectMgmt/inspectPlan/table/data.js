@@ -3,7 +3,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const INSPECT_PLAN_TYPE_DICT = DICT_TYPE.INSPECT_PLAN_TYPE;
 export const INSPECT_PLAN_CYCLE_DICT = DICT_TYPE.INSPECT_PLAN_CYCLE;
@@ -114,8 +114,7 @@ const baseTime = 1_775_011_986_000;
 export function formatPlanTime(value) {
   if (!value) return '-';
   const text = String(value);
-  const timestamp = /^\d{10}$/.test(text) ? Number(text) * 1000 : value;
-  return formatDate(timestamp) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 export function getAuditUserName(auditUserId) {

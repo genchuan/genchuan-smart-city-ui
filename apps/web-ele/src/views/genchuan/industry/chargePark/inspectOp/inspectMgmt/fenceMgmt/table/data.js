@@ -3,7 +3,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getInspectUserPage } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectUser';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const FENCE_MGMT_STATUS_DICT = DICT_TYPE.FENCE_MGMT_STATUS;
 
@@ -138,8 +138,7 @@ function normalizeTimeValue(value) {
 
 export function formatFenceTime(value) {
   if (!value) return '-';
-  const timestamp = normalizeTimeValue(value);
-  return formatDate(timestamp) || String(value);
+  return formatLocalDateTime(value) || String(value);
 }
 
 export function getUserName(userId) {

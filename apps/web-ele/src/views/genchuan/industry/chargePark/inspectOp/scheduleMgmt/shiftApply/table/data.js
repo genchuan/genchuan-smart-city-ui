@@ -3,7 +3,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const SHIFT_APPLY_STATUS_DICT = DICT_TYPE.SHIFT_APPLY_STATUS;
 
@@ -62,8 +62,7 @@ export function formatShiftApplyTime(value) {
   if (!value) return '-';
   if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return value;
   const text = String(value);
-  const timestamp = /^\d{10}$/.test(text) ? Number(text) * 1000 : value;
-  return formatDate(timestamp) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 export function getUserName(userId) {

@@ -5,7 +5,7 @@ import { getInspectReportChart } from '#/api/genchuan/industry/chargePark/inspec
 import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 import { getMockChartData } from './data';
 
@@ -62,7 +62,7 @@ function normalizeTrendData(trendData) {
     } else if (/^\d{13}$/.test(timeText)) {
       timestamp = Number(timeText);
     }
-    const time = timestamp ? formatDate(timestamp, 'YYYY-MM-DD') : timeText;
+    const time = timestamp ? formatLocalDateTime(timestamp, 'YYYY-MM-DD') : timeText;
     const reportCount = Number(item.reportCount ?? item.count ?? 0);
 
     trendMap.set(time, (trendMap.get(time) || 0) + reportCount);

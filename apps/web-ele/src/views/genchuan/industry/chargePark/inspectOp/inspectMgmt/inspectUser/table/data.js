@@ -3,7 +3,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const INSPECT_USER_STATUS_DICT = DICT_TYPE.INSPECT_USER_STATUS;
 export const INSPECT_USER_ONLINE_STATUS_DICT =
@@ -99,8 +99,7 @@ function normalizeTimeValue(value) {
 
 export function formatUserTime(value) {
   if (!value) return '-';
-  const timestamp = normalizeTimeValue(value);
-  return formatDate(timestamp) || String(value);
+  return formatLocalDateTime(value) || String(value);
 }
 
 export function maskPhone(phone) {

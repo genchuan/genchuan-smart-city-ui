@@ -1,4 +1,4 @@
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 // import { getRangePickerDefaultProps } from '#/utils';
 
 export const reportCycleOptions = [
@@ -184,13 +184,7 @@ function resolvePeriod(index, cycle) {
 export function formatReportTime(value) {
   if (!value) return '-';
   const text = String(value);
-  if (/^\d{10}$/.test(text)) {
-    return formatDate(Number(text) * 1000) || text;
-  }
-  if (/^\d{13}$/.test(text)) {
-    return formatDate(Number(text)) || text;
-  }
-  return formatDate(value) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 export function formatRate(value) {
@@ -203,7 +197,7 @@ export function formatRate(value) {
 
 export function formatStatPeriod(start, end) {
   if (!start || !end) return '-';
-  return `${formatDate(start)} 至 ${formatDate(end)}`;
+  return `${formatLocalDateTime(start)} 至 ${formatLocalDateTime(end)}`;
 }
 
 export function getStationName(stationId) {
