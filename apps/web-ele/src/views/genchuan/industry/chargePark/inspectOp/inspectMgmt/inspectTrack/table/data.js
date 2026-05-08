@@ -514,26 +514,26 @@ export function useSearchFormSchema() {
         options: areaOptions,
       },
     },
-    {
-      fieldName: 'status',
-      label: '轨迹状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择轨迹状态',
-        clearable: true,
-        options: trackStatusOptions,
-      },
-    },
-    {
-      fieldName: 'syncStatus',
-      label: '同步状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择同步状态',
-        clearable: true,
-        options: syncStatusOptions,
-      },
-    },
+    // {
+    //   fieldName: 'status',
+    //   label: '轨迹状态',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择轨迹状态',
+    //     clearable: true,
+    //     options: trackStatusOptions,
+    //   },
+    // },
+    // {
+    //   fieldName: 'syncStatus',
+    //   label: '同步状态',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择同步状态',
+    //     clearable: true,
+    //     options: syncStatusOptions,
+    //   },
+    // },
     {
       fieldName: 'trackTime',
       label: '轨迹时间',

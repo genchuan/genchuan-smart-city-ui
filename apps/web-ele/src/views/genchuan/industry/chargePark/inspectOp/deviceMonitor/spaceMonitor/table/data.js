@@ -223,7 +223,7 @@ export function normalizeSpaceMonitorRow(row) {
       `P-${spaceId || row.id}`,
     stationId,
     stationName:
-      row.stationName || row.station_name || getStationName(stationId),
+      row.stationName || row.station_name,
     regionName: row.regionName || row.region_name || '-',
     monitorTime,
     monitorTimeStr: formatMonitorTime(monitorTime),
