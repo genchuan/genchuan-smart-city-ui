@@ -19,14 +19,18 @@ const drawerTitle = computed(
 );
 
 const [DrawerComponent, drawerApi] = useVbenDrawer({
-  width: '62%',
+  appendToMain: true,
+  footer: false,
   mask: false,
   modal: false,
+  closeOnClickModal: false,
+  closeOnPressEscape: true,
   position: 'right',
-  appendToMain: true,
   title: drawerTitle,
   showCancelButton: false,
   showConfirmButton: false,
+  /** 详情无内嵌表格，宽度略小于 75vw；与营销报表抽屉一致无遮罩、不超出视区 */
+  class: 'cycle-report-detail-drawer-panel w-[min(62vw,960px)]',
 });
 
 function displayMetric(field) {
@@ -55,7 +59,7 @@ defineExpose({ close, open });
 
 <template>
   <DrawerComponent>
-    <div class="cycle-report-detail-drawer">
+    <div class="cycle-report-detail-drawer drawer-body-bounded">
       <!-- <div class="drawer-actions">
         <el-button type="primary" @click="handleExport">导出</el-button>
         <el-button @click="close">关闭</el-button>
@@ -149,6 +153,13 @@ defineExpose({ close, open });
 </template>
 
 <style scoped>
+.drawer-body-bounded {
+  box-sizing: border-box;
+  max-height: calc(100vh - 56px - 24px);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .cycle-report-detail-drawer {
   display: flex;
   flex-direction: column;

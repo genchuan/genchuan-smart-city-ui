@@ -11,6 +11,12 @@ export const reportCycleOptions = [
   { label: '自定义报表', value: '自定义报表' },
 ];
 
+/** 报表页签（含「全部」），与营销运营报表周期 tab 一致 */
+export const reportCycleTabs = [
+  { label: '全部', value: '' },
+  ...reportCycleOptions.map((item) => ({ label: item.label, value: item.value })),
+];
+
 export const reportTypeOptions = [
   { label: '自动', value: '自动' },
   { label: '自定义', value: '自定义' },

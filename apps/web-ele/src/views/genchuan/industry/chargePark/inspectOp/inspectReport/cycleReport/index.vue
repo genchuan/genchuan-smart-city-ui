@@ -1,24 +1,28 @@
 <script setup>
-import { shallowRef } from 'vue';
+import { computed, ref, shallowRef } from 'vue';
 
 import Chart from './table/chart.vue';
 import Table from './table/index.vue';
+import { reportCycleTabs } from './table/data';
 
 import '#/genchuan-components/page/index.scss';
 
-const activeName = shallowRef('周期报表');
+const activeName = ref(reportCycleTabs[0].label);
 const secondShow = shallowRef(false);
 const chartFilter = shallowRef(null);
-const showStats = shallowRef(false);
+const showStats = shallowRef(true);
 
-const tabArray = shallowRef([
-  {
-    label: '周期报表',
+const tabArray = ref(
+  reportCycleTabs.map((tab) => ({
+    label: tab.label,
+    value: tab.value,
     components: Table,
     showSecondary: true,
     secondShow: false,
-  },
-]);
+  })),
+);
+
+const showStatsValue = computed(() => showStats.value);
 
 function changeArrowStatus() {
   secondShow.value = !secondShow.value;
@@ -85,6 +89,7 @@ function handleTrendFilter(time) {
       <el-tab-pane
         v-for="item in tabArray"
         :key="item.label"
+        lazy
         :name="item.label"
       >
         <template #label>
@@ -95,9 +100,10 @@ function handleTrendFilter(time) {
         <component
           :is="item.components"
           :key="item.label"
+          :active-report-cycle="item.value"
           :chart-filter="chartFilter"
           :second-show="item.secondShow"
-          :show-stats="showStats"
+          :show-stats="showStatsValue"
           :toggle-stats="toggleStats"
         />
       </el-tab-pane>
