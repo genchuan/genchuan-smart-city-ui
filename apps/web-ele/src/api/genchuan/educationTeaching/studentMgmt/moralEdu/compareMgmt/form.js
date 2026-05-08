@@ -43,16 +43,16 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'className', title: '班级', minWidth: 180, slots: { default: 'className' } },
-    { field: 'cycle', title: '评比周期', minWidth: 100 },
-    { field: 'totalScore', title: '总得分', minWidth: 100 },
-    { field: 'rankNo', title: '排名', minWidth: 80 },
-    { field: 'awardName', title: '授予称号', minWidth: 120 },
-    { field: 'awardTime', title: '授予时间', minWidth: 180, slots: { default: 'awardTime' } },
-    { field: 'scoreUser', title: '打分人', minWidth: 100 },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'className', title: '班级', minWidth: 180, sortable: true, slots: { default: 'className' } },
+    { field: 'cycle', title: '评比周期', minWidth: 100, sortable: true, },
+    { field: 'totalScore', title: '总得分', minWidth: 100, sortable: true, },
+    { field: 'rankNo', title: '排名', minWidth: 80, sortable: true, },
+    { field: 'awardName', title: '授予称号', minWidth: 120, sortable: true, },
+    { field: 'awardTime', title: '授予时间', minWidth: 180, sortable: true, slots: { default: 'awardTime' } },
+    { field: 'scoreUser', title: '打分人', minWidth: 100, sortable: true, },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

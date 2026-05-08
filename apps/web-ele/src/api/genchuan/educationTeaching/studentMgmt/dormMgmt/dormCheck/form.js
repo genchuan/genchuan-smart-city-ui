@@ -57,17 +57,17 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
-    { field: 'checkTime', title: '考勤时间', minWidth: 180, slots: { default: 'checkTime' } },
-    { field: 'checkStatus', title: '考勤状态', minWidth: 100, slots: { default: 'checkStatus' } },
-    { field: 'abnormalType', title: '异常类型', minWidth: 100, slots: { default: 'abnormalType' } },
-    { field: 'repairTime', title: '补卡时间', minWidth: 180, slots: { default: 'repairTime' } },
-    { field: 'repairUser', title: '补卡人', minWidth: 100 },
-    { field: 'pushTime', title: '推送时间', minWidth: 180, slots: { default: 'pushTime' } },
-    { field: 'inRate', title: '在寝率(%)', minWidth: 100 },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'studentId', title: '学号', minWidth: 100, sortable: true, slots: { default: 'studentId' } },
+    { field: 'checkTime', title: '考勤时间', minWidth: 180, sortable: true, slots: { default: 'checkTime' } },
+    { field: 'checkStatus', title: '考勤状态', minWidth: 100, sortable: true, slots: { default: 'checkStatus' } },
+    { field: 'abnormalType', title: '异常类型', minWidth: 100, sortable: true, slots: { default: 'abnormalType' } },
+    { field: 'repairTime', title: '补卡时间', minWidth: 180, sortable: true, slots: { default: 'repairTime' } },
+    { field: 'repairUser', title: '补卡人', minWidth: 100, sortable: true, },
+    { field: 'pushTime', title: '推送时间', minWidth: 180, sortable: true, slots: { default: 'pushTime' } },
+    { field: 'inRate', title: '在寝率(%)', minWidth: 100, sortable: true, },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

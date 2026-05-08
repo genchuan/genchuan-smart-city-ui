@@ -1,124 +1,119 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import Indicator from '#/genchuan-components/stats/indicator.vue';
-import Bar from '#/genchuan-components/stats/bar.vue';
-import {
-  getMoralReportChart,
-  getMoralReportScoreRank,
-} from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/moralReport/data.js';
+import { ref, onMounted } from 'vue';
+import { getMoralReportChart } from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/moralReport/data.js';
+import Bar from '#/genchuan-components/stats/barClick.vue';
 
-const loading = ref(true);
-const chartData = ref({});
-const rankData = ref([]);
+const emit = defineEmits(['rankBarClick', 'campusBarClick']);
 
-// 卡片数据（6个）
-const cardList = computed(() => {
-  const total = chartData.value.totalMoralCount || 0;
-  const avg = chartData.value.avgScore || 0;
-  const max = chartData.value.maxScore || 0;
-  const min = chartData.value.minScore || 0;
-  const good = chartData.value.goodPersonCount || 0;
-  const civilized = chartData.value.civilizedBehaviorCount || 0;
-  return [
-    { title: '总德育评比记录数', value: total, color: '#409EFF', status: 'total' },
-    { title: '平均德育得分', value: avg, color: '#67C23A', suffix: '分', status: 'avg' },
-    { title: '最高德育得分', value: max, color: '#E6A23C', suffix: '分', status: 'max' },
-    { title: '最低德育得分', value: min, color: '#F56C6C', suffix: '分', status: 'min' },
-    { title: '好人好事记录数', value: good, color: '#909399', status: 'good' },
-    { title: '文明行为记录数', value: civilized, color: '#909399', status: 'civilized' },
-  ];
+const loading = ref(false);
+
+// 班级德育得分排名数据
+const rankBarData = ref({
+  xAxis: [],      // 班级名称列表
+  series: [],     // 得分列表
 });
 
-// 柱状图数据（班级德育得分排名）
-const barData = computed(() => {
-  return {
-    xData: rankData.value.map(item => item.className),
-    seriesData: [{ name: '德育得分', data: rankData.value.map(item => item.score) }],
-  };
+// 各校区文明班级数量统计数据
+const campusBarData = ref({
+  xAxis: [],      // 校区名称列表
+  series: [],     // 文明班级数量列表
 });
 
-// 加载数据
-const loadData = async () => {
+const fetchChartData = async () => {
   loading.value = true;
   try {
-    const [chartRes, rankRes] = await Promise.allSettled([
-      getMoralReportChart({ timeScale: '月', statStartTime: '2026-01-01 00:00:00', statEndTime: '2026-01-31 23:59:59' }),
-      getMoralReportScoreRank({ timeScale: '月', statStartTime: '2026-01-01 00:00:00', statEndTime: '2026-01-31 23:59:59' }),
-    ]);
-
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
+    // 实际参数应从父组件或当前筛选条件获取
+    const params = {
+      reportPeriod: '月报',
+      statisticalPeriod: '2026-04-01 至 2026-04-30',
+      campus: '丰泽校区',
+    };
+    const response = await getMoralReportChart(params);
+    const data = response?.data || response;
+    if (data) {
+      // 班级德育得分排名
+      if (data.classRankData) {
+        rankBarData.value.xAxis = data.classRankData.className || [];
+        rankBarData.value.series = [{ name: '德育总分', data: data.classRankData.totalScore || [] }];
+      } else {
+        useMockData();
+      }
+      // 各校区文明班级数量
+      if (data.campusCivilizedData) {
+        campusBarData.value.xAxis = data.campusCivilizedData.campus || [];
+        campusBarData.value.series = [{ name: '文明班级数量', data: data.campusCivilizedData.count || [] }];
+      } else {
+        useMockData();
+      }
     } else {
-      chartData.value = {
-        totalMoralCount: 110,
-        avgScore: 90.2,
-        maxScore: 99.0,
-        minScore: 70.0,
-        goodPersonCount: 45,
-        civilizedBehaviorCount: 65,
-      };
-    }
-
-    if (rankRes.status === 'fulfilled') {
-      rankData.value = rankRes.value;
-    } else {
-      rankData.value = [
-        { className: '高一(1)班', score: 95.5, rank: 1 },
-        { className: '高一(3)班', score: 93.2, rank: 2 },
-        { className: '高一(2)班', score: 90.8, rank: 3 },
-      ];
+      useMockData();
     }
   } catch (error) {
-    console.error('加载图表数据失败', error);
+    console.error('获取图表数据失败:', error);
+    useMockData();
   } finally {
     loading.value = false;
   }
 };
 
+const useMockData = () => {
+  rankBarData.value = {
+    xAxis: ['计算机2301班', '软件2301班', '大数据2401班', '人工智能2401班'],
+    series: [{ name: '德育总分', data: [99.0, 98.0, 96.5, 95.0] }],
+  };
+  campusBarData.value = {
+    xAxis: ['丰泽校区', '洛江校区', '鲤城校区'],
+    series: [{ name: '文明班级数量', data: [20, 15, 12] }],
+  };
+};
+
+// 柱状图点击事件
+const handleRankBarClick = (params) => {
+  // params 格式取决于 barClick 组件，通常包含 xAxis 值（班级名称）
+  emit('rankBarClick', { className: params.xAxis, value: params.value });
+};
+
+const handleCampusBarClick = (params) => {
+  emit('campusBarClick', { campus: params.xAxis, value: params.value });
+};
+
+const refreshData = () => fetchChartData();
+
+defineExpose({ refreshData });
+
 onMounted(() => {
-  loadData();
+  fetchChartData();
 });
 </script>
 
 <template>
-  <div v-loading="loading" class="chart-box">
-    <div class="box-left-m">
-      <Indicator
-        class="left-card"
-        v-for="item in cardList"
-        :key="item.title"
-        v-bind="item"
-      />
-    </div>
+  <div v-loading="loading" class="moral-chart-box">
     <Bar
-      style="flex: 1.5 !important;"
+      style="flex: 2 !important;"
       title="班级德育得分排名"
-      :x-data="barData.xData"
-      :series-data="barData.seriesData"
-      y-name="德育得分"
+      :x-data="rankBarData.xAxis"
+      :series-data="rankBarData.series"
+      y-name="德育总分"
+      @click-point="handleRankBarClick"
+    />
+    <Bar
+      style="flex: 1 !important;"
+      title="各校区文明班级数量统计"
+      :x-data="campusBarData.xAxis"
+      :series-data="campusBarData.series"
+      y-name="文明班级数量"
+      @click-point="handleCampusBarClick"
     />
   </div>
 </template>
 
 <style scoped lang="scss">
-.chart-box {
-  padding-bottom: 0.5rem;
+.moral-chart-box {
   display: flex;
   flex-wrap: wrap;
-  padding-left: 15px;
-  padding-right: 15px;
-  width: 100% !important;
-
-  .box-left-m {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr);
-    min-width: 360px;
-    max-width: 400px;
-    margin-top: 10px !important;
-
-    .left-card {
-      height: 150px !important;
-    }
-  }
+  gap: 16px;
+  padding: 0 15px;
+  margin-bottom: 20px;
+  width: 100%;
 }
 </style>

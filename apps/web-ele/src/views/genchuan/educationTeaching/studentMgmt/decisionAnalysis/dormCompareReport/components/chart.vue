@@ -1,124 +1,118 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import Indicator from '#/genchuan-components/stats/indicator.vue';
-import Bar from '#/genchuan-components/stats/bar.vue';
-import {
-  getDormCompareReportChart,
-  getDormCompareReportScoreRank,
-} from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/dormCompareReport/data.js';
+import { ref, onMounted } from 'vue';
+import { getDormCompareReportChart } from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/dormCompareReport/data.js';
+import Bar from '#/genchuan-components/stats/barClick.vue';
 
-const loading = ref(true);
-const chartData = ref({});
-const rankData = ref([]);
+const emit = defineEmits(['dormRankBarClick', 'buildingBarClick']);
 
-// 卡片数据（6个）
-const cardList = computed(() => {
-  const total = chartData.value.totalCompareCount || 0;
-  const avg = chartData.value.avgScore || 0;
-  const max = chartData.value.maxScore || 0;
-  const min = chartData.value.minScore || 0;
-  const civilized = chartData.value.civilizedDormCount || 0;
-  const normal = chartData.value.normalDormCount || 0;
-  return [
-    { title: '总宿舍评比记录数', value: total, color: '#409EFF', status: 'total' },
-    { title: '平均宿舍评比得分', value: avg, color: '#67C23A', suffix: '分', status: 'avg' },
-    { title: '最高宿舍评比得分', value: max, color: '#E6A23C', suffix: '分', status: 'max' },
-    { title: '最低宿舍评比得分', value: min, color: '#F56C6C', suffix: '分', status: 'min' },
-    { title: '文明宿舍数量', value: civilized, color: '#909399', status: 'civilized' },
-    { title: '普通宿舍数量', value: normal, color: '#909399', status: 'normal' },
-  ];
+const loading = ref(false);
+
+// 宿舍得分排名数据
+const dormRankBarData = ref({
+  xAxis: [],      // 宿舍号列表
+  series: [],     // 得分列表
 });
 
-// 柱状图数据（宿舍得分排名）
-const barData = computed(() => {
-  return {
-    xData: rankData.value.map(item => item.dormNum),
-    seriesData: [{ name: '评比得分', data: rankData.value.map(item => item.score) }],
-  };
+// 各楼栋文明宿舍数量统计数据
+const buildingBarData = ref({
+  xAxis: [],      // 楼栋名称列表
+  series: [],     // 文明宿舍数量列表
 });
 
-// 加载数据
-const loadData = async () => {
+const fetchChartData = async () => {
   loading.value = true;
   try {
-    const [chartRes, rankRes] = await Promise.allSettled([
-      getDormCompareReportChart({ timeScale: '月', statStartTime: '2026-01-01 00:00:00', statEndTime: '2026-01-31 23:59:59' }),
-      getDormCompareReportScoreRank({ timeScale: '月', statStartTime: '2026-01-01 00:00:00', statEndTime: '2026-01-31 23:59:59' }),
-    ]);
-
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
+    // 实际参数应从父组件或当前筛选条件获取
+    const params = {
+      reportPeriod: '月报',
+      statisticalPeriod: '2026-04-01 至 2026-04-30',
+      campus: '丰泽校区',
+    };
+    const response = await getDormCompareReportChart(params);
+    const data = response?.data || response;
+    if (data) {
+      // 宿舍得分排名
+      if (data.dormRankData) {
+        dormRankBarData.value.xAxis = data.dormRankData.dormNo || [];
+        dormRankBarData.value.series = [{ name: '评比总分', data: data.dormRankData.totalScore || [] }];
+      } else {
+        useMockData();
+      }
+      // 各楼栋文明宿舍数量
+      if (data.buildingCivilizedData) {
+        buildingBarData.value.xAxis = data.buildingCivilizedData.buildingName || [];
+        buildingBarData.value.series = [{ name: '文明宿舍数量', data: data.buildingCivilizedData.count || [] }];
+      } else {
+        useMockData();
+      }
     } else {
-      chartData.value = {
-        totalCompareCount: 30,
-        avgScore: 89.6,
-        maxScore: 98.5,
-        minScore: 72.0,
-        civilizedDormCount: 8,
-        normalDormCount: 22,
-      };
-    }
-
-    if (rankRes.status === 'fulfilled') {
-      rankData.value = rankRes.value;
-    } else {
-      rankData.value = [
-        { dormNum: '1号楼101', score: 98.5, rank: 1 },
-        { dormNum: '2号楼202', score: 96.2, rank: 2 },
-        { dormNum: '1号楼102', score: 94.8, rank: 3 },
-      ];
+      useMockData();
     }
   } catch (error) {
-    console.error('加载图表数据失败', error);
+    console.error('获取图表数据失败:', error);
+    useMockData();
   } finally {
     loading.value = false;
   }
 };
 
+const useMockData = () => {
+  dormRankBarData.value = {
+    xAxis: ['101', '102', '103', '104'],
+    series: [{ name: '评比总分', data: [99.0, 98.0, 96.5, 95.0] }],
+  };
+  buildingBarData.value = {
+    xAxis: ['1号楼', '2号楼', '3号楼'],
+    series: [{ name: '文明宿舍数量', data: [15, 12, 8] }],
+  };
+};
+
+// 柱状图点击事件
+const handleDormRankBarClick = (params) => {
+  emit('dormRankBarClick', { dormNo: params.xAxis, value: params.value });
+};
+
+const handleBuildingBarClick = (params) => {
+  emit('buildingBarClick', { buildingName: params.xAxis, value: params.value });
+};
+
+const refreshData = () => fetchChartData();
+
+defineExpose({ refreshData });
+
 onMounted(() => {
-  loadData();
+  fetchChartData();
 });
 </script>
 
 <template>
-  <div v-loading="loading" class="chart-box">
-    <div class="box-left-m">
-      <Indicator
-        class="left-card"
-        v-for="item in cardList"
-        :key="item.title"
-        v-bind="item"
-      />
-    </div>
+  <div v-loading="loading" class="dorm-chart-box">
     <Bar
-      style="flex: 1.5 !important;"
+      style="flex: 2 !important;"
       title="宿舍得分排名"
-      :x-data="barData.xData"
-      :series-data="barData.seriesData"
-      y-name="评比得分"
+      :x-data="dormRankBarData.xAxis"
+      :series-data="dormRankBarData.series"
+      y-name="评比总分"
+      @click-point="handleDormRankBarClick"
+    />
+    <Bar
+      style="flex: 1 !important;"
+      title="各楼栋文明宿舍数量统计"
+      :x-data="buildingBarData.xAxis"
+      :series-data="buildingBarData.series"
+      y-name="文明宿舍数量"
+      @click-point="handleBuildingBarClick"
     />
   </div>
 </template>
 
 <style scoped lang="scss">
-.chart-box {
-  padding-bottom: 0.5rem;
+.dorm-chart-box {
   display: flex;
   flex-wrap: wrap;
-  padding-left: 15px;
-  padding-right: 15px;
-  width: 100% !important;
-
-  .box-left-m {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr);
-    min-width: 360px;
-    max-width: 400px;
-    margin-top: 10px !important;
-
-    .left-card {
-      height: 150px !important;
-    }
-  }
+  gap: 16px;
+  padding: 0 15px;
+  margin-bottom: 20px;
+  width: 100%;
 }
 </style>

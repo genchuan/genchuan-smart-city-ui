@@ -37,14 +37,14 @@ export function getColumns() {
 
   const columns = [
     // { field: 'className', title: '班级名称', minWidth: 150, slots: { default: 'className' } },
-    { field: 'ruleContent', title: '分班规则', minWidth: 340, slots: { default: 'ruleContent' } },
-    { field: 'studentNum', title: '分班学生数', minWidth: 120 },
-    { field: 'assignTime', title: '分班时间', minWidth: 180, slots: { default: 'assignTime' } },
-    { field: 'confirmUser', title: '确认人', minWidth: 120 },
-    { field: 'confirmTime', title: '确认时间', minWidth: 180, slots: { default: 'confirmTime' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'ruleContent', title: '分班规则', minWidth: 340, sortable: true, slots: { default: 'ruleContent' } },
+    { field: 'studentNum', title: '分班学生数', minWidth: 120, sortable: true, },
+    { field: 'assignTime', title: '分班时间', minWidth: 180, sortable: true, slots: { default: 'assignTime' } },
+    { field: 'confirmUser', title: '确认人', minWidth: 120, sortable: true, },
+    { field: 'confirmTime', title: '确认时间', minWidth: 180, sortable: true, slots: { default: 'confirmTime' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

@@ -30,18 +30,18 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
-    { field: 'leaveTime', title: '离校时间', minWidth: 180, slots: { default: 'leaveTime' } },
-    { field: 'leaveAddress', title: '离校去处', minWidth: 150 },
-    { field: 'parentConfirmTime', title: '家长确认时间', minWidth: 180, slots: { default: 'parentConfirmTime' } },
-    { field: 'handleUser', title: '办理人', minWidth: 100 },
-    { field: 'handleTime', title: '办理时间', minWidth: 180, slots: { default: 'handleTime' } },
-    { field: 'checkoutTime', title: '退宿时间', minWidth: 180, slots: { default: 'checkoutTime' } },
-    { field: 'checkoutStatus', title: '退宿状态', minWidth: 100 },
-    { field: 'finishRate', title: '办理完成率(%)', minWidth: 120 },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'studentId', title: '学号', minWidth: 100, sortable: true, slots: { default: 'studentId' } },
+    { field: 'leaveTime', title: '离校时间', minWidth: 180, sortable: true, slots: { default: 'leaveTime' } },
+    { field: 'leaveAddress', title: '离校去处', minWidth: 150, sortable: true, },
+    { field: 'parentConfirmTime', title: '家长确认时间', minWidth: 180, sortable: true, slots: { default: 'parentConfirmTime' } },
+    { field: 'handleUser', title: '办理人', minWidth: 100, sortable: true, },
+    { field: 'handleTime', title: '办理时间', minWidth: 180, sortable: true, slots: { default: 'handleTime' } },
+    { field: 'checkoutTime', title: '退宿时间', minWidth: 180, sortable: true, slots: { default: 'checkoutTime' } },
+    { field: 'checkoutStatus', title: '退宿状态', minWidth: 100, sortable: true, },
+    { field: 'finishRate', title: '办理完成率(%)', minWidth: 120, sortable: true, },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

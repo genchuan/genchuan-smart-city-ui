@@ -36,16 +36,16 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
-    { field: 'dormNum', title: '宿舍号', minWidth: 120, slots: { default: 'dormNum' } },
-    { field: 'bedId', title: '床位号', minWidth: 100 },
-    { field: 'ruleContent', title: '分配规则', minWidth: 150 },
-    { field: 'assignTime', title: '分配时间', minWidth: 180, slots: { default: 'assignTime' } },
-    { field: 'adjustTime', title: '调整时间', minWidth: 180, slots: { default: 'adjustTime' } },
-    { field: 'finishRate', title: '分配完成率', minWidth: 120, slots: { default: 'finishRate' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'studentId', title: '学号', minWidth: 100, sortable: true, slots: { default: 'studentId' } },
+    { field: 'dormNum', title: '宿舍号', minWidth: 120, sortable: true, slots: { default: 'dormNum' } },
+    { field: 'bedId', title: '床位号', minWidth: 100, sortable: true, },
+    { field: 'ruleContent', title: '分配规则', minWidth: 150, sortable: true, },
+    { field: 'assignTime', title: '分配时间', minWidth: 180, sortable: true, slots: { default: 'assignTime' } },
+    { field: 'adjustTime', title: '调整时间', minWidth: 180, sortable: true, slots: { default: 'adjustTime' } },
+    { field: 'finishRate', title: '分配完成率', minWidth: 120, sortable: true, slots: { default: 'finishRate' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

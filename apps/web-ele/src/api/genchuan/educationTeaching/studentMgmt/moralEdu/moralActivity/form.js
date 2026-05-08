@@ -54,16 +54,16 @@ export function useFormSchema() {
 export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
   const columns = [
-    { field: 'activityName', title: '活动名称', minWidth: 180, slots: { default: 'activityName' } },
-    { field: 'activityType', title: '活动类型', minWidth: 100, slots: { default: 'activityType' } },
-    { field: 'hostDept', title: '主办部门', minWidth: 120, slots: { default: 'hostDept' } },
-    { field: 'startTime', title: '开始时间', minWidth: 180, slots: { default: 'startTime' } },
-    { field: 'endTime', title: '结束时间', minWidth: 180, slots: { default: 'endTime' } },
-    { field: 'joinNum', title: '参与人数', minWidth: 100 },
-    { field: 'publishTime', title: '发布时间', minWidth: 180, slots: { default: 'publishTime' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'activityName', title: '活动名称', minWidth: 180, sortable: true, slots: { default: 'activityName' } },
+    { field: 'activityType', title: '活动类型', minWidth: 100, sortable: true, slots: { default: 'activityType' } },
+    { field: 'hostDept', title: '主办部门', minWidth: 120, sortable: true, slots: { default: 'hostDept' } },
+    { field: 'startTime', title: '开始时间', minWidth: 180, sortable: true, slots: { default: 'startTime' } },
+    { field: 'endTime', title: '结束时间', minWidth: 180, sortable: true, slots: { default: 'endTime' } },
+    { field: 'joinNum', title: '参与人数', minWidth: 100, sortable: true, },
+    { field: 'publishTime', title: '发布时间', minWidth: 180, sortable: true, slots: { default: 'publishTime' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
   const allColumns = [...baseColumns, ...columns];
   allColumns.push({

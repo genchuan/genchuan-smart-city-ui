@@ -52,18 +52,18 @@ export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentNo', title: '学号', minWidth: 130 },
-    { field: 'name', title: '姓名', minWidth: 100, slots: { default: 'name' } },
-    { field: 'educationLevel', title: '学历层次', minWidth: 100 },
-    { field: 'studyForm', title: '学习形式', minWidth: 100 },
-    { field: 'major', title: '专业', minWidth: 150, slots: { default: 'major' } },
-    { field: 'className', title: '班级', minWidth: 150, slots: { default: 'className' } },
-    { field: 'studentType', title: '学生类型', minWidth: 100 },
-    { field: 'status', title: '学籍状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'phone', title: '联系电话', minWidth: 130 },
-    { field: 'parentPhone', title: '家长联系电话', minWidth: 150 },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'studentNo', title: '学号', minWidth: 130, sortable: true, },
+    { field: 'name', title: '姓名', minWidth: 100, sortable: true, slots: { default: 'name' } },
+    { field: 'educationLevel', title: '学历层次', minWidth: 100, sortable: true, },
+    { field: 'studyForm', title: '学习形式', minWidth: 100, sortable: true, },
+    { field: 'major', title: '专业', minWidth: 150, sortable: true, slots: { default: 'major' } },
+    { field: 'className', title: '班级', minWidth: 150, sortable: true, slots: { default: 'className' } },
+    { field: 'studentType', title: '学生类型', minWidth: 100, sortable: true, },
+    { field: 'status', title: '学籍状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'phone', title: '联系电话', minWidth: 130, sortable: true, },
+    { field: 'parentPhone', title: '家长联系电话', minWidth: 150, sortable: true, },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];
