@@ -46,7 +46,6 @@ const fetchStatsData = async () => {
   try {
     // 调用API获取统计数据
     const response = await getCycleReportChart({ tenantId: 1 });
-    console.log('getCycleReportChart response:', response);
 
     // 处理响应数据 - 支持两种格式：直接返回data或嵌套在response.data中
     const data = response?.data || response;
@@ -635,7 +634,7 @@ const handleCardClick = async (cardType) => {
 const handlePieClick = async (drillInfo) => {
   console.log('饼图钻取:', drillInfo);
 
-  // 打开钻取明细弹窗
+  // 打开钻取明细弹窗（仅打开弹窗，不触发表格筛选）
   if (drillDownDialogRef.value) {
     drillDownDialogRef.value.open({
       drillType: drillInfo.type,
@@ -643,13 +642,6 @@ const handlePieClick = async (drillInfo) => {
       drillName: drillInfo.name,
       reportCycle: activeName.value,
     });
-  }
-
-  // 同时调用表格筛选
-  await nextTick();
-  const currentTable = getCurrentTableRef();
-  if (currentTable) {
-    currentTable.handleStatsFilter('pie', drillInfo.value);
   }
 };
 
@@ -657,30 +649,24 @@ const handlePieClick = async (drillInfo) => {
 const handleBarClick = async (drillInfo) => {
   console.log('柱状图钻取:', drillInfo);
 
-  // 打开钻取明细弹窗
+  // 打开钻取明细弹窗（仅打开弹窗，不触发表格筛选）
   if (drillDownDialogRef.value) {
     drillDownDialogRef.value.open({
       drillType: drillInfo.type,
       drillValue: drillInfo.value,
       drillName: drillInfo.name,
       reportCycle: activeName.value,
+      // 如果有 categoryId（兑换类目场景），也一起传递
+      ...(drillInfo.categoryId ? { categoryId: drillInfo.categoryId } : {}),
     });
   }
-
-  // 同时调用表格筛选
-  await nextTick();
-  const currentTable = getCurrentTableRef();
-  if (currentTable) {
-    currentTable.handleStatsFilter('bar', drillInfo.value);
-  }
-
 };
 
 // 处理折线图点击 - 打开钻取弹窗
 const handleLineClick = async (drillInfo) => {
   console.log('折线图钻取:', drillInfo);
 
-  // 打开钻取明细弹窗
+  // 打开钻取明细弹窗（仅打开弹窗，不触发表格筛选）
   if (drillDownDialogRef.value) {
     drillDownDialogRef.value.open({
       drillType: drillInfo.type,
@@ -689,14 +675,6 @@ const handleLineClick = async (drillInfo) => {
       reportCycle: activeName.value,
     });
   }
-
-  // 同时调用表格筛选
-  await nextTick();
-  const currentTable = getCurrentTableRef();
-  if (currentTable) {
-    currentTable.handleStatsFilter('line', drillInfo.value);
-  }
-
 };
 
 const changeArrowStatus = () => {

@@ -395,7 +395,6 @@ export const textObj = {
 
 /** 详情抽屉字段配置 - 使用与表格相同的字典颜色逻辑 */
 export const detailFields = [
-  { key: 'id', label: '奖品ID' },
   { key: 'name', label: '奖品名称' },
   {
     key: 'type',

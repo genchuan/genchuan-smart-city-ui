@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, nextTick, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
@@ -16,7 +16,9 @@ import {
   exportCardOrder,
   getCardOrderPage,
 } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardOrder';
+import { getCardConfigDetail } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardConfig';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { exportToExcel } from '#/utils/excel.js';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -68,11 +70,97 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const detailDrawerRef = ref(null);
+const cardConfigDetailDrawerRef = ref(null);
 const payDialogRef = ref(null);
 const activeDialogRef = ref(null);
 const invoiceDialogRef = ref(null);
 const cancelDialogRef = ref(null);
 const formData = ref();
+const cardConfigDetailData = ref({});
+const cardConfigDetailTitle = ref('卡种详情');
+
+// 卡种详情字段配置 - 不包含xxid字段
+const cardConfigDetailFields = [
+  { key: 'name', label: '卡种名称' },
+  {
+    key: 'type',
+    label: '卡种类型',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.CARD_CONFIG_TYPE, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => {
+      const dict = getDictObj(DICT_TYPE.CARD_CONFIG_TYPE, String(value));
+      return getDictTagTypeFromDict(dict, 'primary');
+    },
+  },
+  {
+    key: 'scope',
+    label: '适用范围',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.CARD_CONFIG_SCOPE, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => {
+      const dict = getDictObj(DICT_TYPE.CARD_CONFIG_SCOPE, String(value));
+      return getDictTagTypeFromDict(dict, 'primary');
+    },
+  },
+  {
+    key: 'price',
+    label: '价格',
+    formatter: (value) => `¥${Number(value).toFixed(2)}`,
+  },
+  {
+    key: 'status',
+    label: '配置状态',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.CARD_CONFIG_STATUS, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => {
+      const dict = getDictObj(DICT_TYPE.CARD_CONFIG_STATUS, String(value));
+      return getDictTagTypeFromDict(dict, 'primary');
+    },
+  },
+  { key: 'validDays', label: '有效期天数' },
+  { key: 'saleCount', label: '销量' },
+  {
+    key: 'effectTime',
+    label: '生效时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
+  { key: 'description', label: '卡种描述' },
+  {
+    key: 'auditorName',
+    label: '审核人',
+    formatter: (value) => value || '-',
+  },
+  {
+    key: 'auditTime',
+    label: '审核时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
+  { key: 'creator', label: '创建者' },
+  { key: 'updater', label: '更新者' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
+];
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -466,11 +554,36 @@ const handleOpenUserDetail = (row) => {
   // TODO: 实现用户详情弹窗
 };
 
-/** 打开卡种详情弹窗 */
-const handleOpenCardDetail = (row) => {
-  ElMessage.info(`查看卡种详情: ${row.cardName}`);
-  // TODO: 实现卡种详情弹窗
-};
+/** 打开卡种详情弹窗 - 查看单个卡种详情 */
+async function handleOpenCardDetail(row) {
+  if (!row.cardId) {
+    ElMessage.warning('卡种ID不存在');
+    return;
+  }
+
+  try {
+    const cardConfigDetail = await getCardConfigDetail({ id: row.cardId });
+    if (cardConfigDetail && cardConfigDetail.id) {
+      // 设置数据和标题
+      cardConfigDetailData.value = cardConfigDetail;
+      cardConfigDetailTitle.value = `${cardConfigDetail.name || '卡种'}详情`;
+
+      // 使用nextTick确保DOM更新后再打开抽屉
+      await nextTick();
+      if (cardConfigDetailDrawerRef.value) {
+        cardConfigDetailDrawerRef.value.open();
+      } else {
+        console.error('卡种详情抽屉组件未找到');
+        ElMessage.error('打开详情失败，请重试');
+      }
+    } else {
+      ElMessage.error('获取卡种详情失败');
+    }
+  } catch (error) {
+    console.error('获取卡种详情失败:', error);
+    ElMessage.error('获取卡种详情失败');
+  }
+}
 
 const handleSerachShow = () => {
   drawerApi.open();
@@ -492,6 +605,13 @@ const handleFullShow = () => {
       :title="`${dataObj.detailObj.no || '卡种订单'}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
+    />
+    <!--   卡种详情抽屉 - 展示单个卡种详情-->
+    <DetailDrawer
+      ref="cardConfigDetailDrawerRef"
+      :title="cardConfigDetailTitle"
+      :data="cardConfigDetailData"
+      :fields="cardConfigDetailFields"
     />
     <!--   支付确认弹窗-->
     <PayConfirmDialog ref="payDialogRef" @success="handleRefresh" />
