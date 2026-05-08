@@ -50,6 +50,14 @@ export const checkStatusOptions = getDictOptions(
   'string',
 );
 
+/** 按盘点状态字典 label 取 value，供图表卡片筛选 */
+export function getCheckStatusOptionValue(label) {
+  const opt = checkStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 const MOCK_CHECK_TYPE_VALUES = ['定期', '临时'];
 const MOCK_CHECK_STATUS_VALUES = ['待盘点', '盘点中', '已完成'];
 

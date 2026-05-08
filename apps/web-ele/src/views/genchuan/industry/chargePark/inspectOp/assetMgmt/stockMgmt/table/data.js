@@ -38,6 +38,14 @@ export const stockStatusOptions = getDictOptions(
   'string',
 );
 
+/** 按资产库存状态字典 label 取 value，供图表卡片筛选 */
+export function getAssetStockStatusOptionValue(label) {
+  const opt = stockStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 export const assetOptions = [
   { label: '车位监测摄像头', type: '监测设备', value: 1 },
   { label: '直流快充终端', type: '充电设备', value: 2 },

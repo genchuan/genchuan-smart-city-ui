@@ -39,6 +39,14 @@ export const stockStatusOptions = getDictOptions(
   'string',
 );
 
+/** 按备件库存状态字典 label 取 value，供图表卡片筛选 */
+export function getSpareStockStatusOptionValue(label) {
+  const opt = stockStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 export const spareOptions = [
   { label: '充电枪密封圈', type: '充电备件', value: 1 },
   { label: '摄像头电源', type: '监测备件', value: 2 },

@@ -50,6 +50,14 @@ export const assetStatusOptions = getDictOptions(
   'string',
 );
 
+/** 按资产状态字典 label 取 value，供图表卡片筛选 */
+export function getAssetInfoStatusOptionValue(label) {
+  const opt = assetStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 const MOCK_ASSET_TYPE_VALUES = ['监测设备', '充电设备', '巡检工具'];
 const MOCK_ASSET_STATUS_VALUES = ['正常', '禁用', '报废'];
 

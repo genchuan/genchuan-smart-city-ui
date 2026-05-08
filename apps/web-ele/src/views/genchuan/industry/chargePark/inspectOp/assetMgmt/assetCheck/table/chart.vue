@@ -5,7 +5,7 @@ import { getAssetCheckChart } from '#/api/genchuan/industry/chargePark/inspectOp
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData } from './data';
+import { getCheckStatusOptionValue, getMockChartData } from './data';
 
 const emit = defineEmits(['statusFilter', 'trendFilter']);
 
@@ -22,7 +22,7 @@ const state = reactive({
       title: '盘点完成率',
       value: '0%',
       desc: '已完成盘点',
-      status: '已完成',
+      status: getCheckStatusOptionValue('已完成'),
       color: '#27ae60',
     },
   ],
