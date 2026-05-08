@@ -230,7 +230,7 @@ const getPieOption = (chartData) => {
         type: 'pie',
         radius: ['35%', '55%'],
         center: ['50%', '52%'],
-        avoidLabelOverlap: true,
+        avoidLabelOverlap: true,yua
         minShowLabelAngle: 5,
         label: {
           show: true,

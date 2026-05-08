@@ -21,26 +21,46 @@ let lineChartInstance = null;
 // 获取订单图表数据
 const fetchOrderChartData = async () => {
   try {
-    const res = await getTempParkOrderChart();
-    state.cardList[0].value = res.cardData?.todayOrderCount || 0;
-    state.cardList[1].value = res.cardData?.todayRevenue || 0;
-    state.cardList[2].value = res.cardData?.payRate || 0;
-    // 如果trendData为空，使用假数据
-    state.trendData = res.trendData && res.trendData.length > 0 ? res.trendData : [
-      { date: '2025-04-01', count: 8 },
-      { date: '2025-04-02', count: 10 },
-      { date: '2025-04-03', count: 12 },
-      { date: '2025-04-04', count: 9 },
-      { date: '2025-04-05', count: 15 },
-    ];
-    state.stationData = res.stationData && res.stationData.length > 0 ? res.stationData : [
-      { name: '丰泽站', value: 20 },
-      { name: '鲤城站', value: 15 },
-      { name: '晋江站', value: 12 },
-      { name: '石狮站', value: 8 },
-    ];
-    // 更新折线图
-    updateLineChart();
+    const res = await getOrderChart();
+    if (res.cardData) {
+      const { trendData, typeData, cardData } = res;
+      state.cardList[0].value = cardData?.todayOrderCount || 0;
+      state.cardList[1].value = cardData?.todayRevenue || 0;
+      state.cardList[2].value = cardData?.payRate || 0;
+      // 如果trendData为空，使用假数据
+      state.trendData = trendData && trendData.length > 0 ? trendData : [
+        { date: '2025-04-01', count: 8 },
+        { date: '2025-04-02', count: 10 },
+        { date: '2025-04-03', count: 12 },
+        { date: '2025-04-04', count: 9 },
+        { date: '2025-04-05', count: 15 },
+      ];
+      // 使用typeData作为场站数据展示
+      state.stationData = typeData && typeData.length > 0 ? typeData.map(item => ({
+        name: item.status,
+        value: item.count
+      })) : [
+        { name: '丰泽站', value: 20 },
+        { name: '鲤城站', value: 15 },
+        { name: '晋江站', value: 12 },
+        { name: '石狮站', value: 8 },
+      ];
+    } else {
+      // 接口返回失败，使用假数据
+      state.trendData = [
+        { date: '2025-04-01', count: 8 },
+        { date: '2025-04-02', count: 10 },
+        { date: '2025-04-03', count: 12 },
+        { date: '2025-04-04', count: 9 },
+        { date: '2025-04-05', count: 15 },
+      ];
+      state.stationData = [
+        { name: '丰泽站', value: 20 },
+        { name: '鲤城站', value: 15 },
+        { name: '晋江站', value: 12 },
+        { name: '石狮站', value: 8 },
+      ];
+    }
   } catch (error) {
     console.error('获取订单图表数据失败:', error);
     // 接口调用失败时使用假数据
@@ -60,8 +80,6 @@ const fetchOrderChartData = async () => {
       { name: '晋江站', value: 12 },
       { name: '石狮站', value: 8 },
     ];
-    // 更新折线图
-    updateLineChart();
   }
 };
 
@@ -146,10 +164,10 @@ const updateLineChart = () => {
   });
 };
 
-onMounted(() => {
-  fetchOrderChartData().then(() => {
-    initLineChart();
-  });
+onMounted(async () => {
+  // 先获取数据，再初始化图表
+  await fetchOrderChartData();
+  initLineChart();
 
   window.addEventListener('resize', () => {
     lineChartInstance?.resize();
@@ -163,7 +181,7 @@ onMounted(() => {
       <Card class="left-card" v-for="item in state.cardList" :key="item.title" v-bind="item" />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart" />
-    <Columnar title="各场站订单量" :x-data="state.stationData.map(item => item.name)"
+    <Columnar class="simple-bar-chart" title="各场站订单量" :x-data="state.stationData.map(item => item.name)"
       :series-data="[{ name: '订单数', data: state.stationData.map(item => item.value) }]" />
   </div>
 </template>
