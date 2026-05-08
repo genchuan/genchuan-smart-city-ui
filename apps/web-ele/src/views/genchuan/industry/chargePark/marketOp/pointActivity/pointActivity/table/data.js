@@ -647,7 +647,7 @@ export const textObj = {
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '活动ID' },
+  // { key: 'id', label: '活动ID' },
   { key: 'name', label: '活动名称' },
   {
     key: 'type',
@@ -678,7 +678,7 @@ export const detailFields = [
     },
     tagType: (value) => getPointActivityStatusTagType(value),
   },
-  { key: 'creator', label: '创建者' },
+  // { key: 'creator', label: '创建者' },
   { key: 'updater', label: '更新者' },
   { key: 'createTimeStr', label: '创建时间' },
   { key: 'updateTimeStr', label: '更新时间' },

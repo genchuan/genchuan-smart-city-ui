@@ -247,16 +247,16 @@ defineExpose({
 }
 
 .detail-card {
-  padding: 20px;
-  margin-bottom: 16px;
+  padding: 16px;
+  margin-bottom: 0;
   background-color: var(--el-bg-color, #fff);
   border: 1px solid var(--el-border-color-light, #ebeef5);
   border-radius: 4px;
-  box-shadow: 0 2px 12px 0 rgb(0 0 0 / 10%);
+  box-shadow: 0 1px 4px 0 rgb(0 0 0 / 8%);
 }
 
-.detail-card:last-child {
-  margin-bottom: 0;
+.detail-card + .detail-card {
+  margin-top: 12px;
 }
 
 .detail-content {
@@ -287,9 +287,7 @@ defineExpose({
 }
 
 .detail-separator {
-  padding-top: 20px;
-  margin-top: 20px;
-  border-top: 1px dashed var(--el-border-color-light, #ebeef5);
+  display: none;
 }
 
 .detail-footer {

@@ -422,15 +422,15 @@ export function useSearchFormSchema() {
         clearable: true,
       },
     },
-    {
-      fieldName: 'operator',
-      label: '操作人',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入操作人',
-        clearable: true,
-      },
-    },
+    // {
+    //   fieldName: 'operator',
+    //   label: '操作人',
+    //   component: 'Input',
+    //   componentProps: {
+    //     placeholder: '请输入操作人',
+    //     clearable: true,
+    //   },
+    // },
     {
       fieldName: 'generateTimeRange',
       label: '生成时间',
@@ -561,6 +561,7 @@ export function useGridColumns() {
       title: '生成时间',
       minWidth: 180,
       sortable: true,
+      slots: { default: 'generateTime' },
     },
     {
       field: 'operator',
@@ -620,7 +621,7 @@ export const detailFields = [
   { key: 'exchangeCount', label: '兑换量' },
   { key: 'totalStock', label: '总库存' },
   { key: 'warnStockCount', label: '预警库存数' },
-  { key: 'generateStatus', label: '生成状态' },
+  { key: 'generateStatus', label: '生成状态', type: 'tag', tagType: getGenerateStatusTagType },
   { key: 'generateTime', label: '生成时间' },
   { key: 'operator', label: '操作人' },
   { key: 'generateCost', label: '生成耗时(ms)' },

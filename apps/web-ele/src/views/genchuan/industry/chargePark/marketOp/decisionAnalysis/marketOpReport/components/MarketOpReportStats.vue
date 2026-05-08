@@ -401,6 +401,8 @@ const initBarChart = () => {
       type: chartData.value,
       name: dataItem?.name,
       value: dataItem?.type || dataItem?.name,
+      // 如果有 categoryId（兑换类目场景），也一起传递
+      ...(dataItem?.categoryId ? { categoryId: dataItem.categoryId } : {}),
     });
   });
 };

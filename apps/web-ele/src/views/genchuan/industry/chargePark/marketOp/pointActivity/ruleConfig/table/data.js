@@ -1,8 +1,8 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
-import { formatDate } from '#/utils/genchuan/formatTime';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 /** 获取规则配置类型标签类型 */
 export function getRuleConfigTypeTagType(type) {
@@ -459,57 +459,68 @@ export const textObj = {
   total: ' 总计: 规则配置数量8;已生效:5;未生效:3',
 };
 
-/** 详情抽屉字段配置 */
+/** 详情抽屉字段配置 - 使用与表格相同的字典颜色逻辑 */
 export const detailFields = [
-  { key: 'id', label: '规则ID' },
+  // { key: 'id', label: '规则ID' },
   { key: 'name', label: '规则名称' },
   {
-    key: 'typeName',
+    key: 'type',
     label: '规则类型',
     type: 'tag',
-    tagType: (value) => {
-      const typeMap = {
-        '获取规则': 'primary',
-        '消耗规则': 'warning',
-        '赠送规则': 'success',
-      };
-      return typeMap[value] || 'info';
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.RULE_CONFIG_TYPE, String(value));
+      return dict ? dict.label : value;
     },
+    tagType: (value) => getRuleConfigTypeTagType(value),
   },
   { key: 'giftRatio', label: '赠送比例' },
   {
-    key: 'statusName',
+    key: 'status',
     label: '规则状态',
     type: 'tag',
-    tagType: (value) => {
-      const statusMap = {
-        '已生效': 'success',
-        '未生效': 'info',
-      };
-      return statusMap[value] || 'info';
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.RULE_CONFIG_STATUS, String(value));
+      return dict ? dict.label : value;
     },
+    tagType: (value) => getRuleConfigStatusTagType(value),
   },
   {
-    key: 'sceneName',
+    key: 'scene',
     label: '适用场景',
     type: 'tag',
-    tagType: (value) => {
-      const sceneMap = {
-        '充电': 'primary',
-        '停车': 'warning',
-        '活动': 'success',
-        '其他': 'info',
-      };
-      return sceneMap[value] || 'info';
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.RULE_CONFIG_SCENE, String(value));
+      return dict ? dict.label : value;
     },
+    tagType: (value) => getRuleConfigSceneTagType(value),
   },
   { key: 'description', label: '规则描述' },
-  { key: 'auditorName', label: '审核人' },
-  { key: 'auditTimeStr', label: '审核时间' },
+  { key: 'auditorName', label: '审核人', formatter: (value) => value || '-' },
+  {
+    key: 'auditTime',
+    label: '审核时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
   { key: 'matchCount', label: '匹配次数' },
-  { key: 'effectTimeStr', label: '生效时间' },
-  { key: 'creator', label: '创建者' },
-  { key: 'createTimeStr', label: '创建时间' },
+  {
+    key: 'effectTime',
+    label: '生效时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
+  // { key: 'creator', label: '创建者' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
   { key: 'updater', label: '更新者' },
-  { key: 'updateTimeStr', label: '更新时间' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
 ];
