@@ -503,14 +503,14 @@ watch(
         </el-text>
       </template>
 
-      <template #changeRecord="{ row }">
+      <template #reserve1="{ row }">
         <el-text
           class="common-align"
           style="cursor: pointer"
           type="primary"
           @click="handleChangeRecord(row)"
         >
-          {{ row.changeRecord }}
+          {{ row.reserve1 ?? '-' }}
         </el-text>
       </template>
 

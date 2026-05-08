@@ -193,8 +193,7 @@ export function normalizeSpareStockRow(row) {
       row.warehouse_name ||
       row.stationName ||
       row.station_name ||
-      row.reserve1 ||
-      getWarehouseName(warehouseId),
+      row.reserve1 || '-',
     inTime,
     inTimeStr: formatSpareTime(inTime),
     outTime,
@@ -304,13 +303,12 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'warehouseId',
+      fieldName: 'stationName',
       label: '所属仓库',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择所属仓库',
+        placeholder: '请输入所属仓库',
         clearable: true,
-        options: warehouseOptions,
       },
     },
     {

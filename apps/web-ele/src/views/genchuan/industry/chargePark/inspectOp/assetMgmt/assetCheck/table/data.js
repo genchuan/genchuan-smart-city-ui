@@ -83,7 +83,7 @@ export function formatCheckTime(value) {
   if (!value) return '-';
   const text = String(value);
   const timestamp = /^\d{10}$/.test(text) ? Number(text) * 1000 : value;
-  return formatDate(timestamp) || text;
+  return formatDate(value) || text;
 }
 
 export function getUserName(userId) {
@@ -166,6 +166,7 @@ export function dataList() {
 }
 
 export function normalizeAssetCheckRow(row) {
+  console.log('row', row);
   const checkTime = row.checkTime ?? row.check_time;
   const confirmUserId = row.confirmUserId ?? row.confirm_user_id;
   const confirmTime = row.confirmTime ?? row.confirm_time;
@@ -304,16 +305,16 @@ export function useSearchFormSchema() {
     //     options: userOptions,
     //   },
     // },
-    {
-      fieldName: 'confirmUserId',
-      label: '确认人员',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择确认人员',
-        clearable: true,
-        options: userOptions,
-      },
-    },
+    // {
+    //   fieldName: 'confirmUserId',
+    //   label: '确认人员',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择确认人员',
+    //     clearable: true,
+    //     options: userOptions,
+    //   },
+    // },
     {
       fieldName: 'checkTime',
       label: '盘点时间',
@@ -417,33 +418,33 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'status' },
     },
-    // {
-    //   field: 'creator',
-    //   title: '发起人员',
-    //   minWidth: 110,
-    //   sortable: true,
-    //   slots: { default: 'creator' },
-    // },
-    // {
-    //   field: 'executeUserName',
-    //   title: '执行人员',
-    //   minWidth: 110,
-    //   sortable: true,
-    //   slots: { default: 'executeUserName' },
-    // },
+    {
+      field: 'creator',
+      title: '发起人员',
+      minWidth: 110,
+      sortable: true,
+      slots: { default: 'creator' },
+    },
+    {
+      field: 'updater',
+      title: '执行人员',
+      minWidth: 110,
+      sortable: true,
+      slots: { default: 'updater' },
+    },
     {
       field: 'confirmTimeStr',
       title: '确认时间',
       minWidth: 180,
       sortable: true,
     },
-    {
-      field: 'result',
-      title: '盘点结果',
-      minWidth: 210,
-      sortable: true,
-      slots: { default: 'result' },
-    },
+    // {
+    //   field: 'result',
+    //   title: '盘点结果',
+    //   minWidth: 210,
+    //   sortable: true,
+    //   slots: { default: 'result' },
+    // },
     {
       field: 'createTimeStr',
       title: '创建时间',
@@ -482,7 +483,7 @@ export const detailFields = [
   // { key: 'executeUserName', label: '执行人员' },
   { key: 'confirmUserName', label: '确认人员' },
   { key: 'confirmTimeStr', label: '确认时间' },
-  { key: 'result', label: '盘点结果' },
+  // { key: 'result', label: '盘点结果' },
   { key: 'updater', label: '更新者' },
   { key: 'createTimeStr', label: '创建时间' },
   { key: 'updateTimeStr', label: '更新时间' },

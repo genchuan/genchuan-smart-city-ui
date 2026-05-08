@@ -284,13 +284,12 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationId',
+      fieldName: 'stationName',
       label: '所属仓库',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择所属仓库',
+        placeholder: '请输入所属仓库',
         clearable: true,
-        options: stationOptions,
       },
     },
     {
