@@ -1,5 +1,5 @@
 <script setup>
-import { computed, defineProps, toRefs } from 'vue';
+import { computed, defineProps, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
@@ -18,11 +18,22 @@ const props = defineProps({
   },
 });
 
-const { detailObj, title } = toRefs(props);
+// 使用 ref 来存储内部数据，避免响应式丢失
+const internalDetailObj = ref({});
+
+// 监听 props.detailObj 的变化，更新内部数据
+watch(
+  () => props.detailObj,
+  (newVal) => {
+    internalDetailObj.value = newVal || {};
+  },
+  { immediate: true, deep: true }
+);
+
 // 计算属性处理标题，优先用路段名称，兜底显示默认值
 const drawerTitle = computed(() => {
-  const roadSectionName = detailObj.value?.roadSectionName || '互联互通';
-  return title.value || `${roadSectionName}详情`;
+  const roadSectionName = internalDetailObj.value?.roadSectionName || '互联互通';
+  return props.title || `${roadSectionName}详情`;
 });
 
 // 初始化抽屉实例（加宽适配广告详情更多字段）
@@ -50,57 +61,59 @@ defineExpose({
     <div class="detail-card">
       <!-- 广告详情基础信息 -->
       <div class="detail-card-row">
+        <div class="detail-row-left">id:</div>
+        <div class="detail-row-right">
+          {{ internalDetailObj.id || internalDetailObj.id || '-' }}
+        </div>
+      </div>
+      <div class="detail-card-row">
         <div class="detail-row-left">对接编码:</div>
         <div class="detail-row-right">
-          {{ detailObj.code || '-' }}
+          {{ internalDetailObj.code || internalDetailObj.connectCode || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">平台名称:</div>
         <div class="detail-row-right">
-          {{ detailObj.plat_name || '-' }}
+          {{ internalDetailObj.plat_name || internalDetailObj.thirdPlatform || '-' }}
         </div>
+
+
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">对接类型:</div>
         <div class="detail-row-right">
-          {{ detailObj.type || '-' }}
+          {{ internalDetailObj.type || internalDetailObj.connectType || '-' }}
         </div>
       </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">接口参数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.api_param || '-' }}
-        </div>
-      </div>
+<!--      <div class="detail-card-row">-->
+<!--        <div class="detail-row-left">接口参数:</div>-->
+<!--        <div class="detail-row-right">-->
+<!--          {{ internalDetailObj.api_param || '-' }}-->
+<!--        </div>-->
+<!--      </div>-->
       <div class="detail-card-row">
         <div class="detail-row-left">同步频率:</div>
         <div class="detail-row-right">
-          {{ detailObj.sync_freq || '-' }}
+          {{ internalDetailObj.sync_freq || internalDetailObj.syncFreq || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">同步成功率:</div>
         <div class="detail-row-right">
-          {{ detailObj.sync_rate || '-' }}
-        </div>
-      </div>
-      <div class="detail-card-row">
-        <div class="detail-row-left">同步异常次数:</div>
-        <div class="detail-row-right">
-          {{ detailObj.sync_error || '-' }}
+          {{ internalDetailObj.syncSuccessRate || internalDetailObj.syncSuccessRate || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">对接状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.status || '-' }}
+          {{ internalDetailObj.status || internalDetailObj.connectStatus || '-' }}
         </div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">创建时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.create_time || '-' }}
+          {{ internalDetailObj.create_time || internalDetailObj.createTime || '-' }}
         </div>
       </div>
     </div>
