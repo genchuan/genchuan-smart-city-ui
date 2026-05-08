@@ -281,6 +281,7 @@ const getTableData = async (pageObj) => {
       costPointMin: dataObj.searchParams.costPointMin,
       costPointMax: dataObj.searchParams.costPointMax,
       payStatus: filterPayStatus.value || dataObj.searchParams.payStatus,
+      categoryId: filterCategoryId.value || dataObj.searchParams.categoryId,
       logisticsInfo: dataObj.searchParams.logisticsInfo,
       createTime: dataObj.searchParams.createTime,
       payTime: dataObj.searchParams.payTime,

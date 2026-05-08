@@ -371,15 +371,15 @@ export function useSearchFormSchema() {
         clearable: true,
       },
     },
-    {
-      fieldName: 'userId',
-      label: '用户ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入用户ID',
-        clearable: true,
-      },
-    },
+    // {
+    //   fieldName: 'userId',
+    //   label: '用户ID',
+    //   component: 'InputNumber',
+    //   componentProps: {
+    //     placeholder: '请输入用户ID',
+    //     clearable: true,
+    //   },
+    // },
     {
       fieldName: 'prizeId',
       label: '奖品',
@@ -509,11 +509,11 @@ export const textObj = {
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '记录ID' },
+  // { key: 'id', label: '记录ID' },
   { key: 'no', label: '抽奖记录编号' },
-  { key: 'userId', label: '用户ID' },
+  // { key: 'userId', label: '用户ID' },
   { key: 'userName', label: '用户名称' },
-  { key: 'prizeId', label: '奖品ID' },
+  // { key: 'prizeId', label: '奖品ID' },
   { key: 'prizeName', label: '奖品名称' },
   { key: 'lotteryTimeStr', label: '抽奖时间' },
   { key: 'costPoint', label: '消耗积分' },
@@ -528,7 +528,7 @@ export const detailFields = [
     tagType: (value) => getPointLotteryStatusTagType(value),
   },
   { key: 'sendTimeStr', label: '发放时间' },
-  { key: 'senderId', label: '发放人ID' },
+  // { key: 'senderId', label: '发放人ID' },
   { key: 'senderName', label: '发放人' },
   { key: 'checkResult', label: '核查结果' },
   {

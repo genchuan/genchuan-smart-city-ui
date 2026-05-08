@@ -1,8 +1,8 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
-import { formatDate } from '#/utils/genchuan/formatTime';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 /** 获取库存状态Tag类型 - 使用封装的字典颜色工具 */
 export const getStockControlStatusTagType = (status) => {
@@ -12,7 +12,10 @@ export const getStockControlStatusTagType = (status) => {
 
 /** 获取告警状态Tag类型 - 使用封装的字典颜色工具 */
 export const getStockControlWarnStatusTagType = (warnStatus) => {
-  const dict = getDictObj(DICT_TYPE.STOCK_CONTROL_WARN_STATUS, String(warnStatus));
+  const dict = getDictObj(
+    DICT_TYPE.STOCK_CONTROL_WARN_STATUS,
+    String(warnStatus),
+  );
   return getDictTagTypeFromDict(dict, 'primary');
 };
 
@@ -24,7 +27,10 @@ export const getStockControlStatusLabel = (status) => {
 
 /** 获取告警状态标签 */
 export const getStockControlWarnStatusLabel = (warnStatus) => {
-  const dict = getDictObj(DICT_TYPE.STOCK_CONTROL_WARN_STATUS, String(warnStatus));
+  const dict = getDictObj(
+    DICT_TYPE.STOCK_CONTROL_WARN_STATUS,
+    String(warnStatus),
+  );
   return dict ? dict.label : warnStatus;
 };
 
@@ -41,15 +47,15 @@ export const dataList = () => {
       statusName: '正常库存',
       warnStatus: '0',
       warnStatusName: '未告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 5,
       replenishCount: 3,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 2,
@@ -61,15 +67,15 @@ export const dataList = () => {
       statusName: '低库存',
       warnStatus: '0',
       warnStatusName: '未告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 2,
       replenishCount: 1,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 3,
@@ -81,15 +87,15 @@ export const dataList = () => {
       statusName: '预警库存',
       warnStatus: '1',
       warnStatusName: '已告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 8,
       replenishCount: 5,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 4,
@@ -101,15 +107,15 @@ export const dataList = () => {
       statusName: '正常库存',
       warnStatus: '0',
       warnStatusName: '未告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 3,
       replenishCount: 2,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 5,
@@ -121,15 +127,15 @@ export const dataList = () => {
       statusName: '正常库存',
       warnStatus: '0',
       warnStatusName: '未告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 1,
       replenishCount: 1,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 6,
@@ -141,15 +147,15 @@ export const dataList = () => {
       statusName: '低库存',
       warnStatus: '0',
       warnStatusName: '未告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 4,
       replenishCount: 2,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 7,
@@ -161,15 +167,15 @@ export const dataList = () => {
       statusName: '预警库存',
       warnStatus: '1',
       warnStatusName: '已告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 6,
       replenishCount: 4,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 8,
@@ -181,15 +187,15 @@ export const dataList = () => {
       statusName: '正常库存',
       warnStatus: '0',
       warnStatusName: '未告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 2,
       replenishCount: 1,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
   ];
 };
@@ -380,9 +386,24 @@ export const detailFields = [
   },
   { key: 'allocateCount', label: '调配记录数' },
   { key: 'replenishCount', label: '补货记录数' },
-  { key: 'syncTime', label: '同步时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
+  {
+    key: 'syncTime',
+    label: '同步时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
   { key: 'creator', label: '创建者' },
   { key: 'updater', label: '更新者' },
-  { key: 'createTime', label: '创建时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
-  { key: 'updateTime', label: '更新时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
 ];

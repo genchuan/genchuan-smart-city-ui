@@ -7,8 +7,10 @@
   .reviewStatus-cell {
     background-color: #F56C6C;
   }
-  .vxe-table--body-inner-wrapper{
-    min-height: 100px !important;
+  .vxe-table--empty-content{
+   svg {
+    display: none !important;
+   }
   }
   .icon-first {
     margin-right: 5px;

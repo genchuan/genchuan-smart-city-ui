@@ -1,8 +1,8 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
-import { formatDate } from '#/utils/genchuan/formatTime';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 /** 获取类目状态Tag类型 - 使用封装的字典颜色工具 */
 export const getExchangeCategoryStatusTagType = (status) => {
@@ -40,8 +40,8 @@ export const dataList = () => {
       statusName: '已生效',
       auditorId: 1,
       auditorName: '张三',
-      auditTime: 1745104800000,
-      effectTime: 1746028800000,
+      auditTime: 1_745_104_800_000,
+      effectTime: 1_746_028_800_000,
       sort: 1,
       scope: '0',
       scopeName: '全平台',
@@ -49,8 +49,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 2,
@@ -61,8 +61,8 @@ export const dataList = () => {
       statusName: '已生效',
       auditorId: 2,
       auditorName: '李四',
-      auditTime: 1745104800000,
-      effectTime: 1746028800000,
+      auditTime: 1_745_104_800_000,
+      effectTime: 1_746_028_800_000,
       sort: 2,
       scope: '0',
       scopeName: '全平台',
@@ -70,8 +70,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 3,
@@ -82,8 +82,8 @@ export const dataList = () => {
       statusName: '已生效',
       auditorId: 3,
       auditorName: '王五',
-      auditTime: 1745104800000,
-      effectTime: 1746028800000,
+      auditTime: 1_745_104_800_000,
+      effectTime: 1_746_028_800_000,
       sort: 3,
       scope: '1',
       scopeName: '指定场站',
@@ -91,8 +91,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 4,
@@ -104,7 +104,7 @@ export const dataList = () => {
       auditorId: null,
       auditorName: null,
       auditTime: null,
-      effectTime: 1748707200000,
+      effectTime: 1_748_707_200_000,
       sort: 4,
       scope: '0',
       scopeName: '全平台',
@@ -112,8 +112,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 5,
@@ -124,8 +124,8 @@ export const dataList = () => {
       statusName: '已禁用',
       auditorId: 1,
       auditorName: '张三',
-      auditTime: 1745104800000,
-      effectTime: 1746028800000,
+      auditTime: 1_745_104_800_000,
+      effectTime: 1_746_028_800_000,
       sort: 5,
       scope: '0',
       scopeName: '全平台',
@@ -133,8 +133,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 6,
@@ -145,8 +145,8 @@ export const dataList = () => {
       statusName: '已生效',
       auditorId: 2,
       auditorName: '李四',
-      auditTime: 1745104800000,
-      effectTime: 1746028800000,
+      auditTime: 1_745_104_800_000,
+      effectTime: 1_746_028_800_000,
       sort: 6,
       scope: '1',
       scopeName: '指定场站',
@@ -154,8 +154,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
   ];
 };
@@ -338,14 +338,29 @@ export const detailFields = [
     formatter: (value) => getExchangeCategoryStatusLabel(value),
     tagType: (value) => getExchangeCategoryStatusTagType(value),
   },
-  { key: 'createTime', label: '创建时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
   {
     key: 'auditorName',
     label: '审核人',
     formatter: (value) => value || '-',
   },
-  { key: 'auditTime', label: '审核时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
-  { key: 'effectTime', label: '生效时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
+  {
+    key: 'auditTime',
+    label: '审核时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
+  {
+    key: 'effectTime',
+    label: '生效时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
   { key: 'sort', label: '排序权重' },
   {
     key: 'scope',
@@ -356,5 +371,10 @@ export const detailFields = [
   },
   { key: 'creator', label: '创建者' },
   { key: 'updater', label: '更新者' },
-  { key: 'updateTime', label: '更新时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
 ];
