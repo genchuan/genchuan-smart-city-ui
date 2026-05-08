@@ -3,17 +3,14 @@ import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 import { ElOption, ElSelect } from 'element-plus';
+import { getPunishReviewChart, getPunishReviewStatistics } from '#/api/genchuan/industry/marketsupervision/index.js';
 
 const state = reactive({
   cardList: [
-    { title: '处罚复审台账总数', value: 10, color: '#4A90E2' },
-    { title: '待复审数', value: 10, color: '#50E3C2' },
-    { title: '已下发数', value: 8, color: '#FF9F40' },
-    { title: '已撤销数', value: 7, color: '#A17FE0' },
-    { title: '已下发缴款完成率', value: 3, color: '#FF6B8B' },
-    { title: '复审完成率', value: 1, color: '#FFD93D' },
-    { title: '累计处罚金额', value: 10_000, color: '#4A90E2' },
-    { title: '累计缴款金额', value: 8000, color: '#50E3C2' },
+    { title: '处罚复审台账总数', value: 0, color: '#4A90E2' },
+    { title: '待复审数', value: 0, color: '#50E3C2' },
+    { title: '已下发数', value: 0, color: '#FF9F40' },
+    { title: '已撤销数', value: 0, color: '#A17FE0' },
   ],
   mapConfig: {
     markerIcons: {
@@ -617,8 +614,48 @@ const initBarLineChart = () => {
   }
 };
 
+// 获取数据并更新页面
+const fetchData = async () => {
+  try {
+    // 获取统计数据
+    const statisticsRes = await getPunishReviewStatistics();
+    if (statisticsRes.code === 0) {
+      const { pendingReviewCount, issuedCount, canceledCount, totalCount } = statisticsRes.data;
+      state.cardList = [
+        { title: '处罚复审台账总数', value: totalCount, color: '#4A90E2' },
+        { title: '待复审数', value: pendingReviewCount, color: '#50E3C2' },
+        { title: '已下发数', value: issuedCount, color: '#FF9F40' },
+        { title: '已撤销数', value: canceledCount, color: '#A17FE0' },
+      ];
+    }
+
+    // 获取柱状图数据
+    const chartRes = await getPunishReviewChart();
+    if (chartRes.code === 0) {
+      const { list } = chartRes.data;
+      // 更新第一个饼图数据
+      firstChartData[0] = {
+        label: '月度处罚复审统计',
+        data: list.map(item => ({ name: item.time, value: item.count })),
+      };
+      // 更新柱状图数据
+      allChartsData[0] = {
+        label: '月度处罚复审统计',
+        type: 'bar',
+        data: {
+          xAxis: list.map(item => item.time),
+          seriesData: list.map(item => item.count),
+        },
+      };
+    }
+  } catch (error) {
+    console.error('获取数据失败:', error);
+  }
+};
+
 // 初始化所有图表
-const initCharts = () => {
+const initCharts = async () => {
+  await fetchData();
   initPieChart1();
   initPieChart2();
   initBarLineChart();
@@ -767,15 +804,16 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* 卡片区样式 - 2x3网格布局 */
+/* 卡片区样式 - 2x2网格布局（4个卡片） */
 .cards-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   flex-shrink: 0;
   gap: 12px;
   width: 260px;
   height: 320px;
+  align-content: flex-start;
 }
 
 .stat-card {
