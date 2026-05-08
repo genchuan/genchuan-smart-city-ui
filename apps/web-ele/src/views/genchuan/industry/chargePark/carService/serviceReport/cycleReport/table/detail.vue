@@ -231,8 +231,6 @@ onMounted(async () => {
     console.warn('[加载场站名失败]', error);
   }
 });
-
-
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,

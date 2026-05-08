@@ -259,6 +259,12 @@ const initLineChart = () => {
         fontSize: 10,
         rotate: 45,
         interval: 'auto',
+        formatter: (value) => {
+          const parts = String(value).split('-');
+          return parts.length === 3
+            ? `${Number(parts[1])}/${Number(parts[2])}`
+            : value;
+        },
       },
       axisLine: { lineStyle: { color: '#E8F4FD' } },
       axisTick: { lineStyle: { color: '#E8F4FD' } },
