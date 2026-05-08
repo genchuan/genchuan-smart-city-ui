@@ -62,6 +62,14 @@ export const statusOptions = getDictOptions(
   'string',
 );
 
+/** 按上报状态字典 label 取 value，供图表卡片筛选 */
+export function getReportStatusOptionValue(label) {
+  const opt = statusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 const MOCK_REPORT_TYPE_VALUES = ['设备故障', '占位异常', '其他'];
 const MOCK_REPORT_STATUS_VALUES = ['待审核', '待处置', '已完成', '已驳回'];
 

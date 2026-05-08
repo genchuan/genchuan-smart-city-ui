@@ -7,7 +7,7 @@ import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
-import { getMockChartData } from './data';
+import { getMockChartData, getReportStatusOptionValue } from './data';
 
 const emit = defineEmits(['statusFilter', 'trendFilter', 'typeFilter']);
 
@@ -17,14 +17,14 @@ const state = reactive({
       title: '待审核数',
       value: 0,
       desc: '待确认上报',
-      status: '待审核',
+      status: getReportStatusOptionValue('待审核'),
       color: '#f59e0b',
     },
     {
       title: '处置完成率',
       value: '0%',
       desc: '已完成处置',
-      status: '已完成',
+      status: getReportStatusOptionValue('已完成'),
       color: '#27ae60',
     },
   ],

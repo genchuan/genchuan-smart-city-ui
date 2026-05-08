@@ -74,6 +74,14 @@ export const cycleOptions = getDictOptions(INSPECT_PLAN_CYCLE_DICT, 'string');
 
 export const statusOptions = getDictOptions(INSPECT_PLAN_STATUS_DICT, 'string');
 
+/** 按计划状态字典 label 取 value，供图表卡片筛选 */
+export function getPlanStatusOptionValue(label) {
+  const opt = statusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 const MOCK_PLAN_TYPE_VALUES = ['日常', '专项', '临时'];
 const MOCK_PLAN_CYCLE_VALUES = ['日', '周', '月', '季'];
 const MOCK_PLAN_STATUS_VALUES = ['待生效', '进行中', '已完成', '已暂停'];

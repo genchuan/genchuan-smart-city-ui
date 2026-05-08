@@ -113,6 +113,14 @@ export const taskStatusOptions = getDictOptions(
   'string',
 );
 
+/** 按任务状态字典 label 取 value，供图表卡片筛选 */
+export function getTaskStatusOptionValue(label) {
+  const opt = taskStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 const MOCK_TASK_STATUS_VALUES = ['待派发', '待认领', '处理中', '已完成'];
 
 export const archiveOptions = [

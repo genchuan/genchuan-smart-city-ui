@@ -60,6 +60,14 @@ export const onlineStatusOptions = getDictOptions(
   'string',
 );
 
+/** 按在线状态字典 label 取 value，供图表卡片筛选 */
+export function getOnlineStatusOptionValue(label) {
+  const opt = onlineStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 export const deviceOptions = [
   { label: '巡检终端 A101', value: 101, area: '丰泽区' },
   { label: '巡检终端 B102', value: 102, area: '鲤城区' },

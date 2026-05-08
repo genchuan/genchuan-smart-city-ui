@@ -70,6 +70,14 @@ export const scheduleStatusOptions = getDictOptions(
   'string',
 );
 
+/** 按排班状态字典 label 取 value，供图表卡片筛选 */
+export function getScheduleStatusOptionValue(label) {
+  const opt = scheduleStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 export const shiftApplyStatusOptions = getDictOptions(
   SHIFT_APPLY_STATUS_DICT,
   'string',

@@ -44,6 +44,14 @@ export const userOptions = [
 
 export const statusOptions = getDictOptions(HANDOVER_LOG_STATUS_DICT, 'string');
 
+/** 按交接日志状态字典 label 取 value，供图表卡片筛选 */
+export function getHandoverStatusOptionValue(label) {
+  const opt = statusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 const handoverContents = [
   '今日场站设备运行正常，无异常情况。',
   '丰泽站2号充电桩需关注枪线温度，已完成现场检查。',

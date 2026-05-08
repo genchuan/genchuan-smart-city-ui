@@ -56,6 +56,14 @@ export const processStatusOptions = getDictOptions(
   'string',
 );
 
+/** 按字典项 label 取 value，供图表卡片筛选等与接口/字典一致 */
+export function getProcessStatusOptionValue(label) {
+  const opt = processStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 export const processMethodOptions = [
   { label: '现场劝离', value: '现场劝离' },
   { label: '电话通知', value: '电话通知' },

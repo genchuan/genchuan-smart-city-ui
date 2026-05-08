@@ -44,6 +44,14 @@ export const userOptions = [
 
 export const statusOptions = getDictOptions(SHIFT_APPLY_STATUS_DICT, 'string');
 
+/** 按换班申请状态字典 label 取 value，供图表卡片筛选 */
+export function getShiftApplyStatusOptionValue(label) {
+  const opt = statusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 export const auditResultOptions = [
   { label: '通过', value: '2' },
   { label: '驳回', value: '3' },
