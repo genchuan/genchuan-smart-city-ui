@@ -1,27 +1,30 @@
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { useVbenDrawer } from '@vben/common-ui';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getPassOpReport } from '#/api/genchuan/industry/chargePark/vehiclePass/decisionAnalysis/passOpReport';
 import {
   createCycleReport,
   exportCycleReport,
+  exportCycleReportById,
+  getCycleReport,
   getCycleReportPage,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/passReport/cycleReport';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+import DrillDownDetailDialog from '../components/DrillDownDetailDialog.vue';
 import {
   dataList,
   detailFields,
+  getGenerateStatusTagType,
+  getReportCycleTagType,
   textObj,
   useCreateFormSchema,
   useGridColumns,
@@ -33,9 +36,21 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
+  },
+  activeReportCycle: {
+    type: String,
+    default: '',
+  },
 });
 
-// 是否使用真实API（默认false使用模拟数据）
+// 是否使用真实API（默认true使用真实API）
 const USE_REAL_API = true;
 
 const getTitle = computed(() => {
@@ -55,6 +70,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
 const detailDrawerRef = ref(null);
 const formData = ref();
+
+// 钻取弹窗引用
+const drillDownDialogRef = ref(null);
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -104,15 +122,24 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       }
     } else {
       // 模拟数据模式
-      if (formDrawerApi.sharedData.payload.title === textObj.addText) {
-        dataObj.apilist.push(obj);
-      } else {
-        dataObj.apilist.forEach((v, i) => {
-          if (v.id === formData.value?.id) {
-            dataObj.apilist[i] = obj;
-          }
-        });
-      }
+      const newReport = {
+        id: dataObj.apilist.length + 1,
+        ...obj,
+        enterCount: 0,
+        leaveCount: 0,
+        parkingCount: 0,
+        identifySuccessRate: 0,
+        checkSuccessRate: 0,
+        abnormalHandleRate: 0,
+        etcPassSuccessRate: 0,
+        reportStatus: '生成中',
+        createTime: new Date().toISOString().replace('T', ' ').slice(0, 19),
+        createCost: 0,
+        updateTime: new Date().toISOString().replace('T', ' ').slice(0, 19),
+        creator: '当前用户',
+      };
+      dataObj.apilist.unshift(newReport);
+      ElMessage.success('报表生成任务已提交');
       handleRefresh();
       formDrawerApi.close();
     }
@@ -150,7 +177,7 @@ async function handleExport() {
       console.error(error);
     }
   } else {
-    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+    exportToExcel(dataObj.list, textObj.excelName, textObj.excelAllName);
   }
 }
 
@@ -162,49 +189,19 @@ function handleCreate() {
     .open();
 }
 
-function handleEdit(row) {
-  formDrawerApi
-    .setData({
-      title: textObj.editText,
-      ...row,
-    })
-    .open();
-}
-
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.plateNo]),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.plateNo]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
-}
-
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
+
+// 时间格式转换：将 "YYYY-MM-DD HH:mm:ss" 转换为 "YYYY-MM-DDTHH:mm:ss" (ISO 8601)
+const formatTimeForApi = (timeStr) => {
+  if (!timeStr) return timeStr;
+  // 如果已经是 ISO 格式，直接返回
+  if (timeStr.includes('T')) return timeStr;
+  // 将空格替换为 T
+  return timeStr.replace(' ', 'T');
+};
 
 const dataObj = reactive({
   totalShow: false,
@@ -216,6 +213,20 @@ const dataObj = reactive({
   list: [],
   searchParams: {},
 });
+
+// 当前激活的筛选标签
+const activeFilterTags = reactive({
+  reportStatus: '',
+});
+
+// 移除筛选标签
+const removeFilterTag = (type) => {
+  if (type === 'reportStatus') {
+    activeFilterTags.reportStatus = '';
+    delete dataObj.searchParams.reportStatus;
+    handleRefresh();
+  }
+};
 
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -247,45 +258,24 @@ const getTableData = async (pageObj) => {
   // 使用模拟数据
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
-    switch (activeName.value) {
-      case '半年报': {
-        statusMatch = v.reportType === '半年报';
-        break;
-      }
-      case '周报': {
-        statusMatch = v.reportType === '周报';
-        break;
-      }
-      case '季报': {
-        statusMatch = v.reportType === '季报';
-        break;
-      }
-      case '年报': {
-        statusMatch = v.reportType === '年报';
-        break;
-      }
-      case '日报': {
-        statusMatch = v.reportType === '日报';
-        break;
-      }
-      case '月报': {
-        statusMatch = v.reportType === '月报';
-        break;
-      }
-      case '自定义报表': {
-        statusMatch = v.reportType === '自定义报表';
-        break;
-      }
+    if (activeName.value !== '全部') {
+      statusMatch = v.reportCycle === activeName.value;
     }
 
     let searchMatch = true;
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
-      if (value) {
-        searchMatch =
-          typeof value === 'string'
-            ? searchMatch && v[key]?.toString().includes(value)
-            : searchMatch && v[key] === value;
+      if (value !== undefined && value !== null && value !== '') {
+        if (key === 'beginTime') {
+          searchMatch = searchMatch && v.statStartTime >= value;
+        } else if (key === 'endTime') {
+          searchMatch = searchMatch && v.statEndTime <= value;
+        } else {
+          searchMatch =
+            typeof value === 'string'
+              ? searchMatch && v[key]?.toString().includes(value)
+              : searchMatch && v[key] === value;
+        }
       }
     });
 
@@ -358,9 +348,12 @@ const handleOpenDetail = async (row) => {
   try {
     const loadingInstance = ElLoading.service({ text: '加载详情中...' });
     try {
-      // 优先使用 passOpReport 的详情接口
-      const data = await getPassOpReport(row.id);
-      dataObj.detailObj = data;
+      if (USE_REAL_API) {
+        const data = await getCycleReport(row.id);
+        dataObj.detailObj = data;
+      } else {
+        dataObj.detailObj = row;
+      }
       detailDrawerRef.value.open();
     } finally {
       loadingInstance.close();
@@ -368,7 +361,6 @@ const handleOpenDetail = async (row) => {
   } catch (error) {
     console.error('获取详情失败:', error);
     ElMessage.error('获取详情失败');
-    // 失败时使用行数据兜底
     dataObj.detailObj = row;
     detailDrawerRef.value.open();
   }
@@ -388,41 +380,10 @@ const tabsData = ref([
 const createLabel = (item) => {
   let count = 0;
 
-  switch (item.label) {
-    case '全部': {
-      count = dataObj.apilist.length;
-      break;
-    }
-    case '半年报': {
-      count = dataObj.apilist.filter((v) => v.reportType === '半年报').length;
-      break;
-    }
-    case '周报': {
-      count = dataObj.apilist.filter((v) => v.reportType === '周报').length;
-      break;
-    }
-    case '季报': {
-      count = dataObj.apilist.filter((v) => v.reportType === '季报').length;
-      break;
-    }
-    case '年报': {
-      count = dataObj.apilist.filter((v) => v.reportType === '年报').length;
-      break;
-    }
-    case '日报': {
-      count = dataObj.apilist.filter((v) => v.reportType === '日报').length;
-      break;
-    }
-    case '月报': {
-      count = dataObj.apilist.filter((v) => v.reportType === '月报').length;
-      break;
-    }
-    case '自定义报表': {
-      count = dataObj.apilist.filter(
-        (v) => v.reportType === '自定义报表',
-      ).length;
-      break;
-    }
+  if (item.label === '全部') {
+    count = dataObj.apilist.length;
+  } else {
+    count = dataObj.apilist.filter((v) => v.reportCycle === item.label).length;
   }
 
   return `${item.label}(${count})`;
@@ -440,93 +401,155 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 
-// 下钻筛选 - 点击报表类型
-const handleReportTypeClick = (row) => {
+// 下钻筛选 - 点击报表周期
+const handleReportCycleClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
-    reportCycle: row.reportType, // 后端字段是 reportCycle
+    reportCycle: row.reportCycle,
   };
+  activeName.value = row.reportCycle;
   handleRefresh();
-  // ElMessage.success(`已筛选报表类型：${row.reportType}`);
 };
 
-// 下钻筛选 - 点击统计周期
-const handleStatisticPeriodClick = (row) => {
-  dataObj.searchParams = {
-    ...dataObj.searchParams,
-    statisticPeriod: row.statisticPeriod,
-  };
-  handleRefresh();
-  ElMessage.success(`已筛选统计周期：${row.statisticPeriod}`);
-};
-
-// 下钻筛选 - 点击场站名称
+// 下钻跳转 - 点击场站名称（筛选该场站的报表）
 const handleStationClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
     stationId: row.stationId,
   };
   handleRefresh();
-  ElMessage.success(`已筛选场站：${row.stationName}`);
 };
 
-// 下钻跳转 - 点击入场量
-const handleEntryCountClick = (row) => {
-  ElMessage.info(
-    `查看${row.statisticPeriod}入场明细 - 入场量：${row.entryCount}`,
-  );
-  // TODO: 打开入场明细弹窗
+// 下钻跳转 - 点击入场量（打开钻取弹窗）
+const handleEnterCountClick = (row) => {
+  if (drillDownDialogRef.value) {
+    drillDownDialogRef.value.open({
+      drillType: 'tableEnterCount',
+      drillValue: String(row.id),
+      drillName: row.reportCycle,
+      reportCycle: row.reportCycle,
+      reportId: row.id,
+      stationId: row.stationId,
+    });
+  }
 };
 
-// 下钻跳转 - 点击离场量
-const handleExitCountClick = (row) => {
-  ElMessage.info(
-    `查看${row.statisticPeriod}离场明细 - 离场量：${row.exitCount}`,
-  );
-  // TODO: 打开离场明细弹窗
+// 下钻跳转 - 点击离场量（打开钻取弹窗）
+const handleLeaveCountClick = (row) => {
+  if (drillDownDialogRef.value) {
+    drillDownDialogRef.value.open({
+      drillType: 'tableLeaveCount',
+      drillValue: String(row.id),
+      drillName: row.reportCycle,
+      reportCycle: row.reportCycle,
+      reportId: row.id,
+      stationId: row.stationId,
+    });
+  }
 };
 
-// 下钻跳转 - 点击在停车辆数
+// 下钻跳转 - 点击在停车辆数（打开钻取弹窗）
 const handleParkingCountClick = (row) => {
-  ElMessage.info(
-    `查看${row.statisticPeriod}在停车辆明细 - 在停车辆数：${row.parkingCount}`,
-  );
-  // TODO: 打开在停车辆明细弹窗
+  if (drillDownDialogRef.value) {
+    drillDownDialogRef.value.open({
+      drillType: 'tableParkingCount',
+      drillValue: String(row.id),
+      drillName: row.reportCycle,
+      reportCycle: row.reportCycle,
+      reportId: row.id,
+      stationId: row.stationId,
+    });
+  }
+};
+
+// 下钻跳转 - 点击识别成功率（打开钻取弹窗）
+const handleIdentifySuccessRateClick = (row) => {
+  if (drillDownDialogRef.value) {
+    drillDownDialogRef.value.open({
+      drillType: 'tableIdentifySuccessRate',
+      drillValue: String(row.id),
+      drillName: row.reportCycle,
+      reportCycle: row.reportCycle,
+      reportId: row.id,
+      stationId: row.stationId,
+    });
+  }
+};
+
+// 下钻跳转 - 点击核验成功率（打开钻取弹窗）
+const handleCheckSuccessRateClick = (row) => {
+  if (drillDownDialogRef.value) {
+    drillDownDialogRef.value.open({
+      drillType: 'tableCheckSuccessRate',
+      drillValue: String(row.id),
+      drillName: row.reportCycle,
+      reportCycle: row.reportCycle,
+      reportId: row.id,
+      stationId: row.stationId,
+    });
+  }
+};
+
+// 下钻跳转 - 点击异常处置率（打开钻取弹窗）
+const handleAbnormalHandleRateClick = (row) => {
+  if (drillDownDialogRef.value) {
+    drillDownDialogRef.value.open({
+      drillType: 'tableAbnormalHandleRate',
+      drillValue: String(row.id),
+      drillName: row.reportCycle,
+      reportCycle: row.reportCycle,
+      reportId: row.id,
+      stationId: row.stationId,
+    });
+  }
+};
+
+// 下钻跳转 - 点击ETC通行成功率（打开钻取弹窗）
+const handleEtcPassSuccessRateClick = (row) => {
+  if (drillDownDialogRef.value) {
+    drillDownDialogRef.value.open({
+      drillType: 'tableEtcPassSuccessRate',
+      drillValue: String(row.id),
+      drillName: row.reportCycle,
+      reportCycle: row.reportCycle,
+      reportId: row.id,
+      stationId: row.stationId,
+    });
+  }
 };
 
 // 下钻筛选 - 点击生成状态
-const handleGenerateStatusClick = (row) => {
+const handleReportStatusClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
-    reportStatus: row.generateStatus, // 后端字段是 reportStatus
+    reportStatus: row.reportStatus,
   };
+  activeFilterTags.reportStatus = row.reportStatus;
   handleRefresh();
-  ElMessage.success(`已筛选生成状态：${row.generateStatus}`);
 };
 
 // 下钻筛选 - 点击操作人
-const handleOperatorClick = (row) => {
+const handleCreatorClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
-    creator: row.operatorName, // 后端字段是 creator
+    creator: row.creator,
   };
   handleRefresh();
-  ElMessage.success(`已筛选操作人：${row.operatorName}`);
 };
 
 // 导出单条报表
 const handleExportRow = async (row) => {
   const loadingInstance = ElLoading.service({
-    text: `正在导出${row.reportType}...`,
+    text: `正在导出${row.reportCycle}...`,
   });
   try {
     if (USE_REAL_API) {
-      await exportCycleReport({ id: row.id });
-      ElMessage.success(`${row.reportType}导出成功`);
+      await exportCycleReportById(row.id);
+      ElMessage.success(`${row.reportCycle}导出成功`);
     } else {
       // 模拟导出
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      ElMessage.success(`${row.reportType}导出成功`);
+      ElMessage.success(`${row.reportCycle}导出成功`);
     }
   } catch (error) {
     ElMessage.error('导出失败');
@@ -538,47 +561,100 @@ const handleExportRow = async (row) => {
 
 // 监听图表卡片点击事件
 onMounted(() => {
-  const handleFilterByChart = (e) => {
-    // 没有下钻逻辑。
-    return;
-    const { status } = e.detail;
+  const handleCardClick = (e) => {
+    const { key } = e.detail;
+    const today = new Date();
+    // 使用 ISO 8601 格式：YYYY-MM-DDTHH:mm:ss
+    const todayStart = new Date(today.setHours(0, 0, 0, 0)).toISOString().slice(0, 19);
+    const todayEnd = new Date(today.setHours(23, 59, 59, 999)).toISOString().slice(0, 19);
 
-    // 根据卡片key设置筛选条件
-    // 卡片的key对应后端接口的字段名
-    const filterMap = {
-      entryCount: { field: 'minEntryCount', label: '入场量' },
-      exitCount: { field: 'minExitCount', label: '离场量' },
-      parkingCount: { field: 'minParkingCount', label: '在停车辆数' },
-      identifySuccessRate: {
-        field: 'minIdentifySuccessRate',
-        label: '识别成功率',
-      },
-      verifySuccessRate: { field: 'minVerifySuccessRate', label: '核验成功率' },
-      abnormalHandleRate: {
-        field: 'minAbnormalHandleRate',
-        label: '异常处置率',
-      },
-      etcSuccessRate: { field: 'minEtcSuccessRate', label: 'ETC通行成功率' },
+    // 根据卡片类型筛选报表列表，并传递点击类型参数
+    const filterParams = {
+      beginTime: todayStart,
+      endTime: todayEnd,
+      clickType: key, // 传递点击类型：enterCount、leaveCount、parkingCount等
     };
 
-    const filter = filterMap[status];
-    if (filter) {
-      // 设置筛选条件（这里可以根据实际需求调整筛选逻辑）
-      dataObj.searchParams = {
-        ...dataObj.searchParams,
-        // 可以添加具体的筛选值，比如大于某个阈值
-        // [filter.field]: 某个值
-      };
-      handleRefresh();
-      ElMessage.success(`已点击${filter.label}卡片`);
-    }
+    dataObj.searchParams = {
+      ...dataObj.searchParams,
+      ...filterParams,
+    };
+    handleRefresh();
+
+    const cardTitleMap = {
+      enterCount: '入场量',
+      leaveCount: '离场量',
+      parkingCount: '在停车辆数',
+      identifySuccessRate: '识别成功率',
+      checkSuccessRate: '核验成功率',
+      abnormalHandleRate: '异常处置率',
+      etcPassSuccessRate: 'ETC通行成功率',
+    };
+
+    ElMessage.success(`已筛选今日${cardTitleMap[key]}相关报表`);
   };
 
-  window.addEventListener('filterByChart:passOpReport', handleFilterByChart);
+  window.addEventListener('cycleReport:cardClick', handleCardClick);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('filterByChart:passOpReport', handleFilterByChart);
+  window.removeEventListener('cycleReport:cardClick', () => {});
+});
+
+// 处理统计组件的钻取筛选
+const handleStatsFilter = (type, value) => {
+  dataObj.searchParams = {};
+  activeFilterTags.reportStatus = '';
+
+  switch (type) {
+    case 'card': {
+      switch (value) {
+        case 'enterCount':
+        case 'leaveCount':
+        case 'parkingCount':
+        case 'identifySuccessRate':
+        case 'checkSuccessRate':
+        case 'abnormalHandleRate':
+        case 'etcPassSuccessRate': {
+          console.log('钻取：卡片', value);
+          break;
+        }
+      }
+      break;
+    }
+    case 'reportCycle': {
+      if (value) {
+        dataObj.searchParams.reportCycle = value;
+        console.log('钻取：报表周期', value);
+      } else {
+        delete dataObj.searchParams.reportCycle;
+        console.log('取消报表周期筛选');
+      }
+      break;
+    }
+  }
+
+  gridApi.query();
+};
+
+// 监听 activeReportCycle prop 变化
+watch(
+  () => props.activeReportCycle,
+  (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+      if (newVal) {
+        dataObj.searchParams.reportCycle = newVal;
+      } else {
+        delete dataObj.searchParams.reportCycle;
+      }
+      gridApi.query();
+    }
+  },
+  { immediate: false },
+);
+
+defineExpose({
+  handleStatsFilter,
 });
 </script>
 
@@ -589,13 +665,15 @@ onUnmounted(() => {
     </FormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.reportType || '报表'}详情`"
+      :title="`${dataObj.detailObj.reportCycle || '报表'}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <DrillDownDetailDialog ref="drillDownDialogRef" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
@@ -613,6 +691,19 @@ onUnmounted(() => {
               />
             </el-tabs>
           </div>
+          <!-- 筛选标签 -->
+          <div
+            v-if="activeFilterTags.reportStatus"
+            style="display: flex; gap: 8px; margin-top: 8px"
+          >
+            <el-tag
+              type="primary"
+              closable
+              @close="removeFilterTag('reportStatus')"
+            >
+              生成状态：{{ activeFilterTags.reportStatus }}
+            </el-tag>
+          </div>
         </div>
       </template>
       <template #toolbar-tools>
@@ -629,6 +720,11 @@ onUnmounted(() => {
             @click="handleExport"
           />
           <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
             content="刷新"
             icon-name="Refresh"
             @click="handleRefresh"
@@ -640,34 +736,14 @@ onUnmounted(() => {
           />
         </div>
       </template>
-      <template #id="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.id }}
-        </el-text>
-      </template>
-      <template #reportType="{ row }">
-        <el-text
-          class="common-align"
-          type="primary"
+      <template #reportCycle="{ row }">
+        <el-tag
+          :type="getReportCycleTagType(row.reportCycle)"
           style="cursor: pointer"
-          @click="handleReportTypeClick(row)"
+          @click="handleReportCycleClick(row)"
         >
-          {{ row.reportType }}
-        </el-text>
-      </template>
-      <template #statisticPeriod="{ row }">
-        <el-text
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-          @click="handleStatisticPeriodClick(row)"
-        >
-          {{ row.statisticPeriod }}
-        </el-text>
+          {{ row.reportCycle }}
+        </el-tag>
       </template>
       <template #stationName="{ row }">
         <el-text
@@ -679,24 +755,24 @@ onUnmounted(() => {
           {{ row.stationName }}
         </el-text>
       </template>
-      <template #entryCount="{ row }">
+      <template #enterCount="{ row }">
         <el-text
           class="common-align"
           type="primary"
           style="cursor: pointer"
-          @click="handleEntryCountClick(row)"
+          @click="handleEnterCountClick(row)"
         >
-          {{ row.entryCount }}
+          {{ row.enterCount }}
         </el-text>
       </template>
-      <template #exitCount="{ row }">
+      <template #leaveCount="{ row }">
         <el-text
           class="common-align"
           type="primary"
           style="cursor: pointer"
-          @click="handleExitCountClick(row)"
+          @click="handleLeaveCountClick(row)"
         >
-          {{ row.exitCount }}
+          {{ row.leaveCount }}
         </el-text>
       </template>
       <template #parkingCount="{ row }">
@@ -709,29 +785,69 @@ onUnmounted(() => {
           {{ row.parkingCount }}
         </el-text>
       </template>
-      <template #generateStatus="{ row }">
-        <el-tag
-          :type="
-            row.generateStatus === '已生成'
-              ? 'success'
-              : row.generateStatus === '生成中'
-                ? 'warning'
-                : 'danger'
-          "
-          style="cursor: pointer"
-          @click="handleGenerateStatusClick(row)"
-        >
-          {{ row.generateStatus }}
-        </el-tag>
-      </template>
-      <template #operatorName="{ row }">
+      <template #identifySuccessRate="{ row }">
         <el-text
           class="common-align"
           type="primary"
           style="cursor: pointer"
-          @click="handleOperatorClick(row)"
+          @click="handleIdentifySuccessRateClick(row)"
         >
-          {{ row.operatorName }}
+          {{ row.identifySuccessRate }}
+        </el-text>
+      </template>
+      <template #checkSuccessRate="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleCheckSuccessRateClick(row)"
+        >
+          {{ row.checkSuccessRate }}
+        </el-text>
+      </template>
+      <template #abnormalHandleRate="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleAbnormalHandleRateClick(row)"
+        >
+          {{ row.abnormalHandleRate }}
+        </el-text>
+      </template>
+      <template #etcPassSuccessRate="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleEtcPassSuccessRateClick(row)"
+        >
+          {{ row.etcPassSuccessRate }}
+        </el-text>
+      </template>
+      <template #reportStatus="{ row }">
+        <el-tag
+          :type="
+            row.reportStatus === '已生成'
+              ? 'success'
+              : row.reportStatus === '生成中'
+                ? 'warning'
+                : 'danger'
+          "
+          style="cursor: pointer"
+          @click="handleReportStatusClick(row)"
+        >
+          {{ row.reportStatus }}
+        </el-tag>
+      </template>
+      <template #creator="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleCreatorClick(row)"
+        >
+          {{ row.creator }}
         </el-text>
       </template>
       <template #actions="{ row }">

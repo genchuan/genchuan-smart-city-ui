@@ -19,6 +19,7 @@ import { $t } from '#/locales';
 import IconButton from '#/components/common/IconButton.vue';
 import { exportToExcel } from '#/utils/excel.js';
 import SpaceLocationMap from '../components/SpaceLocationMap.vue';
+import SpaceDetailDialog from '../../../components/SpaceDetailDialog.vue';
 
 import {
   dataList,
@@ -54,6 +55,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const detailDrawerRef = ref(null);
+const spaceDetailRef = ref(null);
 const formData = ref();
 
 const [Form, formApi] = useVbenForm({
@@ -380,8 +382,12 @@ const handleView = async (row) => {
 
 // 下钻筛选 - 点击泊位编号
 const handleSpaceNoClick = (row) => {
-  // 跳转到泊位详情页面
-  handleView(row);
+  // 打开车位详情弹窗
+  if (!row.spaceNo) {
+    ElMessage.warning('泊位编号不存在');
+    return;
+  }
+  spaceDetailRef.value?.open(row.spaceNo, row);
 };
 
 // 下钻筛选 - 点击查询人
@@ -462,6 +468,7 @@ onUnmounted(() => {
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <SpaceDetailDialog ref="spaceDetailRef" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
