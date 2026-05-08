@@ -115,7 +115,6 @@ async function handleImport() {
       successCount: response?.successCount || 0,
       failCount: response?.failureCount || 0,
     };
-    console.log('response', response);
     if (validationResult.value.failCount > 0) {
       ElMessage.warning('部分数据导入失败，请查看校验结果');
     } else {
