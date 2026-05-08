@@ -91,15 +91,17 @@ export function useSearchFormSchema(stationOptions = []) {
       component: 'Input',
       componentProps: {
         placeholder: '请输入车位编号',
+        clearable: true,
       },
     },
     {
-      fieldName: 'stationId',
+      fieldName: 'stationName',
       label: '所属场站',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择所属场站',
-        options: stationOptions,
+        placeholder: '请输入所属场站',
+        // options: stationOptions,
+        clearable: true,
       },
     },
     {

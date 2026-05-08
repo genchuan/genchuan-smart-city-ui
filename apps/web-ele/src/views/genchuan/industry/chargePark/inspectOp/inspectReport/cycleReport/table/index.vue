@@ -133,6 +133,7 @@ const [GenerateDrawer, generateDrawerApi] = useVbenDrawer({
         reportCycle: values.reportCycle,
         reportType: values.reportType,
         stationId: values.stationId,
+        stationName: values.stationName,
         statTimeEnd,
         statTimeStart,
       });

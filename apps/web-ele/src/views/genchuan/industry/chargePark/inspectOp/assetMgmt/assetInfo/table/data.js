@@ -291,16 +291,16 @@ export function useSearchFormSchema() {
         options: assetStatusOptions,
       },
     },
-    {
-      fieldName: 'stationId',
-      label: '所属场站',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择所属场站',
-        clearable: true,
-        options: stationOptions,
-      },
-    },
+    // {
+    //   fieldName: 'stationName',
+    //   label: '所属场站',
+    //   component: 'Input',
+    //   componentProps: {
+    //     placeholder: '请输入所属场站',
+    //     clearable: true,
+    //     // options: stationOptions,
+    //   },
+    // },
     {
       fieldName: 'purchaseTime',
       label: '采购时间',
@@ -347,16 +347,16 @@ export function useFormSchema() {
         type: 'datetime',
       },
     },
-    {
-      fieldName: 'stationId',
-      label: '所属场站',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择所属场站',
-        options: stationOptions,
-      },
-      rules: 'required',
-    },
+    // {
+    //   fieldName: 'stationId',
+    //   label: '所属场站',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择所属场站',
+    //     options: stationOptions,
+    //   },
+    //   rules: 'required',
+    // },
     // {
     //   fieldName: 'status',
     //   label: '资产状态',
@@ -416,26 +416,26 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'status' },
     },
-    {
-      field: 'stationName',
-      title: '所属场站',
-      minWidth: 180,
-      sortable: true,
-      slots: { default: 'stationName' },
-    },
-    {
-      field: 'deviceName',
-      title: '绑定设备',
-      minWidth: 170,
-      sortable: true,
-      slots: { default: 'deviceName' },
-    },
-    {
-      field: 'effectTimeStr',
-      title: '生效时间',
-      minWidth: 180,
-      sortable: true,
-    },
+    // {
+    //   field: 'stationName',
+    //   title: '所属场站',
+    //   minWidth: 180,
+    //   sortable: true,
+    //   slots: { default: 'stationName' },
+    // },
+    // {
+    //   field: 'deviceName',
+    //   title: '绑定设备',
+    //   minWidth: 170,
+    //   sortable: true,
+    //   slots: { default: 'deviceName' },
+    // },
+    // {
+    //   field: 'effectTimeStr',
+    //   title: '生效时间',
+    //   minWidth: 180,
+    //   sortable: true,
+    // },
     {
       field: 'changeRecord',
       title: '变更记录',
