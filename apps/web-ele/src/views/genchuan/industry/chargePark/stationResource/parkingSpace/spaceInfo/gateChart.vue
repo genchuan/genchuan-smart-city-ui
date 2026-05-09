@@ -43,16 +43,11 @@ const props = defineProps({
 
 const emit = defineEmits(['cardClick', 'barClick', 'lineClick', 'pieClick']);
 
-const hasCards = computed(() => props.cards.length > 0);
-const hasPie = computed(
-  () => props.chartConfig.pie && props.pieData.length > 0,
-);
-const hasBar = computed(
-  () => props.chartConfig.bar && props.barXData.length > 0,
-);
-const hasLine = computed(
-  () => props.chartConfig.line && props.lineXData.length > 0,
-);
+const hasCards = computed(() => props.cards?.length > 0);
+const isMarketCardLayout = computed(() => props.cards.length > 4);
+const hasPie = computed(() => props.chartConfig.pie);
+const hasBar = computed(() => props.chartConfig.bar);
+const hasLine = computed(() => props.chartConfig.line);
 
 const chartCount = computed(() => {
   let count = 0;
@@ -63,17 +58,32 @@ const chartCount = computed(() => {
 });
 
 const chartFlex = computed(() => {
-  if (chartCount.value === 0) return '0';
-  if (chartCount.value === 1) return '3.5 !important'; // 单个图表占满剩余空间
-  if (chartCount.value === 2) return '1.75 !important'; // 两个图表平分
-  return '1.17 !important'; // 三个图表平分
+  if (chartCount.value === 0) return 0;
+  return 3.5 / chartCount.value;
+});
+
+const compactCardStyle = computed(() => {
+  if (isMarketCardLayout.value) return {};
+  return {
+    gridTemplateRows: `repeat(${Math.max(props.cards.length, 1)}, minmax(0, 1fr))`,
+  };
 });
 </script>
 
 <template>
-  <div class="park-chart-box">
-    <!-- 图表区域 -->
-    <div v-if="hasCards" class="chart-box-left" style="flex: 1 !important">
+  <div
+    class="park-chart-box"
+    :class="{ 'has-market-card-layout': isMarketCardLayout }"
+  >
+    <div
+      v-if="hasCards"
+      class="chart-box-left"
+      :class="{
+        'is-compact-card-layout': !isMarketCardLayout,
+        'is-market-card-layout': isMarketCardLayout,
+      }"
+      :style="compactCardStyle"
+    >
       <IndicatorClick
         v-for="item in props.cards"
         :key="item.key"
@@ -85,7 +95,6 @@ const chartFlex = computed(() => {
       />
     </div>
 
-    <!-- 图表区域 -->
     <div v-if="hasPie" class="chart-wrapper" :style="{ flex: chartFlex }">
       <PieClick
         class="chart-panel-inner"
@@ -95,7 +104,6 @@ const chartFlex = computed(() => {
       />
     </div>
 
-    <!-- 图表区域 -->
     <div v-if="hasBar" class="chart-wrapper" :style="{ flex: chartFlex }">
       <BarClick
         class="chart-panel-inner"
@@ -107,7 +115,6 @@ const chartFlex = computed(() => {
       />
     </div>
 
-    <!-- 图表区域 -->
     <div v-if="hasLine" class="chart-wrapper" :style="{ flex: chartFlex }">
       <LineChartClick
         class="chart-panel-inner"
@@ -124,21 +131,94 @@ const chartFlex = computed(() => {
 <style scoped lang="scss">
 .park-chart-box {
   display: flex;
-  flex-wrap: wrap;
   gap: 12px;
+  align-items: stretch;
   width: 100%;
 
   .chart-box-left {
-    display: grid !important;
-    grid-template-rows: repeat(2, 1fr);
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
     min-width: 280px;
-    max-width: none;
+  }
+
+  .is-compact-card-layout {
+    display: grid;
+    flex: 1;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    height: 340px;
 
     :deep(.stat-card) {
       height: 100% !important;
-      min-height: 150px;
+      min-height: 0 !important;
+      padding: 8px 12px;
+    }
+
+    :deep(.card-header) {
+      margin-bottom: 4px;
+    }
+
+    :deep(.card-title) {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    :deep(.card-value) {
+      font-size: 24px;
+      line-height: 1.15;
+    }
+  }
+
+  .is-market-card-layout {
+    box-sizing: border-box;
+    display: flex;
+    flex: 0 0 480px;
+    flex-flow: row wrap;
+    gap: 4px;
+    align-content: stretch;
+    width: 480px;
+    min-width: 480px;
+    max-width: 480px;
+    height: 280px;
+    padding: 4px;
+    overflow: hidden;
+
+    :deep(.stat-card) {
+      box-sizing: border-box;
+      display: flex;
+      flex: 1 1 calc(33.333% - 3px);
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0 !important;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    :deep(.card-header) {
+      margin-bottom: 4px;
+    }
+
+    :deep(.card-title) {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12px;
+      line-height: 16px;
+      white-space: nowrap;
+    }
+
+    :deep(.card-indicator) {
+      flex: 0 0 6px;
+      width: 6px;
+      height: 6px;
+    }
+
+    :deep(.card-value) {
+      margin-bottom: 2px;
+      font-size: 20px;
+      line-height: 1.1;
+    }
+
+    :deep(.card-desc) {
+      font-size: 11px;
     }
   }
 
@@ -157,6 +237,21 @@ const chartFlex = computed(() => {
     width: 100%;
     height: 340px !important;
     min-height: 340px !important;
+  }
+
+  &.has-market-card-layout {
+    min-height: 280px;
+    overflow: hidden;
+
+    .chart-wrapper {
+      height: 280px;
+      min-height: 280px;
+    }
+
+    :deep(.chart-panel-inner) {
+      height: 280px !important;
+      min-height: 280px !important;
+    }
   }
 }
 </style>
