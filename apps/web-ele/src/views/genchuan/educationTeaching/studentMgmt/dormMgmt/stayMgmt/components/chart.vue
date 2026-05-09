@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption } from 'element-plus';
+import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
@@ -13,6 +13,44 @@ import {
 const loading = ref(true);
 const chartData = ref({});      // 卡片 + 折线图 + 状态分布
 const classStats = ref({});     // 班级统计
+
+// ========== 时间范围选择器 ==========
+const timeRange = ref([]);
+
+// 获取默认时间范围（最近30天，结束时间为当天）
+const getDefaultTimeRange = () => {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 30);
+  return [start, end];
+};
+
+// 格式化单个日期时间为后端要求的格式（带 T 分隔）
+const formatDateTime = (date, isEnd = false) => {
+  if (!date) return '';
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const time = isEnd ? '23:59:59' : '00:00:00';
+  return `${year}-${month}-${day}T${time}`;
+};
+
+// 生成 timeRange 字符串（格式："起始时间,结束时间"）
+const getTimeRangeParam = () => {
+  if (timeRange.value && timeRange.value.length === 2) {
+    const startStr = formatDateTime(timeRange.value[0], false);
+    const endStr = formatDateTime(timeRange.value[1], true);
+    return `${startStr},${endStr}`;
+  }
+  const [defaultStart, defaultEnd] = getDefaultTimeRange();
+  return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
+};
+
+// 日期范围变化时重新加载数据
+const handleDateRangeChange = () => {
+  loadData();
+};
 
 // ========== 卡片数据 ==========
 const cardList = computed(() => {
@@ -52,6 +90,19 @@ const barData = computed(() => {
   };
 });
 
+// ========== 图表切换（参考代码风格） ==========
+const chartOptions = [
+  { title: '周末留宿趋势', type: 'line' },
+  { title: '各班级留宿统计', type: 'bar' },
+];
+const activeChartIndex = ref(0);
+const currentChartTitle = computed(() => chartOptions[activeChartIndex.value].title);
+const currentChartType = computed(() => chartOptions[activeChartIndex.value].type);
+
+const handleChartChange = (index) => {
+  activeChartIndex.value = index;
+};
+
 // ========== 事件发射 ==========
 const emit = defineEmits(['cardSelect', 'pieSelect', 'barSelect', 'lineSelect']);
 
@@ -75,13 +126,15 @@ const handleLineClick = (params) => {
 const loadData = async () => {
   loading.value = true;
   try {
+    const timeRangeParam = getTimeRangeParam();
     const [chartRes, classRes] = await Promise.allSettled([
-      getStayMgmtChart({}),
-      getStayMgmtCount({}),
+      getStayMgmtChart({ timeRange: timeRangeParam }),
+      getStayMgmtCount({ timeRange: timeRangeParam }),
     ]);
     if (chartRes.status === 'fulfilled') {
       chartData.value = chartRes.value;
     } else {
+      // 模拟数据
       chartData.value = {
         totalStayCount: 156,
         pendingConfirmCount: 15,
@@ -120,12 +173,14 @@ const loadData = async () => {
 };
 
 onMounted(() => {
+  timeRange.value = getDefaultTimeRange();
   loadData();
 });
 </script>
 
 <template>
   <div v-loading="loading" class="chart-box">
+    <!-- 卡片区 -->
     <div class="box-left">
       <Indicator
         class="left-card"
@@ -135,14 +190,61 @@ onMounted(() => {
         @click="handleCardClick"
       />
     </div>
-    <lineChart
-      style="flex: 1.5 !important;"
-      title="周末留宿趋势"
-      :x-data="lineData.xAxis"
-      :series-data="lineData.series"
-      y-name="留宿人数"
-      @line-click="handleLineClick"
-    />
+
+    <!-- 可切换图表区域（折线图 / 柱状图） -->
+    <div class="chart-switch-container" style="flex: 1.5 !important; position: relative">
+      <!-- 左上角：下拉切换标题 -->
+      <div class="chart-select-wrapper">
+        <el-select v-model="activeChartIndex" size="small" @change="handleChartChange">
+          <el-option
+            v-for="(opt, idx) in chartOptions"
+            :key="idx"
+            :label="opt.title"
+            :value="idx"
+          />
+        </el-select>
+      </div>
+      <!-- 右上角：日期范围选择器 -->
+      <div class="date-range-wrapper">
+        <el-date-picker
+          v-model="timeRange"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="起始"
+          end-placeholder="结束"
+          size="small"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          :shortcuts="[
+            { text: '近7天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 7); return [start, end]; } },
+            { text: '近30天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 30); return [start, end]; } },
+            { text: '近90天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 90); return [start, end]; } }
+          ]"
+          @change="handleDateRangeChange"
+        />
+      </div>
+
+      <!-- 折线图 -->
+      <lineChart
+        v-if="currentChartType === 'line'"
+        :title="currentChartTitle"
+        :x-data="lineData.xAxis"
+        :series-data="lineData.series"
+        y-name="留宿人数"
+        @line-click="handleLineClick"
+      />
+      <!-- 柱状图 -->
+      <Bar
+        v-else
+        :title="currentChartTitle"
+        :x-data="barData.xData"
+        :series-data="barData.seriesData"
+        y-name="留宿人数"
+        @bar-click="handleBarClick"
+      />
+    </div>
+
+    <!-- 饼图（保持不变） -->
     <Pie
       style="flex: 1 !important;"
       title-text="留宿申请状态分布"
@@ -171,6 +273,44 @@ onMounted(() => {
 
     .left-card {
       height: 150px !important;
+    }
+  }
+
+  /* 可切换图表区域的样式 */
+  .chart-switch-container {
+    position: relative;
+    min-width: 280px;
+    margin-left: 12px;
+  }
+
+  .chart-select-wrapper {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    z-index: 10;
+  }
+
+  .date-range-wrapper {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    z-index: 10;
+  }
+
+  /* 紧凑的时间选择器样式 */
+  :deep(.el-date-editor) {
+    --el-date-editor-width: 240px;
+
+    .el-range__icon {
+      margin-right: 2px;
+    }
+
+    .el-range-separator {
+      padding: 0 4px;
+    }
+
+    .el-range__close-icon {
+      margin-left: 2px;
     }
   }
 }
