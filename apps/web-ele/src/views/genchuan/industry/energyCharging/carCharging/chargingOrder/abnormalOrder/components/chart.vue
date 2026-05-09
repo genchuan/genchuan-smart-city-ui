@@ -1,6 +1,6 @@
 <script setup>
-import { reactive, onMounted, ref, computed } from 'vue';
-import { ElMessage } from 'element-plus';
+import {reactive, onMounted, ref, computed} from 'vue';
+import {ElMessage} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
@@ -10,18 +10,18 @@ import {
 
 const mockChartData = {
   barData: [
-    { date: '2026-04-01', abnormalCount: 5, handleCount: 4 },
-    { date: '2026-04-02', abnormalCount: 3, handleCount: 3 },
-    { date: '2026-04-03', abnormalCount: 7, handleCount: 5 },
-    { date: '2026-04-04', abnormalCount: 4, handleCount: 4 },
-    { date: '2026-04-05', abnormalCount: 6, handleCount: 5 },
-    { date: '2026-04-06', abnormalCount: 8, handleCount: 6 },
-    { date: '2026-04-07', abnormalCount: 2, handleCount: 2 },
+    {date: '2026-04-01', abnormalCount: 5, handleCount: 4},
+    {date: '2026-04-02', abnormalCount: 3, handleCount: 3},
+    {date: '2026-04-03', abnormalCount: 7, handleCount: 5},
+    {date: '2026-04-04', abnormalCount: 4, handleCount: 4},
+    {date: '2026-04-05', abnormalCount: 6, handleCount: 5},
+    {date: '2026-04-06', abnormalCount: 8, handleCount: 6},
+    {date: '2026-04-07', abnormalCount: 2, handleCount: 2},
   ],
   pieData: [
-    { name: '充电中断', value: 15 },
-    { name: '支付异常', value: 8 },
-    { name: '设备故障', value: 9 },
+    {name: '充电中断', value: 15},
+    {name: '支付异常', value: 8},
+    {name: '设备故障', value: 9},
   ],
   cardData: {
     totalAbnormalCount: 32,
@@ -32,7 +32,7 @@ const mockChartData = {
 };
 
 const loading = ref(true);
-const chartData = ref({ ...mockChartData });
+const chartData = ref({...mockChartData});
 
 const cardList = computed(() => {
   const total = chartData.value.cardData?.totalAbnormalCount || 0;
@@ -40,18 +40,18 @@ const cardList = computed(() => {
   const handle = chartData.value.cardData?.handleCount || 0;
   const rate = chartData.value.cardData?.handleRatio || 0;
   return [
-    { title: '总异常订单数', value: total, color: '#409EFF', status: 'total' },
-    { title: '未处理数', value: unHandle, color: '#E6A23C', status: 'unHandle' },
-    { title: '已处理数', value: handle, color: '#67C23A', status: 'handle' },
-    { title: '处理完成率', value: `${rate}%`, color: '#F56C6C', status: 'rate' },
+    {title: '总异常订单数', value: total, color: '#409EFF', status: 'total'},
+    {title: '未处理数', value: unHandle, color: '#E6A23C', status: 'unHandle'},
+    {title: '已处理数', value: handle, color: '#67C23A', status: 'handle'},
+    {title: '处理完成率', value: `${rate}%`, color: '#F56C6C', status: 'rate'},
   ];
 });
 
 // 柱状图数据
 const barXData = computed(() => chartData.value.barData?.map(item => item.date) || []);
 const barSeriesData = computed(() => [
-  { name: '异常订单数量', data: chartData.value.barData?.map(item => item.abnormalCount) || [] },
-  { name: '处理完成数量', data: chartData.value.barData?.map(item => item.handleCount) || [] },
+  {name: '异常订单数量', data: chartData.value.barData?.map(item => item.abnormalCount) || []},
+  {name: '处理完成数量', data: chartData.value.barData?.map(item => item.handleCount) || []},
 ]);
 
 // 饼图数据
@@ -59,16 +59,34 @@ const pieData = computed(() => chartData.value.pieData || []);
 
 const emit = defineEmits(['barSelect', 'pieSelect', 'cardSelect']);
 
+// ✅ 修改卡片点击事件 - 传正确的状态值
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
+  let statusValue = '';
+  switch (cardInfo.status) {
+    case 'unHandle':
+      statusValue = '未核实';  // ✅ 表格中实际状态值
+      break;
+    case 'handle':
+    case 'rate':
+      statusValue = '已完结';  // ✅ 表格中实际状态值
+      break;
+    case 'total':
+    default:
+      statusValue = '';  // 清空筛选
+      break;
+  }
+  // ✅ 传正确的状态值给父组件
+  emit('cardSelect', statusValue);
 };
 
+// ✅ 修改柱状图点击 - 确保传字符串
 const handleBarClick = (params) => {
-  emit('barSelect', params.name);
+  emit('barSelect', String(params.name || ''));
 };
 
+// ✅ 修改饼图点击 - 确保传字符串
 const handlePieClick = (item) => {
-  emit('pieSelect', item.name);
+  emit('pieSelect', String(item.name || ''));
 };
 
 const fetchChartData = async () => {

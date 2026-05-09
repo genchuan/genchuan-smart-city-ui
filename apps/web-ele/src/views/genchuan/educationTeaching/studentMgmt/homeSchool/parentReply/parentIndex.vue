@@ -149,18 +149,31 @@ const searchParams = ref({});
 
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
+
   try {
-    const params = {
-      ...searchParams.value,
-      pageNo: page.currentPage,
-      pageSize: page.pageSize,
-    };
-    const res = await getParentReplyPage(params);
-    let filtered = res.list;
-    // 应用标签筛选
+    let sourceList = [];
+
+    try {
+      const params = {
+        ...searchParams.value,
+        pageNo: page.currentPage,
+        pageSize: page.pageSize,
+      };
+
+      const res = await getParentReplyPage(params);
+      sourceList = res?.list || [];
+    } catch (apiError) {
+      console.warn('接口异常，使用 mock 数据兜底', apiError);
+      sourceList = getMockList();
+    }
+
+    // 前端标签筛选（统一入口）
+    let filtered = sourceList;
+
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
+      filtered = filtered.filter((item) => {
         let itemValue;
+
         switch (field) {
           case 'readStatus':
             itemValue = item.readStatus;
@@ -175,61 +188,37 @@ const getTableData = async ({ page }) => {
             itemValue = item.studentName;
             break;
           case 'parentReplyTime':
-            const replyDate = item.parentReplyTime ? getDateFromTimestamp(item.parentReplyTime) : '';
-            itemValue = replyDate;
+            itemValue = item.parentReplyTime
+              ? getDateFromTimestamp(item.parentReplyTime)
+              : '';
             break;
           default:
             itemValue = item[field];
         }
+
         if (Array.isArray(filterValue)) {
           return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
         }
+        return String(itemValue) === String(filterValue);
       });
     });
-    dataObj.total = res.total || filtered.length;
+
+    // ✅ 核心修复点
+    dataObj.total = filtered.length;
     dataObj.list = filtered;
+
+    return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'readStatus':
-            itemValue = item.readStatus;
-            break;
-          case 'replyStatus':
-            itemValue = item.replyStatus;
-            break;
-          case 'communicateTitle':
-            itemValue = item.communicateTitle;
-            break;
-          case 'studentName':
-            itemValue = item.studentName;
-            break;
-          case 'parentReplyTime':
-            const replyDate = item.parentReplyTime ? getDateFromTimestamp(item.parentReplyTime) : '';
-            itemValue = replyDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+
+    dataObj.total = 0;
+    dataObj.list = [];
+
+    ElMessage.error('获取家长回复列表失败，请检查网络或联系管理员');
+    return dataObj;
   } finally {
     dataObj.loading = false;
   }
-  return dataObj;
 };
 
 function handleRefresh() {

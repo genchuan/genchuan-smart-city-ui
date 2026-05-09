@@ -36,48 +36,42 @@ const setAbnormalOrderRef = (el) => {
   if (el) abnormalOrderRef.value = el;
 };
 
-// 饼图点击筛选（异常类型）
+// ✅ 修改饼图点击筛选（异常类型）
 const onPieSelect = async (abnormalType) => {
   await nextTick();
   if (!abnormalOrderRef.value) {
     ElMessage.warning('列表组件未就绪，请稍后重试');
     return;
   }
-  abnormalOrderRef.value.handleFilterTagClick('abnormalType', abnormalType);
+  // 筛选异常类型
+  abnormalOrderRef.value.handleFilterTagClick('abnormalType', String(abnormalType));
 };
 
-// 柱状图点击筛选（日期）
+// ✅ 修改柱状图点击筛选（日期）
 const onBarSelect = async (date) => {
   await nextTick();
   if (!abnormalOrderRef.value) {
     ElMessage.warning('列表组件未就绪，请稍后重试');
     return;
   }
-  abnormalOrderRef.value.handleFilterTagClick('createTime', date);
+  // 筛选创建日期
+  abnormalOrderRef.value.handleFilterTagClick('createTime', String(date));
 };
 
-// 卡片点击筛选
-const onCardSelect = async (status) => {
+// ✅ 修改卡片点击筛选 - 现在接收的是正确的状态值
+const onCardSelect = async (statusValue) => {
   await nextTick();
   if (!abnormalOrderRef.value) {
     ElMessage.warning('列表组件未就绪，请稍后重试');
     return;
   }
-  abnormalOrderRef.value.clearFilters();
-  switch (status) {
-    case 'total':
-      break;
-    case 'unHandle':
-      // 未处理数：筛选状态为未核实、已核实、处理中
-      abnormalOrderRef.value.handleFilterTagClick('abnormalStatus', ['未核实', '已核实', '处理中']);
-      break;
-    case 'handle':
-    case 'rate':
-      // 已处理数 / 处理完成率：筛选状态为已完结
-      abnormalOrderRef.value.handleFilterTagClick('abnormalStatus', '已完结');
-      break;
-    default:
-      break;
+
+  if (!statusValue || statusValue === '') {
+    // 点击"全部"或清空筛选
+    abnormalOrderRef.value.clearFilters();
+  } else {
+    // 筛选特定状态
+    abnormalOrderRef.value.handleFilterTagClick('abnormalStatus', statusValue);
   }
 };
 
