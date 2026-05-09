@@ -64,11 +64,13 @@ const fetchStatsData = async () => {
       ];
 
       // 组装饼图数据 - 类目状态分布
-      statsData.value.pieData = (response.statusCountList || []).map((item) => ({
-        name: getCategoryStatusLabel(item.status),
-        value: item.count,
-        status: item.status,
-      }));
+      statsData.value.pieData = (response.statusCountList || []).map(
+        (item) => ({
+          name: getCategoryStatusLabel(item.status),
+          value: item.count,
+          status: item.status,
+        }),
+      );
 
       // 组装柱状图数据 - 类目适用范围分布
       statsData.value.barData = (response.scopeCountList || []).map((item) => ({

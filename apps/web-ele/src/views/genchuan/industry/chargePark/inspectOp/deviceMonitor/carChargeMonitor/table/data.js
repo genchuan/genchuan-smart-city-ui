@@ -336,13 +336,13 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationId',
+      fieldName: 'stationName',
       label: '所属场站',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择所属场站',
+        placeholder: '请输入所属场站',
         clearable: true,
-        options: stationOptions,
+        // options: stationOptions,
       },
     },
     {
@@ -451,7 +451,7 @@ export function useGridColumns() {
 export const detailFields = [
   { key: 'id', label: '监测ID' },
   { key: 'deviceCode', label: '设备编号' },
-  { key: 'deviceName', label: '设备名称' },
+  // { key: 'deviceName', label: '设备名称' },
   // { key: 'deviceId', label: '设备ID' },
   { key: 'stationName', label: '所属场站' },
   // { key: 'stationId', label: '场站ID' },

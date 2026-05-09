@@ -1,8 +1,8 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
-import { formatDate } from '#/utils/genchuan/formatTime';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 /** 获取库存状态Tag类型 - 使用封装的字典颜色工具 */
 export const getStockControlStatusTagType = (status) => {
@@ -12,7 +12,10 @@ export const getStockControlStatusTagType = (status) => {
 
 /** 获取告警状态Tag类型 - 使用封装的字典颜色工具 */
 export const getStockControlWarnStatusTagType = (warnStatus) => {
-  const dict = getDictObj(DICT_TYPE.STOCK_CONTROL_WARN_STATUS, String(warnStatus));
+  const dict = getDictObj(
+    DICT_TYPE.STOCK_CONTROL_WARN_STATUS,
+    String(warnStatus),
+  );
   return getDictTagTypeFromDict(dict, 'primary');
 };
 
@@ -24,7 +27,10 @@ export const getStockControlStatusLabel = (status) => {
 
 /** 获取告警状态标签 */
 export const getStockControlWarnStatusLabel = (warnStatus) => {
-  const dict = getDictObj(DICT_TYPE.STOCK_CONTROL_WARN_STATUS, String(warnStatus));
+  const dict = getDictObj(
+    DICT_TYPE.STOCK_CONTROL_WARN_STATUS,
+    String(warnStatus),
+  );
   return dict ? dict.label : warnStatus;
 };
 
@@ -41,15 +47,15 @@ export const dataList = () => {
       statusName: '正常库存',
       warnStatus: '0',
       warnStatusName: '未告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 5,
       replenishCount: 3,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 2,
@@ -61,15 +67,15 @@ export const dataList = () => {
       statusName: '低库存',
       warnStatus: '0',
       warnStatusName: '未告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 2,
       replenishCount: 1,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 3,
@@ -81,15 +87,15 @@ export const dataList = () => {
       statusName: '预警库存',
       warnStatus: '1',
       warnStatusName: '已告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 8,
       replenishCount: 5,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 4,
@@ -101,15 +107,15 @@ export const dataList = () => {
       statusName: '正常库存',
       warnStatus: '0',
       warnStatusName: '未告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 3,
       replenishCount: 2,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 5,
@@ -121,15 +127,15 @@ export const dataList = () => {
       statusName: '正常库存',
       warnStatus: '0',
       warnStatusName: '未告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 1,
       replenishCount: 1,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 6,
@@ -141,15 +147,15 @@ export const dataList = () => {
       statusName: '低库存',
       warnStatus: '0',
       warnStatusName: '未告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 4,
       replenishCount: 2,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 7,
@@ -161,15 +167,15 @@ export const dataList = () => {
       statusName: '预警库存',
       warnStatus: '1',
       warnStatusName: '已告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 6,
       replenishCount: 4,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 8,
@@ -181,15 +187,15 @@ export const dataList = () => {
       statusName: '正常库存',
       warnStatus: '0',
       warnStatusName: '未告警',
-      syncTime: 1745104800000,
+      syncTime: 1_745_104_800_000,
       allocateCount: 2,
       replenishCount: 1,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
   ];
 };
@@ -239,7 +245,7 @@ export function useFormSchema() {
   ];
 }
 
-/** 库存管控搜索表单配置 - 覆盖所有表格展示字段 */
+/** 库存管控搜索表单配置 - 根据StockControlPageReqVO参数配置 */
 export function useSearchFormSchema() {
   return [
     {
@@ -248,17 +254,10 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择卡种',
-        options: [
-          { label: '日卡 - 停车专用', value: 1 },
-          { label: '周卡 - 充电优惠', value: 2 },
-          { label: '月卡 - 充电通用', value: 3 },
-          { label: '季卡 - 充停通用', value: 4 },
-          { label: '年卡 - 充停通用', value: 5 },
-          { label: '日卡 - 充停通用', value: 6 },
-          { label: '周卡 - 停车专用', value: 7 },
-          { label: '月卡 - 停车专用', value: 8 },
-        ],
+        options: [],
         clearable: true,
+        filterable: true,
+        remote: true,
       },
     },
     {
@@ -278,70 +277,6 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择告警状态',
         options: getDictOptions(DICT_TYPE.STOCK_CONTROL_WARN_STATUS, 'string'),
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'currentStockMin',
-      label: '当前库存最小值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最小库存',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'currentStockMax',
-      label: '当前库存最大值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最大库存',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'syncTime',
-      label: '同步时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择同步时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'warnThresholdMin',
-      label: '预警阈值最小值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最小预警阈值',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'warnThresholdMax',
-      label: '预警阈值最大值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入最大预警阈值',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'updateTime',
-      label: '更新时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择更新时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
         clearable: true,
       },
     },
@@ -451,9 +386,24 @@ export const detailFields = [
   },
   { key: 'allocateCount', label: '调配记录数' },
   { key: 'replenishCount', label: '补货记录数' },
-  { key: 'syncTime', label: '同步时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
+  {
+    key: 'syncTime',
+    label: '同步时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
   { key: 'creator', label: '创建者' },
   { key: 'updater', label: '更新者' },
-  { key: 'createTime', label: '创建时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
-  { key: 'updateTime', label: '更新时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
 ];

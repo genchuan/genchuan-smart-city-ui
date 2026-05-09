@@ -48,7 +48,9 @@ const fetchChartData = async () => {
   try {
     const res = await getSpacePushChart();
     totalPushCount.value = res.totalPushCount || 0;
-    pushSuccessRate.value = res.pushSuccessRate || 0;
+    // 后端可能返回小数(0.78)或百分比数(78);统一转成百分比并保留 1 位小数
+    const rate = res.pushSuccessRate ?? 0;
+    pushSuccessRate.value = rate <= 1 ? (rate * 100).toFixed(1) : Number(rate).toFixed(1);
     pushTrendList.value = res.pushTrendList || [];
     renderLineChart();
   } catch (error) {

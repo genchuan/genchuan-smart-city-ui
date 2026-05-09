@@ -194,7 +194,7 @@ export const dataList = () => {
   }));
 };
 
-/** 奖品管理搜索表单配置 - 覆盖所有表格展示字段 */
+/** 奖品管理搜索表单配置 - 根据PrizeMgmtPageReqVO参数配置 */
 export function useSearchFormSchema() {
   return [
     {
@@ -217,48 +217,6 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stock',
-      label: '当前库存',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入当前库存',
-        min: 0,
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'status',
-      label: '奖品状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择奖品状态',
-        options: getDictOptions(DICT_TYPE.PRIZE_MGMT_STATUS, 'string'),
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'createTime',
-      label: '创建时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择创建时间',
-        type: 'datetimerange',
-        valueFormat: 'x',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'syncTime',
-      label: '同步时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择同步时间',
-        type: 'datetimerange',
-        valueFormat: 'x',
-        clearable: true,
-      },
-    },
-    {
       fieldName: 'activityId',
       label: '绑定活动',
       component: 'Select',
@@ -271,22 +229,12 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'sendCount',
-      label: '发放量',
-      component: 'InputNumber',
+      fieldName: 'status',
+      label: '奖品状态',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入发放量',
-        min: 0,
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'warnThreshold',
-      label: '预警阈值',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入预警阈值',
-        min: 0,
+        placeholder: '请选择奖品状态',
+        options: getDictOptions(DICT_TYPE.PRIZE_MGMT_STATUS, 'string'),
         clearable: true,
       },
     },
@@ -447,7 +395,6 @@ export const textObj = {
 
 /** 详情抽屉字段配置 - 使用与表格相同的字典颜色逻辑 */
 export const detailFields = [
-  { key: 'id', label: '奖品ID' },
   { key: 'name', label: '奖品名称' },
   {
     key: 'type',

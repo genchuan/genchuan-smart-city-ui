@@ -230,10 +230,10 @@ onUnmounted(() => {
 .prize-chart-box {
   display: flex;
   flex-wrap: nowrap;
-  padding-bottom: 0.5rem;
   width: 100%;
   height: auto;
   min-height: 280px;
+  padding-bottom: 0.5rem;
   overflow: hidden;
 }
 
@@ -249,13 +249,13 @@ onUnmounted(() => {
 .stat-card {
   flex: 1;
   padding: 16px;
+  margin-bottom: 12px;
   cursor: pointer;
   background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
   transition: all 0.3s ease;
-  margin-bottom: 12px;
 }
 
 .stat-card:last-child {
@@ -295,7 +295,7 @@ onUnmounted(() => {
 .card-value {
   font-size: 28px;
   font-weight: 600;
-  color: #4A90E2;
+  color: #4a90e2;
 }
 
 .card-desc {

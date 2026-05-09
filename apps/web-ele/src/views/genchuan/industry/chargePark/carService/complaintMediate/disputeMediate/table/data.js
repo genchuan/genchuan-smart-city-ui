@@ -6,7 +6,7 @@ export function useFormSchema() {
     { fieldName: 'status', label: '调解状态', component: 'Select', componentProps: { placeholder: '请选择', options: [
           { label: '待调解', value: '待调解' },
           { label: '调解中', value: '调解中' },
-          { label: '已关闭', value: '已关闭' }
+          { label: '已完成', value: '已完成' }
         ] }, isSearch: true },
     { fieldName: 'submitTime', label: '发起时间', component: 'DatePicker', componentProps: { type: 'daterange', valueFormat: 'YYYY-MM-DD' }, isSearch: true },
   ];
@@ -15,6 +15,7 @@ export function useFormSchema() {
 /** 纠纷调解表格列配置（带钻取交互） */
 export function useGridColumns({ getUserName, getMerchantName }) {
   return [
+    { type: 'checkbox', width: 40 },
     { field: 'id', title: '调解ID', minWidth: 100, sortable: true, slots: { default: 'id' } },
     { field: 'userId', title: '用户', minWidth: 120, sortable: true, slots: { default: 'user_name' }, formatter: ({ userId }) => getUserName(userId) },
     { field: 'merchantId', title: '商户', minWidth: 120, slots: { default: 'merchant_name' }, formatter: ({ merchantId }) => getMerchantName(merchantId) },

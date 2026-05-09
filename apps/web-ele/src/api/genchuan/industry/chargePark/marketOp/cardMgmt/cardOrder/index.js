@@ -3,7 +3,7 @@ import { requestClient } from '#/api/request.js';
 // ==================== 列表页交互操作接口 ====================
 
 /** 分页查询卡种订单列表
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {string} params.no - 订单编号，支持模糊查询
  * @param {number} params.userId - 用户ID，支持按用户筛选
  * @param {number} params.cardId - 卡种ID，支持按卡种筛选
@@ -26,18 +26,20 @@ export function exportCardOrder() {
 }
 
 /** 批量导出卡种订单数据
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {Array<number>} params.ids - 订单ID列表
  * @returns {Promise}
  */
 export function batchExportCardOrder(params) {
-  return requestClient.download('/marketop/card-order/batch-export', { params });
+  return requestClient.download('/marketop/card-order/batch-export', {
+    params,
+  });
 }
 
 // ==================== 列表行交互操作接口 ====================
 
 /** 获取卡种订单详情
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {number} params.id - 订单ID
  * @returns {Promise}
  */
@@ -46,17 +48,17 @@ export function getCardOrderDetail(params) {
 }
 
 /** 支付订单
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {number} params.id - 订单ID
  * @returns {Promise}
  */
 export function payCardOrder(params) {
-  return requestClient.put('/marketop/card-order/pay', null,{
+  return requestClient.put('/marketop/card-order/pay', null, {
     params,
   });
 }
 /** 激活订单
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 订单ID
  * @returns {Promise}
  */
@@ -65,7 +67,7 @@ export function activeCardOrder(data) {
 }
 
 /** 开票
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 订单ID
  * @param {string} data.invoiceInfo - 开票信息，包含抬头、税号等
  * @returns {Promise}
@@ -75,7 +77,7 @@ export function invoiceCardOrder(data) {
 }
 
 /** 取消订单
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 订单ID
  * @param {string} data.cancelReason - 取消原因
  * @returns {Promise}

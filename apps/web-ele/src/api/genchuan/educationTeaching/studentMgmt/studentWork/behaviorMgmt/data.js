@@ -195,7 +195,7 @@ export function getBehaviorMgmtChart(params) {
 }
 
 export function getAttendanceCount(params) {
-  return requestClient.get('/studentmgmt/behavior-mgmt/chart/attendanceCount', { params }).catch(err => {
+  return requestClient.get('/studentmgmt/behavior-mgmt/attendanceCount', { params }).catch(err => {
     console.warn('班级请假次数统计接口失败，使用模拟数据', err);
     return Promise.resolve({
       classStatistics: [

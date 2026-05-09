@@ -338,12 +338,13 @@ watch(
   () => props.chartFilter,
   (filter) => {
     if (!filter) return;
+    console.log('filter', filter);
     if (filter.type === 'status') {
       filterStatus.value = filter.value || '';
       filterAlarmed.value = false;
     }
     if (filter.type === 'alarmed') {
-      filterAlarmed.value = true;
+      filterAlarmed.value = filter.value ?? false;
     }
     if (filter.type === 'fence') {
       dataObj.detailObj = normalizeFenceMgmtRow(filter.value || {});

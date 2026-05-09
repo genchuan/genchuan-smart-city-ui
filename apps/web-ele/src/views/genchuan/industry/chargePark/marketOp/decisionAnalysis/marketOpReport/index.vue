@@ -1,12 +1,11 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue';
 
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj } from '@vben/hooks';
+
 import {
-  getCycleReportBarDrill,
-  getCycleReportCardDrill,
   getCycleReportChart,
-  getCycleReportLineDrill,
-  getCycleReportPieDrill,
 } from '#/api/genchuan/industry/chargePark/marketOp/decisionAnalysis/marketOpReport';
 
 import DrillDownDetailDialog from './components/DrillDownDetailDialog.vue';
@@ -46,75 +45,77 @@ const drillDownDialogRef = ref(null);
 const fetchStatsData = async () => {
   try {
     // 调用API获取统计数据
-    const response = await getCycleReportChart({ reportId: 1 });
-    if (response && response.code === 200 && response.data) {
-      const data = response.data;
+    const response = await getCycleReportChart({ tenantId: 1 });
 
+    // 处理响应数据 - 支持两种格式：直接返回data或嵌套在response.data中
+    const data = response?.data || response;
+
+    if (data && data.cardData) {
       // 组装卡片数据 - 11张卡片
       statsData.value.cards = [
         {
           title: '活动数',
-          value: data.activityCount || 0,
+          value: data.cardData.activityCount || 0,
           color: '#4A90E2',
           type: 'activityCount',
         },
         {
           title: '参与用户数',
-          value: data.joinUserCount || 0,
+          value: data.cardData.joinUserCount || 0,
           color: '#50E3C2',
           type: 'joinUserCount',
         },
         {
           title: '抽奖量',
-          value: data.lotteryCount || 0,
+          value: data.cardData.lotteryCount || 0,
           color: '#FF9F40',
           type: 'lotteryCount',
         },
         {
           title: '中奖率',
-          value: data.winningRate || '0%',
+          value: data.cardData.winningRate || '0%',
           color: '#A17FE0',
           type: 'winningRate',
         },
         {
           title: '优惠券发放量',
-          value: data.couponSendCount || 0,
+          value: data.cardData.couponSendCount || 0,
           color: '#FF6B8B',
           type: 'couponSendCount',
         },
         {
           title: '核销率',
-          value: data.couponVerifyRate || '0%',
+          value: data.cardData.couponVerifyRate || '0%',
           color: '#4A90E2',
           type: 'couponVerifyRate',
         },
         {
           title: '卡种订单量',
-          value: data.cardOrderCount || 0,
+          value: data.cardData.cardOrderCount || 0,
           color: '#50E3C2',
           type: 'cardOrderCount',
         },
         {
           title: '营收',
-          value: `¥${(data.revenue || 0).toFixed(2)}`,
+          value: `¥${(data.cardData.revenue || 0).toFixed(2)}`,
           color: '#FF9F40',
           type: 'revenue',
         },
         {
           title: '兑换量',
-          value: data.exchangeCount || 0,
+          value: data.cardData.exchangeCount || 0,
           color: '#A17FE0',
           type: 'exchangeCount',
         },
         {
           title: '总库存',
-          value: data.totalStock || 0,
+          value: data.cardData.totalStock || 0,
           color: '#FF6B8B',
           type: 'totalStock',
         },
         {
           title: '预警库存数',
-          value: data.warnStockCount || 0,
+          value: data.cardData.warnStockCount || 0,
           color: '#F56C6C',
           type: 'warnStockCount',
         },
@@ -125,27 +126,36 @@ const fetchStatsData = async () => {
         {
           label: '规则类型占比',
           value: 'ruleType',
-          data: (data.ruleTypeDistribution || []).map((item) => ({
-            name: item.name,
-            value: item.value,
+          data: (
+            data.pieData?.find((item) => item.name === '规则类型占比')?.data ||
+            []
+          ).map((item) => ({
+            name: getRuleTypeLabel(item.type),
+            value: item.ratio,
             type: item.type,
           })),
         },
         {
           label: '配置类型占比',
           value: 'configType',
-          data: (data.configTypeDistribution || []).map((item) => ({
-            name: item.name,
-            value: item.value,
+          data: (
+            data.pieData?.find((item) => item.name === '配置类型占比')?.data ||
+            []
+          ).map((item) => ({
+            name: getConfigTypeLabel(item.type),
+            value: item.ratio,
             type: item.type,
           })),
         },
         {
           label: '券包类型占比',
           value: 'couponPackageType',
-          data: (data.couponPackageTypeDistribution || []).map((item) => ({
-            name: item.name,
-            value: item.value,
+          data: (
+            data.pieData?.find((item) => item.name === '券包类型占比')?.data ||
+            []
+          ).map((item) => ({
+            name: getCouponPackageTypeLabel(item.type),
+            value: item.ratio,
             type: item.type,
           })),
         },
@@ -159,46 +169,61 @@ const fetchStatsData = async () => {
         {
           label: '活动类型分布',
           value: 'activityType',
-          data: (data.activityTypeDistribution || []).map((item) => ({
-            name: item.name,
-            value: item.value,
+          data: (
+            data.barData?.find((item) => item.name === '活动类型分布')?.data ||
+            []
+          ).map((item) => ({
+            name: getActivityTypeLabel(item.type),
+            value: item.count,
             type: item.type,
           })),
         },
         {
           label: '奖品类型分布',
           value: 'prizeType',
-          data: (data.prizeTypeDistribution || []).map((item) => ({
-            name: item.name,
-            value: item.value,
+          data: (
+            data.barData?.find((item) => item.name === '奖品类型分布')?.data ||
+            []
+          ).map((item) => ({
+            name: getPrizeTypeLabel(item.type),
+            value: item.count,
             type: item.type,
           })),
         },
         {
           label: '优惠券类型分布',
           value: 'couponType',
-          data: (data.couponTypeDistribution || []).map((item) => ({
-            name: item.name,
-            value: item.value,
+          data: (
+            data.barData?.find((item) => item.name === '优惠券类型分布')
+              ?.data || []
+          ).map((item) => ({
+            name: getCouponTypeLabel(item.type),
+            value: item.count,
             type: item.type,
           })),
         },
         {
           label: '卡种类型分布',
           value: 'cardType',
-          data: (data.cardTypeDistribution || []).map((item) => ({
-            name: item.name,
-            value: item.value,
+          data: (
+            data.barData?.find((item) => item.name === '卡种类型分布')?.data ||
+            []
+          ).map((item) => ({
+            name: getCardTypeLabel(item.type),
+            value: item.count,
             type: item.type,
           })),
         },
         {
           label: '兑换类目分布',
           value: 'exchangeCategory',
-          data: (data.exchangeCategoryDistribution || []).map((item) => ({
+          data: (
+            data.barData?.find((item) => item.name === '兑换类目订单分布')
+              ?.data || []
+          ).map((item) => ({
             name: item.name,
-            value: item.value,
-            type: item.type,
+            value: item.count,
+            type: item.categoryId,
           })),
         },
       ].filter((item) => item.data.length > 0);
@@ -207,82 +232,121 @@ const fetchStatsData = async () => {
       statsData.value.barData = barChartOptions.value[0]?.data || [];
 
       // 组装折线图选项数据 - 支持切换
-      const joinTrend = (data.joinTrend || []).map((item) => ({
-        date: item.date,
-        fullDate: item.fullDate,
-        value: item.value,
-      }));
-      const lotteryTrend = (data.lotteryTrend || []).map((item) => ({
-        date: item.date,
-        fullDate: item.fullDate,
-        value: item.value,
-      }));
-      const couponSendTrend = (data.couponSendTrend || []).map((item) => ({
-        date: item.date,
-        fullDate: item.fullDate,
-        value: item.value,
-      }));
-      const orderTrend = (data.orderTrend || []).map((item) => ({
-        date: item.date,
-        fullDate: item.fullDate,
-        value: item.value,
-      }));
-      const stockTrend = (data.stockTrend || []).map((item) => ({
-        date: item.date,
-        fullDate: item.fullDate,
-        value: item.value,
-      }));
+      const lineDataList = data.lineData || [];
 
       lineChartOptions.value = [
         {
           label: '活动参与趋势',
           value: 'joinTrend',
           data: {
-            xAxis: joinTrend.map((item) => item.date),
-            series: joinTrend.map((item) => item.value),
-            fullDates: joinTrend.map((item) => item.fullDate),
+            xAxis: (
+              lineDataList.find((item) => item.name === '活动参与趋势')?.data ||
+              []
+            ).map((item) => {
+              const dateObj = new Date(item.date);
+              return `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+            }),
+            series: (
+              lineDataList.find((item) => item.name === '活动参与趋势')?.data ||
+              []
+            ).map((item) => item.count),
+            fullDates: (
+              lineDataList.find((item) => item.name === '活动参与趋势')?.data ||
+              []
+            ).map((item) => item.date),
           },
         },
         {
           label: '抽奖量趋势',
           value: 'lotteryTrend',
           data: {
-            xAxis: lotteryTrend.map((item) => item.date),
-            series: lotteryTrend.map((item) => item.value),
-            fullDates: lotteryTrend.map((item) => item.fullDate),
+            xAxis: (
+              lineDataList.find((item) => item.name === '抽奖里趋势')?.data ||
+              []
+            ).map((item) => {
+              const dateObj = new Date(item.date);
+              return `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+            }),
+            series: (
+              lineDataList.find((item) => item.name === '抽奖里趋势')?.data ||
+              []
+            ).map((item) => item.count),
+            fullDates: (
+              lineDataList.find((item) => item.name === '抽奖里趋势')?.data ||
+              []
+            ).map((item) => item.date),
           },
         },
         {
           label: '优惠券发放趋势',
           value: 'couponSendTrend',
           data: {
-            xAxis: couponSendTrend.map((item) => item.date),
-            series: couponSendTrend.map((item) => item.value),
-            fullDates: couponSendTrend.map((item) => item.fullDate),
+            xAxis: (
+              lineDataList.find((item) => item.name === '优惠券发放趋势')
+                ?.data || []
+            ).map((item) => {
+              const dateObj = new Date(item.date);
+              return `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+            }),
+            series: (
+              lineDataList.find((item) => item.name === '优惠券发放趋势')
+                ?.data || []
+            ).map((item) => item.count),
+            fullDates: (
+              lineDataList.find((item) => item.name === '优惠券发放趋势')
+                ?.data || []
+            ).map((item) => item.date),
           },
         },
         {
           label: '订单量趋势',
           value: 'orderTrend',
           data: {
-            xAxis: orderTrend.map((item) => item.date),
-            series: orderTrend.map((item) => item.value),
-            fullDates: orderTrend.map((item) => item.fullDate),
+            xAxis: (
+              lineDataList.find((item) => item.name === '订单量趋势')?.data ||
+              []
+            ).map((item) => {
+              const dateObj = new Date(item.date);
+              return `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+            }),
+            series: (
+              lineDataList.find((item) => item.name === '订单量趋势')?.data ||
+              []
+            ).map((item) => item.count),
+            fullDates: (
+              lineDataList.find((item) => item.name === '订单量趋势')?.data ||
+              []
+            ).map((item) => item.date),
           },
         },
         {
           label: '库存趋势',
           value: 'stockTrend',
           data: {
-            xAxis: stockTrend.map((item) => item.date),
-            series: stockTrend.map((item) => item.value),
-            fullDates: stockTrend.map((item) => item.fullDate),
+            xAxis: (
+              lineDataList.find((item) => item.name === '库存趋势')?.data || []
+            ).map((item) => {
+              const dateObj = new Date(item.date);
+              return `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
+            }),
+            series: (
+              lineDataList.find((item) => item.name === '库存趋势')?.data || []
+            ).map((item) => item.count),
+            fullDates: (
+              lineDataList.find((item) => item.name === '库存趋势')?.data || []
+            ).map((item) => item.date),
           },
         },
       ].filter((item) => item.data.xAxis.length > 0);
 
       // 默认折线图数据
-      statsData.value.lineData = joinTrend;
+      const joinTrendData =
+        lineDataList.find((item) => item.name === '活动参与趋势')?.data || [];
+      statsData.value.lineData = joinTrendData.map((item) => ({
+        date: `${new Date(item.date).getMonth() + 1}/${new Date(item.date).getDate()}`,
+        fullDate: item.date,
+        value: item.count,
+      }));
     } else {
       // 使用模拟数据
       useMockData();
@@ -292,6 +356,48 @@ const fetchStatsData = async () => {
     // 使用模拟数据
     useMockData();
   }
+};
+
+// 类型标签转换函数 - 使用系统字典配置
+const getRuleTypeLabel = (type) => {
+  const dict = getDictObj(DICT_TYPE.RULE_CONFIG_TYPE, String(type));
+  return dict ? dict.label : type;
+};
+
+const getConfigTypeLabel = (type) => {
+  const dict = getDictObj(DICT_TYPE.ACTIVITY_CONFIG_TYPE, String(type));
+  return dict ? dict.label : type;
+};
+
+const getCouponPackageTypeLabel = (type) => {
+  const dict = getDictObj(DICT_TYPE.PACKAGE_CONFIG_TYPE, String(type));
+  return dict ? dict.label : type;
+};
+
+const getActivityTypeLabel = (type) => {
+  const dict = getDictObj(DICT_TYPE.POINT_ACTIVITY_TYPE, String(type));
+  return dict ? dict.label : type;
+};
+
+const getPrizeTypeLabel = (type) => {
+  const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_TYPE, String(type));
+  return dict ? dict.label : type;
+};
+
+const getCouponTypeLabel = (type) => {
+  const dict = getDictObj(DICT_TYPE.COUPON_MGMT_TYPE, String(type));
+  return dict ? dict.label : type;
+};
+
+const getCardTypeLabel = (type) => {
+  const dict = getDictObj(DICT_TYPE.CARD_CONFIG_TYPE, String(type));
+  return dict ? dict.label : type;
+};
+
+const getExchangeCategoryLabel = (type) => {
+  // 兑换类目暂无对应字典，使用硬编码映射
+  const map = { 0: '数码产品', 1: '生活用品' };
+  return map[type] || type;
 };
 
 // 使用模拟数据
@@ -500,8 +606,21 @@ const generateTrendData = () => {
   return data;
 };
 
-// 处理卡片点击 - 钻取筛选
+// 处理卡片点击 - 打开钻取弹窗并筛选
 const handleCardClick = async (cardType) => {
+  console.log('卡片钻取:', cardType);
+
+  // 打开钻取明细弹窗
+  if (drillDownDialogRef.value) {
+    drillDownDialogRef.value.open({
+      drillType: cardType,
+      drillValue: cardType,
+      drillName: '',
+      reportCycle: activeName.value,
+    });
+  }
+
+  // 同时调用表格筛选
   await nextTick();
   const currentTable = getCurrentTableRef();
   if (currentTable) {
@@ -509,21 +628,13 @@ const handleCardClick = async (cardType) => {
   } else {
     console.warn('tableRef not ready or handleStatsFilter not available');
   }
-
-  // 调用卡片钻取API
-  try {
-    const response = await getCycleReportCardDrill({ cardType });
-    console.log('卡片钻取数据:', response);
-  } catch (error) {
-    console.error('卡片钻取失败:', error);
-  }
 };
 
 // 处理饼图点击 - 打开钻取弹窗
 const handlePieClick = async (drillInfo) => {
   console.log('饼图钻取:', drillInfo);
 
-  // 打开钻取明细弹窗
+  // 打开钻取明细弹窗（仅打开弹窗，不触发表格筛选）
   if (drillDownDialogRef.value) {
     drillDownDialogRef.value.open({
       drillType: drillInfo.type,
@@ -531,24 +642,6 @@ const handlePieClick = async (drillInfo) => {
       drillName: drillInfo.name,
       reportCycle: activeName.value,
     });
-  }
-
-  // 同时调用表格筛选
-  await nextTick();
-  const currentTable = getCurrentTableRef();
-  if (currentTable) {
-    currentTable.handleStatsFilter('pie', drillInfo.value);
-  }
-
-  // 调用饼图钻取API
-  try {
-    const response = await getCycleReportPieDrill({
-      pieType: drillInfo.type,
-      type: drillInfo.value,
-    });
-    console.log('饼图钻取数据:', response);
-  } catch (error) {
-    console.error('饼图钻取失败:', error);
   }
 };
 
@@ -556,32 +649,16 @@ const handlePieClick = async (drillInfo) => {
 const handleBarClick = async (drillInfo) => {
   console.log('柱状图钻取:', drillInfo);
 
-  // 打开钻取明细弹窗
+  // 打开钻取明细弹窗（仅打开弹窗，不触发表格筛选）
   if (drillDownDialogRef.value) {
     drillDownDialogRef.value.open({
       drillType: drillInfo.type,
       drillValue: drillInfo.value,
       drillName: drillInfo.name,
       reportCycle: activeName.value,
+      // 如果有 categoryId（兑换类目场景），也一起传递
+      ...(drillInfo.categoryId ? { categoryId: drillInfo.categoryId } : {}),
     });
-  }
-
-  // 同时调用表格筛选
-  await nextTick();
-  const currentTable = getCurrentTableRef();
-  if (currentTable) {
-    currentTable.handleStatsFilter('bar', drillInfo.value);
-  }
-
-  // 调用柱状图钻取API
-  try {
-    const response = await getCycleReportBarDrill({
-      barType: drillInfo.type,
-      type: drillInfo.value,
-    });
-    console.log('柱状图钻取数据:', response);
-  } catch (error) {
-    console.error('柱状图钻取失败:', error);
   }
 };
 
@@ -589,7 +666,7 @@ const handleBarClick = async (drillInfo) => {
 const handleLineClick = async (drillInfo) => {
   console.log('折线图钻取:', drillInfo);
 
-  // 打开钻取明细弹窗
+  // 打开钻取明细弹窗（仅打开弹窗，不触发表格筛选）
   if (drillDownDialogRef.value) {
     drillDownDialogRef.value.open({
       drillType: drillInfo.type,
@@ -597,24 +674,6 @@ const handleLineClick = async (drillInfo) => {
       drillName: drillInfo.name,
       reportCycle: activeName.value,
     });
-  }
-
-  // 同时调用表格筛选
-  await nextTick();
-  const currentTable = getCurrentTableRef();
-  if (currentTable) {
-    currentTable.handleStatsFilter('line', drillInfo.value);
-  }
-
-  // 调用折线图钻取API
-  try {
-    const response = await getCycleReportLineDrill({
-      lineType: drillInfo.type,
-      date: drillInfo.value,
-    });
-    console.log('折线图钻取数据:', response);
-  } catch (error) {
-    console.error('折线图钻取失败:', error);
   }
 };
 
@@ -633,17 +692,23 @@ const showStatsValue = computed(() => showStats.value);
 // 获取当前激活的tableRef（根据当前激活的标签页）
 const getCurrentTableRef = () => {
   // 找到当前激活标签页的索引
-  const activeIndex = reportCycleTabs.findIndex((t) => t.label === activeName.value);
+  const activeIndex = reportCycleTabs.findIndex(
+    (t) => t.label === activeName.value,
+  );
   if (activeIndex === -1) return null;
 
   // 如果tableRef是数组，返回对应索引的表格实例
   if (Array.isArray(tableRef.value)) {
-    return tableRef.value[activeIndex] && typeof tableRef.value[activeIndex].handleStatsFilter === 'function'
+    return tableRef.value[activeIndex] &&
+      typeof tableRef.value[activeIndex].handleStatsFilter === 'function'
       ? tableRef.value[activeIndex]
       : null;
   }
   // 否则直接返回
-  return tableRef.value && typeof tableRef.value.handleStatsFilter === 'function' ? tableRef.value : null;
+  return tableRef.value &&
+    typeof tableRef.value.handleStatsFilter === 'function'
+    ? tableRef.value
+    : null;
 };
 
 // 报表周期标签列表 - 作为el-tabs的标签页

@@ -100,22 +100,22 @@ export function useSearchFormSchema() {
         ],
       },
     },
-    {
-      fieldName: 'stationId',
-      label: '场站',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入场站ID',
-      },
-    },
-    {
-      fieldName: 'auditUserId',
-      label: '审核人ID',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入审核人ID',
-      },
-    },
+    // {
+    //   fieldName: 'stationId',
+    //   label: '场站',
+    //   component: 'Input',
+    //   componentProps: {
+    //     placeholder: '请输入场站ID',
+    //   },
+    // },
+    // {
+    //   fieldName: 'auditUserId',
+    //   label: '审核人ID',
+    //   component: 'Input',
+    //   componentProps: {
+    //     placeholder: '请输入审核人ID',
+    //   },
+    // },
     {
       fieldName: 'registerTime',
       label: '登记时间',
@@ -312,18 +312,18 @@ export function useGridColumns() {
       minWidth: 100,
       sortable: true,
     },
-    {
-      field: 'stationId',
-      title: '场站ID',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'auditUserId',
-      title: '审核人ID',
-      minWidth: 100,
-      sortable: true,
-    },
+    // {
+    //   field: 'stationId',
+    //   title: '场站ID',
+    //   minWidth: 100,
+    //   sortable: true,
+    // },
+    // {
+    //   field: 'auditUserId',
+    //   title: '审核人ID',
+    //   minWidth: 100,
+    //   sortable: true,
+    // },
     {
       field: 'auditTime',
       title: '审核时间',
@@ -362,8 +362,8 @@ export const detailFields = [
   { key: 'phone', label: '联系电话' },
   { key: 'registerTime', label: '登记时间', formatter: formatTime },
   { key: 'status', label: '审核状态' },
-  { key: 'stationId', label: '场站ID' },
-  { key: 'auditUserId', label: '审核人ID' },
+  // { key: 'stationId', label: '场站ID' },
+  // { key: 'auditUserId', label: '审核人ID' },
   { key: 'auditTime', label: '审核时间', formatter: formatTime },
   { key: 'auditComment', label: '审核意见' },
   { key: 'remark', label: '备注' },

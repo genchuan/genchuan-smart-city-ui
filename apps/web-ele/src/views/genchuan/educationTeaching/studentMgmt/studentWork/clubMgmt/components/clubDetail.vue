@@ -47,10 +47,26 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-card-row"><div class="detail-row-left">社团类型：</div><div class="detail-row-right">{{ detailObj.clubType || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">学号：</div><div class="detail-row-right">{{ detailObj.studentId || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">班级：</div><div class="detail-row-right">{{ detailObj.className || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">申请时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.applyTime) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.status || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">场馆申请状态：</div><div class="detail-row-right">{{ detailObj.venueApplyStatus || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">备注：</div><div class="detail-row-right">{{ detailObj.remark || '-' }}</div></div>
+
+      <div class="detail-section">🎪 场馆申请信息</div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">场馆申请状态：</div>
+        <div class="detail-row-right">{{ detailObj.venueApplyStatus || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">申请场馆：</div>
+        <div class="detail-row-right">{{ detailObj.venueName || '-' }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">申请时间：</div>
+        <div class="detail-row-right">{{ formatTimestamp(detailObj.applyTime) }}</div>
+      </div>
+      <div class="detail-card-row">
+        <div class="detail-row-left">申请原因：</div>
+        <div class="detail-row-right">{{ detailObj.applyReason || '-' }}</div>
+      </div>
 
       <div class="detail-section">📝 审核记录</div>
       <div class="detail-card-row"><div class="detail-row-left">审核人：</div><div class="detail-row-right">{{ detailObj.auditUser || '-' }}</div></div>

@@ -25,6 +25,10 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { UserOpReportApi } from '#/api/genchuan/industry/chargePark/userMerchant/decisionAnalysis/userOpReport';
 import IconButton from '#/components/common/IconButton.vue';
 import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
+import {
+  buildActiveFilterTags,
+  type ActiveFilterTag,
+} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildDetailStatsData,
@@ -60,8 +64,48 @@ const generateForm = ref({
 const filterReportType = ref('');
 const searchParams = ref<Record<string, any>>({});
 
+const quickFilterConfigs = {
+  reportType: {
+    label: '报表类型',
+    type: 'success',
+  },
+} as const;
+
+const searchFilterConfigs = {
+  reportType: {
+    label: '报表类型',
+    type: 'success',
+  },
+  statTime: {
+    formatter: (value: any[]) => value.join(' 至 '),
+    label: '统计时间',
+    type: 'danger',
+  },
+  timeScale: {
+    label: '时间尺度',
+    type: 'info',
+  },
+} as const;
+
 const detailStatsData = computed(() =>
   buildDetailStatsData(detailReport.value),
+);
+
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: quickFilterConfigs,
+      source: 'quick',
+      values: {
+        reportType: filterReportType.value,
+      },
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
 );
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -193,7 +237,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 /** 刷新表格 - 同时清除所有快捷筛选 */
 function handleRefresh() {
   filterReportType.value = '';
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 联动刷新页面 */
@@ -208,7 +252,7 @@ async function resetSearch() {
   searchParams.value = {};
   filterReportType.value = '';
   await queryFormApi.resetForm();
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 设置筛选条件 */
@@ -218,8 +262,8 @@ async function setSearchValues(values: Record<string, any>) {
     ...values,
   };
   filterReportType.value = '';
-  await queryFormApi.setValues(searchParams.value);
-  return gridApi.query();
+  await syncQueryFormValues();
+  return gridApi.reload();
 }
 
 /** 重新计算表格布局 */
@@ -286,6 +330,11 @@ async function handleExportRow(row: UserOpReportRow) {
 /** 打开搜索抽屉 */
 async function handleSerachShow() {
   drawerApi.open();
+  await syncQueryFormValues();
+}
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
   await queryFormApi.setValues(searchParams.value);
 }
 
@@ -293,13 +342,29 @@ async function handleSerachShow() {
 function handleFilterReportType(reportType: UserOpReportRow['reportType']) {
   filterReportType.value =
     filterReportType.value === reportType ? '' : reportType;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消报表类型筛选 */
 function handleCancelReportTypeFilter() {
   filterReportType.value = '';
-  gridApi.query();
+  gridApi.reload();
+}
+
+/** 移除筛选标签 */
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'quick') {
+    if (tag.key === 'reportType') {
+      handleCancelReportTypeFilter();
+    }
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
 }
 
 /** 确认生成自定义报表 */
@@ -350,13 +415,14 @@ async function handleConfirmGenerate() {
             "
           >
             <ElTag
-              v-if="filterReportType"
-              type="success"
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
               closable
               style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleCancelReportTypeFilter"
+              @close="handleRemoveFilterTag(tag)"
             >
-              报表类型：{{ filterReportType }}
+              {{ tag.label }}：{{ tag.value }}
             </ElTag>
           </div>
         </template>

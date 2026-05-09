@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import {downloadFileFromBlobPart} from '@vben/utils';
@@ -281,6 +281,7 @@ const getTableData = async (pageObj) => {
       costPointMin: dataObj.searchParams.costPointMin,
       costPointMax: dataObj.searchParams.costPointMax,
       payStatus: filterPayStatus.value || dataObj.searchParams.payStatus,
+      categoryId: filterCategoryId.value || dataObj.searchParams.categoryId,
       logisticsInfo: dataObj.searchParams.logisticsInfo,
       createTime: dataObj.searchParams.createTime,
       payTime: dataObj.searchParams.payTime,
@@ -479,14 +480,16 @@ defineExpose({
 
 // ==================== 详情弹窗处理 ====================
 
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
+const handleOpenDetail = async (row) => {
+  dataObj.detailObj = { ...row };
+  await nextTick();
   detailDrawerRef.value.open();
 };
 
 /** 打开订单详情弹窗 */
-const handleOpenOrderDetail = (row) => {
-  dataObj.detailObj = row;
+const handleOpenOrderDetail = async (row) => {
+  dataObj.detailObj = { ...row };
+  await nextTick();
   detailDrawerRef.value.open();
 };
 
@@ -526,6 +529,7 @@ const handleFullShow = () => {
     </FormDrawer>
     <!--   详情抽屉-->
     <DetailDrawer
+      v-if="Object.keys(dataObj.detailObj).length > 0"
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.no || '兑换订单'}详情`"
       :data="dataObj.detailObj"

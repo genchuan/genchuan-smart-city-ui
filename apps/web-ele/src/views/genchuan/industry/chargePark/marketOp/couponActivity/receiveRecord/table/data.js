@@ -1,8 +1,8 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
-import { formatDate } from '#/utils/genchuan/formatTime';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 /** 获取记录状态Tag类型 - 使用封装的字典颜色工具 */
 export const getReceiveRecordStatusTagType = (status) => {
@@ -12,7 +12,10 @@ export const getReceiveRecordStatusTagType = (status) => {
 
 /** 获取同步状态Tag类型 - 使用封装的字典颜色工具 */
 export const getReceiveRecordSyncStatusTagType = (syncStatus) => {
-  const dict = getDictObj(DICT_TYPE.RECEIVE_RECORD_SYNC_STATUS, String(syncStatus));
+  const dict = getDictObj(
+    DICT_TYPE.RECEIVE_RECORD_SYNC_STATUS,
+    String(syncStatus),
+  );
   return getDictTagTypeFromDict(dict, 'primary');
 };
 
@@ -24,7 +27,10 @@ export const getReceiveRecordStatusLabel = (status) => {
 
 /** 获取同步状态标签 */
 export const getReceiveRecordSyncStatusLabel = (syncStatus) => {
-  const dict = getDictObj(DICT_TYPE.RECEIVE_RECORD_SYNC_STATUS, String(syncStatus));
+  const dict = getDictObj(
+    DICT_TYPE.RECEIVE_RECORD_SYNC_STATUS,
+    String(syncStatus),
+  );
   return dict ? dict.label : syncStatus;
 };
 
@@ -38,10 +44,10 @@ export const dataList = () => {
       userName: '张三',
       couponId: 1,
       couponName: '5元充电券',
-      receiveTime: 1743472800000,
+      receiveTime: 1_743_472_800_000,
       status: '0',
       statusName: '正常记录',
-      verifyTime: 1743589200000,
+      verifyTime: 1_743_589_200_000,
       checkResult: null,
       syncStatus: '1',
       syncStatusName: '已同步',
@@ -50,8 +56,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1743472800000,
-      updateTime: 1743589200000,
+      createTime: 1_743_472_800_000,
+      updateTime: 1_743_589_200_000,
     },
     {
       id: 2,
@@ -60,7 +66,7 @@ export const dataList = () => {
       userName: '李四',
       couponId: 2,
       couponName: '10元充电券',
-      receiveTime: 1743476400000,
+      receiveTime: 1_743_476_400_000,
       status: '1',
       statusName: '异常记录',
       verifyTime: null,
@@ -72,8 +78,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'system',
       updater: 'admin',
-      createTime: 1743476400000,
-      updateTime: 1743562800000,
+      createTime: 1_743_476_400_000,
+      updateTime: 1_743_562_800_000,
     },
     {
       id: 3,
@@ -82,20 +88,20 @@ export const dataList = () => {
       userName: '王五',
       couponId: 3,
       couponName: '20元充电券',
-      receiveTime: 1743480000000,
+      receiveTime: 1_743_480_000_000,
       status: '2',
       statusName: '已核查',
-      verifyTime: 1743592800000,
+      verifyTime: 1_743_592_800_000,
       checkResult: '核查通过，数据正常',
       syncStatus: '1',
       syncStatusName: '已同步',
-      archiveTime: 1743679200000,
+      archiveTime: 1_743_679_200_000,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'admin',
-      createTime: 1743480000000,
-      updateTime: 1743679200000,
+      createTime: 1_743_480_000_000,
+      updateTime: 1_743_679_200_000,
     },
     {
       id: 4,
@@ -104,10 +110,10 @@ export const dataList = () => {
       userName: '赵六',
       couponId: 1,
       couponName: '5元充电券',
-      receiveTime: 1743483600000,
+      receiveTime: 1_743_483_600_000,
       status: '0',
       statusName: '正常记录',
-      verifyTime: 1743596400000,
+      verifyTime: 1_743_596_400_000,
       checkResult: null,
       syncStatus: '1',
       syncStatusName: '已同步',
@@ -116,8 +122,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1743483600000,
-      updateTime: 1743596400000,
+      createTime: 1_743_483_600_000,
+      updateTime: 1_743_596_400_000,
     },
     {
       id: 5,
@@ -126,10 +132,10 @@ export const dataList = () => {
       userName: '孙七',
       couponId: 4,
       couponName: '30元充电券',
-      receiveTime: 1743487200000,
+      receiveTime: 1_743_487_200_000,
       status: '0',
       statusName: '正常记录',
-      verifyTime: 1743600000000,
+      verifyTime: 1_743_600_000_000,
       checkResult: null,
       syncStatus: '0',
       syncStatusName: '未同步',
@@ -138,8 +144,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1743487200000,
-      updateTime: 1743487200000,
+      createTime: 1_743_487_200_000,
+      updateTime: 1_743_487_200_000,
     },
     {
       id: 6,
@@ -148,7 +154,7 @@ export const dataList = () => {
       userName: '周八',
       couponId: 2,
       couponName: '10元充电券',
-      receiveTime: 1743490800000,
+      receiveTime: 1_743_490_800_000,
       status: '1',
       statusName: '异常记录',
       verifyTime: null,
@@ -160,8 +166,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'system',
       updater: 'admin',
-      createTime: 1743490800000,
-      updateTime: 1743566400000,
+      createTime: 1_743_490_800_000,
+      updateTime: 1_743_566_400_000,
     },
     {
       id: 7,
@@ -170,10 +176,10 @@ export const dataList = () => {
       userName: '吴九',
       couponId: 5,
       couponName: '50元充电券',
-      receiveTime: 1743494400000,
+      receiveTime: 1_743_494_400_000,
       status: '0',
       statusName: '正常记录',
-      verifyTime: 1743603600000,
+      verifyTime: 1_743_603_600_000,
       checkResult: null,
       syncStatus: '1',
       syncStatusName: '已同步',
@@ -182,8 +188,8 @@ export const dataList = () => {
       reserve2: null,
       creator: 'system',
       updater: 'system',
-      createTime: 1743494400000,
-      updateTime: 1743603600000,
+      createTime: 1_743_494_400_000,
+      updateTime: 1_743_603_600_000,
     },
     {
       id: 8,
@@ -192,20 +198,20 @@ export const dataList = () => {
       userName: '郑十',
       couponId: 3,
       couponName: '20元充电券',
-      receiveTime: 1743498000000,
+      receiveTime: 1_743_498_000_000,
       status: '2',
       statusName: '已核查',
-      verifyTime: 1743607200000,
+      verifyTime: 1_743_607_200_000,
       checkResult: '核查通过',
       syncStatus: '1',
       syncStatusName: '已同步',
-      archiveTime: 1743693600000,
+      archiveTime: 1_743_693_600_000,
       reserve1: null,
       reserve2: null,
       creator: 'system',
       updater: 'admin',
-      createTime: 1743498000000,
-      updateTime: 1743693600000,
+      createTime: 1_743_498_000_000,
+      updateTime: 1_743_693_600_000,
     },
   ];
 };
@@ -276,7 +282,7 @@ export function useFormSchema() {
   ];
 }
 
-/** 领用记录搜索表单配置 - 仅显示表格中已显示字段 */
+/** 领用记录搜索表单配置 - 根据ReceiveRecordPageReqVO参数配置 */
 export function useSearchFormSchema() {
   return [
     {
@@ -288,22 +294,25 @@ export function useSearchFormSchema() {
         clearable: true,
       },
     },
+    // {
+    //   fieldName: 'userId',
+    //   label: '用户ID',
+    //   component: 'InputNumber',
+    //   componentProps: {
+    //     placeholder: '请输入用户ID',
+    //     clearable: true,
+    //   },
+    // },
     {
-      fieldName: 'userName',
-      label: '用户名称',
-      component: 'Input',
+      fieldName: 'couponId',
+      label: '优惠券',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入用户名称',
+        placeholder: '请选择优惠券',
+        options: [],
         clearable: true,
-      },
-    },
-    {
-      fieldName: 'couponName',
-      label: '优惠券名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入优惠券名称',
-        clearable: true,
+        filterable: true,
+        remote: true,
       },
     },
     {
@@ -325,49 +334,6 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择记录状态',
         options: getDictOptions(DICT_TYPE.RECEIVE_RECORD_STATUS, 'string'),
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'verifyTime',
-      label: '核销时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择核销时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'checkResult',
-      label: '核查结果',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入核查结果',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'syncStatus',
-      label: '同步状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择同步状态',
-        options: getDictOptions(DICT_TYPE.RECEIVE_RECORD_SYNC_STATUS, 'string'),
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'archiveTime',
-      label: '归档时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择归档时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
         clearable: true,
       },
     },
@@ -463,7 +429,12 @@ export const detailFields = [
   { key: 'no', label: '记录编号' },
   { key: 'userName', label: '用户名称' },
   { key: 'couponName', label: '优惠券名称' },
-  { key: 'receiveTime', label: '领用时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
+  {
+    key: 'receiveTime',
+    label: '领用时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
   {
     key: 'status',
     label: '记录状态',
@@ -471,7 +442,12 @@ export const detailFields = [
     formatter: (value) => getReceiveRecordStatusLabel(value),
     tagType: (value) => getReceiveRecordStatusTagType(value),
   },
-  { key: 'verifyTime', label: '核销时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
+  {
+    key: 'verifyTime',
+    label: '核销时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
   { key: 'checkResult', label: '核查结果', formatter: (value) => value || '-' },
   {
     key: 'syncStatus',
@@ -480,9 +456,24 @@ export const detailFields = [
     formatter: (value) => getReceiveRecordSyncStatusLabel(value),
     tagType: (value) => getReceiveRecordSyncStatusTagType(value),
   },
-  { key: 'archiveTime', label: '归档时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-' },
+  {
+    key: 'archiveTime',
+    label: '归档时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
   { key: 'creator', label: '创建者' },
   { key: 'updater', label: '更新者' },
-  { key: 'createTime', label: '创建时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
-  { key: 'updateTime', label: '更新时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
 ];

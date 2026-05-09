@@ -11,12 +11,27 @@ const statusReverse = {
   'online': '已上架'
 };
 
-// 通用转换函数：后端 → 前端（将英文 online 转为中文）
+// 资源类型映射（新增）
+const resourceTypeMap = {
+  '课程': 'course',
+  '图书': 'book',
+  '专题包': 'package'
+};
+const resourceTypeReverse = {
+  'course': '课程',
+  'book': '图书',
+  'package': '专题包'
+};
+
+// 通用转换函数：后端 → 前端（将英文转为中文）
 function convertEnToZh(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const result = { ...obj };
   if (result.status && statusReverse[result.status]) {
     result.status = statusReverse[result.status];
+  }
+  if (result.resourceType && resourceTypeReverse[result.resourceType]) {
+    result.resourceType = resourceTypeReverse[result.resourceType];
   }
   return result;
 }
@@ -27,6 +42,9 @@ function convertZhToEn(obj) {
   const result = { ...obj };
   if (result.status && statusMap[result.status]) {
     result.status = statusMap[result.status];
+  }
+  if (result.resourceType && resourceTypeMap[result.resourceType]) {
+    result.resourceType = resourceTypeMap[result.resourceType];
   }
   return result;
 }

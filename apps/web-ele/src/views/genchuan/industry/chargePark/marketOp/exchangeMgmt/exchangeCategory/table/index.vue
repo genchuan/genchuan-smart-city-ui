@@ -33,7 +33,7 @@ import {
   useGridColumns,
   useSearchFormSchema,
 } from './data';
-import {downloadFileFromBlobPart} from '@vben/utils';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 const props = defineProps({
   secondShow: {

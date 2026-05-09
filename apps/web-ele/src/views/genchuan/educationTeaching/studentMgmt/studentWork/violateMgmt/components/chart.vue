@@ -1,17 +1,13 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-
-import { ElDatePicker } from 'element-plus';
-
-import {
-  getViolateCount,
-  getViolateMgmtChart,
-} from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/violateMgmt/data.js';
-import Bar from '#/genchuan-components/stats/barClick.vue';
+import { reactive, onMounted, ref, computed } from 'vue';
+import { ElMessage, ElDatePicker } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
+import Bar from '#/genchuan-components/stats/barClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
-
-const emit = defineEmits(['barClick', 'pieClick', 'cardSelect']);
+import {
+  getViolateMgmtChart,
+  getViolateCount,
+} from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/violateMgmt/data.js';
 
 // 模拟数据（字段与后端一致）
 const mockOverview = {
@@ -68,21 +64,14 @@ const cardList = computed(() => {
     { title: '违纪总次数', value: total, color: '#409EFF', status: 'total' },
     { title: '待审批', value: pending, color: '#E6A23C', status: 'pending' },
     { title: '已预警', value: warn, color: '#F56C6C', status: 'warn' },
-    {
-      title: '高风险学生',
-      value: highRisk,
-      color: '#909399',
-      status: 'highRisk',
-    },
+    { title: '高风险学生', value: highRisk, color: '#909399', status: 'highRisk' },
   ];
 });
 
 // 各班级违纪次数柱状图（适配后端字段 class_name）
-const barXData = computed(() =>
-  classCountData.value.map((item) => item.class_name),
-);
+const barXData = computed(() => classCountData.value.map(item => item.class_name));
 const barSeriesData = computed(() => [
-  { name: '违纪次数', data: classCountData.value.map((item) => item.count) },
+  { name: '违纪次数', data: classCountData.value.map(item => item.count) },
 ]);
 
 // 违纪类型分布饼图（处理 typeName 为 null 的情况）
@@ -92,6 +81,8 @@ const pieData = computed(() => {
     value: item.count,
   }));
 });
+
+const emit = defineEmits(['barClick', 'pieClick', 'cardSelect']);
 
 const handleCardClick = (cardInfo) => {
   emit('cardSelect', cardInfo.status);
@@ -168,7 +159,10 @@ const handleDateRangeChange = async () => {
   if (dateRange.value && dateRange.value.length === 2) {
     loading.value = true;
     try {
-      await Promise.all([loadOverviewData(), loadViolateCountData()]);
+      await Promise.all([
+        loadOverviewData(),
+        loadViolateCountData(),
+      ]);
     } finally {
       loading.value = false;
     }
@@ -183,8 +177,7 @@ const loadChartData = async () => {
       getViolateMgmtChart({}),
       getViolateCount({}),
     ]);
-    overviewData.value =
-      overviewRes.status === 'fulfilled' ? overviewRes.value : mockOverview;
+    overviewData.value = overviewRes.status === 'fulfilled' ? overviewRes.value : mockOverview;
     if (violateCountRes.status === 'fulfilled') {
       classCountData.value = violateCountRes.value.classCountList || [];
       typeCountData.value = violateCountRes.value.typeCountList || [];
@@ -209,7 +202,7 @@ onMounted(() => {
 
 <template>
   <div v-loading="loading" class="chart-box">
-    <div class="box-left" style="flex: 1 !important">
+    <div class="box-left" style="flex: 1 !important;">
       <Indicator
         class="left-card"
         v-for="item in cardList"
@@ -218,13 +211,10 @@ onMounted(() => {
         @click="handleCardClick"
       />
     </div>
-    <div
-      class="chart-wrapper bar-chart-container"
-      style=" position: relative;flex: 1.5 !important"
-    >
+    <div class="chart-wrapper bar-chart-container" style="flex: 1.5 !important; position: relative;">
       <!-- 时间范围选择器 -->
       <div class="date-range-wrapper">
-        <ElDatePicker
+        <el-date-picker
           v-model="dateRange"
           type="daterange"
           range-separator="-"
@@ -232,39 +222,15 @@ onMounted(() => {
           end-placeholder="结束时间"
           size="small"
           :shortcuts="[
-            {
-              text: '近三个月',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setMonth(start.getMonth() - 3);
-                return [start, end];
-              },
-            },
-            {
-              text: '近半年',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setMonth(start.getMonth() - 6);
-                return [start, end];
-              },
-            },
-            {
-              text: '近一年',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setFullYear(start.getFullYear() - 1);
-                return [start, end];
-              },
-            },
+            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
+            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
+            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
           ]"
           @change="handleDateRangeChange"
         />
       </div>
       <Bar
-        title="各班级违纪次数"
+        :title="'各班级违纪次数'"
         :x-data="barXData"
         :series-data="barSeriesData"
         y-name="违纪次数"
@@ -272,8 +238,8 @@ onMounted(() => {
       />
     </div>
     <Pie
-      style="flex: 1 !important"
-      title-text="违纪类型分布"
+      style="flex: 1 !important;"
+      :title-text="'违纪类型分布'"
       :data="pieData"
       @pie-click="handlePieClick"
     />
@@ -282,12 +248,12 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .chart-box {
+  padding-bottom: 0.5rem;
   display: flex;
   flex-wrap: wrap;
-  width: 100% !important;
-  padding-right: 15px;
-  padding-bottom: 0.5rem;
   padding-left: 15px;
+  padding-right: 15px;
+  width: 100% !important;
 
   .box-left {
     display: grid !important;
@@ -303,10 +269,10 @@ onMounted(() => {
   }
 
   .chart-wrapper {
-    position: relative;
     display: flex;
     flex-direction: column;
     min-width: 280px;
+    position: relative;
   }
 
   /* 柱状图容器特殊样式，用于绝对定位时间选择器 */

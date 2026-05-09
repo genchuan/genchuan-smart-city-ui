@@ -29,7 +29,7 @@ const open = (rule) => {
   const configs = [];
   if (rule) {
     const parts = rule.split(';');
-    parts.forEach(part => {
+    parts.forEach((part) => {
       const [key, value] = part.split('：');
       if (key && value) {
         configs.push({ key: key.trim(), value: value.trim() });
@@ -49,17 +49,19 @@ defineExpose({
   <Modal>
     <div class="filter-rule-content">
       <h4 class="section-title">报表筛选配置</h4>
-      <div v-if="filterConfig.length === 0" class="empty-tip">
-        暂无筛选配置
-      </div>
+      <div v-if="filterConfig.length === 0" class="empty-tip">暂无筛选配置</div>
       <div v-else class="config-list">
-        <div v-for="(item, index) in filterConfig" :key="index" class="config-item">
+        <div
+          v-for="(item, index) in filterConfig"
+          :key="index"
+          class="config-item"
+        >
           <span class="config-key">{{ item.key }}：</span>
           <span class="config-value">{{ item.value }}</span>
         </div>
       </div>
-      
-      <h4 class="section-title" style="margin-top: 24px;">全维度筛选配置</h4>
+
+      <h4 class="section-title" style="margin-top: 24px">全维度筛选配置</h4>
       <div class="full-config">
         <div class="config-row">
           <span class="config-label">统计维度：</span>
@@ -93,22 +95,22 @@ defineExpose({
 }
 
 .section-title {
-  margin: 0 0 16px 0;
+  margin: 0 0 16px;
   font-size: 16px;
   font-weight: 600;
   color: #303133;
 }
 
 .empty-tip {
-  text-align: center;
   padding: 20px;
   color: #909399;
+  text-align: center;
 }
 
 .config-list {
+  padding: 16px;
   background-color: #f5f7fa;
   border-radius: 4px;
-  padding: 16px;
 }
 
 .config-item {
@@ -121,8 +123,8 @@ defineExpose({
 }
 
 .config-key {
-  color: #606266;
   font-weight: 500;
+  color: #606266;
 }
 
 .config-value {
@@ -130,15 +132,15 @@ defineExpose({
 }
 
 .full-config {
+  padding: 16px;
   background-color: #f5f7fa;
   border-radius: 4px;
-  padding: 16px;
 }
 
 .config-row {
-  margin-bottom: 12px;
   display: flex;
   align-items: center;
+  margin-bottom: 12px;
 }
 
 .config-row:last-child {
@@ -147,20 +149,20 @@ defineExpose({
 
 .config-label {
   width: 100px;
-  color: #606266;
-  font-weight: 500;
   font-size: 14px;
+  font-weight: 500;
+  color: #606266;
 }
 
 .config-text {
-  color: #303133;
   font-size: 14px;
+  color: #303133;
 }
 
 .config-tags {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
+  gap: 8px;
 }
 
 .config-tags .el-tag {

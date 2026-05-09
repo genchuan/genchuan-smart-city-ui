@@ -372,7 +372,7 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
   onConfirm: async () => {
     if (!confirmForm.confirmResult) return ElMessage.warning('请填写调解结果');
     await confirmDispute({ id: currentConfirmRow.id, confirmResult: confirmForm.confirmResult });
-    ElMessage.success('调解完成，状态已变更为已关闭');
+    ElMessage.success('调解完成，状态已变更为已完成');
     confirmDrawerApi.close();
     handleRefresh();
   },

@@ -277,6 +277,7 @@ const [SelectForm, selectFormApi] = useVbenForm({
     try {
       const res = await selectStudyUp({
         id: currentSelectRow.value.id,
+        studentId: currentSelectRow.value.studentId,
         ...values,
       });
       if (res && res !== false) {

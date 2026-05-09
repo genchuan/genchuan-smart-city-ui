@@ -39,12 +39,12 @@ const handleConfirm = async () => {
     console.log('Pay response:', response);
 
     // 判断成功：code为0或200，或者data为true
-    const isSuccess = response && (
-      response.code === 0 ||
-      response.code === 200 ||
-      response.data === true ||
-      response === true
-    );
+    const isSuccess =
+      response &&
+      (response.code === 0 ||
+        response.code === 200 ||
+        response.data === true ||
+        response === true);
 
     if (isSuccess) {
       ElMessage.success('支付成功');
@@ -57,7 +57,10 @@ const handleConfirm = async () => {
   } catch (error) {
     console.error('支付失败:', error);
     // 如果报错但包含成功信息，也认为是成功
-    if (error?.response?.data?.code === 0 || error?.response?.data?.code === 200) {
+    if (
+      error?.response?.data?.code === 0 ||
+      error?.response?.data?.code === 200
+    ) {
       ElMessage.success('支付成功');
       modalApi.close();
       emit('success');
@@ -96,9 +99,9 @@ defineExpose({
 }
 
 .confirm-message {
+  margin-bottom: 10px;
   font-size: 14px;
   color: #303133;
-  margin-bottom: 10px;
 }
 
 .tip {

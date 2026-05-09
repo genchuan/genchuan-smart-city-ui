@@ -1,25 +1,16 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-
-import { ElDatePicker } from 'element-plus';
-
-import {
-  getDutyIndex,
-  getDutyMgmtChart,
-} from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/dutyMgmt/data.js';
+import { reactive, onMounted, ref, computed } from 'vue';
+import { ElMessage, ElDatePicker } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
+import {
+  getDutyMgmtChart,
+  getDutyIndex,
+} from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/dutyMgmt/data.js';
 
-const emit = defineEmits(['lineClick']);
 const loading = ref(true);
 const chartData = ref({});
-const indexData = ref({
-  monthList: [],
-  dutyCountList: [],
-  checkInRateList: [],
-  shiftRateList: [],
-  vehicleRateList: [],
-});
+const indexData = ref({ monthList: [], dutyCountList: [], checkInRateList: [], shiftRateList: [], vehicleRateList: [] });
 
 // 时间范围选择器相关（针对两个接口）
 // 默认值：开始时间 2024-01-01，结束时间 2026-12-31
@@ -62,6 +53,8 @@ const lineSeriesData = computed(() => [
   { name: '出车率(%)', data: indexData.value.vehicleRateList || [] },
 ]);
 
+const emit = defineEmits(['lineClick']);
+
 // 折线图点击筛选（月份）
 const handleLineClick = (monthName) => {
   emit('lineClick', { month: monthName });
@@ -97,7 +90,7 @@ const loadChartData = async () => {
       checkInRate: 96.77,
       shiftApplyCount: 8,
       vehicleApplyCount: 5,
-      statusCountMap: { 待打卡: 12, 待调班审批: 2, 待出车审批: 1, 已完成: 109 },
+      statusCountMap: { '待打卡': 12, '待调班审批': 2, '待出车审批': 1, '已完成': 109 },
     };
   }
 };
@@ -141,7 +134,10 @@ const handleDateRangeChange = async () => {
   if (dateRange.value && dateRange.value.length === 2) {
     loading.value = true;
     try {
-      await Promise.all([loadChartData(), loadIndexData()]);
+      await Promise.all([
+        loadChartData(),
+        loadIndexData(),
+      ]);
     } finally {
       loading.value = false;
     }
@@ -156,32 +152,29 @@ const loadData = async () => {
       getDutyMgmtChart({}),
       getDutyIndex({}),
     ]);
-    chartData.value =
-      chartRes.status === 'fulfilled'
-        ? chartRes.value
-        : {
-            totalDutyCount: 124,
-            todayDutyCount: 4,
-            checkInRate: 96.77,
-            shiftApplyCount: 8,
-            vehicleApplyCount: 5,
-            statusCountMap: {
-              待打卡: 12,
-              待调班审批: 2,
-              待出车审批: 1,
-              已完成: 109,
-            },
-          };
-    indexData.value =
-      indexRes.status === 'fulfilled'
-        ? indexRes.value
-        : {
-            monthList: ['2025-01', '2025-02', '2025-03'],
-            dutyCountList: [112, 98, 124],
-            checkInRateList: [95.54, 96.94, 96.77],
-            shiftRateList: [6.25, 7.14, 6.45],
-            vehicleRateList: [4.46, 3.06, 4.03],
-          };
+    if (chartRes.status === 'fulfilled') {
+      chartData.value = chartRes.value;
+    } else {
+      chartData.value = {
+        totalDutyCount: 124,
+        todayDutyCount: 4,
+        checkInRate: 96.77,
+        shiftApplyCount: 8,
+        vehicleApplyCount: 5,
+        statusCountMap: { '待打卡': 12, '待调班审批': 2, '待出车审批': 1, '已完成': 109 },
+      };
+    }
+    if (indexRes.status === 'fulfilled') {
+      indexData.value = indexRes.value;
+    } else {
+      indexData.value = {
+        monthList: ['2025-01', '2025-02', '2025-03'],
+        dutyCountList: [112, 98, 124],
+        checkInRateList: [95.54, 96.94, 96.77],
+        shiftRateList: [6.25, 7.14, 6.45],
+        vehicleRateList: [4.46, 3.06, 4.03],
+      };
+    }
   } catch (error) {
     console.error('加载图表数据失败', error);
   } finally {
@@ -207,7 +200,7 @@ onMounted(() => {
     <div class="line-chart-container">
       <!-- 时间范围选择器（只针对两个接口） -->
       <div class="date-range-wrapper">
-        <ElDatePicker
+        <el-date-picker
           v-model="dateRange"
           type="daterange"
           range-separator="-"
@@ -215,40 +208,16 @@ onMounted(() => {
           end-placeholder="结束时间"
           size="small"
           :shortcuts="[
-            {
-              text: '近三个月',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setMonth(start.getMonth() - 3);
-                return [start, end];
-              },
-            },
-            {
-              text: '近半年',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setMonth(start.getMonth() - 6);
-                return [start, end];
-              },
-            },
-            {
-              text: '近一年',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setFullYear(start.getFullYear() - 1);
-                return [start, end];
-              },
-            },
+            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
+            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
+            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
           ]"
           @change="handleDateRangeChange"
         />
       </div>
       <lineChart
-        style="flex: 1.5 !important"
-        title="值班核心指标趋势"
+        style="flex: 1.5 !important;"
+        :title="'值班核心指标趋势'"
         :x-data="lineXData"
         :series-data="lineSeriesData"
         y-name="数值"
@@ -260,12 +229,12 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .chart-box {
+  padding-bottom: 0.5rem;
   display: flex;
   flex-wrap: wrap;
-  width: 100% !important;
-  padding-right: 15px;
-  padding-bottom: 0.5rem;
   padding-left: 15px;
+  padding-right: 15px;
+  width: 100% !important;
 
   .box-left-m {
     display: grid !important;

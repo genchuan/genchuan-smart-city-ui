@@ -2,6 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -9,6 +10,7 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
+  batchExportCycleReport,
   createCycleReport,
   exportCycleReport,
   getCycleReportDetail,
@@ -17,9 +19,10 @@ import {
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
-import DrillDownDialog from '../components/DrillDownDialog.vue';
-import FilterRuleDialog from '../components/FilterRuleDialog.vue';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
+import DrillDownDetailDialog from '../components/DrillDownDetailDialog.vue';
+import FilterRuleDialog from '../components/FilterRuleDialog.vue';
 import {
   dataList,
   detailFields,
@@ -30,7 +33,6 @@ import {
   useGridColumns,
   useSearchFormSchema,
 } from './data';
-import {downloadFileFromBlobPart} from '@vben/utils';
 
 const props = defineProps({
   secondShow: {
@@ -73,10 +75,45 @@ const formData = ref();
 const drillDownDialogRef = ref(null);
 const filterRuleDialogRef = ref(null);
 
-// 处理字段钻取
+// 处理字段钻取 - 支持卡片钻取和表格字段钻取
 const handleFieldDrill = (type, row) => {
   if (!drillDownDialogRef.value) return;
-  drillDownDialogRef.value.open(type, row.reportCycle, row.statTime);
+
+  // 表格字段钻取类型映射
+  const tableDrillTypeMap = {
+    activity: 'tableActivityCount',
+    joinUser: 'tableJoinUserCount',
+    lottery: 'tableLotteryCount',
+    winning: 'tableWinningRate',
+    couponSend: 'tableCouponSendCount',
+    couponVerify: 'tableVerifyRate',
+    cardOrder: 'tableCardOrderCount',
+    revenue: 'tableRevenue',
+    exchangeCount: 'tableExchangeCount',
+    totalStock: 'tableTotalStock',
+    warnStockCount: 'tableWarnStockCount',
+  };
+
+  // 判断是否为表格字段钻取类型
+  const drillType = tableDrillTypeMap[type];
+  if (drillType) {
+    // 表格字段钻取 - 传递 reportId
+    drillDownDialogRef.value.open({
+      drillType,
+      drillValue: String(row.id), // reportId
+      drillName: row.reportCycle,
+      reportCycle: row.reportCycle,
+      reportId: row.id,
+    });
+  } else {
+    // 其他类型钻取（保持原有逻辑）
+    drillDownDialogRef.value.open({
+      drillType: type,
+      drillValue: '',
+      drillName: row.reportCycle,
+      reportCycle: row.reportCycle,
+    });
+  }
 };
 
 // 处理筛选规则查看
@@ -116,9 +153,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         statStartTime: obj.statTimeRange?.[0],
         statEndTime: obj.statTimeRange?.[1],
         filterRule: obj.filterRule,
+        tenantId: 1,
       };
       const response = await createCycleReport(params);
-      if (response && response.code === 200) {
+      if (response) {
         ElMessage.success('报表生成成功');
         handleRefresh();
         formDrawerApi.close();
@@ -582,8 +620,12 @@ const handleStatsFilter = (type, value) => {
 // 导出单条报表
 const handleExportRow = async (row) => {
   try {
-    // 调用导出API
-    await exportCycleReport();
+    // 调用批量导出API，传入当前行ID（参照兑换订单批量导出逻辑）
+    const data = await batchExportCycleReport({ ids: [row.id] });
+    downloadFileFromBlobPart({
+      fileName: `${row.reportCycle}_营销运营报表.xlsx`,
+      source: data,
+    });
     ElMessage.success(`导出成功：${row.reportCycle}`);
   } catch (error) {
     console.error('导出失败:', error);
@@ -606,7 +648,7 @@ watch(
       gridApi.query();
     }
   },
-  { immediate: false }
+  { immediate: false },
 );
 
 defineExpose({
@@ -786,7 +828,7 @@ defineExpose({
       <template #exchangeCount="{ row }">
         <span
           style="color: #409eff; cursor: pointer"
-          @click="handleFieldDrill('exchange', row)"
+          @click="handleFieldDrill('exchangeCount', row)"
         >
           {{ row.exchangeCount }}
         </span>
@@ -796,7 +838,7 @@ defineExpose({
       <template #totalStock="{ row }">
         <span
           style="color: #409eff; cursor: pointer"
-          @click="handleFieldDrill('stock', row)"
+          @click="handleFieldDrill('totalStock', row)"
         >
           {{ row.totalStock }}
         </span>
@@ -806,7 +848,7 @@ defineExpose({
       <template #warnStockCount="{ row }">
         <span
           style="color: #f56c6c; cursor: pointer"
-          @click="handleFieldDrill('warnStock', row)"
+          @click="handleFieldDrill('warnStockCount', row)"
         >
           {{ row.warnStockCount }}
         </span>
@@ -825,6 +867,18 @@ defineExpose({
         >
           {{ row.generateStatus }}
         </ElTag>
+      </template>
+
+      <!-- 生成时间 - 格式化时间戳 -->
+      <template #generateTime="{ row }">
+        {{
+          row.generateTime
+            ? formatDate(
+                new Date(Number(row.generateTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : '-'
+        }}
       </template>
 
       <!-- 操作人 - 点击跳转操作人员详情 -->
@@ -880,7 +934,7 @@ defineExpose({
     </Grid>
 
     <!-- 钻取明细弹窗 -->
-    <DrillDownDialog ref="drillDownDialogRef" />
+    <DrillDownDetailDialog ref="drillDownDialogRef" />
     <!-- 筛选规则详情弹窗 -->
     <FilterRuleDialog ref="filterRuleDialogRef" />
   </div>

@@ -30,6 +30,10 @@ import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/use
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
+import {
+  buildActiveFilterTags,
+  type ActiveFilterTag,
+} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildUserInfoQueryParams,
@@ -183,6 +187,75 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const searchParams = ref<Record<string, any>>({});
+
+const quickFilterConfigs = {
+  phone: {
+    formatter: (value: any) => maskPhone(String(value)),
+    label: '绑定手机号',
+    type: 'primary',
+  },
+  status: {
+    label: '用户状态',
+    type: 'warning',
+  },
+  userType: {
+    label: '用户类型',
+    type: 'success',
+  },
+} as const;
+
+const searchFilterConfigs = {
+  nickname: {
+    label: '用户昵称',
+    type: 'info',
+  },
+  phone: {
+    formatter: (value: any) => maskPhone(String(value)),
+    label: '绑定手机号',
+    type: 'primary',
+  },
+  registerTime: {
+    formatter: (value: any[]) =>
+      value
+        .filter((item) => item)
+        .map((item) => dayjs(item).format('YYYY-MM-DD HH:mm:ss'))
+        .join(' 至 '),
+    label: '注册时间',
+    type: 'danger',
+  },
+  status: {
+    label: '用户状态',
+    type: 'warning',
+  },
+  userType: {
+    label: '用户类型',
+    type: 'success',
+  },
+} as const;
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: quickFilterConfigs,
+      source: 'quick',
+      values: {
+        phone: filterPhone.value,
+        status: filterStatus.value,
+        userType: filterUserType.value,
+      },
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
+);
 
 const detailFields = ref([
   { key: 'nickname', label: '用户昵称' },
@@ -354,7 +427,7 @@ function handleRefresh() {
   filterStatus.value = '';
   filterUserType.value = '';
   filterPhone.value = '';
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 联动刷新页面 */
@@ -372,7 +445,7 @@ async function resetSearch() {
   filterUserType.value = '';
   filterPhone.value = '';
   await queryFormApi.resetForm();
-  return gridApi.query();
+  return gridApi.reload();
 }
 
 /** 设置筛选条件 */
@@ -384,8 +457,8 @@ async function setSearchValues(values: Record<string, any>) {
   filterStatus.value = '';
   filterUserType.value = '';
   filterPhone.value = '';
-  await queryFormApi.setValues(searchParams.value);
-  return gridApi.query();
+  await syncQueryFormValues();
+  return gridApi.reload();
 }
 
 /** 重新计算表格布局 */
@@ -620,7 +693,7 @@ async function handleImportUsers() {
 /** 打开搜索弹窗 */
 async function handleSerachShow() {
   drawerApi.open();
-  await queryFormApi.setValues(searchParams.value);
+  await syncQueryFormValues();
 }
 
 /** 搜索表单提交 */
@@ -630,40 +703,60 @@ async function onQuerySubmit(values: Record<string, any>) {
   drawerApi.close();
 }
 
+/** 移除筛选标签 */
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'quick') {
+    if (tag.key === 'status') {
+      handleCancelStatusFilter();
+    } else if (tag.key === 'userType') {
+      handleCancelUserTypeFilter();
+    } else if (tag.key === 'phone') {
+      handleCancelPhoneFilter();
+    }
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
+}
+
 /** 按状态筛选 */
 function handleFilterStatus(status: string) {
   filterStatus.value = filterStatus.value === status ? '' : status;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 按用户类型筛选 */
 function handleFilterUserType(userType: string) {
   filterUserType.value = filterUserType.value === userType ? '' : userType;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 按手机号筛选 */
 function handleFilterPhone(phone: string) {
   filterPhone.value = filterPhone.value === phone ? '' : phone;
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消状态筛选 */
 function handleCancelStatusFilter() {
   filterStatus.value = '';
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消用户类型筛选 */
 function handleCancelUserTypeFilter() {
   filterUserType.value = '';
-  gridApi.query();
+  gridApi.reload();
 }
 
 /** 取消手机号筛选 */
 function handleCancelPhoneFilter() {
   filterPhone.value = '';
-  gridApi.query();
+  gridApi.reload();
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -716,35 +809,15 @@ const handleOpenDetail = (row: UserRow) => {
               align-items: center;
             "
           >
-            <!-- 用户状态筛选标签 -->
             <ElTag
-              v-if="filterStatus"
-              type="warning"
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
               closable
-              @close="handleCancelStatusFilter"
               style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleRemoveFilterTag(tag)"
             >
-              用户状态：{{ filterStatus }}
-            </ElTag>
-            <!-- 用户类型筛选标签 -->
-            <ElTag
-              v-if="filterUserType"
-              type="success"
-              closable
-              @close="handleCancelUserTypeFilter"
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-            >
-              用户类型：{{ filterUserType }}
-            </ElTag>
-            <!-- 手机号筛选标签 -->
-            <ElTag
-              v-if="filterPhone"
-              type="primary"
-              closable
-              @close="handleCancelPhoneFilter"
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-            >
-              绑定手机号：{{ maskPhone(filterPhone) }}
+              {{ tag.label }}：{{ tag.value }}
             </ElTag>
           </div>
         </template>
@@ -947,9 +1020,7 @@ const handleOpenDetail = (row: UserRow) => {
 
     <!-- 导入弹窗 -->
     <ElDialog v-model="importDialogVisible" title="导入用户" width="520px">
-      <div class="import-tip">
-        提供标准模板下载，上传后按文档要求模拟导入校验。
-      </div>
+      <div class="import-tip">下载模板后上传文件即可。</div>
       <div class="import-actions">
         <ElButton @click="handleDownloadTemplate">下载模板</ElButton>
       </div>

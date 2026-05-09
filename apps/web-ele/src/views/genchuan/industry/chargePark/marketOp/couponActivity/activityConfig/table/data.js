@@ -1,8 +1,8 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
-import { formatDate } from '#/utils/genchuan/formatTime';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 /** 获取配置类型Tag类型 - 使用封装的字典颜色工具 */
 export const getActivityConfigTypeTagType = (type) => {
@@ -18,7 +18,10 @@ export const getActivityConfigStatusTagType = (status) => {
 
 /** 获取适用人群Tag类型 - 使用封装的字典颜色工具 */
 export const getActivityConfigUserGroupTagType = (userGroup) => {
-  const dict = getDictObj(DICT_TYPE.ACTIVITY_CONFIG_USER_GROUP, String(userGroup));
+  const dict = getDictObj(
+    DICT_TYPE.ACTIVITY_CONFIG_USER_GROUP,
+    String(userGroup),
+  );
   return getDictTagTypeFromDict(dict, 'primary');
 };
 
@@ -36,7 +39,10 @@ export const getActivityConfigStatusLabel = (status) => {
 
 /** 获取适用人群标签 */
 export const getActivityConfigUserGroupLabel = (userGroup) => {
-  const dict = getDictObj(DICT_TYPE.ACTIVITY_CONFIG_USER_GROUP, String(userGroup));
+  const dict = getDictObj(
+    DICT_TYPE.ACTIVITY_CONFIG_USER_GROUP,
+    String(userGroup),
+  );
   return dict ? dict.label : userGroup;
 };
 
@@ -54,16 +60,16 @@ export const dataList = () => {
       statusName: '已生效',
       auditorId: 1,
       auditorName: '张三',
-      auditTime: 1745104800000,
+      auditTime: 1_745_104_800_000,
       joinCount: 320,
-      effectTime: 1746028800000,
+      effectTime: 1_746_028_800_000,
       description: '五一专属充电优惠活动',
       userGroup: '2',
       userGroupName: '全部',
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 2,
@@ -76,16 +82,16 @@ export const dataList = () => {
       statusName: '已生效',
       auditorId: 2,
       auditorName: '李四',
-      auditTime: 1745104800000,
+      auditTime: 1_745_104_800_000,
       joinCount: 156,
-      effectTime: 1746028800000,
+      effectTime: 1_746_028_800_000,
       description: '新用户专属充电优惠',
       userGroup: '0',
       userGroupName: '新用户',
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 3,
@@ -100,14 +106,14 @@ export const dataList = () => {
       auditorName: '王五',
       auditTime: null,
       joinCount: 0,
-      effectTime: 1748707200000,
+      effectTime: 1_748_707_200_000,
       description: '平台周年庆感恩回馈活动',
       userGroup: '2',
       userGroupName: '全部',
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 4,
@@ -120,16 +126,16 @@ export const dataList = () => {
       statusName: '已生效',
       auditorId: 1,
       auditorName: '张三',
-      auditTime: 1745104800000,
+      auditTime: 1_745_104_800_000,
       joinCount: 892,
-      effectTime: 1746028800000,
+      effectTime: 1_746_028_800_000,
       description: '日常充电返现活动',
       userGroup: '1',
       userGroupName: '老用户',
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 5,
@@ -144,14 +150,14 @@ export const dataList = () => {
       auditorName: null,
       auditTime: null,
       joinCount: 0,
-      effectTime: 1756656000000,
+      effectTime: 1_756_656_000_000,
       description: '国庆长假充电特惠活动',
       userGroup: '2',
       userGroupName: '全部',
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 6,
@@ -164,16 +170,16 @@ export const dataList = () => {
       statusName: '已生效',
       auditorId: 2,
       auditorName: '李四',
-      auditTime: 1745104800000,
+      auditTime: 1_745_104_800_000,
       joinCount: 234,
-      effectTime: 1746028800000,
+      effectTime: 1_746_028_800_000,
       description: '老用户专属回馈活动',
       userGroup: '1',
       userGroupName: '老用户',
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 7,
@@ -188,14 +194,14 @@ export const dataList = () => {
       auditorName: null,
       auditTime: null,
       joinCount: 0,
-      effectTime: 1735689600000,
+      effectTime: 1_735_689_600_000,
       description: '春节充电红包活动',
       userGroup: '2',
       userGroupName: '全部',
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 8,
@@ -208,16 +214,16 @@ export const dataList = () => {
       statusName: '已生效',
       auditorId: 3,
       auditorName: '王五',
-      auditTime: 1745104800000,
+      auditTime: 1_745_104_800_000,
       joinCount: 567,
-      effectTime: 1746028800000,
+      effectTime: 1_746_028_800_000,
       description: '周末充电优惠活动',
       userGroup: '2',
       userGroupName: '全部',
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 9,
@@ -230,16 +236,16 @@ export const dataList = () => {
       statusName: '已生效',
       auditorId: 1,
       auditorName: '张三',
-      auditTime: 1745104800000,
+      auditTime: 1_745_104_800_000,
       joinCount: 445,
-      effectTime: 1746028800000,
+      effectTime: 1_746_028_800_000,
       description: '会员日专属优惠活动',
       userGroup: '1',
       userGroupName: '老用户',
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 10,
@@ -252,16 +258,16 @@ export const dataList = () => {
       statusName: '已生效',
       auditorId: 2,
       auditorName: '李四',
-      auditTime: 1745104800000,
+      auditTime: 1_745_104_800_000,
       joinCount: 678,
-      effectTime: 1746028800000,
+      effectTime: 1_746_028_800_000,
       description: '新用户注册礼包活动',
       userGroup: '0',
       userGroupName: '新用户',
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 11,
@@ -276,14 +282,14 @@ export const dataList = () => {
       auditorName: null,
       auditTime: null,
       joinCount: 0,
-      effectTime: 1751241600000,
+      effectTime: 1_751_241_600_000,
       description: '端午节充电优惠活动',
       userGroup: '2',
       userGroupName: '全部',
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
     {
       id: 12,
@@ -296,16 +302,16 @@ export const dataList = () => {
       statusName: '已生效',
       auditorId: 3,
       auditorName: '王五',
-      auditTime: 1745104800000,
+      auditTime: 1_745_104_800_000,
       joinCount: 1234,
-      effectTime: 1746028800000,
+      effectTime: 1_746_028_800_000,
       description: '夜间低谷时段充电优惠',
       userGroup: '2',
       userGroupName: '全部',
       creator: 'admin',
       updater: 'admin',
-      createTime: 1745018400000,
-      updateTime: 1745101200000,
+      createTime: 1_745_018_400_000,
+      updateTime: 1_745_101_200_000,
     },
   ];
 };
@@ -371,7 +377,7 @@ export function useFormSchema() {
   ];
 }
 
-/** 活动配置搜索表单配置 - 覆盖所有表格展示字段 */
+/** 活动配置搜索表单配置 - 根据ActivityConfigPageReqVO参数配置 */
 export function useSearchFormSchema() {
   return [
     {
@@ -394,24 +400,6 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'joinCondition',
-      label: '参与条件',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入参与条件',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'ruleContent',
-      label: '规则内容',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入规则内容',
-        clearable: true,
-      },
-    },
-    {
       fieldName: 'userGroup',
       label: '适用人群',
       component: 'Select',
@@ -428,100 +416,6 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择配置状态',
         options: getDictOptions(DICT_TYPE.ACTIVITY_CONFIG_STATUS, 'string'),
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'auditorName',
-      label: '审核人',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入审核人',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'joinCount',
-      label: '参与人数',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入参与人数',
-        clearable: true,
-        min: 0,
-      },
-    },
-    {
-      fieldName: 'description',
-      label: '活动描述',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入活动描述',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'creator',
-      label: '创建者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入创建者',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'updater',
-      label: '更新者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入更新者',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'createTime',
-      label: '创建时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择创建时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'updateTime',
-      label: '更新时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择更新时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'auditTime',
-      label: '审核时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择审核时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'effectTime',
-      label: '生效时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择生效时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
         clearable: true,
       },
     },
@@ -650,7 +544,12 @@ export const detailFields = [
     formatter: (value) => getActivityConfigStatusLabel(value),
     tagType: (value) => getActivityConfigStatusTagType(value),
   },
-  { key: 'createTime', label: '创建时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
   {
     key: 'auditorName',
     label: '审核人',
@@ -659,12 +558,23 @@ export const detailFields = [
   {
     key: 'auditTime',
     label: '审核时间',
-    formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
   },
   { key: 'joinCount', label: '参与人数' },
-  { key: 'effectTime', label: '生效时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
+  {
+    key: 'effectTime',
+    label: '生效时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
   { key: 'description', label: '活动描述' },
   { key: 'creator', label: '创建者' },
   { key: 'updater', label: '更新者' },
-  { key: 'updateTime', label: '更新时间', formatter: (value) => value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
 ];

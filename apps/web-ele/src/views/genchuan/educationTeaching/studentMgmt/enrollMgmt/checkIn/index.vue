@@ -1,14 +1,14 @@
 <script setup>
-import { reactive, ref } from 'vue';
-import { useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {reactive, ref} from 'vue';
+import {useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import CheckInDetailDrawer from './components/checkInDetail.vue';
 import {
-  getMockList,
+  // getMockList 已删除，不再导入
   getCheckInPage,
   supplyCheckIn,
   confirmCheckIn,
@@ -23,7 +23,7 @@ import {
   useSupplyFormSchema,
 } from '#/api/genchuan/educationTeaching/studentMgmt/enrollMgmt/checkIn/form.js';
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // 标签筛选
@@ -61,7 +61,7 @@ function getFieldLabel(field) {
     status: '状态',
     creator: '创建人',
     createTime: '创建时间',
-    studentName: '学生姓名',
+    studentId: '学号',
   };
   return map[field] || field;
 }
@@ -98,13 +98,14 @@ const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
 
 const searchParams = ref({});
 const currentEditId = ref(null);
+const currentStudentId = ref(null); // 存储当前补充的学生ID
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
@@ -146,7 +147,7 @@ const getAccountStatusType = (accountStatus) => {
   return map[accountStatus] || 'info';
 };
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -170,8 +171,8 @@ const getTableData = async ({ page }) => {
             const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
             itemValue = createDate;
             break;
-          case 'studentName':
-            itemValue = item.studentName;
+          case 'studentId':
+            itemValue = item.studentId;
             break;
           default:
             itemValue = item[field];
@@ -187,37 +188,10 @@ const getTableData = async ({ page }) => {
     dataObj.list = filtered;
   } catch (error) {
     console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          case 'studentName':
-            itemValue = item.studentName;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
+    // 分页接口已联调成功，出错时返回空数据并提示用户
+    dataObj.total = 0;
+    dataObj.list = [];
+    ElMessage.error('获取报到记录失败，请检查网络或联系管理员');
   } finally {
     dataObj.loading = false;
   }
@@ -236,10 +210,10 @@ function handleReset() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportCheckIn(searchParams.value);
-      downloadFileFromBlobPart({ fileName: `${textObj.excelName}.xls`, source: data });
+      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -267,10 +241,10 @@ async function handleBatchConfirm() {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '确认中...' });
+    const loading = ElLoading.service({text: '确认中...'});
     try {
       const ids = confirmRows.map(row => row.id);
-      const res = await confirmCheckIn({ ids });
+      const res = await confirmCheckIn({ids});
       if (res && res !== false) {
         ElMessage.success('批量确认成功');
         handleRefresh();
@@ -280,7 +254,8 @@ async function handleBatchConfirm() {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 批量审核
@@ -300,10 +275,10 @@ async function handleBatchAudit() {
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '审核中...' });
+    const loading = ElLoading.service({text: '审核中...'});
     try {
       const ids = auditRows.map(row => row.id);
-      const res = await auditCheckIn({ ids });
+      const res = await auditCheckIn({ids});
       if (res && res !== false) {
         ElMessage.success('批量审核成功');
         handleRefresh();
@@ -313,7 +288,8 @@ async function handleBatchAudit() {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 补充（编辑）
@@ -323,12 +299,12 @@ async function handleSupply(row) {
     return;
   }
   currentEditId.value = row.id;
+  currentStudentId.value = row.studentId;   // 保存 studentId
   try {
-    const detail = await getCheckInDetail({ id: row.id });
+    const detail = await getCheckInDetail({id: row.id});
     supplyFormApi.setValues({
       examScore: detail.examScore,
       supplyInfo: detail.supplyInfo,
-      remark: detail.remark,
     });
     supplyDrawerApi.open();
   } catch (error) {
@@ -344,14 +320,14 @@ async function handleConfirm(row) {
     return;
   }
   try {
-    await ElMessageBox.confirm(`确认学生"${row.studentName}"的报到信息？确认后状态将变为“待审核”。`, '确认', {
+    await ElMessageBox.confirm(`确认学号"${row.studentId}"的报到信息？确认后状态将变为“待审核”。`, '确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '确认中...' });
+    const loading = ElLoading.service({text: '确认中...'});
     try {
-      const res = await confirmCheckIn({ ids: [row.id] });
+      const res = await confirmCheckIn({ids: [row.id]});
       if (res && res !== false) {
         ElMessage.success('确认成功');
         handleRefresh();
@@ -361,7 +337,8 @@ async function handleConfirm(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
 // 单行审核
@@ -371,14 +348,14 @@ async function handleAudit(row) {
     return;
   }
   try {
-    await ElMessageBox.confirm(`审核学生"${row.studentName}"的报到信息？审核后将自动创建系统账号，状态变为“已报到”。`, '审核', {
+    await ElMessageBox.confirm(`审核学号"${row.studentId}"的报到信息？审核后将自动创建系统账号，状态变为“已报到”。`, '审核', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
     });
-    const loading = ElLoading.service({ text: '审核中...' });
+    const loading = ElLoading.service({text: '审核中...'});
     try {
-      const res = await auditCheckIn({ ids: [row.id] });
+      const res = await auditCheckIn({ids: [row.id]});
       if (res && res !== false) {
         ElMessage.success('审核成功');
         handleRefresh();
@@ -388,17 +365,31 @@ async function handleAudit(row) {
     } finally {
       loading.close();
     }
-  } catch {}
+  } catch {
+  }
 }
 
-// 补充表单
+// 补充表单 - 适配后端接口参数
 const [SupplyForm, supplyFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '保存中...' });
+    const loading = ElLoading.service({text: '保存中...'});
     try {
-      const res = await supplyCheckIn({ ...values, id: currentEditId.value });
+      // 构造后端要求的参数结构
+      const requestData = {
+        ids: [currentEditId.value],               // 必填，数组
+        studentId: currentStudentId.value,        // 必填，整数
+        examScore: values.examScore,
+        supplyInfo: values.supplyInfo,
+      };
+      // 清理值为 undefined 或 null 的字段（可选）
+      Object.keys(requestData).forEach(key => {
+        if (requestData[key] === undefined || requestData[key] === null) {
+          delete requestData[key];
+        }
+      });
+      const res = await supplyCheckIn(requestData);
       if (res && res !== false) {
         ElMessage.success('补充成功');
         supplyDrawerApi.close();
@@ -413,7 +404,7 @@ const [SupplyForm, supplyFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useSupplyFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
 });
 
 // 详情抽屉
@@ -426,9 +417,9 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -438,20 +429,20 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -459,17 +450,18 @@ const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <CheckInDetailDrawer ref="checkInDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <CheckInDetailDrawer ref="checkInDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                         @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
     <SupplyDrawer title="补充信息">
-      <SupplyForm />
+      <SupplyForm/>
     </SupplyDrawer>
     <Grid>
       <template #table-title>
@@ -486,27 +478,30 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton :content="textObj.confirmText" icon-name="Checked" @click="handleBatchConfirm" />
-          <IconButton :content="textObj.auditText" icon-name="Check" @click="handleBatchAudit" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton :content="textObj.confirmText" icon-name="Checked"
+                      @click="handleBatchConfirm"/>
+          <IconButton :content="textObj.auditText" icon-name="Check" @click="handleBatchAudit"/>
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
         </div>
       </template>
 
       <!-- 钻取列 -->
-      <template #studentName="{ row }">
+      <template #studentId="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
-          {{ row.studentName }}
+          {{ row.studentId }}
         </el-text>
       </template>
       <template #supplyInfo="{ row }">
         <el-text>{{ row.supplyInfo || '-' }}</el-text>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer">
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer">
           {{ row.status }}
         </el-tag>
       </template>
@@ -516,12 +511,14 @@ defineExpose({ handleFilterTagClick, clearFilters });
         </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer">
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer">
           {{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer">
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
+                 type="primary" style="cursor: pointer">
           {{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
@@ -543,10 +540,13 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton v-if="row.status === '待确认'" content="补充" icon-name="Edit" @click="handleSupply(row)" />
-          <IconButton v-if="row.status === '待确认'" content="确认" icon-name="Checked" @click="handleConfirm(row)" />
-          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check" @click="handleAudit(row)" />
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
+          <IconButton v-if="row.status === '待确认'" content="补充" icon-name="Edit"
+                      @click="handleSupply(row)"/>
+          <IconButton v-if="row.status === '待确认'" content="确认" icon-name="Checked"
+                      @click="handleConfirm(row)"/>
+          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check"
+                      @click="handleAudit(row)"/>
         </div>
       </template>
     </Grid>

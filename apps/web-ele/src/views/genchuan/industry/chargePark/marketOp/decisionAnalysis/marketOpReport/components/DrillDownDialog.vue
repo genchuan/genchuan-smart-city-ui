@@ -44,55 +44,252 @@ const dataList = ref([]);
 const getMockData = (type) => {
   const mockDataMap = {
     activity: [
-      { id: 1, name: '积分兑换活动', type: '积分活动', status: '进行中', startTime: '2026-03-01', endTime: '2026-03-31' },
-      { id: 2, name: '幸运大抽奖', type: '抽奖活动', status: '已结束', startTime: '2026-03-15', endTime: '2026-03-20' },
-      { id: 3, name: '优惠券发放活动', type: '优惠券活动', status: '进行中', startTime: '2026-03-10', endTime: '2026-04-10' },
+      {
+        id: 1,
+        name: '积分兑换活动',
+        type: '积分活动',
+        status: '进行中',
+        startTime: '2026-03-01',
+        endTime: '2026-03-31',
+      },
+      {
+        id: 2,
+        name: '幸运大抽奖',
+        type: '抽奖活动',
+        status: '已结束',
+        startTime: '2026-03-15',
+        endTime: '2026-03-20',
+      },
+      {
+        id: 3,
+        name: '优惠券发放活动',
+        type: '优惠券活动',
+        status: '进行中',
+        startTime: '2026-03-10',
+        endTime: '2026-04-10',
+      },
     ],
     joinUser: [
-      { id: 1, userName: '张三', userId: 'U001', phone: '13800138001', joinTime: '2026-03-15 10:30:00', activityName: '积分兑换活动' },
-      { id: 2, userName: '李四', userId: 'U002', phone: '13800138002', joinTime: '2026-03-16 14:20:00', activityName: '幸运大抽奖' },
-      { id: 3, userName: '王五', userId: 'U003', phone: '13800138003', joinTime: '2026-03-17 09:15:00', activityName: '优惠券发放活动' },
+      {
+        id: 1,
+        userName: '张三',
+        userId: 'U001',
+        phone: '13800138001',
+        joinTime: '2026-03-15 10:30:00',
+        activityName: '积分兑换活动',
+      },
+      {
+        id: 2,
+        userName: '李四',
+        userId: 'U002',
+        phone: '13800138002',
+        joinTime: '2026-03-16 14:20:00',
+        activityName: '幸运大抽奖',
+      },
+      {
+        id: 3,
+        userName: '王五',
+        userId: 'U003',
+        phone: '13800138003',
+        joinTime: '2026-03-17 09:15:00',
+        activityName: '优惠券发放活动',
+      },
     ],
     lottery: [
-      { id: 1, userName: '张三', userId: 'U001', lotteryTime: '2026-03-15 10:35:00', activityName: '幸运大抽奖', prizeName: '积分100', result: '中奖' },
-      { id: 2, userName: '李四', userId: 'U002', lotteryTime: '2026-03-16 14:25:00', activityName: '幸运大抽奖', prizeName: '谢谢参与', result: '未中奖' },
+      {
+        id: 1,
+        userName: '张三',
+        userId: 'U001',
+        lotteryTime: '2026-03-15 10:35:00',
+        activityName: '幸运大抽奖',
+        prizeName: '积分100',
+        result: '中奖',
+      },
+      {
+        id: 2,
+        userName: '李四',
+        userId: 'U002',
+        lotteryTime: '2026-03-16 14:25:00',
+        activityName: '幸运大抽奖',
+        prizeName: '谢谢参与',
+        result: '未中奖',
+      },
     ],
     winning: [
-      { id: 1, userName: '张三', userId: 'U001', prizeName: '积分100', prizeValue: '100积分', winningTime: '2026-03-15 10:35:00', status: '已发放' },
-      { id: 2, userName: '赵六', userId: 'U006', prizeName: '优惠券50元', prizeValue: '¥50', winningTime: '2026-03-18 16:45:00', status: '已使用' },
+      {
+        id: 1,
+        userName: '张三',
+        userId: 'U001',
+        prizeName: '积分100',
+        prizeValue: '100积分',
+        winningTime: '2026-03-15 10:35:00',
+        status: '已发放',
+      },
+      {
+        id: 2,
+        userName: '赵六',
+        userId: 'U006',
+        prizeName: '优惠券50元',
+        prizeValue: '¥50',
+        winningTime: '2026-03-18 16:45:00',
+        status: '已使用',
+      },
     ],
     couponSend: [
-      { id: 1, couponName: '满100减10', userName: '张三', userId: 'U001', sendTime: '2026-03-15 10:40:00', status: '已领取' },
-      { id: 2, couponName: '满200减30', userName: '李四', userId: 'U002', sendTime: '2026-03-16 14:30:00', status: '已使用' },
+      {
+        id: 1,
+        couponName: '满100减10',
+        userName: '张三',
+        userId: 'U001',
+        sendTime: '2026-03-15 10:40:00',
+        status: '已领取',
+      },
+      {
+        id: 2,
+        couponName: '满200减30',
+        userName: '李四',
+        userId: 'U002',
+        sendTime: '2026-03-16 14:30:00',
+        status: '已使用',
+      },
     ],
     couponVerify: [
-      { id: 1, couponName: '满100减10', userName: '张三', userId: 'U001', verifyTime: '2026-03-20 11:20:00', orderNo: 'CO20260320001', amount: 100 },
-      { id: 2, couponName: '满200减30', userName: '李四', userId: 'U002', verifyTime: '2026-03-21 15:30:00', orderNo: 'CO20260321002', amount: 230 },
+      {
+        id: 1,
+        couponName: '满100减10',
+        userName: '张三',
+        userId: 'U001',
+        verifyTime: '2026-03-20 11:20:00',
+        orderNo: 'CO20260320001',
+        amount: 100,
+      },
+      {
+        id: 2,
+        couponName: '满200减30',
+        userName: '李四',
+        userId: 'U002',
+        verifyTime: '2026-03-21 15:30:00',
+        orderNo: 'CO20260321002',
+        amount: 230,
+      },
     ],
     cardOrder: [
-      { id: 1, orderNo: 'CO20260315001', userName: '张三', cardName: '充电月卡', amount: 299, payTime: '2026-03-15 10:45:00', status: '已完成' },
-      { id: 2, orderNo: 'CO20260316002', userName: '李四', cardName: '停车季卡', amount: 599, payTime: '2026-03-16 14:35:00', status: '已完成' },
+      {
+        id: 1,
+        orderNo: 'CO20260315001',
+        userName: '张三',
+        cardName: '充电月卡',
+        amount: 299,
+        payTime: '2026-03-15 10:45:00',
+        status: '已完成',
+      },
+      {
+        id: 2,
+        orderNo: 'CO20260316002',
+        userName: '李四',
+        cardName: '停车季卡',
+        amount: 599,
+        payTime: '2026-03-16 14:35:00',
+        status: '已完成',
+      },
     ],
     revenue: [
-      { id: 1, orderNo: 'CO20260315001', userName: '张三', amount: 299, payMethod: '微信支付', payTime: '2026-03-15 10:45:00' },
-      { id: 2, orderNo: 'CO20260316002', userName: '李四', amount: 599, payMethod: '支付宝', payTime: '2026-03-16 14:35:00' },
-      { id: 3, orderNo: 'CO20260317003', userName: '王五', amount: 199, payMethod: '余额支付', payTime: '2026-03-17 09:20:00' },
+      {
+        id: 1,
+        orderNo: 'CO20260315001',
+        userName: '张三',
+        amount: 299,
+        payMethod: '微信支付',
+        payTime: '2026-03-15 10:45:00',
+      },
+      {
+        id: 2,
+        orderNo: 'CO20260316002',
+        userName: '李四',
+        amount: 599,
+        payMethod: '支付宝',
+        payTime: '2026-03-16 14:35:00',
+      },
+      {
+        id: 3,
+        orderNo: 'CO20260317003',
+        userName: '王五',
+        amount: 199,
+        payMethod: '余额支付',
+        payTime: '2026-03-17 09:20:00',
+      },
     ],
     exchange: [
-      { id: 1, userName: '张三', productName: '充电优惠券', points: 100, exchangeTime: '2026-03-15 10:50:00', status: '已发放' },
-      { id: 2, userName: '李四', productName: '停车优惠券', points: 200, exchangeTime: '2026-03-16 14:40:00', status: '已使用' },
+      {
+        id: 1,
+        userName: '张三',
+        productName: '充电优惠券',
+        points: 100,
+        exchangeTime: '2026-03-15 10:50:00',
+        status: '已发放',
+      },
+      {
+        id: 2,
+        userName: '李四',
+        productName: '停车优惠券',
+        points: 200,
+        exchangeTime: '2026-03-16 14:40:00',
+        status: '已使用',
+      },
     ],
     stock: [
-      { id: 1, cardName: '充电月卡', currentStock: 500, totalStock: 1000, availableStock: 500, status: '正常' },
-      { id: 2, cardName: '停车季卡', currentStock: 200, totalStock: 500, availableStock: 300, status: '正常' },
-      { id: 3, cardName: '充电周卡', currentStock: 50, totalStock: 200, availableStock: 150, status: '预警' },
+      {
+        id: 1,
+        cardName: '充电月卡',
+        currentStock: 500,
+        totalStock: 1000,
+        availableStock: 500,
+        status: '正常',
+      },
+      {
+        id: 2,
+        cardName: '停车季卡',
+        currentStock: 200,
+        totalStock: 500,
+        availableStock: 300,
+        status: '正常',
+      },
+      {
+        id: 3,
+        cardName: '充电周卡',
+        currentStock: 50,
+        totalStock: 200,
+        availableStock: 150,
+        status: '预警',
+      },
     ],
     warnStock: [
-      { id: 1, cardName: '充电周卡', currentStock: 50, warnThreshold: 100, shortage: 50, status: '库存不足' },
-      { id: 2, cardName: '停车日卡', currentStock: 20, warnThreshold: 50, shortage: 30, status: '库存不足' },
+      {
+        id: 1,
+        cardName: '充电周卡',
+        currentStock: 50,
+        warnThreshold: 100,
+        shortage: 50,
+        status: '库存不足',
+      },
+      {
+        id: 2,
+        cardName: '停车日卡',
+        currentStock: 20,
+        warnThreshold: 50,
+        shortage: 30,
+        status: '库存不足',
+      },
     ],
     operator: [
-      { id: 1, account: 'admin', name: '管理员', department: '运营部', role: '超级管理员', lastLoginTime: '2026-04-01 08:30:00' },
+      {
+        id: 1,
+        account: 'admin',
+        name: '管理员',
+        department: '运营部',
+        role: '超级管理员',
+        lastLoginTime: '2026-04-01 08:30:00',
+      },
     ],
   };
   return mockDataMap[type] || [];
@@ -198,7 +395,7 @@ const columns = ref([]);
 const open = async (type, reportCycle, statTime) => {
   loading.value = true;
   columns.value = getColumns(type);
-  
+
   // 设置弹窗标题
   const titleMap = {
     activity: `${reportCycle} - 活动明细`,
@@ -214,15 +411,15 @@ const open = async (type, reportCycle, statTime) => {
     warnStock: `${reportCycle} - 预警卡种库存明细`,
     operator: '操作人员详情',
   };
-  
+
   modalApi.setState({ title: titleMap[type] || '明细' });
-  
+
   // 模拟加载数据
   setTimeout(() => {
     dataList.value = getMockData(type);
     loading.value = false;
   }, 500);
-  
+
   modalApi.open();
 };
 
@@ -234,17 +431,17 @@ defineExpose({
 <template>
   <Modal>
     <div class="drill-down-content">
-      <div v-if="loading" class="loading-tip">
-        加载中...
-      </div>
-      <div v-else-if="dataList.length === 0" class="empty-tip">
-        暂无数据
-      </div>
+      <div v-if="loading" class="loading-tip">加载中...</div>
+      <div v-else-if="dataList.length === 0" class="empty-tip">暂无数据</div>
       <div v-else class="data-table">
         <table class="detail-table">
           <thead>
             <tr>
-              <th v-for="col in columns" :key="col.field" :style="{ minWidth: col.minWidth + 'px' }">
+              <th
+                v-for="col in columns"
+                :key="col.field"
+                :style="{ minWidth: col.minWidth + 'px' }"
+              >
                 {{ col.title }}
               </th>
             </tr>
@@ -253,7 +450,18 @@ defineExpose({
             <tr v-for="(row, index) in dataList" :key="index">
               <td v-for="col in columns" :key="col.field">
                 <span v-if="col.field === 'status'">
-                  <ElTag :type="row.status === '正常' || row.status === '已完成' || row.status === '已发放' || row.status === '已使用' ? 'success' : row.status === '预警' || row.status === '库存不足' ? 'danger' : 'info'">
+                  <ElTag
+                    :type="
+                      row.status === '正常' ||
+                      row.status === '已完成' ||
+                      row.status === '已发放' ||
+                      row.status === '已使用'
+                        ? 'success'
+                        : row.status === '预警' || row.status === '库存不足'
+                          ? 'danger'
+                          : 'info'
+                    "
+                  >
                     {{ row[col.field] }}
                   </ElTag>
                 </span>
@@ -269,16 +477,16 @@ defineExpose({
 
 <style scoped>
 .drill-down-content {
-  padding: 20px;
   max-height: 500px;
+  padding: 20px;
   overflow-y: auto;
 }
 
 .loading-tip,
 .empty-tip {
-  text-align: center;
   padding: 40px;
   color: #909399;
+  text-align: center;
 }
 
 .data-table {
@@ -287,8 +495,8 @@ defineExpose({
 
 .detail-table {
   width: 100%;
-  border-collapse: collapse;
   font-size: 14px;
+  border-collapse: collapse;
 }
 
 .detail-table th,
@@ -299,9 +507,9 @@ defineExpose({
 }
 
 .detail-table th {
-  background-color: #f5f7fa;
   font-weight: 600;
   color: #606266;
+  background-color: #f5f7fa;
 }
 
 .detail-table tr:hover {

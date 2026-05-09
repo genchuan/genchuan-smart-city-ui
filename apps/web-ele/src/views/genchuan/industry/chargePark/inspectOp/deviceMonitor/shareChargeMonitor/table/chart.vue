@@ -63,7 +63,7 @@ const state = reactive({
       fields: [
         { key: 'stationName', label: '所属场站' },
         // { key: 'regionName', label: '所属区域' },
-        { key: 'monitorStatus', label: '监测状态', bold: true },
+        // { key: 'monitorStatus', label: '监测状态', bold: true },
       ],
     },
   },
@@ -80,21 +80,39 @@ const mapData = computed(() => {
     coordinate: `${item.lon ?? item.longitude},${item.lat ?? item.latitude}`,
   }));
 
-  if (!props.locatedDevice?.longitude || !props.locatedDevice?.latitude) {
+  const d = props.locatedDevice;
+  const lon = d?.longitude ?? d?.lon;
+  const lat = d?.latitude ?? d?.lat;
+  if (
+    d == null ||
+    lon === '' ||
+    lat === '' ||
+    lon == null ||
+    lat == null
+  ) {
     return baseData;
   }
 
   const located = {
-    id: props.locatedDevice.id || props.locatedDevice.deviceCode,
-    deviceCode: props.locatedDevice.deviceCode || '目标设备',
-    stationName: props.locatedDevice.stationName || '-',
-    regionName: props.locatedDevice.regionName || '-',
-    monitorStatus: props.locatedDevice.monitorStatus || '定位',
+    id: d.id || d.deviceCode,
+    deviceCode: d.deviceCode || '目标设备',
+    stationName: d.stationName || '-',
+    regionName: d.regionName || '-',
+    monitorStatus: d.monitorStatus || '定位',
     statusName: '定位',
-    coordinate: `${props.locatedDevice.longitude},${props.locatedDevice.latitude}`,
+    coordinate: `${Number(lon)},${Number(lat)}`,
   };
 
   return [located, ...baseData.filter((item) => item.id !== located.id)];
+});
+
+const mapLocateFocusKey = computed(() => {
+  const d = props.locatedDevice;
+  if (!d?.locateKey) return 0;
+  const lon = d.longitude ?? d.lon;
+  const lat = d.latitude ?? d.lat;
+  if (lon == null || lat == null || lon === '' || lat === '') return 0;
+  return d.locateKey;
 });
 
 const trendXData = computed(() => state.trendData.map((item) => item.time));
@@ -171,6 +189,7 @@ onMounted(() => {
         <MapComponent
           :data="mapData"
           :info-window-config="state.mapConfig.infoWindowConfig"
+          :locate-focus-key="mapLocateFocusKey"
           :marker-icons="state.mapConfig.markerIcons"
           :status-icon-map="state.mapConfig.statusIconMap"
           :status-key-map="state.mapConfig.statusKeyMap"

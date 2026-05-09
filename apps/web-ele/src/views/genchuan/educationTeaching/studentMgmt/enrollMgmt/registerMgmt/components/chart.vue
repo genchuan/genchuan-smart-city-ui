@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption } from 'element-plus';
+import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
@@ -12,6 +12,45 @@ import {
 const loading = ref(true);
 const chartData = ref({});          // 卡片 + 折线图
 const enrollData = ref({});         // 专业报名录取数据
+
+// 时间范围选择器绑定的值（数组格式 [startDate, endDate]）
+const timeRange = ref([]);
+
+// 获取默认时间范围（最近30天，结束时间为当天）
+const getDefaultTimeRange = () => {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 30);
+  return [start, end];
+};
+
+// 格式化单个日期时间为后端要求的格式（带 T 分隔，如 "2023-01-01T00:00:00"）
+// isEnd: 是否为结束时间（结束时间用 23:59:59，起始用 00:00:00）
+const formatDateTime = (date, isEnd = false) => {
+  if (!date) return '';
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const time = isEnd ? '23:59:59' : '00:00:00';
+  return `${year}-${month}-${day}T${time}`;
+};
+
+// 生成 timeRange 字符串（格式："起始时间,结束时间"）
+const getTimeRangeParam = () => {
+  if (timeRange.value && timeRange.value.length === 2) {
+    const startStr = formatDateTime(timeRange.value[0], false);
+    const endStr = formatDateTime(timeRange.value[1], true);
+    return `${startStr},${endStr}`;
+  }
+  const [defaultStart, defaultEnd] = getDefaultTimeRange();
+  return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
+};
+
+// 日期范围变化时重新加载数据
+const handleDateRangeChange = () => {
+  loadData();
+};
 
 // ========== 卡片数据 ==========
 const cardList = computed(() => {
@@ -92,13 +131,15 @@ const handleLineClick = (params) => {
 const loadData = async () => {
   loading.value = true;
   try {
+    const timeRangeParam = getTimeRangeParam();
     const [chartRes, enrollRes] = await Promise.allSettled([
-      getRegisterMgmtChart({}),
-      getRegisterMgmtEnrollCount({}),
+      getRegisterMgmtChart({ timeRange: timeRangeParam }),
+      getRegisterMgmtEnrollCount({ timeRange: timeRangeParam }),
     ]);
     if (chartRes.status === 'fulfilled') {
       chartData.value = chartRes.value;
     } else {
+      console.warn('看板接口失败，使用模拟数据', chartRes.reason);
       chartData.value = {
         totalApplyCount: 156,
         pendingAuditCount: 22,
@@ -118,6 +159,7 @@ const loadData = async () => {
     if (enrollRes.status === 'fulfilled') {
       enrollData.value = enrollRes.value;
     } else {
+      console.warn('专业统计接口失败，使用模拟数据', enrollRes.reason);
       enrollData.value = {
         majorEnrollData: [
           { major: '计算机应用技术', applyCount: 45, admitCount: 40 },
@@ -136,6 +178,7 @@ const loadData = async () => {
 };
 
 onMounted(() => {
+  timeRange.value = getDefaultTimeRange();
   loadData();
 });
 </script>
@@ -152,7 +195,8 @@ onMounted(() => {
       />
     </div>
 
-    <div class="chart-area">
+    <div class="chart-area main-chart-container">
+      <!-- 图表切换下拉框 -->
       <div class="chart-select-wrapper">
         <el-select
           v-model="activeChartIndex"
@@ -167,6 +211,27 @@ onMounted(() => {
           />
         </el-select>
       </div>
+
+      <!-- 时间范围选择器（紧凑样式，位于右上角） -->
+      <div class="date-range-wrapper">
+        <el-date-picker
+          v-model="timeRange"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="起始"
+          end-placeholder="结束"
+          size="small"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          :shortcuts="[
+            { text: '近7天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 7); return [start, end]; } },
+            { text: '近30天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 30); return [start, end]; } },
+            { text: '近90天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 90); return [start, end]; } }
+          ]"
+          @change="handleDateRangeChange"
+        />
+      </div>
+
       <Bar
         v-if="currentChart.type === 'bar'"
         style="flex: 1 !important;"
@@ -222,6 +287,35 @@ onMounted(() => {
     top: 8px;
     right: 10px;
     z-index: 10;
+  }
+
+  /* 主图表容器（用于定位时间选择器） */
+  .main-chart-container {
+    position: relative;
+  }
+
+  .date-range-wrapper {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    z-index: 10;
+  }
+
+  /* 紧凑的时间选择器样式 */
+  :deep(.el-date-editor) {
+    --el-date-editor-width: 240px;
+
+    .el-range__icon {
+      margin-right: 2px;
+    }
+
+    .el-range-separator {
+      padding: 0 4px;
+    }
+
+    .el-range__close-icon {
+      margin-left: 2px;
+    }
   }
 }
 </style>

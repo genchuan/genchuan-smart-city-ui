@@ -19,12 +19,18 @@ import {
   evaluateReserve,
   getReserveDetail,
   getUserList,
+  getUserDetail,
   getStationList,
   getSpaceList,
   createReserve,
+  getStationDetail,
+  getSpaceDetail,
 } from '#/api/genchuan/industry/chargePark/carService/reserveService/reserveList/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import ReserveDetailDrawer from './detail.vue';
+import UserDetailDrawer from '#/views/genchuan/industry/chargePark/carService/carGuide/nearStation/table/userDetail.vue';
+import StationDetailDrawer from './stationDetail.vue';
+import SpaceDetailDrawer from './spaceDetail.vue';
 
 // 新增 props 和 emit
 const props = defineProps({
@@ -241,6 +247,47 @@ const handleOpenDetail = async (row) => {
   detailDrawerRef.value.open();
 };
 
+// 用户详情抽屉
+const userDetailDrawerRef = ref(null);
+const showUserDetail = async (userId) => {
+  if (!userId) return ElMessage.warning('用户ID不存在');
+  try {
+    const userDetail = await getUserDetail(userId);
+    userDetailDrawerRef.value?.open(userDetail);
+  } catch (error) {
+    console.error('获取用户详情失败', error);
+    ElMessage.error('获取用户详情失败');
+  }
+};
+
+// 场站详情抽屉
+const stationDetailDrawerRef = ref(null);
+const showStationDetail = async (stationId) => {
+  if (!stationId) return ElMessage.warning('场站ID不存在');
+  try {
+    const stationDetail = await getStationDetail(stationId);
+    if (!stationDetail) return ElMessage.warning('该场站不存在');
+    stationDetailDrawerRef.value?.open(stationDetail);
+  } catch (error) {
+    console.error('获取场站详情失败', error);
+    ElMessage.error('获取场站详情失败');
+  }
+};
+
+// 车位详情抽屉
+const spaceDetailDrawerRef = ref(null);
+const showSpaceDetail = async (spaceId) => {
+  if (!spaceId) return ElMessage.warning('车位ID不存在');
+  try {
+    const spaceDetail = await getSpaceDetail(spaceId);
+    if (!spaceDetail) return ElMessage.warning('该车位不存在');
+    spaceDetailDrawerRef.value?.open(spaceDetail);
+  } catch (error) {
+    console.error('获取车位详情失败', error);
+    ElMessage.error('获取车位详情失败');
+  }
+};
+
 // ==================== 批量审核抽屉 ====================
 const batchAuditForm = reactive({ auditResult: '', auditRemark: '', rejectReason: '' });
 const [BatchAuditDrawer, batchAuditDrawerApi] = useVbenDrawer({
@@ -431,15 +478,22 @@ const showScoreDetail = (row) => {
 // 图表刷新事件
 const handleChartRefresh = (event) => {
   const filters = event.detail;
+  // 图表/卡片点击之间互斥：清掉所有图表相关过滤，再加当前一项
   const newSearchObj = { ...dataObj.searchObj };
   delete newSearchObj.status;
   delete newSearchObj.statusList;
+  delete newSearchObj.reserveTime;
+  delete newSearchObj.reserveType;
   if (filters?.date) {
     newSearchObj.reserveTime = [`${filters.date} 00:00:00`, `${filters.date} 23:59:59`];
   } else if (filters?.reserveType) {
     newSearchObj.reserveType = filters.reserveType;
   } else if (filters?.statusList) {
     newSearchObj.statusList = filters.statusList;
+  } else if (filters?.reserveSuccessRate) {
+    newSearchObj.status = '已完成';
+  } else if (filters?.totalReserveCount) {
+    // 总预约量：所有过滤已清空，展示全部
   }
   dataObj.searchObj = newSearchObj;
   dataObj.currentPage = 1;
@@ -521,19 +575,22 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
         <el-text @click="handleOpenDetail(row)" type="primary">{{ row.id }}</el-text>
       </template>
       <template #user_name="{ row }">
-        <el-text @click="() => handleClearField('userId') || (dataObj.searchObj.userId = row.userId) || gridApi.query()" type="primary" style="cursor: pointer">
-          {{ getUserName(row.userId) }}
+        <el-text v-if="row.userId" @click="showUserDetail(row.userId)" type="primary" style="cursor: pointer">
+          {{ getUserName(row.userId) || row.userId }}
         </el-text>
+        <span v-else>-</span>
       </template>
       <template #station_name="{ row }">
-        <el-text @click="() => handleClearField('stationId') || (dataObj.searchObj.stationId = row.stationId) || gridApi.query()" type="primary" style="cursor: pointer">
-          {{ getStationName(row.stationId) }}
+        <el-text v-if="row.stationId" @click="showStationDetail(row.stationId)" type="primary" style="cursor: pointer">
+          {{ getStationName(row.stationId) || row.stationId }}
         </el-text>
+        <span v-else>-</span>
       </template>
       <template #space_name="{ row }">
-        <el-text @click="() => handleClearField('spaceId') || (dataObj.searchObj.spaceId = row.spaceId) || gridApi.query()" type="primary" style="cursor: pointer">
-          {{ getSpaceName(row.spaceId) }}
+        <el-text v-if="row.spaceId" @click="showSpaceDetail(row.spaceId)" type="primary" style="cursor: pointer">
+          {{ getSpaceName(row.spaceId) || row.spaceId }}
         </el-text>
+        <span v-else>-</span>
       </template>
       <template #status="{ row }">
         <el-tag :type="{ 待审核: 'warning', 已生效: 'success', 已完成: 'info', 已取消: 'danger' }[row.status]" @click="() => handleClearField('status') || (dataObj.searchObj.status = row.status) || gridApi.query()" style="cursor: pointer">
@@ -580,6 +637,9 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
     </SearchDrawer>
 
     <ReserveDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="预约详情" />
+    <UserDetailDrawer ref="userDetailDrawerRef" />
+    <StationDetailDrawer ref="stationDetailDrawerRef" />
+    <SpaceDetailDrawer ref="spaceDetailDrawerRef" />
 
     <!-- 新增预约抽屉 -->
     <CreateDrawer>
@@ -642,7 +702,7 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
     <EvaluateDrawer>
       <el-form :model="evaluateForm" label-width="100px">
         <el-form-item label="评分" required>
-          <el-rate v-model="evaluateForm.score" :max="5" show-text />
+          <el-rate v-model="evaluateForm.score" :max="5" show-text :texts="['很差', '失望', '一般', '满意', '惊喜']" />
         </el-form-item>
         <el-form-item label="评价内容">
           <el-input v-model="evaluateForm.evaluateContent" type="textarea" rows="3" />

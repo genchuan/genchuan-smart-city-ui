@@ -1,23 +1,25 @@
 <script setup>
 import { computed, ref } from 'vue';
 
+import { useVbenModal } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj } from '@vben/hooks';
-
-import { useVbenModal } from '@vben/common-ui';
 
 import { ElMessage } from 'element-plus';
 
 import { sendCouponMgmt } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 
+const emit = defineEmits(['success']);
+
 // 获取优惠券类型标签
 const getCouponTypeLabel = computed(() => {
   if (!rowData.value?.type) return '';
-  const dict = getDictObj(DICT_TYPE.COUPON_MGMT_TYPE, String(rowData.value.type));
+  const dict = getDictObj(
+    DICT_TYPE.COUPON_MGMT_TYPE,
+    String(rowData.value.type),
+  );
   return dict ? dict.label : rowData.value.type;
 });
-
-const emit = defineEmits(['success']);
 
 const [Modal, modalApi] = useVbenModal({
   title: '发放优惠券',
@@ -107,9 +109,7 @@ defineExpose({
             <template v-else-if="rowData?.type === '2'">
               {{ rowData?.amount }}小时
             </template>
-            <template v-else>
-              ¥{{ rowData?.amount }}
-            </template>
+            <template v-else> ¥{{ rowData?.amount }} </template>
           </span>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { requestClient } from '#/api/request.js';
 // ==================== 列表页交互操作接口 ====================
 
 /** 分页查询优惠券列表
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {string} params.name - 券名称，支持模糊查询
  * @param {string} params.type - 券类型（满减/折扣/时长/立减）
  * @param {string} params.status - 券状态（未领取/已领取/已使用/已过期）
@@ -17,7 +17,7 @@ export function getCouponMgmtPage(params) {
 }
 
 /** 新增优惠券
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {string} data.name - 券名称，唯一
  * @param {string} data.type - 券类型（满减/折扣/时长/立减）
  * @param {number} data.amount - 面额
@@ -68,7 +68,7 @@ export function getCouponMgmtDetail(id) {
 }
 
 /** 发放优惠券
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 优惠券ID
  * @param {number} data.receiverId - 领取人用户ID
  * @returns {Promise}
@@ -78,7 +78,7 @@ export function sendCouponMgmt(data) {
 }
 
 /** 核销优惠券
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 优惠券ID
  * @returns {Promise}
  */
@@ -87,7 +87,7 @@ export function verifyCouponMgmt(data) {
 }
 
 /** 重新发放优惠券
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 优惠券ID
  * @param {number} data.receiverId - 领取人用户ID
  * @param {string} data.newValidTime - 新的有效期
@@ -98,7 +98,7 @@ export function resendCouponMgmt(data) {
 }
 
 /** 编辑优惠券
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @returns {Promise}
  */
 export function updateCouponMgmt(data) {

@@ -15,7 +15,6 @@ import {
   handleLeaveHandle,
   exportLeaveHandle,
   getLeaveHandleDetail,
-  getStudentOptions,
 } from '#/api/genchuan/educationTeaching/studentMgmt/leaveMgmt/leaveHandle/data.js';
 import {
   textObj,
@@ -356,24 +355,6 @@ const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
     }
   },
 });
-
-// 动态注入学生选项
-const studentOptions = ref([]);
-const loadStudentOptions = async () => {
-  const res = await getStudentOptions();
-  studentOptions.value = res;
-};
-loadStudentOptions();
-
-watch(applyFormApi, (api) => {
-  if (api && studentOptions.value.length) {
-    const schema = api.getSchema();
-    const studentField = schema.find(f => f.fieldName === 'studentId');
-    if (studentField) {
-      studentField.componentProps.options = studentOptions.value;
-    }
-  }
-}, {immediate: true});
 
 // 详情抽屉
 const leaveDetailDrawerRef = ref(null);

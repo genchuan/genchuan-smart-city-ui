@@ -1,15 +1,13 @@
 <script setup>
 import { computed, nextTick, onMounted, ref } from 'vue';
 
-import { ElMessage } from 'element-plus';
-import { ArrowDown, ArrowUp } from '@element-plus/icons-vue';
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj } from '@vben/hooks';
 
+import { getStockControlChart } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/stockControl';
+
 import StockControlStats from './components/StockControlStats.vue';
 import Table from './table/index.vue';
-
-import { getStockControlChart } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/stockControl';
 
 import '#/genchuan-components/page/index.scss';
 
@@ -42,12 +40,8 @@ const fetchStatsData = async () => {
   try {
     const response = await getStockControlChart();
     if (response) {
-      const {
-        totalStock,
-        warnStockCount,
-        stockTrend,
-        stockDistribution,
-      } = response;
+      const { totalStock, warnStockCount, stockTrend, stockDistribution } =
+        response;
 
       // 组装卡片数据
       statsData.value.cards = [
@@ -199,7 +193,7 @@ const handleLineClick = async (date) => {
   ) {
     // 找到对应的完整日期格式
     const lineDataItem = statsData.value.lineData.find(
-      (item) => item.date === date
+      (item) => item.date === date,
     );
     const fullDate = lineDataItem ? lineDataItem.fullDate : date;
     tableComponent.handleStatsFilter('date', fullDate);

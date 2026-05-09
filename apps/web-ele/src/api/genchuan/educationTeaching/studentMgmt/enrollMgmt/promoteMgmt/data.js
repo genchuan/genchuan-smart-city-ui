@@ -1,19 +1,64 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+// 状态映射（后端英文 executed -> 前端中文 已执行）
+const statusMap = {
+  '未执行': 'pending',
+  '已执行': 'executed'
+};
+const statusReverse = {
+  'pending': '未执行',
+  'executed': '已执行'
+};
+
+// 通用转换函数：后端 → 前端（将英文转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.status && statusReverse[result.status]) {
+    result.status = statusReverse[result.status];
+  }
+  return result;
+}
+
+// 通用转换函数：前端 → 后端（将中文转为英文）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.status && statusMap[result.status]) {
+    result.status = statusMap[result.status];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 宣传管理接口 ====================
 
 // 分页查询
 export function getPromoteMgmtPage(params) {
-  return requestClient.get('/studentmgmt/promote-mgmt/page', { params }).catch(err => {
-    console.warn('分页接口失败', err);
-    // 分页接口已联调成功，不再使用模拟数据，返回空列表
-    return { list: [], total: 0 };
-  });
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/promote-mgmt/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败', err);
+      return { list: [], total: 0 };
+    });
 }
 
 // 发布（新增宣传任务）
 export function createPromoteMgmt(data) {
-  return requestClient.post('/studentmgmt/promote-mgmt/create', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/promote-mgmt/create', convertedData).catch(err => {
     console.warn('发布接口失败，模拟成功', err);
     return Promise.resolve({ id: Date.now() });
   });
@@ -29,7 +74,8 @@ export function executePromoteMgmt(data) {
 
 // 编辑
 export function updatePromoteMgmt(data) {
-  return requestClient.put('/studentmgmt/promote-mgmt/update', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.put('/studentmgmt/promote-mgmt/update', convertedData).catch(err => {
     console.warn('编辑接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -37,7 +83,8 @@ export function updatePromoteMgmt(data) {
 
 // 导出
 export function exportPromoteMgmt(params) {
-  return requestClient.download('/studentmgmt/promote-mgmt/export-excel', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/promote-mgmt/export-excel', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
@@ -46,9 +93,9 @@ export function exportPromoteMgmt(params) {
 // 详情
 export function getPromoteMgmtDetail(params) {
   return requestClient.get('/studentmgmt/promote-mgmt/get', { params })
+    .then(res => convertEnToZh(res))
     .catch(err => {
       console.warn('详情接口失败', err);
-      // 不再使用模拟数据，直接抛出错误让调用方处理
       return Promise.reject(err);
     });
 }
@@ -73,7 +120,7 @@ export function getPromoteMgmtChart(params) {
 
 // 各站点宣传人数统计（柱状图）
 export function getPromoteMgmtSiteCount(params) {
-  return requestClient.get('/studentmgmt/promote-mgmt/chart/promoteCount', { params }).catch(err => {
+  return requestClient.get('/studentmgmt/promote-mgmt/promoteCount', { params }).catch(err => {
     console.warn('站点统计接口失败，使用模拟数据', err);
     return Promise.resolve({
       siteList: ['泉州一中', '泉州五中', '厦门双十', '福州一中'],

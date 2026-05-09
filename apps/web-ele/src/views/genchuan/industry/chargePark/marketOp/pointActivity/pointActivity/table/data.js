@@ -324,7 +324,7 @@ export const getPointActivityStatusTagType = (status) => {
   return getDictTagTypeFromDict(dict, 'primary');
 };
 
-/** 积分活动搜索表单配置 - 支持所有展示字段 */
+/** 积分活动搜索表单配置 - 根据PointActivityPageReqVO参数配置 */
 export function useSearchFormSchema() {
   return [
     {
@@ -347,77 +347,36 @@ export function useSearchFormSchema() {
       },
     },
     {
+      fieldName: 'startTime',
+      label: '开始时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择开始时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'x',
+        type: 'datetimerange',
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'endTime',
+      label: '结束时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择结束时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'x',
+        type: 'datetimerange',
+        clearable: true,
+      },
+    },
+    {
       fieldName: 'status',
       label: '活动状态',
       component: 'Select',
       componentProps: {
         placeholder: '请选择活动状态',
         options: getDictOptions(DICT_TYPE.POINT_ACTIVITY_STATUS, 'string'),
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'timeRange',
-      label: '活动时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择活动时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'x',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'stationIds',
-      label: '活动覆盖场站',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择活动覆盖场站',
-        options: stationOptions,
-        clearable: true,
-        multiple: true,
-      },
-    },
-    {
-      fieldName: 'auditorName',
-      label: '审核人',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入审核人',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'creator',
-      label: '创建者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入创建者',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'createTimeRange',
-      label: '创建时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择创建时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'x',
-        type: 'datetimerange',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'auditTimeRange',
-      label: '审核时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择审核时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'x',
-        type: 'datetimerange',
         clearable: true,
       },
     },
@@ -688,7 +647,7 @@ export const textObj = {
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '活动ID' },
+  // { key: 'id', label: '活动ID' },
   { key: 'name', label: '活动名称' },
   {
     key: 'type',
@@ -719,7 +678,7 @@ export const detailFields = [
     },
     tagType: (value) => getPointActivityStatusTagType(value),
   },
-  { key: 'creator', label: '创建者' },
+  // { key: 'creator', label: '创建者' },
   { key: 'updater', label: '更新者' },
   { key: 'createTimeStr', label: '创建时间' },
   { key: 'updateTimeStr', label: '更新时间' },

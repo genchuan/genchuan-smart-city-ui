@@ -33,11 +33,10 @@ export function getColumns() {
     { field: 'content', title: '消息内容', minWidth: 250 },
     { field: 'sendUser', title: '发布人', minWidth: 100 },
     { field: 'sendTime', title: '发布时间', minWidth: 180, slots: { default: 'sendTime' } },
-    { field: 'replyContent', title: '家长反馈内容', minWidth: 180 },
+    { field: 'replyContent', title: '反馈内容', minWidth: 180 },
     { field: 'replyTime', title: '反馈时间', minWidth: 180, slots: { default: 'replyTime' } },
     { field: 'interactRate', title: '互动率(%)', minWidth: 100 },
     { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'creator', title: '创建人', minWidth: 120, slots: { default: 'creator' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
     { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
   ];

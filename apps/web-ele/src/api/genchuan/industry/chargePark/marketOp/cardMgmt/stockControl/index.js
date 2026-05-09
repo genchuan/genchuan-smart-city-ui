@@ -3,7 +3,7 @@ import { requestClient } from '#/api/request.js';
 // ==================== 列表页交互操作接口 ====================
 
 /** 分页查询库存管控列表
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {number} params.cardId - 卡种ID，支持按卡种筛选
  * @param {string} params.status - 库存状态（正常库存/低库存/预警库存）
  * @param {string} params.warnStatus - 告警状态（未告警/已告警）
@@ -23,7 +23,7 @@ export function exportStockControl() {
 }
 
 /** 调配库存
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.cardId - 卡种ID
  * @param {number} data.sourceStationId - 源场站ID
  * @param {number} data.targetStationId - 目标场站ID
@@ -37,7 +37,7 @@ export function allocateStockControl(data) {
 // ==================== 列表行交互操作接口 ====================
 
 /** 获取库存管控详情
- * @param {Object} params - 请求参数
+ * @param {object} params - 请求参数
  * @param {number} params.id - 库存ID
  * @returns {Promise}
  */
@@ -46,7 +46,7 @@ export function getStockControlDetail(params) {
 }
 
 /** 补货
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 库存ID
  * @param {number} data.num - 补货数量
  * @returns {Promise}
@@ -56,7 +56,7 @@ export function replenishStockControl(data) {
 }
 
 /** 告警
- * @param {Object} data - 请求参数
+ * @param {object} data - 请求参数
  * @param {number} data.id - 库存ID
  * @param {string} data.warnContent - 告警内容
  * @returns {Promise}

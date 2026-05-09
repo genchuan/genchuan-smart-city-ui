@@ -7,9 +7,10 @@ import dayjs from 'dayjs';
 import { ElMessage } from 'element-plus';
 
 import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
-import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
+// import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
 import { buildStatsDataFromApi } from './data';
+import UserInfoChart from './table/chart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
@@ -64,36 +65,43 @@ async function loadStats() {
   }
 }
 
-const statsData = computed(() => {
-  const data = statsDataSource.value;
+const statsData = computed(() => statsDataSource.value);
 
-  return {
-    ...data,
-    cards: data.cards.map((item, index) => ({
-      ...item,
-      onClick: index === 0 ? handleFilterAllUsers : handleFilterRecentUsers,
-    })),
-    charts: data.charts.map((item) => {
-      if (item.type === 'line') {
-        return {
-          ...item,
-          onClick: (params: { name: string }) =>
-            handleFilterByMonth(params.name),
-        };
-      }
+type ChartRefreshPayload =
+  | {
+      index: number;
+      type: 'card';
+    }
+  | {
+      chartType: string;
+      name: string;
+      type: 'chart';
+    };
 
-      if (item.type === 'bar') {
-        return {
-          ...item,
-          onClick: (params: { name: string }) =>
-            handleFilterByUserType(params.name),
-        };
-      }
+async function handleChartRefresh(payload: ChartRefreshPayload) {
+  if (payload.type === 'card') {
+    if (payload.index === 0) {
+      await handleFilterAllUsers();
+      return;
+    }
 
-      return item;
-    }),
-  };
-});
+    await handleFilterRecentUsers();
+    return;
+  }
+
+  if (!payload.name) {
+    return;
+  }
+
+  if (payload.chartType === 'line') {
+    await handleFilterByMonth(payload.name);
+    return;
+  }
+
+  if (payload.chartType === 'bar') {
+    await handleFilterByUserType(payload.name);
+  }
+}
 
 /** 钻取全部用户列表 */
 async function handleFilterAllUsers() {
@@ -133,8 +141,13 @@ onMounted(() => {
 <template>
   <Page auto-content-height class="user-info-page">
     <div class="common-index user-info-index">
-      <div v-show="showStats" class="user-info-stats">
-        <StatsVisualization :data="statsData" />
+      <div v-if="showStats" class="user-info-stats">
+        <!--
+          原公共统计组件留存：
+          <StatsVisualization :data="statsData" />
+          该组件暂未消费卡片/图表点击事件，所以本页改为参考 rescueInfo 使用局部图表组件。
+        -->
+        <UserInfoChart :data="statsData" @refresh="handleChartRefresh" />
       </div>
       <div class="user-info-table-wrap">
         <Table

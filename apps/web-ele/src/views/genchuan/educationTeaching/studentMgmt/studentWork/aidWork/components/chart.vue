@@ -1,24 +1,20 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-
-import { ElDatePicker, ElOption, ElSelect } from 'element-plus';
-
+import {reactive, onMounted, ref, computed} from 'vue';
+import {ElMessage, ElSelect, ElOption, ElDatePicker} from 'element-plus';
+import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
+import Pie from '#/genchuan-components/stats/pieClick.vue';
+import Bar from '#/genchuan-components/stats/barClick.vue';
 import {
   getAidWorkChart,
   getApplyCount,
 } from '#/api/genchuan/educationTeaching/studentMgmt/studentWork/aidWork/data.js';
-import Bar from '#/genchuan-components/stats/barClick.vue';
-import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
-import Pie from '#/genchuan-components/stats/pieClick.vue';
-
-const emit = defineEmits(['cardClick', 'pieClick', 'barClick']);
 
 // 资助类型映射（后端 type 数字转中文）
 const aidTypeMap = {
-  1: '奖学金',
-  2: '助学金',
-  3: '助学贷款',
-  4: '勤工俭学',
+  '1': '奖学金',
+  '2': '助学金',
+  '3': '助学贷款',
+  '4': '勤工俭学'
 };
 
 const loading = ref(true);
@@ -48,33 +44,23 @@ const cardList = computed(() => {
   const totalAmount = chartData.value.totalApplyAmount || 0;
   const totalGrant = chartData.value.totalGrantAmount || 0;
   return [
-    { title: '总申请数', value: totalCount, color: '#409EFF', status: 'total' },
-    { title: '总通过数', value: totalPass, color: '#67C23A', status: 'passed' },
-    {
-      title: '总申请金额',
-      value: `¥${totalAmount.toFixed(2)}`,
-      color: '#E6A23C',
-      status: 'amount',
-    },
-    {
-      title: '总发放金额',
-      value: `¥${totalGrant.toFixed(2)}`,
-      color: '#F56C6C',
-      status: 'grant',
-    },
+    {title: '总申请数', value: totalCount, color: '#409EFF', status: 'total'},
+    {title: '总通过数', value: totalPass, color: '#67C23A', status: 'passed'},
+    {title: '总申请金额', value: `¥${totalAmount.toFixed(2)}`, color: '#E6A23C', status: 'amount'},
+    {title: '总发放金额', value: `¥${totalGrant.toFixed(2)}`, color: '#F56C6C', status: 'grant'},
   ];
 });
 
 // 各状态申请数量饼图数据
 const statusPieData = computed(() => {
   const map = chartData.value.statusCountMap || {};
-  return Object.entries(map).map(([name, value]) => ({ name, value }));
+  return Object.entries(map).map(([name, value]) => ({name, value}));
 });
 
 // 各资助类型申请数量饼图数据
 const typePieData = computed(() => {
   const map = chartData.value.typeCountMap || {};
-  return Object.entries(map).map(([name, value]) => ({ name, value }));
+  return Object.entries(map).map(([name, value]) => ({name, value}));
 });
 
 // 饼图切换选项
@@ -92,9 +78,7 @@ const pieOptions = computed(() => [
 ]);
 
 const activePieIndex = ref(0);
-const currentPieData = computed(
-  () => pieOptions.value[activePieIndex.value] || pieOptions.value[0],
-);
+const currentPieData = computed(() => pieOptions.value[activePieIndex.value] || pieOptions.value[0]);
 
 const handlePieChange = (index) => {
   activePieIndex.value = index;
@@ -103,41 +87,32 @@ const handlePieChange = (index) => {
 // 处理 typeApplyData 转换为柱状图需要的格式
 // 需要将后端 type 数字转为中文名称，处理 null 值，finishRate 转为百分比
 const transformedApplyData = computed(() => {
-  return typeApplyData.value.map((item) => {
+  return typeApplyData.value.map(item => {
     const typeName = aidTypeMap[item.type] || item.type;
     const finishCount = item.finishCount ?? 0;
-    const finishRate =
-      item.finishRate == null ? 0 : (item.finishRate * 100).toFixed(1);
+    const finishRate = item.finishRate != null ? (item.finishRate * 100).toFixed(1) : 0;
     return {
       name: typeName,
       applyCount: item.applyCount,
-      finishCount,
-      finishRate: Number.parseFloat(finishRate),
+      finishCount: finishCount,
+      finishRate: parseFloat(finishRate),
     };
   });
 });
 
-const barXData = computed(() =>
-  transformedApplyData.value.map((item) => item.name),
-);
-const barApplySeries = computed(() => [
-  {
-    name: '申请人数',
-    data: transformedApplyData.value.map((item) => item.applyCount),
-  },
-]);
-const barFinishSeries = computed(() => [
-  {
-    name: '办理完成人数',
-    data: transformedApplyData.value.map((item) => item.finishCount),
-  },
-]);
-const barRateSeries = computed(() => [
-  {
-    name: '办理完成率(%)',
-    data: transformedApplyData.value.map((item) => item.finishRate),
-  },
-]);
+const barXData = computed(() => transformedApplyData.value.map(item => item.name));
+const barApplySeries = computed(() => [{
+  name: '申请人数',
+  data: transformedApplyData.value.map(item => item.applyCount)
+}]);
+const barFinishSeries = computed(() => [{
+  name: '办理完成人数',
+  data: transformedApplyData.value.map(item => item.finishCount)
+}]);
+const barRateSeries = computed(() => [{
+  name: '办理完成率(%)',
+  data: transformedApplyData.value.map(item => item.finishRate)
+}]);
 
 // 柱状图切换选项
 const chartOptions = computed(() => [
@@ -165,13 +140,13 @@ const chartOptions = computed(() => [
 ]);
 
 const activeChartIndex = ref(0);
-const currentChart = computed(
-  () => chartOptions.value[activeChartIndex.value] || chartOptions.value[0],
-);
+const currentChart = computed(() => chartOptions.value[activeChartIndex.value] || chartOptions.value[0]);
 
 const handleChartChange = (index) => {
   activeChartIndex.value = index;
 };
+
+const emit = defineEmits(['cardClick', 'pieClick', 'barClick']);
 
 const handleCardClick = (cardInfo) => {
   emit('cardClick', cardInfo.status);
@@ -179,13 +154,13 @@ const handleCardClick = (cardInfo) => {
 
 const handlePieClick = (item) => {
   const pieType = currentPieData.value.type;
-  emit('pieClick', { type: pieType, value: item.name });
+  emit('pieClick', {type: pieType, value: item.name});
 };
 
 const handleBarClick = (params) => {
   // 柱状图点击筛选对应类型
   const typeName = params.name;
-  emit('barClick', { type: 'aidType', value: typeName });
+  emit('barClick', {type: 'aidType', value: typeName});
 };
 
 // 加载看板数据（带时间范围参数）
@@ -215,10 +190,10 @@ const loadChartData = async () => {
     chartData.value = {
       totalApplyCount: 256,
       totalPassCount: 198,
-      totalApplyAmount: 768_000,
-      totalGrantAmount: 594_000,
-      statusCountMap: { 待审核: 32, 已通过: 198, 已完成: 26 },
-      typeCountMap: { 奖学金: 86, 助学金: 102, 助学贷款: 48, 勤工俭学: 20 },
+      totalApplyAmount: 768000,
+      totalGrantAmount: 594000,
+      statusCountMap: {'待审核': 32, '已通过': 198, '已完成': 26},
+      typeCountMap: {'奖学金': 86, '助学金': 102, '助学贷款': 48, '勤工俭学': 20},
     };
   }
 };
@@ -248,28 +223,10 @@ const loadApplyCountData = async () => {
   } catch (error) {
     console.warn('获取申请人数统计失败，使用模拟数据', error);
     typeApplyData.value = [
-      {
-        type: '1',
-        name: '',
-        applyCount: 86,
-        finishCount: 78,
-        finishRate: 0.907,
-      },
-      {
-        type: '2',
-        name: '',
-        applyCount: 102,
-        finishCount: 92,
-        finishRate: 0.902,
-      },
-      {
-        type: '3',
-        name: '',
-        applyCount: 48,
-        finishCount: 42,
-        finishRate: 0.875,
-      },
-      { type: '4', name: '', applyCount: 20, finishCount: 18, finishRate: 0.9 },
+      {type: "1", name: "", applyCount: 86, finishCount: 78, finishRate: 0.907},
+      {type: "2", name: "", applyCount: 102, finishCount: 92, finishRate: 0.902},
+      {type: "3", name: "", applyCount: 48, finishCount: 42, finishRate: 0.875},
+      {type: "4", name: "", applyCount: 20, finishCount: 18, finishRate: 0.90},
     ];
   }
 };
@@ -279,7 +236,10 @@ const handleDateRangeChange = async () => {
   if (dateRange.value && dateRange.value.length === 2) {
     loading.value = true;
     try {
-      await Promise.all([loadChartData(), loadApplyCountData()]);
+      await Promise.all([
+        loadChartData(),
+        loadApplyCountData(),
+      ]);
     } finally {
       loading.value = false;
     }
@@ -294,88 +254,43 @@ const loadData = async () => {
       getAidWorkChart({}),
       getApplyCount({}),
     ]);
-    chartData.value =
-      chartRes.status === 'fulfilled'
-        ? chartRes.value
-        : {
-            totalApplyCount: 256,
-            totalPassCount: 198,
-            totalApplyAmount: 768_000,
-            totalGrantAmount: 594_000,
-            statusCountMap: { 待审核: 32, 已通过: 198, 已完成: 26 },
-            typeCountMap: {
-              奖学金: 86,
-              助学金: 102,
-              助学贷款: 48,
-              勤工俭学: 20,
-            },
-          };
-    typeApplyData.value =
-      applyRes.status === 'fulfilled'
-        ? applyRes.value
-        : [
-            {
-              type: '1',
-              name: '',
-              applyCount: 86,
-              finishCount: 78,
-              finishRate: 0.907,
-            },
-            {
-              type: '2',
-              name: '',
-              applyCount: 102,
-              finishCount: 92,
-              finishRate: 0.902,
-            },
-            {
-              type: '3',
-              name: '',
-              applyCount: 48,
-              finishCount: 42,
-              finishRate: 0.875,
-            },
-            {
-              type: '4',
-              name: '',
-              applyCount: 20,
-              finishCount: 18,
-              finishRate: 0.9,
-            },
-          ];
+    if (chartRes.status === 'fulfilled') {
+      chartData.value = chartRes.value;
+    } else {
+      chartData.value = {
+        totalApplyCount: 256,
+        totalPassCount: 198,
+        totalApplyAmount: 768000,
+        totalGrantAmount: 594000,
+        statusCountMap: {'待审核': 32, '已通过': 198, '已完成': 26},
+        typeCountMap: {'奖学金': 86, '助学金': 102, '助学贷款': 48, '勤工俭学': 20},
+      };
+    }
+    if (applyRes.status === 'fulfilled') {
+      typeApplyData.value = applyRes.value;
+    } else {
+      typeApplyData.value = [
+        {type: "1", name: "", applyCount: 86, finishCount: 78, finishRate: 0.907},
+        {type: "2", name: "", applyCount: 102, finishCount: 92, finishRate: 0.902},
+        {type: "3", name: "", applyCount: 48, finishCount: 42, finishRate: 0.875},
+        {type: "4", name: "", applyCount: 20, finishCount: 18, finishRate: 0.90},
+      ];
+    }
   } catch (error) {
     console.error('加载图表数据失败', error);
     chartData.value = {
       totalApplyCount: 256,
       totalPassCount: 198,
-      totalApplyAmount: 768_000,
-      totalGrantAmount: 594_000,
-      statusCountMap: { 待审核: 32, 已通过: 198, 已完成: 26 },
-      typeCountMap: { 奖学金: 86, 助学金: 102, 助学贷款: 48, 勤工俭学: 20 },
+      totalApplyAmount: 768000,
+      totalGrantAmount: 594000,
+      statusCountMap: {'待审核': 32, '已通过': 198, '已完成': 26},
+      typeCountMap: {'奖学金': 86, '助学金': 102, '助学贷款': 48, '勤工俭学': 20},
     };
     typeApplyData.value = [
-      {
-        type: '1',
-        name: '',
-        applyCount: 86,
-        finishCount: 78,
-        finishRate: 0.907,
-      },
-      {
-        type: '2',
-        name: '',
-        applyCount: 102,
-        finishCount: 92,
-        finishRate: 0.902,
-      },
-      {
-        type: '3',
-        name: '',
-        applyCount: 48,
-        finishCount: 42,
-        finishRate: 0.875,
-      },
-      { type: '4', name: '', applyCount: 20, finishCount: 18, finishRate: 0.9 },
+      {type: "1", name: "", applyCount: 86, finishCount: 78, finishRate: 0.907},
+      {type: "2", name: "", applyCount: 102, finishCount: 92, finishRate: 0.902},
+      {type: "3", name: "", applyCount: 48, finishCount: 42, finishRate: 0.875},
+      {type: "4", name: "", applyCount: 20, finishCount: 18, finishRate: 0.90},
     ];
   } finally {
     loading.value = false;
@@ -390,7 +305,7 @@ onMounted(() => {
 <template>
   <div v-loading="loading" class="chart-box">
     <!-- 卡片区 -->
-    <div class="box-left" style="flex: 1 !important">
+    <div class="box-left" style="flex: 1 !important;">
       <Indicator
         class="left-card"
         v-for="item in cardList"
@@ -403,18 +318,18 @@ onMounted(() => {
     <!-- 饼图切换区域 -->
     <div class="pie-chart-area">
       <div class="pie-select-wrapper">
-        <ElSelect
+        <el-select
           v-model="activePieIndex"
           size="small"
           @change="handlePieChange"
         >
-          <ElOption
+          <el-option
             v-for="(opt, idx) in pieOptions"
             :key="idx"
             :label="opt.title"
             :value="idx"
           />
-        </ElSelect>
+        </el-select>
       </div>
       <Pie
         :title-text="currentPieData.title"
@@ -426,22 +341,22 @@ onMounted(() => {
     <!-- 柱状图切换区域 -->
     <div class="chart-area bar-chart-container">
       <div class="chart-select-wrapper">
-        <ElSelect
+        <el-select
           v-model="activeChartIndex"
           size="small"
           @change="handleChartChange"
         >
-          <ElOption
+          <el-option
             v-for="(opt, idx) in chartOptions"
             :key="idx"
             :label="opt.title"
             :value="idx"
           />
-        </ElSelect>
+        </el-select>
       </div>
       <!-- 时间范围选择器（只针对两个接口） -->
       <div class="date-range-wrapper">
-        <ElDatePicker
+        <el-date-picker
           v-model="dateRange"
           type="daterange"
           range-separator="-"
@@ -449,33 +364,9 @@ onMounted(() => {
           end-placeholder="结束时间"
           size="small"
           :shortcuts="[
-            {
-              text: '近三个月',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setMonth(start.getMonth() - 3);
-                return [start, end];
-              },
-            },
-            {
-              text: '近半年',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setMonth(start.getMonth() - 6);
-                return [start, end];
-              },
-            },
-            {
-              text: '近一年',
-              value: () => {
-                const end = new Date();
-                const start = new Date();
-                start.setFullYear(start.getFullYear() - 1);
-                return [start, end];
-              },
-            },
+            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
+            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
+            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
           ]"
           @change="handleDateRangeChange"
         />
@@ -493,12 +384,12 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .chart-box {
+  padding-bottom: 0.5rem;
   display: flex;
   flex-wrap: wrap;
-  width: 100% !important;
-  padding-right: 15px;
-  padding-bottom: 0.5rem;
   padding-left: 15px;
+  padding-right: 15px;
+  width: 100% !important;
 
   .box-left {
     display: grid !important;
@@ -516,11 +407,11 @@ onMounted(() => {
 
 .pie-chart-area {
   position: relative;
-  display: flex;
   flex: 1;
-  flex-direction: column;
   min-width: 280px;
   margin-top: 10px;
+  display: flex;
+  flex-direction: column;
 }
 
 .pie-select-wrapper {
@@ -532,11 +423,11 @@ onMounted(() => {
 
 .chart-area {
   position: relative;
-  display: flex;
   flex: 1.5;
-  flex-direction: column;
   min-width: 300px;
   margin-top: 10px;
+  display: flex;
+  flex-direction: column;
 }
 
 .chart-select-wrapper {

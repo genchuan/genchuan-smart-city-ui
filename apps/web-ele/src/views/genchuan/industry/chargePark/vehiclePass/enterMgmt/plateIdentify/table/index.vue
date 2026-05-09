@@ -484,13 +484,13 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 
-// 车牌点击 - 跳转车辆详情
+// 车牌点击 - 查看车辆详情
 const handlePlateNoClick = (row) => {
   if (!row.plateNo) {
     ElMessage.warning('该记录无车牌信息');
     return;
   }
-  vehicleDetailRef.value?.open(row.plateNo, row);
+  vehicleDetailRef.value?.open(row.plateNo);
 };
 
 // 车牌颜色点击 - 筛选同颜色车牌

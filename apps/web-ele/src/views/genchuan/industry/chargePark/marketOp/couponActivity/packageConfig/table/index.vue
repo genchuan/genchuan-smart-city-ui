@@ -1,7 +1,9 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, nextTick, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj } from '@vben/hooks';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
@@ -14,7 +16,9 @@ import {
   getPackageConfigPage,
   updatePackageConfig,
 } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/packageConfig';
+import { getCouponMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 import StatusConfirmDialog from '#/views/genchuan/industry/chargePark/marketOp/couponActivity/packageConfig/components/StatusConfirmDialog.vue';
 
@@ -64,8 +68,66 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const detailDrawerRef = ref(null);
+const couponDetailDrawerRef = ref(null);
 const formData = ref();
 const statusConfirmDialogRef = ref();
+const couponDetailData = ref([]);
+const couponDetailTitle = ref('优惠券详情');
+
+// 优惠券详情字段配置 - 不包含xxid字段
+const couponDetailFields = [
+  { key: 'name', label: '券名称' },
+  {
+    key: 'type',
+    label: '券类型',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.COUPON_MGMT_TYPE, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => {
+      const dict = getDictObj(DICT_TYPE.COUPON_MGMT_TYPE, String(value));
+      return getDictTagTypeFromDict(dict, 'primary');
+    },
+  },
+  {
+    key: 'amount',
+    label: '面额',
+    formatter: (value, row) => {
+      if (!row) return value;
+      if (row.type === '1') {
+        return `${(value * 10).toFixed(1)}折`;
+      } else if (row.type === '2') {
+        return `${value}小时`;
+      }
+      return `¥${value}`;
+    },
+  },
+  { key: 'useCondition', label: '使用条件' },
+  {
+    key: 'status',
+    label: '券状态',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.COUPON_MGMT_STATUS, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => {
+      const dict = getDictObj(DICT_TYPE.COUPON_MGMT_STATUS, String(value));
+      return getDictTagTypeFromDict(dict, 'info');
+    },
+  },
+  { key: 'senderName', label: '发放人' },
+  { key: 'sendTimeStr', label: '发放时间' },
+  { key: 'receiverName', label: '领取人' },
+  { key: 'verifyTimeStr', label: '核销时间' },
+  { key: 'validTimeStr', label: '有效期' },
+  { key: 'description', label: '券描述' },
+  { key: 'createTimeStr', label: '创建时间' },
+  { key: 'creator', label: '创建者' },
+  { key: 'updater', label: '更新者' },
+  { key: 'updateTimeStr', label: '更新时间' },
+];
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -157,7 +219,7 @@ async function handleExport() {
     const response = await getPackageConfigPage({
       ...params,
       pageNo: 1,
-      pageSize: 99999, // 获取所有数据
+      pageSize: 99_999, // 获取所有数据
     });
 
     if (response && response.list) {
@@ -176,29 +238,35 @@ async function handleExport() {
 
       // 准备Excel数据
       const excelData = formattedList.map((item) => ({
-        '券包名称': item.name,
-        '券包类型': item.typeName,
-        '包含优惠券': item.couponNames || '-',
-        '价格': `¥${item.price}`,
-        '适用范围': item.scopeName,
-        '配置状态': item.statusName,
-        '创建时间': item.createTimeStr,
-        '审核人': item.auditorName || '-',
-        '审核时间': item.auditTimeStr,
-        '销量': item.saleCount || 0,
-        '生效时间': item.effectTimeStr,
-        '券包描述': item.description || '-',
+        券包名称: item.name,
+        券包类型: item.typeName,
+        包含优惠券: item.couponNames || '-',
+        价格: `¥${item.price}`,
+        适用范围: item.scopeName,
+        配置状态: item.statusName,
+        创建时间: item.createTimeStr,
+        审核人: item.auditorName || '-',
+        审核时间: item.auditTimeStr,
+        销量: item.saleCount || 0,
+        生效时间: item.effectTimeStr,
+        券包描述: item.description || '-',
       }));
 
       // 转换为CSV格式
       const headers = Object.keys(excelData[0] || {});
       const csvContent = [
         headers.join(','),
-        ...excelData.map((row) => headers.map((h) => `"${(row[h] || '').toString().replace(/"/g, '""')}"`).join(',')),
+        ...excelData.map((row) =>
+          headers
+            .map((h) => `"${(row[h] || '').toString().replaceAll('"', '""')}"`)
+            .join(','),
+        ),
       ].join('\n');
 
       // 创建Blob并下载
-      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([`\uFEFF${csvContent}`], {
+        type: 'text/csv;charset=utf-8;',
+      });
       downloadFileFromBlobPart({
         fileName: textObj.excelAllName,
         source: blob,
@@ -456,11 +524,70 @@ const handleOpenPackageDetail = (row) => {
   detailDrawerRef.value.open();
 };
 
-/** 打开关联优惠券列表弹窗 */
-const handleOpenCouponList = (row) => {
-  ElMessage.info(`查看关联优惠券: ${row.couponNames}`);
-  // TODO: 实现关联优惠券列表弹窗
-};
+/** 打开关联优惠券列表弹窗 - 查看多个优惠券详情 */
+async function handleOpenCouponList(row) {
+  if (!row.couponIds) {
+    ElMessage.warning('该券包未包含优惠券');
+    return;
+  }
+
+  const couponIdArr = row.couponIds.split(',').filter((id) => id.trim());
+  if (couponIdArr.length === 0) {
+    ElMessage.warning('该券包未包含优惠券');
+    return;
+  }
+
+  try {
+    const loadingInstance = ElLoading.service({
+      text: '正在加载优惠券详情...',
+    });
+
+    // 并发请求所有优惠券详情
+    const detailPromises = couponIdArr.map((id) =>
+      getCouponMgmtDetail(Number(id.trim())).catch((error) => {
+        console.error(`获取优惠券ID ${id} 详情失败:`, error);
+        return null;
+      }),
+    );
+
+    const detailResults = await Promise.all(detailPromises);
+
+    // 过滤掉请求失败的，格式化时间字段
+    const formattedDetails = detailResults
+      .filter((detail) => detail && detail.id)
+      .map((detail) => ({
+        ...detail,
+        createTimeStr: detail.createTime ? formatDate(detail.createTime) : '-',
+        updateTimeStr: detail.updateTime ? formatDate(detail.updateTime) : '-',
+        sendTimeStr: detail.sendTime ? formatDate(detail.sendTime) : '-',
+        verifyTimeStr: detail.verifyTime ? formatDate(detail.verifyTime) : '-',
+        validTimeStr: detail.validTime ? formatDate(detail.validTime) : '-',
+      }));
+
+    loadingInstance.close();
+
+    if (formattedDetails.length === 0) {
+      ElMessage.error('未能获取到任何优惠券详情');
+      return;
+    }
+
+    // 设置数据并更新标题
+    couponDetailData.value = formattedDetails;
+    couponDetailTitle.value = `包含优惠券 (${formattedDetails.length}张)`;
+
+    // 使用nextTick确保DOM更新后再打开抽屉
+    await nextTick();
+    if (couponDetailDrawerRef.value) {
+      couponDetailDrawerRef.value.open();
+    } else {
+      console.error('优惠券详情抽屉组件未找到');
+      ElMessage.error('打开详情失败，请重试');
+    }
+  } catch (error) {
+    console.error('获取优惠券详情失败:', error);
+    ElMessage.error('获取优惠券详情失败');
+  }
+}
 
 /** 打开操作人员详情弹窗 */
 const handleOpenAuditorDetail = (row) => {
@@ -519,6 +646,13 @@ defineExpose({
       :title="`${dataObj.detailObj.name || '券包配置'}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
+    />
+    <!--   优惠券详情抽屉 - 展示多个优惠券详情-->
+    <DetailDrawer
+      ref="couponDetailDrawerRef"
+      :title="couponDetailTitle"
+      :data="couponDetailData"
+      :fields="couponDetailFields"
     />
     <!-- 状态操作确认弹窗 -->
     <StatusConfirmDialog

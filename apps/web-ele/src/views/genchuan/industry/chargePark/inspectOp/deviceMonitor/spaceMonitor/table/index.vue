@@ -262,7 +262,10 @@ function changeTotalShow() {
 async function handleOpenDetail(row) {
   try {
     const response = await getSpaceMonitorDetail(row.id);
-    dataObj.detailObj = normalizeSpaceMonitorRow(response || row);
+    dataObj.detailObj = {
+      ...normalizeSpaceMonitorRow(response || row),
+      stationName: row.stationName,
+    };
   } catch (error) {
     console.error('获取车位监测详情失败，使用行数据:', error);
     dataObj.detailObj = row;
@@ -279,8 +282,8 @@ async function handleLocate(row) {
       id: row.id,
       spaceCode: response?.spaceCode || row.spaceCode,
       stationName: response?.stationName || row.stationName,
-      longitude: response?.longitude ?? row.longitude,
-      latitude: response?.latitude ?? row.latitude,
+      longitude: response?.longitude ?? response?.lon ?? row.longitude,
+      latitude: response?.latitude ?? response?.lat ?? row.latitude,
     };
 
     emit('locateSpace', location);
