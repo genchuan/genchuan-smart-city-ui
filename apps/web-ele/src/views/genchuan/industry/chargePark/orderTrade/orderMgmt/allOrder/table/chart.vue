@@ -423,6 +423,9 @@ onMounted(async () => {
       <template #orderNo="{ row }">
         {{ row.orderNo }}
       </template>
+      <template #plateNo="{ row }">
+        {{ row.plateNo }}
+      </template>
     </DrawerGrid>
   </Drawer>
 </template>

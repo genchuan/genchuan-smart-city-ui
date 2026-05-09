@@ -2,6 +2,28 @@
 import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { ElTag } from 'element-plus';
+
+// 订单状态映射
+const statusMap = {
+  charging: { label: '充电中', type: 'primary' },
+  pending_pay: { label: '待支付', type: 'warning' },
+  paid: { label: '已支付', type: 'success' },
+  completed: { label: '已完成', type: 'success' },
+  cancelled: { label: '已取消', type: 'info' },
+  refunding: { label: '退款中', type: 'danger' },
+  unpaid: { label: '未支付', type: 'warning' },
+};
+
+// 获取状态标签
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || status || '-';
+};
+
+// 获取状态类型
+const getStatusType = (status) => {
+  return statusMap[status]?.type || 'default';
+};
 
 // 定义组件接收的属性（充电停车订单详情）
 const props = defineProps({
@@ -22,7 +44,7 @@ const { detailObj, title } = toRefs(props);
 
 // 计算属性处理标题
 const drawerTitle = computed(() => {
-  const orderNo = detailObj.value?.orderNumber || '充电停车订单';
+  const orderNo = detailObj.value?.orderNo || '充电停车订单';
   return title.value || `${orderNo} 详情`;
 });
 
@@ -49,52 +71,89 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 充电停车订单 详情字段 -->
+      <!-- 主键ID -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">主键ID:</div>
+        <div class="detail-row-right">
+          {{ detailObj.id || '-' }}
+        </div>
+      </div>
+
+      <!-- 订单编号 -->
       <div class="detail-card-row">
         <div class="detail-row-left">订单编号:</div>
         <div class="detail-row-right">
-          {{ detailObj.orderNumber || '-' }}
+          {{ detailObj.orderNo || '-' }}
         </div>
       </div>
 
+      <!-- 车牌 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">用户名称:</div>
+        <div class="detail-row-left">车牌:</div>
         <div class="detail-row-right">
-          {{ detailObj.userName || '-' }}
+          {{ detailObj.plateNo || '-' }}
         </div>
       </div>
 
+      <!-- 充电时长（分钟） -->
       <div class="detail-card-row">
-        <div class="detail-row-left">所属场站:</div>
+        <div class="detail-row-left">充电时长（分钟）:</div>
         <div class="detail-row-right">
-          {{ detailObj.stationName || '-' }}
+          {{ detailObj.chargeDuration || '-' }}
         </div>
       </div>
 
+      <!-- 充电量（度） -->
       <div class="detail-card-row">
-        <div class="detail-row-left">订单类型:</div>
+        <div class="detail-row-left">充电量（度）:</div>
         <div class="detail-row-right">
-          {{ detailObj.orderType || '-' }}
+          {{ detailObj.chargeQuantity ? detailObj.chargeQuantity.toFixed(2) + ' 度' : '-' }}
         </div>
       </div>
 
+      <!-- 充电功率（kw） -->
       <div class="detail-card-row">
-        <div class="detail-row-left">总金额:</div>
-        <div class="detail-row-right">{{ detailObj.totalAmount || 0 }} 元</div>
+        <div class="detail-row-left">充电功率（kw）:</div>
+        <div class="detail-row-right">
+          {{ detailObj.chargePower ? detailObj.chargePower.toFixed(2) + ' kw' : '-' }}
+        </div>
       </div>
 
+      <!-- 订单金额 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">实付金额:</div>
-        <div class="detail-row-right">{{ detailObj.actualAmount || 0 }} 元</div>
+        <div class="detail-row-left">订单金额:</div>
+        <div class="detail-row-right">
+          {{ detailObj.amount ? '¥' + detailObj.amount.toFixed(2) : '-' }}
+        </div>
       </div>
 
+      <!-- 订单状态 -->
       <div class="detail-card-row">
         <div class="detail-row-left">订单状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.orderStatus || '-' }}
+          <ElTag :type="getStatusType(detailObj.status)">
+            {{ getStatusLabel(detailObj.status) }}
+          </ElTag>
         </div>
       </div>
 
+      <!-- 订单生成时间 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">订单生成时间:</div>
+        <div class="detail-row-right">
+          {{ detailObj.createOrderTime || '-' }}
+        </div>
+      </div>
+
+      <!-- 所属场站ID -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">所属场站ID:</div>
+        <div class="detail-row-right">
+          {{ detailObj.stationId || '-' }}
+        </div>
+      </div>
+
+      <!-- 支付时间 -->
       <div class="detail-card-row">
         <div class="detail-row-left">支付时间:</div>
         <div class="detail-row-right">
@@ -102,6 +161,58 @@ defineExpose({
         </div>
       </div>
 
+      <!-- 支付方式 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">支付方式:</div>
+        <div class="detail-row-right">
+          <span v-if="detailObj.payMethod === 'wechat'">微信支付</span>
+          <span v-else-if="detailObj.payMethod === 'alipay'">支付宝</span>
+          <span v-else-if="detailObj.payMethod === 'cash'">现金</span>
+          <span v-else>{{ detailObj.payMethod || '-' }}</span>
+        </div>
+      </div>
+
+      <!-- 优惠抵扣金额 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">优惠抵扣金额:</div>
+        <div class="detail-row-right">
+          {{ detailObj.discountAmount ? '¥' + detailObj.discountAmount.toFixed(2) : '-' }}
+        </div>
+      </div>
+
+      <!-- 归档时间 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">归档时间:</div>
+        <div class="detail-row-right">
+          {{ detailObj.archiveTime || '-' }}
+        </div>
+      </div>
+
+      <!-- 操作人ID -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">操作人ID:</div>
+        <div class="detail-row-right">
+          {{ detailObj.operatorId || '-' }}
+        </div>
+      </div>
+
+      <!-- 创建者 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">创建者:</div>
+        <div class="detail-row-right">
+          {{ detailObj.creator || '-' }}
+        </div>
+      </div>
+
+      <!-- 更新者 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新者:</div>
+        <div class="detail-row-right">
+          {{ detailObj.updater || '-' }}
+        </div>
+      </div>
+
+      <!-- 创建时间 -->
       <div class="detail-card-row">
         <div class="detail-row-left">创建时间:</div>
         <div class="detail-row-right">
@@ -109,27 +220,7 @@ defineExpose({
         </div>
       </div>
 
-      <div class="detail-card-row">
-        <div class="detail-row-left">支付渠道:</div>
-        <div class="detail-row-right">
-          {{ detailObj.payChannel || '-' }}
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">优惠金额:</div>
-        <div class="detail-row-right">
-          {{ detailObj.discountAmount || 0 }} 元
-        </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新人:</div>
-        <div class="detail-row-right">
-          {{ detailObj.updateUser || '-' }}
-        </div>
-      </div>
-
+      <!-- 更新时间 -->
       <div class="detail-card-row">
         <div class="detail-row-left">更新时间:</div>
         <div class="detail-row-right">
