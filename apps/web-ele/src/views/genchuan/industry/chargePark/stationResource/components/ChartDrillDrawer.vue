@@ -174,8 +174,8 @@ defineExpose({
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-  color: #606266;
   font-size: 14px;
+  color: #606266;
 }
 
 :deep(.vxe-grid) {
