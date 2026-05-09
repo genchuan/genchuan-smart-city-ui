@@ -11,7 +11,7 @@ import * as XLSX from 'xlsx';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
-import { getTempParkOrderPage, exportTempParkOrderExcel, refundTempParkOrder, invoiceTempParkOrder, cancelTempParkOrder, payTempParkOrder, invoiceOrder, getPlateIdentifyPage } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { getTempParkOrderPage, exportTempParkOrderExcel, refundTempParkOrder, invoiceTempParkOrder, cancelTempParkOrder, payTempParkOrder, invoiceOrder } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import { $t } from '#/locales';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
@@ -20,6 +20,8 @@ import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 import { formatTimestamp } from '#/utils';
 import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
+import PlateNoDetail from '#/views/genchuan/industry/chargePark/orderTrade/orderMgmt/components/plateNoDetail.vue';
+
 
 const props = defineProps({
   secondShow: {
@@ -421,8 +423,8 @@ const invoiceForm = reactive({
 });
 
 // 车牌详情弹窗
-const plateDetailDialogVisible = ref(false);
-const plateDetailData = ref({});
+const plateDetailVisible = ref(false);
+const currentPlateNo = ref('');
 
 // 打开开票弹窗
 const handleInvoice = (row) => {
@@ -456,33 +458,9 @@ const handleInvoiceSubmit = async () => {
 };
 
 // 获取车牌详情
-const handlePlateDetail = async (row) => {
-  try {
-    console.log({ plateNo: row.plateNo })
-    const res = await getPlateIdentifyPage({ plateNo: row.plateNo });
-    if (res.list && Array.isArray(res.list)) {
-      const plate = res.list.find(item => item.plateNo === row.plateNo);
-      if (plate) {
-        // 格式化时间
-        const formattedPlate = {
-          ...plate,
-          createTime: formatTimestamp(plate.createTime),
-          updateTime: formatTimestamp(plate.updateTime)
-        };
-        plateDetailData.value = formattedPlate;
-      } else {
-        plateDetailData.value = null;
-        ElMessage.info('暂无车牌数据');
-      }
-    } else {
-      plateDetailData.value = null;
-      ElMessage.info('暂无车牌数据');
-    }
-    plateDetailDialogVisible.value = true;
-  } catch (error) {
-    console.error('获取车牌详情失败:', error);
-    ElMessage.error('获取车牌详情失败');
-  }
+const handlePlateDetail = (row) => {
+  currentPlateNo.value = row.plateNo;
+  plateDetailVisible.value = true;
 };
 
 // ====================== 告警明细弹窗 ======================
@@ -634,66 +612,7 @@ const alarmColumns = [
     </ElDialog>
 
     <!-- 车牌详情弹窗 -->
-    <ElDialog v-model="plateDetailDialogVisible" title="车牌详情" width="800px" append-to-body>
-      <div v-if="plateDetailData" class="plate-detail-container">
-        <div class="detail-row">
-          <span class="detail-label">主键ID:</span>
-          <span class="detail-value">{{ plateDetailData.id }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">车牌:</span>
-          <span class="detail-value">{{ plateDetailData.plateNo }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">车牌颜色:</span>
-          <span class="detail-value">{{ plateDetailData.plateColor }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">置信度:</span>
-          <span class="detail-value">{{ plateDetailData.confidence }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">图片URL:</span>
-          <span class="detail-value">{{ plateDetailData.imageUrl }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">识别状态:</span>
-          <span class="detail-value">{{ plateDetailData.status }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">场站名称:</span>
-          <span class="detail-value">{{ plateDetailData.stationName }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">备注:</span>
-          <span class="detail-value">{{ plateDetailData.remark }}</span>
-        </div> 
-        <div class="detail-row">
-          <span class="detail-label">创建者:</span>
-          <span class="detail-value">{{ plateDetailData.creator }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">更新者:</span>
-          <span class="detail-value">{{ plateDetailData.updater }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">创建时间:</span>
-          <span class="detail-value">{{ plateDetailData.createTime }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">更新时间:</span>
-          <span class="detail-value">{{ plateDetailData.updateTime }}</span>
-        </div>
-      </div>
-      <div v-else class="no-data">
-        暂无车牌数据
-      </div>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="plateDetailDialogVisible = false">关闭</el-button>
-        </div>
-      </template>
-    </ElDialog>
+    <PlateNoDetail v-model:visible="plateDetailVisible" :plate-no="currentPlateNo" />
 
     <Grid>
       <template #toolbar-tools>

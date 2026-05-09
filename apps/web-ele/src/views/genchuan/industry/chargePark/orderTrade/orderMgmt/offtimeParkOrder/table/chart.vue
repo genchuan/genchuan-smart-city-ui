@@ -419,6 +419,9 @@ onMounted(async () => {
         <span v-else-if="row.payMethod === 'cash'">现金</span>
         <span v-else>{{ row.payMethod }}</span>
       </template>
+        <template #plateNo="{ row }">
+              {{ row.plateNo }}
+            </template>
     </DrawerGrid>
   </Drawer>
 </template>

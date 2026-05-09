@@ -154,6 +154,7 @@ export function useGridColumns() {
       title: '车牌',
       minWidth: 100,
       sortable: true,
+      slots: { default: 'plateNo' },
     },
     {
       field: 'orderType',
