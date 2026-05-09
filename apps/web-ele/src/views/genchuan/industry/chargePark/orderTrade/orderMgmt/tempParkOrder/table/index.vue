@@ -453,7 +453,7 @@ const handleInvoiceSubmit = async () => {
     invoiceDialogVisible.value = false;
     handleRefresh();
   } catch (error) {
-    ElMessage.error('开票申请失败');
+    ElMessage.error(error.msg);
   }
 };
 
