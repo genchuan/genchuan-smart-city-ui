@@ -4,6 +4,7 @@ import type { UploadUserFile } from 'element-plus';
 import type { OperatorInfo, UserRow } from '../data';
 
 import type { UserInfoDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
+import type { ActiveFilterTag } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import { computed, ref } from 'vue';
 
@@ -30,10 +31,7 @@ import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/use
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
-import {
-  buildActiveFilterTags,
-  type ActiveFilterTag,
-} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
+import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildUserInfoQueryParams,
@@ -217,7 +215,7 @@ const searchFilterConfigs = {
   registerTime: {
     formatter: (value: any[]) =>
       value
-        .filter((item) => item)
+        .filter(Boolean)
         .map((item) => dayjs(item).format('YYYY-MM-DD HH:mm:ss'))
         .join(' 至 '),
     label: '注册时间',
@@ -706,12 +704,19 @@ async function onQuerySubmit(values: Record<string, any>) {
 /** 移除筛选标签 */
 async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   if (tag.source === 'quick') {
-    if (tag.key === 'status') {
-      handleCancelStatusFilter();
-    } else if (tag.key === 'userType') {
-      handleCancelUserTypeFilter();
-    } else if (tag.key === 'phone') {
-      handleCancelPhoneFilter();
+    switch (tag.key) {
+      case 'phone': {
+        handleCancelPhoneFilter();
+        break;
+      }
+      case 'status': {
+        handleCancelStatusFilter();
+        break;
+      }
+      case 'userType': {
+        handleCancelUserTypeFilter();
+        break;
+      }
     }
     return;
   }
@@ -736,7 +741,16 @@ function handleFilterUserType(userType: string) {
 }
 
 /** 按手机号筛选 */
-function handleFilterPhone(phone: string) {
+async function handleFilterPhone(row: UserRow) {
+  const detail = row.phone.includes('*')
+    ? await fetchUserDetail(row, '加载完整手机号失败')
+    : null;
+  const phone = detail?.row.phone || row.phone;
+
+  if (!phone || phone === '-') {
+    return;
+  }
+
   filterPhone.value = filterPhone.value === phone ? '' : phone;
   gridApi.reload();
 }
@@ -873,7 +887,7 @@ const handleOpenDetail = (row: UserRow) => {
 
         <template #phone="{ row }">
           <el-text
-            @click="handleFilterPhone(row.phone)"
+            @click="handleFilterPhone(row)"
             class="common-align"
             type="primary"
             style="cursor: pointer"
