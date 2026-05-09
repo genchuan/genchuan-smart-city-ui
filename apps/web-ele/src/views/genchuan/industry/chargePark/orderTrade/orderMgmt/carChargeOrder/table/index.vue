@@ -432,18 +432,34 @@ const handleRefundSubmit = async () => {
 const invoiceDialogVisible = ref(false);
 const invoiceForm = reactive({
   id: '',
+  orderNo: '',
+  invoiceTitle: '',
+  invoiceTaxNo: '',
+  invoiceEmail: '',
   remark: '',
 });
 
 // 打开开票弹窗
 const handleInvoice = (row) => {
   invoiceForm.id = row.id;
+  invoiceForm.orderNo = row.orderNo;
   invoiceForm.remark = '';
   invoiceDialogVisible.value = true;
 };
 
+// 邮箱格式校验
+const validateEmail = (email) => {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email);
+};
+
 // 提交开票
 const handleInvoiceSubmit = async () => {
+  if (invoiceForm.invoiceEmail && !validateEmail(invoiceForm.invoiceEmail)) {
+    ElMessage.error('请输入有效的邮箱地址');
+    return;
+  }
+
   try {
     await invoiceTempParkOrder(invoiceForm);
     ElMessage.success('开票申请已提交');
@@ -661,6 +677,27 @@ const alarmColumns = [
       <el-form :model="invoiceForm" label-width="80px">
         <el-form-item label="订单ID">
           <el-input v-model="invoiceForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="订单编号">
+          <el-input v-model="invoiceForm.orderNo" disabled />
+        </el-form-item>
+        <el-form-item label="发票抬头">
+          <el-input
+            v-model="invoiceForm.invoiceTitle"
+            placeholder="请输入发票抬头"
+          />
+        </el-form-item>
+        <el-form-item label="发票税号">
+          <el-input
+            v-model="invoiceForm.invoiceTaxNo"
+            placeholder="请输入发票税号"
+          />
+        </el-form-item>
+        <el-form-item label="接收邮箱">
+          <el-input
+            v-model="invoiceForm.invoiceEmail"
+            placeholder="请输入接收邮箱"
+          />
         </el-form-item>
         <el-form-item label="备注">
           <el-input
