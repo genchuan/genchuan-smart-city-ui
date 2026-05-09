@@ -7,6 +7,7 @@ const props = defineProps({
   title: { type: String, default: '数据统计' },
   xData: { type: Array, required: true },
   seriesData: { type: Array, required: true },
+  valueSuffix: { type: String, default: '' },
   yName: { type: String, default: '' },
 });
 
@@ -80,7 +81,10 @@ const initChart = async () => {
         left: 'center',
         textStyle: { fontSize: 15, fontWeight: 300, color: '#6E7E91' },
       },
-      tooltip: { trigger: 'axis' },
+      tooltip: {
+        trigger: 'axis',
+        valueFormatter: (value) => `${value}${props.valueSuffix}`,
+      },
       legend: {
         top: 30,
         left: 'center',
@@ -126,7 +130,7 @@ const initChart = async () => {
           position: 'top',
           color: '#6E7E91',
           fontSize: 12,
-          formatter: '{c}',
+          formatter: (params) => `${params.value}${props.valueSuffix}`,
         },
         emphasis: {
           itemStyle: {
@@ -159,7 +163,13 @@ const initChart = async () => {
 };
 
 watch(
-  [() => props.xData, () => props.seriesData, () => props.title],
+  [
+    () => props.xData,
+    () => props.seriesData,
+    () => props.title,
+    () => props.valueSuffix,
+    () => props.yName,
+  ],
   () => {
     if (chartRef.value) {
       initChart();

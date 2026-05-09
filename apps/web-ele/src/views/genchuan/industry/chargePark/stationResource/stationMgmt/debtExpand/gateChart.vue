@@ -48,6 +48,11 @@ const isMarketCardLayout = computed(() => props.cards.length > 4);
 const hasPie = computed(() => props.chartConfig.pie);
 const hasBar = computed(() => props.chartConfig.bar);
 const hasLine = computed(() => props.chartConfig.line);
+const barValueSuffix = computed(() => props.chartConfig.bar?.[5] || '');
+const barYAxisName = computed(() => {
+  if (!barValueSuffix.value) return '数量';
+  return `${props.chartConfig.bar?.[3] || '数值'}(${barValueSuffix.value})`;
+});
 
 const chartCount = computed(() => {
   let count = 0;
@@ -110,7 +115,8 @@ const compactCardStyle = computed(() => {
         :title="`${props.title}分布`"
         :x-data="props.barXData"
         :series-data="props.barSeriesData"
-        y-name="数量"
+        :value-suffix="barValueSuffix"
+        :y-name="barYAxisName"
         @bar-click="emit('barClick', $event)"
       />
     </div>

@@ -83,6 +83,20 @@ const columnFormatters = {
   formatDateTime: ({ cellValue }) => formatDateTime(cellValue),
 };
 
+function formatColumnValue(cellValue, column) {
+  if (isEmpty(cellValue)) return '--';
+  let formatted = cellValue;
+  if (column.formatter === 'formatDateTime') {
+    formatted = formatDateTime(cellValue);
+  } else if (Array.isArray(cellValue)) {
+    formatted = cellValue.join('、');
+  }
+  if (column.suffix && formatted !== '--') {
+    return `${formatted}${column.suffix}`;
+  }
+  return formatted;
+}
+
 function normalizeOptions(options = []) {
   return options.map((item) => {
     if (typeof item === 'object' && item !== null) {
@@ -589,7 +603,10 @@ function buildGridColumns() {
         title: column.label,
         sortable: true,
       };
-      if (column.formatter) {
+      if (column.suffix) {
+        columnConfig.formatter = ({ cellValue }) =>
+          formatColumnValue(cellValue, column);
+      } else if (column.formatter) {
         columnConfig.formatter =
           typeof column.formatter === 'string'
             ? columnFormatters[column.formatter]
