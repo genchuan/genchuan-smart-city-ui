@@ -1,8 +1,8 @@
 <!-- survey/index.vue (外层) -->
 <script setup>
 import { ref, computed } from 'vue';
-// import carchart from './chart.vue';
-// import Table from './table/index.vue'; // 表格组件
+import carchart from './chart.vue';
+import Table from './table/index.vue'; // 表格组件
 import '#/components/page/index.scss';
 
 const changeArrowStatus = () => {
