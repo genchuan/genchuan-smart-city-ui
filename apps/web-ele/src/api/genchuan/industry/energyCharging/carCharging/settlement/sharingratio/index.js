@@ -39,7 +39,6 @@ export function getSharingRatio(params) {
   });
 }
 
-
 /** 复制 */
 export function copySharingRatio(data) {
   return requestClient.post('/vehiclecharging/sharing-ratio/copy', data);
