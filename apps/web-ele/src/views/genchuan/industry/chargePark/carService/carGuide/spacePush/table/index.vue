@@ -173,7 +173,7 @@ const props = defineProps({
   secondShow: Boolean,
   arrowShow: { type: Boolean, default: false },   // 新增
 });
-const emit = defineEmits(['arrow-change']);         // 新增
+const emit = defineEmits(['arrow-change','refresh-chart']);         // 新增
 
 // 新增：触发箭头切换事件
 const arrowChange = () => {
@@ -516,6 +516,7 @@ const confirmSinglePush = async () => {
     ElMessage.success('推送成功');
     singlePushVisible.value = false;
     handleRefresh();
+    emit('refresh-chart');    // 新增
   } catch (error) {
     ElMessage.error(error.message || '推送失败');
   } finally {
@@ -536,6 +537,7 @@ const confirmBatchPush = async () => {
     batchPushVisible.value = false;
     selectedIds.value = [];
     handleRefresh();
+    emit('refresh-chart');    // 新增
   } catch (error) {
     ElMessage.error(error.message || '批量推送失败');
   } finally {
