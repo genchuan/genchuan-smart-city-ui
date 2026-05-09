@@ -150,7 +150,7 @@ const props = defineProps({
   secondShow: Boolean,
   arrowShow: { type: Boolean, default: false },
 });
-const emit = defineEmits(['arrow-change']);
+const emit = defineEmits(['arrow-change', 'refresh-chart']);
 
 const arrowChange = () => {
   emit('arrow-change');
@@ -343,6 +343,7 @@ const handleMediate = async (row) => {
   await mediateDispute({ id: row.id });
   ElMessage.success('认领成功，状态更新为调解中');
   handleRefresh();
+  emit('refresh-chart');
 };
 
 const progressForm = reactive({ progress: '' });
@@ -356,6 +357,7 @@ const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
     ElMessage.success('进度更新成功');
     progressDrawerApi.close();
     handleRefresh();
+    emit('refresh-chart');
   },
 });
 const openUpdateProgress = (row) => {
@@ -375,6 +377,7 @@ const [ConfirmDrawer, confirmDrawerApi] = useVbenDrawer({
     ElMessage.success('调解完成，状态已变更为已完成');
     confirmDrawerApi.close();
     handleRefresh();
+    emit('refresh-chart');
   },
 });
 const openConfirm = (row) => {

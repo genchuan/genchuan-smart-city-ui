@@ -85,6 +85,8 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
   lineChart?.dispose();
 });
+
+defineExpose({ refresh: fetchChartData });
 </script>
 
 <template>
