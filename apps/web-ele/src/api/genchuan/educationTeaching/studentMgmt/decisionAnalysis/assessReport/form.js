@@ -341,6 +341,6 @@ export const detailFields = [
   { key: 'exportCount', label: '导出次数' },
   { key: 'dataUpdateTime', label: '数据更新时间' },
   { key: 'creator', label: '创建者' },
-  { key: 'createTime', label: '创建时间' },
-  { key: 'updateTime', label: '更新时间' },
+  // { key: 'createTime', label: '创建时间' },
+  // { key: 'updateTime', label: '更新时间' },
 ];

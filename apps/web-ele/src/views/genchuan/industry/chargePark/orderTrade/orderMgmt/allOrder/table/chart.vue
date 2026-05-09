@@ -1,11 +1,14 @@
 <script setup>
-import { reactive, onMounted, ref } from 'vue';
+import { reactive, onMounted, ref, computed } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElTag } from 'element-plus';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getOrderChart, getOrderPage } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
 import * as echarts from 'echarts';
+import { formatTimestamp } from '#/utils';
+import { useGridColumns } from './data';
 
 // 订单状态映射
 const statusMap = {
@@ -17,21 +20,56 @@ const statusMap = {
   refunding: { label: '退款中', type: 'danger' },
 };
 
+// 获取状态标签
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || status;
+};
+
+// 获取状态类型
+const getStatusType = (status) => {
+  return statusMap[status]?.type || 'default';
+};
+
+// 当前选中的日期（用于折线图点击后筛选）
+const selectedDate = ref(null);
+
+// 当前选中的订单状态（用于柱状图点击后筛选）
+const selectedStatus = ref(null);
+
+// 是否使用日期筛选（点击卡片或折线图时为true，点击柱状图时为false）
+const useDateFilter = ref(true);
+
 // 抽屉配置
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
   width: '75%',
-  title: '今日订单列表',
+  title: computed(() => {
+    let title = '';
+    if (selectedDate.value) {
+      title = `${selectedDate.value} `;
+    } else {
+      title = '今日 ';
+    }
+    if (selectedStatus.value) {
+      title += `${statusMap[selectedStatus.value]?.label || selectedStatus.value} `;
+    }
+    title += '订单列表';
+    return title;
+  }),
+  class: 'genchuan-detail-drawer',
   onCancel() {
     drawerApi.close();
   },
 });
 
-// 抽屉表格数据
-const drawerTableData = ref([]);
-const drawerLoading = ref(false);
+// 抽屉表格数据对象
+const drawerDataObj = reactive({
+  total: 0,
+  list: [],
+  loading: false,
+});
 
 const state = reactive({
   cardList: [
@@ -51,28 +89,137 @@ const getTodayTimeRange = () => {
   return { start, end };
 };
 
-// 点击卡片事件
-const handleCardClick = async (title) => {
-  const { start, end } = getTodayTimeRange();
+// 抽屉搜索条件
+const drawerSearchObj = reactive({});
+
+// 抽屉表格数据获取
+const getDrawerTableData = async (pageObj) => {
+  const page = pageObj.page;
   const params = {
-    pageNo: 1,
-    pageSize: 10,
-    createOrderTimeStart: start,
-    createOrderTimeEnd: end,
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
   };
+  
+  // 如果使用日期筛选，添加日期参数
+  if (useDateFilter.value) {
+    let start, end;
+    if (selectedDate.value) {
+      start = selectedDate.value + ' 00:00:00';
+      end = selectedDate.value + ' 23:59:59';
+    } else {
+      ({ start, end } = getTodayTimeRange());
+    }
+    params.createOrderTimeStart = start;
+    params.createOrderTimeEnd = end;
+  }
+  
+  // 如果选中了状态，传递状态参数
+  if (selectedStatus.value) {
+    params.status = selectedStatus.value;
+  }
+  
+  Object.assign(params, drawerSearchObj);
 
   try {
-    drawerLoading.value = true;
+    drawerDataObj.loading = true;
     const res = await getOrderPage(params);
-    drawerTableData.value = res.list || [];
-    drawerApi.open();
+    drawerDataObj.total = res.total;
+    drawerDataObj.list = res.list.map((v) => {
+      return {
+        ...v,
+        payTime: formatTimestamp(v.payTime),
+        updateTime: formatTimestamp(v.updateTime),
+        createTime: formatTimestamp(v.createTime),
+      };
+    });
+    return drawerDataObj;
   } catch (error) {
     console.error('获取订单列表失败:', error);
     ElMessage.error('获取订单列表失败');
+    return drawerDataObj;
   } finally {
-    drawerLoading.value = false;
+    drawerDataObj.loading = false;
   }
 };
+
+// 点击卡片事件
+const handleCardClick = () => {
+  // 设置为null表示使用当日日期
+  selectedDate.value = null;
+  // 重置状态筛选
+  selectedStatus.value = null;
+  // 使用日期筛选
+  useDateFilter.value = true;
+  console.log('点击卡片，日期重置为当日，状态重置，使用日期筛选');
+  // 刷新表格数据
+  drawerGridApi.query();
+  drawerApi.open();
+};
+/** 刷新表格 */
+function handleRefresh() {
+  drawerGridApi.query();
+}
+// 折线图点击事件处理
+const handleLineChartClick = (params) => {
+  console.log('折线图点击事件触发:', params);
+  if (params && params.name) {
+    selectedDate.value = params.name;
+    // 重置状态筛选
+    selectedStatus.value = null;
+    // 使用日期筛选
+    useDateFilter.value = true;
+    console.log('选中日期:', selectedDate.value);
+    drawerGridApi.query();
+    drawerApi.open();
+  }
+};
+
+// 柱状图点击事件处理
+const handleBarChartClick = (params) => {
+  console.log('柱状图点击事件触发:', params);
+  if (params && params.name) {
+    // 根据中文状态名称找到对应的英文状态值
+    const statusKey = Object.keys(statusMap).find(key => statusMap[key].label === params.name);
+    if (statusKey) {
+      selectedStatus.value = statusKey;
+      console.log('选中状态:', selectedStatus.value);
+    } else {
+      // 如果找不到映射，直接使用名称作为状态值
+      selectedStatus.value = params.name;
+      console.log('选中状态(未映射):', selectedStatus.value);
+    }
+    // 重置日期筛选
+    selectedDate.value = null;
+    // 不使用日期筛选（只传状态参数）
+    useDateFilter.value = false;
+    drawerGridApi.query();
+    drawerApi.open();
+  }
+};
+
+// 抽屉表格配置 - 删除最后一个操作列
+const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: useGridColumns().slice(0, -1),
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => getDrawerTableData({ page }),
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    pagerConfig: drawerDataObj,
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+    },
+    showOverflow: true,
+  },
+  showSearchForm: false,
+});
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
@@ -191,7 +338,7 @@ const initLineChart = () => {
         data: state.trendData.map(item => item.count),
         smooth: true,
         symbol: 'circle',
-        symbolSize: 6,
+        symbolSize: 10,
         lineStyle: { color: '#4A90E2', width: 2 },
         itemStyle: { color: '#4A90E2' },
         areaStyle: {
@@ -200,11 +347,25 @@ const initLineChart = () => {
             { offset: 1, color: 'rgba(74, 144, 226, 0.05)' },
           ]),
         },
+        emphasis: {
+          focus: 'series',
+          itemStyle: {
+            borderColor: '#4A90E2',
+            borderWidth: 2,
+            shadowBlur: 10,
+            shadowColor: 'rgba(74, 144, 226, 0.5)',
+          },
+        },
       },
     ],
   };
 
   lineChartInstance.setOption(option);
+
+  // 添加点击事件监听
+  lineChartInstance.on('click', (params) => {
+    handleLineChartClick(params);
+  });
 };
 
 // 更新折线图
@@ -241,55 +402,27 @@ onMounted(async () => {
     </div>
     <div ref="lineChartRef" class="simple-bar-chart" />
     <Columnar class="simple-bar-chart" title="各场站订单量" :x-data="state.stationData.map(item => item.name)"
-      :series-data="[{ name: '订单数', data: state.stationData.map(item => item.value) }]" />
+      :series-data="[{ name: '订单数', data: state.stationData.map(item => item.value) }]" @bar-click="handleBarChartClick" />
   </div>
 
   <Drawer>
-    <div v-if="drawerLoading" class="flex justify-center items-center py-8">
-      <div class="loading"></div>
-    </div>
-    <div v-else-if="drawerTableData.length === 0" class="text-center py-8 text-gray-500">
-      暂无订单数据
-    </div>
-    <div v-else class="overflow-auto">
-      <table class="w-full border-collapse">
-        <thead>
-          <tr class="bg-gray-50">
-            <th class="border border-gray-200 px-4 py-2 text-left text-sm font-medium text-gray-700">订单编号</th>
-            <th class="border border-gray-200 px-4 py-2 text-left text-sm font-medium text-gray-700">场站名称</th>
-            <th class="border border-gray-200 px-4 py-2 text-left text-sm font-medium text-gray-700">订单类型</th>
-            <th class="border border-gray-200 px-4 py-2 text-left text-sm font-medium text-gray-700">订单金额</th>
-            <th class="border border-gray-200 px-4 py-2 text-left text-sm font-medium text-gray-700">订单状态</th>
-            <th class="border border-gray-200 px-4 py-2 text-left text-sm font-medium text-gray-700">创建时间</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in drawerTableData" :key="item.id" class="hover:bg-gray-50">
-            <td class="border border-gray-200 px-4 py-2 text-sm text-gray-900">{{ item.orderNo || '-' }}</td>
-            <td class="border border-gray-200 px-4 py-2 text-sm text-gray-900">{{ item.stationName || '-' }}</td>
-            <td class="border border-gray-200 px-4 py-2 text-sm text-gray-900">
-              <span v-if="item.orderType === 'offtime_park'">错时停车</span>
-              <span v-else-if="item.orderType === 'car_charge'">汽车充电</span>
-              <span v-else-if="item.orderType === 'bike_charge'">两轮充电</span>
-              <span v-else-if="item.orderType === 'share_charge'">共享充电</span>
-              <span v-else>{{ item.orderType }}</span>
-            </td>
-            <td class="border border-gray-200 px-4 py-2 text-sm text-gray-900">{{ item.amount || 0 }} 元</td>
-            <td class="border border-gray-200 px-4 py-2 text-sm">
-              <span :class="['px-2 py-1 rounded text-xs', {
-                'bg-green-100 text-green-800': item.status === 'paid' || item.status === 'completed',
-                'bg-yellow-100 text-yellow-800': item.status === 'pending_pay',
-                'bg-blue-100 text-blue-800': item.status === 'charging',
-                'bg-gray-100 text-gray-800': item.status === 'cancelled',
-                'bg-red-100 text-red-800': item.status === 'refunding',
-              }]">
-                {{ statusMap[item.status]?.label || item.status }}
-              </span>
-            </td>
-            <td class="border border-gray-200 px-4 py-2 text-sm text-gray-900">{{ item.createTime || '-' }}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <DrawerGrid>
+      <template #orderType="{ row }">
+        <span v-if="row.orderType === 'temp_park'">临时停车</span>
+        <span v-else-if="row.orderType === 'offtime_park'">错时停车</span>
+        <span v-else-if="row.orderType === 'car_charge'">汽车充电</span>
+        <span v-else-if="row.orderType === 'bike_charge'">两轮充电</span>
+        <span v-else-if="row.orderType === 'share_charge'">共享充电</span>
+        <span v-else>{{ row.orderType }}</span>
+      </template>
+      <template #status="{ row }">
+        <ElTag :type="getStatusType(row.status)">
+          {{ getStatusLabel(row.status) }}
+        </ElTag>
+      </template>
+      <template #orderNo="{ row }">
+        {{ row.orderNo }}
+      </template>
+    </DrawerGrid>
   </Drawer>
 </template>

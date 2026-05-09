@@ -504,12 +504,12 @@ export function useSearchFormSchema() {
     {
       fieldName: 'area',
       label: '所属片区',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择所属片区',
+        placeholder: '请输入所属片区',
         clearable: true,
-        filterable: true,
-        options: areaOptions,
+        // filterable: true,
+        // options: areaOptions,
       },
     },
     // {

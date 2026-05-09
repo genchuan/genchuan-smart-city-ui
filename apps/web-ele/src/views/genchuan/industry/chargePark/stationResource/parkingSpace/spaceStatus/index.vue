@@ -13,6 +13,7 @@ import * as pageApi from '#/api/genchuan/industry/chargePark/stationResource/par
 import CommonDetailDrawer from '#/components/common/DetailDrawer.vue';
 import IconButton from '#/genchuan-components/IconButton.vue';
 
+import ChartDrillDrawer from '../../components/ChartDrillDrawer.vue';
 import DetailDrawer from './detail.vue';
 import gateChart from './gateChart.vue';
 import gateMap from './gateMap.vue';
@@ -47,6 +48,7 @@ const drillDetailFields = ref([]);
 const drillDrawerTitle = ref('关联信息');
 const fileInputRef = ref(null);
 const chartData = ref({});
+const chartDrillDrawerRef = ref(null);
 
 function normalizeOptions(options = []) {
   return options.map((item) => {
@@ -818,22 +820,35 @@ function handleCardClick(item) {
   applySearchPatch({ status: item.status });
 }
 
+function openChartDrill(chartType, value, field, title) {
+  chartDrillDrawerRef.value?.open({
+    chartType,
+    field,
+    label: getFieldLabel(field),
+    pageTitle: pageConfig.title,
+    title,
+    value,
+  });
+}
+
 function handleBarClick(name) {
-  const field = pageConfig.chart?.bar?.[1];
-  if (!field) return;
-  applySearchPatch({ [field]: name });
+  const field = pageConfig.chart?.bar?.[4] || pageConfig.chart?.bar?.[1];
+  openChartDrill('bar', name, field, `${pageConfig.title}分布`);
 }
 
 function handleLineClick(payload) {
-  const field = pageConfig.chart?.line?.[1];
-  if (!field) return;
-  applySearchPatch({ [field]: payload?.categoryName || payload?.name });
+  const field = pageConfig.chart?.line?.[4] || pageConfig.chart?.line?.[1];
+  openChartDrill(
+    'line',
+    payload?.categoryName || payload?.name,
+    field,
+    `${pageConfig.title}趋势`,
+  );
 }
 
 function handlePieClick(payload) {
-  const field = pageConfig.chart?.pie?.[1];
-  if (!field) return;
-  applySearchPatch({ [field]: payload?.name });
+  const field = pageConfig.chart?.pie?.[3] || pageConfig.chart?.pie?.[1];
+  openChartDrill('pie', payload?.name, field, `${pageConfig.title}占比`);
 }
 
 function getDrillValue(column, row) {
@@ -965,6 +980,7 @@ defineExpose({
         :fields="drillDetailFields"
         width="38%"
       />
+      <ChartDrillDrawer ref="chartDrillDrawerRef" />
 
       <SearchDrawer title="搜索">
         <QueryForm class="query-form" @reset="handleResetSearch" />
@@ -1141,18 +1157,6 @@ defineExpose({
     align-items: stretch;
     min-width: 0;
     padding: 0;
-  }
-
-  .station-chart-wrap :deep(.chart-box-left) {
-    flex: 0 0 300px;
-    min-width: 300px;
-    max-width: 300px;
-    margin-left: 0;
-  }
-
-  .station-chart-wrap :deep(.park-chart-box > :not(.chart-box-left)) {
-    flex: 1 1 0;
-    min-width: 0;
   }
 
   .station-map-wrap {

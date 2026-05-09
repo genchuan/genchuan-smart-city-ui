@@ -706,6 +706,19 @@ onUnmounted(() => {
   if (rateChart) rateChart.dispose();
   if (totalChart) totalChart.dispose();
 });
+// 报表周期标签颜色映射
+const getCycleTagType = (cycle) => {
+  const typeMap = {
+    '日报': 'info',      // 蓝色
+    '周报': 'success',   // 绿色
+    '月报': 'warning',   // 橙色
+    '季报': 'danger',    // 红色
+    '半年报': 'primary', // 深蓝色
+    '年报': '',          // 灰色（默认）
+    '自定义报表': 'info', // 蓝色
+  };
+  return typeMap[cycle] || '';
+};
 </script>
 
 <template>
@@ -759,13 +772,14 @@ onUnmounted(() => {
       </template>
 
       <template #reportCycle="{ row }">
-        <el-text
+        <el-tag
+          :type="getCycleTagType(row.reportCycle)"
           @click="filterByField('reportCycle', row.reportCycle)"
-          type="primary"
           style="cursor: pointer"
+          size="small"
         >
           {{ row.reportCycle }}
-        </el-text>
+        </el-tag>
       </template>
       <template #statTime="{ row }">
         <el-text

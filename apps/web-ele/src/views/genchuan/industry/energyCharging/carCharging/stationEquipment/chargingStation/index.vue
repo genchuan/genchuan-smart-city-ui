@@ -498,11 +498,12 @@ const getTableData = async ({ page }) => {
     pageSize: page.pageSize,
     ...dataObj.searchParams,
   };
+
   try {
     const res = await getChargingStationPage(params);
     let listData = res.data?.list || res.list || [];
-    let total = res.data?.total || res.total || 0;
 
+    // ✅ 前端标签筛选
     if (Object.keys(tagFilters.value).length > 0) {
       listData = listData.filter((item) => {
         for (const [field, filterValue] of Object.entries(tagFilters.value)) {
@@ -520,6 +521,7 @@ const getTableData = async ({ page }) => {
             default:
               itemValue = item[field];
           }
+
           if (Array.isArray(filterValue)) {
             if (!filterValue.includes(String(itemValue))) return false;
           } else {
@@ -530,8 +532,10 @@ const getTableData = async ({ page }) => {
       });
     }
 
-    dataObj.total = total;
+    // ✅ 关键修复点：total 必须是筛选后的长度
+    dataObj.total = listData.length;
     dataObj.list = listData;
+
     return dataObj;
   } catch (error) {
     console.error('获取数据失败', error);

@@ -15,6 +15,7 @@ import { getAreaTree } from '#/api/system/area';
 import CommonDetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import IconButton from '#/genchuan-components/IconButton.vue';
 
+import ChartDrillDrawer from '../../components/ChartDrillDrawer.vue';
 import { detailFields as stationDetailFields } from '../../stationMgmt/stationInfo/table/data.js';
 import DetailDrawer from './detail.vue';
 import gateChart from './gateChart.vue';
@@ -49,6 +50,7 @@ const drillDetailObj = ref({});
 const drillDetailFields = ref([]);
 const drillDrawerTitle = ref('关联信息');
 const chartData = ref({});
+const chartDrillDrawerRef = ref(null);
 const areaTreeData = ref([]);
 const importDialogVisible = ref(false);
 const importFile = ref(null);
@@ -1082,37 +1084,35 @@ async function handleCardClick(item) {
   applySearchPatch({ status: item.status });
 }
 
+function openChartDrill(chartType, value, field, title) {
+  chartDrillDrawerRef.value?.open({
+    chartType,
+    field,
+    label: getFieldLabel(field),
+    pageTitle: pageConfig.title,
+    title,
+    value,
+  });
+}
+
 function handleBarClick(name) {
-  const item = (chartData.value?.stationCountBarList || []).find(
-    (record) => record.name === name,
-  );
-  if (item?.id || item?.areaId) {
-    return handleOpenStationList({
-      id: item.id || item.areaId,
-      name: item.name,
-      stationCount: item.value,
-    });
-  }
-  return openDrillDrawer(
-    `${name}下属场站列表`,
-    [{ name, stationNo: '图表数据未返回片区ID，无法查询场站明细' }],
-    [
-      { key: 'name', label: '片区名称', section: '片区信息' },
-      { key: 'stationNo', label: '明细状态', section: '统计信息' },
-    ],
-  );
+  const field = pageConfig.chart?.bar?.[4] || pageConfig.chart?.bar?.[1];
+  openChartDrill('bar', name, field, `${pageConfig.title}分布`);
 }
 
 function handleLineClick(payload) {
-  const field = pageConfig.chart?.line?.[1];
-  if (!field) return;
-  applySearchPatch({ [field]: payload?.categoryName || payload?.name });
+  const field = pageConfig.chart?.line?.[4] || pageConfig.chart?.line?.[1];
+  openChartDrill(
+    'line',
+    payload?.categoryName || payload?.name,
+    field,
+    `${pageConfig.title}趋势`,
+  );
 }
 
 function handlePieClick(payload) {
-  const field = pageConfig.chart?.pie?.[1];
-  if (!field) return;
-  applySearchPatch({ [field]: payload?.name });
+  const field = pageConfig.chart?.pie?.[3] || pageConfig.chart?.pie?.[1];
+  openChartDrill('pie', payload?.name, field, `${pageConfig.title}占比`);
 }
 
 function getDrillValue(column, row) {
@@ -1246,6 +1246,8 @@ onMounted(() => {
         :fields="drillDetailFields"
         width="38%"
       />
+
+      <ChartDrillDrawer ref="chartDrillDrawerRef" />
 
       <SearchDrawer title="筛选">
         <QueryForm class="query-form" @reset="handleResetSearch" />
@@ -1473,18 +1475,6 @@ onMounted(() => {
     align-items: stretch;
     min-width: 0;
     padding: 0;
-  }
-
-  .station-chart-wrap :deep(.chart-box-left) {
-    flex: 1 1 300px;
-    min-width: 300px;
-    max-width: none;
-    margin-left: 0;
-  }
-
-  .station-chart-wrap :deep(.park-chart-box > :not(.chart-box-left)) {
-    flex: 1 1 0;
-    min-width: 0;
   }
 
   .station-map-wrap {
