@@ -170,7 +170,7 @@ const props = defineProps({
   secondShow: Boolean,
   arrowShow: { type: Boolean, default: false },
 });
-const emit = defineEmits(['arrow-change']);
+const emit = defineEmits(['arrow-change', 'refresh-chart']);
 const arrowChange = () => emit('arrow-change');
 
 const dataObj = reactive({
@@ -352,6 +352,7 @@ const handleApprove = async (row) => {
   await approveAppeal({ id: row.id, auditRemark: '' });
   ElMessage.success('审核通过，状态更新为待处置');
   handleRefresh();
+  emit('refresh-chart');
 };
 
 const rejectForm = reactive({ rejectReason: '' });
@@ -371,12 +372,14 @@ const confirmReject = async () => {
   ElMessage.success('已驳回，状态更新为已关闭');
   rejectDialogVisible.value = false;
   handleRefresh();
+  emit('refresh-chart');
 };
 
 const handleExecute = async (row) => {
   await executeAppeal({ id: row.id });
   ElMessage.success('已认领，状态更新为已完成');
   handleRefresh();
+  emit('refresh-chart');
 };
 
 const feedbackForm = reactive({ feedbackContent: '' });
@@ -390,6 +393,7 @@ const [FeedbackDrawer, feedbackDrawerApi] = useVbenDrawer({
     ElMessage.success('反馈成功，状态已变更为已关闭');
     feedbackDrawerApi.close();
     handleRefresh();
+    emit('refresh-chart');
   },
 });
 const openFeedback = (row) => {
@@ -419,6 +423,7 @@ const [BatchAuditDrawer, batchAuditDrawerApi] = useVbenDrawer({
     ElMessage.success('批量审核完成');
     batchAuditDrawerApi.close();
     handleRefresh();
+    emit('refresh-chart');
     dataObj.selectedRows = [];
   },
 });

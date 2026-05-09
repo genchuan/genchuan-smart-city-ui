@@ -6,6 +6,8 @@ import DisputeMediateChart from './table/chart.vue';
 
 const secondShow = ref(false);
 const activeName = ref('纠纷调解');
+const chartRef = ref(null);
+const refreshChartData = () => chartRef.value?.refresh();
 
 const tabArray = ref([
   {
@@ -33,7 +35,7 @@ const handleChartRefresh = (filters) => {
 
 <template>
   <div class="common-index">
-    <DisputeMediateChart v-if="tabArray[0].arrowShow" @refresh="handleChartRefresh" />
+    <DisputeMediateChart v-if="tabArray[0].arrowShow" ref="chartRef" @refresh="handleChartRefresh" />
     <div class="icon-change">
       <el-icon class="tabel-tab-icon" v-if="secondShow" @click="changeArrowStatus"><ArrowDown /></el-icon>
       <el-icon class="tabel-tab-icon" v-if="!secondShow" @click="changeArrowStatus"><ArrowUp /></el-icon>
@@ -48,6 +50,7 @@ const handleChartRefresh = (filters) => {
           :second-show="item.secondShow"
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
+          @refresh-chart="refreshChartData"
         />
       </el-tab-pane>
     </el-tabs>
