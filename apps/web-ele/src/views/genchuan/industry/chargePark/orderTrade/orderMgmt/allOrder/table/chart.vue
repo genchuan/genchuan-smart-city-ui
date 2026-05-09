@@ -5,6 +5,15 @@ import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
 import * as echarts from 'echarts';
 
+// 订单状态映射
+const statusMap = {
+  charging: { label: '充电中', type: 'primary' },
+  pending_pay: { label: '待支付', type: 'warning' },
+  paid: { label: '已支付', type: 'success' },
+  completed: { label: '已完成', type: 'success' },
+  cancelled: { label: '已取消', type: 'info' },
+  refunding: { label: '退款中', type: 'danger' },
+};
 const state = reactive({
   cardList: [
     { title: '今日订单量', value: 0, color: '#13ce66' },
@@ -35,9 +44,9 @@ const fetchOrderChartData = async () => {
         { date: '2025-04-04', count: 9 },
         { date: '2025-04-05', count: 15 },
       ];
-      // 使用typeData作为场站数据展示
+      // 使用typeData作为订单状态数据展示，X轴显示中文状态名称
       state.stationData = typeData && typeData.length > 0 ? typeData.map(item => ({
-        name: item.status,
+        name: statusMap[item.status]?.label || item.status,
         value: item.count
       })) : [
         { name: '丰泽站', value: 20 },
