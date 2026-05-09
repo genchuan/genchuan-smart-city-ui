@@ -25,11 +25,8 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { UserOpReportApi } from '#/api/genchuan/industry/chargePark/userMerchant/decisionAnalysis/userOpReport';
 import IconButton from '#/components/common/IconButton.vue';
 import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
-import {
-  buildActiveFilterTags,
-  type ActiveFilterTag,
-} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
+import DrillDownDetailDialog from '../components/DrillDownDetailDialog.vue';
 import {
   buildDetailStatsData,
   buildUserOpReportQueryParams,
@@ -54,6 +51,7 @@ const props = withDefaults(
 const detailCache = new Map<number, UserOpReportDetailVO>();
 const detailDrawerVisible = ref(false);
 const detailReport = ref<UserOpReportRow>();
+const drillDownDialogRef = ref<InstanceType<typeof DrillDownDetailDialog>>();
 const generateDialogVisible = ref(false);
 const generateFilterPlaceholder =
   '例如：{"userType":"个人用户","statTime":"2026-04-01,2026-04-20"}';
@@ -64,48 +62,8 @@ const generateForm = ref({
 const filterReportType = ref('');
 const searchParams = ref<Record<string, any>>({});
 
-const quickFilterConfigs = {
-  reportType: {
-    label: '报表类型',
-    type: 'success',
-  },
-} as const;
-
-const searchFilterConfigs = {
-  reportType: {
-    label: '报表类型',
-    type: 'success',
-  },
-  statTime: {
-    formatter: (value: any[]) => value.join(' 至 '),
-    label: '统计时间',
-    type: 'danger',
-  },
-  timeScale: {
-    label: '时间尺度',
-    type: 'info',
-  },
-} as const;
-
 const detailStatsData = computed(() =>
   buildDetailStatsData(detailReport.value),
-);
-
-const activeFilterTags = computed<ActiveFilterTag[]>(() =>
-  buildActiveFilterTags([
-    {
-      configs: quickFilterConfigs,
-      source: 'quick',
-      values: {
-        reportType: filterReportType.value,
-      },
-    },
-    {
-      configs: searchFilterConfigs,
-      source: 'search',
-      values: searchParams.value,
-    },
-  ]),
 );
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -138,6 +96,19 @@ const [QueryForm, queryFormApi] = useVbenForm({
     content: '查询',
   },
 });
+
+function getGridColumns() {
+  return useGridColumns()?.map((column) => {
+    if (column.field === 'timeScale' || column.field === 'statTime') {
+      return {
+        ...column,
+        slots: { default: column.field },
+      };
+    }
+
+    return column;
+  });
+}
 
 /** 搜索表单提交 */
 async function onQuerySubmit(values: Record<string, any>) {
@@ -213,7 +184,7 @@ async function queryUserOpReportPage(
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: useGridColumns(),
+    columns: getGridColumns(),
     layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
     height: 'auto',
@@ -273,10 +244,18 @@ async function recalculateLayout() {
 }
 
 defineExpose({
+  handleStatsFilter,
   recalculateLayout,
   resetSearch,
   setSearchValues,
 });
+
+async function handleStatsFilter(type: string, value?: string) {
+  if (type === 'reportType') {
+    filterReportType.value = value || '';
+    await gridApi.reload();
+  }
+}
 
 /** 打开报表详情抽屉 */
 async function handleOpenDetail(row: UserOpReportRow) {
@@ -338,33 +317,23 @@ async function syncQueryFormValues() {
   await queryFormApi.setValues(searchParams.value);
 }
 
-/** 按报表类型筛选 */
-function handleFilterReportType(reportType: UserOpReportRow['reportType']) {
-  filterReportType.value =
-    filterReportType.value === reportType ? '' : reportType;
-  gridApi.reload();
+function handleOpenDrillDown(info: {
+  drillName?: string;
+  drillType: string;
+  drillValue?: number | string;
+}) {
+  drillDownDialogRef.value?.open(info);
 }
 
-/** 取消报表类型筛选 */
-function handleCancelReportTypeFilter() {
-  filterReportType.value = '';
-  gridApi.reload();
-}
-
-/** 移除筛选标签 */
-async function handleRemoveFilterTag(tag: ActiveFilterTag) {
-  if (tag.source === 'quick') {
-    if (tag.key === 'reportType') {
-      handleCancelReportTypeFilter();
-    }
-    return;
-  }
-
-  const nextValues = { ...searchParams.value };
-  delete nextValues[tag.key];
-  searchParams.value = nextValues;
-  await syncQueryFormValues();
-  await handleRefresh();
+function handleReportFieldDrill(
+  drillType: string,
+  drillValue: number | string,
+) {
+  handleOpenDrillDown({
+    drillName: String(drillValue || '-'),
+    drillType,
+    drillValue,
+  });
 }
 
 /** 确认生成自定义报表 */
@@ -404,29 +373,6 @@ async function handleConfirmGenerate() {
   <div class="user-op-report-table">
     <div class="user-op-report-grid-wrap">
       <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-              align-items: center;
-            "
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
-            >
-              {{ tag.label }}：{{ tag.value }}
-            </ElTag>
-          </div>
-        </template>
-
         <template #toolbar-tools>
           <div class="common-toolbar-tools">
             <IconButton
@@ -462,9 +408,31 @@ async function handleConfirmGenerate() {
             class="common-align"
             type="primary"
             style="cursor: pointer"
-            @click="handleFilterReportType(row.reportType)"
+            @click="handleReportFieldDrill('reportType', row.reportType)"
           >
             {{ row.reportType }}
+          </el-text>
+        </template>
+
+        <template #timeScale="{ row }">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleReportFieldDrill('reportTimeScale', row.timeScale)"
+          >
+            {{ row.timeScale }}
+          </el-text>
+        </template>
+
+        <template #statTime="{ row }">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleReportFieldDrill('statTime', row.statTime)"
+          >
+            {{ row.statTime }}
           </el-text>
         </template>
 
@@ -473,7 +441,11 @@ async function handleConfirmGenerate() {
         </template>
 
         <template #status="{ row }">
-          <ElTag :type="getStatusTagType(row.status)">
+          <ElTag
+            :type="getStatusTagType(row.status)"
+            style="cursor: pointer"
+            @click="handleReportFieldDrill('reportStatus', row.status)"
+          >
             {{ row.status }}
           </ElTag>
         </template>
@@ -584,6 +556,7 @@ async function handleConfirmGenerate() {
         </ElButton>
       </template>
     </ElDialog>
+    <DrillDownDetailDialog ref="drillDownDialogRef" />
   </div>
 </template>
 
@@ -602,6 +575,7 @@ async function handleConfirmGenerate() {
 
 .user-op-report-grid-wrap {
   flex: 1;
+  min-height: 0;
 }
 
 .report-detail-body {

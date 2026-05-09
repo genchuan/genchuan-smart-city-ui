@@ -23,6 +23,8 @@ import { $t } from '#/locales';
 import IconButton from '#/components/common/IconButton.vue';
 import { exportToExcel } from '#/utils/excel.js';
 
+import SpaceDetailDialog from '../../../components/SpaceDetailDialog.vue';
+import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
 import {
   dataList,
   detailFields,
@@ -56,6 +58,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const detailDrawerRef = ref(null);
+const spaceDetailRef = ref(null);
+const vehicleDetailRef = ref(null);
 
 const [CreateForm, createFormApi] = useVbenForm({
   commonConfig: {
@@ -536,6 +540,24 @@ const handleCorrect = (row) => {
     })
     .open();
 };
+
+// 打开车位详情弹窗
+const handleOpenSpaceDetail = (row) => {
+  if (!row.spaceId) {
+    ElMessage.warning('车位信息不存在');
+    return;
+  }
+  spaceDetailRef.value?.open(row.spaceId, row);
+};
+
+// 打开车辆详情弹窗
+const handleOpenVehicleDetail = (row) => {
+  if (!row.plateNo) {
+    ElMessage.warning('车牌号不存在');
+    return;
+  }
+  vehicleDetailRef.value?.open(row.plateNo);
+};
 </script>
 
 <template>
@@ -551,10 +573,12 @@ const handleCorrect = (row) => {
     </CorrectFormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.plateNo}详情`"
+      :title="`${dataObj.detailObj.plateNo || '车辆'}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <SpaceDetailDialog ref="spaceDetailRef" />
+    <VehicleDetailDialog ref="vehicleDetailRef" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -614,12 +638,22 @@ const handleCorrect = (row) => {
         </el-text>
       </template>
       <template #plateNo="{ row }">
-        <el-text class="common-align" type="primary">
+        <el-text
+          @click="handleOpenVehicleDetail(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
           {{ row.plateNo }}
         </el-text>
       </template>
       <template #spaceId="{ row }">
-        <el-text class="common-align" type="primary">
+        <el-text
+          @click="handleOpenSpaceDetail(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
           {{ row.spaceId }}
         </el-text>
       </template>

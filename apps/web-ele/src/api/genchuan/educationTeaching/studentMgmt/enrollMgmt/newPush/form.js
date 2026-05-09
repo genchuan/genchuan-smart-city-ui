@@ -29,14 +29,14 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'taskName', title: '推送任务名称', minWidth: 180, slots: { default: 'taskName' } },
-    { field: 'pushContent', title: '推送内容', minWidth: 340, slots: { default: 'pushContent' } },
-    { field: 'pushNum', title: '推送人数', minWidth: 100 },
-    { field: 'pushTime', title: '推送时间', minWidth: 180, slots: { default: 'pushTime' } },
-    { field: 'finishRate', title: '推送完成率', minWidth: 120, slots: { default: 'finishRate' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'taskName', title: '推送任务名称', minWidth: 180, sortable: true, slots: { default: 'taskName' } },
+    { field: 'pushContent', title: '推送内容', minWidth: 340, sortable: true, slots: { default: 'pushContent' } },
+    { field: 'pushNum', title: '推送人数', minWidth: 100, sortable: true, },
+    { field: 'pushTime', title: '推送时间', minWidth: 180, sortable: true, slots: { default: 'pushTime' } },
+    { field: 'finishRate', title: '推送完成率', minWidth: 120, sortable: true, slots: { default: 'finishRate' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

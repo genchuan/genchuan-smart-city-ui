@@ -1,4 +1,4 @@
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 // import { getRangePickerDefaultProps } from '#/utils';
 
 export const reportCycleOptions = [
@@ -9,6 +9,12 @@ export const reportCycleOptions = [
   { label: '半年报', value: '半年报' },
   { label: '年报', value: '年报' },
   { label: '自定义报表', value: '自定义报表' },
+];
+
+/** 报表页签（含「全部」），与营销运营报表周期 tab 一致 */
+export const reportCycleTabs = [
+  { label: '全部', value: '' },
+  ...reportCycleOptions.map((item) => ({ label: item.label, value: item.value })),
 ];
 
 export const reportTypeOptions = [
@@ -184,13 +190,7 @@ function resolvePeriod(index, cycle) {
 export function formatReportTime(value) {
   if (!value) return '-';
   const text = String(value);
-  if (/^\d{10}$/.test(text)) {
-    return formatDate(Number(text) * 1000) || text;
-  }
-  if (/^\d{13}$/.test(text)) {
-    return formatDate(Number(text)) || text;
-  }
-  return formatDate(value) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 export function formatRate(value) {
@@ -203,7 +203,7 @@ export function formatRate(value) {
 
 export function formatStatPeriod(start, end) {
   if (!start || !end) return '-';
-  return `${formatDate(start)} 至 ${formatDate(end)}`;
+  return `${formatLocalDateTime(start)} 至 ${formatLocalDateTime(end)}`;
 }
 
 export function getStationName(stationId) {

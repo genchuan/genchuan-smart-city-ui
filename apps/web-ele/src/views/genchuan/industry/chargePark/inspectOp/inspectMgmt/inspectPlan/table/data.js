@@ -3,7 +3,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const INSPECT_PLAN_TYPE_DICT = DICT_TYPE.INSPECT_PLAN_TYPE;
 export const INSPECT_PLAN_CYCLE_DICT = DICT_TYPE.INSPECT_PLAN_CYCLE;
@@ -74,6 +74,14 @@ export const cycleOptions = getDictOptions(INSPECT_PLAN_CYCLE_DICT, 'string');
 
 export const statusOptions = getDictOptions(INSPECT_PLAN_STATUS_DICT, 'string');
 
+/** 按计划状态字典 label 取 value，供图表卡片筛选 */
+export function getPlanStatusOptionValue(label) {
+  const opt = statusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 const MOCK_PLAN_TYPE_VALUES = ['日常', '专项', '临时'];
 const MOCK_PLAN_CYCLE_VALUES = ['日', '周', '月', '季'];
 const MOCK_PLAN_STATUS_VALUES = ['待生效', '进行中', '已完成', '已暂停'];
@@ -114,8 +122,7 @@ const baseTime = 1_775_011_986_000;
 export function formatPlanTime(value) {
   if (!value) return '-';
   const text = String(value);
-  const timestamp = /^\d{10}$/.test(text) ? Number(text) * 1000 : value;
-  return formatDate(timestamp) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 export function getAuditUserName(auditUserId) {

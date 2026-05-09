@@ -3,7 +3,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const OIL_MONITOR_PROCESS_STATUS_DICT =
   DICT_TYPE.OIL_MONITOR_PROCESS_STATUS;
@@ -56,6 +56,14 @@ export const processStatusOptions = getDictOptions(
   'string',
 );
 
+/** 按字典项 label 取 value，供图表卡片筛选等与接口/字典一致 */
+export function getProcessStatusOptionValue(label) {
+  const opt = processStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 export const processMethodOptions = [
   { label: '现场劝离', value: '现场劝离' },
   { label: '电话通知', value: '电话通知' },
@@ -83,8 +91,7 @@ const baseTime = 1_775_011_986_000;
 export function formatMonitorTime(value) {
   if (!value) return '-';
   const text = String(value);
-  const timestamp = /^\d{10}$/.test(text) ? Number(text) * 1000 : value;
-  return formatDate(timestamp) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 export function getStationName(stationId) {

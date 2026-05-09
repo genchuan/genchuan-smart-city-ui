@@ -132,11 +132,22 @@ onMounted(() => {
 
 .merchant-link-stats {
   flex-shrink: 0;
+  height: 280px;
+  overflow: hidden;
 }
 
 .merchant-link-table-wrap {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+:deep(.park-chart-box) {
+  min-height: 280px;
+}
+
+:deep(.simple-bar-chart),
+:deep(.park-type-chart) {
+  height: 280px;
 }
 </style>

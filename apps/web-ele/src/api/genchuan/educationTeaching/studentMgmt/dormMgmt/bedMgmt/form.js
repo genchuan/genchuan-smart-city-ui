@@ -43,16 +43,16 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
-    { field: 'building', title: '楼栋', minWidth: 100, slots: { default: 'building' } },
-    { field: 'floor', title: '楼层', minWidth: 80 },
-    { field: 'roomNum', title: '房间号', minWidth: 100, slots: { default: 'roomNum' } },
-    { field: 'bedNum', title: '床位号', minWidth: 80 },
-    { field: 'assignTime', title: '分配时间', minWidth: 180, slots: { default: 'assignTime' } },
-    { field: 'adjustTime', title: '调整时间', minWidth: 180, slots: { default: 'adjustTime' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'studentId', title: '学号', minWidth: 100, sortable: true, slots: { default: 'studentId' } },
+    { field: 'building', title: '楼栋', minWidth: 100, sortable: true, slots: { default: 'building' } },
+    { field: 'floor', title: '楼层', minWidth: 80, sortable: true, },
+    { field: 'roomNum', title: '房间号', minWidth: 100, sortable: true, slots: { default: 'roomNum' } },
+    { field: 'bedNum', title: '床位号', minWidth: 80, sortable: true, },
+    { field: 'assignTime', title: '分配时间', minWidth: 180, sortable: true, slots: { default: 'assignTime' } },
+    { field: 'adjustTime', title: '调整时间', minWidth: 180, sortable: true, slots: { default: 'adjustTime' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

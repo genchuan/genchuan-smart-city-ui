@@ -16,6 +16,7 @@ import * as stationInfoApi from '#/api/genchuan/industry/chargePark/stationResou
 import CommonDetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import IconButton from '#/genchuan-components/IconButton.vue';
 
+import ChartDrillDrawer from '../../components/ChartDrillDrawer.vue';
 import DetailDrawer from './detail.vue';
 import gateChart from './gateChart.vue';
 import gateMap from './gateMap.vue';
@@ -54,6 +55,7 @@ const importLoading = ref(false);
 const importResult = ref(null);
 const importUpdateSupport = ref(false);
 const chartData = ref({});
+const chartDrillDrawerRef = ref(null);
 const selectOptionsMap = ref({});
 
 function padTime(value) {
@@ -241,6 +243,7 @@ function createSchema(fields, isSearch = false) {
     if (field.type === 'select') {
       Object.assign(componentProps, {
         allowClear: true,
+        clearable: true,
         filterOption: true,
         options: getSelectFieldOptions(field),
         showSearch: true,
@@ -1081,32 +1084,35 @@ function handleCardClick(item) {
   applySearchPatch({ [field]: item.status });
 }
 
+function openChartDrill(chartType, value, field, title) {
+  chartDrillDrawerRef.value?.open({
+    chartType,
+    field,
+    label: getFieldLabel(field),
+    pageTitle: pageConfig.title,
+    title,
+    value,
+  });
+}
+
 function handleBarClick(name) {
   const field = pageConfig.chart?.bar?.[4] || pageConfig.chart?.bar?.[1];
-  applyChartSearch(field, name);
+  openChartDrill('bar', name, field, `${pageConfig.title}分布`);
 }
 
 function handleLineClick(payload) {
   const field = pageConfig.chart?.line?.[4] || pageConfig.chart?.line?.[1];
-  applyChartSearch(field, payload?.categoryName || payload?.name);
+  openChartDrill(
+    'line',
+    payload?.categoryName || payload?.name,
+    field,
+    `${pageConfig.title}趋势`,
+  );
 }
 
 function handlePieClick(payload) {
   const field = pageConfig.chart?.pie?.[3] || pageConfig.chart?.pie?.[1];
-  applyChartSearch(field, payload?.name);
-}
-
-function isSearchField(field) {
-  return searchFields.some((item) => item.field === field);
-}
-
-function applyChartSearch(field, value) {
-  if (!field || isEmpty(value)) return;
-  if (!isSearchField(field)) {
-    ElMessage.info('当前图表未返回可筛选字段，已保留展示不发起筛选');
-    return;
-  }
-  applySearchPatch({ [field]: value });
+  openChartDrill('pie', payload?.name, field, `${pageConfig.title}占比`);
 }
 
 function getDrillValue(column, row) {
@@ -1239,6 +1245,8 @@ defineExpose({
         :fields="drillDetailFields"
         width="38%"
       />
+
+      <ChartDrillDrawer ref="chartDrillDrawerRef" />
 
       <SearchDrawer title="筛选">
         <QueryForm class="query-form" @reset="handleResetSearch" />
@@ -1479,18 +1487,6 @@ defineExpose({
     align-items: stretch;
     min-width: 0;
     padding: 0;
-  }
-
-  .station-chart-wrap :deep(.chart-box-left) {
-    flex: 1 1 300px;
-    min-width: 300px;
-    max-width: none;
-    margin-left: 0;
-  }
-
-  .station-chart-wrap :deep(.park-chart-box > :not(.chart-box-left)) {
-    flex: 1 1 0;
-    min-width: 0;
   }
 
   .station-map-wrap {

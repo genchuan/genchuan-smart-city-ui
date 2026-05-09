@@ -35,10 +35,10 @@ const [Modal, modalApi] = useVbenModal({
 
 function downloadTemplate() {
   const templateData = [
-    ['资产名称', '资产类型', '采购时间', '所属场站'],
-    ['车位监测摄像头', '监测设备', '2026-04-15 09:00:00', '泉州丰泽充电站'],
-    ['直流快充终端', '充电设备', '2026-04-16 09:00:00', '晋江池店综合能源站'],
-    ['手持巡检终端', '巡检工具', '2026-04-17 09:00:00', '鲤城公共停车场'],
+    ['资产名称', '资产类型', '采购时间', '所属场站', '资产状态'],
+    ['车位监测摄像头', '监测设备', '2026-04-15 09:00:00', '泉州丰泽充电站', '正常'],
+    ['直流快充终端', '充电设备', '2026-04-16 09:00:00', '晋江池店综合能源站', '正常'],
+    ['手持巡检终端', '巡检工具', '2026-04-17 09:00:00', '鲤城公共停车场', '正常'],
   ];
   const worksheet = XLSX.utils.aoa_to_sheet(templateData);
   const workbook = XLSX.utils.book_new();
@@ -113,11 +113,15 @@ async function handleImport() {
       message: response?.message || '导入成功',
       total: response?.total || 0,
       successCount: response?.successCount || 0,
-      failCount: response?.failCount || 0,
+      failCount: response?.failureCount || 0,
     };
-    ElMessage.success(response?.message || '导入成功');
-    emit('success');
-    modalApi.close();
+    if (validationResult.value.failCount > 0) {
+      ElMessage.warning('部分数据导入失败，请查看校验结果');
+    } else {
+      ElMessage.success(response?.message || '导入成功');
+      emit('success');
+      modalApi.close();
+    }
   } catch (error) {
     console.error('导入资产信息失败:', error);
     validationResult.value = {

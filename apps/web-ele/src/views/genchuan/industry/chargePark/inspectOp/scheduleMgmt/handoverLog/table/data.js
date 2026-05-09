@@ -3,7 +3,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const HANDOVER_LOG_STATUS_DICT = DICT_TYPE.HANDOVER_LOG_STATUS;
 
@@ -44,6 +44,14 @@ export const userOptions = [
 
 export const statusOptions = getDictOptions(HANDOVER_LOG_STATUS_DICT, 'string');
 
+/** 按交接日志状态字典 label 取 value，供图表卡片筛选 */
+export function getHandoverStatusOptionValue(label) {
+  const opt = statusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 const handoverContents = [
   '今日场站设备运行正常，无异常情况。',
   '丰泽站2号充电桩需关注枪线温度，已完成现场检查。',
@@ -59,8 +67,7 @@ export function formatHandoverTime(value) {
   if (!value) return '-';
   if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return value;
   const text = String(value);
-  const timestamp = /^\d{10}$/.test(text) ? Number(text) * 1000 : value;
-  return formatDate(timestamp) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 export function getUserName(userId) {

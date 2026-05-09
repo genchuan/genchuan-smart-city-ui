@@ -1,404 +1,135 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
-import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
-import ReportDetailDrawer from './components/reportDetail.vue';
-import {
-  getMockList,
-  getAssessReportPage,
-  createAssessReport,
-  exportAssessReport,
-  getAssessReportDetail,
-} from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/assessReport/data.js';
-import {
-  textObj,
-  useFormSchema,
-  getColumns,
-  useGenerateFormSchema,
-} from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/assessReport/form.js';
+import { ref, nextTick, onMounted, computed } from 'vue';
 
-// 辅助函数：时间戳格式化
-const formatTimestamp = (timestamp) => {
-  if (!timestamp) return '-';
-  const date = new Date(parseInt(timestamp));
-  if (isNaN(date.getTime())) return timestamp;
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-};
+import Chart from './components/chart.vue';
+import Table from './table/index.vue';
 
-// 提取日期部分（用于筛选）
-const getDateFromTimestamp = (timestamp) => {
-  if (!timestamp) return '';
-  const date = new Date(parseInt(timestamp));
-  if (isNaN(date.getTime())) return '';
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
+import '#/genchuan-components/page/index.scss';
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
-const emit = defineEmits(['arrow-change']);
-
-// ---------- 标签筛选 ----------
-const tagFilters = ref({});
-
-function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
-    const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
-    } else {
-      tagFilters.value[field] = value;
-    }
-  } else {
-    tagFilters.value[field] = value;
+const showStats = ref(true);
+const toggleStats = () => {
+  showStats.value = !showStats.value;
+  if (showStats.value) {
+    chartRef.value?.refreshData();
   }
-  gridApi.reload();
-}
+};
 
-function clearFilters() {
-  tagFilters.value = {};
-  gridApi.reload();
-}
+const drillDownDialogRef = ref(null);
+const chartRef = ref(null);
 
-function removeFilterTag(field) {
-  delete tagFilters.value[field];
-  gridApi.reload();
-}
+const reportCycleTabs = [
+  {label: '全部', value: ''},
+  {label: '日报', value: '日报'},
+  {label: '周报', value: '周报'},
+  {label: '月报', value: '月报'},
+  {label: '季报', value: '季报'},
+  {label: '半年报', value: '半年报'},
+  {label: '年报', value: '年报'},
+  {label: '自定义报表', value: '自定义报表'},
+];
 
-function getFieldLabel(field) {
-  const map = {
-    timeScale: '报表时间尺度',
-    creator: '生成人',
-    createTime: '生成时间',
-  };
-  return map[field] || field;
-}
+const tabArray = ref(
+  reportCycleTabs.map((tab) => ({
+    label: tab.label,
+    value: tab.value,
+    components: Table,
+    showSecondary: true,
+    secondShow: false,
+  })),
+);
 
-function getTagDisplayText(field, value) {
-  if (Array.isArray(value)) return value.join('、');
-  return value || '-';
-}
+const activeName = ref(reportCycleTabs[0].label);
+const secondShow = ref(false);
+const tableRef = ref(null);
 
-// ---------- 抽屉组件 ----------
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => drawerApi.close(),
-});
+const changeArrowStatus = () => {
+  secondShow.value = !secondShow.value;
+  tabArray.value.forEach((v) => {
+    v.secondShow = secondShow.value;
+  });
+};
 
-const [GenerateDrawer, generateDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => generateDrawerApi.close(),
-});
+const showStatsValue = computed(() => showStats.value);
 
-const dataObj = reactive({
-  totalShow: false,
-  detailObj: {},
-  total: 0,
-  currentPage: 1,
-  pageSize: 10,
-  list: [],
-  loading: false,
-});
+const getCurrentTableRef = () => {
+  const activeIndex = reportCycleTabs.findIndex((t) => t.label === activeName.value);
+  if (activeIndex === -1) return null;
+  if (Array.isArray(tableRef.value)) {
+    return tableRef.value[activeIndex] &&
+    typeof tableRef.value[activeIndex].handleStatsFilter === 'function'
+      ? tableRef.value[activeIndex]
+      : null;
+  }
+  return tableRef.value && typeof tableRef.value.handleStatsFilter === 'function'
+    ? tableRef.value
+    : null;
+};
 
-const gridColumns = ref(getColumns());
-const checkedIds = ref([]);
-const checkedRows = ref([]);
+const tabChange = (tabName) => {
+  const tab = reportCycleTabs.find((t) => t.label === tabName);
+  const currentTable = getCurrentTableRef();
+  if (tab && currentTable) {
+    currentTable.handleStatsFilter('reportCycle', tab.value);
+  }
+};
 
-function handleRowCheckboxChange({ records }) {
-  checkedIds.value = records.map(item => item.id);
-  checkedRows.value = records;
-}
-
-const searchParams = ref({});
-
-const getTableData = async ({ page }) => {
-  dataObj.loading = true;
-  try {
-    const params = {
-      ...searchParams.value,
-      pageNo: page.currentPage,
-      pageSize: page.pageSize,
-    };
-    const res = await getAssessReportPage(params);
-    let filtered = res.list;
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'timeScale':
-            itemValue = item.timeScale;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+const openDrillDialogAndFilter = async (drillType, drillValue, drillName, reportCycle) => {
+  if (drillDownDialogRef.value) {
+    drillDownDialogRef.value.open({
+      drillType,
+      drillValue,
+      drillName,
+      reportCycle,
     });
-    dataObj.total = res.total || filtered.length;
-    dataObj.list = filtered;
-  } catch (error) {
-    console.error('获取数据失败:', error);
-    const mockData = getMockList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
-        let itemValue;
-        switch (field) {
-          case 'timeScale':
-            itemValue = item.timeScale;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice((page.currentPage - 1) * page.pageSize, page.currentPage * page.pageSize);
-  } finally {
-    dataObj.loading = false;
   }
-  return dataObj;
+  await nextTick();
+  const currentTable = getCurrentTableRef();
+  if (currentTable) {
+    currentTable.handleStatsFilter(drillType, drillValue);
+  }
 };
 
-function handleRefresh() {
-  gridApi.reload();
-}
-
-function handleReset() {
-  searchParams.value = {};
-  tagFilters.value = {};
-  gridApi.reload();
-}
-
-// 批量导出
-async function handleBatchExport() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个报表');
-    return;
-  }
-  try {
-    const loading = ElLoading.service({ text: '正在导出...' });
-    try {
-      // 支持批量导出，后端按 ids 导出
-      const data = await exportAssessReport({ ids: checkedIds.value });
-      downloadFileFromBlobPart({ fileName: `${textObj.excelName}.xls`, source: data });
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
-  } catch (error) {
-    console.error('导出失败:', error);
-    ElMessage.error('导出失败');
-  }
-}
-
-// 单行导出
-async function handleExport(row) {
-  try {
-    const loading = ElLoading.service({ text: '正在导出...' });
-    try {
-      const data = await exportAssessReport({ ids: [row.id] });
-      downloadFileFromBlobPart({ fileName: `${row.timeScale}_报表_${formatTimestamp(row.statStartTime)}.xls`, source: data });
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
-  } catch (error) {
-    console.error('导出失败:', error);
-    ElMessage.error('导出失败');
-  }
-}
-
-// 生成报表
-function handleGenerate() {
-  generateFormApi.resetForm();
-  generateDrawerApi.open();
-}
-
-// 生成表单
-const [GenerateForm, generateFormApi] = useVbenForm({
-  collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
-  handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '生成报表中...' });
-    try {
-      const res = await createAssessReport(values);
-      if (res === true) {
-        ElMessage.success('报表生成成功');
-        generateDrawerApi.close();
-        handleRefresh();
-      } else {
-        ElMessage.error('报表生成失败');
-      }
-    } finally {
-      loading.close();
-    }
-  },
-  layout: 'horizontal',
-  schema: useGenerateFormSchema(),
-  showCollapseButton: false,
-  submitButtonOptions: { content: '确认' },
-});
-
-// 详情抽屉
-const reportDetailDrawerRef = ref(null);
-function handleOpenDetail(row) {
-  dataObj.detailObj = row;
-  reportDetailDrawerRef.value.open();
-}
-
-const [QueryForm] = useVbenForm({
-  collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
-  handleSubmit: (values) => {
-    searchParams.value = { ...values };
-    drawerApi.close();
-    gridApi.reload();
-  },
-  layout: 'horizontal',
-  schema: useFormSchema().map(v => {
-    delete v.rules;
-    return v;
-  }),
-  showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
-});
-
-const [Grid, gridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: gridColumns.value,
-    keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
-    pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
-    showOverflow: true,
-  },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
-  showSearchForm: false,
-});
-
-const handleSerachShow = () => drawerApi.open();
-const handleFullShow = () => screenfull.toggle();
-const arrowChange = () => emit('arrow-change');
-
-const showChart = ref(true);
-const toggleChart = () => {
-  showChart.value = !showChart.value;
+const handleRadarClick = (drillInfo) => {
+  console.log('雷达图钻取:', drillInfo);
+  openDrillDialogAndFilter('radar', drillInfo.value, drillInfo.name, activeName.value);
 };
 
-defineExpose({ handleFilterTagClick, clearFilters });
+const handleLineClick = (drillInfo) => {
+  console.log('折线图钻取:', drillInfo);
+  openDrillDialogAndFilter('line', drillInfo.value, drillInfo.name, activeName.value);
+};
+
+onMounted(() => {
+  setTimeout(() => {
+    const currentTable = getCurrentTableRef();
+    if (currentTable) {
+      currentTable.handleStatsFilter('reportCycle', reportCycleTabs[0].value);
+    }
+  }, 300);
+});
 </script>
 
 <template>
-  <div class="park-lot-table-new">
-    <ReportDetailDrawer ref="reportDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
-    <Drawer title="筛选">
-      <QueryForm />
-    </Drawer>
-    <GenerateDrawer :title="textObj.generateText">
-      <GenerateForm />
-    </GenerateDrawer>
-    <Grid>
-      <template #table-title>
-        <ElTag
-          v-for="(value, field) in tagFilters"
-          :key="field"
-          type="success"
-          closable
-          @close="removeFilterTag(field)"
-          style="height: 32px; margin: 4px 8px 4px 0; line-height: 32px"
-        >
-          {{ getFieldLabel(field) }}: {{ getTagDisplayText(field, value) }}
-        </ElTag>
-      </template>
-      <template #toolbar-tools>
-        <div class="common-toolbar-tools">
-          <IconButton content="生成" icon-name="Plus" @click="handleGenerate" />
-          <IconButton content="导出" icon-name="download" @click="handleBatchExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart" @click="toggleChart" />
-        </div>
-      </template>
-
-      <!-- 钻取列 -->
-      <template #timeScale="{ row }">
-        <el-text @click="handleFilterTagClick('timeScale', row.timeScale)" type="primary" style="cursor: pointer;">
-          {{ row.timeScale }}
-        </el-text>
-      </template>
-      <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">
-          {{ row.creator || '-' }}
-        </el-text>
-      </template>
-      <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">
-          {{ formatTimestamp(row.createTime) }}
-        </el-text>
-      </template>
-
-      <!-- 时间格式化 -->
-      <template #statStartTime="{ row }">
-        <el-text>{{ formatTimestamp(row.statStartTime) }}</el-text>
-      </template>
-      <template #statEndTime="{ row }">
-        <el-text>{{ formatTimestamp(row.statEndTime) }}</el-text>
-      </template>
-      <template #statFinishTime="{ row }">
-        <el-text>{{ formatTimestamp(row.statFinishTime) }}</el-text>
-      </template>
-
-      <!-- 操作按钮 -->
-      <template #actions="{ row }">
-        <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton content="导出" icon-name="download" @click="handleExport(row)" />
-        </div>
-      </template>
-    </Grid>
+  <div class="common-index">
+    <Chart v-if="showStats" ref="chartRef" @radar-click="handleRadarClick"
+           @line-click="handleLineClick"/>
+    <el-tabs v-model="activeName" class="common-tabs" type="card" @tab-change="tabChange">
+      <el-tab-pane v-for="item in tabArray" :key="item.label" :name="item.label">
+        <template #label>
+          <div class="table-first">
+            <span>{{ item.label }}</span>
+          </div>
+        </template>
+        <component
+          :is="item.components"
+          ref="tableRef"
+          :second-show="item.secondShow"
+          :show-stats="showStatsValue"
+          :toggle-stats="toggleStats"
+          :key="item.label"
+          :active-report-cycle="item.value"
+        />
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>

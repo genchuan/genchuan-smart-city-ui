@@ -32,12 +32,12 @@ export function useFormSchema() {
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-    { field: 'id', title: '查询ID', minWidth: 100, slots: { default: 'id' } },
-    { field: 'userName', title: '用户', minWidth: 120, slots: { default: 'userName' } },
-    { field: 'queryLocationName', title: '查询位置', minWidth: 180, slots: { default: 'queryLocation' } },
-    { field: 'queryTime', title: '查询时间', minWidth: 160 },
-    { field: 'stationCount', title: '周边场站数', minWidth: 120, slots: { default: 'stationCount' } },
-    { field: 'emptyStationCount', title: '空位场站数', minWidth: 120, slots: { default: 'emptyStationCount' } },
+    { field: 'id', title: '查询ID', minWidth: 100, sortable: true,slots: { default: 'id' } },
+    { field: 'userName', title: '用户', minWidth: 120,sortable: true, slots: { default: 'userName' } },
+    { field: 'queryLocationName', title: '查询位置', minWidth: 180, sortable: true,slots: { default: 'queryLocation' } },
+    { field: 'queryTime', title: '查询时间', minWidth: 160,sortable: true, },
+    { field: 'stationCount', title: '周边场站数', minWidth: 120, sortable: true,slots: { default: 'stationCount' } },
+    { field: 'emptyStationCount', title: '空位场站数', minWidth: 120, sortable: true,slots: { default: 'emptyStationCount' } },
   ];
 }
 

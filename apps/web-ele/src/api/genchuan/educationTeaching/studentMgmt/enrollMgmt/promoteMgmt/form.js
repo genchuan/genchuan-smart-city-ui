@@ -36,15 +36,15 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'taskName', title: '宣传任务名称', minWidth: 180, slots: { default: 'taskName' } },
-    { field: 'site', title: '宣传站点', minWidth: 120, slots: { default: 'site' } },
-    { field: 'promoteNum', title: '宣传人数', minWidth: 100 },
-    { field: 'intentNum', title: '意向学生数', minWidth: 100 },
-    { field: 'executeUser', title: '执行人', minWidth: 100 },
-    { field: 'executeTime', title: '执行时间', minWidth: 180, slots: { default: 'executeTime' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'taskName', title: '宣传任务名称', minWidth: 180, sortable: true, slots: { default: 'taskName' } },
+    { field: 'site', title: '宣传站点', minWidth: 120, sortable: true, slots: { default: 'site' } },
+    { field: 'promoteNum', title: '宣传人数', minWidth: 100, sortable: true, },
+    { field: 'intentNum', title: '意向学生数', minWidth: 100, sortable: true, },
+    { field: 'executeUser', title: '执行人', minWidth: 100, sortable: true, },
+    { field: 'executeTime', title: '执行时间', minWidth: 180, sortable: true, slots: { default: 'executeTime' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

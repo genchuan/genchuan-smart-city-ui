@@ -182,40 +182,60 @@ function handleRowCheckboxChange({records}) {
 
 const searchParams = ref({});
 
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {...searchParams.value, pageNo: page.currentPage, pageSize: page.pageSize};
+    const params = {
+      ...searchParams.value,
+      pageNo: page.currentPage,
+      pageSize: page.pageSize,
+    };
+
     if (params.dutyDate && Array.isArray(params.dutyDate) && params.dutyDate.length === 2) {
       params.dutyDateStart = params.dutyDate[0];
       params.dutyDateEnd = params.dutyDate[1];
       delete params.dutyDate;
     }
+
     const res = await getDutyMgmtPage(params);
+
     let filtered = res.list;
+
+    // 应用标签筛选
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
+      filtered = filtered.filter((item) => {
         let itemValue;
         if (field === 'dutyUser') itemValue = item.dutyUser;
         else if (field === 'status') itemValue = item.status;
         else if (field === 'creator') itemValue = item.creator;
-        else if (field === 'createTime') itemValue = item.createTime ? getDateFromTimestamp(item.createTime) : '';
+        else if (field === 'createTime')
+          itemValue = item.createTime ? getDateFromTimestamp(item.createTime) : '';
         else itemValue = item[field];
-        if (Array.isArray(filterValue)) return filterValue.includes(String(itemValue));
-        else return String(itemValue) === String(filterValue);
+
+        if (Array.isArray(filterValue)) {
+          return filterValue.includes(String(itemValue));
+        } else {
+          return String(itemValue) === String(filterValue);
+        }
       });
     });
-    dataObj.total = res.total;
+
+    // ✅ 关键修复点：使用前端筛选后的长度
+    dataObj.total = filtered.length;
     dataObj.list = filtered;
+
+    return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
+
     dataObj.total = 0;
     dataObj.list = [];
+
     ElMessage.error('获取值班列表失败，请检查网络或联系管理员');
+    return dataObj;
   } finally {
     dataObj.loading = false;
   }
-  return dataObj;
 };
 
 function handleRefresh() {

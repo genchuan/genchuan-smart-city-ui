@@ -20,6 +20,7 @@ export type UserOpReportPageReqVO = PageParam & {
   createTime?: string;
   reportType?: string;
   statTime?: string;
+  status?: string;
   timeScale?: string;
 };
 

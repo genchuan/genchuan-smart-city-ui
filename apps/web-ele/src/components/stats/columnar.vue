@@ -15,6 +15,9 @@ const props = defineProps({
   yName: { type: String, default: '数量' },
 });
 
+// 定义点击事件
+const emit = defineEmits(['barClick']);
+
 const chartRef = ref(null);
 let chartInstance = null;
 let resizeTimer = null; // 防抖计时器
@@ -138,6 +141,16 @@ const initChart = async () => {
     chartInstance.setOption(option, {
       notMerge: false,
       lazyUpdate: false,
+    });
+
+    // 5. 添加点击事件监听
+    chartInstance.on('click', (params) => {
+      emit('barClick', {
+        name: params.name,
+        value: params.value,
+        seriesName: params.seriesName,
+        dataIndex: params.dataIndex,
+      });
     });
   } catch (error) {
     console.error('ECharts初始化失败：', error);

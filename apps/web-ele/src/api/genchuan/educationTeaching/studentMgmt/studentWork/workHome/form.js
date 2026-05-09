@@ -41,12 +41,12 @@ export function useFormSchema() {
 // 表格列定义
 export function getColumnsByStatus(status) {
   const columns = [
-    { field: 'recordType', title: '记录类型', minWidth: 100, slots: { default: 'recordType' } },
-    { field: 'recordTitle', title: '记录标题', minWidth: 300 },
-    { field: 'studentName', title: '学生姓名', minWidth: 100 },
-    { field: 'className', title: '班级名称', minWidth: 150 },
-    { field: 'creator', title: '创建人', minWidth: 100 },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
+    { field: 'recordType', title: '记录类型', minWidth: 100, sortable: true, slots: { default: 'recordType' } },
+    { field: 'recordTitle', title: '记录标题', minWidth: 300, sortable: true, },
+    { field: 'studentName', title: '学生姓名', minWidth: 100, sortable: true, },
+    { field: 'className', title: '班级名称', minWidth: 150, sortable: true, },
+    { field: 'creator', title: '创建人', minWidth: 100, sortable: true, },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
   ];
   return columns;
 }

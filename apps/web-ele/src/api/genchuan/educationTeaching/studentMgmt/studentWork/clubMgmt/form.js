@@ -37,17 +37,17 @@ export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'clubName', title: '社团名称', minWidth: 120, slots: { default: 'clubName' } },
-    { field: 'clubType', title: '社团类型', minWidth: 100, slots: { default: 'clubType' } },
-    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'venueApplyStatus', title: '场馆申请状态', minWidth: 120 },
-    { field: 'applyTime', title: '申请时间', minWidth: 180, slots: { default: 'applyTime' } },
-    { field: 'auditUser', title: '审核人', minWidth: 120 },
-    { field: 'auditTime', title: '审核时间', minWidth: 180, slots: { default: 'auditTime' } },
-    { field: 'archiveTime', title: '建档时间', minWidth: 180, slots: { default: 'archiveTime' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'clubName', title: '社团名称', minWidth: 120, sortable: true, slots: { default: 'clubName' } },
+    { field: 'clubType', title: '社团类型', minWidth: 100, sortable: true, slots: { default: 'clubType' } },
+    { field: 'studentId', title: '学号', minWidth: 100, sortable: true, slots: { default: 'studentId' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'venueApplyStatus', title: '场馆申请状态', minWidth: 120, sortable: true, },
+    { field: 'applyTime', title: '申请时间', minWidth: 180, sortable: true, slots: { default: 'applyTime' } },
+    { field: 'auditUser', title: '审核人', minWidth: 120, sortable: true, },
+    { field: 'auditTime', title: '审核时间', minWidth: 180, sortable: true, slots: { default: 'auditTime' } },
+    { field: 'archiveTime', title: '建档时间', minWidth: 180, sortable: true, slots: { default: 'archiveTime' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

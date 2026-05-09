@@ -105,6 +105,10 @@ onMounted(() => {
 onUnmounted(() => {
   lineChart?.dispose();
 });
+// 新增：暴露刷新方法
+defineExpose({
+  refresh: fetchChartData
+});
 </script>
 
 <style scoped>

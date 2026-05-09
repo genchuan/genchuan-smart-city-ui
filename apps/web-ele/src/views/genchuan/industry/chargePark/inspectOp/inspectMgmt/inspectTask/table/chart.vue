@@ -6,7 +6,11 @@ import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData, getPlanTypeLabel } from './data';
+import {
+  getMockChartData,
+  getPlanTypeLabel,
+  getTaskStatusOptionValue,
+} from './data';
 
 const emit = defineEmits(['statusFilter', 'trendFilter']);
 
@@ -16,14 +20,14 @@ const state = reactive({
       title: '待处理任务数',
       value: 0,
       desc: '待派发/待认领/处理中',
-      status: '处理中',
+      status: getTaskStatusOptionValue('处理中'),
       color: '#f59e0b',
     },
     {
       title: '已完成任务数',
       value: 0,
       desc: '已完成',
-      status: '已完成',
+      status: getTaskStatusOptionValue('已完成'),
       color: '#27ae60',
     },
   ],

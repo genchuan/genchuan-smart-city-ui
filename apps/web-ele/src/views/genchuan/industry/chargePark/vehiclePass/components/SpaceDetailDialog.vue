@@ -125,9 +125,6 @@ defineExpose({
 
     <template #footer>
       <el-button @click="close">关闭</el-button>
-      <el-button type="primary" @click="goToSpaceManagement">
-        跳转到车位管理页面
-      </el-button>
     </template>
   </el-dialog>
 </template>

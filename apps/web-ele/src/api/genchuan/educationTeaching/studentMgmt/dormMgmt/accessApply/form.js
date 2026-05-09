@@ -42,15 +42,15 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
-    { field: 'applyType', title: '申请类型', minWidth: 100, slots: { default: 'applyType' } },
-    { field: 'applyReason', title: '申请原因', minWidth: 150 },
-    { field: 'applyTime', title: '申请时间', minWidth: 180, slots: { default: 'applyTime' } },
-    { field: 'auditUser', title: '审核人', minWidth: 100 },
-    { field: 'auditTime', title: '审核时间', minWidth: 180, slots: { default: 'auditTime' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'studentId', title: '学号', minWidth: 100, sortable: true, slots: { default: 'studentId' } },
+    { field: 'applyType', title: '申请类型', minWidth: 100, sortable: true, slots: { default: 'applyType' } },
+    { field: 'applyReason', title: '申请原因', minWidth: 150, sortable: true, },
+    { field: 'applyTime', title: '申请时间', minWidth: 180, sortable: true, slots: { default: 'applyTime' } },
+    { field: 'auditUser', title: '审核人', minWidth: 100, sortable: true, },
+    { field: 'auditTime', title: '审核时间', minWidth: 180, sortable: true, slots: { default: 'auditTime' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

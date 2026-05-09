@@ -6,7 +6,7 @@ import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData } from './data';
+import { getAssetStockStatusOptionValue, getMockChartData } from './data';
 
 const emit = defineEmits(['assetFilter', 'statusFilter', 'trendFilter']);
 
@@ -23,7 +23,7 @@ const state = reactive({
       title: '预警库存数',
       value: 0,
       desc: '需处理库存',
-      status: '预警库存',
+      status: getAssetStockStatusOptionValue('预警库存'),
       color: '#e74c3c',
     },
   ],

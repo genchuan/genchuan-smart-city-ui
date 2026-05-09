@@ -1,5 +1,5 @@
 import { getRangePickerDefaultProps } from '#/utils';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const reportTypeOptions = [
   { label: '日报', value: '日报' },
@@ -39,9 +39,7 @@ const baseTime = new Date('2026-04-01 08:00:00').getTime();
 export function formatReportTime(value) {
   if (!value) return '-';
   const text = String(value);
-  if (/^\d{10}$/.test(text)) return formatDate(Number(text) * 1000) || text;
-  if (/^\d{13}$/.test(text)) return formatDate(Number(text)) || text;
-  return formatDate(value) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 function toDate(offset) {

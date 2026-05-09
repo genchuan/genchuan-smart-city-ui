@@ -43,16 +43,16 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'targetName', title: '指标名称', minWidth: 150, slots: { default: 'targetName' } },
-    { field: 'totalScore', title: '指标总分', minWidth: 100 },
-    { field: 'warnThreshold', title: '预警阈值', minWidth: 100 },
-    { field: 'evaluatorType', title: '评价人类型', minWidth: 120, slots: { default: 'evaluatorType' } },
-    { field: 'scoreType', title: '计分方式', minWidth: 120, slots: { default: 'scoreType' } },
-    { field: 'enableTime', title: '启用时间', minWidth: 180, slots: { default: 'enableTime' } },
-    { field: 'disableTime', title: '停用时间', minWidth: 180, slots: { default: 'disableTime' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'targetName', title: '指标名称', minWidth: 150, sortable: true, slots: { default: 'targetName' } },
+    { field: 'totalScore', title: '指标总分', minWidth: 100, sortable: true, },
+    { field: 'warnThreshold', title: '预警阈值', minWidth: 100, sortable: true, },
+    { field: 'evaluatorType', title: '评价人类型', minWidth: 120, sortable: true, slots: { default: 'evaluatorType' } },
+    { field: 'scoreType', title: '计分方式', minWidth: 120, sortable: true, slots: { default: 'scoreType' } },
+    { field: 'enableTime', title: '启用时间', minWidth: 180, sortable: true, slots: { default: 'enableTime' } },
+    { field: 'disableTime', title: '停用时间', minWidth: 180, sortable: true, slots: { default: 'disableTime' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

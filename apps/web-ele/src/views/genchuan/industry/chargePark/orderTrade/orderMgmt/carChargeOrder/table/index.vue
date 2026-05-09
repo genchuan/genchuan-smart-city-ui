@@ -27,6 +27,7 @@ import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightki
 
 import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
+import PlateNoDetail from '#/views/genchuan/industry/chargePark/orderTrade/orderMgmt/components/plateNoDetail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -281,6 +282,16 @@ const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value?.open();
 };
+
+// 车牌详情弹窗
+const plateDetailVisible = ref(false);
+const currentPlateNo = ref('');
+
+const handlePlateDetail = (row) => {
+  currentPlateNo.value = row.plateNo;
+  plateDetailVisible.value = true;
+};
+
 const tabsData = ref([
   { label: '全部' },
   { label: '启用' },
@@ -529,6 +540,9 @@ const alarmColumns = [
       <QueryForm class="query-form" />
     </Drawer>
 
+    <!-- 车牌详情弹窗 -->
+    <PlateNoDetail v-model:visible="plateDetailVisible" :plate-no="currentPlateNo" />
+
     <!-- 告警明细弹窗 -->
     <ElDialog
       v-model="alarmDialogVisible"
@@ -742,6 +756,15 @@ const alarmColumns = [
           type="primary"
         >
           {{ row.orderNo }}
+        </el-text>
+      </template>
+      <template #plateNo="{ row }">
+        <el-text
+          @click="handlePlateDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.plateNo }}
         </el-text>
       </template>
       <template #payMethod="{ row }">
