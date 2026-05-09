@@ -308,12 +308,6 @@ export function useGridColumns() {
       customRender: ({ text }) => text ? new Date(Number(text)).toLocaleString() : '-',
     },
     {
-      field: 'operatorId',
-      title: '操作人ID',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
       field: 'creator',
       title: '创建者',
       minWidth: 120,
