@@ -14,11 +14,11 @@ type StatsCard = {
 
 type StatsChart = {
   color?: string[];
+  data?: Array<{ name: string; value: number | string }>;
   series?: Array<number | string>;
   title: string;
   type: 'bar' | 'line' | 'pie' | string;
   xAxis?: string[];
-  data?: Array<{ name: string; value: number | string }>;
 };
 
 type StatsData = {
@@ -316,7 +316,7 @@ onUnmounted(() => {
   gap: 20px;
   width: 100%;
   height: auto;
-  min-height: 300px;
+  min-height: 280px;
   overflow: hidden;
 }
 
