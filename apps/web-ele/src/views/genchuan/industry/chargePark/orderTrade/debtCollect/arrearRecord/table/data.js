@@ -198,8 +198,8 @@ export function useGridColumns() {
       slots: { default: 'status' },
     },
     {
-      field: 'stationId',
-      title: '所属场站ID',
+      field: 'stationName',
+      title: '所属场站',
       minWidth: 140,
       sortable: true,
     },

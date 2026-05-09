@@ -251,12 +251,6 @@ export function useGridColumns() {
       slots: { default: 'orderNo' },
     },
     {
-      field: 'userId',
-      title: '用户ID',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
       field: 'userNickname',
       title: '用户昵称',
       minWidth: 140,
@@ -304,8 +298,8 @@ export function useGridColumns() {
       customRender: ({ text }) => text || '-',
     },
     {
-      field: 'stationId',
-      title: '所属场站ID',
+      field: 'stationName',
+      title: '所属场站',
       minWidth: 140,
       sortable: true,
     },

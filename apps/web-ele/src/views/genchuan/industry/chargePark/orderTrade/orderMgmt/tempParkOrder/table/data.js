@@ -275,8 +275,8 @@ export function useGridColumns() {
       customRender: ({ text }) => text ? new Date(Number(text)).toLocaleString() : '-',
     },
     {
-      field: 'stationId',
-      title: '所属场站ID',
+      field: 'stationName',
+      title: '所属场站',
       minWidth: 140,
       sortable: true,
     },

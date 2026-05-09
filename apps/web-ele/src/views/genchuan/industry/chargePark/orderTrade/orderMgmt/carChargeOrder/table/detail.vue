@@ -147,9 +147,9 @@ defineExpose({
 
       <!-- 所属场站ID -->
       <div class="detail-card-row">
-        <div class="detail-row-left">所属场站ID:</div>
+        <div class="detail-row-left">所属场站:</div>
         <div class="detail-row-right">
-          {{ detailObj.stationId || '-' }}
+          {{ detailObj.stationName || '-' }}
         </div>
       </div>
 
@@ -187,14 +187,7 @@ defineExpose({
           {{ detailObj.archiveTime || '-' }}
         </div>
       </div>
-
-      <!-- 操作人ID -->
-      <div class="detail-card-row">
-        <div class="detail-row-left">操作人ID:</div>
-        <div class="detail-row-right">
-          {{ detailObj.operatorId || '-' }}
-        </div>
-      </div>
+ 
 
       <!-- 创建者 -->
       <div class="detail-card-row">
