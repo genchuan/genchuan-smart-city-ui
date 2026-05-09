@@ -2,12 +2,17 @@
 import { onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
+import { ElMessage } from 'element-plus';
 
 import { getCycleReportChart } from '#/api/genchuan/industry/chargePark/vehiclePass/passReport/cycleReport';
+
+import DetailDialog from './components/DetailDialog.vue';
 
 const props = defineProps({
   parkId: { type: Number, default: null },
 });
+
+const detailDialogRef = ref(null);
 
 const cards = reactive([
   {
@@ -15,14 +20,14 @@ const cards = reactive([
     value: 0,
     desc: '累计入场车辆',
     color: '#4A90E2',
-    key: 'entryCount',
+    key: 'enterCount',
   },
   {
     title: '离场量',
     value: 0,
     desc: '累计离场车辆',
     color: '#50E3C2',
-    key: 'exitCount',
+    key: 'leaveCount',
   },
   {
     title: '在停车辆数',
@@ -43,7 +48,7 @@ const cards = reactive([
     value: '0%',
     desc: '核验准确度',
     color: '#E74C3C',
-    key: 'verifySuccessRate',
+    key: 'checkSuccessRate',
   },
   {
     title: '异常处置率',
@@ -57,7 +62,7 @@ const cards = reactive([
     value: '0%',
     desc: 'ETC通行率',
     color: '#1ABC9C',
-    key: 'etcSuccessRate',
+    key: 'etcPassSuccessRate',
   },
 ]);
 
@@ -81,52 +86,64 @@ let pieChartInstance = null;
 
 async function loadChartData() {
   try {
+    // 使用真实API
     const params = {
       reportCycle: '日报',
       stationId: props.parkId,
+      statTime: new Date().toISOString().split('T')[0],
       tenantId: 1, // TODO: 从用户信息获取
     };
 
+    console.log('请求图表数据参数:', params);
     const res = await getCycleReportChart(params);
+    console.log('图表数据响应:', res);
 
     // 更新卡片数据
     if (res?.cardData) {
-      cards[0].value = res.cardData.entryCount || 0;
-      cards[1].value = res.cardData.exitCount || 0;
+      cards[0].value = res.cardData.enterCount || 0;
+      cards[1].value = res.cardData.leaveCount || 0;
       cards[2].value = res.cardData.parkingCount || 0;
       cards[3].value = res.cardData.identifySuccessRate
         ? `${res.cardData.identifySuccessRate}%`
         : '0%';
-      cards[4].value = res.cardData.verifySuccessRate
-        ? `${res.cardData.verifySuccessRate}%`
+      cards[4].value = res.cardData.checkSuccessRate
+        ? `${res.cardData.checkSuccessRate}%`
         : '0%';
       cards[5].value = res.cardData.abnormalHandleRate
         ? `${res.cardData.abnormalHandleRate}%`
         : '0%';
-      cards[6].value = res.cardData.etcSuccessRate
-        ? `${res.cardData.etcSuccessRate}%`
+      cards[6].value = res.cardData.etcPassSuccessRate
+        ? `${res.cardData.etcPassSuccessRate}%`
         : '0%';
     }
 
+    // 保存图表数据
+    state.chartData = {
+      cardData: res?.cardData || {},
+      mapData: res?.mapData || [],
+      barData: res?.barData || [],
+      lineData: res?.lineData || [],
+      pieData: res?.pieData || [],
+    };
+
     // 检查是否有图表数据
     const hasChartData =
-      res &&
-      (res.lineData?.length > 0 ||
-        res.barData?.length > 0 ||
-        res.pieData?.length > 0);
+      (state.chartData.lineData?.length > 0 ||
+        state.chartData.barData?.length > 0 ||
+        state.chartData.pieData?.length > 0);
+
+    console.log('是否有图表数据:', hasChartData);
+    console.log('lineData长度:', state.chartData.lineData?.length);
+    console.log('barData长度:', state.chartData.barData?.length);
+    console.log('pieData长度:', state.chartData.pieData?.length);
+
+    state.hasData = hasChartData;
 
     if (hasChartData) {
-      state.chartData = {
-        cardData: res.cardData || {},
-        mapData: res.mapData || [],
-        barData: res.barData || [],
-        lineData: res.lineData || [],
-        pieData: res.pieData || [],
-      };
-      state.hasData = true;
-      initCharts();
-    } else {
-      state.hasData = false;
+      // 延迟初始化图表，确保DOM已渲染
+      setTimeout(() => {
+        initCharts();
+      }, 100);
     }
   } catch (error) {
     console.error('加载图表数据失败:', error);
@@ -141,7 +158,7 @@ function initLineChart() {
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '通行量趋势',
+      text: '通行量趋势 / 成功率趋势',
       left: 'center',
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
@@ -149,11 +166,11 @@ function initLineChart() {
     tooltip: { trigger: 'axis' },
     legend: {
       bottom: 10,
-      data: ['入场量', '离场量', '识别成功率', '核验成功率'],
+      data: ['通行量', '识别成功率', '核验成功率', '异常处置率'],
     },
     xAxis: {
       type: 'category',
-      data: state.chartData.lineData.map((item) => item.date || item.time),
+      data: state.chartData.lineData.map((item) => item.statTime),
     },
     yAxis: [
       { type: 'value', name: '通行数量', position: 'left' },
@@ -161,24 +178,13 @@ function initLineChart() {
     ],
     series: [
       {
-        name: '入场量',
+        name: '通行量',
         type: 'line',
         yAxisIndex: 0,
-        data: state.chartData.lineData.map((item) => item.entryCount),
+        data: state.chartData.lineData.map((item) => item.passCount),
         smooth: true,
         lineStyle: { width: 3, color: '#4A90E2' },
         areaStyle: { color: 'rgba(74,144,226,0.1)' },
-        symbol: 'circle',
-        symbolSize: 6,
-      },
-      {
-        name: '离场量',
-        type: 'line',
-        yAxisIndex: 0,
-        data: state.chartData.lineData.map((item) => item.exitCount),
-        smooth: true,
-        lineStyle: { width: 3, color: '#50E3C2' },
-        areaStyle: { color: 'rgba(80,227,194,0.1)' },
         symbol: 'circle',
         symbolSize: 6,
       },
@@ -196,9 +202,19 @@ function initLineChart() {
         name: '核验成功率',
         type: 'line',
         yAxisIndex: 1,
-        data: state.chartData.lineData.map((item) => item.verifySuccessRate),
+        data: state.chartData.lineData.map((item) => item.checkSuccessRate),
         smooth: true,
         lineStyle: { width: 2, color: '#E74C3C', type: 'dashed' },
+        symbol: 'circle',
+        symbolSize: 4,
+      },
+      {
+        name: '异常处置率',
+        type: 'line',
+        yAxisIndex: 1,
+        data: state.chartData.lineData.map((item) => item.abnormalHandleRate),
+        smooth: true,
+        lineStyle: { width: 2, color: '#F39C12', type: 'dashed' },
         symbol: 'circle',
         symbolSize: 4,
       },
@@ -206,15 +222,12 @@ function initLineChart() {
   };
   lineChartInstance.setOption(option);
 
-  // 添加折线图点击事件
   lineChartInstance.on('click', (params) => {
-    const clickDate = new Date(params.name);
-    const startTime = new Date(clickDate.setHours(0, 0, 0, 0)).getTime().toString();
-    const endTime = new Date(clickDate.setHours(23, 59, 59, 999)).getTime().toString();
-    const filterParams = { startTime, endTime };
-    window.dispatchEvent(
-      new CustomEvent('filterByChart:passOpReport', { detail: filterParams }),
-    );
+    const dataIndex = params.dataIndex;
+    const lineItem = state.chartData.lineData[dataIndex];
+    if (lineItem) {
+      openDetailDialog('line', params.seriesName, lineItem);
+    }
   });
 }
 
@@ -225,25 +238,29 @@ function initBarChart() {
   const option = {
     backgroundColor: 'transparent',
     title: {
-      text: '各场站通行量 / 各时段通行量',
+      text: '各场站通行量 / 异常数 / ETC通行量',
       left: 'center',
       top: 10,
       textStyle: { fontSize: 14, fontWeight: 500 },
     },
     tooltip: { trigger: 'axis' },
-    legend: { bottom: 10, data: ['入场量', '离场量', 'ETC通行量'] },
+    legend: { bottom: 10, data: ['通行量', '异常数', 'ETC通行量'] },
     xAxis: {
       type: 'category',
       data: state.chartData.barData.map(
-        (item) => item.name || item.hour || item.station,
+        (item) => item.stationName || item.hour || '未知',
       ),
+      axisLabel: {
+        interval: 0,
+        rotate: state.chartData.barData.length > 10 ? 45 : 0,
+      },
     },
-    yAxis: { type: 'value', name: '通行量' },
+    yAxis: { type: 'value', name: '数量' },
     series: [
       {
-        name: '入场量',
+        name: '通行量',
         type: 'bar',
-        data: state.chartData.barData.map((item) => item.entryCount),
+        data: state.chartData.barData.map((item) => item.passCount),
         itemStyle: {
           borderRadius: [4, 4, 0, 0],
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -254,14 +271,14 @@ function initBarChart() {
         label: { show: true, position: 'top' },
       },
       {
-        name: '离场量',
+        name: '异常数',
         type: 'bar',
-        data: state.chartData.barData.map((item) => item.exitCount),
+        data: state.chartData.barData.map((item) => item.abnormalCount),
         itemStyle: {
           borderRadius: [4, 4, 0, 0],
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#50E3C2' },
-            { offset: 1, color: '#1ABC9C' },
+            { offset: 0, color: '#E74C3C' },
+            { offset: 1, color: '#C0392B' },
           ]),
         },
         label: { show: true, position: 'top' },
@@ -269,7 +286,7 @@ function initBarChart() {
       {
         name: 'ETC通行量',
         type: 'bar',
-        data: state.chartData.barData.map((item) => item.etcCount),
+        data: state.chartData.barData.map((item) => item.etcPassCount),
         itemStyle: {
           borderRadius: [4, 4, 0, 0],
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -283,15 +300,12 @@ function initBarChart() {
   };
   barChartInstance.setOption(option);
 
-  // 添加柱状图点击事件
   barChartInstance.on('click', (params) => {
-    const filterParams = {
-      station: params.name,
-      dataType: params.seriesName, // '入场量', '离场量', 'ETC通行量'
-    };
-    window.dispatchEvent(
-      new CustomEvent('filterByChart:passOpReport', { detail: filterParams }),
-    );
+    const dataIndex = params.dataIndex;
+    const barItem = state.chartData.barData[dataIndex];
+    if (barItem) {
+      openDetailDialog('bar', params.seriesName, barItem);
+    }
   });
 }
 
@@ -299,6 +313,12 @@ function initPieChart() {
   if (!pieChartRef.value) return;
   if (pieChartInstance) pieChartInstance.dispose();
   pieChartInstance = echarts.init(pieChartRef.value);
+
+  const pieChartData = state.chartData.pieData.map((item) => ({
+    name: item.type || item.name,
+    value: item.count || item.value,
+  }));
+
   const option = {
     backgroundColor: 'transparent',
     title: {
@@ -310,7 +330,7 @@ function initPieChart() {
     tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)' },
     legend: {
       bottom: 10,
-      data: state.chartData.pieData.map((item) => item.name),
+      data: pieChartData.map((item) => item.name),
     },
     series: [
       {
@@ -334,18 +354,14 @@ function initPieChart() {
             fontWeight: 'bold',
           },
         },
-        data: state.chartData.pieData,
+        data: pieChartData,
       },
     ],
   };
   pieChartInstance.setOption(option);
 
-  // 添加饼图点击事件
   pieChartInstance.on('click', (params) => {
-    const filterParams = { category: params.name };
-    window.dispatchEvent(
-      new CustomEvent('filterByChart:passOpReport', { detail: filterParams }),
-    );
+    openDetailDialog('pie', params.name, { type: params.name, count: params.value });
   });
 }
 
@@ -356,28 +372,113 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
+  console.log('卡片点击:', key);
   const today = new Date();
-  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
+  // 使用 ISO 8601 格式：YYYY-MM-DDTHH:mm:ss
+  const todayStart = new Date(today.setHours(0, 0, 0, 0)).toISOString().slice(0, 19);
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).toISOString().slice(0, 19);
 
-  const filterMap = {
-    entryCount: {
-      recordType: '入场',
-      startTime: todayStart,
-      endTime: todayEnd,
-    },
-    exitCount: { recordType: '离场', startTime: todayStart, endTime: todayEnd },
-    parkingCount: { parkStatus: '在停' },
-    identifySuccessRate: { identifyStatus: '成功' },
-    verifySuccessRate: { verifyStatus: '成功' },
-    abnormalHandleRate: { handleStatus: '已处置' },
+  const cardTitleMap = {
+    enterCount: '入场量',
+    leaveCount: '离场量',
+    parkingCount: '在停车辆数',
+    identifySuccessRate: '识别成功率',
+    checkSuccessRate: '核验成功率',
+    abnormalHandleRate: '异常处置率',
+    etcPassSuccessRate: 'ETC通行成功率',
   };
 
-  const filterParams = filterMap[key];
-  if (filterParams) {
-    window.dispatchEvent(
-      new CustomEvent('filterByChart:passOpReport', { detail: filterParams }),
-    );
+  const title = `今日${cardTitleMap[key]}明细`;
+  const filterParams = {
+    beginTime: todayStart,
+    endTime: todayEnd,
+  };
+
+  console.log('打开弹窗:', title, filterParams);
+  console.log('detailDialogRef.value:', detailDialogRef.value);
+
+  if (detailDialogRef.value) {
+    detailDialogRef.value.open({
+      title,
+      filterParams,
+    });
+  } else {
+    console.error('detailDialogRef.value 为空');
+  }
+
+  // 同时触发自定义事件，让表格也能响应（保留原有功能）
+  window.dispatchEvent(
+    new CustomEvent('cycleReport:cardClick', {
+      detail: { key },
+    }),
+  );
+}
+
+// 打开明细对话框
+function openDetailDialog(chartType, seriesName, data) {
+  let title = '';
+  let filterParams = {};
+
+  // 根据图表类型和系列名称确定筛选参数
+  if (chartType === 'bar') {
+    const target = data.stationName || data.hour || '未知';
+    if (seriesName === '通行量') {
+      title = `${target} - 通行量明细`;
+      filterParams = {
+        stationName: data.stationName,
+      };
+    } else if (seriesName === '异常数') {
+      title = `${target} - 异常明细`;
+      filterParams = {
+        stationName: data.stationName,
+      };
+    } else if (seriesName === 'ETC通行量') {
+      title = `${target} - ETC通行明细`;
+      filterParams = {
+        stationName: data.stationName,
+      };
+    }
+  } else if (chartType === 'line') {
+    // 将日期字符串转换为 ISO 8601 格式
+    const statDate = new Date(data.statTime);
+    const beginTime = new Date(statDate.setHours(0, 0, 0, 0)).toISOString().slice(0, 19);
+    const endTime = new Date(statDate.setHours(23, 59, 59, 999)).toISOString().slice(0, 19);
+
+    if (seriesName === '通行量') {
+      title = `${data.statTime} - 通行量明细`;
+      filterParams = {
+        beginTime,
+        endTime,
+      };
+    } else if (seriesName === '识别成功率') {
+      title = `${data.statTime} - 识别明细`;
+      filterParams = {
+        beginTime,
+        endTime,
+      };
+    } else if (seriesName === '核验成功率') {
+      title = `${data.statTime} - 核验明细`;
+      filterParams = {
+        beginTime,
+        endTime,
+      };
+    } else if (seriesName === '异常处置率') {
+      title = `${data.statTime} - 异常处置明细`;
+      filterParams = {
+        beginTime,
+        endTime,
+      };
+    }
+  } else if (chartType === 'pie') {
+    title = `${data.type} - 明细`;
+    filterParams = {};
+  }
+
+  if (detailDialogRef.value && title) {
+    detailDialogRef.value.open({
+      title,
+      filterParams,
+    });
   }
 }
 
@@ -435,6 +536,9 @@ onUnmounted(() => {
         <div ref="pieChartRef" style="width: 100%; height: 100%"></div>
       </div>
     </div>
+
+    <!-- 明细对话框 -->
+    <DetailDialog ref="detailDialogRef" />
   </div>
 </template>
 
