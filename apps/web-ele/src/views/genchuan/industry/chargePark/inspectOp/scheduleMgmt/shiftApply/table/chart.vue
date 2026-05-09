@@ -5,7 +5,7 @@ import { getShiftApplyChart } from '#/api/genchuan/industry/chargePark/inspectOp
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData } from './data';
+import { getMockChartData, getShiftApplyStatusOptionValue } from './data';
 
 const emit = defineEmits(['statusFilter', 'trendFilter']);
 const state = reactive({
@@ -21,7 +21,7 @@ const state = reactive({
       title: '审核通过率',
       value: '0%',
       desc: '已通过申请',
-      status: '已通过',
+      status: getShiftApplyStatusOptionValue('已通过'),
       color: '#27ae60',
     },
   ],

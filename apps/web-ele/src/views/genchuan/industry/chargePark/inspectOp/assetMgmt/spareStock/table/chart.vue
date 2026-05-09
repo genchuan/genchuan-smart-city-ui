@@ -6,7 +6,7 @@ import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData } from './data';
+import { getMockChartData, getSpareStockStatusOptionValue } from './data';
 
 const emit = defineEmits(['spareFilter', 'statusFilter', 'trendFilter']);
 
@@ -23,7 +23,7 @@ const state = reactive({
       title: '补货量',
       value: 0,
       desc: '需补货备件',
-      status: '低库存',
+      status: getSpareStockStatusOptionValue('低库存'),
       color: '#f39c12',
     },
   ],

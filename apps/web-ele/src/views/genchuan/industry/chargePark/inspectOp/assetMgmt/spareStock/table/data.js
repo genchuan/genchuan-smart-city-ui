@@ -3,7 +3,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const SPARE_STOCK_STATUS_DICT = DICT_TYPE.SPARE_STOCK_STATUS;
 
@@ -38,6 +38,14 @@ export const stockStatusOptions = getDictOptions(
   SPARE_STOCK_STATUS_DICT,
   'string',
 );
+
+/** 按备件库存状态字典 label 取 value，供图表卡片筛选 */
+export function getSpareStockStatusOptionValue(label) {
+  const opt = stockStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
 
 export const spareOptions = [
   { label: '充电枪密封圈', type: '充电备件', value: 1 },
@@ -80,8 +88,7 @@ const baseTime = 1_775_011_986_000;
 export function formatSpareTime(value) {
   if (!value) return '-';
   const text = String(value);
-  const timestamp = /^\d{10}$/.test(text) ? Number(text) * 1000 : value;
-  return formatDate(timestamp) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 export function getSpareName(spareId) {
@@ -193,8 +200,7 @@ export function normalizeSpareStockRow(row) {
       row.warehouse_name ||
       row.stationName ||
       row.station_name ||
-      row.reserve1 ||
-      getWarehouseName(warehouseId),
+      row.reserve1 || '-',
     inTime,
     inTimeStr: formatSpareTime(inTime),
     outTime,
@@ -304,13 +310,12 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'warehouseId',
+      fieldName: 'stationName',
       label: '所属仓库',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择所属仓库',
+        placeholder: '请输入所属仓库',
         clearable: true,
-        options: warehouseOptions,
       },
     },
     {

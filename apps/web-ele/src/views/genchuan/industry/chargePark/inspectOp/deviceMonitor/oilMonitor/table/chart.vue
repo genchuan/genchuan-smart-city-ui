@@ -6,7 +6,11 @@ import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData, getStationName } from './data';
+import {
+  getMockChartData,
+  getProcessStatusOptionValue,
+  getStationName,
+} from './data';
 
 const emit = defineEmits(['statusFilter', 'stationFilter', 'trendFilter']);
 
@@ -16,14 +20,14 @@ const state = reactive({
       title: '待处置占位数',
       value: 0,
       desc: '待处理',
-      status: '未处理',
+      status: getProcessStatusOptionValue('未处理'),
       color: '#e95f5f',
     },
     {
       title: '处置完成率',
       value: '0%',
       desc: '已关闭',
-      status: '已关闭',
+      status: getProcessStatusOptionValue('已关闭'),
       color: '#2fbf71',
     },
   ],

@@ -3,7 +3,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const SCHEDULE_VIEW_SHIFT_TYPE_DICT = DICT_TYPE.SCHEDULE_VIEW_SHIFT_TYPE;
 export const SCHEDULE_VIEW_STATUS_DICT = DICT_TYPE.SCHEDULE_VIEW_STATUS;
@@ -70,6 +70,14 @@ export const scheduleStatusOptions = getDictOptions(
   'string',
 );
 
+/** 按排班状态字典 label 取 value，供图表卡片筛选 */
+export function getScheduleStatusOptionValue(label) {
+  const opt = scheduleStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 export const shiftApplyStatusOptions = getDictOptions(
   SHIFT_APPLY_STATUS_DICT,
   'string',
@@ -99,8 +107,7 @@ export function formatScheduleTime(value) {
   if (!value) return '-';
   if (/^\d{4}-\d{2}-\d{2}$/.test(String(value))) return value;
   const text = String(value);
-  const timestamp = /^\d{10}$/.test(text) ? Number(text) * 1000 : value;
-  return formatDate(timestamp) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 export function getUserName(userId) {

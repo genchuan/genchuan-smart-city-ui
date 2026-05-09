@@ -126,11 +126,15 @@ async function handleImport() {
       message: response?.message || '导入成功',
       total: response?.total || 0,
       successCount: response?.successCount || 0,
-      failCount: response?.failCount || 0,
+      failCount: response?.failureCount || 0,
     };
-    ElMessage.success(response?.message || '导入成功');
-    emit('success');
-    modalApi.close();
+    if (validationResult.value.failCount > 0) {
+      ElMessage.warning('部分数据导入失败，请查看校验结果');
+    } else {
+      ElMessage.success(response?.message || '导入成功');
+      emit('success');
+      modalApi.close();
+    }
   } catch (error) {
     console.error('导入巡检计划失败:', error);
     validationResult.value = {

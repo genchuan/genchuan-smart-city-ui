@@ -5,7 +5,7 @@ import { getHandoverLogChart } from '#/api/genchuan/industry/chargePark/inspectO
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData } from './data';
+import { getHandoverStatusOptionValue, getMockChartData } from './data';
 
 const emit = defineEmits(['statusFilter', 'trendFilter']);
 
@@ -22,7 +22,7 @@ const state = reactive({
       title: '确认率',
       value: '0%',
       desc: '已确认日志',
-      status: '已确认',
+      status: getHandoverStatusOptionValue('已确认'),
       color: '#27ae60',
     },
   ],

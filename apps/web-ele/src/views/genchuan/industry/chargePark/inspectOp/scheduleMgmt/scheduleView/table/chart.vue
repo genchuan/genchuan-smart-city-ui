@@ -5,7 +5,12 @@ import { getScheduleViewChart } from '#/api/genchuan/industry/chargePark/inspect
 import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
-import { getMockChartData, getShiftTypeTagType, getUserName } from './data';
+import {
+  getMockChartData,
+  getScheduleStatusOptionValue,
+  getShiftTypeTagType,
+  getUserName,
+} from './data';
 
 const emit = defineEmits(['dateFilter', 'statusFilter', 'userFilter']);
 
@@ -22,7 +27,7 @@ const state = reactive({
       title: '在岗人员数',
       value: 0,
       desc: '正常排班人员',
-      status: '正常',
+      status: getScheduleStatusOptionValue('正常'),
       color: '#27ae60',
     },
   ],

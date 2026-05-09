@@ -381,8 +381,7 @@ function handleStatusClick(status) {
 }
 
 function handleWarehouseClick(warehouseId) {
-  filterWarehouseId.value =
-    Number(filterWarehouseId.value) === Number(warehouseId) ? '' : warehouseId;
+  filterWarehouseId.value = warehouseId
   gridApi.query();
 }
 
@@ -468,7 +467,7 @@ watch(
             type="primary"
             @close="cancelFilter('warehouseId')"
           >
-            所属仓库：{{ getWarehouseName(filterWarehouseId) }}
+            所属仓库：{{ filterWarehouseId }}
           </ElTag>
           <ElTag
             v-if="filterTrendTime"
@@ -550,7 +549,7 @@ watch(
           class="common-align"
           style="cursor: pointer"
           type="primary"
-          @click="handleWarehouseClick(row.warehouseId)"
+          @click="handleWarehouseClick(row.warehouseName)"
         >
           {{ row.warehouseName }}
         </el-text>

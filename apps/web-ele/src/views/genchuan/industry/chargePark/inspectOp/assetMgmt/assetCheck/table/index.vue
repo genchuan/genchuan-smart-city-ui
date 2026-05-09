@@ -153,8 +153,8 @@ function buildQueryParams(page) {
     type: filterType.value || dataObj.searchParams.type,
     status: filterStatus.value || dataObj.searchParams.status,
     creator: filterCreator.value || dataObj.searchParams.creator,
-    executeUserId:
-      filterExecuteUserId.value || dataObj.searchParams.executeUserId,
+    updater:
+      filterExecuteUserId.value || dataObj.searchParams.updater,
     trendTime: filterTrendTime.value,
   };
 }
@@ -337,11 +337,11 @@ function handleCreatorClick(creator) {
   gridApi.query();
 }
 
-function handleExecutorClick(executeUserId) {
+function handleExecutorClick(updater) {
   filterExecuteUserId.value =
-    Number(filterExecuteUserId.value) === Number(executeUserId)
+    Number(filterExecuteUserId.value) === Number(updater)
       ? ''
-      : executeUserId;
+      : updater;
   gridApi.query();
 }
 
@@ -350,7 +350,7 @@ function cancelFilter(type) {
     creator: () => {
       filterCreator.value = '';
     },
-    executeUserId: () => {
+    updater: () => {
       filterExecuteUserId.value = '';
     },
     status: () => {
@@ -433,9 +433,9 @@ watch(
             v-if="filterExecuteUserId"
             closable
             type="info"
-            @close="cancelFilter('executeUserId')"
+            @close="cancelFilter('updater')"
           >
-            执行人员：{{ getUserName(filterExecuteUserId) }}
+            执行人员：{{ filterExecuteUserId }}
           </ElTag>
           <ElTag
             v-if="filterTrendTime"
@@ -511,15 +511,15 @@ watch(
         </el-text>
       </template>
 
-      <template #executeUserName="{ row }">
+      <template #updater="{ row }">
         <el-text
-          v-if="row.executeUserId"
+          v-if="row.updater"
           class="common-align"
           style="cursor: pointer"
           type="primary"
-          @click="handleExecutorClick(row.executeUserId)"
+          @click="handleExecutorClick(row.updater)"
         >
-          {{ row.executeUserName }}
+          {{ row.updater }}
         </el-text>
         <span v-else>-</span>
       </template>
