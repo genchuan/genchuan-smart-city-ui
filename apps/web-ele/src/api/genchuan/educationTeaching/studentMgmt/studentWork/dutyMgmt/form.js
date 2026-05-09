@@ -43,20 +43,20 @@ export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'dutyDate', title: '值班日期', minWidth: 120 },
-    { field: 'dutyUser', title: '值班人', minWidth: 100, slots: { default: 'dutyUser' } },
-    { field: 'checkInStatus', title: '打卡状态', minWidth: 100 },
-    { field: 'transferReason', title: '调班原因', minWidth: 150 },
-    { field: 'transferUser', title: '调班替代人', minWidth: 120 },
-    { field: 'transferStatus', title: '调班状态', minWidth: 100 },
-    { field: 'carReason', title: '出车事由', minWidth: 150 },
-    { field: 'carDestination', title: '出车目的地', minWidth: 120 },
-    { field: 'carStatus', title: '出车状态', minWidth: 100 },
-    { field: 'recordContent', title: '值班记录', minWidth: 200 },
-    { field: 'recordUploadTime', title: '记录上传时间', minWidth: 180, slots: { default: 'recordUploadTime' } },
-    { field: 'status', title: '状态', minWidth: 120, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'dutyDate', title: '值班日期', minWidth: 120, sortable: true, },
+    { field: 'dutyUser', title: '值班人', minWidth: 100, sortable: true, slots: { default: 'dutyUser' } },
+    { field: 'checkInStatus', title: '打卡状态', minWidth: 100, sortable: true, },
+    { field: 'transferReason', title: '调班原因', minWidth: 150, sortable: true, },
+    { field: 'transferUser', title: '调班替代人', minWidth: 120, sortable: true, },
+    { field: 'transferStatus', title: '调班状态', minWidth: 100, sortable: true, },
+    { field: 'carReason', title: '出车事由', minWidth: 150, sortable: true, },
+    { field: 'carDestination', title: '出车目的地', minWidth: 120, sortable: true, },
+    { field: 'carStatus', title: '出车状态', minWidth: 100, sortable: true, },
+    { field: 'recordContent', title: '值班记录', minWidth: 200, sortable: true, },
+    { field: 'recordUploadTime', title: '记录上传时间', minWidth: 180, sortable: true, slots: { default: 'recordUploadTime' } },
+    { field: 'status', title: '状态', minWidth: 120, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

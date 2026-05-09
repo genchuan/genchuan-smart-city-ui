@@ -48,17 +48,17 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'communicateTitle', title: '消息标题', minWidth: 200, slots: { default: 'communicateTitle' } },
-    { field: 'studentName', title: '学生姓名', minWidth: 100, slots: { default: 'studentName' } },
-    { field: 'parentName', title: '家长姓名', minWidth: 100 },
-    { field: 'parentReplyContent', title: '家长回复内容', minWidth: 180 },
-    { field: 'parentReplyTime', title: '回复时间', minWidth: 180, slots: { default: 'parentReplyTime' } },
-    { field: 'teacherReplyContent', title: '老师回复内容', minWidth: 180 },
-    { field: 'teacherReplyTime', title: '老师回复时间', minWidth: 180, slots: { default: 'teacherReplyTime' } },
-    { field: 'readStatus', title: '阅读状态', minWidth: 100, slots: { default: 'readStatus' } },
-    { field: 'replyStatus', title: '回复状态', minWidth: 100, slots: { default: 'replyStatus' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'communicateTitle', title: '消息标题', minWidth: 200, sortable: true, slots: { default: 'communicateTitle' } },
+    { field: 'studentName', title: '学生姓名', minWidth: 100, sortable: true, slots: { default: 'studentName' } },
+    { field: 'parentName', title: '家长姓名', minWidth: 100, sortable: true, },
+    { field: 'parentReplyContent', title: '家长回复内容', minWidth: 180, sortable: true, },
+    { field: 'parentReplyTime', title: '回复时间', minWidth: 180, sortable: true, slots: { default: 'parentReplyTime' } },
+    { field: 'teacherReplyContent', title: '老师回复内容', minWidth: 180, sortable: true, },
+    { field: 'teacherReplyTime', title: '老师回复时间', minWidth: 180, sortable: true, slots: { default: 'teacherReplyTime' } },
+    { field: 'readStatus', title: '阅读状态', minWidth: 100, sortable: true, slots: { default: 'readStatus' } },
+    { field: 'replyStatus', title: '回复状态', minWidth: 100, sortable: true, slots: { default: 'replyStatus' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

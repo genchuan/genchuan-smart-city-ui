@@ -54,16 +54,16 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'enterpriseName', title: '企业名称', minWidth: 180, slots: { default: 'enterpriseName' } },
-    { field: 'enterpriseType', title: '企业类型', minWidth: 100, slots: { default: 'enterpriseType' } },
-    { field: 'deptId', title: '负责系部', minWidth: 120, slots: { default: 'deptId' } },
-    { field: 'contactUser', title: '联系人', minWidth: 100 },
-    { field: 'contactPhone', title: '联系电话', minWidth: 120 },
-    { field: 'coopStartTime', title: '合作开始时间', minWidth: 180, slots: { default: 'coopStartTime' } },
-    { field: 'coopEndTime', title: '合作结束时间', minWidth: 180, slots: { default: 'coopEndTime' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'enterpriseName', title: '企业名称', minWidth: 180, sortable: true, slots: { default: 'enterpriseName' } },
+    { field: 'enterpriseType', title: '企业类型', minWidth: 100, sortable: true, slots: { default: 'enterpriseType' } },
+    { field: 'deptId', title: '负责系部', minWidth: 120, sortable: true, slots: { default: 'deptId' } },
+    { field: 'contactUser', title: '联系人', minWidth: 100, sortable: true, },
+    { field: 'contactPhone', title: '联系电话', minWidth: 120, sortable: true, },
+    { field: 'coopStartTime', title: '合作开始时间', minWidth: 180, sortable: true, slots: { default: 'coopStartTime' } },
+    { field: 'coopEndTime', title: '合作结束时间', minWidth: 180, sortable: true, slots: { default: 'coopEndTime' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

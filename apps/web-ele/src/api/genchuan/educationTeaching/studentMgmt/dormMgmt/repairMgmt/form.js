@@ -44,20 +44,20 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'dormNum', title: '宿舍号', minWidth: 100, slots: { default: 'dormNum' } },
-    { field: 'repairType', title: '报修类型', minWidth: 100, slots: { default: 'repairType' } },
-    { field: 'applyTime', title: '申请时间', minWidth: 180, slots: { default: 'applyTime' } },
-    { field: 'dispatchUser', title: '派单人', minWidth: 100 },
-    { field: 'dispatchTime', title: '派单时间', minWidth: 180, slots: { default: 'dispatchTime' } },
-    { field: 'repairUser', title: '维修人', minWidth: 100 },
-    { field: 'feedbackContent', title: '维修反馈', minWidth: 150 },
-    { field: 'feedbackTime', title: '反馈时间', minWidth: 180, slots: { default: 'feedbackTime' } },
-    { field: 'checkUser', title: '验收人', minWidth: 100 },
-    { field: 'checkTime', title: '验收时间', minWidth: 180, slots: { default: 'checkTime' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'checkStatus', title: '验收状态', minWidth: 100 },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'dormNum', title: '宿舍号', minWidth: 100, sortable: true, slots: { default: 'dormNum' } },
+    { field: 'repairType', title: '报修类型', minWidth: 100, sortable: true, slots: { default: 'repairType' } },
+    { field: 'applyTime', title: '申请时间', minWidth: 180, sortable: true, slots: { default: 'applyTime' } },
+    { field: 'dispatchUser', title: '派单人', minWidth: 100, sortable: true, },
+    { field: 'dispatchTime', title: '派单时间', minWidth: 180, sortable: true, slots: { default: 'dispatchTime' } },
+    { field: 'repairUser', title: '维修人', minWidth: 100, sortable: true, },
+    { field: 'feedbackContent', title: '维修反馈', minWidth: 150, sortable: true, },
+    { field: 'feedbackTime', title: '反馈时间', minWidth: 180, sortable: true, slots: { default: 'feedbackTime' } },
+    { field: 'checkUser', title: '验收人', minWidth: 100, sortable: true, },
+    { field: 'checkTime', title: '验收时间', minWidth: 180, sortable: true, slots: { default: 'checkTime' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'checkStatus', title: '验收状态', minWidth: 100, sortable: true, },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

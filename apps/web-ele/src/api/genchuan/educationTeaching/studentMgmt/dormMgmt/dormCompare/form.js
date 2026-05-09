@@ -43,16 +43,16 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'dormNum', title: '宿舍号', minWidth: 100, slots: { default: 'dormNum' } },
-    { field: 'cycle', title: '评比周期', minWidth: 100 },
-    { field: 'score', title: '得分', minWidth: 100 },
-    { field: 'rankNo', title: '排名', minWidth: 80 },
-    { field: 'scoreUser', title: '打分人', minWidth: 100 },
-    { field: 'sumTime', title: '汇总时间', minWidth: 180, slots: { default: 'sumTime' } },
-    { field: 'pushTime', title: '推送时间', minWidth: 180, slots: { default: 'pushTime' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'dormNum', title: '宿舍号', minWidth: 100, sortable: true, slots: { default: 'dormNum' } },
+    { field: 'cycle', title: '评比周期', minWidth: 100, sortable: true, },
+    { field: 'score', title: '得分', minWidth: 100, sortable: true, },
+    { field: 'rankNo', title: '排名', minWidth: 80, sortable: true, },
+    { field: 'scoreUser', title: '打分人', minWidth: 100, sortable: true, },
+    { field: 'sumTime', title: '汇总时间', minWidth: 180, sortable: true, slots: { default: 'sumTime' } },
+    { field: 'pushTime', title: '推送时间', minWidth: 180, sortable: true, slots: { default: 'pushTime' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];
