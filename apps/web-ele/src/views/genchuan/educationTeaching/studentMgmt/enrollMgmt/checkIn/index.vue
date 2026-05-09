@@ -147,7 +147,7 @@ const getAccountStatusType = (accountStatus) => {
   return map[accountStatus] || 'info';
 };
 
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -155,10 +155,14 @@ const getTableData = async ({page}) => {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
+
     const res = await getCheckInPage(params);
+
     let filtered = res.list;
+
+    // 应用标签筛选
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
+      filtered = filtered.filter((item) => {
         let itemValue;
         switch (field) {
           case 'status':
@@ -168,8 +172,9 @@ const getTableData = async ({page}) => {
             itemValue = item.creator;
             break;
           case 'createTime':
-            const createDate = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-            itemValue = createDate;
+            itemValue = item.createTime
+              ? getDateFromTimestamp(item.createTime)
+              : '';
             break;
           case 'studentId':
             itemValue = item.studentId;
@@ -177,6 +182,7 @@ const getTableData = async ({page}) => {
           default:
             itemValue = item[field];
         }
+
         if (Array.isArray(filterValue)) {
           return filterValue.includes(String(itemValue));
         } else {
@@ -184,18 +190,23 @@ const getTableData = async ({page}) => {
         }
       });
     });
-    dataObj.total = res.total || filtered.length;
+
+    // ✅ 关键修复点：使用前端筛选后的长度
+    dataObj.total = filtered.length;
     dataObj.list = filtered;
+
+    return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-    // 分页接口已联调成功，出错时返回空数据并提示用户
+
     dataObj.total = 0;
     dataObj.list = [];
+
     ElMessage.error('获取报到记录失败，请检查网络或联系管理员');
+    return dataObj;
   } finally {
     dataObj.loading = false;
   }
-  return dataObj;
 };
 
 function handleRefresh() {

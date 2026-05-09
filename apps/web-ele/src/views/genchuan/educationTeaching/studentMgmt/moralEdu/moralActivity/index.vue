@@ -144,15 +144,22 @@ const loadDeptOptions = async () => {
 };
 loadDeptOptions();
 
-// 表格数据获取
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {...searchParams.value, pageNo: page.currentPage, pageSize: page.pageSize};
+    const params = {
+      ...searchParams.value,
+      pageNo: page.currentPage,
+      pageSize: page.pageSize,
+    };
+
     const res = await getMoralActivityPage(params);
+
     let filtered = res.list;
+
+    // 应用标签筛选
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter(item => {
+      filtered = filtered.filter((item) => {
         let itemValue;
         switch (field) {
           case 'activityType':
@@ -168,7 +175,9 @@ const getTableData = async ({page}) => {
             itemValue = item.creator;
             break;
           case 'createTime':
-            itemValue = item.createTime ? getDateFromTimestamp(item.createTime) : '';
+            itemValue = item.createTime
+              ? getDateFromTimestamp(item.createTime)
+              : '';
             break;
           case 'activityName':
             itemValue = item.activityName;
@@ -176,21 +185,31 @@ const getTableData = async ({page}) => {
           default:
             itemValue = item[field];
         }
-        if (Array.isArray(filterValue)) return filterValue.includes(String(itemValue));
-        else return String(itemValue) === String(filterValue);
+
+        if (Array.isArray(filterValue)) {
+          return filterValue.includes(String(itemValue));
+        } else {
+          return String(itemValue) === String(filterValue);
+        }
       });
     });
-    dataObj.total = res.total;
+
+    // ✅ 关键修复点：使用前端筛选后的长度
+    dataObj.total = filtered.length;
     dataObj.list = filtered;
+
+    return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
+
     dataObj.total = 0;
     dataObj.list = [];
+
     ElMessage.error('获取活动列表失败，请检查网络或联系管理员');
+    return dataObj;
   } finally {
     dataObj.loading = false;
   }
-  return dataObj;
 };
 
 function handleRefresh() {
