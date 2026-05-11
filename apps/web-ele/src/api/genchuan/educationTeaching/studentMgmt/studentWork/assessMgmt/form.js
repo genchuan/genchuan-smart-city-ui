@@ -44,16 +44,16 @@ export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'className', title: '班级', minWidth: 180, slots: { default: 'className' } },
-    { field: 'assessType', title: '考评类型', minWidth: 120, slots: { default: 'assessType' } },
-    { field: 'cycle', title: '统计周期', minWidth: 100 },
-    { field: 'score', title: '考评得分', minWidth: 100 },
-    { field: 'rankNo', title: '班级排名', minWidth: 100 },   // rank → rankNo
-    { field: 'assessUser', title: '考评人', minWidth: 120 },
-    { field: 'publishTime', title: '发布时间', minWidth: 180, slots: { default: 'publishTime' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'className', title: '班级', minWidth: 180, sortable: true, slots: { default: 'className' } },
+    { field: 'assessType', title: '考评类型', minWidth: 120, sortable: true, slots: { default: 'assessType' } },
+    { field: 'cycle', title: '统计周期', minWidth: 100, sortable: true, },
+    { field: 'score', title: '考评得分', minWidth: 100, sortable: true, },
+    { field: 'rankNo', title: '班级排名', minWidth: 100, sortable: true, },
+    { field: 'assessUser', title: '考评人', minWidth: 120, sortable: true, },
+    { field: 'publishTime', title: '发布时间', minWidth: 180, sortable: true, slots: { default: 'publishTime' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

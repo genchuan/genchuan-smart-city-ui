@@ -26,13 +26,13 @@ const punishTypeReverse = {
 };
 
 const statusReverse = {
-  '3': '待审批',
+  'pending': '待审批',
   'executed': '已执行',
   'warned': '已预警',
   'warn': '已预警'
 };
 const statusMap = {
-  '待审批': '3',
+  '待审批': 'pending',
   '已执行': 'executed',
   '已预警': 'warned'
 };

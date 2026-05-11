@@ -275,8 +275,8 @@ export function useGridColumns() {
       customRender: ({ text }) => text ? new Date(Number(text)).toLocaleString() : '-',
     },
     {
-      field: 'stationId',
-      title: '所属场站ID',
+      field: 'stationName',
+      title: '所属场站',
       minWidth: 140,
       sortable: true,
     },
@@ -306,12 +306,6 @@ export function useGridColumns() {
       minWidth: 220,
       sortable: true,
       customRender: ({ text }) => text ? new Date(Number(text)).toLocaleString() : '-',
-    },
-    {
-      field: 'operatorId',
-      title: '操作人ID',
-      minWidth: 120,
-      sortable: true,
     },
     {
       field: 'creator',

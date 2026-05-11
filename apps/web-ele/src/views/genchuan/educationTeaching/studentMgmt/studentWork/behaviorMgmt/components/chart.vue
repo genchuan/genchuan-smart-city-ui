@@ -1,6 +1,6 @@
 <script setup>
 import { reactive, onMounted, ref, computed } from 'vue';
-import { ElMessage, ElSelect, ElOption } from 'element-plus';
+import { ElMessage, ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
@@ -13,6 +13,44 @@ import {
 const loading = ref(true);
 const overviewData = ref({});
 const classData = ref([]);
+
+// ========== 时间范围选择器 ==========
+const timeRange = ref([]);
+
+// 获取默认时间范围（最近30天，结束时间为当天）
+const getDefaultTimeRange = () => {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 30);
+  return [start, end];
+};
+
+// 格式化单个日期时间为后端要求的格式（带 T 分隔）
+const formatDateTime = (date, isEnd = false) => {
+  if (!date) return '';
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const time = isEnd ? '23:59:59' : '00:00:00';
+  return `${year}-${month}-${day}T${time}`;
+};
+
+// 生成 timeRange 字符串（格式："起始时间,结束时间"）
+const getTimeRangeParam = () => {
+  if (timeRange.value && timeRange.value.length === 2) {
+    const startStr = formatDateTime(timeRange.value[0], false);
+    const endStr = formatDateTime(timeRange.value[1], true);
+    return `${startStr},${endStr}`;
+  }
+  const [defaultStart, defaultEnd] = getDefaultTimeRange();
+  return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
+};
+
+// 日期范围变化时重新加载数据
+const handleDateRangeChange = () => {
+  loadChartData();
+};
 
 // 卡片列表
 const cardList = computed(() => {
@@ -114,9 +152,10 @@ const handleTrendClick = (params) => {
 const loadChartData = async () => {
   loading.value = true;
   try {
+    const timeRangeParam = getTimeRangeParam();
     const [overviewRes, classRes] = await Promise.allSettled([
-      getBehaviorMgmtChart({}),
-      getAttendanceCount({}),
+      getBehaviorMgmtChart({timeRange: timeRangeParam}),
+      getAttendanceCount({timeRange: timeRangeParam}),
     ]);
     if (overviewRes.status === 'fulfilled') {
       overviewData.value = overviewRes.value;
@@ -158,6 +197,7 @@ const loadChartData = async () => {
 };
 
 onMounted(() => {
+  timeRange.value = getDefaultTimeRange();
   loadChartData();
 });
 </script>
@@ -185,6 +225,7 @@ onMounted(() => {
 
     <!-- 图表切换区域（折线图/柱状图） -->
     <div class="chart-area">
+      <!-- 图表切换下拉框 -->
       <div class="chart-select-wrapper">
         <el-select
           v-model="activeChartIndex"
@@ -198,6 +239,26 @@ onMounted(() => {
             :value="idx"
           />
         </el-select>
+      </div>
+
+      <!-- 日期范围选择器（紧凑样式，位于右上角） -->
+      <div class="date-range-wrapper">
+        <el-date-picker
+          v-model="timeRange"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="起始"
+          end-placeholder="结束"
+          size="small"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          :shortcuts="[
+            { text: '近7天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 7); return [start, end]; } },
+            { text: '近30天', value: () => { const end = new Date(); const start = new Date(); start.setDate(end.getDate() - 30); return [start, end]; } },
+            { text: '本月', value: () => { const now = new Date(); const start = new Date(now.getFullYear(), now.getMonth(), 1); const end = new Date(now.getFullYear(), now.getMonth() + 1, 0); return [start, end]; } }
+          ]"
+          @change="handleDateRangeChange"
+        />
       </div>
 
       <!-- 动态渲染当前图表组件 -->
@@ -258,5 +319,29 @@ onMounted(() => {
   top: 8px;
   right: 10px;
   z-index: 10;
+}
+
+.date-range-wrapper {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 10;
+}
+
+/* 紧凑的时间选择器样式 */
+:deep(.el-date-editor) {
+  --el-date-editor-width: 240px;
+
+  .el-range__icon {
+    margin-right: 2px;
+  }
+
+  .el-range-separator {
+    padding: 0 4px;
+  }
+
+  .el-range__close-icon {
+    margin-left: 2px;
+  }
 }
 </style>

@@ -43,16 +43,16 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'resourceName', title: '资源名称', minWidth: 180, slots: { default: 'resourceName' } },
-    { field: 'resourceType', title: '资源类型', minWidth: 100, slots: { default: 'resourceType' } },
-    { field: 'resourceUrl', title: '资源地址', minWidth: 200 },
-    { field: 'learnNum', title: '学习人数', minWidth: 100 },
-    { field: 'learnRate', title: '学习完成率(%)', minWidth: 120 },
-    { field: 'publishTime', title: '上架时间', minWidth: 180, slots: { default: 'publishTime' } },
-    { field: 'offTime', title: '下架时间', minWidth: 180, slots: { default: 'offTime' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'resourceName', title: '资源名称', minWidth: 180, sortable: true, slots: { default: 'resourceName' } },
+    { field: 'resourceType', title: '资源类型', minWidth: 100, sortable: true, slots: { default: 'resourceType' } },
+    { field: 'resourceUrl', title: '资源地址', minWidth: 200, sortable: true, },
+    { field: 'learnNum', title: '学习人数', minWidth: 100, sortable: true, },
+    { field: 'learnRate', title: '学习完成率(%)', minWidth: 120, sortable: true, },
+    { field: 'publishTime', title: '上架时间', minWidth: 180, sortable: true, slots: { default: 'publishTime' } },
+    { field: 'offTime', title: '下架时间', minWidth: 180, sortable: true, slots: { default: 'offTime' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

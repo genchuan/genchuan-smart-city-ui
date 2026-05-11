@@ -1,6 +1,27 @@
 <script setup>
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
+import { ElTag } from 'element-plus';
+
+// 订单状态映射
+const statusMap = {
+  charging: { label: '充电中', type: 'primary' },
+  pending_pay: { label: '待支付', type: 'warning' },
+  paid: { label: '已支付', type: 'success' },
+  completed: { label: '已完成', type: 'success' },
+  cancelled: { label: '已取消', type: 'info' },
+  refunding: { label: '退款中', type: 'danger' },
+};
+
+// 获取状态标签
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || status || '-';
+};
+
+// 获取状态类型
+const getStatusType = (status) => {
+  return statusMap[status]?.type || 'default';
+};
 
 // 定义组件接收的属性（充电订单详情）
 const props = defineProps({
@@ -65,7 +86,10 @@ defineExpose({
         <div class="detail-row-left">用户昵称:</div>
         <div class="detail-row-right">{{ detailObj.userNickname || '-' }}</div>
       </div>
-
+      <div class="detail-card-row">
+          <div class="detail-row-left">所属场站:</div>
+          <div class="detail-row-right">{{ detailObj.stationName || '-' }}</div>
+        </div>  
       <div class="detail-card-row">
         <div class="detail-row-left">充电时长（分钟）:</div>
         <div class="detail-row-right">{{ detailObj.chargeDuration || '-' }}</div>
@@ -81,9 +105,14 @@ defineExpose({
         <div class="detail-row-right">{{ detailObj.amount || '0.00' }} 元</div>
       </div>
 
+      <!-- 订单状态 -->
       <div class="detail-card-row">
         <div class="detail-row-left">订单状态:</div>
-        <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
+        <div class="detail-row-right">
+          <ElTag :type="getStatusType(detailObj.status)">
+            {{ getStatusLabel(detailObj.status) }}
+          </ElTag>
+        </div>
       </div>
 
       <div class="detail-card-row">

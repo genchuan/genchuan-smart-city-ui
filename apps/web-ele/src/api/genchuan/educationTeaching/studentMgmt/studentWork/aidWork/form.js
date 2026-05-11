@@ -45,16 +45,16 @@ export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
-    { field: 'aidType', title: '资助类型', minWidth: 120, slots: { default: 'aidType' } },
-    { field: 'applyAmount', title: '申请金额', minWidth: 120, slots: { default: 'applyAmount' } },
-    { field: 'applyTime', title: '申报时间', minWidth: 180, slots: { default: 'applyTime' } },
-    { field: 'auditUser', title: '审核人', minWidth: 120 },
-    { field: 'auditTime', title: '审核时间', minWidth: 180, slots: { default: 'auditTime' } },
-    { field: 'processStatus', title: '流程状态', minWidth: 100 },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'studentId', title: '学号', minWidth: 100, sortable: true, slots: { default: 'studentId' } },
+    { field: 'aidType', title: '资助类型', minWidth: 120, sortable: true, slots: { default: 'aidType' } },
+    { field: 'applyAmount', title: '申请金额', minWidth: 120, sortable: true, slots: { default: 'applyAmount' } },
+    { field: 'applyTime', title: '申报时间', minWidth: 180, sortable: true, slots: { default: 'applyTime' } },
+    { field: 'auditUser', title: '审核人', minWidth: 120, sortable: true, },
+    { field: 'auditTime', title: '审核时间', minWidth: 180, sortable: true, slots: { default: 'auditTime' } },
+    { field: 'processStatus', title: '流程状态', minWidth: 100, sortable: true, },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

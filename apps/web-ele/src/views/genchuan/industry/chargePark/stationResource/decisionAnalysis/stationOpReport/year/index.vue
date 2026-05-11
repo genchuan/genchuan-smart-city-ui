@@ -12,6 +12,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import * as pageApi from '#/api/genchuan/industry/chargePark/stationResource/decisionAnalysis/stationOpReport/index.js';
 import IconButton from '#/genchuan-components/IconButton.vue';
 
+import DrillDownDetailDrawer from '../components/DrillDownDetailDrawer.vue';
 import {
   formFields,
   pageConfig,
@@ -23,6 +24,25 @@ import DetailDrawer from './detail.vue';
 
 import '#/components/page/index.scss';
 
+const props = defineProps({
+  secondShow: {
+    type: Boolean,
+    default: false,
+  },
+  showStats: {
+    type: Boolean,
+    default: false,
+  },
+  toggleStats: {
+    type: Function,
+    default: () => {},
+  },
+  activeReportCycle: {
+    type: String,
+    default: undefined,
+  },
+});
+
 const primaryField =
   pageConfig.primaryField ||
   pageConfig.nameField ||
@@ -32,6 +52,7 @@ const appliedQuery = ref({});
 const detailObj = ref({});
 const generating = ref(false);
 const detailDrawerRef = ref(null);
+const drillDownDrawerRef = ref(null);
 
 const reportPeriodMap = {
   day: '\u65E5\u62A5',
@@ -44,6 +65,9 @@ const reportPeriodMap = {
 };
 
 function currentReportPeriod() {
+  if (props.activeReportCycle !== undefined) {
+    return props.activeReportCycle;
+  }
   return reportPeriodMap[REPORT_TYPE] || REPORT_TYPE;
 }
 
@@ -135,8 +159,14 @@ function createSchema(fields, isSearch = false) {
   });
 }
 
+const generateButtonText = computed(() => {
+  const cycle = currentReportPeriod();
+  if (cycle) return `生成${cycle}`;
+  return '生成报表';
+});
+
 const drawerTitle = computed(
-  () => pageConfig.generateButtonText || `\u751F\u6210${pageConfig.title}`,
+  () => generateButtonText.value || `\u751F\u6210${pageConfig.title}`,
 );
 
 function getCellSlotName(column) {
@@ -209,7 +239,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     if (!isOpen || !pageConfig.enableGenerate) return;
     formApi.resetForm();
     await formApi.setValues({
-      reportCycle: currentReportPeriod(),
+      reportCycle: currentReportPeriod() || reportPeriodMap[REPORT_TYPE],
     });
   },
 });
@@ -255,7 +285,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
           return await pageApi.getStationOpReportPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
-            reportCycle: currentReportPeriod(),
+            ...(currentReportPeriod()
+              ? { reportCycle: currentReportPeriod() }
+              : {}),
             ...appliedQuery.value,
           });
         },
@@ -322,7 +354,10 @@ async function handleGenerate() {
   try {
     await pageApi.createStationOpReport({
       ...values,
-      reportCycle: values.reportCycle || currentReportPeriod(),
+      reportCycle:
+        values.reportCycle ||
+        currentReportPeriod() ||
+        reportPeriodMap[REPORT_TYPE],
     });
     ElMessage.success('\u751F\u6210\u6210\u529F');
     formDrawerApi.close();
@@ -346,7 +381,7 @@ async function handleExport(extraParams = {}, isRowExport = false) {
   }
 
   const blob = await pageApi.exportStationOpReport({
-    reportCycle: currentReportPeriod(),
+    ...(currentReportPeriod() ? { reportCycle: currentReportPeriod() } : {}),
     ...appliedQuery.value,
     ...extraParams,
   });
@@ -507,10 +542,16 @@ async function handleCellDrill(column, row) {
     return applySearchPatch(patch);
   }
   if (drillType === 'dialog') {
-    await handleOpenDetail(row);
-    ElMessage.success(
-      `${column.drillLabel || column.label || '\u6570\u636E'}\u5DF2\u6253\u5F00`,
-    );
+    drillDownDrawerRef.value?.open({
+      source: 'table',
+      drillType: column.field,
+      drillLabel: column.drillLabel || column.label,
+      drillName: row?.[pageConfig.nameField] || row?.reportCycle,
+      drillValue: getDrillValue(column, row),
+      reportCycle: row?.reportCycle || currentReportPeriod(),
+      reportId: row?.id,
+      row,
+    });
   }
 }
 
@@ -519,10 +560,32 @@ function handleFullScreen() {
     screenfull.toggle();
   }
 }
+
+function handleStatsFilter(type, value) {
+  if (type !== 'reportCycle') return;
+  const nextQuery = { ...appliedQuery.value };
+  if (value) {
+    nextQuery.reportCycle = value;
+  } else {
+    delete nextQuery.reportCycle;
+  }
+  appliedQuery.value = nextQuery;
+  handleRefresh();
+}
+
+watch(
+  () => props.activeReportCycle,
+  (value, oldValue) => {
+    if (value === undefined || value === oldValue) return;
+    handleStatsFilter('reportCycle', value);
+  },
+);
+
 defineExpose({
   handleFilterTagClick: (field, value) => {
     applySearchPatch({ [field]: value });
   },
+  handleStatsFilter,
   clearFilters,
 });
 </script>
@@ -538,6 +601,7 @@ defineExpose({
     </FormDrawer>
 
     <DetailDrawer ref="detailDrawerRef" :detail-obj="detailObj" />
+    <DrillDownDetailDrawer ref="drillDownDrawerRef" />
 
     <SearchDrawer title="\u7b5b\u9009\u6761\u4ef6">
       <QueryForm class="query-form" @reset="handleResetSearch" />
@@ -566,7 +630,7 @@ defineExpose({
         <div class="common-toolbar-tools">
           <IconButton
             v-if="pageConfig.enableGenerate"
-            :content="pageConfig.generateButtonText"
+            :content="generateButtonText"
             icon-name="DocumentAdd"
             @click="handleOpenGenerate"
           />
@@ -579,6 +643,11 @@ defineExpose({
             content="\u5bfc\u51fa"
             icon-name="download"
             @click="handleExport()"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
           />
           <IconButton
             content="\u5237\u65b0"

@@ -109,7 +109,7 @@ const props = defineProps({
   secondShow: { type: Boolean, default: false },
   arrowShow: { type: Boolean, default: false },  // 新增
 });
-const emit = defineEmits(['arrow-change']);     // 新增
+const emit = defineEmits(['arrow-change','refresh-chart']);     // 新增
 
 const arrowChange = () => {
   emit('arrow-change');
@@ -503,6 +503,7 @@ async function confirmDispatch() {
   ElMessage.success('派发成功');
   dispatchDrawerApi.close();
   handleRefresh();
+  window.dispatchEvent(new CustomEvent('rescue-data-changed'));
 }
 
 // 批量派发
@@ -527,6 +528,7 @@ async function confirmBatchDispatch() {
     checkedIds.value = [];
     checkedRows.value = [];
     handleRefresh();
+    window.dispatchEvent(new CustomEvent('rescue-data-changed'));
   } catch (err) {
     const msg = err?.response?.data?.msg || err?.msg || err?.message || '批量派发失败';
     ElMessage.error(msg);
@@ -539,6 +541,7 @@ const handleClaim = async (row) => {
   await claimRescue(row.id);
   ElMessage.success('认领成功');
   handleRefresh();
+  window.dispatchEvent(new CustomEvent('rescue-data-changed'));
 };
 
 // 更新进度
@@ -580,6 +583,7 @@ async function confirmProgress() {
   ElMessage.success(progressForm.complete ? '更新进度并完成救援' : '更新进度成功');
   progressDrawerApi.close();
   handleRefresh();
+  window.dispatchEvent(new CustomEvent('rescue-data-changed'));
 }
 
 // 转派
@@ -598,6 +602,7 @@ async function confirmTransfer() {
   ElMessage.success('转派成功');
   transferDrawerApi.close();
   handleRefresh();
+  window.dispatchEvent(new CustomEvent('rescue-data-changed'));
 }
 
 // 评价
@@ -615,6 +620,7 @@ async function confirmEvaluate() {
   ElMessage.success('评价成功');
   evaluateDrawerApi.close();
   handleRefresh();
+  window.dispatchEvent(new CustomEvent('rescue-data-changed'));
 }
 
 // 归档
@@ -623,6 +629,7 @@ const handleArchive = async (row) => {
   await archiveRescue(row.id);
   ElMessage.success('归档成功');
   handleRefresh();
+  window.dispatchEvent(new CustomEvent('rescue-data-changed'));
 };
 
 // 处理时长钻取

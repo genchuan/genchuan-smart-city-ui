@@ -69,13 +69,13 @@ const statsData = computed(() => statsDataSource.value);
 
 type ChartRefreshPayload =
   | {
-      index: number;
-      type: 'card';
-    }
-  | {
       chartType: string;
       name: string;
       type: 'chart';
+    }
+  | {
+      index: number;
+      type: 'card';
     };
 
 async function handleChartRefresh(payload: ChartRefreshPayload) {
@@ -180,6 +180,8 @@ onMounted(() => {
 
 .user-info-stats {
   flex-shrink: 0;
+  height: 280px;
+  overflow: hidden;
 }
 
 .user-info-table-wrap {

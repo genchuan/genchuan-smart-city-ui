@@ -78,15 +78,13 @@ const tagFilters = ref({});
 
 function handleFilterTagClick(field, value) {
   if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
-    const existing = tagFilters.value[field];
-    if (
-      Array.isArray(existing) &&
-      existing.length === 1 &&
-      existing[0] === value
-    ) {
+
+  const current = tagFilters.value[field];
+
+  if (current !== undefined) {
+    if (Array.isArray(current) && current.length === 1 && current[0] === value) {
       delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
+    } else if (!Array.isArray(current) && current === value) {
       delete tagFilters.value[field];
     } else {
       tagFilters.value[field] = value;
@@ -94,17 +92,19 @@ function handleFilterTagClick(field, value) {
   } else {
     tagFilters.value[field] = value;
   }
-  gridApi.reload();
+
+  // ✅ 关键：刷新 = 重新请求接口
+  handleRefresh();
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  handleRefresh();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  handleRefresh();
 }
 
 function getFieldLabel(field) {
@@ -155,11 +155,22 @@ const searchParams = ref({});
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
+    // ✅ 1. 所有筛选条件（搜索 + 标签）一起传给后端
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
+
+    // ✅ 2. 清理空值（和参考代码一致）
+    Object.keys(params).forEach((key) => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
+    });
+
+    // ✅ 3. 时间范围处理
     if (
       params.createTime &&
       Array.isArray(params.createTime) &&
@@ -169,89 +180,24 @@ const getTableData = async ({ page }) => {
       params.endTime = params.createTime[1];
       delete params.createTime;
     }
+
+    // ✅ 4. 只调一次接口，不做任何前端筛选
     const res = await getAbnormalOrderPage(params);
-    let filtered = res.list;
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'abnormalType':
-            itemValue = item.abnormalType;
-            break;
-          case 'abnormalStatus':
-            itemValue = item.abnormalStatus;
-            break;
-          case 'checkUser':
-            itemValue = item.checkUser;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    // ✅ 修改点1：使用后端返回的总记录数
-    dataObj.total = res.total;
-    // ✅ 修改点2：直接使用当前页数据（res.list 已经是当前页数据，不需要再 slice）
-    dataObj.list = filtered;
+
+    // ✅ 5. 直接用后端返回的数据和总数
+    dataObj.list = res.list || [];
+    dataObj.total = res.total || 0;
   } catch (error) {
     console.error('获取数据失败:', error);
+
+    // ✅ 6. 错误兜底（保持你原来的 mock 行为，但不再影响 total）
     const mockData = dataList();
-    let filtered = mockData;
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'abnormalType':
-            itemValue = item.abnormalType;
-            break;
-          case 'abnormalStatus':
-            itemValue = item.abnormalStatus;
-            break;
-          case 'checkUser':
-            itemValue = item.checkUser;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            const createDate = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            itemValue = createDate;
-            break;
-          default:
-            itemValue = item[field];
-        }
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
-    });
-    dataObj.total = filtered.length;
-    dataObj.list = filtered.slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+    dataObj.list = mockData;
+    dataObj.total = mockData.length;
   } finally {
     dataObj.loading = false;
   }
+
   return dataObj;
 };
 

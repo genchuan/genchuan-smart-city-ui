@@ -242,6 +242,7 @@ export function useGridColumns() {
       title: '车牌',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'plateNo' },
     },
     {
       field: 'chargeDuration',
@@ -271,6 +272,12 @@ export function useGridColumns() {
       customRender: ({ text }) => text ? `¥${text.toFixed(2)}` : '¥0.00',
     },
     {
+      field: 'stationName',
+      title: '所属场站',
+      minWidth: 140,
+      sortable: true,
+    },
+    {
       field: 'status',
       title: '订单状态',
       minWidth: 120,
@@ -285,8 +292,8 @@ export function useGridColumns() {
       customRender: ({ text }) => text ? new Date(Number(text)).toLocaleString() : '-',
     },
     {
-      field: 'stationId',
-      title: '所属场站ID',
+      field: 'stationName',
+      title: '所属场站',
       minWidth: 140,
       sortable: true,
     },

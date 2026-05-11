@@ -27,6 +27,7 @@ import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightki
 
 import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
+import PlateNoDetail from '#/views/genchuan/industry/chargePark/orderTrade/orderMgmt/components/plateNoDetail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -281,6 +282,16 @@ const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value?.open();
 };
+
+// 车牌详情弹窗
+const plateDetailVisible = ref(false);
+const currentPlateNo = ref('');
+
+const handlePlateDetail = (row) => {
+  currentPlateNo.value = row.plateNo;
+  plateDetailVisible.value = true;
+};
+
 const tabsData = ref([
   { label: '全部' },
   { label: '启用' },
@@ -421,18 +432,34 @@ const handleRefundSubmit = async () => {
 const invoiceDialogVisible = ref(false);
 const invoiceForm = reactive({
   id: '',
+  orderNo: '',
+  invoiceTitle: '',
+  invoiceTaxNo: '',
+  invoiceEmail: '',
   remark: '',
 });
 
 // 打开开票弹窗
 const handleInvoice = (row) => {
   invoiceForm.id = row.id;
+  invoiceForm.orderNo = row.orderNo;
   invoiceForm.remark = '';
   invoiceDialogVisible.value = true;
 };
 
+// 邮箱格式校验
+const validateEmail = (email) => {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(email);
+};
+
 // 提交开票
 const handleInvoiceSubmit = async () => {
+  if (invoiceForm.invoiceEmail && !validateEmail(invoiceForm.invoiceEmail)) {
+    ElMessage.error('请输入有效的邮箱地址');
+    return;
+  }
+
   try {
     await invoiceTempParkOrder(invoiceForm);
     ElMessage.success('开票申请已提交');
@@ -528,6 +555,9 @@ const alarmColumns = [
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
+
+    <!-- 车牌详情弹窗 -->
+    <PlateNoDetail v-model:visible="plateDetailVisible" :plate-no="currentPlateNo" />
 
     <!-- 告警明细弹窗 -->
     <ElDialog
@@ -648,6 +678,27 @@ const alarmColumns = [
         <el-form-item label="订单ID">
           <el-input v-model="invoiceForm.id" disabled />
         </el-form-item>
+        <el-form-item label="订单编号">
+          <el-input v-model="invoiceForm.orderNo" disabled />
+        </el-form-item>
+        <el-form-item label="发票抬头">
+          <el-input
+            v-model="invoiceForm.invoiceTitle"
+            placeholder="请输入发票抬头"
+          />
+        </el-form-item>
+        <el-form-item label="发票税号">
+          <el-input
+            v-model="invoiceForm.invoiceTaxNo"
+            placeholder="请输入发票税号"
+          />
+        </el-form-item>
+        <el-form-item label="接收邮箱">
+          <el-input
+            v-model="invoiceForm.invoiceEmail"
+            placeholder="请输入接收邮箱"
+          />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input
             v-model="invoiceForm.remark"
@@ -742,6 +793,15 @@ const alarmColumns = [
           type="primary"
         >
           {{ row.orderNo }}
+        </el-text>
+      </template>
+      <template #plateNo="{ row }">
+        <el-text
+          @click="handlePlateDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.plateNo }}
         </el-text>
       </template>
       <template #payMethod="{ row }">

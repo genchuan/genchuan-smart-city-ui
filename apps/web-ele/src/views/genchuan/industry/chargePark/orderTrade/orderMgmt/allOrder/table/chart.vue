@@ -1,9 +1,75 @@
 <script setup>
-import { reactive, onMounted, ref } from 'vue';
-import { getOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { reactive, onMounted, ref, computed } from 'vue';
+import { useVbenDrawer } from '@vben/common-ui';
+import { ElMessage, ElTag } from 'element-plus';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getOrderChart, getOrderPage } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
 import * as echarts from 'echarts';
+import { formatTimestamp } from '#/utils';
+import { useGridColumns } from './data';
+
+// 订单状态映射
+const statusMap = {
+  charging: { label: '充电中', type: 'primary' },
+  pending_pay: { label: '待支付', type: 'warning' },
+  paid: { label: '已支付', type: 'success' },
+  completed: { label: '已完成', type: 'success' },
+  cancelled: { label: '已取消', type: 'info' },
+  refunding: { label: '退款中', type: 'danger' },
+};
+
+// 获取状态标签
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || status;
+};
+
+// 获取状态类型
+const getStatusType = (status) => {
+  return statusMap[status]?.type || 'default';
+};
+
+// 当前选中的日期（用于折线图点击后筛选）
+const selectedDate = ref(null);
+
+// 当前选中的订单状态（用于柱状图点击后筛选）
+const selectedStatus = ref(null);
+
+// 是否使用日期筛选（点击卡片或折线图时为true，点击柱状图时为false）
+const useDateFilter = ref(true);
+
+// 抽屉配置
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  width: '75%',
+  title: computed(() => {
+    let title = '';
+    if (selectedDate.value) {
+      title = `${selectedDate.value} `;
+    } else {
+      title = '今日 ';
+    }
+    if (selectedStatus.value) {
+      title += `${statusMap[selectedStatus.value]?.label || selectedStatus.value} `;
+    }
+    title += '订单列表';
+    return title;
+  }),
+  class: 'genchuan-detail-drawer',
+  onCancel() {
+    drawerApi.close();
+  },
+});
+
+// 抽屉表格数据对象
+const drawerDataObj = reactive({
+  total: 0,
+  list: [],
+  loading: false,
+});
 
 const state = reactive({
   cardList: [
@@ -15,32 +81,192 @@ const state = reactive({
   stationData: [],
 });
 
+// 获取今天的开始和结束时间
+const getTodayTimeRange = () => {
+  const today = new Date();
+  const start = today.toISOString().split('T')[0] + ' 00:00:00';
+  const end = today.toISOString().split('T')[0] + ' 23:59:59';
+  return { start, end };
+};
+
+// 抽屉搜索条件
+const drawerSearchObj = reactive({});
+
+// 抽屉表格数据获取
+const getDrawerTableData = async (pageObj) => {
+  const page = pageObj.page;
+  const params = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+  };
+  
+  // 如果使用日期筛选，添加日期参数
+  if (useDateFilter.value) {
+    let start, end;
+    if (selectedDate.value) {
+      start = selectedDate.value + ' 00:00:00';
+      end = selectedDate.value + ' 23:59:59';
+    } else {
+      ({ start, end } = getTodayTimeRange());
+    }
+    params.createOrderTimeStart = start;
+    params.createOrderTimeEnd = end;
+  }
+  
+  // 如果选中了状态，传递状态参数
+  if (selectedStatus.value) {
+    params.status = selectedStatus.value;
+  }
+  
+  Object.assign(params, drawerSearchObj);
+
+  try {
+    drawerDataObj.loading = true;
+    const res = await getOrderPage(params);
+    drawerDataObj.total = res.total;
+    drawerDataObj.list = res.list.map((v) => {
+      return {
+        ...v,
+        payTime: formatTimestamp(v.payTime),
+        updateTime: formatTimestamp(v.updateTime),
+        createTime: formatTimestamp(v.createTime),
+      };
+    });
+    return drawerDataObj;
+  } catch (error) {
+    console.error('获取订单列表失败:', error);
+    ElMessage.error('获取订单列表失败');
+    return drawerDataObj;
+  } finally {
+    drawerDataObj.loading = false;
+  }
+};
+
+// 点击卡片事件
+const handleCardClick = () => {
+  // 设置为null表示使用当日日期
+  selectedDate.value = null;
+  // 重置状态筛选
+  selectedStatus.value = null;
+  // 使用日期筛选
+  useDateFilter.value = true;
+  console.log('点击卡片，日期重置为当日，状态重置，使用日期筛选');
+  // 刷新表格数据
+  drawerGridApi.query();
+  drawerApi.open();
+};
+/** 刷新表格 */
+function handleRefresh() {
+  drawerGridApi.query();
+}
+// 折线图点击事件处理
+const handleLineChartClick = (params) => {
+  console.log('折线图点击事件触发:', params);
+  if (params && params.name) {
+    selectedDate.value = params.name;
+    // 重置状态筛选
+    selectedStatus.value = null;
+    // 使用日期筛选
+    useDateFilter.value = true;
+    console.log('选中日期:', selectedDate.value);
+    drawerGridApi.query();
+    drawerApi.open();
+  }
+};
+
+// 柱状图点击事件处理
+const handleBarChartClick = (params) => {
+  console.log('柱状图点击事件触发:', params);
+  if (params && params.name) {
+    // 根据中文状态名称找到对应的英文状态值
+    const statusKey = Object.keys(statusMap).find(key => statusMap[key].label === params.name);
+    if (statusKey) {
+      selectedStatus.value = statusKey;
+      console.log('选中状态:', selectedStatus.value);
+    } else {
+      // 如果找不到映射，直接使用名称作为状态值
+      selectedStatus.value = params.name;
+      console.log('选中状态(未映射):', selectedStatus.value);
+    }
+    // 重置日期筛选
+    selectedDate.value = null;
+    // 不使用日期筛选（只传状态参数）
+    useDateFilter.value = false;
+    drawerGridApi.query();
+    drawerApi.open();
+  }
+};
+
+// 抽屉表格配置 - 删除最后一个操作列
+const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: useGridColumns().slice(0, -1),
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => getDrawerTableData({ page }),
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    pagerConfig: drawerDataObj,
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+    },
+    showOverflow: true,
+  },
+  showSearchForm: false,
+});
+
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
 // 获取订单图表数据
 const fetchOrderChartData = async () => {
   try {
-    const res = await getTempParkOrderChart();
-    state.cardList[0].value = res.cardData?.todayOrderCount || 0;
-    state.cardList[1].value = res.cardData?.todayRevenue || 0;
-    state.cardList[2].value = res.cardData?.payRate || 0;
-    // 如果trendData为空，使用假数据
-    state.trendData = res.trendData && res.trendData.length > 0 ? res.trendData : [
-      { date: '2025-04-01', count: 8 },
-      { date: '2025-04-02', count: 10 },
-      { date: '2025-04-03', count: 12 },
-      { date: '2025-04-04', count: 9 },
-      { date: '2025-04-05', count: 15 },
-    ];
-    state.stationData = res.stationData && res.stationData.length > 0 ? res.stationData : [
-      { name: '丰泽站', value: 20 },
-      { name: '鲤城站', value: 15 },
-      { name: '晋江站', value: 12 },
-      { name: '石狮站', value: 8 },
-    ];
-    // 更新折线图
-    updateLineChart();
+    const res = await getOrderChart();
+    if (res.cardData) {
+      const { trendData, typeData, cardData } = res;
+      state.cardList[0].value = cardData?.todayOrderCount || 0;
+      state.cardList[1].value = cardData?.todayRevenue || 0;
+      state.cardList[2].value = cardData?.payRate || 0;
+      // 如果trendData为空，使用假数据
+      state.trendData = trendData && trendData.length > 0 ? trendData : [
+        { date: '2025-04-01', count: 8 },
+        { date: '2025-04-02', count: 10 },
+        { date: '2025-04-03', count: 12 },
+        { date: '2025-04-04', count: 9 },
+        { date: '2025-04-05', count: 15 },
+      ];
+      // 使用typeData作为订单状态数据展示，X轴显示中文状态名称
+      state.stationData = typeData && typeData.length > 0 ? typeData.map(item => ({
+        name: statusMap[item.status]?.label || item.status,
+        value: item.count
+      })) : [
+        { name: '丰泽站', value: 20 },
+        { name: '鲤城站', value: 15 },
+        { name: '晋江站', value: 12 },
+        { name: '石狮站', value: 8 },
+      ];
+    } else {
+      // 接口返回失败，使用假数据
+      state.trendData = [
+        { date: '2025-04-01', count: 8 },
+        { date: '2025-04-02', count: 10 },
+        { date: '2025-04-03', count: 12 },
+        { date: '2025-04-04', count: 9 },
+        { date: '2025-04-05', count: 15 },
+      ];
+      state.stationData = [
+        { name: '丰泽站', value: 20 },
+        { name: '鲤城站', value: 15 },
+        { name: '晋江站', value: 12 },
+        { name: '石狮站', value: 8 },
+      ];
+    }
   } catch (error) {
     console.error('获取订单图表数据失败:', error);
     // 接口调用失败时使用假数据
@@ -60,8 +286,6 @@ const fetchOrderChartData = async () => {
       { name: '晋江站', value: 12 },
       { name: '石狮站', value: 8 },
     ];
-    // 更新折线图
-    updateLineChart();
   }
 };
 
@@ -114,7 +338,7 @@ const initLineChart = () => {
         data: state.trendData.map(item => item.count),
         smooth: true,
         symbol: 'circle',
-        symbolSize: 6,
+        symbolSize: 10,
         lineStyle: { color: '#4A90E2', width: 2 },
         itemStyle: { color: '#4A90E2' },
         areaStyle: {
@@ -123,11 +347,25 @@ const initLineChart = () => {
             { offset: 1, color: 'rgba(74, 144, 226, 0.05)' },
           ]),
         },
+        emphasis: {
+          focus: 'series',
+          itemStyle: {
+            borderColor: '#4A90E2',
+            borderWidth: 2,
+            shadowBlur: 10,
+            shadowColor: 'rgba(74, 144, 226, 0.5)',
+          },
+        },
       },
     ],
   };
 
   lineChartInstance.setOption(option);
+
+  // 添加点击事件监听
+  lineChartInstance.on('click', (params) => {
+    handleLineChartClick(params);
+  });
 };
 
 // 更新折线图
@@ -146,10 +384,10 @@ const updateLineChart = () => {
   });
 };
 
-onMounted(() => {
-  fetchOrderChartData().then(() => {
-    initLineChart();
-  });
+onMounted(async () => {
+  // 先获取数据，再初始化图表
+  await fetchOrderChartData();
+  initLineChart();
 
   window.addEventListener('resize', () => {
     lineChartInstance?.resize();
@@ -160,10 +398,34 @@ onMounted(() => {
 <template>
   <div class="park-chart-box">
     <div class="chart-box-left">
-      <Card class="left-card" v-for="item in state.cardList" :key="item.title" v-bind="item" />
+      <Card class="left-card cursor-pointer" v-for="item in state.cardList" :key="item.title" v-bind="item" @click="handleCardClick(item.title)" />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart" />
-    <Columnar title="各场站订单量" :x-data="state.stationData.map(item => item.name)"
-      :series-data="[{ name: '订单数', data: state.stationData.map(item => item.value) }]" />
+    <Columnar class="simple-bar-chart" title="各场站订单量" :x-data="state.stationData.map(item => item.name)"
+      :series-data="[{ name: '订单数', data: state.stationData.map(item => item.value) }]" @bar-click="handleBarChartClick" />
   </div>
+
+  <Drawer>
+    <DrawerGrid>
+      <template #orderType="{ row }">
+        <span v-if="row.orderType === 'temp_park'">临时停车</span>
+        <span v-else-if="row.orderType === 'offtime_park'">错时停车</span>
+        <span v-else-if="row.orderType === 'car_charge'">汽车充电</span>
+        <span v-else-if="row.orderType === 'bike_charge'">两轮充电</span>
+        <span v-else-if="row.orderType === 'share_charge'">共享充电</span>
+        <span v-else>{{ row.orderType }}</span>
+      </template>
+      <template #status="{ row }">
+        <ElTag :type="getStatusType(row.status)">
+          {{ getStatusLabel(row.status) }}
+        </ElTag>
+      </template>
+      <template #orderNo="{ row }">
+        {{ row.orderNo }}
+      </template>
+      <template #plateNo="{ row }">
+        {{ row.plateNo }}
+      </template>
+    </DrawerGrid>
+  </Drawer>
 </template>

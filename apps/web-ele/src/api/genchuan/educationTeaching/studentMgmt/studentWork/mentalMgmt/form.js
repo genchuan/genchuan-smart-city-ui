@@ -58,16 +58,16 @@ export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentId', title: '学号', minWidth: 120, slots: { default: 'studentId' } },  // 新增学号列
-    { field: 'mentalStatus', title: '心理状态', minWidth: 100, slots: { default: 'mentalStatus' } },
-    { field: 'riskLevel', title: '风险等级', minWidth: 100, slots: { default: 'riskLevel' } },
-    { field: 'evaluateTime', title: '评估时间', minWidth: 180, slots: { default: 'evaluateTime' } },
-    { field: 'consultTime', title: '咨询预约时间', minWidth: 180, slots: { default: 'consultTime' } },
-    { field: 'interveneTime', title: '干预时间', minWidth: 180, slots: { default: 'interveneTime' } },
-    { field: 'interveneContent', title: '干预内容', minWidth: 200 },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'studentId', title: '学号', minWidth: 120, sortable: true, slots: { default: 'studentId' } },
+    { field: 'mentalStatus', title: '心理状态', minWidth: 100, sortable: true, slots: { default: 'mentalStatus' } },
+    { field: 'riskLevel', title: '风险等级', minWidth: 100, sortable: true, slots: { default: 'riskLevel' } },
+    { field: 'evaluateTime', title: '评估时间', minWidth: 180, sortable: true, slots: { default: 'evaluateTime' } },
+    { field: 'consultTime', title: '咨询预约时间', minWidth: 180, sortable: true, slots: { default: 'consultTime' } },
+    { field: 'interveneTime', title: '干预时间', minWidth: 180, sortable: true, slots: { default: 'interveneTime' } },
+    { field: 'interveneContent', title: '干预内容', minWidth: 200, sortable: true, },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];

@@ -44,8 +44,8 @@ const handleChartRefresh = (filters, activeTab) => {
   }
 };
 
-// 可选：刷新图表的方法（如果图表组件暴露了 refresh 方法）
-const refreshChart = () => {
+// 新增：刷新图表数据
+const refreshChartData = () => {
   chartRef.value?.refresh();
 };
 </script>
@@ -78,6 +78,7 @@ const refreshChart = () => {
           :second-show="item.secondShow"
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
+          @refresh-chart="refreshChartData"
           :key="item.label"
         />
       </el-tab-pane>

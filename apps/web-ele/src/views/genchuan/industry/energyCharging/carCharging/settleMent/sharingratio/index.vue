@@ -3,7 +3,6 @@ import { ref } from 'vue';
 
 import monitor from './monitor/index.vue';
 import gateChart from './monitor/table/gateChart.vue';
-import report from './report/index.vue';
 
 import '#/components/page/index.scss';
 

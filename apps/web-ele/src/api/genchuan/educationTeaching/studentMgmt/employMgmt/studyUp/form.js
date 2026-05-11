@@ -42,16 +42,16 @@ export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
-    { field: 'studentId', title: '学号', minWidth: 100, slots: { default: 'studentId' } },
-    { field: 'schoolName', title: '目标院校名称', minWidth: 150, slots: { default: 'schoolName' } },
-    { field: 'schoolType', title: '院校类型', minWidth: 100, slots: { default: 'schoolType' } },
-    { field: 'major', title: '意向专业', minWidth: 120 },
-    { field: 'planContent', title: '升学规划内容', minWidth: 180, slots: { default: 'planContent' } },
-    { field: 'planTime', title: '规划时间', minWidth: 180, slots: { default: 'planTime' } },
-    { field: 'recordTime', title: '跟踪记录时间', minWidth: 180, slots: { default: 'recordTime' } },
-    { field: 'status', title: '状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'createTime', title: '创建时间', minWidth: 180, slots: { default: 'createTime' } },
-    { field: 'updateTime', title: '更新时间', minWidth: 180, slots: { default: 'updateTime' } },
+    { field: 'studentId', title: '学号', minWidth: 100, sortable: true, slots: { default: 'studentId' } },
+    { field: 'schoolName', title: '目标院校名称', minWidth: 150, sortable: true, slots: { default: 'schoolName' } },
+    { field: 'schoolType', title: '院校类型', minWidth: 100, sortable: true, slots: { default: 'schoolType' } },
+    { field: 'major', title: '意向专业', minWidth: 120, sortable: true, },
+    { field: 'planContent', title: '升学规划内容', minWidth: 180, sortable: true, slots: { default: 'planContent' } },
+    { field: 'planTime', title: '规划时间', minWidth: 180, sortable: true, slots: { default: 'planTime' } },
+    { field: 'recordTime', title: '跟踪记录时间', minWidth: 180, sortable: true, slots: { default: 'recordTime' } },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
+    { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
+    { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];
 
   const allColumns = [...baseColumns, ...columns];
