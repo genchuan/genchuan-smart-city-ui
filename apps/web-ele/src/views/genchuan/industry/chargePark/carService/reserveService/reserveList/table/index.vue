@@ -233,7 +233,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-function handleRefresh() { gridApi.query(); }
+function handleRefresh() {
+  gridApi.query();
+  // 通知图表刷新统计数据
+  window.dispatchEvent(new CustomEvent('reserve-stats-refresh'));
+}
 async function handleExport() {
   const data = await exportReserveListExcel(dataObj.searchObj);
   downloadFileFromBlobPart({ fileName: '预约信息记录.xls', source: data });
