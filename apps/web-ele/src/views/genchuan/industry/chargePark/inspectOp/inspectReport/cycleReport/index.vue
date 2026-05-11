@@ -44,6 +44,63 @@ function handleMetricFilter(metricKey) {
   };
 }
 
+const cardMap = {
+  deviceNormal: {
+    component: '',
+    queryParams: {
+
+    }
+  },
+  deviceAbnormal: {
+    component: '',
+    queryParams: {
+      status: 'deviceAbnormal',
+    }
+  },
+  inspectTask: {
+    component: '',
+    queryParams: {
+      status: 'inspectTask',
+    }
+  },
+  taskComplete: {
+    component: '',
+    queryParams: {
+      status: 'taskComplete',
+    }
+  },
+  oilWaitHandle: {
+    component: '',
+    queryParams: {
+      status: 'oilWaitHandle',
+    }
+  },
+  oilHandleComplete: {
+    component: '',
+    queryParams: {
+      status: 'oilHandleComplete',
+    }
+  },
+  inspectUserOnline: {
+    component: '',
+    queryParams: {
+      status: 'inspectUserOnline',
+    }
+  },
+  assetNormal: {
+    component: '',
+    queryParams: {
+      status: 'assetNormal',
+    }
+  },
+  stockWarn: {
+    component: '',
+    queryParams: {
+      status: 'stockWarn',
+    }
+  },
+}
+
 function handleStationFilter(stationName) {
   chartFilter.value = {
     type: 'station',
