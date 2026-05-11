@@ -2,6 +2,18 @@
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 
+// 逃费识别状态映射
+const statusMap = {
+  pending: { label: '待识别', type: 'warning' },
+  identified: { label: '已识别', type: 'success' },
+  marked: { label: '已标记（非逃费）', type: 'info' },
+};
+
+// 获取状态标签
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || status;
+};
+
 // 欠费识别记录详情
 const props = defineProps({
   detailObj: {
@@ -72,28 +84,14 @@ defineExpose({
 
       <div class="detail-card-row">
         <div class="detail-row-left">状态:</div>
-        <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
+        <div class="detail-row-right">{{ getStatusLabel(detailObj.status) || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">所属场站ID:</div>
-        <div class="detail-row-right">{{ detailObj.stationId || '-' }}</div>
+        <div class="detail-row-left">所属场站:</div>
+        <div class="detail-row-right">{{ detailObj.stationName || '-' }}</div>
       </div>
 
-      <div class="detail-card-row">
-        <div class="detail-row-left">操作人ID:</div>
-        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段1:</div>
-        <div class="detail-row-right">{{ detailObj.reserve1 || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段2:</div>
-        <div class="detail-row-right">{{ detailObj.reserve2 || '-' }}</div>
-      </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>

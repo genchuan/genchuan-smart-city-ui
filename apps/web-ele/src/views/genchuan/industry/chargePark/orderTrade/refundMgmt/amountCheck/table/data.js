@@ -206,12 +206,6 @@ export function useGridColumns() {
       minWidth: 120,
       sortable: true,
       slots: { default: 'status' },
-    },
-    {
-      field: 'operatorId',
-      title: '操作人ID',
-      minWidth: 120,
-      sortable: true,
     }, 
     {
       field: 'creator',

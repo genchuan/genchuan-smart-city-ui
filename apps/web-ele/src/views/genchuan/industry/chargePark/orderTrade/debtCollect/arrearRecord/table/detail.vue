@@ -2,6 +2,17 @@
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 
+// 欠费记录结清状态映射
+const statusMap = {
+  unpaid: { label: '未结清', type: 'warning' },
+  cleared: { label: '已结清', type: 'success' },
+};
+
+// 获取状态标签
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || status;
+};
+
 // 欠费结清记录详情
 const props = defineProps({
   detailObj: {
@@ -72,28 +83,15 @@ defineExpose({
 
       <div class="detail-card-row">
         <div class="detail-row-left">结清状态:</div>
-        <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
+        <div class="detail-row-right">{{ getStatusLabel(detailObj.status) || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">所属场站ID:</div>
-        <div class="detail-row-right">{{ detailObj.stationId || '-' }}</div>
+        <div class="detail-row-left">所属场站:</div>
+        <div class="detail-row-right">{{ detailObj.stationName || '-' }}</div>
       </div>
 
-      <div class="detail-card-row">
-        <div class="detail-row-left">操作人ID:</div>
-        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段1:</div>
-        <div class="detail-row-right">{{ detailObj.reserve1 || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段2:</div>
-        <div class="detail-row-right">{{ detailObj.reserve2 || '-' }}</div>
-      </div>
+       
 
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
