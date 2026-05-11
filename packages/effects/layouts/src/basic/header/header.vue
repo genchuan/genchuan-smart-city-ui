@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed, useSlots } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { useRefresh } from '@vben/hooks';
 import { createIconifyIcon, RotateCw } from '@vben/icons';
@@ -29,6 +30,9 @@ const emit = defineEmits<{ clearPreferencesAndLogout: [] }>();
 // 创建商城图标
 const ShoppingCartIcon = createIconifyIcon('mdi:cart-outline');
 
+// 创建升级会员图标
+const CrownIcon = createIconifyIcon('mdi:crown');
+
 interface Props {
   /**
    * Logo 主题
@@ -42,6 +46,7 @@ const accessStore = useAccessStore();
 const { globalSearchShortcutKey, preferencesButtonPosition } = usePreferences();
 const slots = useSlots();
 const { refresh } = useRefresh();
+const router = useRouter();
 
 const rightSlots = computed(() => {
   const list = [{ index: REFERENCE_VALUE + 100, name: 'user-dropdown' }];
@@ -51,6 +56,12 @@ const rightSlots = computed(() => {
       name: 'global-search',
     });
   }
+
+  // 升级会员图标
+  list.push({
+    index: REFERENCE_VALUE + 4,
+    name: 'upgrade-member',
+  });
 
   // 商城图标
   list.push({
@@ -142,6 +153,11 @@ function openMall() {
   // window.open(mallUrl, '_blank');
   window.open('http://192.168.8.12:3000/pages/index/cart', '_blank');
 }
+
+/** 打开升级会员页面 */
+function openUpgradeMember() {
+  router.push('/member/upgrade');
+}
 </script>
 
 <template>
@@ -181,6 +197,16 @@ function openMall() {
             :menus="accessStore.accessMenus"
             class="mr-1 sm:mr-4"
           />
+        </template>
+
+        <template v-else-if="slot.name === 'upgrade-member'">
+          <div
+            class="mr-2 flex cursor-pointer items-center gap-1 rounded-md bg-orange-100 px-2 py-1 text-orange-600 transition-colors hover:bg-orange-200"
+            @click="openUpgradeMember"
+          >
+            <CrownIcon class="size-4" />
+            <span class="text-xs font-medium">升级会员</span>
+          </div>
         </template>
 
         <template v-else-if="slot.name === 'mall'">
