@@ -1,73 +1,57 @@
 <script setup>
-import { reactive, ref } from 'vue';
-import { useVbenDrawer } from '@vben/common-ui';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import {ref} from 'vue';
+import {useVbenDrawer} from '@vben/common-ui';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {getAbnormalStudentDetailList} from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/dormCheckReport/data.js';
 
 const currentRow = ref({});
 
 const columns = [
-  { type: 'seq', width: 60, title: '序号' },
-  { field: 'studentName', title: '学生姓名', minWidth: 120 },
-  { field: 'studentNo', title: '学号', minWidth: 150 },
-  { field: 'dormNo', title: '宿舍号', minWidth: 100 },
-  { field: 'abnormalType', title: '异常类型', minWidth: 120 },
-  { field: 'abnormalDate', title: '异常日期', minWidth: 120 },
-  { field: 'remark', title: '备注', minWidth: 150 },
+  {type: 'seq', width: 60, title: '序号'},
+  {field: 'studentName', title: '学生姓名', minWidth: 120},
+  {field: 'studentNo', title: '学号', minWidth: 150},
+  {field: 'dormNo', title: '宿舍号', minWidth: 100},
+  {field: 'abnormalType', title: '异常类型', minWidth: 120},
+  {field: 'abnormalDate', title: '异常日期', minWidth: 120},
+  {field: 'remark', title: '备注', minWidth: 150},
 ];
 
-const generateFullList = () => {
-  const list = [];
-  for (let i = 1; i <= 18; i++) {
-    list.push({
-      id: i,
-      studentName: `学生${i}`,
-      studentNo: `2024${String(i).padStart(3, '0')}`,
-      dormNo: `${Math.floor(Math.random() * 500) + 100}`,
-      abnormalType: ['迟到', '缺勤', '请假未归'][Math.floor(Math.random() * 3)],
-      abnormalDate: `2026-04-${Math.floor(Math.random() * 30) + 1}`,
-      remark: i % 2 === 0 ? '已通知家长' : '待处理',
-    });
-  }
-  return list;
-};
-const fullList = generateFullList();
-
+// 使用文件1中的接口
 const fetchData = async (params) => {
-  const { currentPage, pageSize } = params;
-  const start = (currentPage - 1) * pageSize;
-  const list = fullList.slice(start, start + pageSize);
-  return { list, total: fullList.length };
+  // params 格式: { page: { currentPage, pageSize } }
+  const pageNo = params.page?.currentPage || 1;
+  const pageSize = params.page?.pageSize || 10;
+  const res = await getAbnormalStudentDetailList({
+    className: currentRow.value.className,
+    pageNo,
+    pageSize,
+  });
+  if (res.code === 200) {
+    return {
+      list: res.data.list,
+      total: res.data.total,
+    };
+  } else {
+    console.error('获取考勤异常学生明细失败', res.msg);
+    return {list: [], total: 0};
+  }
 };
-
-const dataObj = reactive({
-  totalShow: false,
-  detailObj: {},
-  total: 0,
-  currentPage: 1,
-  pageSize: 10,
-  list: [],
-  loading: false,
-});
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns,
     proxyConfig: {
       ajax: {
-        query: async ({page}) => {
-          const res = await fetchData({
-            className: currentRow.value.className,
-            currentPage: page.currentPage,
-            pageSize: page.pageSize
-          });
-          dataObj.total = res.total;
-          dataObj.list = res.list;
-          return res;
-        },
+        query: async ({page}) => await fetchData({page}),
       },
     },
     rowConfig: {keyField: 'id'},
-    pagerConfig: dataObj,
+    pagerConfig: {
+      totalShow: true,
+      total: 0,
+      currentPage: 1,
+      pageSize: 10,
+    },
     toolbarConfig: {refresh: true},
   },
   showSearchForm: false,
@@ -84,7 +68,7 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
 const open = async (row) => {
   currentRow.value = row;
   detailDrawerApi.open();
-  setTimeout(() => gridApi.query(), 100);
+  await gridApi.query(); // 确保数据刷新
 };
 
 const close = () => detailDrawerApi.close();

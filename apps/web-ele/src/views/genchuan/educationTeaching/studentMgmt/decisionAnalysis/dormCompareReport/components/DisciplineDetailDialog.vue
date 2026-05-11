@@ -1,7 +1,8 @@
 <script setup>
-import {reactive, ref} from 'vue';
+import { ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getDisciplineDetailList } from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/dormCompareReport/data.js';
 
 const currentRow = ref({});
 
@@ -14,34 +15,25 @@ const columns = [
   { field: 'remark', title: '备注', minWidth: 120 },
 ];
 
-// 获取宿舍纪律明细（模拟数据）
+// 使用文件1中的接口
 const fetchData = async (params) => {
-  // TODO: 替换为真实API
-  // return requestClient.get('/studentmgmt/dorm-compare-report/discipline-detail', { params });
-  console.log('请求宿舍纪律明细:', params);
-  const mockList = [];
-  for (let i = 1; i <= 5; i++) {
-    mockList.push({
-      id: i,
-      checkDate: `2026-04-${i * 3}`,
-      score: (Math.random() * 30 + 60).toFixed(1),
-      inspector: ['值班老师', '宿管员'][Math.floor(Math.random() * 2)],
-      violation: i % 2 === 0 ? '晚归' : '卫生不合格',
-      remark: i % 2 === 0 ? '已教育' : '已整改',
-    });
+  const pageNo = params.page?.currentPage || 1;
+  const pageSize = params.page?.pageSize || 10;
+  const res = await getDisciplineDetailList({
+    dormNo: currentRow.value.dormNo,
+    pageNo,
+    pageSize,
+  });
+  if (res.code === 200) {
+    return {
+      list: res.data.list,
+      total: res.data.total,
+    };
+  } else {
+    console.error('获取宿舍纪律明细失败', res.msg);
+    return { list: [], total: 0 };
   }
-  return { list: mockList, total: mockList.length };
 };
-
-const dataObj = reactive({
-  totalShow: false,
-  detailObj: {},
-  total: 0,
-  currentPage: 1,
-  pageSize: 10,
-  list: [],
-  loading: false,
-});
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -49,12 +41,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({ page }) =>
-          await fetchData({ dormNo: currentRow.value.dormNo, ...page }),
+        query: async ({ page }) => await fetchData({ page }),
       },
     },
     rowConfig: { keyField: 'id', isHover: true },
-    pagerConfig: dataObj,
+    pagerConfig: {
+      totalShow: true,
+      total: 0,
+      currentPage: 1,
+      pageSize: 10,
+    },
     toolbarConfig: { refresh: true },
     showOverflow: true,
   },
@@ -73,7 +69,7 @@ const open = async (row) => {
   if (!row) return;
   currentRow.value = row;
   drawerApi.open();
-  setTimeout(() => gridApi.query(), 100);
+  await gridApi.query();
 };
 
 const close = () => drawerApi.close();

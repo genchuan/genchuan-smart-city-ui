@@ -1,7 +1,8 @@
 <script setup>
-import {reactive, ref} from 'vue';
+import { reactive, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getDormHealthDetailList } from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/dormCompareReport/data.js';
 
 const currentRow = ref({});
 
@@ -13,31 +14,33 @@ const columns = [
   { field: 'remark', title: '备注', minWidth: 150 },
 ];
 
-// 获取宿舍卫生明细（模拟数据）
+// 使用文件1的接口（动态生成模拟数据，保证任何宿舍号都有数据）
 const fetchData = async (params) => {
-  // TODO: 替换为真实API
-  // return requestClient.get('/studentmgmt/dorm-compare-report/health-detail', { params });
-  console.log('请求宿舍卫生明细:', params);
-  const mockList = [];
-  for (let i = 1; i <= 7; i++) {
-    mockList.push({
-      id: i,
-      checkDate: `2026-04-${String(i).padStart(2, '0')}`,
-      score: (Math.random() * 50 + 50).toFixed(1),
-      inspector: ['值班老师', '宿管员', '学生会'][Math.floor(Math.random() * 3)],
-      remark: i % 2 === 0 ? '地面干净' : '物品摆放整齐',
-    });
+  // params 结构: { page: { currentPage, pageSize } }
+  const pageNo = params.page?.currentPage || 1;
+  const pageSize = params.page?.pageSize || 10;
+  const res = await getDormHealthDetailList({
+    dormNo: currentRow.value.dormNo,
+    pageNo,
+    pageSize,
+  });
+  if (res.code === 200) {
+    return {
+      list: res.data.list,
+      total: res.data.total,
+    };
+  } else {
+    console.error('获取宿舍卫生明细失败', res.msg);
+    return { list: [], total: 0 };
   }
-  return { list: mockList, total: mockList.length };
 };
 
+// 分页配置（保持与您原代码一致的 reactive 对象，但开启 totalShow）
 const dataObj = reactive({
-  totalShow: false,
-  detailObj: {},
+  totalShow: true,    // 改为 true，显示总条数
   total: 0,
   currentPage: 1,
   pageSize: 10,
-  list: [],
   loading: false,
 });
 
@@ -47,13 +50,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({ page }) =>
-          await fetchData({ dormNo: currentRow.value.dormNo, ...page }),
+        query: async ({page}) => await fetchData({page}),
       },
     },
-    rowConfig: { keyField: 'id', isHover: true },
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true },
+    toolbarConfig: {refresh: true},
     showOverflow: true,
   },
   showSearchForm: false,
@@ -71,19 +73,19 @@ const open = async (row) => {
   if (!row) return;
   currentRow.value = row;
   drawerApi.open();
-  setTimeout(() => gridApi.query(), 100);
+  await gridApi.query();  // 确保数据刷新
 };
 
 const close = () => drawerApi.close();
 
-defineExpose({ open, close });
+defineExpose({open, close});
 </script>
 
 <template>
   <Drawer title="宿舍卫生评比明细" class="genchuan-detail-drawer">
     <div class="detail-container">
       <div class="info-bar">宿舍号：{{ currentRow.dormNo }}</div>
-      <Grid />
+      <Grid/>
     </div>
   </Drawer>
 </template>
@@ -92,6 +94,7 @@ defineExpose({ open, close });
 .detail-container {
   padding: 10px;
 }
+
 .info-bar {
   margin-bottom: 12px;
   font-size: 14px;

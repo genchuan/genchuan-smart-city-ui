@@ -1,7 +1,8 @@
 <script setup>
-import {ref} from 'vue';
-import {useVbenDrawer} from '@vben/common-ui';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import { ref } from 'vue';
+import { useVbenDrawer } from '@vben/common-ui';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getCivilizedBehaviorDetailList } from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/moralReport/data.js';
 
 const currentRow = ref({});
 
@@ -14,22 +15,25 @@ const columns = [
   {field: 'remark', title: '备注', minWidth: 150},
 ];
 
-// 获取文明行为评比记录（模拟数据）
+// 使用文件1中的接口
 const fetchData = async (params) => {
-  // TODO: 替换为真实API
-  console.log('请求文明行为评比记录:', params);
-  const mockList = [];
-  for (let i = 1; i <= 4; i++) {
-    mockList.push({
-      id: i,
-      evaluateDate: `2026-04-${i * 5}`,
-      score: (Math.random() * 30 + 60).toFixed(1),
-      inspector: ['德育处', '学生处', '值周教师'][Math.floor(Math.random() * 3)],
-      items: '文明礼仪、卫生保持、纪律遵守',
-      remark: i % 2 === 0 ? '表现优秀' : '有待提升',
-    });
+  // params 可能包含 { className, page: { currentPage, pageSize } }
+  const pageNo = params.page?.currentPage || 1;
+  const pageSize = params.page?.pageSize || 10;
+  const res = await getCivilizedBehaviorDetailList({
+    className: currentRow.value.className,
+    pageNo,
+    pageSize,
+  });
+  if (res.code === 200) {
+    return {
+      list: res.data.list,
+      total: res.data.total,
+    };
+  } else {
+    console.error('获取文明行为评比明细失败', res.msg);
+    return {list: [], total: 0};
   }
-  return {list: mockList, total: mockList.length};
 };
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -38,21 +42,25 @@ const [Grid, gridApi] = useVbenVxeGrid({
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({page}) =>
-          await fetchData({className: currentRow.value.className, ...page}),
+        query: async ({page}) => await fetchData({page}),
       },
     },
     rowConfig: {keyField: 'id', isHover: true},
-    pagerConfig: {},
+    pagerConfig: {
+      totalShow: true,
+      total: 0,
+      currentPage: 1,
+      pageSize: 10,
+    },
     toolbarConfig: {refresh: true},
     showOverflow: true,
   },
   showSearchForm: false,
 });
 
-// 使用 Drawer 替代 Modal
+// 使用 Drawer
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
-  modal: false,      // 非模态，支持同时打开多个
+  modal: false,
   appendToMain: true,
   footer: false,
   width: 800,
@@ -63,7 +71,7 @@ const open = async (row) => {
   if (!row) return;
   currentRow.value = row;
   detailDrawerApi.open();
-  setTimeout(() => gridApi.query(), 100);
+  await gridApi.query(); // 确保数据刷新
 };
 
 const close = () => detailDrawerApi.close();

@@ -1,4 +1,3 @@
-<!-- 新增文件: components/RadarChart.vue (雷达图组件) -->
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import * as echarts from 'echarts';

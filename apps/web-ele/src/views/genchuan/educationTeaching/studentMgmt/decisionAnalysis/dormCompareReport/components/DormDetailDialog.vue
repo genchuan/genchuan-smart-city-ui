@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useVbenModal } from '@vben/common-ui';
 import { ElMessage, ElLoading } from 'element-plus';
+import { getDormCompareDetail } from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/dormCompareReport/data.js';
 
 const currentRow = ref({});
 
@@ -16,25 +17,6 @@ const detailData = ref({
   civilizedDormTitle: '',
   assessRank: 0,
 });
-
-// 获取宿舍评比明细（模拟数据，预留真实接口）
-const fetchDetail = async (row) => {
-  // TODO: 替换为真实API
-  // return requestClient.get('/studentmgmt/dorm-compare-report/dorm-detail', { params: { id: row.id } });
-  console.log('请求宿舍评比明细:', row);
-  await new Promise(resolve => setTimeout(resolve, 300));
-  return {
-    dormNo: row.dormNo,
-    buildingName: row.buildingName,
-    floor: row.floor,
-    className: row.className,
-    totalAssessScore: row.totalAssessScore || 0,
-    healthScore: row.healthScore || 0,
-    disciplineScore: row.disciplineScore || 0,
-    civilizedDormTitle: row.civilizedDormTitle || '',
-    assessRank: row.assessRank || 0,
-  };
-};
 
 const [Modal, modal] = useVbenModal({
   title: '宿舍评比明细',
@@ -51,9 +33,14 @@ const open = async (row) => {
   currentRow.value = row;
   const loadingInstance = ElLoading.service({ text: '加载中...' });
   try {
-    const data = await fetchDetail(row);
-    detailData.value = data;
-    modal.open();
+    // 调用文件1中的接口，根据报表ID获取明细
+    const res = await getDormCompareDetail({ id: row.id });
+    if (res.code === 200) {
+      detailData.value = res.data;
+      modal.open();
+    } else {
+      ElMessage.error(res.msg || '获取明细失败');
+    }
   } catch (error) {
     console.error('加载宿舍评比明细失败:', error);
     ElMessage.error('加载失败');

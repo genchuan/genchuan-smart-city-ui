@@ -96,8 +96,8 @@ export const generateMockReportList = (filters = {}) => {
   return filtered;
 };
 
-// ==================== 列表页交互操作接口 ====================
 
+// ==================== 列表页交互操作接口 ====================
 /**
  * 分页查询德育评比报表列表
  * @param {object} params - 请求参数
@@ -170,8 +170,8 @@ export function exportMoralReport(params) {
   });
 }
 
-// ==================== 列表行交互操作接口 ====================
 
+// ==================== 列表行交互操作接口 ====================
 /**
  * 获取德育评比报表详情（查看抽屉弹窗）
  * @param {object} params - 请求参数
@@ -187,29 +187,290 @@ export function getMoralReportDetail(params) {
   });
 }
 
-// ==================== 数据可视化图表接口 ====================
+/**
+ * 分页查询文明行为评比明细列表
+ * @param {object} params - 请求参数
+ * @param {string} [params.className] - 班级名称
+ * @param {string} [params.campus] - 校区
+ * @param {number} [params.pageNo=1] - 页码
+ * @param {number} [params.pageSize=10] - 每页条数
+ * @returns {Promise}
+ */
+export function getCivilizedBehaviorDetailList(params) {
+  return requestClient.get('/studentmgmt/moral-report/civilized-behavior-detail', { params }).catch(err => {
+    console.warn('文明行为评比明细接口失败，使用模拟数据', err);
+    // 生成模拟文明行为评比明细数据
+    const campuses = ['丰泽校区', '洛江校区', '鲤城校区'];
+    const classNames = [
+      '计算机2201班', '计算机2202班', '软件工程2301班', '软件工程2302班',
+      '大数据2401班', '人工智能2401班', '网络工程2201班', '计算机2303班',
+    ];
+    const inspectors = ['德育处', '学生处', '值周教师', '年段长'];
+    const itemsOptions = [
+      '文明礼仪、卫生保持、纪律遵守',
+      '语言文明、仪容仪表、课间秩序',
+      '尊师爱友、环境保洁、考勤',
+      '文明行为、公物爱护、安全规范'
+    ];
+    const remarks = ['表现优秀', '有待提升', '进步明显', '需加强文明礼仪', '整体良好'];
 
+    // 构建全量模拟数据（总共48条，每个班级至少6条）
+    const allMockData = [];
+    for (let i = 1; i <= 48; i++) {
+      const className = classNames[(i - 1) % classNames.length];
+      allMockData.push({
+        id: i,
+        evaluateDate: `2026-04-${String(((i - 1) % 28) + 1).padStart(2, '0')}`,
+        score: (Math.random() * 30 + 65).toFixed(1),
+        inspector: inspectors[Math.floor(Math.random() * inspectors.length)],
+        items: itemsOptions[Math.floor(Math.random() * itemsOptions.length)],
+        remark: remarks[Math.floor(Math.random() * remarks.length)],
+        className,
+        campus: campuses[(i - 1) % campuses.length],
+        createTime: Date.now() - Math.random() * 30 * 86400000,
+      });
+    }
+
+    // 应用筛选条件
+    let filtered = allMockData;
+    if (params?.className) {
+      filtered = filtered.filter(item => item.className.includes(params.className));
+    }
+    if (params?.campus) {
+      filtered = filtered.filter(item => item.campus === params.campus);
+    }
+
+    // 分页
+    const pageNo = params?.pageNo || 1;
+    const pageSize = params?.pageSize || 10;
+    const total = filtered.length;
+    const start = (pageNo - 1) * pageSize;
+    const list = filtered.slice(start, start + pageSize);
+
+    return Promise.resolve({
+      code: 200,
+      data: { list, total, pageNo, pageSize },
+      msg: '成功',
+    });
+  });
+}
+
+/**
+ * 获取班级德育明细（单个班级的德育各分项得分）
+ * @param {object} params - 请求参数
+ * @param {string} params.className - 班级名称（必填）
+ * @returns {Promise}
+ */
+export function getMoralClassDetail(params) {
+  return requestClient.get('/studentmgmt/moral-report/class-detail', { params }).catch(err => {
+    console.warn('班级德育明细接口失败，使用模拟数据', err);
+    // 从已有的报表模拟数据中查找匹配班级的记录
+    const allData = generateMockReportList();
+    let target = allData.find(item => item.className === params.className);
+    // 若未找到，则生成一条默认数据
+    if (!target) {
+      target = {
+        className: params.className || '未知班级',
+        totalMoralScore: (Math.random() * 40 + 60).toFixed(1),
+        goodDeedScore: (Math.random() * 50).toFixed(1),
+        civilizedBehaviorScore: (Math.random() * 50).toFixed(1),
+        assessRank: Math.floor(Math.random() * 50) + 1,
+        civilizedClassTitle: ['文明班级', '优秀班级', '先进班集体', ''][Math.floor(Math.random() * 4)],
+      };
+    }
+    return Promise.resolve({
+      code: 200,
+      data: {
+        className: target.className,
+        totalMoralScore: target.totalMoralScore,
+        goodDeedScore: target.goodDeedScore,
+        civilizedBehaviorScore: target.civilizedBehaviorScore,
+        assessRank: target.assessRank,
+        civilizedClassTitle: target.civilizedClassTitle || '',
+      },
+      msg: '成功',
+    });
+  });
+}
+
+/**
+ * 分页查询好人好事记录明细列表
+ * @param {object} params - 请求参数
+ * @param {string} [params.className] - 班级名称
+ * @param {string} [params.campus] - 校区
+ * @param {number} [params.pageNo=1] - 页码
+ * @param {number} [params.pageSize=10] - 每页条数
+ * @returns {Promise}
+ */
+export function getGoodDeedList(params) {
+  return requestClient.get('/studentmgmt/moral-report/good-deed-list', { params }).catch(err => {
+    console.warn('好人好事记录明细接口失败，使用模拟数据', err);
+    // 生成模拟好人好事记录数据
+    const campuses = ['丰泽校区', '洛江校区', '鲤城校区'];
+    const classNames = [
+      '计算机2201班', '计算机2202班', '软件工程2301班', '软件工程2302班',
+      '大数据2401班', '人工智能2401班', '网络工程2201班', '计算机2303班',
+    ];
+    const eventNames = ['拾金不昧', '助人为乐', '义务劳动', '爱心捐赠', '见义勇为', '环保卫士'];
+    const recorders = ['班主任', '德育处', '班长', '学生处', '年段长'];
+
+    // 构建全量模拟数据（总共60条）
+    const allMockData = [];
+    for (let i = 1; i <= 60; i++) {
+      const className = classNames[(i - 1) % classNames.length];
+      allMockData.push({
+        id: i,
+        eventDate: `2026-04-${String(((i - 1) % 28) + 1).padStart(2, '0')}`,
+        eventName: eventNames[Math.floor(Math.random() * eventNames.length)],
+        score: (Math.random() * 10 + 5).toFixed(1),
+        recorder: recorders[Math.floor(Math.random() * recorders.length)],
+        className,
+        campus: campuses[(i - 1) % campuses.length],
+        createTime: Date.now() - Math.random() * 30 * 86400000,
+      });
+    }
+
+    // 应用筛选条件
+    let filtered = allMockData;
+    if (params?.className) {
+      filtered = filtered.filter(item => item.className.includes(params.className));
+    }
+    if (params?.campus) {
+      filtered = filtered.filter(item => item.campus === params.campus);
+    }
+
+    // 分页
+    const pageNo = params?.pageNo || 1;
+    const pageSize = params?.pageSize || 10;
+    const total = filtered.length;
+    const start = (pageNo - 1) * pageSize;
+    const list = filtered.slice(start, start + pageSize);
+
+    return Promise.resolve({
+      code: 200,
+      data: { list, total, pageNo, pageSize },
+      msg: '成功',
+    });
+  });
+}
+
+
+// ==================== 数据可视化图表接口 ====================
 /**
  * 德育评比统计看板（柱状图：班级德育得分排名、各校区文明班级数量）
  * @param {object} params - 请求参数
  * @param {string} params.reportPeriod - 报表周期（必填）
  * @param {string} params.statisticalPeriod - 统计时段（必填）
- * @param {string} params.campus - 校区（必填）
  * @returns {Promise}
  */
 export function getMoralReportChart(params) {
   return requestClient.get('/studentmgmt/moral-report/chart', { params }).catch(err => {
     console.warn('图表接口失败，使用模拟数据', err);
-    // 班级德育得分排名
+    // 根据请求参数生成有差异的模拟数据
+    const { reportPeriod = '月报', statisticalPeriod = '' } = params;
+    console.log('[道德模拟] 周期:', reportPeriod, '时段:', statisticalPeriod);
+
+    // ------------------- 1. 班级德育得分排名 -------------------
+    let classNames = [];
+    let totalScores = [];
+
+    switch (reportPeriod) {
+      case '日报':
+        classNames = ['计算机2301班', '软件2301班', '大数据2401班', '人工智能2401班', '网络2301班'];
+        totalScores = [92.5, 90.0, 88.5, 85.0, 83.5];
+        break;
+      case '周报':
+        classNames = ['软件2301班', '计算机2301班', '人工智能2401班', '大数据2401班', '网络2301班'];
+        totalScores = [97.0, 95.5, 94.0, 92.0, 89.5];
+        break;
+      case '月报':
+        classNames = ['计算机2301班', '软件2301班', '大数据2401班', '人工智能2401班'];
+        totalScores = [99.0, 98.0, 96.5, 95.0];
+        break;
+      case '季报':
+        classNames = ['人工智能2401班', '计算机2301班', '软件2301班', '大数据2401班', '网络2301班', '物联网2401班'];
+        totalScores = [98.5, 97.0, 96.0, 94.5, 92.0, 90.0];
+        break;
+      case '半年报':
+        classNames = ['大数据2401班', '人工智能2401班', '计算机2301班', '软件2301班', '物联网2401班'];
+        totalScores = [99.5, 98.5, 97.5, 96.0, 94.0];
+        break;
+      case '年报':
+        classNames = ['计算机2301班', '大数据2401班', '人工智能2401班', '软件2301班', '物联网2401班', '网络2301班'];
+        totalScores = [100.0, 98.5, 98.0, 97.0, 95.5, 94.0];
+        break;
+      case '自定义报表':
+        classNames = ['软件2301班', '大数据2401班', '计算机2301班'];
+        totalScores = [88.0, 85.5, 84.0];
+        break;
+      default:
+        classNames = ['计算机2301班', '软件2301班', '大数据2401班', '人工智能2401班'];
+        totalScores = [95.0, 94.0, 93.0, 92.0];
+    }
+
+    // 添加小扰动
+    const perturbedScores = totalScores.map(s => {
+      let perturb = (Math.random() - 0.5) * 1.5;
+      return Math.min(100, Math.max(60, s + perturb)).toFixed(1);
+    });
+
     const classRankData = {
-      className: ['计算机2301班', '软件2301班', '大数据2401班', '人工智能2401班'],
-      totalScore: [99.0, 98.0, 96.5, 95.0],
+      className: classNames,
+      totalScore: perturbedScores,
     };
-    // 各校区文明班级数量统计
+
+    // ------------------- 2. 各校区文明班级数量统计 -------------------
+    let campuses = [];
+    let counts = [];
+
+    switch (reportPeriod) {
+      case '日报':
+        campuses = ['丰泽校区', '洛江校区', '鲤城校区', '台商校区'];
+        counts = [5, 3, 2, 1];
+        break;
+      case '周报':
+        campuses = ['丰泽校区', '洛江校区', '鲤城校区'];
+        counts = [12, 10, 8];
+        break;
+      case '月报':
+        campuses = ['丰泽校区', '洛江校区', '鲤城校区'];
+        counts = [20, 15, 12];
+        break;
+      case '季报':
+        campuses = ['丰泽校区', '洛江校区', '鲤城校区', '台商校区'];
+        counts = [35, 28, 22, 10];
+        break;
+      case '半年报':
+        campuses = ['丰泽校区', '洛江校区', '鲤城校区'];
+        counts = [58, 46, 38];
+        break;
+      case '年报':
+        campuses = ['丰泽校区', '洛江校区', '鲤城校区', '台商校区', '晋江校区'];
+        counts = [110, 95, 82, 45, 30];
+        break;
+      case '自定义报表':
+        campuses = ['丰泽校区', '洛江校区'];
+        counts = [7, 5];
+        break;
+      default:
+        campuses = ['丰泽校区', '洛江校区', '鲤城校区'];
+        counts = [15, 12, 10];
+    }
+
+    // 添加小扰动
+    const perturbedCounts = counts.map(c => {
+      let perturb = Math.floor((Math.random() - 0.5) * 2);
+      return Math.max(0, c + perturb);
+    });
+
     const campusCivilizedData = {
-      campus: ['丰泽校区', '洛江校区', '鲤城校区'],
-      count: [20, 15, 12],
+      campus: campuses,
+      count: perturbedCounts,
     };
+
+    console.log('[道德模拟] 班级排名数据:', classRankData);
+    console.log('[道德模拟] 校区文明数据:', campusCivilizedData);
+
     return Promise.resolve({
       code: 200,
       data: { classRankData, campusCivilizedData },

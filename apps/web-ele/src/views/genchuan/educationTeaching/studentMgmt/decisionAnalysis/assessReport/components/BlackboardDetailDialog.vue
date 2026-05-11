@@ -1,44 +1,48 @@
 <script setup>
-import { reactive, ref, watch } from 'vue';
-import {useVbenDrawer} from '@vben/common-ui';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import { reactive, ref } from 'vue';
+import { useVbenDrawer } from '@vben/common-ui';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getBlackboardDetailList } from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/assessReport/data.js';
 
 const currentRow = ref({});
 
 const columns = [
-  {type: 'seq', width: 60, title: '序号'},
-  {field: 'evaluateDate', title: '评比日期', minWidth: 120},
-  {field: 'score', title: '得分', minWidth: 100, sortable: true},
-  {field: 'inspector', title: '评比人', minWidth: 100},
-  {field: 'theme', title: '主题', minWidth: 120},
-  {field: 'comment', title: '点评', minWidth: 150},
+  { type: 'seq', width: 60, title: '序号' },
+  { field: 'evaluateDate', title: '评比日期', minWidth: 120 },
+  { field: 'score', title: '得分', minWidth: 100, sortable: true },
+  { field: 'inspector', title: '评比人', minWidth: 100 },
+  { field: 'theme', title: '主题', minWidth: 120 },
+  { field: 'comment', title: '点评', minWidth: 150 },
 ];
 
+// 使用文件1中的接口，并适配分页参数格式
 const fetchData = async (params) => {
-  console.log('请求黑板报明细:', params);
-  // TODO: 替换为真实API
-  // return requestClient.get('/studentmgmt/assess-report/blackboard-detail', { params });
-  const mockList = [];
-  for (let i = 1; i <= 4; i++) {
-    mockList.push({
-      id: i,
-      evaluateDate: `2026-04-${i * 7}`,
-      score: (Math.random() * 30).toFixed(1),
-      inspector: ['美术老师', '德育处'][Math.floor(Math.random() * 2)],
-      theme: ['安全主题', '环保主题', '节日主题'][Math.floor(Math.random() * 3)],
-      comment: '内容丰富，版面美观',
-    });
+  // params 格式：{ page: { currentPage, pageSize } }
+  const pageNo = params.page?.currentPage || 1;
+  const pageSize = params.page?.pageSize || 10;
+  const res = await getBlackboardDetailList({
+    className: currentRow.value.className,
+    pageNo,
+    pageSize,
+  });
+  // 接口返回格式：{ code, data: { list, total } }
+  if (res.code === 200) {
+    return {
+      list: res.data.list,
+      total: res.data.total,
+    };
+  } else {
+    console.error('获取黑板报明细失败', res.msg);
+    return { list: [], total: 0 };
   }
-  return {list: mockList, total: mockList.length};
 };
 
+// 分页配置（vxe-grid 会自动管理，只需提供初始状态）
 const dataObj = reactive({
-  totalShow: false,
-  detailObj: {},
+  totalShow: true,
   total: 0,
   currentPage: 1,
   pageSize: 10,
-  list: [],
   loading: false,
 });
 
@@ -47,43 +51,42 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns,
     proxyConfig: {
       ajax: {
-        query: async ({page}) =>
-          await fetchData({className: currentRow.value.className, ...page}),
+        query: async ({ page }) => await fetchData({ page }),
       },
     },
-    rowConfig: {keyField: 'id'},
+    rowConfig: { keyField: 'id' },
     pagerConfig: dataObj,
-    toolbarConfig: {refresh: true},
+    toolbarConfig: { refresh: true },
   },
   showSearchForm: false,
 });
 
-// 使用 Drawer 替代 Modal
+// 使用 Drawer
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
-  modal: false,      // 非模态，支持同时打开多个
+  modal: false,
   appendToMain: true,
   footer: false,
   width: 800,
   onCancel: () => detailDrawerApi.close(),
-  // 可以添加 class 样式，但推荐在模板上添加
 });
 
 const open = async (row) => {
   currentRow.value = row;
   detailDrawerApi.open();
-  setTimeout(() => gridApi.query(), 100);
+  // 打开后刷新表格数据
+  await gridApi.query();
 };
 
 const close = () => detailDrawerApi.close();
 
-defineExpose({open, close});
+defineExpose({ open, close });
 </script>
 
 <template>
   <DetailDrawer title="黑板报评比明细" class="genchuan-detail-drawer">
     <div class="detail-container">
       <div class="info-bar">班级：{{ currentRow.className }}</div>
-      <Grid/>
+      <Grid />
     </div>
   </DetailDrawer>
 </template>
