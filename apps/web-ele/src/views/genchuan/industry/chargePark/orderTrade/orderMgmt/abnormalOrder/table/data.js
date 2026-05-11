@@ -249,18 +249,6 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'reserve1',
-      title: '备用字段1',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'reserve2',
-      title: '备用字段2',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
       field: 'creator',
       title: '创建者',
       minWidth: 120,
