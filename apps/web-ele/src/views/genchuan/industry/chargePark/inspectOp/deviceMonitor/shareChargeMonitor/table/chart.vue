@@ -94,7 +94,7 @@ const mapData = computed(() => {
   }
 
   const located = {
-    id: d.id || d.deviceCode,
+    id: d.id || d.deviceCode || d?.deviceId,
     deviceCode: d.deviceCode || '目标设备',
     stationName: d.stationName || '-',
     regionName: d.regionName || '-',

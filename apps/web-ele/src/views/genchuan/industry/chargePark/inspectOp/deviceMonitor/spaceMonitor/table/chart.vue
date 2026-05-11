@@ -110,7 +110,7 @@ const mapData = computed(() => {
   }
 
   const located = {
-    id: s.id || s.spaceCode,
+    id: s.id || s.spaceCode || s?.spaceId,
     spaceCode: s.spaceCode || '目标车位',
     stationName: s.stationName || '-',
     regionName: s.regionName || '-',
