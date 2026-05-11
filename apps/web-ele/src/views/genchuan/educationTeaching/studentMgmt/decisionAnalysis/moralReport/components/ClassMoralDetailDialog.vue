@@ -1,7 +1,8 @@
 <script setup>
-import { ref } from 'vue';
-import { useVbenModal } from '@vben/common-ui';
-import { ElMessage, ElLoading } from 'element-plus';
+import {ref} from 'vue';
+import {useVbenModal} from '@vben/common-ui';
+import {ElMessage, ElLoading} from 'element-plus';
+import {getMoralClassDetail} from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/moralReport/data.js';
 
 const currentRow = ref({});
 
@@ -13,22 +14,6 @@ const detailData = ref({
   assessRank: 0,
   civilizedClassTitle: '',
 });
-
-// 获取德育明细（模拟数据，预留真实接口）
-const fetchDetail = async (row) => {
-  // TODO: 替换为真实API
-  // return requestClient.get('/studentmgmt/moral-report/class-detail', { params: { id: row.id } });
-  console.log('请求班级德育明细:', row);
-  await new Promise(resolve => setTimeout(resolve, 300));
-  return {
-    className: row.className,
-    totalMoralScore: row.totalMoralScore || 0,
-    goodDeedScore: row.goodDeedScore || 0,
-    civilizedBehaviorScore: row.civilizedBehaviorScore || 0,
-    assessRank: row.assessRank || 0,
-    civilizedClassTitle: row.civilizedClassTitle || '',
-  };
-};
 
 const [Modal, modal] = useVbenModal({
   title: '班级德育明细',
@@ -43,11 +28,16 @@ const open = async (row) => {
     return;
   }
   currentRow.value = row;
-  const loadingInstance = ElLoading.service({ text: '加载中...' });
+  const loadingInstance = ElLoading.service({text: '加载中...'});
   try {
-    const data = await fetchDetail(row);
-    detailData.value = data;
-    modal.open();
+    // 调用文件1中的接口，根据班级名称获取明细
+    const res = await getMoralClassDetail({className: row.className});
+    if (res.code === 200) {
+      detailData.value = res.data;
+      modal.open();
+    } else {
+      ElMessage.error(res.msg || '获取明细失败');
+    }
   } catch (error) {
     console.error('加载班级德育明细失败:', error);
     ElMessage.error('加载失败');
@@ -56,7 +46,7 @@ const open = async (row) => {
   }
 };
 
-defineExpose({ open });
+defineExpose({open});
 </script>
 
 <template>
@@ -94,15 +84,18 @@ defineExpose({ open });
 .moral-detail {
   padding: 20px;
 }
+
 .detail-item {
   margin-bottom: 16px;
   font-size: 14px;
 }
+
 .label {
   display: inline-block;
   width: 110px;
   color: #606266;
 }
+
 .value {
   color: #303133;
   font-weight: 500;

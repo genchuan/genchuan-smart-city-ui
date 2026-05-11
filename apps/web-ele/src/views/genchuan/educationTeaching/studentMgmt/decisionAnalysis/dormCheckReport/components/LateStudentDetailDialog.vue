@@ -1,72 +1,57 @@
 <script setup>
-import {reactive, ref} from 'vue';
-import {useVbenDrawer} from '@vben/common-ui';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import { ref } from 'vue';
+import { useVbenDrawer } from '@vben/common-ui';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getLateStudentDetailList } from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/dormCheckReport/data.js';
 
 const currentRow = ref({});
 
 const columns = [
-  {type: 'seq', width: 60, title: '序号'},
-  {field: 'studentName', title: '学生姓名', minWidth: 120},
-  {field: 'studentNo', title: '学号', minWidth: 150},
-  {field: 'dormNo', title: '宿舍号', minWidth: 100},
-  {field: 'lateTime', title: '迟到时间', minWidth: 160},
-  {field: 'lateMinutes', title: '迟到时长(分钟)', minWidth: 120},
+  { type: 'seq', width: 60, title: '序号' },
+  { field: 'studentName', title: '学生姓名', minWidth: 120 },
+  { field: 'studentNo', title: '学号', minWidth: 150 },
+  { field: 'dormNo', title: '宿舍号', minWidth: 100 },
+  { field: 'lateTime', title: '迟到时间', minWidth: 160 },
+  { field: 'lateMinutes', title: '迟到时长(分钟)', minWidth: 120 },
 ];
 
-const generateFullList = () => {
-  const list = [];
-  for (let i = 1; i <= 8; i++) {
-    list.push({
-      id: i,
-      studentName: `学生${i}`,
-      studentNo: `2024${String(i).padStart(3, '0')}`,
-      dormNo: `${Math.floor(Math.random() * 500) + 100}`,
-      lateTime: `2026-04-${Math.floor(Math.random() * 30) + 1} 07:30:00`,
-      lateMinutes: Math.floor(Math.random() * 30) + 5,
-    });
-  }
-  return list;
-};
-const fullList = generateFullList();
-
+// 使用文件1中的接口
 const fetchData = async (params) => {
-  const {currentPage, pageSize} = params;
-  const start = (currentPage - 1) * pageSize;
-  const list = fullList.slice(start, start + pageSize);
-  return {list, total: fullList.length};
+  // params 格式: { page: { currentPage, pageSize } }
+  const pageNo = params.page?.currentPage || 1;
+  const pageSize = params.page?.pageSize || 10;
+  const res = await getLateStudentDetailList({
+    className: currentRow.value.className,
+    pageNo,
+    pageSize,
+  });
+  if (res.code === 200) {
+    return {
+      list: res.data.list,
+      total: res.data.total,
+    };
+  } else {
+    console.error('获取迟到学生明细失败', res.msg);
+    return { list: [], total: 0 };
+  }
 };
-
-const dataObj = reactive({
-  totalShow: false,
-  detailObj: {},
-  total: 0,
-  currentPage: 1,
-  pageSize: 10,
-  list: [],
-  loading: false,
-});
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns,
     proxyConfig: {
       ajax: {
-        query: async ({page}) => {
-          const res = await fetchData({
-            className: currentRow.value.className,
-            currentPage: page.currentPage,
-            pageSize: page.pageSize
-          });
-          dataObj.total = res.total;
-          dataObj.list = res.list;
-          return res;
-        },
+        query: async ({ page }) => await fetchData({ page }),
       },
     },
-    rowConfig: {keyField: 'id'},
-    pagerConfig: dataObj,
-    toolbarConfig: {refresh: true},
+    rowConfig: { keyField: 'id' },
+    pagerConfig: {
+      totalShow: true,
+      total: 0,
+      currentPage: 1,
+      pageSize: 10,
+    },
+    toolbarConfig: { refresh: true },
   },
   showSearchForm: false,
 });
@@ -82,19 +67,19 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
 const open = async (row) => {
   currentRow.value = row;
   detailDrawerApi.open();
-  setTimeout(() => gridApi.query(), 100);
+  await gridApi.query(); // 确保数据加载完成
 };
 
 const close = () => detailDrawerApi.close();
 
-defineExpose({open, close});
+defineExpose({ open, close });
 </script>
 
 <template>
   <DetailDrawer title="迟到学生明细" class="genchuan-detail-drawer">
     <div class="detail-container">
       <div class="info-bar">班级：{{ currentRow.className }}</div>
-      <Grid/>
+      <Grid />
     </div>
   </DetailDrawer>
 </template>

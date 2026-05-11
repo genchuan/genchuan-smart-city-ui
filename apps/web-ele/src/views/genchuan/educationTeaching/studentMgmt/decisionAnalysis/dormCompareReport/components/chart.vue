@@ -9,39 +9,107 @@ const loading = ref(false);
 
 // 宿舍得分排名数据
 const dormRankBarData = ref({
-  xAxis: [],      // 宿舍号列表
-  series: [],     // 得分列表
+  xAxis: [],
+  series: [],
 });
 
 // 各楼栋文明宿舍数量统计数据
 const buildingBarData = ref({
-  xAxis: [],      // 楼栋名称列表
-  series: [],     // 文明宿舍数量列表
+  xAxis: [],
+  series: [],
 });
 
-const fetchChartData = async () => {
+// 默认参数（初始加载使用）
+const defaultParams = {
+  reportPeriod: '月报',
+  statisticalPeriod: getDefaultStatisticalPeriod('月报'),
+  campus: '丰泽校区',
+};
+
+// 根据报表周期生成默认统计时段（与父组件保持一致）
+function getDefaultStatisticalPeriod(reportPeriod) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const date = now.getDate();
+  const pad = (n) => String(n).padStart(2, '0');
+
+  switch (reportPeriod) {
+    case '日报':
+      const todayStr = `${year}-${pad(month)}-${pad(date)}`;
+      return `${todayStr} 至 ${todayStr}`;
+    case '周报': {
+      const dayOfWeek = now.getDay();
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + mondayOffset);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const format = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      return `${format(monday)} 至 ${format(sunday)}`;
+    }
+    case '月报': {
+      const firstDay = `${year}-${pad(month)}-01`;
+      const lastDay = `${year}-${pad(month)}-${new Date(year, month, 0).getDate()}`;
+      return `${firstDay} 至 ${lastDay}`;
+    }
+    case '季报': {
+      const quarter = Math.ceil(month / 3);
+      const firstMonth = (quarter - 1) * 3 + 1;
+      const lastMonth = quarter * 3;
+      const firstDay = `${year}-${pad(firstMonth)}-01`;
+      const lastDay = `${year}-${pad(lastMonth)}-${new Date(year, lastMonth, 0).getDate()}`;
+      return `${firstDay} 至 ${lastDay}`;
+    }
+    case '半年报': {
+      const half = month <= 6 ? 1 : 2;
+      const firstMonth = half === 1 ? 1 : 7;
+      const lastMonth = half === 1 ? 6 : 12;
+      const firstDay = `${year}-${pad(firstMonth)}-01`;
+      const lastDay = `${year}-${pad(lastMonth)}-${new Date(year, lastMonth, 0).getDate()}`;
+      return `${firstDay} 至 ${lastDay}`;
+    }
+    case '年报':
+      return `${year}-01-01 至 ${year}-12-31`;
+    case '自定义报表':
+    default:
+      const end = new Date();
+      const start = new Date();
+      start.setDate(start.getDate() - 29);
+      const formatDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      return `${formatDate(start)} 至 ${formatDate(end)}`;
+  }
+}
+
+// 获取图表数据（支持传入自定义参数）
+const fetchChartData = async (customParams = null) => {
   loading.value = true;
   try {
-    // 实际参数应从父组件或当前筛选条件获取
-    const params = {
-      reportPeriod: '月报',
-      statisticalPeriod: '2026-04-01 至 2026-04-30',
-      campus: '丰泽校区',
-    };
+    let params = {...defaultParams};
+    if (customParams) {
+      params = {...params, ...customParams};
+      if (customParams.reportPeriod && !customParams.statisticalPeriod) {
+        params.statisticalPeriod = getDefaultStatisticalPeriod(customParams.reportPeriod);
+      }
+    }
     const response = await getDormCompareReportChart(params);
     const data = response?.data || response;
     if (data) {
-      // 宿舍得分排名
       if (data.dormRankData) {
         dormRankBarData.value.xAxis = data.dormRankData.dormNo || [];
-        dormRankBarData.value.series = [{ name: '评比总分', data: data.dormRankData.totalScore || [] }];
+        dormRankBarData.value.series = [{
+          name: '评比总分',
+          data: data.dormRankData.totalScore || []
+        }];
       } else {
         useMockData();
       }
-      // 各楼栋文明宿舍数量
       if (data.buildingCivilizedData) {
         buildingBarData.value.xAxis = data.buildingCivilizedData.buildingName || [];
-        buildingBarData.value.series = [{ name: '文明宿舍数量', data: data.buildingCivilizedData.count || [] }];
+        buildingBarData.value.series = [{
+          name: '文明宿舍数量',
+          data: data.buildingCivilizedData.count || []
+        }];
       } else {
         useMockData();
       }
@@ -56,29 +124,38 @@ const fetchChartData = async () => {
   }
 };
 
+// 本地应急模拟数据
 const useMockData = () => {
   dormRankBarData.value = {
     xAxis: ['101', '102', '103', '104'],
-    series: [{ name: '评比总分', data: [99.0, 98.0, 96.5, 95.0] }],
+    series: [{name: '评比总分', data: [99.0, 98.0, 96.5, 95.0]}],
   };
   buildingBarData.value = {
     xAxis: ['1号楼', '2号楼', '3号楼'],
-    series: [{ name: '文明宿舍数量', data: [15, 12, 8] }],
+    series: [{name: '文明宿舍数量', data: [15, 12, 8]}],
   };
 };
 
-// 柱状图点击事件
-const handleDormRankBarClick = (params) => {
-  emit('dormRankBarClick', { dormNo: params.xAxis, value: params.value });
+// ✅ 柱状图点击事件：接收柱子名称字符串，构造对象后向上传递
+const handleDormRankBarClick = (dormNo) => {
+  const seriesData = dormRankBarData.value.series[0]?.data || [];
+  const index = dormRankBarData.value.xAxis.findIndex(x => x === dormNo);
+  const value = index !== -1 ? seriesData[index] : null;
+  emit('dormRankBarClick', { dormNo, value });
 };
 
-const handleBuildingBarClick = (params) => {
-  emit('buildingBarClick', { buildingName: params.xAxis, value: params.value });
+const handleBuildingBarClick = (buildingName) => {
+  const seriesData = buildingBarData.value.series[0]?.data || [];
+  const index = buildingBarData.value.xAxis.findIndex(x => x === buildingName);
+  const value = index !== -1 ? seriesData[index] : null;
+  emit('buildingBarClick', { buildingName, value });
 };
 
-const refreshData = () => fetchChartData();
+const refreshData = (params = null) => {
+  fetchChartData(params);
+};
 
-defineExpose({ refreshData });
+defineExpose({refreshData});
 
 onMounted(() => {
   fetchChartData();
@@ -87,13 +164,14 @@ onMounted(() => {
 
 <template>
   <div v-loading="loading" class="dorm-chart-box">
+    <!-- ✅ 将 @click-point 改为 @barClick -->
     <Bar
       style="flex: 2 !important;"
       title="宿舍得分排名"
       :x-data="dormRankBarData.xAxis"
       :series-data="dormRankBarData.series"
       y-name="评比总分"
-      @click-point="handleDormRankBarClick"
+      @barClick="handleDormRankBarClick"
     />
     <Bar
       style="flex: 1 !important;"
@@ -101,7 +179,7 @@ onMounted(() => {
       :x-data="buildingBarData.xAxis"
       :series-data="buildingBarData.series"
       y-name="文明宿舍数量"
-      @click-point="handleBuildingBarClick"
+      @barClick="handleBuildingBarClick"
     />
   </div>
 </template>

@@ -18,14 +18,14 @@ const drillDownDialogRef = ref(null);
 const chartRef = ref(null);
 
 const reportCycleTabs = [
-  { label: '全部', value: '' },
-  { label: '日报', value: '日报' },
-  { label: '周报', value: '周报' },
-  { label: '月报', value: '月报' },
-  { label: '季报', value: '季报' },
-  { label: '半年报', value: '半年报' },
-  { label: '年报', value: '年报' },
-  { label: '自定义报表', value: '自定义报表' },
+  {label: '全部', value: ''},
+  {label: '日报', value: '日报'},
+  {label: '周报', value: '周报'},
+  {label: '月报', value: '月报'},
+  {label: '季报', value: '季报'},
+  {label: '半年报', value: '半年报'},
+  {label: '年报', value: '年报'},
+  {label: '自定义报表', value: '自定义报表'},
 ];
 
 const tabArray = ref(
@@ -65,11 +65,80 @@ const getCurrentTableRef = () => {
     : null;
 };
 
+// 根据报表周期生成统计时段字符串（与图表组件内部逻辑保持一致）
+const getStatisticalPeriodByReportCycle = (reportPeriod) => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const date = now.getDate();
+  const pad = (n) => String(n).padStart(2, '0');
+
+  switch (reportPeriod) {
+    case '日报':
+      const todayStr = `${year}-${pad(month)}-${pad(date)}`;
+      return `${todayStr} 至 ${todayStr}`;
+    case '周报': {
+      const dayOfWeek = now.getDay();
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + mondayOffset);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const format = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      return `${format(monday)} 至 ${format(sunday)}`;
+    }
+    case '月报': {
+      const firstDay = `${year}-${pad(month)}-01`;
+      const lastDay = `${year}-${pad(month)}-${new Date(year, month, 0).getDate()}`;
+      return `${firstDay} 至 ${lastDay}`;
+    }
+    case '季报': {
+      const quarter = Math.ceil(month / 3);
+      const firstMonth = (quarter - 1) * 3 + 1;
+      const lastMonth = quarter * 3;
+      const firstDay = `${year}-${pad(firstMonth)}-01`;
+      const lastDay = `${year}-${pad(lastMonth)}-${new Date(year, lastMonth, 0).getDate()}`;
+      return `${firstDay} 至 ${lastDay}`;
+    }
+    case '半年报': {
+      const half = month <= 6 ? 1 : 2;
+      const firstMonth = half === 1 ? 1 : 7;
+      const lastMonth = half === 1 ? 6 : 12;
+      const firstDay = `${year}-${pad(firstMonth)}-01`;
+      const lastDay = `${year}-${pad(lastMonth)}-${new Date(year, lastMonth, 0).getDate()}`;
+      return `${firstDay} 至 ${lastDay}`;
+    }
+    case '年报':
+      return `${year}-01-01 至 ${year}-12-31`;
+    case '自定义报表':
+    default:
+      const end = new Date();
+      const start = new Date();
+      start.setDate(start.getDate() - 29);
+      const formatDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      return `${formatDate(start)} 至 ${formatDate(end)}`;
+  }
+};
+
 const tabChange = (tabName) => {
   const tab = reportCycleTabs.find((t) => t.label === tabName);
   const currentTable = getCurrentTableRef();
   if (tab && currentTable) {
     currentTable.handleStatsFilter('reportCycle', tab.value);
+  }
+
+  // 图表组件刷新：根据选中的报表周期生成统计时段并传参
+  if (!tab) return;
+  const reportCycleValue = tab.value;
+  if (reportCycleValue === '') {
+    // “全部”标签：让图表使用内部默认参数（月报）
+    chartRef.value?.refreshData();
+  } else {
+    const statisticalPeriod = getStatisticalPeriodByReportCycle(reportCycleValue);
+    chartRef.value?.refreshData({
+      reportPeriod: reportCycleValue,
+      statisticalPeriod,
+    });
   }
 };
 
@@ -92,7 +161,6 @@ const openDrillDialogAndFilter = async (drillType, drillValue, drillName, report
 // 柱状图钻取：班级德育得分排名 -> 跳转班级德育明细弹窗
 const handleRankBarClick = (drillInfo) => {
   console.log('班级排名柱状图钻取:', drillInfo);
-  // 传递给表格组件，打开德育明细弹窗
   const currentTable = getCurrentTableRef();
   if (currentTable) {
     currentTable.handleStatsFilter('classRankBar', drillInfo.className);

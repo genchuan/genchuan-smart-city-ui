@@ -1,7 +1,8 @@
 <script setup>
-import { reactive, ref, watch } from 'vue';
+import { ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getHealthDetailList } from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/assessReport/data.js';
 
 const currentRow = ref({});
 
@@ -9,37 +10,30 @@ const columns = [
   { type: 'seq', width: 60, title: '序号' },
   { field: 'date', title: '评分日期', minWidth: 120 },
   { field: 'score', title: '卫生得分', minWidth: 100, sortable: true },
-  { field: 'inspector', title: '检查人', minWidth: 100 },
-  { field: 'remark', title: '备注', minWidth: 150 },
+  { field: 'inspector', title: '检查人', minWidth: 100},
+  {field: 'remark', title: '备注', minWidth: 150},
 ];
 
-// 获取卫生明细（模拟数据）
+// 使用文件1中的接口
 const fetchData = async (params) => {
-  // TODO: 替换为真实API
-  // return requestClient.get('/studentmgmt/assess-report/health-detail', { params });
-  console.log('请求卫生明细:', params);
-  const mockList = [];
-  for (let i = 1; i <= 7; i++) {
-    mockList.push({
-      id: i,
-      date: `2026-04-${String(i).padStart(2, '0')}`,
-      score: (Math.random() * 30).toFixed(1),
-      inspector: ['张老师', '李老师', '王老师'][Math.floor(Math.random() * 3)],
-      remark: i % 2 === 0 ? '地面干净' : '桌椅整齐',
-    });
+  // params 格式: { page: { currentPage, pageSize } }
+  const pageNo = params.page?.currentPage || 1;
+  const pageSize = params.page?.pageSize || 10;
+  const res = await getHealthDetailList({
+    className: currentRow.value.className,
+    pageNo,
+    pageSize,
+  });
+  if (res.code === 200) {
+    return {
+      list: res.data.list,
+      total: res.data.total,
+    };
+  } else {
+    console.error('获取卫生明细失败', res.msg);
+    return {list: [], total: 0};
   }
-  return {list: mockList, total: mockList.length};
 };
-
-const dataObj = reactive({
-  totalShow: false,
-  detailObj: {},
-  total: 0,
-  currentPage: 1,
-  pageSize: 10,
-  list: [],
-  loading: false,
-});
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -47,28 +41,25 @@ const [Grid, gridApi] = useVbenVxeGrid({
     keepSource: true,
     proxyConfig: {
       ajax: {
-        query: async ({page}) => {
-          const res = await fetchData({
-            className: currentRow.value.className,
-            pageNo: page.currentPage,
-            pageSize: page.pageSize,
-          });
-          dataObj.value = res;
-          return res;
-        },
+        query: async ({page}) => await fetchData({page}),
       },
     },
     rowConfig: {keyField: 'id'},
-    pagerConfig: dataObj,
+    pagerConfig: {
+      totalShow: true,
+      total: 0,
+      currentPage: 1,
+      pageSize: 10,
+    },
     toolbarConfig: {refresh: true},
     showOverflow: true,
   },
   showSearchForm: false,
 });
 
-// 使用 Drawer 替代 Modal
+// 使用 Drawer
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
-  modal: false,      // 非模态，支持同时打开多个
+  modal: false,
   appendToMain: true,
   footer: false,
   width: 700,
@@ -78,7 +69,7 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
 const open = async (row) => {
   currentRow.value = row;
   detailDrawerApi.open();
-  setTimeout(() => gridApi.query(), 100);
+  await gridApi.query(); // 使用 await 确保数据加载
 };
 
 const close = () => detailDrawerApi.close();

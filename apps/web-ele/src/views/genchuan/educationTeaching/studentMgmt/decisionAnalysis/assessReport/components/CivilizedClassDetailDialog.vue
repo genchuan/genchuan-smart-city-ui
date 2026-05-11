@@ -1,7 +1,8 @@
 <script setup>
-import { reactive, ref, watch } from 'vue';
+import { reactive, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getCivilizedClassDetailList } from '#/api/genchuan/educationTeaching/studentMgmt/decisionAnalysis/assessReport/data.js';
 
 const currentRow = ref({});
 
@@ -10,35 +11,36 @@ const columns = [
   { field: 'evaluateDate', title: '评比日期', minWidth: 120 },
   { field: 'score', title: '得分', minWidth: 100, sortable: true },
   { field: 'inspector', title: '评比人', minWidth: 100 },
-  { field: 'items', title: '评比项目', minWidth: 150 },
-  { field: 'remark', title: '备注', minWidth: 150 },
+  { field: 'items', title: '评比项目', minWidth: 150},
+  {field: 'remark', title: '备注', minWidth: 150},
 ];
 
+// 使用文件1中的接口，适配分页参数格式
 const fetchData = async (params) => {
-  // TODO: 替换为真实API
-  // return requestClient.get('/studentmgmt/assess-report/civilized-class-detail', { params });
-  console.log('请求文明班级明细:', params);
-  const mockList = [];
-  for (let i = 1; i <= 5; i++) {
-    mockList.push({
-      id: i,
-      evaluateDate: `2026-04-${i * 5}`,
-      score: (Math.random() * 30).toFixed(1),
-      inspector: ['王主任', '李主任'][Math.floor(Math.random() * 2)],
-      items: '班风、卫生、纪律',
-      remark: i % 2 === 0 ? '表现优秀' : '有待提升',
-    });
+  // params 可能包含 { className, currentPage, pageSize }
+  const pageNo = params.currentPage || 1;
+  const pageSize = params.pageSize || 10;
+  const res = await getCivilizedClassDetailList({
+    className: currentRow.value.className,
+    pageNo,
+    pageSize,
+  });
+  if (res.code === 200) {
+    return {
+      list: res.data.list,
+      total: res.data.total,
+    };
+  } else {
+    console.error('获取文明班级明细失败', res.msg);
+    return {list: [], total: 0};
   }
-  return {list: mockList, total: mockList.length};
 };
 
 const dataObj = reactive({
-  totalShow: false,
-  detailObj: {},
+  totalShow: true,   // 显示总数
   total: 0,
   currentPage: 1,
   pageSize: 10,
-  list: [],
   loading: false,
 });
 
@@ -47,8 +49,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     columns,
     proxyConfig: {
       ajax: {
-        query: async ({page}) =>
-          await fetchData({className: currentRow.value.className, ...page}),
+        query: async ({page}) => await fetchData({...page, className: currentRow.value.className}),
       },
     },
     rowConfig: {keyField: 'id'},
@@ -58,7 +59,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-// 使用 Drawer 替代 Modal
+// 使用 Drawer
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -70,7 +71,8 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
 const open = async (row) => {
   currentRow.value = row;
   detailDrawerApi.open();
-  setTimeout(() => gridApi.query(), 100);
+  // 打开后刷新表格数据
+  await gridApi.query();
 };
 
 const close = () => detailDrawerApi.close();

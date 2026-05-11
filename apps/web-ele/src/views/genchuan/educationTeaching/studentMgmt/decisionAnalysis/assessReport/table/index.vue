@@ -164,7 +164,7 @@ const [QueryForm] = useVbenForm({
 const detailDrawerRef = ref(null);
 const detailData = ref({});
 
-// 明细弹窗引用（已移除 drillDownDetailDialogRef）
+// 明细弹窗引用
 const classAssessDetailRef = ref(null);
 const healthDetailRef = ref(null);
 const morningExerciseDetailRef = ref(null);
@@ -347,19 +347,20 @@ const handleFieldDrill = (type, row) => {
   drillMap[type]?.();
 };
 
-// 处理图表钻取（已移除 line 分支中的 DrillDownDetailDialog 调用）
 const handleStatsFilter = (type, value) => {
   if (type === 'radar') {
-    if (value === '卫生') healthDetailRef.value?.open({dimension: value});
-    else if (value === '早操') morningExerciseDetailRef.value?.open({dimension: value});
-    else if (value === '文明班级') civilizedClassDetailRef.value?.open({dimension: value});
-    else if (value === '黑板报') blackboardDetailRef.value?.open({dimension: value});
+    classAssessDetailRef.value?.open({ className: value });
+  } else if (type === 'line') {
+    // ✅ 修改：value 应为一个对象 { className, date }
+    classAssessDetailRef.value?.open({
+      className: value.className,
+      statisticalDate: value.date,
+    });
   } else if (type === 'reportCycle') {
     searchParams.reportPeriod = value || '';
     activeFilterTags.reportPeriod = value || '';
     handleRefresh();
   }
-  // type === 'line' 的分支已移除
 };
 
 watch(
