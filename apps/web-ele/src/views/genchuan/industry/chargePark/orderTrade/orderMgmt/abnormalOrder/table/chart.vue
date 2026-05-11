@@ -85,8 +85,9 @@ const state = reactive({
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 选中的日期和状态
+// 选中的日期和异常类型
 const selectedDate = ref(null);
+const selectedAbnormalType = ref(null);
 const selectedStatus = ref(null);
 const useDateFilter = ref(true);
 
@@ -105,14 +106,14 @@ const [Drawer, drawerApi] = useVbenDrawer({
   footer: false,
   width: '75%',
   title: computed(() => {
-    if (selectedDate.value && selectedStatus.value) {
-      return `${selectedDate.value} ${getTypeLabel(selectedStatus.value)}订单`;
+    if (selectedDate.value && selectedAbnormalType.value) {
+      return `${selectedDate.value} ${getAbnormalTypeLabel(selectedAbnormalType.value)}订单`;
     }
     else if (selectedDate.value) {
       return `${selectedDate.value}订单`;
     }
-    else if (selectedStatus.value) {
-      return `${getTypeLabel(selectedStatus.value)}订单`;
+    else if (selectedAbnormalType.value) {
+      return `${getAbnormalTypeLabel(selectedAbnormalType.value)}订单`;
     }
     return '订单列表';
   }),
@@ -140,17 +141,25 @@ const getDrawerTableData = async (pageObj) => {
   // 如果使用日期筛选，添加日期参数
   if (useDateFilter.value) {
     let start, end;
-    if (selectedDate.value) {
+    // 如果 drawerSearchObj 已有时间范围（柱状图点击设置的），直接使用
+    if (drawerSearchObj.identifyTimeStart && drawerSearchObj.identifyTimeEnd) {
+      start = drawerSearchObj.identifyTimeStart;
+      end = drawerSearchObj.identifyTimeEnd;
+    } else if (selectedDate.value) {
       start = selectedDate.value + ' 00:00:00';
       end = selectedDate.value + ' 23:59:59';
     }
     else {
       ({ start, end } = getTodayTimeRange());
     }
-    params.createOrderTimeStart = start;
-    params.createOrderTimeEnd = end;
+    params.identifyTimeStart = start;
+    params.identifyTimeEnd = end;
   }
-  // 如果选中了状态，传递状态参数
+  // 如果选中了异常类型，传递异常类型参数
+  if (selectedAbnormalType.value) {
+    params.abnormalType = selectedAbnormalType.value;
+  }
+  // 如果选中了状态（卡片点击时），传递状态参数
   if (selectedStatus.value) {
     params.status = selectedStatus.value;
   }
@@ -162,6 +171,7 @@ const getDrawerTableData = async (pageObj) => {
     drawerDataObj.list = res.list.map((v) => {
       return {
         ...v,
+        identifyTime: formatTimestamp(v.identifyTime),
         createTime: formatTimestamp(v.createTime),
         updateTime: formatTimestamp(v.updateTime),
         processTime: formatTimestamp(v.processTime),
@@ -207,14 +217,19 @@ const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
 const handleCardClick = (index) => {
   if (index === 0) {
     // 待处理数量 → 显示 unhandled
+    selectedAbnormalType.value = null;
     selectedStatus.value = 'unhandled';
   }
   else if (index === 1) {
     // 处理完成率 → 显示 closed
+    selectedAbnormalType.value = null;
     selectedStatus.value = 'closed';
   }
   selectedDate.value = null;
   useDateFilter.value = false;
+  // 清除近30天的时间范围
+  delete drawerSearchObj.identifyTimeStart;
+  delete drawerSearchObj.identifyTimeEnd;
   drawerGridApi.query();
   drawerApi.open();
 };
@@ -224,7 +239,11 @@ const handleLineChartClick = (params) => {
   if (params && params.name) {
     selectedDate.value = params.name;
     selectedStatus.value = null;
+    selectedAbnormalType.value = null;
     useDateFilter.value = true;
+    // 清除近30天的时间范围
+    delete drawerSearchObj.identifyTimeStart;
+    delete drawerSearchObj.identifyTimeEnd;
     drawerGridApi.query();
     drawerApi.open();
   }
@@ -233,15 +252,27 @@ const handleLineChartClick = (params) => {
 // 柱状图点击事件处理
 const handleBarChartClick = (params) => {
   if (params && params.name) {
-    const statusKey = Object.keys(typeMap).find(key => typeMap[key].label === params.name);
-    if (statusKey) {
-      selectedStatus.value = statusKey;
+    // 根据中文异常类型名称找到对应的英文类型值
+    const abnormalTypeKey = Object.keys(abnormalTypeMap).find(key => abnormalTypeMap[key].label === params.name);
+    if (abnormalTypeKey) {
+      selectedAbnormalType.value = abnormalTypeKey;
     }
     else {
-      selectedStatus.value = params.name;
+      selectedAbnormalType.value = params.name;
     }
-    selectedDate.value = null;
-    useDateFilter.value = false;
+    // 重置状态筛选
+    selectedStatus.value = null;
+    // 计算近30天的时间范围
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
+    const start = thirtyDaysAgo.toISOString().split('T')[0] + ' 00:00:00';
+    const end = today.toISOString().split('T')[0] + ' 23:59:59';
+    selectedDate.value = `${start.split(' ')[0]} 至 ${end.split(' ')[0]}`;
+    // 使用日期筛选（近30天）
+    useDateFilter.value = true;
+    // 存储近30天的时间范围用于参数传递
+    drawerSearchObj.identifyTimeStart = start;
+    drawerSearchObj.identifyTimeEnd = end;
     drawerGridApi.query();
     drawerApi.open();
   }
@@ -272,9 +303,9 @@ const fetchOrderChartData = async () => {
       res.typeData && Array.isArray(res.typeData) && res.typeData.length > 0
         ? res.typeData
         : [
-            { count: 5, status: 'unhandled' },
-            { count: 3, status: 'handling' },
-            { count: 12, status: 'closed' },
+            { count: 5, type: 'payment_error' },
+            { count: 3, type: 'billing_error' },
+            { count: 12, type: 'status_error' },
           ];
     // 更新折线图
     updateLineChart();
@@ -291,9 +322,9 @@ const fetchOrderChartData = async () => {
       { date: '2025-04-05', count: 6 },
     ];
     state.typeData = [
-      { count: 5, status: 'unhandled' },
-      { count: 3, status: 'handling' },
-      { count: 12, status: 'closed' },
+      { count: 5, type: 'payment_error' },
+      { count: 3, type: 'billing_error' },
+      { count: 12, type: 'status_error' },
     ];
     // 更新折线图
     updateLineChart();
@@ -418,7 +449,7 @@ onMounted(() => {
     <Columnar
       class="simple-bar-chart"
       title="异常类型分布"
-      :x-data="state.typeData.map((item) => getTypeLabel(item.status))"
+      :x-data="state.typeData.map((item) => getAbnormalTypeLabel(item.type))"
       :series-data="[
         { name: '数量', data: state.typeData.map((item) => item.count || 0) },
       ]"
