@@ -1,6 +1,7 @@
 <script setup>
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
+import { ElTag } from 'element-plus';
 
 // 退款申请状态映射
 const statusMap = {
@@ -96,42 +97,17 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">状态:</div>
         <div class="detail-row-right">
-          <el-tag :type="getStatusType(detailObj.status)">
+          <ElTag :type="getStatusType(detailObj.status)">
             {{ getStatusLabel(detailObj.status) }}
-          </el-tag>
+          </ElTag>
         </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">申请人ID:</div>
-        <div class="detail-row-right">{{ detailObj.applicantId || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">审核人ID:</div>
-        <div class="detail-row-right">{{ detailObj.auditUserId || '-' }}</div>
-      </div>
+      </div> 
 
       <div class="detail-card-row">
         <div class="detail-row-left">审核时间:</div>
         <div class="detail-row-right">{{ detailObj.auditTime || '-' }}</div>
       </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">操作人ID:</div>
-        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段1:</div>
-        <div class="detail-row-right">{{ detailObj.reserve1 || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段2:</div>
-        <div class="detail-row-right">{{ detailObj.reserve2 || '-' }}</div>
-      </div>
-
+ 
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
