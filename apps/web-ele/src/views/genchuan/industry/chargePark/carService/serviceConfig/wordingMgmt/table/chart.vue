@@ -70,15 +70,21 @@ const handleCardClick = (index) => {
   else if (card.key === 'matchRate') emit('refresh', { highMatchRate: true }); // 匹配率钻取按需实现
 };
 
+const refreshStats = () => {
+  fetchChartData();
+};
+
 onMounted(() => {
   nextTick(() => {
     fetchChartData();
     window.addEventListener('resize', handleResize);
+    window.addEventListener('wording-mgmt-refresh-stats', refreshStats);
   });
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
+  window.removeEventListener('wording-mgmt-refresh-stats', refreshStats);
   pieChart?.dispose();
 });
 </script>
