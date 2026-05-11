@@ -45,8 +45,8 @@ const state = reactive({
 // 当前选中的日期（用于折线图点击后筛选）
 const selectedDate = ref(null);
 
-// 当前选中的订单状态（用于柱状图点击后筛选）
-const selectedStatus = ref(null);
+// 当前选中的场站名称（用于柱状图点击后筛选）
+const selectedStation = ref(null);
 
 // 是否使用日期筛选（点击卡片或折线图时为true，点击柱状图时为false）
 const useDateFilter = ref(true);
@@ -64,8 +64,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
     } else {
       title = '今日 ';
     }
-    if (selectedStatus.value) {
-      title += `${statusMap[selectedStatus.value]?.label || selectedStatus.value} `;
+    if (selectedStation.value) {
+      title += `${selectedStation.value} `;
     }
     title += '订单列表';
     return title;
@@ -105,7 +105,11 @@ const getDrawerTableData = async (pageObj) => {
   // 如果使用日期筛选，添加日期参数
   if (useDateFilter.value) {
     let start, end;
-    if (selectedDate.value) {
+    // 如果 drawerSearchObj 已有时间范围（柱状图点击设置的），直接使用
+    if (drawerSearchObj.createOrderTimeStart && drawerSearchObj.createOrderTimeEnd) {
+      start = drawerSearchObj.createOrderTimeStart;
+      end = drawerSearchObj.createOrderTimeEnd;
+    } else if (selectedDate.value) {
       start = selectedDate.value + ' 00:00:00';
       end = selectedDate.value + ' 23:59:59';
     } else {
@@ -115,9 +119,9 @@ const getDrawerTableData = async (pageObj) => {
     params.createOrderTimeEnd = end;
   }
   
-  // 如果选中了状态，传递状态参数
-  if (selectedStatus.value) {
-    params.status = selectedStatus.value;
+  // 如果选中了场站，传递场站参数
+  if (selectedStation.value) {
+    params.stationName = selectedStation.value;
   }
   
   Object.assign(params, drawerSearchObj);
@@ -154,10 +158,13 @@ const getDrawerTableData = async (pageObj) => {
 const handleCardClick = () => {
   // 设置为null表示使用当日日期
   selectedDate.value = null;
-  // 重置状态筛选
-  selectedStatus.value = null;
+  // 重置场站筛选
+  selectedStation.value = null;
   // 使用日期筛选
   useDateFilter.value = true;
+  // 清除近一个月的时间范围
+  delete drawerSearchObj.createOrderTimeStart;
+  delete drawerSearchObj.createOrderTimeEnd;
   // 刷新表格数据
   drawerGridApi.query();
   drawerApi.open();
@@ -168,10 +175,13 @@ const handleLineChartClick = (params) => {
   console.log('折线图点击事件触发:', params);
   if (params && params.name) {
     selectedDate.value = params.name;
-    // 重置状态筛选
-    selectedStatus.value = null;
+    // 重置场站筛选
+    selectedStation.value = null;
     // 使用日期筛选
     useDateFilter.value = true;
+    // 清除近一个月的时间范围
+    delete drawerSearchObj.createOrderTimeStart;
+    delete drawerSearchObj.createOrderTimeEnd;
     drawerGridApi.query();
     drawerApi.open();
   }
@@ -181,18 +191,18 @@ const handleLineChartClick = (params) => {
 const handleBarChartClick = (params) => {
   console.log('柱状图点击事件触发:', params);
   if (params && params.name) {
-    // 根据中文状态名称找到对应的英文状态值
-    const statusKey = Object.keys(statusMap).find(key => statusMap[key].label === params.name);
-    if (statusKey) {
-      selectedStatus.value = statusKey;
-    } else {
-      // 如果找不到映射，直接使用名称作为状态值
-      selectedStatus.value = params.name;
-    }
-    // 重置日期筛选
-    selectedDate.value = null;
-    // 不使用日期筛选（只传状态参数）
-    useDateFilter.value = false;
+    selectedStation.value = params.name;
+    // 计算近一个月的时间范围
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const start = firstDayOfMonth.toISOString().split('T')[0] + ' 00:00:00';
+    const end = today.toISOString().split('T')[0] + ' 23:59:59';
+    selectedDate.value = `${start.split(' ')[0]} 至 ${end.split(' ')[0]}`;
+    // 使用日期筛选（近一个月）
+    useDateFilter.value = true;
+    // 存储近一个月的时间范围用于参数传递
+    drawerSearchObj.createOrderTimeStart = start;
+    drawerSearchObj.createOrderTimeEnd = end;
     drawerGridApi.query();
     drawerApi.open();
   }
@@ -390,11 +400,7 @@ onMounted(async () => {
     <Columnar
      class="simple-bar-chart"
       title="订单类型分布"
-      :x-data="
-        state.stationData.map(
-          (item) => statusMap[item.status]?.label || item.status,
-        )
-      "
+      :x-data="state.stationData.map((item) => item.station)"
       :series-data="[
         { name: '订单数', data: state.stationData.map((item) => item.count) },
       ]"
