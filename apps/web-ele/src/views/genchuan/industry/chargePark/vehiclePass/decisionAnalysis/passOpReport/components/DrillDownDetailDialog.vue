@@ -1,11 +1,12 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, nextTick, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
 import { ElMessage } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getCycleReportPage } from '#/api/genchuan/industry/chargePark/vehiclePass/passReport/cycleReport';
 
 const emit = defineEmits(['close']);
 
@@ -43,6 +44,7 @@ const isChartDrill = computed(() => {
     'stationDistribution',
     'hourDistribution',
     'passTrend',
+    'identifyTrend',
     'abnormalType',
   ];
   return chartTypes.includes(drillInfo.drillType);
@@ -75,6 +77,7 @@ const chartTypeMap = {
   stationDistribution: { chartType: 'bar', apiParam: 'stationDistribution' },
   hourDistribution: { chartType: 'bar', apiParam: 'hourDistribution' },
   passTrend: { chartType: 'line', apiParam: 'passTrend' },
+  identifyTrend: { chartType: 'line', apiParam: 'identifyTrend' },
   abnormalType: { chartType: 'pie', apiParam: 'abnormalType' },
 };
 
@@ -104,67 +107,78 @@ const dialogTitle = computed(() => {
 });
 
 const getColumns = () => {
-  if (isCardDrill.value) {
-    return getCardDrillColumns();
-  }
-  if (isTableDrill.value) {
-    return getTableDrillColumns();
-  }
-  if (isChartDrill.value) {
-    return getChartDrillColumns();
-  }
-  return [];
-};
-
-const getCardDrillColumns = () => {
-  const baseColumns = [
-    { field: 'stationName', title: '场站名称', minWidth: 180 },
-    { field: 'passTime', title: '通行时间', minWidth: 160 },
-    { field: 'plateNumber', title: '车牌号', minWidth: 120 },
-    { field: 'passType', title: '通行类型', minWidth: 100 },
-  ];
-
-  switch (drillInfo.drillType) {
-    case 'enterCount':
-      return [
-        ...baseColumns,
-        { field: 'enterLane', title: '入场车道', minWidth: 120 },
-        { field: 'identifyResult', title: '识别结果', minWidth: 100 },
-      ];
-    case 'leaveCount':
-      return [
-        ...baseColumns,
-        { field: 'leaveLane', title: '离场车道', minWidth: 120 },
-        { field: 'parkingDuration', title: '停车时长', minWidth: 120 },
-      ];
-    case 'parkingCount':
-      return [
-        ...baseColumns,
-        { field: 'parkingSpace', title: '停车位', minWidth: 100 },
-        { field: 'parkingDuration', title: '停车时长', minWidth: 120 },
-      ];
-    default:
-      return baseColumns;
-  }
-};
-
-const getTableDrillColumns = () => {
+  // 返回周期报表的列配置
   return [
-    { field: 'stationName', title: '场站名称', minWidth: 180 },
-    { field: 'passTime', title: '通行时间', minWidth: 160 },
-    { field: 'plateNumber', title: '车牌号', minWidth: 120 },
-    { field: 'passType', title: '通行类型', minWidth: 100 },
-    { field: 'value', title: '数值', minWidth: 100 },
-  ];
-};
-
-const getChartDrillColumns = () => {
-  return [
-    { field: 'stationName', title: '场站名称', minWidth: 180 },
-    { field: 'statTime', title: '统计时间', minWidth: 160 },
-    { field: 'passCount', title: '通行量', minWidth: 100 },
-    { field: 'enterCount', title: '入场量', minWidth: 100 },
-    { field: 'leaveCount', title: '离场量', minWidth: 100 },
+    { type: 'checkbox', width: 40 },
+    {
+      field: 'reportCycle',
+      title: '报表周期',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'statStartTime',
+      title: '统计时段',
+      minWidth: 320,
+      sortable: true,
+      formatter: ({ row }) => {
+        return `${row.statStartTime} ~ ${row.statEndTime}`;
+      },
+    },
+    {
+      field: 'stationName',
+      title: '所属场站',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      field: 'enterCount',
+      title: '入场量',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'leaveCount',
+      title: '离场量',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'parkingCount',
+      title: '在停车辆数',
+      minWidth: 120,
+      sortable: true,
+    },
+    {
+      field: 'identifySuccessRate',
+      title: '识别成功率(%)',
+      minWidth: 130,
+      sortable: true,
+    },
+    {
+      field: 'checkSuccessRate',
+      title: '核验成功率(%)',
+      minWidth: 130,
+      sortable: true,
+    },
+    {
+      field: 'abnormalHandleRate',
+      title: '异常处置率(%)',
+      minWidth: 130,
+      sortable: true,
+    },
+    {
+      field: 'etcPassSuccessRate',
+      title: 'ETC通行成功率(%)',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'reportStatus',
+      title: '报表生成状态',
+      minWidth: 120,
+      sortable: true,
+    },
   ];
 };
 
@@ -172,43 +186,70 @@ const getTableData = async (pageObj) => {
   const page = pageObj.page;
 
   try {
-    // 模拟数据
-    const mockData = generateMockData();
-    dataObj.total = mockData.length;
-    dataObj.list = mockData.slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+    // 构建查询参数
+    const params = {
+      pageNo: page.currentPage,
+      pageSize: page.pageSize,
+    };
+
+    console.log('下钻信息:', drillInfo);
+    console.log('是否卡片下钻:', isCardDrill.value);
+    console.log('是否图表下钻:', isChartDrill.value);
+
+    // 根据下钻类型添加筛选条件
+    if (drillInfo.reportCycle && drillInfo.reportCycle !== '全部') {
+      params.reportCycle = drillInfo.reportCycle;
+    }
+
+    if (drillInfo.stationId) {
+      params.stationId = drillInfo.stationId;
+    }
+
+    // 卡片下钻 - 添加今日时间筛选
+    if (isCardDrill.value) {
+      const today = new Date();
+      const beginTime = new Date(today.setHours(0, 0, 0, 0)).toISOString().slice(0, 19);
+      const endTime = new Date(today.setHours(23, 59, 59, 999)).toISOString().slice(0, 19);
+      params.beginTime = beginTime;
+      params.endTime = endTime;
+    }
+
+    // 图表下钻 - 根据下钻类型添加筛选
+    if (isChartDrill.value) {
+      // 柱状图下钻 - 按场站筛选
+      if (drillInfo.drillType === 'stationDistribution' && drillInfo.stationId) {
+        params.stationId = drillInfo.stationId;
+      }
+
+      // 折线图下钻 - 按时间筛选
+      if ((drillInfo.drillType === 'passTrend' || drillInfo.drillType === 'identifyTrend') && drillInfo.drillValue) {
+        const date = new Date(drillInfo.drillValue);
+        const beginTime = new Date(date.setHours(0, 0, 0, 0)).toISOString().slice(0, 19);
+        const endTime = new Date(date.setHours(23, 59, 59, 999)).toISOString().slice(0, 19);
+        params.beginTime = beginTime;
+        params.endTime = endTime;
+      }
+
+      // 饼图下钻 - 暂时不添加特定筛选，显示所有数据
+      // 如果后端支持按异常类型筛选，可以添加：
+      // if (drillInfo.drillType === 'abnormalType' && drillInfo.drillValue) {
+      //   params.abnormalType = drillInfo.drillValue;
+      // }
+    }
+
+    console.log('钻取查询参数:', params);
+
+    // 调用真实API
+    const res = await getCycleReportPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
+
     return dataObj;
   } catch (error) {
     console.error('获取钻取数据失败:', error);
     ElMessage.error('获取钻取数据失败');
     return dataObj;
   }
-};
-
-const generateMockData = () => {
-  const data = [];
-  for (let i = 0; i < 50; i++) {
-    data.push({
-      id: i + 1,
-      stationName: '泉州丰泽充停场站',
-      passTime: `2026-05-08 ${String(Math.floor(Math.random() * 24)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
-      plateNumber: `闽D${String(Math.floor(Math.random() * 100000)).padStart(5, '0')}`,
-      passType: Math.random() > 0.5 ? '入场' : '离场',
-      enterLane: `${Math.floor(Math.random() * 5) + 1}号车道`,
-      leaveLane: `${Math.floor(Math.random() * 5) + 1}号车道`,
-      identifyResult: Math.random() > 0.1 ? '成功' : '失败',
-      parkingSpace: `A${Math.floor(Math.random() * 100) + 1}`,
-      parkingDuration: `${Math.floor(Math.random() * 120)}分钟`,
-      value: Math.floor(Math.random() * 100),
-      statTime: `2026-05-08`,
-      passCount: Math.floor(Math.random() * 500) + 100,
-      enterCount: Math.floor(Math.random() * 300) + 50,
-      leaveCount: Math.floor(Math.random() * 300) + 50,
-    });
-  }
-  return data;
 };
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -225,6 +266,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     pagerConfig: dataObj,
+    toolbarConfig: {
+      refresh: true,
+    },
     showOverflow: true,
   },
   showSearchForm: false,
@@ -234,27 +278,37 @@ const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
+  mask: false,
+  closeOnClickModal: false,
+  closeOnPressEscape: true,
+  class: 'w-[75vw]',
   onCancel() {
     drawerApi.close();
     emit('close');
   },
   onConfirm() {},
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      const columns = getColumns();
-      gridApi.setGridOption('columns', columns);
-      gridApi.query();
-    }
-  },
 });
 
-const open = (info) => {
+const open = async (info) => {
+  console.log('打开钻取弹窗:', info);
   Object.assign(drillInfo, info);
-  drawerApi
-    .setData({
-      title: dialogTitle.value,
-    })
-    .open();
+
+  drawerApi.setState({
+    title: dialogTitle.value,
+  });
+
+  await nextTick();
+
+  // 动态更新表格列配置
+  const columns = getColumns();
+  gridApi.setGridOptions({ columns });
+
+  drawerApi.open();
+
+  // 等待抽屉打开后加载数据
+  setTimeout(() => {
+    gridApi.query();
+  }, 100);
 };
 
 defineExpose({
