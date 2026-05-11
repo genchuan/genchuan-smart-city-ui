@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
@@ -27,6 +27,7 @@ import {
   getSpareStatusTagType,
   getWarehouseName,
   isSpareStatusLabel,
+  loadSpareOptions,
   normalizeSpareStockRow,
   textObj,
   useGridColumns,
@@ -228,7 +229,14 @@ async function getTableData({ page }) {
   return dataObj;
 }
 
-const [QueryForm] = useVbenForm({
+function buildSearchFormSchema() {
+  return useSearchFormSchema().map((item) => {
+    delete item.rules;
+    return { ...item };
+  });
+}
+
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -239,10 +247,7 @@ const [QueryForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema().map((item) => {
-    delete item.rules;
-    return { ...item };
-  }),
+  schema: buildSearchFormSchema(),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -423,6 +428,12 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(async () => {
+  await loadSpareOptions();
+  await queryFormApi.setState({ schema: buildSearchFormSchema() });
+  await actionFormApi.setState({ schema: useInFormSchema() });
+});
 </script>
 
 <template>

@@ -6,7 +6,11 @@ import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData, getSpareStockStatusOptionValue } from './data';
+import {
+  getMockChartData,
+  getSpareStockStatusOptionValue,
+  loadSpareOptions,
+} from './data';
 
 const emit = defineEmits(['spareFilter', 'statusFilter', 'trendFilter']);
 
@@ -90,8 +94,9 @@ function handleStockClick(spareName) {
   emit('spareFilter', spareName);
 }
 
-onMounted(() => {
-  fetchChartData();
+onMounted(async () => {
+  await loadSpareOptions();
+  await fetchChartData();
 });
 </script>
 

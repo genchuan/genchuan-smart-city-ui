@@ -1,6 +1,7 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getSpareStockSimpleList } from '#/api/genchuan/industry/chargePark/inspectOp/assetMgmt/spareStock';
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
@@ -47,14 +48,58 @@ export function getSpareStockStatusOptionValue(label) {
   return opt != null ? opt.value : label;
 }
 
-export const spareOptions = [
-  { label: '充电枪密封圈', type: '充电备件', value: 1 },
-  { label: '摄像头电源', type: '监测备件', value: 2 },
-  { label: '交流接触器', type: '电气备件', value: 3 },
-  { label: '桩体急停按钮', type: '安全备件', value: 4 },
-  { label: '枪线防护套', type: '充电备件', value: 5 },
-  { label: '地磁电池组', type: '监测备件', value: 6 },
-];
+/** 备件下拉选项，由 loadSpareOptions 请求 simple-list 后填充 */
+export const spareOptions = [];
+
+/** 接口行转下拉项（兼容 spare_id / spare_name / spare_type） */
+export function mapSpareSimpleToOption(row) {
+  const spareId = row.spareId ?? row.spare_id;
+  const spareName = row.spareName ?? row.spare_name ?? '';
+  const spareType = row.spareType ?? row.spare_type ?? '-';
+  return {
+    label: spareName,
+    value: spareId,
+    type: spareType,
+  };
+}
+
+let spareOptionsLoadPromise = null;
+
+/**
+ * 拉取备件简单列表并写入 spareOptions（供筛选、入出库表单等使用）
+ * @returns {Promise<typeof spareOptions>}
+ */
+export function loadSpareOptions(params) {
+  if (!spareOptionsLoadPromise) {
+    spareOptionsLoadPromise = (async () => {
+      try {
+        const raw = await getSpareStockSimpleList(params);
+        const list = Array.isArray(raw) ? raw : [];
+        const mapped = list
+          .map(mapSpareSimpleToOption)
+          .filter(
+            (o) =>
+              o.value !== undefined &&
+              o.value !== null &&
+              String(o.value) !== '',
+          );
+        spareOptions.splice(0, spareOptions.length, ...mapped);
+      } catch (error) {
+        console.error('加载备件简单列表失败:', error);
+        spareOptions.splice(0, spareOptions.length);
+      } finally {
+        spareOptionsLoadPromise = null;
+      }
+      return spareOptions;
+    })();
+  }
+  return spareOptionsLoadPromise;
+}
+
+function getSpareOptionsForMock() {
+  if (spareOptions.length > 0) return spareOptions;
+  return [{ label: '—', type: '-', value: 0 }];
+}
 
 export const warehouseOptions = [
   { label: '丰泽中心备件仓', value: 1 },
@@ -136,8 +181,9 @@ export function getStockStatusByCount(currentStock) {
 }
 
 export function dataList() {
+  const sparePool = getSpareOptionsForMock();
   return Array.from({ length: 16 }, (_, index) => {
-    const spare = spareOptions[index % spareOptions.length];
+    const spare = sparePool[index % sparePool.length];
     const warehouse = warehouseOptions[index % warehouseOptions.length];
     const currentStockList = [18, 7, 22, 4, 11, 6, 26, 9];
     const currentStock = currentStockList[index % currentStockList.length];
@@ -280,7 +326,8 @@ export function getMockChartData() {
     time,
     stockCount: spareStock - (5 - index) * 4,
   }));
-  const stockData = spareOptions.map((spare) => ({
+  const sparePool = getSpareOptionsForMock();
+  const stockData = sparePool.map((spare) => ({
     spareId: spare.value,
     spareName: spare.label,
     currentStock: list
@@ -301,12 +348,12 @@ export function getMockChartData() {
 export function useSearchFormSchema() {
   return [
     {
-      fieldName: 'spareName',
+      fieldName: 'spareId',
       label: '备件名称',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入备件名称',
-        clearable: true,
+        placeholder: '请选择关联备件',
+        options: spareOptions,
       },
     },
     {

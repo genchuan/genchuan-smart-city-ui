@@ -36,3 +36,8 @@ export function replenishSpareStock(data) {
 export function getSpareStockChart(params) {
   return requestClient.get('/inspectop/spare-stock/chart', { params });
 }
+
+/** 获取备件仓储简单列表 */
+export function getSpareStockSimpleList(params) {
+  return requestClient.get('/inspectop/spare-stock/simple-list', { params });
+}

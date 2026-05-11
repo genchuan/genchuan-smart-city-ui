@@ -358,19 +358,19 @@ export function useFormSchema() {
       },
       rules: 'required',
     },
-    {
-      fieldName: 'progress',
-      label: '盘点进度',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入盘点进度',
-        min: 0,
-        max: 100,
-        step: 1,
-        precision: 0,
-        controlsPosition: 'right',
-      },
-    },
+    // {
+    //   fieldName: 'progress',
+    //   label: '盘点进度',
+    //   component: 'InputNumber',
+    //   componentProps: {
+    //     placeholder: '请输入盘点进度',
+    //     min: 0,
+    //     max: 100,
+    //     step: 1,
+    //     precision: 0,
+    //     controlsPosition: 'right',
+    //   },
+    // },
     // {
     //   fieldName: 'checkScope',
     //   label: '盘点范围',
