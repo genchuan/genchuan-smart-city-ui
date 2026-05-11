@@ -126,8 +126,8 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     try {
       await createAssetCheck({
         ...values,
-        progress: 0,
-        status: '待盘点',
+        // progress: 0,
+        status: '1',
       });
       ElMessage.success('新增成功');
       formDrawerApi.close();
@@ -550,7 +550,7 @@ watch(
             @click="handleUpdateProgress(row)"
           />
           <IconButton
-            v-if="isCheckStatusLabel(row.status, '已完成')"
+            v-if="isCheckStatusLabel(row.status, '已完成') && !row.confirmTime"
             content="确认"
             icon-name="Select"
             @click="handleConfirm(row)"

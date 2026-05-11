@@ -14,7 +14,7 @@ export function exportAssetCheck(params) {
 
 /** 发起资产盘点 */
 export function createAssetCheck(data) {
-  return requestClient.post('/inspectop/asset-check/create', data);
+  return requestClient.post('/inspectop/asset-check/create-simple', data);
 }
 
 /** 获取资产盘点详情 */
