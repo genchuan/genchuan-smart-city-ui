@@ -1,6 +1,31 @@
 <script setup>
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
+import { ElTag } from 'element-plus';
+
+// 追缴跟踪状态映射
+const statusMap = {
+  pending: { label: '待推送', type: 'warning' },
+  collecting: { label: '追缴中', type: 'primary' },
+  completed: { label: '已完成', type: 'success' },
+};
+
+// 追缴方式映射
+const collectMethodMap = {
+  sms: { label: '短信', type: 'primary' },
+  notify: { label: '站内信', type: 'info' },
+  phone: { label: '电话', type: 'warning' },
+};
+
+// 获取状态标签
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || status;
+};
+
+// 获取追缴方式标签
+const getCollectMethodLabel = (method) => {
+  return collectMethodMap[method]?.label || method;
+};
 
 // 追缴记录详情
 const props = defineProps({
@@ -62,7 +87,11 @@ defineExpose({
 
       <div class="detail-card-row">
         <div class="detail-row-left">追缴方式:</div>
-        <div class="detail-row-right">{{ detailObj.collectMethod || '-' }}</div>
+        <div class="detail-row-right">
+          <ElTag :type="collectMethodMap[detailObj.collectMethod]?.type || 'default'">
+            {{ getCollectMethodLabel(detailObj.collectMethod) }}
+          </ElTag>
+        </div>
       </div>
 
       <div class="detail-card-row">
@@ -72,38 +101,18 @@ defineExpose({
 
       <div class="detail-card-row">
         <div class="detail-row-left">状态:</div>
-        <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">片区ID:</div>
-        <div class="detail-row-right">{{ detailObj.areaId || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">转派用户ID:</div>
-        <div class="detail-row-right">{{ detailObj.transferUserId || '-' }}</div>
-      </div>
+        <div class="detail-row-right">
+          <ElTag :type="statusMap[detailObj.status]?.type || 'default'">
+            {{ getStatusLabel(detailObj.status) }}
+          </ElTag>
+        </div>
+      </div> 
 
       <div class="detail-card-row">
         <div class="detail-row-left">追缴进度:</div>
         <div class="detail-row-right">{{ detailObj.collectProgress || '-' }}</div>
       </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">操作人ID:</div>
-        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段1:</div>
-        <div class="detail-row-right">{{ detailObj.reserve1 || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段2:</div>
-        <div class="detail-row-right">{{ detailObj.reserve2 || '-' }}</div>
-      </div>
+ 
 
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
