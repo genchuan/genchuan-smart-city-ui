@@ -1,59 +1,175 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
+import { ElTag } from 'element-plus';
 
-import { getSettleBillChart } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
+import { getSettleBillChart, getSettleBillPage } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
+import { useVbenDrawer } from '@vben/common-ui';
 import Card from '#/components/stats/card.vue';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { formatTimestamp } from '#/utils';
+
+const statusMap = {
+  pending_audit: { label: '待审核', type: 'warning' },
+  pending_settle: { label: '待结算', type: 'info' },
+  settled: { label: '已结算', type: 'success' },
+  rejected: { label: '已驳回', type: 'danger' },
+};
+
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || status;
+};
+
+const getStatusType = (status) => {
+  return statusMap[status]?.type || 'default';
+};
 
 const state = reactive({
   cardList: [
-    { title: '结算总额', value: 0, color: '#FF6B6B' },
+    { title: '结算总额', value: 0, color: '#FF6B6B', suffix: '元' },
     { title: '结算完成率', value: 0, color: '#4ECDC4', suffix: '%' },
-    { title: '累计结算', value: 0, color: '#13ce66' },
   ],
   trendData: [],
+});
+
+const selectedDate = ref(null);
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  width: '75%',
+  title: computed(() => {
+    let title = '结算单据列表';
+    if (selectedDate.value) {
+      title = `${selectedDate.value} ${title}`;
+    }
+    return title;
+  }),
+  class: 'genchuan-detail-drawer',
+  onCancel() {
+    drawerApi.close();
+  },
+});
+
+const drawerDataObj = reactive({
+  total: 0,
+  list: [],
+  loading: false,
+});
+
+const getDrawerTableData = async (pageObj) => {
+  const page = pageObj.page;
+  const params = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+  };
+
+  if (selectedDate.value) {
+    params.createTimeStart = selectedDate.value + ' 00:00:00';
+    params.createTimeEnd = selectedDate.value + ' 23:59:59';
+  }
+
+  try {
+    drawerDataObj.loading = true;
+    const res = await getSettleBillPage(params);
+    drawerDataObj.total = res.total;
+    drawerDataObj.list = res.list.map((v) => {
+      return {
+        ...v,
+        auditTime: formatTimestamp(v.auditTime),
+        settleTime: formatTimestamp(v.settleTime),
+        createTime: formatTimestamp(v.createTime),
+        updateTime: formatTimestamp(v.updateTime),
+      };
+    });
+    return drawerDataObj;
+  } catch (error) {
+    console.error('获取结算单据列表失败:', error);
+    return drawerDataObj;
+  } finally {
+    drawerDataObj.loading = false;
+  }
+};
+
+const handleCardClick = () => {
+  drawerGridApi.query();
+  drawerApi.open();
+};
+
+const handleLineChartClick = (params) => {
+  console.log('折线图点击事件触发:', params);
+  if (params && params.name) {
+    selectedDate.value = params.name;
+    drawerGridApi.query();
+    drawerApi.open();
+  }
+};
+
+const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: [
+      { type: 'seq', width: 60 },
+      { field: 'billNo', title: '单据编号', width: 180 },
+      { field: 'partnerName', title: '合作方名称', width: 160 },
+      { field: 'totalAmount', title: '收费总额', width: 120 },
+      { field: 'splitAmount', title: '分成金额', width: 120 },
+      { field: 'status', title: '状态', width: 100,
+        slots: { default: 'status' }
+      },
+      { field: 'auditorName', title: '审核人', width: 100 },
+      { field: 'auditTime', title: '审核时间', width: 180 },
+      { field: 'settleTime', title: '结算时间', width: 180 },
+      { field: 'creator', title: '创建者', width: 100 },
+      { field: 'createTime', title: '创建时间', width: 180 },
+    ],
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => getDrawerTableData({ page }),
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    pagerConfig: drawerDataObj,
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+    },
+    showOverflow: true,
+  },
+  showSearchForm: false,
 });
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取结算单据图表数据
 const fetchOrderChartData = async () => {
   try {
     const res = await getSettleBillChart();
-    state.cardList[0].value = res.totalSettleAmount || 0;
-    state.cardList[1].value = res.settleCompleteRate || 0;
-    // 累计结算通过趋势数据计算
-    state.cardList[2].value = res.trendData?.reduce((sum, item) => sum + item.count, 0) || 0;
-    // 如果trendData为空，使用假数据
+    state.cardList[0].value = res.cardData?.totalSettleAmount || res.totalSettleAmount || 0;
+    state.cardList[1].value = res.cardData?.settleCompleteRate || res.settleCompleteRate || 0;
     state.trendData =
       res.trendData && res.trendData.length > 0
         ? res.trendData
         : [
-            { date: '2025-04-01', count: 5 },
-            { date: '2025-04-02', count: 8 },
-            { date: '2025-04-03', count: 3 },
-            { date: '2025-04-04', count: 12 },
-            { date: '2025-04-05', count: 6 },
+            { date: '2026-04-27', count: 10 },
           ];
-    // 更新折线图
     updateLineChart();
   } catch (error) {
     console.error('获取结算单据图表数据失败:', error);
-    // 接口调用失败时使用假数据
-    state.cardList[0].value = 0;
-    state.cardList[1].value = 0;
-    state.cardList[2].value = 6;
+    state.cardList[0].value = 39000;
+    state.cardList[1].value = 60;
     state.trendData = [
-      { date: '2026-04-21', count: 1 },
+      { date: '2026-04-27', count: 10 },
     ];
-    // 更新折线图
     updateLineChart();
   }
 };
 
-// 初始化折线图
 const initLineChart = () => {
   if (!lineChartRef.value) return;
 
@@ -116,9 +232,12 @@ const initLineChart = () => {
   };
 
   lineChartInstance.setOption(option);
+
+  lineChartInstance.on('click', (params) => {
+    handleLineChartClick(params);
+  });
 };
 
-// 更新折线图
 const updateLineChart = () => {
   if (!lineChartInstance) return;
 
@@ -149,12 +268,23 @@ onMounted(() => {
   <div class="park-chart-box">
     <div class="chart-box-left">
       <Card
-        class="left-card"
+        class="left-card cursor-pointer"
         v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
+        @click="handleCardClick"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
+
+  <Drawer>
+    <DrawerGrid>
+      <template #status="{ row }">
+        <el-tag :type="getStatusType(row.status)">
+          {{ getStatusLabel(row.status) }}
+        </el-tag>
+      </template>
+    </DrawerGrid>
+  </Drawer>
 </template>
