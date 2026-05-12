@@ -23,7 +23,7 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-card-row"><div class="detail-row-left">预约ID：</div><div class="detail-row-right">{{ detailObj.id || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">用户：</div><div class="detail-row-right">{{ detailObj.userName || '-' }} (ID:{{ detailObj.userId || '-' }})</div></div>
       <div class="detail-card-row"><div class="detail-row-left">场站：</div><div class="detail-row-right">{{ detailObj.stationName || '-' }} (ID:{{ detailObj.stationId || '-' }})</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">车位：</div><div class="detail-row-right">{{ detailObj.spaceName || '-' }} (ID:{{ detailObj.spaceId || '-' }})</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">车位：</div><div class="detail-row-right">{{ detailObj.spaceNo || '-' }} (ID:{{ detailObj.spaceId || '-' }})</div></div>
       <div class="detail-card-row"><div class="detail-row-left">预约时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.reserveTime) || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">预约类型：</div><div class="detail-row-right">{{ detailObj.reserveType || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">状态：</div><div class="detail-row-right">{{ detailObj.status || '-' }}</div></div>

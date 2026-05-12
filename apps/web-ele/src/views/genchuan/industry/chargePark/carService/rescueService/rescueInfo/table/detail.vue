@@ -32,6 +32,27 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   async onOpenChange() {},
 });
 
+/** 将秒数格式化为 X天Y小时Z分钟（自动省略值为0的单位） */
+const formatDuration = (seconds) => {
+  if (seconds == null || seconds === '' || isNaN(seconds)) return '-';
+  let totalSec = Number(seconds);
+  if (!isFinite(totalSec) || totalSec < 0) return '-';
+
+  const days = Math.floor(totalSec / 86400);
+  totalSec %= 86400;
+  const hours = Math.floor(totalSec / 3600);
+  totalSec %= 3600;
+  const minutes = Math.floor(totalSec / 60);
+
+  const parts = [];
+  if (days > 0) parts.push(`${days}天`);
+  if (hours > 0) parts.push(`${hours}小时`);
+  if (minutes > 0) parts.push(`${minutes}分钟`);
+
+  if (parts.length === 0) return '0分钟';
+  return parts.join('');
+};
+
 defineExpose({
   open: () => detailDrawerApi.open(),
   close: () => detailDrawerApi.close(),
@@ -75,7 +96,7 @@ defineExpose({
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">处理时长:</div>
-        <div class="detail-row-right">{{ detailObj.handleDuration ? `${detailObj.handleDuration}秒` : '-' }}</div>
+        <div class="detail-row-right">{{ formatDuration(detailObj.handleDuration) }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">评价得分:</div>

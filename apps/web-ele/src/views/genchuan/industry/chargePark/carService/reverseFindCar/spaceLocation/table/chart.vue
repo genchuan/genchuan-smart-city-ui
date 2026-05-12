@@ -2,7 +2,7 @@
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { getSpaceLocationChart } from '#/api/genchuan/industry/chargePark/carService/reverseFindCar/spaceLocation/index.js';
 import { ElMessage } from 'element-plus';
-import MapComponent from '#/views/genchuan/industry/chargePark/carService/Mapindex.vue';
+import MapComponent from './Mapindex.vue';
 
 const emit = defineEmits(['refresh']);
 

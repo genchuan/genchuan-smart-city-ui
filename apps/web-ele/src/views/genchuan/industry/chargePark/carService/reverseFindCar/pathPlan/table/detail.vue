@@ -10,6 +10,20 @@ const props = defineProps({
 const { detailObj, title } = toRefs(props);
 const drawerTitle = computed(() => title.value || `路径规划${detailObj.value?.id || ''}详情`);
 
+// 路径长度：米 → 公里，保留一位小数
+const formatPathLength = (meters) => {
+  if (meters === null || meters === undefined || meters === '') return '-';
+  const km = meters / 1000;
+  return `${km.toFixed(2)}km`;
+};
+
+// 预计时长：秒 → 分钟，保留一位小数
+const formatExpectDuration = (seconds) => {
+  if (seconds === null || seconds === undefined || seconds === '') return '-';
+  const minutes = seconds / 60;
+  return `${minutes.toFixed(0)}分钟`;
+};
+
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false, appendToMain: true, footer: false, width: 750,
   onCancel: () => detailDrawerApi.close(),
@@ -25,8 +39,8 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <div class="detail-card-row"><div class="detail-row-left">起点位置：</div><div class="detail-row-right">{{ detailObj.startLocationName || detailObj.startLocation || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">终点位置：</div><div class="detail-row-right">{{ detailObj.endLocationName || detailObj.endLocation || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">规划时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.planTime) || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">路径长度：</div><div class="detail-row-right">{{ detailObj.pathLength ? `${detailObj.pathLength}米` : '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">预计时长：</div><div class="detail-row-right">{{ detailObj.expectDuration ? `${detailObj.expectDuration}秒` : '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">路径长度：</div><div class="detail-row-right">{{ formatPathLength(detailObj.pathLength) }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">预计时长：</div><div class="detail-row-right">{{ formatExpectDuration(detailObj.expectDuration) }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建人：</div><div class="detail-row-right">{{ detailObj.creator || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">创建时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.createTime) || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">更新人：</div><div class="detail-row-right">{{ detailObj.updater || '-' }}</div></div>

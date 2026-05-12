@@ -17,8 +17,22 @@ export function useGridColumns({ getUserName }) {
     { field: 'startLocationName', title: '起点', minWidth: 180, sortable: true, slots: { default: 'start_location' } },
     { field: 'endLocationName', title: '终点', minWidth: 180, sortable: true, slots: { default: 'end_location' } },
     { field: 'planTime', title: '规划时间', minWidth: 160, sortable: true },
-    { field: 'pathLength', title: '路径长度', minWidth: 100, sortable: true, },
-    { field: 'expectDuration', title: '预计时长', minWidth: 100, sortable: true,  },
+    {
+      field: 'pathLength', title: '路径长度(km)', minWidth: 100, sortable: true,
+      formatter: ({ cellValue }) => {
+        if (cellValue == null || cellValue === '') return '';
+        const m = Number(cellValue);
+        return isFinite(m) ? (m / 1000).toFixed(2) : '';
+      },
+    },
+    {
+      field: 'expectDuration', title: '预计时长(分钟)', minWidth: 100, sortable: true,
+      formatter: ({ cellValue }) => {
+        if (cellValue == null || cellValue === '') return '';
+        const s = Number(cellValue);
+        return isFinite(s) ? Math.round(s / 60) : '';
+      },
+    },
     { title: '操作', width: 150, fixed: 'right', slots: { default: 'actions' } },
   ];
 }
