@@ -264,3 +264,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     </Grid>
   </Page>
 </template>
+
+<style scoped lang="scss">
+@import '#/views/genchuan/industry/chargePark/userMerchant/utils/tablePager.scss';
+</style>

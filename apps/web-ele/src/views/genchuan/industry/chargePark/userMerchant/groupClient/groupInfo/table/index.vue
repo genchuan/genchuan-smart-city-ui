@@ -4,10 +4,12 @@ import type { UploadUserFile } from 'element-plus';
 import type { GroupAccountLog, GroupInfoRow, OperatorInfo } from '../data';
 
 import type { GroupInfoDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupInfo';
+import type { ActiveFilterTag } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import { computed, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import dayjs from 'dayjs';
 import {
@@ -29,10 +31,8 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { GroupInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupInfo';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import {
-  buildActiveFilterTags,
-  type ActiveFilterTag,
-} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
+import { downloadFileIfValid } from '#/views/genchuan/industry/chargePark/userMerchant/utils/download';
+import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildGroupInfoQueryParams,
@@ -253,8 +253,8 @@ async function queryGroupInfoPage(
   formValues: Record<string, any> = {},
 ) {
   const queryValues = {
-    ...searchParams.value,
     ...formValues,
+    ...searchParams.value,
   };
 
   const result = await GroupInfoApi.getGroupInfoPage({
@@ -362,9 +362,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
-    height: 'auto',
     proxyConfig: {
       ajax: {
         query: queryGroupInfoPage,
@@ -375,6 +373,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
@@ -425,7 +424,7 @@ async function setSearchValues(values: Record<string, any>) {
     phone: '',
     status: '',
   };
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   return gridApi.reload();
 }
 
@@ -444,9 +443,10 @@ defineExpose({
 /** 导出当前列表 */
 async function handleExport() {
   try {
-    await GroupInfoApi.exportGroupInfo(
+    const data = await GroupInfoApi.exportGroupInfo(
       buildGroupInfoQueryParams(searchParams.value, drillFilters.value),
     );
+    downloadFileFromBlobPart({ fileName: '集团信息.xls', source: data });
     ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
@@ -649,19 +649,18 @@ async function handleOpenAccount(row: GroupInfoRow) {
 }
 
 /** 下载导入模板 */
-function handleDownloadTemplate() {
-  const blob = new Blob(
-    [
-      '集团名称,联系人,联系手机号,集团类型,地址,备注\n示例集团,张三,13812345678,企业单位,福建省泉州市示例地址,导入模板示例',
-    ],
-    { type: 'text/csv;charset=utf-8;' },
-  );
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = '集团信息导入模板.csv';
-  link.click();
-  URL.revokeObjectURL(url);
+async function handleDownloadTemplate() {
+  try {
+    const data = await GroupInfoApi.importGroupInfoTemplate();
+    downloadFileIfValid({
+      fileName: 'group-info-import-template.xls',
+      source: data,
+    });
+    ElMessage.success('模板下载成功');
+  } catch (error) {
+    ElMessage.error('模板下载失败');
+    console.error('[groupInfo] download template failed:', error);
+  }
 }
 
 /** 导入集团数据 */
@@ -757,14 +756,23 @@ function handleCancelStatusFilter() {
 /** 移除筛选标签 */
 async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   if (tag.source === 'drill') {
-    if (tag.key === 'contact') {
-      handleCancelContactFilter();
-    } else if (tag.key === 'phone') {
-      handleCancelPhoneFilter();
-    } else if (tag.key === 'groupType') {
-      handleCancelGroupTypeFilter();
-    } else if (tag.key === 'status') {
-      handleCancelStatusFilter();
+    switch (tag.key) {
+      case 'contact': {
+        handleCancelContactFilter();
+        break;
+      }
+      case 'groupType': {
+        handleCancelGroupTypeFilter();
+        break;
+      }
+      case 'phone': {
+        handleCancelPhoneFilter();
+        break;
+      }
+      case 'status': {
+        handleCancelStatusFilter();
+        break;
+      }
     }
     return;
   }
@@ -797,193 +805,186 @@ function getStatusTagType(status: GroupInfoRow['status']) {
 </script>
 
 <template>
-  <div class="group-info-table">
-    <div class="group-info-grid-wrap">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-              align-items: center;
-            "
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
-            >
-              {{ tag.label }}：{{ tag.value }}
-            </ElTag>
-          </div>
-        </template>
-
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-            <IconButton
-              content="导入"
-              icon-name="Upload"
-              @click="() => (importDialogVisible = true)"
-            />
-            <IconButton
-              content="导出"
-              icon-name="download"
-              @click="handleExport"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSerachShow"
-            />
-            <IconButton
-              :content="props.showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="props.toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
-
-        <template #name="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleDetail(row)"
-          >
-            {{ row.name }}
-          </el-text>
-        </template>
-
-        <template #contact="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleFilterContact(row.contact)"
-          >
-            {{ row.contact }}
-          </el-text>
-        </template>
-
-        <template #phone="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleFilterPhone(row.phone)"
-          >
-            {{ maskPhone(row.phone) }}
-          </el-text>
-        </template>
-
-        <template #groupType="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleFilterGroupType(row.groupType)"
-          >
-            {{ row.groupType }}
-          </el-text>
-        </template>
-
-        <template #status="{ row }">
+  <div class="park-lot-table-new user-merchant-table-grid">
+    <Grid>
+      <template #table-title>
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; align-items: center"
+        >
           <ElTag
-            :type="getStatusTagType(row.status)"
-            style="cursor: pointer"
-            @click="handleFilterStatus(row.status)"
+            v-for="tag in activeFilterTags"
+            :key="`${tag.source}-${tag.key}`"
+            :type="tag.type"
+            closable
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+            @close="handleRemoveFilterTag(tag)"
           >
-            {{ row.status }}
+            {{ tag.label }}：{{ tag.value }}
           </ElTag>
-        </template>
+        </div>
+      </template>
 
-        <template #walletBalance="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenAccount(row)"
-          >
-            {{ row.walletBalance.toFixed(2) }}
-          </el-text>
-        </template>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="导入"
+            icon-name="Upload"
+            @click="() => (importDialogVisible = true)"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
+      </template>
 
-        <template #auditorName="{ row }">
-          <el-text
-            v-if="row.auditorName !== '-'"
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenOperator(row, 'auditor')"
-          >
-            {{ row.auditorName }}
-          </el-text>
-          <span v-else>{{ row.auditorName }}</span>
-        </template>
+      <template #name="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleDetail(row)"
+        >
+          {{ row.name }}
+        </el-text>
+      </template>
 
-        <template #creator="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenOperator(row, 'creator')"
-          >
-            {{ row.creator }}
-          </el-text>
-        </template>
+      <template #contact="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterContact(row.contact)"
+        >
+          {{ row.contact }}
+        </el-text>
+      </template>
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="详情"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-            <IconButton
-              v-if="row.status === '待审核'"
-              content="通过"
-              icon-name="Check"
-              @click="handleApprove(row)"
-            />
-            <IconButton
-              v-if="row.status === '待审核'"
-              content="驳回"
-              icon-name="Close"
-              @click="handleOpenReject(row)"
-            />
-            <IconButton
-              v-if="row.status === '正常'"
-              content="编辑"
-              icon-name="Edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              v-if="row.status === '正常'"
-              content="禁用"
-              icon-name="Close"
-              @click="handleToggleStatus(row, '禁用')"
-            />
-            <IconButton
-              v-if="row.status === '禁用'"
-              content="启用"
-              icon-name="Check"
-              @click="handleToggleStatus(row, '正常')"
-            />
-          </div>
-        </template>
-      </Grid>
-    </div>
+      <template #phone="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterPhone(row.phone)"
+        >
+          {{ maskPhone(row.phone) }}
+        </el-text>
+      </template>
+
+      <template #groupType="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterGroupType(row.groupType)"
+        >
+          {{ row.groupType }}
+        </el-text>
+      </template>
+
+      <template #status="{ row }">
+        <ElTag
+          :type="getStatusTagType(row.status)"
+          style="cursor: pointer"
+          @click="handleFilterStatus(row.status)"
+        >
+          {{ row.status }}
+        </ElTag>
+      </template>
+
+      <template #walletBalance="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenAccount(row)"
+        >
+          {{ row.walletBalance.toFixed(2) }}
+        </el-text>
+      </template>
+
+      <template #auditorName="{ row }">
+        <el-text
+          v-if="row.auditorName !== '-'"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenOperator(row, 'auditor')"
+        >
+          {{ row.auditorName }}
+        </el-text>
+        <span v-else>{{ row.auditorName }}</span>
+      </template>
+
+      <template #creator="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenOperator(row, 'creator')"
+        >
+          {{ row.creator }}
+        </el-text>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleDetail(row)"
+          />
+          <IconButton
+            v-if="row.status === '待审核'"
+            content="通过"
+            icon-name="Check"
+            @click="handleApprove(row)"
+          />
+          <IconButton
+            v-if="row.status === '待审核'"
+            content="驳回"
+            icon-name="Close"
+            @click="handleOpenReject(row)"
+          />
+          <IconButton
+            v-if="row.status === '正常'"
+            content="编辑"
+            icon-name="Edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            v-if="row.status === '正常'"
+            content="禁用"
+            icon-name="Close"
+            @click="handleToggleStatus(row, '禁用')"
+          />
+          <IconButton
+            v-if="row.status === '禁用'"
+            content="启用"
+            icon-name="Check"
+            @click="handleToggleStatus(row, '正常')"
+          />
+        </div>
+      </template>
+    </Grid>
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -1003,19 +1004,41 @@ function getStatusTagType(status: GroupInfoRow['status']) {
     />
 
     <ElDialog v-model="importDialogVisible" title="导入集团" width="520px">
-      <div class="import-tip">下载模板后上传文件即可。</div>
-      <div class="import-actions">
-        <ElButton @click="handleDownloadTemplate">下载模板</ElButton>
+      <div class="import-container">
+        <div class="template-section">
+          <div class="section-title">1. 下载导入模板</div>
+          <div class="section-content">
+            <p class="tip-text">
+              请使用系统提供的模板格式导入数据，确保数据格式正确
+            </p>
+            <ElButton type="primary" @click="handleDownloadTemplate">
+              下载导入模板
+            </ElButton>
+          </div>
+        </div>
+
+        <div class="upload-section">
+          <div class="section-title">2. 上传数据文件</div>
+          <div class="section-content">
+            <el-upload
+              v-model:file-list="importFileList"
+              drag
+              :auto-upload="false"
+              :limit="1"
+              accept=".xls,.xlsx,.csv"
+            >
+              <div class="el-upload__text">
+                将文件拖到此处，或<em>点击上传</em>
+              </div>
+              <template #tip>
+                <div class="el-upload__tip">
+                  支持 .xls、.xlsx、.csv 格式文件
+                </div>
+              </template>
+            </el-upload>
+          </div>
+        </div>
       </div>
-      <el-upload
-        v-model:file-list="importFileList"
-        drag
-        :auto-upload="false"
-        :limit="1"
-        accept=".xls,.xlsx,.csv"
-      >
-        <div>点击或拖拽文件到此处上传</div>
-      </el-upload>
       <template #footer>
         <ElButton @click="importDialogVisible = false">取消</ElButton>
         <ElButton type="primary" @click="handleImportGroups">
@@ -1075,35 +1098,42 @@ function getStatusTagType(status: GroupInfoRow['status']) {
 </template>
 
 <style scoped lang="scss">
-.group-info-table,
-.group-info-grid-wrap {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.group-info-table {
-  display: flex;
-  flex-direction: column;
-}
-
-.group-info-grid-wrap {
-  flex: 1;
-}
-
 .import-actions,
 .import-tip {
   margin-bottom: 12px;
 }
 
-:deep(.vxe-grid) {
-  height: 100% !important;
+.import-container {
+  padding: 20px;
 }
 
-:deep(.vxe-grid--layout-body-wrapper),
-:deep(.vxe-grid--layout-body-content-wrapper),
-:deep(.vxe-grid--table-container),
-:deep(.vxe-grid--table-wrapper) {
-  min-height: 0;
+.template-section,
+.upload-section {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.section-content {
+  padding-left: 16px;
+}
+
+.tip-text {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+:deep(.el-upload) {
+  width: 100%;
+}
+
+:deep(.el-upload-dragger) {
+  width: 100%;
 }
 </style>

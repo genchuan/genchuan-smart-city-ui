@@ -2,6 +2,7 @@
 import type { CreditConfigRow } from '../data';
 
 import type { CreditConfigVO } from '#/api/genchuan/industry/chargePark/userMerchant/creditMgmt/creditConfig';
+import type { ActiveFilterTag } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import { computed, ref } from 'vue';
 
@@ -16,10 +17,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { CreditConfigApi } from '#/api/genchuan/industry/chargePark/userMerchant/creditMgmt/creditConfig';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import {
-  buildActiveFilterTags,
-  type ActiveFilterTag,
-} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
+import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildCreditConfigQueryParams,
@@ -247,8 +245,8 @@ async function queryCreditConfigPage(
   formValues: Record<string, any> = {},
 ) {
   const queryValues = {
-    ...searchParams.value,
     ...formValues,
+    ...searchParams.value,
     levelThreshold: drillFilters.value.levelThreshold,
     ruleDesc: drillFilters.value.ruleDesc,
     status: drillFilters.value.status,
@@ -376,9 +374,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
-    height: 'auto',
     proxyConfig: {
       ajax: {
         query: queryCreditConfigPage,
@@ -389,6 +385,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
@@ -439,7 +436,7 @@ async function setSearchValues(values: Record<string, any>) {
     ruleDesc: '',
     status: '',
   };
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   return gridApi.reload();
 }
 
@@ -596,15 +593,29 @@ function handleCancelStatusFilter() {
 /** 移除筛选标签 */
 async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   if (tag.source === 'drill') {
-    if (tag.key === 'ruleDesc') {
-      handleCancelRuleDescFilter();
-    } else if (tag.key === 'levelThreshold') {
-      handleCancelLevelThresholdFilter();
-    } else if (tag.key === 'status') {
-      handleCancelStatusFilter();
-    } else if (tag.key === 'configType') {
-      drillFilters.value.configType = '';
-      gridApi.reload();
+    switch (tag.key) {
+      case 'configType': {
+        drillFilters.value.configType = '';
+        gridApi.reload();
+
+        break;
+      }
+      case 'levelThreshold': {
+        handleCancelLevelThresholdFilter();
+
+        break;
+      }
+      case 'ruleDesc': {
+        handleCancelRuleDescFilter();
+
+        break;
+      }
+      case 'status': {
+        handleCancelStatusFilter();
+
+        break;
+      }
+      // No default
     }
     return;
   }
@@ -618,113 +629,106 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
 </script>
 
 <template>
-  <div class="credit-config-table">
-    <div class="credit-config-grid-wrap">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-              align-items: center;
-            "
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
-            >
-              {{ tag.label }}：{{ tag.value }}
-            </ElTag>
-          </div>
-        </template>
-
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSerachShow"
-            />
-            <IconButton
-              :content="props.showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="props.toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
-
-        <template #ruleDesc="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleFilterRuleDesc(row.ruleDesc)"
-          >
-            {{ row.ruleDesc }}
-          </el-text>
-        </template>
-
-        <template #levelThreshold="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleFilterLevelThreshold(row.levelThreshold)"
-          >
-            {{ row.levelThreshold }}
-          </el-text>
-        </template>
-
-        <template #status="{ row }">
+  <div class="park-lot-table-new user-merchant-table-grid">
+    <Grid>
+      <template #table-title>
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; align-items: center"
+        >
           <ElTag
-            :type="getStatusTagType(row.status)"
-            style="cursor: pointer"
-            @click="handleFilterStatus(row.status)"
+            v-for="tag in activeFilterTags"
+            :key="`${tag.source}-${tag.key}`"
+            :type="tag.type"
+            closable
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+            @close="handleRemoveFilterTag(tag)"
           >
-            {{ row.status }}
+            {{ tag.label }}：{{ tag.value }}
           </ElTag>
-        </template>
+        </div>
+      </template>
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="详情"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-            <IconButton
-              content="编辑"
-              icon-name="Edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              v-if="row.status === '未生效'"
-              content="生效"
-              icon-name="Check"
-              @click="handleEnable(row)"
-            />
-            <IconButton
-              v-if="row.status === '已生效'"
-              content="禁用"
-              icon-name="Close"
-              @click="handleDisable(row)"
-            />
-          </div>
-        </template>
-      </Grid>
-    </div>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
+      </template>
+
+      <template #ruleDesc="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterRuleDesc(row.ruleDesc)"
+        >
+          {{ row.ruleDesc }}
+        </el-text>
+      </template>
+
+      <template #levelThreshold="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterLevelThreshold(row.levelThreshold)"
+        >
+          {{ row.levelThreshold }}
+        </el-text>
+      </template>
+
+      <template #status="{ row }">
+        <ElTag
+          :type="getStatusTagType(row.status)"
+          style="cursor: pointer"
+          @click="handleFilterStatus(row.status)"
+        >
+          {{ row.status }}
+        </ElTag>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleDetail(row)"
+          />
+          <IconButton
+            content="编辑"
+            icon-name="Edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            v-if="row.status === '未生效'"
+            content="生效"
+            icon-name="Check"
+            @click="handleEnable(row)"
+          />
+          <IconButton
+            v-if="row.status === '已生效'"
+            content="禁用"
+            icon-name="Close"
+            @click="handleDisable(row)"
+          />
+        </div>
+      </template>
+    </Grid>
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -745,31 +749,4 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   </div>
 </template>
 
-<style scoped lang="scss">
-.credit-config-table,
-.credit-config-grid-wrap {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.credit-config-table {
-  display: flex;
-  flex-direction: column;
-}
-
-.credit-config-grid-wrap {
-  flex: 1;
-}
-
-:deep(.vxe-grid) {
-  height: 100% !important;
-}
-
-:deep(.vxe-grid--layout-body-wrapper),
-:deep(.vxe-grid--layout-body-content-wrapper),
-:deep(.vxe-grid--table-container),
-:deep(.vxe-grid--table-wrapper) {
-  min-height: 0;
-}
-</style>
+<style scoped lang="scss"></style>

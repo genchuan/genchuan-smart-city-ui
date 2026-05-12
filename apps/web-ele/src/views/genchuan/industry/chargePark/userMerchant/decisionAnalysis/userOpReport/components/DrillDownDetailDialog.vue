@@ -276,7 +276,9 @@ defineExpose({
   </Drawer>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+@import '#/views/genchuan/industry/chargePark/userMerchant/utils/tablePager.scss';
+
 .user-op-drill-dialog {
   width: 100%;
   height: 100%;

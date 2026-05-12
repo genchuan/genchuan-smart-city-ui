@@ -313,10 +313,9 @@ onUnmounted(() => {
 .park-chart-box {
   display: flex;
   flex-wrap: nowrap;
-  gap: 20px;
   width: 100%;
   height: auto;
-  min-height: 280px;
+  min-height: 300px;
   overflow: hidden;
 }
 
@@ -324,7 +323,7 @@ onUnmounted(() => {
   display: flex;
   flex-shrink: 0;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
   width: 200px;
 }
 
@@ -336,7 +335,6 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   flex: 1 1 0;
-  gap: 20px;
   min-width: 0;
 }
 

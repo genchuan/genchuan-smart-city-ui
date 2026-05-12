@@ -159,6 +159,12 @@ export const UserInfoApi = {
     });
   },
 
+  importUserInfoTemplate: async () => {
+    return await requestClient.download(
+      '/usermerchant/user-info/get-import-template',
+    );
+  },
+
   exportUserInfo: async (params: UserInfoPageReqVO) => {
     return await requestClient.download('/usermerchant/user-info/export', {
       params,

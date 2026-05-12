@@ -154,6 +154,12 @@ export const GroupCarApi = {
     });
   },
 
+  importGroupCarTemplate: async () => {
+    return await requestClient.download(
+      '/usermerchant/group-car/get-import-template',
+    );
+  },
+
   exportGroupCar: async (params: GroupCarPageReqVO) => {
     return await requestClient.download('/usermerchant/group-car/export', {
       params,

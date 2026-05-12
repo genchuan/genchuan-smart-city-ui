@@ -59,6 +59,14 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits([
+  'barClick',
+  'cardClick',
+  'chartClick',
+  'lineClick',
+  'pieClick',
+]);
+
 const chartRefs = ref({});
 const chartInstances = ref({});
 const showMap = ref(false);
@@ -87,7 +95,46 @@ const initCharts = () => {
 
     const option = getChartOption(chart);
     chartInstance.setOption(option);
+    chartInstance.off('click');
+    chartInstance.on('click', (params) => {
+      const payload = {
+        chart,
+        dataIndex: params.dataIndex,
+        name: String(params.name || ''),
+        value: params.value,
+      };
+
+      switch (chart.type) {
+        case 'bar': {
+          emit('barClick', payload);
+          break;
+        }
+        case 'line': {
+          emit('lineClick', payload);
+          break;
+        }
+        case 'pie': {
+          emit('pieClick', payload);
+          break;
+        }
+        // No default
+      }
+
+      emit('chartClick', payload);
+
+      if (typeof chart.onClick === 'function') {
+        chart.onClick(payload);
+      }
+    });
   });
+};
+
+const handleCardClick = (card, index) => {
+  emit('cardClick', { card, index, type: card.type });
+
+  if (typeof card.onClick === 'function') {
+    card.onClick({ card, index });
+  }
 };
 
 const getChartOption = (chart) => {
@@ -120,9 +167,6 @@ const getChartOption = (chart) => {
   };
 
   if (chart.type === 'pie') {
-    // 计算数据总和用于百分比计算
-    const total = chart.data.reduce((sum, item) => sum + item.value, 0);
-
     option.title = {
       text: chart.title,
       left: 'center',
@@ -340,9 +384,11 @@ onUnmounted(() => {
         v-for="(card, index) in data.cards"
         :key="`card-${index}`"
         class="stat-card"
+        :class="{ 'stat-card-clickable': typeof card.onClick === 'function' }"
         :style="{
           borderLeftColor: card.color || '#13ce66',
         }"
+        @click="handleCardClick(card, index)"
       >
         <div class="card-header">
           <h3 class="card-title">{{ card.title }}</h3>
@@ -418,6 +464,10 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 16px;
   width: 200px;
+}
+
+.stat-card-clickable {
+  cursor: pointer;
 }
 
 .charts-wrapper {

@@ -9,10 +9,12 @@ import type {
 } from '../data';
 
 import type { GroupCarDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupCar';
+import type { ActiveFilterTag } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import dayjs from 'dayjs';
 import {
@@ -32,10 +34,8 @@ import { GroupCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/gro
 import { GroupInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupInfo';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import {
-  buildActiveFilterTags,
-  type ActiveFilterTag,
-} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
+import { downloadFileIfValid } from '#/views/genchuan/industry/chargePark/userMerchant/utils/download';
+import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildGroupCarQueryParams,
@@ -251,8 +251,8 @@ async function queryGroupCarPage(
   formValues: Record<string, any> = {},
 ) {
   const queryValues = {
-    ...searchParams.value,
     ...formValues,
+    ...searchParams.value,
     ...drillFilters.value,
   };
 
@@ -362,8 +362,6 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
-    height: 'auto',
     keepSource: true,
     proxyConfig: {
       ajax: {
@@ -375,6 +373,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
@@ -463,7 +462,7 @@ async function setSearchValues(values: Record<string, any>) {
     plateColor: '',
     status: '',
   };
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   return gridApi.reload();
 }
 
@@ -487,12 +486,13 @@ onMounted(async () => {
 /** 导出当前列表 */
 async function handleExport() {
   try {
-    await GroupCarApi.exportGroupCar(
+    const data = await GroupCarApi.exportGroupCar(
       buildGroupCarQueryParams({
         ...searchParams.value,
         ...drillFilters.value,
       }),
     );
+    downloadFileFromBlobPart({ fileName: '集团车辆.xls', source: data });
     ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
@@ -725,19 +725,18 @@ function handleFilterByPlateColor(plateColor: string) {
 }
 
 /** 下载导入模板 */
-function handleDownloadTemplate() {
-  const blob = new Blob(
-    [
-      '所属集团,车牌号码,车牌颜色,车辆类型,备注\n泉州智联企业集团,闽C66666,蓝牌,小型车,导入模板示例',
-    ],
-    { type: 'text/csv;charset=utf-8;' },
-  );
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = '集团车辆导入模板.csv';
-  link.click();
-  URL.revokeObjectURL(url);
+async function handleDownloadTemplate() {
+  try {
+    const data = await GroupCarApi.importGroupCarTemplate();
+    downloadFileIfValid({
+      fileName: 'group-car-import-template.xls',
+      source: data,
+    });
+    ElMessage.success('模板下载成功');
+  } catch (error) {
+    ElMessage.error('模板下载失败');
+    console.error('[groupCar] download template failed:', error);
+  }
 }
 
 /** 导入车辆数据 */
@@ -818,179 +817,172 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
 </script>
 
 <template>
-  <div class="group-car-table">
-    <div class="group-car-grid-wrap">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-              align-items: center;
-            "
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
-            >
-              {{ tag.label }}：{{ tag.value }}
-            </ElTag>
-          </div>
-        </template>
-
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-            <IconButton
-              content="导入"
-              icon-name="Upload"
-              @click="() => (importDialogVisible = true)"
-            />
-            <IconButton
-              content="导出"
-              icon-name="download"
-              @click="handleExport"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSerachShow"
-            />
-            <IconButton
-              :content="props.showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="props.toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
-
-        <template #groupName="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenGroup(row)"
-          >
-            {{ row.groupName }}
-          </el-text>
-        </template>
-
-        <template #plateNo="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleDetail(row)"
-          >
-            {{ row.plateNo }}
-          </el-text>
-        </template>
-
-        <template #plateColor="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleFilterByPlateColor(row.plateColor)"
-          >
-            {{ row.plateColor }}
-          </el-text>
-        </template>
-
-        <template #carType="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="setSearchValues({ carType: row.carType })"
-          >
-            {{ row.carType }}
-          </el-text>
-        </template>
-
-        <template #status="{ row }">
+  <div class="park-lot-table-new user-merchant-table-grid">
+    <Grid>
+      <template #table-title>
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; align-items: center"
+        >
           <ElTag
-            :type="
-              row.status === '已绑定'
-                ? 'success'
-                : row.status === '待审核'
-                  ? 'warning'
-                  : row.status === '已驳回'
-                    ? 'danger'
-                    : 'info'
-            "
-            style="cursor: pointer"
-            @click="handleFilterStatus(row.status)"
+            v-for="tag in activeFilterTags"
+            :key="`${tag.source}-${tag.key}`"
+            :type="tag.type"
+            closable
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+            @close="handleRemoveFilterTag(tag)"
           >
-            {{ row.status }}
+            {{ tag.label }}：{{ tag.value }}
           </ElTag>
-        </template>
+        </div>
+      </template>
 
-        <template #auditorName="{ row }">
-          <el-text
-            v-if="row.auditorName !== '-'"
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenOperator(row)"
-          >
-            {{ row.auditorName }}
-          </el-text>
-          <span v-else>{{ row.auditorName }}</span>
-        </template>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="导入"
+            icon-name="Upload"
+            @click="() => (importDialogVisible = true)"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
+      </template>
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="详情"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-            <IconButton
-              v-if="row.status === '待审核'"
-              content="通过"
-              icon-name="Check"
-              @click="handleApprove(row)"
-            />
-            <IconButton
-              v-if="row.status === '待审核'"
-              content="驳回"
-              icon-name="Close"
-              @click="handleOpenReject(row)"
-            />
-            <IconButton
-              v-if="row.status === '已绑定'"
-              content="解绑"
-              icon-name="Close"
-              @click="handleUnbind(row)"
-            />
-            <IconButton
-              v-if="row.status === '已解绑'"
-              content="重新绑定"
-              icon-name="RefreshRight"
-              @click="handleRebind(row)"
-            />
-            <IconButton
-              v-if="row.status === '待审核'"
-              content="编辑"
-              icon-name="Edit"
-              @click="handleEdit(row)"
-            />
-          </div>
-        </template>
-      </Grid>
-    </div>
+      <template #groupName="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenGroup(row)"
+        >
+          {{ row.groupName }}
+        </el-text>
+      </template>
+
+      <template #plateNo="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleDetail(row)"
+        >
+          {{ row.plateNo }}
+        </el-text>
+      </template>
+
+      <template #plateColor="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterByPlateColor(row.plateColor)"
+        >
+          {{ row.plateColor }}
+        </el-text>
+      </template>
+
+      <template #carType="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="setSearchValues({ carType: row.carType })"
+        >
+          {{ row.carType }}
+        </el-text>
+      </template>
+
+      <template #status="{ row }">
+        <ElTag
+          :type="
+            row.status === '已绑定'
+              ? 'success'
+              : row.status === '待审核'
+                ? 'warning'
+                : row.status === '已驳回'
+                  ? 'danger'
+                  : 'info'
+          "
+          style="cursor: pointer"
+          @click="handleFilterStatus(row.status)"
+        >
+          {{ row.status }}
+        </ElTag>
+      </template>
+
+      <template #auditorName="{ row }">
+        <el-text
+          v-if="row.auditorName !== '-'"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenOperator(row)"
+        >
+          {{ row.auditorName }}
+        </el-text>
+        <span v-else>{{ row.auditorName }}</span>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleDetail(row)"
+          />
+          <IconButton
+            v-if="row.status === '待审核'"
+            content="通过"
+            icon-name="Check"
+            @click="handleApprove(row)"
+          />
+          <IconButton
+            v-if="row.status === '待审核'"
+            content="驳回"
+            icon-name="Close"
+            @click="handleOpenReject(row)"
+          />
+          <IconButton
+            v-if="row.status === '已绑定'"
+            content="解绑"
+            icon-name="Close"
+            @click="handleUnbind(row)"
+          />
+          <IconButton
+            v-if="row.status === '已解绑'"
+            content="重新绑定"
+            icon-name="RefreshRight"
+            @click="handleRebind(row)"
+          />
+          <IconButton
+            v-if="row.status === '待审核'"
+            content="编辑"
+            icon-name="Edit"
+            @click="handleEdit(row)"
+          />
+        </div>
+      </template>
+    </Grid>
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -1008,22 +1000,44 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
     />
 
     <ElDialog v-model="importDialogVisible" title="导入集团车辆" width="520px">
-      <div class="import-tip">下载模板后上传文件即可。</div>
-      <div class="import-actions">
-        <ElButton @click="handleDownloadTemplate">下载模板</ElButton>
+      <div class="import-container">
+        <div class="template-section">
+          <div class="section-title">1. 下载导入模板</div>
+          <div class="section-content">
+            <p class="tip-text">
+              请使用系统提供的模板格式导入数据，确保数据格式正确
+            </p>
+            <ElButton type="primary" @click="handleDownloadTemplate">
+              下载导入模板
+            </ElButton>
+          </div>
+        </div>
+
+        <div class="upload-section">
+          <div class="section-title">2. 上传数据文件</div>
+          <div class="section-content">
+            <el-upload
+              v-model:file-list="importFileList"
+              drag
+              :auto-upload="false"
+              :limit="1"
+              accept=".xls,.xlsx,.csv"
+            >
+              <div class="el-upload__text">
+                将文件拖到此处，或<em>点击上传</em>
+              </div>
+              <template #tip>
+                <div class="el-upload__tip">
+                  支持 .xls、.xlsx、.csv 格式文件
+                </div>
+              </template>
+            </el-upload>
+          </div>
+        </div>
       </div>
-      <el-upload
-        v-model:file-list="importFileList"
-        drag
-        :auto-upload="false"
-        :limit="1"
-        accept=".xls,.xlsx,.csv"
-      >
-        <div>点击或拖拽文件到此处上传</div>
-      </el-upload>
       <template #footer>
         <ElButton @click="importDialogVisible = false">取消</ElButton>
-        <ElButton type="primary" @click="handleImportCars">开始导入</ElButton>
+        <ElButton type="primary" @click="handleImportCars"> 开始导入 </ElButton>
       </template>
     </ElDialog>
 
@@ -1093,35 +1107,42 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
 </template>
 
 <style scoped lang="scss">
-.group-car-table,
-.group-car-grid-wrap {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.group-car-table {
-  display: flex;
-  flex-direction: column;
-}
-
-.group-car-grid-wrap {
-  flex: 1;
-}
-
 .import-actions,
 .import-tip {
   margin-bottom: 12px;
 }
 
-:deep(.vxe-grid) {
-  height: 100% !important;
+.import-container {
+  padding: 20px;
 }
 
-:deep(.vxe-grid--layout-body-wrapper),
-:deep(.vxe-grid--layout-body-content-wrapper),
-:deep(.vxe-grid--table-container),
-:deep(.vxe-grid--table-wrapper) {
-  min-height: 0;
+.template-section,
+.upload-section {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.section-content {
+  padding-left: 16px;
+}
+
+.tip-text {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+:deep(.el-upload) {
+  width: 100%;
+}
+
+:deep(.el-upload-dragger) {
+  width: 100%;
 }
 </style>

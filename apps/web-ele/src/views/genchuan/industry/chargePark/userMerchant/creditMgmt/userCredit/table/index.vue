@@ -2,10 +2,12 @@
 import type { UserCreditRow, UserProfileInfo, UserSelectOption } from '../data';
 
 import type { UserCreditDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/creditMgmt/userCredit';
+import type { ActiveFilterTag } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import { computed, onMounted, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import {
   ElDescriptions,
@@ -23,10 +25,7 @@ import { UserCreditApi } from '#/api/genchuan/industry/chargePark/userMerchant/c
 import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import {
-  buildActiveFilterTags,
-  type ActiveFilterTag,
-} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
+import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildUserCreditQueryParams,
@@ -264,8 +263,8 @@ async function queryUserCreditPage(
   await ensureUserProfilesLoaded();
 
   const queryValues = {
-    ...searchParams.value,
     ...formValues,
+    ...searchParams.value,
   };
 
   if (drillFilters.value.creditLevel) {
@@ -294,9 +293,7 @@ async function queryUserCreditPage(
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
-    height: 'auto',
     proxyConfig: {
       ajax: {
         query: queryUserCreditPage,
@@ -307,6 +304,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
@@ -342,7 +340,7 @@ async function setSearchValues(values: Record<string, any>) {
     ...values,
   };
   drillFilters.value = {};
-  await queryFormApi.setValues(searchParams.value);
+  void syncQueryFormValues();
   return gridApi.reload();
 }
 
@@ -361,9 +359,10 @@ defineExpose({
 /** 导出当前列表 */
 async function handleExport() {
   try {
-    await UserCreditApi.exportUserCredit(
+    const data = await UserCreditApi.exportUserCredit(
       buildUserCreditQueryParams(searchParams.value, drillFilters.value),
     );
+    downloadFileFromBlobPart({ fileName: '用户信用.xls', source: data });
     ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
@@ -471,106 +470,99 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="user-credit-table">
-    <div class="user-credit-grid-wrap">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-              align-items: center;
-            "
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
-            >
-              {{ tag.label }}：{{ tag.value }}
-            </ElTag>
-          </div>
-        </template>
-
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton
-              content="导出"
-              icon-name="download"
-              @click="handleExport"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSerachShow"
-            />
-            <IconButton
-              :content="props.showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="props.toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
-
-        <template #userName="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenUser(row)"
-          >
-            {{ row.userName }}
-          </el-text>
-        </template>
-
-        <template #creditScore="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleFilterByScore(row.creditScore)"
-          >
-            {{ row.creditScore }}
-          </el-text>
-        </template>
-
-        <template #creditLevel="{ row }">
+  <div class="park-lot-table-new user-merchant-table-grid">
+    <Grid>
+      <template #table-title>
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; align-items: center"
+        >
           <ElTag
-            :type="getCreditLevelTagType(row.creditLevel)"
-            style="cursor: pointer"
-            @click="handleFilterByLevel(row.creditLevel)"
+            v-for="tag in activeFilterTags"
+            :key="`${tag.source}-${tag.key}`"
+            :type="tag.type"
+            closable
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+            @close="handleRemoveFilterTag(tag)"
           >
-            {{ row.creditLevel }}
+            {{ tag.label }}：{{ tag.value }}
           </ElTag>
-        </template>
+        </div>
+      </template>
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="详情"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-            <IconButton
-              v-if="row.creditStatus === '低信用'"
-              content="提醒"
-              icon-name="Warning"
-              @click="handleRemind(row)"
-            />
-          </div>
-        </template>
-      </Grid>
-    </div>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
+      </template>
+
+      <template #userName="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenUser(row)"
+        >
+          {{ row.userName }}
+        </el-text>
+      </template>
+
+      <template #creditScore="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterByScore(row.creditScore)"
+        >
+          {{ row.creditScore }}
+        </el-text>
+      </template>
+
+      <template #creditLevel="{ row }">
+        <ElTag
+          :type="getCreditLevelTagType(row.creditLevel)"
+          style="cursor: pointer"
+          @click="handleFilterByLevel(row.creditLevel)"
+        >
+          {{ row.creditLevel }}
+        </ElTag>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleDetail(row)"
+          />
+          <IconButton
+            v-if="row.creditStatus === '低信用'"
+            content="提醒"
+            icon-name="Warning"
+            @click="handleRemind(row)"
+          />
+        </div>
+      </template>
+    </Grid>
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -608,31 +600,4 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped lang="scss">
-.user-credit-table,
-.user-credit-grid-wrap {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.user-credit-table {
-  display: flex;
-  flex-direction: column;
-}
-
-.user-credit-grid-wrap {
-  flex: 1;
-}
-
-:deep(.vxe-grid) {
-  height: 100% !important;
-}
-
-:deep(.vxe-grid--layout-body-wrapper),
-:deep(.vxe-grid--layout-body-content-wrapper),
-:deep(.vxe-grid--table-container),
-:deep(.vxe-grid--table-wrapper) {
-  min-height: 0;
-}
-</style>
+<style scoped lang="scss"></style>

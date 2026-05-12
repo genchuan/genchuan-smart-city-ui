@@ -150,6 +150,12 @@ export const UserCarApi = {
     });
   },
 
+  importUserCarTemplate: async () => {
+    return await requestClient.download(
+      '/usermerchant/user-car/get-import-template',
+    );
+  },
+
   exportUserCar: async (params: UserCarPageReqVO) => {
     return await requestClient.download('/usermerchant/user-car/export', {
       params,

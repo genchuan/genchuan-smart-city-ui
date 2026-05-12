@@ -10,10 +10,12 @@ import type {
   MerchantRechargeDetailVO,
   MerchantRechargePageReqVO,
 } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantRecharge';
+import type { ActiveFilterTag } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import {
   ElDescriptions,
@@ -33,10 +35,7 @@ import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant
 import { MerchantRechargeApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantRecharge';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import {
-  buildActiveFilterTags,
-  type ActiveFilterTag,
-} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
+import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildMerchantOptionsFromApi,
@@ -326,8 +325,8 @@ async function queryMerchantRechargePage(
   formValues: Record<string, any> = {},
 ) {
   const queryValues = {
-    ...searchParams.value,
     ...formValues,
+    ...searchParams.value,
   };
 
   if (filterAmount.value) {
@@ -361,9 +360,7 @@ async function queryMerchantRechargePage(
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
-    height: 'auto',
     proxyConfig: {
       ajax: {
         query: queryMerchantRechargePage,
@@ -374,6 +371,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
@@ -416,7 +414,7 @@ async function setSearchValues(values: Record<string, any>) {
   filterAmount.value = '';
   filterPayChannel.value = '';
   filterStatus.value = '';
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   return gridApi.reload();
 }
 
@@ -461,9 +459,10 @@ async function handleExport() {
       exportValues.status = filterStatus.value;
     }
 
-    await MerchantRechargeApi.exportMerchantRecharge(
+    const data = await MerchantRechargeApi.exportMerchantRecharge(
       buildMerchantRechargeQueryParams(exportValues),
     );
+    downloadFileFromBlobPart({ fileName: '商户充值.xls', source: data });
     ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
@@ -642,12 +641,19 @@ function handleCancelStatusFilter() {
 /** 移除筛选标签 */
 async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   if (tag.source === 'quick') {
-    if (tag.key === 'amount') {
-      handleCancelAmountFilter();
-    } else if (tag.key === 'payChannel') {
-      handleCancelPayChannelFilter();
-    } else if (tag.key === 'status') {
-      handleCancelStatusFilter();
+    switch (tag.key) {
+      case 'amount': {
+        handleCancelAmountFilter();
+        break;
+      }
+      case 'payChannel': {
+        handleCancelPayChannelFilter();
+        break;
+      }
+      case 'status': {
+        handleCancelStatusFilter();
+        break;
+      }
     }
     return;
   }
@@ -661,129 +667,122 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
 </script>
 
 <template>
-  <div class="merchant-recharge-table">
-    <div class="merchant-recharge-grid-wrap">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-              align-items: center;
-            "
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
-            >
-              {{ tag.label }}：{{ tag.value }}
-            </ElTag>
-          </div>
-        </template>
-
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton
-              content="导出"
-              icon-name="download"
-              @click="handleExport"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSerachShow"
-            />
-            <IconButton
-              :content="props.showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="props.toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
-
-        <template #merchantName="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenMerchant(row)"
-          >
-            {{ row.merchantName }}
-          </el-text>
-        </template>
-
-        <template #amount="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleFilterAmount(row.amount)"
-          >
-            {{ row.amount.toFixed(2) }}
-          </el-text>
-        </template>
-
-        <template #payChannel="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleFilterPayChannel(row.payChannel)"
-          >
-            {{ row.payChannel }}
-          </el-text>
-        </template>
-
-        <template #status="{ row }">
+  <div class="park-lot-table-new user-merchant-table-grid">
+    <Grid>
+      <template #table-title>
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; align-items: center"
+        >
           <ElTag
-            :type="getStatusTagType(row.status)"
-            style="cursor: pointer"
-            @click="handleFilterStatus(row.status)"
+            v-for="tag in activeFilterTags"
+            :key="`${tag.source}-${tag.key}`"
+            :type="tag.type"
+            closable
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+            @close="handleRemoveFilterTag(tag)"
           >
-            {{ row.status }}
+            {{ tag.label }}：{{ tag.value }}
           </ElTag>
-        </template>
+        </div>
+      </template>
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="详情"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-            <IconButton
-              v-if="row.status === '待支付'"
-              content="支付"
-              icon-name="Check"
-              @click="handleOpenPay(row)"
-            />
-            <IconButton
-              v-if="row.status === '已支付'"
-              content="确认"
-              icon-name="Check"
-              @click="handleConfirm(row)"
-            />
-            <IconButton
-              v-if="row.status === '待支付'"
-              content="取消"
-              icon-name="Close"
-              @click="handleCancel(row)"
-            />
-          </div>
-        </template>
-      </Grid>
-    </div>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
+      </template>
+
+      <template #merchantName="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenMerchant(row)"
+        >
+          {{ row.merchantName }}
+        </el-text>
+      </template>
+
+      <template #amount="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterAmount(row.amount)"
+        >
+          {{ row.amount.toFixed(2) }}
+        </el-text>
+      </template>
+
+      <template #payChannel="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterPayChannel(row.payChannel)"
+        >
+          {{ row.payChannel }}
+        </el-text>
+      </template>
+
+      <template #status="{ row }">
+        <ElTag
+          :type="getStatusTagType(row.status)"
+          style="cursor: pointer"
+          @click="handleFilterStatus(row.status)"
+        >
+          {{ row.status }}
+        </ElTag>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleDetail(row)"
+          />
+          <IconButton
+            v-if="row.status === '待支付'"
+            content="支付"
+            icon-name="Check"
+            @click="handleOpenPay(row)"
+          />
+          <IconButton
+            v-if="row.status === '已支付'"
+            content="确认"
+            icon-name="Check"
+            @click="handleConfirm(row)"
+          />
+          <IconButton
+            v-if="row.status === '待支付'"
+            content="取消"
+            icon-name="Close"
+            @click="handleCancel(row)"
+          />
+        </div>
+      </template>
+    </Grid>
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -846,31 +845,4 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   </div>
 </template>
 
-<style scoped lang="scss">
-.merchant-recharge-table,
-.merchant-recharge-grid-wrap {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.merchant-recharge-table {
-  display: flex;
-  flex-direction: column;
-}
-
-.merchant-recharge-grid-wrap {
-  flex: 1;
-}
-
-:deep(.vxe-grid) {
-  height: 100% !important;
-}
-
-:deep(.vxe-grid--layout-body-wrapper),
-:deep(.vxe-grid--layout-body-content-wrapper),
-:deep(.vxe-grid--table-container),
-:deep(.vxe-grid--table-wrapper) {
-  min-height: 0;
-}
-</style>
+<style scoped lang="scss"></style>

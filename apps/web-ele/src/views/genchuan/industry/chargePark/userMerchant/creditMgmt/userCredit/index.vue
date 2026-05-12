@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
-
 import { ElMessage } from 'element-plus';
 
 import { UserCreditApi } from '#/api/genchuan/industry/chargePark/userMerchant/creditMgmt/userCredit';
@@ -11,7 +9,7 @@ import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.v
 import { buildStatsDataFromApi } from './data';
 import Table from './table/index.vue';
 
-import '#/components/page/index.scss';
+import '#/genchuan-components/page/index.scss';
 
 type TableInstance = {
   recalculateLayout: () => Promise<void> | void;
@@ -63,24 +61,7 @@ async function loadStats() {
   }
 }
 
-const statsData = computed(() => {
-  const data = statsDataSource.value;
-
-  return {
-    ...data,
-    cards: data.cards.map((item, index) => ({
-      ...item,
-      onClick: index === 0 ? handleFilterAllCredits : handleFilterLowCredits,
-    })),
-    charts: data.charts.map((item) => ({
-      ...item,
-      onClick:
-        item.type === 'pie'
-          ? (params: { name: string }) => handleFilterByLevel(params.name)
-          : undefined,
-    })),
-  };
-});
+const statsData = computed(() => statsDataSource.value);
 
 /** 钻取全部信用列表 */
 async function handleFilterAllCredits() {
@@ -107,58 +88,25 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page auto-content-height class="user-credit-page">
-    <div class="common-index user-credit-index">
-      <div v-show="showStats" class="user-credit-stats">
-        <StatsVisualization :data="statsData" />
-      </div>
-      <div class="user-credit-table-wrap">
-        <Table
-          ref="tableRef"
-          :reload-stats="loadStats"
-          :show-stats="showStats"
-          :toggle-stats="toggleStats"
-        />
-      </div>
-    </div>
-  </Page>
+  <div class="common-index">
+    <StatsVisualization
+      v-if="showStats"
+      :data="statsData"
+      @card-click="
+        ({ index }) =>
+          index === 0 ? handleFilterAllCredits() : handleFilterLowCredits()
+      "
+      @pie-click="({ name }) => handleFilterByLevel(name)"
+    />
+    <Table
+      ref="tableRef"
+      :reload-stats="loadStats"
+      :show-stats="showStats"
+      :toggle-stats="toggleStats"
+    />
+  </div>
 </template>
 
 <style scoped lang="scss">
-.user-credit-page {
-  height: 100%;
-}
-
-:deep(.user-credit-page .vben-page-content) {
-  height: 100%;
-}
-
-.user-credit-index {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.user-credit-stats {
-  flex-shrink: 0;
-  height: 280px;
-  overflow: hidden;
-}
-
-.user-credit-table-wrap {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-:deep(.park-chart-box) {
-  min-height: 280px;
-}
-
-:deep(.simple-bar-chart),
-:deep(.park-type-chart) {
-  height: 280px;
-}
+@import '#/views/genchuan/industry/chargePark/userMerchant/utils/tablePager.scss';
 </style>

@@ -78,6 +78,18 @@ export interface CouponProfileInfo {
   validPeriod: string;
 }
 
+export interface CouponMgmtApiVO {
+  description?: string;
+  id?: number;
+  name?: string;
+  status?: string;
+  statusName?: string;
+  type?: string;
+  typeName?: string;
+  useCondition?: string;
+  validTime?: null | number | string;
+}
+
 export interface MerchantSendCouponRow {
   couponId: number;
   couponName: string;
@@ -396,6 +408,23 @@ export function buildCouponSelectOptions(
 }
 
 /**
+ * 将优惠券管理接口数据转下拉项
+ */
+export function buildCouponOptionsFromApi(list: CouponMgmtApiVO[] = []) {
+  return buildCouponSelectOptions(
+    list.map((item) => ({
+      label: item.name || '',
+      remark: item.description || '',
+      rule: item.useCondition || '-',
+      status: item.statusName || item.status || '-',
+      type: item.typeName || item.type || '-',
+      validPeriod: formatApiTime(item.validTime),
+      value: Number(item.id ?? 0),
+    })),
+  );
+}
+
+/**
  * 构建优惠券信息索引
  */
 export function buildCouponProfileLookup(
@@ -628,7 +657,9 @@ export function buildMerchantSendCouponRowFromApi(
       : fallback.logs || [],
     merchantAddress: merchantProfile.address,
     merchantContact: merchantProfile.contact,
-    merchantId: Number(data.merchantId ?? fallback.merchantId ?? 0),
+    merchantId: Number(
+      data.merchantId ?? data.merchantInfo?.id ?? fallback.merchantId ?? 0,
+    ),
     merchantName: merchantProfile.name,
     merchantPhone: merchantProfile.phone,
     merchantRegisterTime: merchantProfile.registerTime,

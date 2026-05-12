@@ -189,6 +189,12 @@ export const MerchantInfoApi = {
     });
   },
 
+  importMerchantInfoTemplate: async () => {
+    return await requestClient.download(
+      '/usermerchant/merchant-info/get-import-template',
+    );
+  },
+
   exportMerchantInfo: async (params: MerchantInfoPageReqVO) => {
     return await requestClient.download('/usermerchant/merchant-info/export', {
       params,

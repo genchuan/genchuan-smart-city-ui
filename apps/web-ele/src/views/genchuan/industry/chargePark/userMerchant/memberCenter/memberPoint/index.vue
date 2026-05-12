@@ -9,6 +9,7 @@ import type {
 import { ref } from 'vue';
 
 import { DocAlert, Page, useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
@@ -113,9 +114,10 @@ async function handleSearchShow() {
 /** 导出当前列表 */
 async function handleExport() {
   try {
-    await MemberPointApi.exportMemberPoint(
+    const data = await MemberPointApi.exportMemberPoint(
       searchParams.value as MemberPointPageReqVO,
     );
+    downloadFileFromBlobPart({ fileName: '会员积分.xls', source: data });
     ElMessage.success('导出成功');
   } catch {
     ElMessage.error('导出失败');
@@ -194,3 +196,7 @@ async function handleCheck(row: MemberPointVO) {
     </Grid>
   </Page>
 </template>
+
+<style scoped lang="scss">
+@import '#/views/genchuan/industry/chargePark/userMerchant/utils/tablePager.scss';
+</style>

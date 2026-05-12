@@ -8,6 +8,7 @@ import type {
 import { computed, ref } from 'vue';
 
 import { DocAlert, Page, useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -130,9 +131,10 @@ async function handleSearchShow() {
 /** 导出当前列表 */
 async function handleExport() {
   try {
-    await MemberSignApi.exportMemberSign(
+    const data = await MemberSignApi.exportMemberSign(
       searchParams.value as MemberSignPageReqVO,
     );
+    downloadFileFromBlobPart({ fileName: '会员签到.xls', source: data });
     ElMessage.success('导出成功');
   } catch {
     ElMessage.error('导出失败');
@@ -199,3 +201,7 @@ async function handleDetail(row: MemberSignVO) {
     />
   </Page>
 </template>
+
+<style scoped lang="scss">
+@import '#/views/genchuan/industry/chargePark/userMerchant/utils/tablePager.scss';
+</style>

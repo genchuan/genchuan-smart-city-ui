@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
-
 import { ElMessage } from 'element-plus';
 
 import { MerchantLinkApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantLink';
@@ -11,7 +9,7 @@ import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.v
 import { buildStatsDataFromApi } from './data';
 import Table from './table/index.vue';
 
-import '#/components/page/index.scss';
+import '#/genchuan-components/page/index.scss';
 
 type TableInstance = {
   recalculateLayout: () => Promise<void> | void;
@@ -63,22 +61,7 @@ async function loadStats() {
   }
 }
 
-const statsData = computed(() => {
-  const data = statsDataSource.value;
-
-  return {
-    ...data,
-    cards: data.cards.map((item) => ({
-      ...item,
-      onClick: handleFilterLinked,
-    })),
-    charts: data.charts.map((item) => ({
-      ...item,
-      onClick: (params: { name: string }) =>
-        handleFilterByLinkType(params.name),
-    })),
-  };
-});
+const statsData = computed(() => statsDataSource.value);
 
 /** 钻取已对接列表 */
 async function handleFilterLinked() {
@@ -96,58 +79,22 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page auto-content-height class="merchant-link-page">
-    <div class="common-index merchant-link-index">
-      <div v-show="showStats" class="merchant-link-stats">
-        <StatsVisualization :data="statsData" />
-      </div>
-      <div class="merchant-link-table-wrap">
-        <Table
-          ref="tableRef"
-          :reload-stats="loadStats"
-          :show-stats="showStats"
-          :toggle-stats="toggleStats"
-        />
-      </div>
-    </div>
-  </Page>
+  <div class="common-index">
+    <StatsVisualization
+      v-if="showStats"
+      :data="statsData"
+      @bar-click="({ name }) => handleFilterByLinkType(name)"
+      @card-click="handleFilterLinked"
+    />
+    <Table
+      ref="tableRef"
+      :reload-stats="loadStats"
+      :show-stats="showStats"
+      :toggle-stats="toggleStats"
+    />
+  </div>
 </template>
 
 <style scoped lang="scss">
-.merchant-link-page {
-  height: 100%;
-}
-
-:deep(.merchant-link-page .vben-page-content) {
-  height: 100%;
-}
-
-.merchant-link-index {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.merchant-link-stats {
-  flex-shrink: 0;
-  height: 280px;
-  overflow: hidden;
-}
-
-.merchant-link-table-wrap {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-:deep(.park-chart-box) {
-  min-height: 280px;
-}
-
-:deep(.simple-bar-chart),
-:deep(.park-type-chart) {
-  height: 280px;
-}
+@import '#/views/genchuan/industry/chargePark/userMerchant/utils/tablePager.scss';
 </style>

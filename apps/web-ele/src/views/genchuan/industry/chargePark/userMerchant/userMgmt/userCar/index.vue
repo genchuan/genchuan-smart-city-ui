@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
-
 import { ElMessage } from 'element-plus';
 
 import { UserCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userCar';
@@ -11,7 +9,7 @@ import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.v
 import { buildStatsDataFromApi } from './data';
 import Table from './table/index.vue';
 
-import '#/components/page/index.scss';
+import '#/genchuan-components/page/index.scss';
 
 type TableInstance = {
   recalculateLayout: () => Promise<void> | void;
@@ -63,28 +61,7 @@ async function loadStats() {
   }
 }
 
-const statsData = computed(() => {
-  const data = statsDataSource.value;
-
-  return {
-    ...data,
-    cards: data.cards.map((item, index) => ({
-      ...item,
-      onClick: index === 0 ? handleFilterBoundCars : handleFilterApprovedCars,
-    })),
-    charts: data.charts.map((item) => {
-      if (item.type === 'bar') {
-        return {
-          ...item,
-          onClick: (params: { name: string }) =>
-            handleFilterByCarType(params.name),
-        };
-      }
-
-      return item;
-    }),
-  };
-});
+const statsData = computed(() => statsDataSource.value);
 
 /** 钻取已绑定车辆 */
 async function handleFilterBoundCars() {
@@ -111,58 +88,25 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page auto-content-height class="user-car-page">
-    <div class="common-index user-car-index">
-      <div v-show="showStats" class="user-car-stats">
-        <StatsVisualization :data="statsData" />
-      </div>
-      <div class="user-car-table-wrap">
-        <Table
-          ref="tableRef"
-          :reload-stats="loadStats"
-          :show-stats="showStats"
-          :toggle-stats="toggleStats"
-        />
-      </div>
-    </div>
-  </Page>
+  <div class="common-index">
+    <StatsVisualization
+      v-if="showStats"
+      :data="statsData"
+      @bar-click="({ name }) => handleFilterByCarType(name)"
+      @card-click="
+        ({ index }) =>
+          index === 0 ? handleFilterBoundCars() : handleFilterApprovedCars()
+      "
+    />
+    <Table
+      ref="tableRef"
+      :reload-stats="loadStats"
+      :show-stats="showStats"
+      :toggle-stats="toggleStats"
+    />
+  </div>
 </template>
 
 <style scoped lang="scss">
-.user-car-page {
-  height: 100%;
-}
-
-:deep(.user-car-page .vben-page-content) {
-  height: 100%;
-}
-
-.user-car-index {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.user-car-stats {
-  flex-shrink: 0;
-  height: 280px;
-  overflow: hidden;
-}
-
-.user-car-table-wrap {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-:deep(.park-chart-box) {
-  min-height: 280px;
-}
-
-:deep(.simple-bar-chart),
-:deep(.park-type-chart) {
-  height: 280px;
-}
+@import '#/views/genchuan/industry/chargePark/userMerchant/utils/tablePager.scss';
 </style>

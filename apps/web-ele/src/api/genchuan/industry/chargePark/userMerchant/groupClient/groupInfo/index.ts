@@ -169,6 +169,12 @@ export const GroupInfoApi = {
     });
   },
 
+  importGroupInfoTemplate: async () => {
+    return await requestClient.download(
+      '/usermerchant/group-info/get-import-template',
+    );
+  },
+
   exportGroupInfo: async (params: GroupInfoPageReqVO) => {
     return await requestClient.download('/usermerchant/group-info/export', {
       params,

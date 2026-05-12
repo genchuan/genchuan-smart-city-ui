@@ -650,13 +650,16 @@ export function buildStatsDataFromApi(data?: Partial<UserInfoChartVO>) {
  * 构建查询参数
  */
 export function buildUserInfoQueryParams(formValues: Record<string, any>) {
+  const registerTimeRange =
+    Array.isArray(formValues.registerTime) &&
+    formValues.registerTime.length === 2 &&
+    formValues.registerTime.every((item) => dayjs(item).isValid())
+      ? `${dayjs(formValues.registerTime[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(formValues.registerTime[1]).format('YYYY-MM-DD HH:mm:ss')}`
+      : undefined;
+
   const params = {
     ...formValues,
-    registerTime:
-      Array.isArray(formValues.registerTime) &&
-      formValues.registerTime.length === 2
-        ? `${dayjs(formValues.registerTime[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(formValues.registerTime[1]).format('YYYY-MM-DD HH:mm:ss')}`
-        : undefined,
+    registerTime: registerTimeRange,
   };
 
   return Object.fromEntries(
