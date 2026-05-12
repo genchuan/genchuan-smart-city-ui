@@ -136,6 +136,7 @@ const [ActionDrawer, actionDrawerApi] = useVbenDrawer({
       if (actionType.value === 'in') {
         await inSpareStock({
           spareId: values.spareId,
+          spareName: values.spareName,
           inCount: Number(values.inCount || 0),
           supplier: values.supplier,
         });
