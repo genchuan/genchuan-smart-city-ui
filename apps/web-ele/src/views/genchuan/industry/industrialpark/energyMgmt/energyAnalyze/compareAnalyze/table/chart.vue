@@ -2,7 +2,7 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 import * as echarts from 'echarts';
-import { getCompareChart } from '#/api/genchuan/industry/industrialPark/energyMgmt/energyAnalyze/compareAnalyze/index.js';
+import { getCompareChart } from '#/api/genchuan/industry/industrialpark/energyMgmt/energyAnalyze/compareAnalyze/index.js';
 import { ElMessage } from 'element-plus';
 
 const emit = defineEmits(['refresh']);

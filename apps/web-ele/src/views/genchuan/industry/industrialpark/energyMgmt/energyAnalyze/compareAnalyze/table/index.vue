@@ -18,7 +18,7 @@ import {
   getCompareAnalyzeDetail,
   optimizeCompareAnalyze,
   getUserDetail,
-} from '#/api/genchuan/industry/industrialPark/energyMgmt/energyAnalyze/compareAnalyze/index.js';
+} from '#/api/genchuan/industry/industrialpark/energyMgmt/energyAnalyze/compareAnalyze/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import CompareDetailDrawer from './detail.vue';
 import ProblemDetailDrawer from './problemDetail.vue';
