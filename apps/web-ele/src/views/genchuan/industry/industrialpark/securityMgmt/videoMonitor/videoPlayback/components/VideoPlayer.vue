@@ -1,4 +1,3 @@
-<!-- 文件: src/views/genchuan/industrialPark/securityMgmt/videoPlayback/components/VideoPlayer.vue -->
 <template>
   <div class="video-player-container">
     <video

@@ -20,7 +20,7 @@ import {
   getCameraDetail,
   getUserDetail,
   getSecurityEventDetail,
-} from '#/api/genchuan/industry/industrialPark/securityMgmt/videoMonitor/realTimeMonitor/data.js';
+} from '#/api/genchuan/industry/industrialpark/securityMgmt/videoMonitor/realTimeMonitor/data.js';
 import {
   textObj,
   useFormSchema,
@@ -29,7 +29,7 @@ import {
   useSplitScreenSchema,
   useAlarmFormSchema,
   useRecordFormSchema,
-} from '#/api/genchuan/industry/industrialPark/securityMgmt/videoMonitor/realTimeMonitor/form.js';
+} from '#/api/genchuan/industry/industrialpark/securityMgmt/videoMonitor/realTimeMonitor/form.js';
 
 const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
 const emit = defineEmits(['arrow-change']);

@@ -1,4 +1,3 @@
-<!-- 文件3: src/views/genchuan/industrialPark/securityMgmt/videoPlayback/index.vue -->
 <script setup>
 import { reactive, ref, nextTick } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
@@ -18,14 +17,14 @@ import {
   confirmVideoPlayback,
   getCameraDetail,
   getUserDetail,
-} from '#/api/genchuan/industry/industrialPark/securityMgmt/videoMonitor/videoPlayback/data.js';
+} from '#/api/genchuan/industry/industrialpark/securityMgmt/videoMonitor/videoPlayback/data.js';
 import {
   textObj,
   useFormSchema,
   getColumns,
   useSearchFormSchema,
   formatTimestamp,
-} from '#/api/genchuan/industry/industrialPark/securityMgmt/videoMonitor/videoPlayback/form.js';
+} from '#/api/genchuan/industry/industrialpark/securityMgmt/videoMonitor/videoPlayback/form.js';
 
 const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
 const emit = defineEmits(['arrow-change']);

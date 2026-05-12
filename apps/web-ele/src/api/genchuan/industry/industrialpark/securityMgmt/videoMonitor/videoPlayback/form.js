@@ -1,4 +1,3 @@
-// 文件2: src/views/genchuan/industrialPark/securityMgmt/videoPlayback/form.js
 // 筛选表单 schema（用于列表页搜索）
 export function useFormSchema() {
   return [

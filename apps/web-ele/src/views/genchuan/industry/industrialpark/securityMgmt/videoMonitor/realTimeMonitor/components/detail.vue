@@ -2,7 +2,7 @@
 import { computed, toRefs, ref, onMounted } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { ElMessage } from 'element-plus';
-import { getCameraDetail } from '#/api/genchuan/industry/industrialPark/securityMgmt/videoMonitor/realTimeMonitor/data.js';
+import { getCameraDetail } from '#/api/genchuan/industry/industrialpark/securityMgmt/videoMonitor/realTimeMonitor/data.js';
 
 const props = defineProps({
   detailObj: { type: Object, required: true, default: () => ({}) },

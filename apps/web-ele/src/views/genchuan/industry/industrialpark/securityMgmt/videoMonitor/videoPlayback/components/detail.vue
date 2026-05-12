@@ -1,9 +1,8 @@
-<!-- 文件4: src/views/genchuan/industrialPark/securityMgmt/videoPlayback/components/detail.vue -->
 <script setup>
 import { computed, toRefs, ref, onMounted } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
-import { getCameraDetail } from '#/api/genchuan/industry/industrialPark/securityMgmt/videoMonitor/videoPlayback/data.js';
-import { formatTimestamp } from '#/api/genchuan/industry/industrialPark/securityMgmt/videoMonitor/videoPlayback/form.js';
+import { getCameraDetail } from '#/api/genchuan/industry/industrialpark/securityMgmt/videoMonitor/videoPlayback/data.js';
+import { formatTimestamp } from '#/api/genchuan/industry/industrialpark/securityMgmt/videoMonitor/videoPlayback/form.js';
 
 const props = defineProps({
   detailObj: { type: Object, required: true, default: () => ({}) },

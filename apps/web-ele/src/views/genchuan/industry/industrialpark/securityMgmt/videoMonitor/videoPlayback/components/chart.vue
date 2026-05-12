@@ -1,10 +1,9 @@
-<!-- 文件5: src/views/genchuan/industrialPark/securityMgmt/videoPlayback/components/chart.vue -->
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { ElSelect, ElOption } from 'element-plus';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChart.vue';
-import { getVideoPlaybackChart } from '#/api/genchuan/industry/industrialPark/securityMgmt/videoMonitor/videoPlayback/data.js';
+import { getVideoPlaybackChart } from '#/api/genchuan/industry/industrialpark/securityMgmt/videoMonitor/videoPlayback/data.js';
 
 const loading = ref(true);
 const chartData = ref({

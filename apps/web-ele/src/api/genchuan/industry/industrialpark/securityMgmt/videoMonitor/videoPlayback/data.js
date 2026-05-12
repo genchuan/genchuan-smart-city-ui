@@ -1,4 +1,3 @@
-// 文件1: src/views/genchuan/industrialPark/securityMgmt/videoPlayback/data.js
 import { requestClient } from '#/api/request';
 
 // ==================== 录像回放接口 ====================

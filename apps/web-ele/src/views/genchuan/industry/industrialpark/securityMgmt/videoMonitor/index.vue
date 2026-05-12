@@ -1,4 +1,3 @@
-<!-- 文件6: src/views/genchuan/industrialPark/securityMgmt/index.vue（父容器，包含实时监控和录像回放两个tab） -->
 <script setup>
 import { ref, computed, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';

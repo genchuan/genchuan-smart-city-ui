@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import MapCommon from './MapCommon.vue';
-import { getRealTimeMonitorChart } from '#/api/genchuan/industry/industrialPark/securityMgmt/videoMonitor/realTimeMonitor/data.js';
+import { getRealTimeMonitorChart } from '#/api/genchuan/industry/industrialpark/securityMgmt/videoMonitor/realTimeMonitor/data.js';
 
 const loading = ref(true);
 const chartData = ref({

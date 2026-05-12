@@ -1,9 +1,9 @@
 <script setup>
 import { onMounted, defineProps, ref, onUnmounted, watch, defineExpose } from 'vue';
 
-import markerNormal from '#/views/genchuan/industry/industrialPark/images/marker-normal.png';
-import markerAlarm from '#/views/genchuan/industry/industrialPark/images/marker-alarm.png';
-import markerOffline from '#/views/genchuan/industry/industrialPark/images/marker-offline.png';
+import markerNormal from '#/views/genchuan/industry/industrialpark/images/marker-normal.png';
+import markerAlarm from '#/views/genchuan/industry/industrialpark/images/marker-alarm.png';
+import markerOffline from '#/views/genchuan/industry/industrialpark/images/marker-offline.png';
 
 const props = defineProps({
   idName: {
