@@ -43,10 +43,10 @@ export type UserInfoUpdateReqVO = UserInfoCreateReqVO & {
 // 用户信息分页请求
 export type UserInfoPageReqVO = PageParam & {
   carCount?: number;
-  loginTime?: string;
+  loginTime?: string[];
   nickname?: string;
   phone?: string;
-  registerTime?: string;
+  registerTime?: string[];
   remark?: string;
   status?: string;
   userType?: string;
@@ -160,9 +160,7 @@ export const UserInfoApi = {
   },
 
   importUserInfoTemplate: async () => {
-    return await requestClient.download(
-      '/usermerchant/user-info/get-import-template',
-    );
+    return await requestClient.download('/usermerchant/user-info/template');
   },
 
   exportUserInfo: async (params: UserInfoPageReqVO) => {

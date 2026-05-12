@@ -27,6 +27,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { UserCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userCar';
 import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
@@ -35,6 +36,7 @@ import { downloadFileIfValid } from '#/views/genchuan/industry/chargePark/userMe
 import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
+  buildCarInfo,
   buildUserInfoQueryParams,
   buildUserRowFromApi,
   formatAuditLogs,
@@ -608,14 +610,27 @@ async function handleOpenWallet(row: UserRow) {
 
 /** 打开车辆明细弹窗 */
 async function handleOpenCars(row: UserRow) {
-  const detail = await fetchUserDetail(row, '加载车辆明细失败');
+  const loadingInstance = ElLoading.service({
+    target: '.user-info-table',
+    text: '加载中...',
+  });
 
-  if (!detail) {
-    return;
+  try {
+    const result = await UserCarApi.getUserCarPage({
+      pageNo: 1,
+      pageSize: Math.max(row.carCount || 20, 20),
+      userId: row.id,
+    });
+    const list = Array.isArray(result?.list) ? result.list : [];
+
+    currentCars.value = list.map((item) => buildCarInfo(item));
+    vehicleDialogVisible.value = true;
+  } catch (error) {
+    ElMessage.error('加载车辆明细失败');
+    console.error('[userInfo] load cars failed:', error);
+  } finally {
+    loadingInstance.close();
   }
-
-  currentCars.value = detail.row.cars;
-  vehicleDialogVisible.value = true;
 }
 
 /** 批量禁用所选用户 */

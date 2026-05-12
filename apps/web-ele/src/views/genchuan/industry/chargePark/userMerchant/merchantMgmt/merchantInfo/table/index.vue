@@ -7,7 +7,10 @@ import type {
   OperatorInfo,
 } from '../data';
 
-import type { MerchantInfoDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
+import type {
+  MerchantInfoAuditReqVO,
+  MerchantInfoDetailVO,
+} from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import type { ActiveFilterTag } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import { computed, ref } from 'vue';
@@ -256,6 +259,51 @@ async function fetchMerchantDetail(
 }
 
 /** 查询商户列表 */
+function formatRequestDateTime(value?: null | string) {
+  if (!value) {
+    return dayjs().format('YYYY-MM-DDTHH:mm:ss');
+  }
+
+  const dateTime = dayjs(value);
+  return dateTime.isValid()
+    ? dateTime.format('YYYY-MM-DDTHH:mm:ss')
+    : dayjs().format('YYYY-MM-DDTHH:mm:ss');
+}
+
+async function buildMerchantAuditPayload(
+  row: MerchantInfoRow,
+  auditRemark: string,
+): Promise<MerchantInfoAuditReqVO | null> {
+  const detail = await fetchMerchantDetail(row);
+
+  if (!detail) {
+    return null;
+  }
+
+  const source = detail.source;
+  const detailRow = detail.row;
+
+  return {
+    address: source.address || detailRow.address || '',
+    auditRemark,
+    auditResult: auditRemark,
+    contact: source.contact || detailRow.contact || '',
+    id: detailRow.id,
+    ids: [detailRow.id],
+    merchantType: source.merchantType || detailRow.merchantType || '',
+    name: source.name || detailRow.name || '',
+    phone: source.phone || detailRow.phone || '',
+    registerTime: formatRequestDateTime(
+      source.registerTime || detailRow.registerTime,
+    ),
+    remark: source.remark || detailRow.remark || '',
+    reserve1: source.reserve1,
+    reserve2: source.reserve2,
+    status: source.status || detailRow.status,
+    walletBalance: source.walletBalance ?? detailRow.walletBalance ?? 0,
+  };
+}
+
 async function queryMerchantInfoPage(
   { page }: any,
   formValues: Record<string, any> = {},
@@ -597,10 +645,16 @@ async function handleApprove(row: MerchantInfoRow) {
   });
 
   try {
-    await MerchantInfoApi.approveMerchantInfo({
-      auditRemark: '商户信息无误，审核通过',
-      ids: [row.id],
-    });
+    const payload = await buildMerchantAuditPayload(
+      row,
+      '商户信息无误，审核通过',
+    );
+
+    if (!payload) {
+      return;
+    }
+
+    await MerchantInfoApi.approveMerchantInfo(payload);
     ElMessage.success('商户审核通过');
     await handleReloadPage();
   } catch (error) {
@@ -635,10 +689,16 @@ async function handleConfirmReject() {
   });
 
   try {
-    await MerchantInfoApi.rejectMerchantInfo({
-      auditRemark: rejectReason.value.trim(),
-      ids: [rejectRow.value.id],
-    });
+    const payload = await buildMerchantAuditPayload(
+      rejectRow.value,
+      rejectReason.value.trim(),
+    );
+
+    if (!payload) {
+      return;
+    }
+
+    await MerchantInfoApi.rejectMerchantInfo(payload);
     rejectDialogVisible.value = false;
     rejectReason.value = '';
     rejectRow.value = undefined;

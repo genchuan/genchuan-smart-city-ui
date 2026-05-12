@@ -68,8 +68,8 @@ export type MerchantLinkDetailVO = MerchantLinkVO & {
 // 商户对接分页请求
 export type MerchantLinkPageReqVO = PageParam & {
   apiUrl?: string;
-  effectTime?: string;
-  lastSyncTime?: string;
+  effectTime?: string[];
+  lastSyncTime?: string[];
   linkType?: string;
   merchantId?: number;
   remark?: string;

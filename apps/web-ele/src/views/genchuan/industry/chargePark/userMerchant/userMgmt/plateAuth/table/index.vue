@@ -123,7 +123,7 @@ const searchFilterConfigs = {
     label: '认证状态',
     type: 'warning',
   },
-  userId: {
+  nickname: {
     label: '所属用户',
     type: 'info',
   },
@@ -169,7 +169,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   },
   handleSubmit: onQuerySubmit,
   layout: 'horizontal',
-  schema: useSearchSchema(userSelectOptions.value).map((v: any) => {
+  schema: useSearchSchema().map((v: any) => {
     delete v.rules;
     return { ...v };
   }),
@@ -279,15 +279,6 @@ async function loadUserOptions() {
     userSelectOptions.value = buildUserSelectOptions(userSelectOptions.value);
     userProfileLookup.value = buildUserProfileLookup(userSelectOptions.value);
   }
-
-  await queryFormApi.updateSchema([
-    {
-      fieldName: 'userId',
-      componentProps: {
-        options: userSelectOptions.value,
-      },
-    },
-  ]);
 
   await handleRefresh();
 }

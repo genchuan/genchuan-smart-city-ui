@@ -13,6 +13,8 @@ import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
+const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+
 export type PlateAuthStatus = '已认证' | '已驳回' | '待审核';
 
 export interface AuthLog {
@@ -549,8 +551,8 @@ export function buildPlateAuthRowFromApi(
   const auditorName =
     data.auditorInfo?.name ||
     data.auditorInfo?.nickname ||
-    (data.auditorId ? operatorNameByIdMap[data.auditorId] : undefined) ||
     fallback.auditorName ||
+    (data.auditorId ? operatorNameByIdMap[data.auditorId] : undefined) ||
     '-';
 
   const auditorInfo = (() => {
@@ -694,7 +696,10 @@ export function buildPlateAuthQueryParams(formValues: Record<string, any>) {
     ...formValues,
     applyTime:
       Array.isArray(formValues.applyTime) && formValues.applyTime.length === 2
-        ? `${dayjs(formValues.applyTime[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(formValues.applyTime[1]).format('YYYY-MM-DD HH:mm:ss')}`
+        ? [
+            dayjs(formValues.applyTime[0]).format(QUERY_TIME_FORMAT),
+            dayjs(formValues.applyTime[1]).format(QUERY_TIME_FORMAT),
+          ]
         : undefined,
   };
 
@@ -710,17 +715,14 @@ export function buildPlateAuthQueryParams(formValues: Record<string, any>) {
   );
 }
 
-export function useSearchSchema(
-  currentUserOptions: UserSelectOption[] = userOptions,
-): VbenFormSchema[] {
+export function useSearchSchema(): VbenFormSchema[] {
   return [
     {
-      fieldName: 'userId',
+      fieldName: 'nickname',
       label: '所属用户',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        options: currentUserOptions,
-        placeholder: '请选择所属用户',
+        placeholder: '请输入所属用户',
       },
     },
     {

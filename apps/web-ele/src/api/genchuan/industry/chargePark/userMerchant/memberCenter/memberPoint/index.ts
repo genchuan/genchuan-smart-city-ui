@@ -1,5 +1,6 @@
 import type { PageParam, PageResult } from '@vben/request';
 
+import { normalizeQueryDateTimeRanges } from '#/api/genchuan/industry/chargePark/userMerchant/utils/query';
 import { requestClient } from '#/api/request';
 
 // 会员积分 VO
@@ -21,10 +22,12 @@ export type MemberPointVO = {
 
 export type MemberPointPageReqVO = PageParam & {
   bizType?: number | string;
+  checkTime?: string[];
   createTime?: string | string[];
   nickname?: string;
   point?: number | string;
   status?: string;
+  updateTime?: string[];
 };
 
 export type MemberPointCheckReqVO = {
@@ -50,7 +53,13 @@ export const MemberPointApi = {
   getMemberPointPage: async (params: MemberPointPageReqVO) => {
     return await requestClient.get<PageResult<MemberPointVO>>(
       '/usermerchant/member-point/page',
-      { params },
+      {
+        params: normalizeQueryDateTimeRanges(params, [
+          'checkTime',
+          'createTime',
+          'updateTime',
+        ]),
+      },
     );
   },
 
@@ -65,7 +74,11 @@ export const MemberPointApi = {
 
   exportMemberPoint: async (params: MemberPointPageReqVO) => {
     return await requestClient.download('/usermerchant/member-point/export', {
-      params,
+      params: normalizeQueryDateTimeRanges(params, [
+        'checkTime',
+        'createTime',
+        'updateTime',
+      ]),
     });
   },
 

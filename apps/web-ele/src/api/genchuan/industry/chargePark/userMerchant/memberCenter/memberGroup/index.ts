@@ -1,5 +1,6 @@
 import type { PageParam, PageResult } from '@vben/request';
 
+import { normalizeQueryDateTimeRanges } from '#/api/genchuan/industry/chargePark/userMerchant/utils/query';
 import { requestClient } from '#/api/request';
 
 // 会员分组 VO
@@ -16,8 +17,10 @@ export type MemberGroupVO = {
 
 export type MemberGroupPageReqVO = PageParam & {
   createTime?: string | string[];
+  effectiveTime?: string[];
   name?: string;
   status?: number | string;
+  updateTime?: string[];
 };
 
 export type MemberGroupSaveReqVO = MemberGroupVO;
@@ -63,7 +66,13 @@ export const MemberGroupApi = {
   getMemberGroupPage: async (params: MemberGroupPageReqVO) => {
     const result = await requestClient.get<PageResult<MemberGroupVO>>(
       '/usermerchant/member-group/page',
-      { params },
+      {
+        params: normalizeQueryDateTimeRanges(params, [
+          'createTime',
+          'effectiveTime',
+          'updateTime',
+        ]),
+      },
     );
     return {
       ...result,

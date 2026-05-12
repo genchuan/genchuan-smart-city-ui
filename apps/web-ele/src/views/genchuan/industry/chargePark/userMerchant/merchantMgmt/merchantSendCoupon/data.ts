@@ -18,6 +18,8 @@ import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
+const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+
 export type MerchantSendCouponStatus = '已取消' | '已执行' | '待执行';
 
 export interface RedemptionLog {
@@ -605,12 +607,15 @@ export function buildMerchantSendCouponRowFromApi(
   merchantLookup: Record<number, Partial<MerchantProfileInfo>> = {},
   couponLookup: Record<number, CouponProfileInfo> = buildCouponProfileLookup(),
 ): MerchantSendCouponRow {
+  const merchantId = Number(
+    data.merchantId ?? data.merchantInfo?.id ?? fallback.merchantId ?? 0,
+  );
   const merchantProfile = buildMerchantProfile(
     data.merchantInfo
       ? {
           address: data.merchantInfo.address,
           contact: data.merchantInfo.contact,
-          id: data.merchantInfo.id || data.merchantId,
+          id: data.merchantInfo.id || merchantId,
           merchantType: data.merchantInfo.merchantType,
           name: data.merchantInfo.name,
           phone: data.merchantInfo.phone,
@@ -619,7 +624,10 @@ export function buildMerchantSendCouponRowFromApi(
           status: data.merchantInfo.status,
         }
       : undefined,
-    fallback,
+    {
+      ...fallback,
+      merchantId,
+    },
     merchantLookup,
   );
   const couponProfile = buildCouponProfile(
@@ -657,9 +665,7 @@ export function buildMerchantSendCouponRowFromApi(
       : fallback.logs || [],
     merchantAddress: merchantProfile.address,
     merchantContact: merchantProfile.contact,
-    merchantId: Number(
-      data.merchantId ?? data.merchantInfo?.id ?? fallback.merchantId ?? 0,
-    ),
+    merchantId,
     merchantName: merchantProfile.name,
     merchantPhone: merchantProfile.phone,
     merchantRegisterTime: merchantProfile.registerTime,
@@ -796,7 +802,10 @@ function buildRangeParam(value: any) {
     return undefined;
   }
 
-  return `${dayjs(value[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(value[1]).format('YYYY-MM-DD HH:mm:ss')}`;
+  return [
+    dayjs(value[0]).format(QUERY_TIME_FORMAT),
+    dayjs(value[1]).format(QUERY_TIME_FORMAT),
+  ];
 }
 
 /**

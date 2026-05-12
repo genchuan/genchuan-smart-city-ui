@@ -59,6 +59,9 @@ const generateFilterPlaceholder =
 const generateForm = ref({
   filterCondition: '',
   remark: '',
+  reportCycle: '自定义报表',
+  statEndTime: '',
+  statStartTime: '',
 });
 const filterReportType = ref('');
 const searchParams = ref<Record<string, any>>({});
@@ -357,11 +360,17 @@ async function handleConfirmGenerate() {
     await UserOpReportApi.generateUserOpReport({
       filterCondition: generateForm.value.filterCondition.trim(),
       remark: generateForm.value.remark.trim(),
+      reportCycle: generateForm.value.reportCycle,
+      statEndTime: generateForm.value.statEndTime || undefined,
+      statStartTime: generateForm.value.statStartTime || undefined,
     });
     generateDialogVisible.value = false;
     generateForm.value = {
       filterCondition: '',
       remark: '',
+      reportCycle: '自定义报表',
+      statEndTime: '',
+      statStartTime: '',
     };
     ElMessage.success('自定义报表已生成');
     await handleReloadPage();

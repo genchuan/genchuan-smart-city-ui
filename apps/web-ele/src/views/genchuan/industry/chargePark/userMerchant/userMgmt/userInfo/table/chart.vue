@@ -314,7 +314,7 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: nowrap;
   width: 100%;
-  height: auto;
+  height: 300px;
   min-height: 300px;
   overflow: hidden;
 }
@@ -325,6 +325,12 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 8px;
   width: 200px;
+  height: 100%;
+}
+
+.stat-card {
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .park-chart-box .chart-box-left .user-info-clickable-card {
@@ -342,7 +348,7 @@ onUnmounted(() => {
 .park-type-chart {
   flex: 1;
   min-width: 0;
-  height: 280px;
+  height: 100%;
   cursor: pointer;
 }
 </style>

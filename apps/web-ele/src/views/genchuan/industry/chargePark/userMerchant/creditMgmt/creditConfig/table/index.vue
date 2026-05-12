@@ -184,7 +184,7 @@ function formatSubmitTime(value?: string) {
   }
 
   return dayjs(value).isValid()
-    ? dayjs(value).format('YYYY-MM-DD HH:mm:ss')
+    ? dayjs(value).format('YYYY-MM-DDTHH:mm:ss')
     : value;
 }
 
@@ -192,7 +192,7 @@ function formatSubmitTime(value?: string) {
 async function validateRuleDescUnique(ruleDesc: string, currentId?: number) {
   const result = await CreditConfigApi.getCreditConfigPage({
     pageNo: 1,
-    pageSize: 9999,
+    pageSize: 200,
     ruleDesc,
   });
   const list = Array.isArray(result?.list) ? result.list : [];
@@ -254,7 +254,7 @@ async function queryCreditConfigPage(
   const isConfigTypeDrill = !!drillFilters.value.configType;
   const result = await CreditConfigApi.getCreditConfigPage({
     pageNo: isConfigTypeDrill ? 1 : page.currentPage,
-    pageSize: isConfigTypeDrill ? 9999 : page.pageSize,
+    pageSize: isConfigTypeDrill ? 200 : page.pageSize,
     ...buildCreditConfigQueryParams(queryValues),
   });
 
@@ -302,7 +302,10 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     const levelThreshold = (values.levelThreshold || '').trim();
     const remark = (values.remark || '').trim();
 
-    if (!(await validateRuleDescUnique(ruleDesc, formData.value?.id))) {
+    if (
+      formMode.value === 'create' &&
+      !(await validateRuleDescUnique(ruleDesc))
+    ) {
       ElMessage.warning('该信用规则已存在');
       return;
     }

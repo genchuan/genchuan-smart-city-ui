@@ -19,7 +19,7 @@ export type CreditConfigVO = {
 
 // 信用配置分页请求
 export type CreditConfigPageReqVO = PageParam & {
-  effectTime?: string;
+  effectTime?: string[];
   levelThreshold?: string;
   remark?: string;
   ruleDesc?: string;
@@ -70,7 +70,7 @@ export const CreditConfigApi = {
   },
 
   saveCreditConfig: async (data: CreditConfigSaveReqVO) => {
-    return await requestClient.post('/usermerchant/credit-config/save', data);
+    return await requestClient.put('/usermerchant/credit-config/save', data);
   },
 
   updateCreditConfig: async (data: CreditConfigVO) => {

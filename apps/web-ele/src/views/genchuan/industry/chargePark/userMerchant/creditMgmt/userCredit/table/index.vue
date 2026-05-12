@@ -89,8 +89,8 @@ const searchFilterConfigs = {
     label: '信用等级',
     type: 'warning',
   },
-  userId: {
-    label: '所属用户',
+  nickname: {
+    label: '用户名称',
     type: 'info',
   },
 } as const;
@@ -144,7 +144,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   },
   handleSubmit: onQuerySubmit,
   layout: 'horizontal',
-  schema: useSearchSchema(userSelectOptions.value).map((item) => ({
+  schema: useSearchSchema().map((item) => ({
     ...item,
     rules: undefined,
   })),
@@ -165,7 +165,7 @@ async function onQuerySubmit(values: Record<string, any>) {
 async function loadUserProfiles() {
   const result = await UserInfoApi.getUserInfoPage({
     pageNo: 1,
-    pageSize: 9999,
+    pageSize: 200,
   });
   const list = Array.isArray(result?.list) ? result.list : [];
   const profiles = list
@@ -185,7 +185,7 @@ async function loadUserProfiles() {
   userProfileMap.value = nextUserProfileMap;
   userSelectOptions.value = buildUserSelectOptions(profiles);
   queryFormApi.setState({
-    schema: useSearchSchema(userSelectOptions.value).map((item) => ({
+    schema: useSearchSchema().map((item) => ({
       ...item,
       rules: undefined,
     })),

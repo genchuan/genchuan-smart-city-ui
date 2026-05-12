@@ -209,9 +209,6 @@ function getStatusTagType(status: MerchantRechargeRow['status']) {
     case '已支付': {
       return 'primary';
     }
-    case '已生效': {
-      return 'success';
-    }
     case '待支付': {
       return 'warning';
     }
@@ -275,6 +272,66 @@ async function fetchMerchantProfile(
   }
 }
 
+/** 补齐商户信息索引 */
+async function ensureMerchantProfiles(merchantIds: number[]) {
+  const uniqueIds = [...new Set(merchantIds.filter((id) => id > 0))].filter(
+    (id) => !merchantProfileLookup.value[id],
+  );
+
+  if (uniqueIds.length === 0) {
+    return;
+  }
+
+  const details = await Promise.all(
+    uniqueIds.map((id) => fetchMerchantProfile(id, '加载商户信息失败')),
+  );
+  const patchedOptions = details
+    .filter((item): item is MerchantInfoDetailVO => Boolean(item?.id))
+    .map((item) => ({
+      address: item.address || '',
+      contact: item.contact || '',
+      label: item.name || '',
+      merchantType: item.merchantType || '',
+      phone: item.phone || '',
+      registerTime: formatApiTime(item.registerTime),
+      remark: item.remark || '',
+      status: item.status || '-',
+      value: Number(item.id ?? 0),
+    }));
+
+  if (patchedOptions.length === 0) {
+    return;
+  }
+
+  merchantSelectOptions.value = buildMerchantOptionsFromApi([
+    ...merchantSelectOptions.value.map((item) => ({
+      address: item.address || '',
+      contact: item.contact || '',
+      id: item.value,
+      merchantType: item.merchantType || '',
+      name: item.label,
+      phone: item.phone || '',
+      registerTime: item.registerTime || '',
+      remark: item.remark || '',
+      status: item.status || '-',
+    })),
+    ...patchedOptions.map((item) => ({
+      address: item.address || '',
+      contact: item.contact || '',
+      id: item.value,
+      merchantType: item.merchantType || '',
+      name: item.label,
+      phone: item.phone || '',
+      registerTime: item.registerTime || '',
+      remark: item.remark || '',
+      status: item.status || '-',
+    })),
+  ]);
+  merchantProfileLookup.value = buildMerchantProfileLookup(
+    merchantSelectOptions.value,
+  );
+}
+
 /** 获取充值详情 */
 async function fetchMerchantRechargeDetail(
   row: MerchantRechargeRow,
@@ -283,6 +340,9 @@ async function fetchMerchantRechargeDetail(
   const cachedDetail = detailCache.get(row.id);
 
   if (cachedDetail) {
+    await ensureMerchantProfiles([
+      Number(cachedDetail.merchantId ?? row.merchantId ?? 0),
+    ]);
     return {
       row: buildMerchantRechargeRowFromApi(
         cachedDetail,
@@ -299,8 +359,9 @@ async function fetchMerchantRechargeDetail(
   });
 
   try {
-    const data = await MerchantRechargeApi.getMerchantRecharge(row.id);
+    const data: MerchantRechargeDetailVO = row;
     detailCache.set(row.id, data);
+    await ensureMerchantProfiles([Number(data.merchantId ?? row.merchantId)]);
 
     return {
       row: buildMerchantRechargeRowFromApi(
@@ -348,6 +409,7 @@ async function queryMerchantRechargePage(
   };
   const result = await MerchantRechargeApi.getMerchantRechargePage(params);
   const list = Array.isArray(result?.list) ? result.list : [];
+  await ensureMerchantProfiles(list.map((item) => Number(item.merchantId)));
 
   return {
     list: list.map((item) =>
@@ -519,7 +581,7 @@ async function handleConfirm(row: MerchantRechargeRow) {
     await MerchantRechargeApi.confirmMerchantRecharge({
       ids: [row.id],
     });
-    ElMessage.success('充值已确认生效');
+    ElMessage.success('充值已确认');
     await handleReloadPage();
   } catch (error) {
     ElMessage.error('确认失败');

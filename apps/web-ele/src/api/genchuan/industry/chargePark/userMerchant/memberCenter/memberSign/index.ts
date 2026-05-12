@@ -1,5 +1,6 @@
 import type { PageParam, PageResult } from '@vben/request';
 
+import { normalizeQueryDateTimeRanges } from '#/api/genchuan/industry/chargePark/userMerchant/utils/query';
 import { requestClient } from '#/api/request';
 
 // 会员签到 VO
@@ -17,6 +18,8 @@ export type MemberSignVO = {
 export type MemberSignPageReqVO = PageParam & {
   createTime?: string | string[];
   nickname?: string;
+  signDate?: string[];
+  updateTime?: string[];
 };
 
 export type MemberSignChartReqVO = {
@@ -41,7 +44,12 @@ export const MemberSignApi = {
   getMemberSignPage: async (params: MemberSignPageReqVO) => {
     return await requestClient.get<PageResult<MemberSignVO>>(
       '/usermerchant/member-sign/page',
-      { params },
+      {
+        params: normalizeQueryDateTimeRanges(params, [
+          'createTime',
+          'updateTime',
+        ]),
+      },
     );
   },
 
@@ -56,7 +64,10 @@ export const MemberSignApi = {
 
   exportMemberSign: async (params: MemberSignPageReqVO) => {
     return await requestClient.download('/usermerchant/member-sign/export', {
-      params,
+      params: normalizeQueryDateTimeRanges(params, [
+        'createTime',
+        'updateTime',
+      ]),
     });
   },
 

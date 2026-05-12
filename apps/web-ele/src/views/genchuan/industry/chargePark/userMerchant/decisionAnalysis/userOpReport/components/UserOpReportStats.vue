@@ -313,7 +313,7 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: nowrap;
   width: 100%;
-  height: auto;
+  height: 280px;
   min-height: 280px;
   padding-bottom: 0.5rem;
   overflow: hidden;
@@ -326,7 +326,7 @@ onUnmounted(() => {
   gap: 4px;
   align-content: stretch;
   width: 480px;
-  height: 280px;
+  height: 100%;
   padding: 4px;
   overflow: hidden;
 }
@@ -410,7 +410,7 @@ onUnmounted(() => {
   flex: 1 1 0;
   align-items: center;
   min-width: 0;
-  height: 280px;
+  height: 100%;
   padding: 4px;
 }
 
@@ -419,7 +419,7 @@ onUnmounted(() => {
   box-sizing: border-box;
   flex: 1;
   min-width: 0;
-  height: 272px;
+  height: 100%;
 }
 
 .line-chart-area {
