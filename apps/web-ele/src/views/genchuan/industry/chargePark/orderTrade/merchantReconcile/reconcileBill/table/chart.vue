@@ -1,61 +1,178 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
+import { ElTag } from 'element-plus';
 
-import { getReconcileBillChart } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
+import { getReconcileBillChart, getReconcileBillListPage } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
+import { useVbenDrawer } from '@vben/common-ui';
 import Card from '#/components/stats/card.vue';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { formatTimestamp } from '#/utils';
+
+const statusMap = {
+  pending: { label: '待对账', type: 'warning' },
+  reconciled: { label: '已对账', type: 'success' },
+  abnormal: { label: '异常', type: 'danger' },
+};
+
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || status;
+};
+
+const getStatusType = (status) => {
+  return statusMap[status]?.type || 'default';
+};
 
 const state = reactive({
   cardList: [
-    { title: '待对账数', value: 0, color: '#FF6B6B' },
-    { title: '异常数', value: 0, color: '#E74C3C' },
-    { title: '已确认数', value: 0, color: '#13ce66' },
-    { title: '确认率', value: 0, color: '#4A90E2', suffix: '%' },
+    { title: '待对账数', value: 0, color: '#FF6B6B', status: 'pending' },
+    { title: '异常数', value: 0, color: '#E74C3C', status: 'abnormal' },
+    { title: '已确认数', value: 0, color: '#13ce66', status: 'reconciled' },
+    { title: '确认率', value: 0, color: '#4A90E2', suffix: '%', status: null },
   ],
   trendData: [],
+});
+
+const selectedStatus = ref(null);
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  width: '75%',
+  title: computed(() => {
+    let title = '对账单列表';
+    if (selectedStatus.value) {
+      title = `${statusMap[selectedStatus.value]?.label || selectedStatus.value} ${title}`;
+    }
+    return title;
+  }),
+  class: 'genchuan-detail-drawer',
+  onCancel() {
+    drawerApi.close();
+  },
+});
+
+const drawerDataObj = reactive({
+  total: 0,
+  list: [],
+  loading: false,
+});
+
+const getDrawerTableData = async (pageObj) => {
+  const page = pageObj.page;
+  const params = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+  };
+
+  if (selectedStatus.value) {
+    params.status = selectedStatus.value;
+  }
+
+  try {
+    drawerDataObj.loading = true;
+    const res = await getReconcileBillListPage(params);
+    drawerDataObj.total = res.total;
+    drawerDataObj.list = res.list.map((v) => {
+      return {
+        ...v,
+        confirmTime: formatTimestamp(v.confirmTime),
+        createTime: formatTimestamp(v.createTime),
+      };
+    });
+    return drawerDataObj;
+  } catch (error) {
+    console.error('获取对账单列表失败:', error);
+    return drawerDataObj;
+  } finally {
+    drawerDataObj.loading = false;
+  }
+};
+
+const handleCardClick = (status) => {
+  selectedStatus.value = status;
+  drawerGridApi.query();
+  drawerApi.open();
+};
+
+const handleLineChartClick = (params) => {
+  console.log('折线图点击事件触发:', params);
+  if (params && params.name) {
+    selectedStatus.value = null;
+    drawerGridApi.query();
+    drawerApi.open();
+  }
+};
+
+const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: [
+      { type: 'seq', width: 60 },
+      { field: 'billNo', title: '对账单号', width: 180 },
+      { field: 'merchantName', title: '商户名称', width: 160 },
+      { field: 'billDate', title: '对账日期', width: 120 },
+      { field: 'sysAmount', title: '系统订单总金额', width: 140 },
+      { field: 'merchantAmount', title: '商户上报总金额', width: 140 },
+      { field: 'diffAmount', title: '差异金额', width: 120 },
+      { field: 'status', title: '对账状态', width: 120,
+        slots: { default: 'status' }
+      },
+      { field: 'remark', title: '备注', width: 200 },
+      { field: 'confirmTime', title: '确认时间', width: 180 },
+      { field: 'createTime', title: '创建时间', width: 180 },
+    ],
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => getDrawerTableData({ page }),
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    pagerConfig: drawerDataObj,
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+    },
+    showOverflow: true,
+  },
+  showSearchForm: false,
 });
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取对账单图表数据
 const fetchReconcileBillChartData = async () => {
   try {
     const res = await getReconcileBillChart();
-    state.cardList[0].value = res.pendingCount || 0;
-    state.cardList[1].value = res.disputedCount || 0;
-    state.cardList[2].value = res.confirmedCount || 0;
-    state.cardList[3].value = res.confirmRate || 0;
-    // 如果trendData为空，使用假数据
+    state.cardList[0].value = res.cardData?.pendingCount || res.pendingCount || 0;
+    state.cardList[1].value = res.cardData?.disputedCount || res.disputedCount || 0;
+    state.cardList[2].value = res.cardData?.confirmedCount || res.confirmedCount || 0;
+    state.cardList[3].value = res.cardData?.confirmRate || res.confirmRate || 0;
     state.trendData =
       res.trendData && res.trendData.length > 0
         ? res.trendData
         : [
-            { date: '2026-04-01', count: 2 },
-            { date: '2026-04-08', count: 1 },
-            { date: '2026-04-10', count: 1 },
+            { date: '2026-04-27', count: 10 },
           ];
-    // 更新折线图
     updateChart();
   } catch (error) {
     console.error('获取对账单图表数据失败:', error);
-    // 接口调用失败时使用假数据
-    state.cardList[0].value = 0;
+    state.cardList[0].value = 1;
     state.cardList[1].value = 0;
     state.cardList[2].value = 0;
     state.cardList[3].value = 0;
     state.trendData = [
-      { date: '2026-04-01', count: 2 },
-      { date: '2026-04-08', count: 1 },
-      { date: '2026-04-10', count: 1 },
+      { date: '2026-04-27', count: 10 },
     ];
-    // 更新折线图
     updateChart();
   }
 };
 
-// 初始化折线图
 const initChart = () => {
   if (!lineChartRef.value) return;
 
@@ -116,9 +233,12 @@ const initChart = () => {
   };
 
   lineChartInstance.setOption(option);
+
+  lineChartInstance.on('click', (params) => {
+    handleLineChartClick(params);
+  });
 };
 
-// 更新折线图
 const updateChart = () => {
   if (!lineChartInstance) return;
 
@@ -149,14 +269,25 @@ onMounted(() => {
   <div class="park-chart-box">
     <div class="chart-box-left">
       <Card
-        class="left-card"
+        class="left-card cursor-pointer"
         v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
+        @click="handleCardClick(item.status)"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
+
+  <Drawer>
+    <DrawerGrid>
+      <template #status="{ row }">
+        <el-tag :type="getStatusType(row.status)">
+          {{ getStatusLabel(row.status) }}
+        </el-tag>
+      </template>
+    </DrawerGrid>
+  </Drawer>
 </template>
 
 <style scoped lang="scss">

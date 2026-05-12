@@ -1,60 +1,171 @@
 <script setup>
-import { onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
+import { ElTag } from 'element-plus';
 
-import { getReconcileRecordChart } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
+import { getReconcileRecordChart, getReconcileRecordListPage } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
+import { useVbenDrawer } from '@vben/common-ui';
 import Card from '#/components/stats/card.vue';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { formatTimestamp } from '#/utils';
+
+const matchResultMap = {
+  matched: { label: '已匹配', type: 'success' },
+  unmatched: { label: '未匹配', type: 'danger' },
+  partial: { label: '部分匹配', type: 'warning' },
+};
+
+const getMatchResultLabel = (matchResult) => {
+  return matchResultMap[matchResult]?.label || matchResult;
+};
+
+const getMatchResultType = (matchResult) => {
+  return matchResultMap[matchResult]?.type || 'default';
+};
 
 const state = reactive({
   cardList: [
-    { title: '未匹配数', value: 0, color: '#FF6B6B' },
-    { title: '总记录数', value: 0, color: '#4ECDC4' },
-    { title: '匹配率', value: 0, color: '#13ce66', suffix: '%' },
+    { title: '未匹配数', value: 0, color: '#FF6B6B', matchResult: 'unmatched' },
+    { title: '总记录数', value: 0, color: '#4ECDC4', matchResult: null },
   ],
   trendData: [],
+});
+
+const selectedMatchResult = ref(null);
+
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  appendToMain: true,
+  footer: false,
+  width: '75%',
+  title: computed(() => {
+    let title = '对账记录列表';
+    if (selectedMatchResult.value) {
+      title = `${getMatchResultLabel(selectedMatchResult.value)} ${title}`;
+    }
+    return title;
+  }),
+  class: 'genchuan-detail-drawer',
+  onCancel() {
+    drawerApi.close();
+  },
+});
+
+const drawerDataObj = reactive({
+  total: 0,
+  list: [],
+  loading: false,
+});
+
+const getDrawerTableData = async (pageObj) => {
+  const page = pageObj.page;
+  const params = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+  };
+
+  if (selectedMatchResult.value) {
+    params.matchResult = selectedMatchResult.value;
+  }
+
+  try {
+    drawerDataObj.loading = true;
+    const res = await getReconcileRecordListPage(params);
+    drawerDataObj.total = res.total;
+    drawerDataObj.list = res.list.map((v) => {
+      return {
+        ...v,
+        handleTime: formatTimestamp(v.handleTime),
+        createTime: formatTimestamp(v.createTime),
+      };
+    });
+    return drawerDataObj;
+  } catch (error) {
+    console.error('获取对账记录列表失败:', error);
+    return drawerDataObj;
+  } finally {
+    drawerDataObj.loading = false;
+  }
+};
+
+const handleCardClick = (matchResult) => {
+  selectedMatchResult.value = matchResult;
+  drawerGridApi.query();
+  drawerApi.open();
+};
+
+const handleLineChartClick = (params) => {
+  console.log('折线图点击事件触发:', params);
+  if (params && params.name) {
+    selectedMatchResult.value = null;
+    drawerGridApi.query();
+    drawerApi.open();
+  }
+};
+
+const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: [
+      { type: 'seq', width: 60 },
+      { field: 'billNo', title: '对账单号', width: 180 },
+      { field: 'orderNo', title: '订单编号', width: 180 },
+      { field: 'sysAmount', title: '系统金额', width: 120 },
+      { field: 'merchantAmount', title: '商户上报金额', width: 140 },
+      { field: 'diffAmount', title: '差异金额', width: 120 },
+      { field: 'matchResult', title: '对账结果', width: 120,
+        slots: { default: 'matchResult' }
+      },
+      { field: 'diffReason', title: '异常原因', width: 200 },
+      { field: 'handleTime', title: '处理时间', width: 180 },
+      { field: 'createTime', title: '创建时间', width: 180 },
+    ],
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => getDrawerTableData({ page }),
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    pagerConfig: drawerDataObj,
+    toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
+      refresh: true,
+    },
+    showOverflow: true,
+  },
+  showSearchForm: false,
 });
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取对账记录图表数据
 const fetchReconcileRecordChartData = async () => {
   try {
     const res = await getReconcileRecordChart();
-    state.cardList[0].value = res.unmatchedCount || 0;
-    state.cardList[1].value = res.totalCount || 0;
-    state.cardList[2].value = res.matchRate || 0;
-    // 如果trendData为空，使用假数据
+    state.cardList[0].value = res.cardData?.unmatchedCount || res.unmatchedCount || 0;
+    state.cardList[1].value = res.cardData?.totalCount || res.totalCount || 0;
     state.trendData =
       res.trendData && res.trendData.length > 0
         ? res.trendData
         : [
-            { date: '2026-04-01', count: 2 },
-            { date: '2026-04-08', count: 1 },
-            { date: '2026-04-10', count: 1 },
-            { date: '2026-04-26', count: 10 },
+            { date: '2026-04-27', count: 10 },
           ];
-    // 更新折线图
     updateChart();
   } catch (error) {
     console.error('获取对账记录图表数据失败:', error);
-    // 接口调用失败时使用假数据
-    state.cardList[0].value = 3;
-    state.cardList[1].value = 15;
-    state.cardList[2].value = 80;
+    state.cardList[0].value = 2;
+    state.cardList[1].value = 10;
     state.trendData = [
-      { date: '2026-04-01', count: 2 },
-      { date: '2026-04-08', count: 1 },
-      { date: '2026-04-10', count: 1 },
-      { date: '2026-04-26', count: 10 },
+      { date: '2026-04-27', count: 10 },
     ];
-    // 更新折线图
     updateChart();
   }
 };
 
-// 初始化折线图
 const initChart = () => {
   if (!lineChartRef.value) return;
 
@@ -115,9 +226,12 @@ const initChart = () => {
   };
 
   lineChartInstance.setOption(option);
+
+  lineChartInstance.on('click', (params) => {
+    handleLineChartClick(params);
+  });
 };
 
-// 更新折线图
 const updateChart = () => {
   if (!lineChartInstance) return;
 
@@ -148,14 +262,25 @@ onMounted(() => {
   <div class="park-chart-box">
     <div class="chart-box-left">
       <Card
-        class="left-card"
+        class="left-card cursor-pointer"
         v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
+        @click="handleCardClick(item.matchResult)"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
+
+  <Drawer>
+    <DrawerGrid>
+      <template #matchResult="{ row }">
+        <el-tag :type="getMatchResultType(row.matchResult)">
+          {{ getMatchResultLabel(row.matchResult) }}
+        </el-tag>
+      </template>
+    </DrawerGrid>
+  </Drawer>
 </template>
 
 <style scoped lang="scss">
@@ -170,7 +295,7 @@ onMounted(() => {
 .chart-box-left {
   display: grid !important;
   grid-template-columns: 1fr !important;
-  grid-template-rows: repeat(3, 1fr) !important;
+  grid-template-rows: repeat(2, 1fr) !important;
   gap: 16px !important;
   flex-shrink: 0;
   width: 30%;
