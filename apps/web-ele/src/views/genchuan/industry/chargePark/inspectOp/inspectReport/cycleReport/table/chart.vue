@@ -182,13 +182,14 @@ function handleCardClick(card) {
 function handleBarLineClick(payload) {
   const name = payload?.data?.name;
   if (!name) return;
+  const chartKey = payload.chartKey;
   const slot = payload.chartSlot;
   if (slot === 'bar' || (!slot && payload.chartType === 'bar')) {
-    emit('stationFilter', name);
+    emit('stationFilter', { stationName: name, barChartKey: chartKey });
     return;
   }
   if (slot === 'line' || (!slot && payload.chartType === 'line')) {
-    emit('trendFilter', name);
+    emit('trendFilter', { trendDate: name, lineChartKey: chartKey });
   }
 }
 
