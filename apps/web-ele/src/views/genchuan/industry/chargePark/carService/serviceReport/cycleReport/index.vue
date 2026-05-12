@@ -88,10 +88,6 @@ const handleChartRefresh = (filters) => {
 
 <style scoped lang="scss">
 .common-index {
-  // 图表容器下边距
-  :deep(.stats-four-visualization) {
-    margin-bottom: 8px;
-  }
 
   // 图标按钮组上下边距
   .icon-change {
