@@ -30,6 +30,20 @@ const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
 };
 
+// 订单类型映射
+const orderTypeMap = {
+  temp_park: '临时停车',
+  offtime_park: '错时停车',
+  car_charge: '汽车充电',
+  bike_charge: '两轮充电',
+  share_charge: '共享充电',
+};
+
+// 获取订单类型标签
+const getOrderTypeLabel = (orderType) => {
+  return orderTypeMap[orderType] || orderType || '-';
+};
+
 // 当前选中的日期（用于折线图点击后筛选）
 const selectedDate = ref(null);
 
@@ -53,7 +67,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
       title = '今日 ';
     }
     if (selectedStatus.value) {
-      title += `${statusMap[selectedStatus.value]?.label || selectedStatus.value} `;
+      title += `${getOrderTypeLabel(selectedStatus.value)} `;
     }
     title += '订单列表';
     return title;
@@ -115,7 +129,7 @@ const getDrawerTableData = async (pageObj) => {
   
   // 如果选中了状态，传递状态参数
   if (selectedStatus.value) {
-    params.status = selectedStatus.value;
+    params.orderType = selectedStatus.value;
   }
   
   Object.assign(params, drawerSearchObj);
@@ -178,19 +192,18 @@ const handleLineChartClick = (params) => {
 const handleBarChartClick = (params) => {
   console.log('柱状图点击事件触发:', params);
   if (params && params.name) {
-    // 根据中文状态名称找到对应的英文状态值
-    const statusKey = Object.keys(statusMap).find(key => statusMap[key].label === params.name);
-    if (statusKey) {
-      selectedStatus.value = statusKey;
-      console.log('选中状态:', selectedStatus.value);
+    // 根据中文订单类型名称找到对应的英文订单类型值
+    const orderTypeKey = Object.keys(orderTypeMap).find(key => orderTypeMap[key] === params.name);
+    if (orderTypeKey) {
+      selectedStatus.value = orderTypeKey;
+      console.log('选中订单类型:', selectedStatus.value);
     } else {
-      // 如果找不到映射，直接使用名称作为状态值
       selectedStatus.value = params.name;
-      console.log('选中状态(未映射):', selectedStatus.value);
+      console.log('选中订单类型(未映射):', selectedStatus.value);
     }
     // 重置日期筛选
     selectedDate.value = null;
-    // 不使用日期筛选（只传状态参数）
+    // 不使用日期筛选（只传订单类型参数）
     useDateFilter.value = false;
     drawerGridApi.query();
     drawerApi.open();
@@ -241,15 +254,16 @@ const fetchOrderChartData = async () => {
         { date: '2025-04-04', count: 9 },
         { date: '2025-04-05', count: 15 },
       ];
-      // 使用typeData作为订单状态数据展示，X轴显示中文状态名称
+      // 使用typeData作为订单类型数据展示，X轴显示中文订单类型名称
       state.stationData = typeData && typeData.length > 0 ? typeData.map(item => ({
-        name: statusMap[item.status]?.label || item.status,
+        name: getOrderTypeLabel(item.type),
         value: item.count
       })) : [
-        { name: '丰泽站', value: 20 },
-        { name: '鲤城站', value: 15 },
-        { name: '晋江站', value: 12 },
-        { name: '石狮站', value: 8 },
+        { name: '临时停车', value: 20 },
+        { name: '错时停车', value: 15 },
+        { name: '汽车充电', value: 12 },
+        { name: '两轮充电', value: 8 },
+        { name: '共享充电', value: 10 },
       ];
     } else {
       // 接口返回失败，使用假数据

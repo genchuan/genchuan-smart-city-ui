@@ -1,6 +1,40 @@
 <script setup>
 import { computed, defineProps, toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
+import { ElTag } from 'element-plus';
+
+// 追缴配置状态映射
+const statusMap = {
+  inactive: { label: '未生效', type: 'info' },
+  active: { label: '已生效', type: 'success' },
+};
+
+// 追缴方式映射
+const collectMethodMap = {
+  sms: { label: '短信', type: 'primary' },
+  notify: { label: '站内信', type: 'info' },
+  phone: { label: '电话', type: 'warning' },
+};
+
+// 获取状态标签
+const getStatusLabel = (status) => {
+  return statusMap[status]?.label || status;
+};
+
+// 获取状态类型
+const getStatusType = (status) => {
+  return statusMap[status]?.type || 'default';
+};
+
+// 获取追缴方式标签
+const getCollectMethodLabel = (method) => {
+  return collectMethodMap[method]?.label || method;
+};
+
+// 获取追缴方式类型
+const getCollectMethodType = (method) => {
+  return collectMethodMap[method]?.type || 'default';
+};
 
 // 追缴配置详情
 const props = defineProps({
@@ -57,7 +91,11 @@ defineExpose({
 
       <div class="detail-card-row">
         <div class="detail-row-left">追缴方式:</div>
-        <div class="detail-row-right">{{ detailObj.collectMethod || '-' }}</div>
+        <div class="detail-row-right">
+          <ElTag :type="getCollectMethodType(detailObj.collectMethod)">
+            {{ getCollectMethodLabel(detailObj.collectMethod) }}
+          </ElTag>
+        </div>
       </div>
 
       <div class="detail-card-row">
@@ -72,29 +110,18 @@ defineExpose({
 
       <div class="detail-card-row">
         <div class="detail-row-left">状态:</div>
-        <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
+        <div class="detail-row-right">
+          <ElTag :type="getStatusType(detailObj.status)">
+            {{ getStatusLabel(detailObj.status) }}
+          </ElTag>
+        </div>
       </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">配置说明:</div>
         <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
       </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">操作人ID:</div>
-        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段1:</div>
-        <div class="detail-row-right">{{ detailObj.reserve1 || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段2:</div>
-        <div class="detail-row-right">{{ detailObj.reserve2 || '-' }}</div>
-      </div>
-
+ 
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>

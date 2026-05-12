@@ -202,25 +202,7 @@ export function useGridColumns() {
       title: '所属场站',
       minWidth: 140,
       sortable: true,
-    },
-    {
-      field: 'operatorId',
-      title: '操作人ID',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'reserve1',
-      title: '备用字段1',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'reserve2',
-      title: '备用字段2',
-      minWidth: 120,
-      sortable: true,
-    },
+    }, 
     {
       field: 'creator',
       title: '创建者',

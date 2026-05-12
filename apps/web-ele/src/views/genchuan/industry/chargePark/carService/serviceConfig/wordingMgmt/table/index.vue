@@ -205,7 +205,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-function handleRefresh() { gridApi.query(); }
+const handleRefresh = () => {
+  gridApi.query();
+  // 通知图表组件刷新统计数据
+  window.dispatchEvent(new CustomEvent('wording-mgmt-refresh-stats'));
+};
 
 const editForm = reactive({ id: null, name: '', content: '', type: '' });
 const isEdit = ref(false);

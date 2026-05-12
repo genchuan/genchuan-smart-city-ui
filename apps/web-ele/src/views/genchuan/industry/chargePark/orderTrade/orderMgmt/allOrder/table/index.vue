@@ -317,7 +317,7 @@ const handleFullShow = () => {
 const parkDetailDrawerRef = ref(null);
 const enDetailObjRef = ref(null);
 const arrowChange = () => {
-  emit('arrow-change');
+  emit('arrow-change');  
 };
 const autoElmessage = () => {
   ElMessage.success($t('月报自动刷新成功'));

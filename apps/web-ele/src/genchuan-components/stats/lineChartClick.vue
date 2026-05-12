@@ -1,4 +1,3 @@
-<!-- /components/stats/line.vue -->
 <script setup>
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 

@@ -28,9 +28,9 @@ const state = reactive({
 });
 const lineChartRef = ref(null);
 let lineChartInstance = null;
-// 选中的日期和状态
+// 选中的日期和场站
 const selectedDate = ref(null);
-const selectedStatus = ref(null);
+const selectedStation = ref(null);
 const useDateFilter = ref(true);
 // 获取今日时间范围
 const getTodayTimeRange = () => {
@@ -46,14 +46,14 @@ const [Drawer, drawerApi] = useVbenDrawer({
   footer: false,
   width: '75%',
   title: computed(() => {
-    if (selectedDate.value && selectedStatus.value) {
-      return `${selectedDate.value} ${statusMap[selectedStatus.value]?.label || selectedStatus.value}订单`;
+    if (selectedDate.value && selectedStation.value) {
+      return `${selectedDate.value} ${selectedStation.value}订单`;
     }
     else if (selectedDate.value) {
       return `${selectedDate.value}订单`;
     }
-    else if (selectedStatus.value) {
-      return `${statusMap[selectedStatus.value]?.label || selectedStatus.value}订单`;
+    else if (selectedStation.value) {
+      return `${selectedStation.value}订单`;
     }
     return '订单列表';
   }),
@@ -80,7 +80,11 @@ const getDrawerTableData = async (pageObj) => {
   // 如果使用日期筛选，添加日期参数
   if (useDateFilter.value) {
     let start, end;
-    if (selectedDate.value) {
+    // 如果 drawerSearchObj 已有时间范围（柱状图点击设置的），直接使用
+    if (drawerSearchObj.createOrderTimeStart && drawerSearchObj.createOrderTimeEnd) {
+      start = drawerSearchObj.createOrderTimeStart;
+      end = drawerSearchObj.createOrderTimeEnd;
+    } else if (selectedDate.value) {
       start = selectedDate.value + ' 00:00:00';
       end = selectedDate.value + ' 23:59:59';
     }
@@ -90,9 +94,9 @@ const getDrawerTableData = async (pageObj) => {
     params.createOrderTimeStart = start;
     params.createOrderTimeEnd = end;
   }
-  // 如果选中了状态，传递状态参数
-  if (selectedStatus.value) {
-    params.status = selectedStatus.value;
+  // 如果选中了场站，传递场站参数
+  if (selectedStation.value) {
+    params.stationName = selectedStation.value;
   }
   Object.assign(params, drawerSearchObj);
   try {
@@ -147,8 +151,11 @@ const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
 // 点击卡片事件
 const handleCardClick = () => {
   selectedDate.value = null;
-  selectedStatus.value = null;
+  selectedStation.value = null;
   useDateFilter.value = true;
+  // 清除近一个月的时间范围
+  delete drawerSearchObj.createOrderTimeStart;
+  delete drawerSearchObj.createOrderTimeEnd;
   drawerGridApi.query();
   drawerApi.open();
 };
@@ -156,8 +163,11 @@ const handleCardClick = () => {
 const handleLineChartClick = (params) => {
   if (params && params.name) {
     selectedDate.value = params.name;
-    selectedStatus.value = null;
+    selectedStation.value = null;
     useDateFilter.value = true;
+    // 清除近一个月的时间范围
+    delete drawerSearchObj.createOrderTimeStart;
+    delete drawerSearchObj.createOrderTimeEnd;
     drawerGridApi.query();
     drawerApi.open();
   }
@@ -165,15 +175,18 @@ const handleLineChartClick = (params) => {
 // 柱状图点击事件处理
 const handleBarChartClick = (params) => {
   if (params && params.name) {
-    const statusKey = Object.keys(statusMap).find(key => statusMap[key].label === params.name);
-    if (statusKey) {
-      selectedStatus.value = statusKey;
-    }
-    else {
-      selectedStatus.value = params.name;
-    }
-    selectedDate.value = null;
-    useDateFilter.value = false;
+    selectedStation.value = params.name;
+    // 计算近一个月的时间范围
+    const today = new Date();
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const start = firstDayOfMonth.toISOString().split('T')[0] + ' 00:00:00';
+    const end = today.toISOString().split('T')[0] + ' 23:59:59';
+    selectedDate.value = `${start.split(' ')[0]} 至 ${end.split(' ')[0]}`;
+    // 使用日期筛选（近一个月）
+    useDateFilter.value = true;
+    // 存储近一个月的时间范围用于参数传递
+    drawerSearchObj.createOrderTimeStart = start;
+    drawerSearchObj.createOrderTimeEnd = end;
     drawerGridApi.query();
     drawerApi.open();
   }
@@ -183,9 +196,16 @@ const handleBarChartClick = (params) => {
 const fetchOrderChartData = async () => {
   try {
     const res = await getCarChargeOrderChart();
-    state.cardList[0].value = res.todayOrderCount;
-    state.cardList[1].value = res.todayRevenue;
-    state.cardList[2].value = res.todayChargeQuantity;
+    // 从 cardData 中获取卡片数据
+    if (res.cardData) {
+      state.cardList[0].value = res.cardData.todayOrderCount || 0;
+      state.cardList[1].value = res.cardData.todayRevenue || 0;
+      state.cardList[2].value = res.cardData.todayChargeQuantity || 0;
+    } else {
+      state.cardList[0].value = res.todayOrderCount || 0;
+      state.cardList[1].value = res.todayRevenue || 0;
+      state.cardList[2].value = res.todayChargeQuantity || 0;
+    }
     // 如果trendData为空，使用假数据
     state.trendData =
       res.trendData && res.trendData.length > 0
@@ -201,8 +221,8 @@ const fetchOrderChartData = async () => {
       res.stationData && res.stationData.length > 0
         ? res.stationData
         : [
-          { name: '丰泽站', count: 25 },
-          { name: '鲤城站', count: 18 },
+          { station: '丰泽站', count: 25 },
+          { station: '鲤城站', count: 18 },
         ];
     // 更新折线图
     updateLineChart();
@@ -220,8 +240,8 @@ const fetchOrderChartData = async () => {
       { date: '2025-04-05', count: 14 },
     ];
     state.stationData = [
-      { name: '丰泽站', value: 25 },
-      { name: '鲤城站', value: 18 },
+      { station: '丰泽站', count: 25 },
+      { station: '鲤城站', count: 18 },
     ];
     // 更新折线图
     updateLineChart();
@@ -339,7 +359,7 @@ onMounted(() => {
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
     <Columnar class="simple-bar-chart" title="订单状态分布" :x-data="state.stationData.map(
-      (item) => statusMap[item.status]?.label || item.status,
+      (item) => item.station
     )
       " :series-data="[
         { name: '订单数', data: state.stationData.map((item) => item.count) },
