@@ -116,6 +116,36 @@ setupVbenVxeTable({
       },
     });
 
+    vxeUI.renderer.add('CellElTag', {
+      renderTableDefault(renderOpts, params) {
+        const { props } = renderOpts;
+        const { column, row } = params;
+        const value = row[column.field];
+        if (value === undefined || value === null || value === '') {
+          return '-';
+        }
+        const labelGetter = props?.labelGetter as
+          | ((v: unknown, r: unknown, c: unknown) => string)
+          | undefined;
+        const tagTypeGetter = props?.tagTypeGetter as
+          | ((v: unknown, r: unknown, c: unknown) => string)
+          | undefined;
+        const label =
+          typeof labelGetter === 'function'
+            ? labelGetter(value, row, column)
+            : String(value);
+        const tagType =
+          typeof tagTypeGetter === 'function'
+            ? tagTypeGetter(value, row, column)
+            : 'info';
+        return h(
+          ElTag,
+          { type: (tagType || 'info') as any, size: 'small' },
+          { default: () => String(label ?? '-') },
+        );
+      },
+    });
+
     vxeUI.renderer.add('CellTags', {
       renderTableDefault(renderOpts, params) {
         const { props } = renderOpts;

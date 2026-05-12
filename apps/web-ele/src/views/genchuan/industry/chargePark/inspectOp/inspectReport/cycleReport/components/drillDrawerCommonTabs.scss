@@ -1,0 +1,52 @@
+/**
+ * 与列表页 .common-index .common-tabs 视觉对齐，仅作用于钻取抽屉（不修改 genchuan-components/page/index.scss）
+ * 依赖模板根节点 class：cycle-report-drill-drawer-scope
+ */
+.cycle-report-drill-drawer-scope {
+  .drill-detail-drawer-body .common-tabs {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    height: 100%;
+
+    .el-tabs__header {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      z-index: 2;
+      margin-bottom: 0;
+      background-color: hsl(var(--card));
+    }
+
+    .el-tabs__nav-wrap {
+      margin-bottom: 0;
+    }
+
+    .el-tabs__nav {
+      margin-left: 20px;
+    }
+
+    .el-tabs__item {
+      padding-left: 5px;
+    }
+
+    .el-tabs__header::before {
+      width: 20px;
+    }
+
+    .el-tabs__content {
+      box-sizing: border-box;
+      flex: 1;
+      min-height: 0;
+      padding-top: 42px;
+      overflow: hidden;
+    }
+
+    .el-tab-pane {
+      height: 100%;
+    }
+  }
+}
