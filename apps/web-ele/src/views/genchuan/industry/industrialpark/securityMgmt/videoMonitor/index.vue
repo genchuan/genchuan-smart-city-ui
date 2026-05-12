@@ -7,6 +7,9 @@ import realTimeMonitorChart from './realTimeMonitor/components/chart.vue';
 // 录像回放组件
 import videoPlayback from './videoPlayback/index.vue';
 import videoPlaybackChart from './videoPlayback/components/chart.vue';
+// AI识别组件
+import aiRecognition from './aiRecognition/index.vue';
+import aiRecognitionChart from './aiRecognition/components/chart.vue';
 import '#/components/page/index.scss';
 
 const changeArrowStatus = () => {
@@ -35,6 +38,15 @@ const tabArray = ref([
     arrowShow: true,
     arrowState: false,
   },
+  {
+    label: 'AI识别',
+    components: aiRecognition,
+    chartComponent: aiRecognitionChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
 ]);
 
 const arrowChange = () => {
@@ -58,14 +70,10 @@ const setVideoPlaybackRef = (el) => {
   if (el) videoPlaybackRef.value = el;
 };
 
-// 辅助：标准化状态（用于卡片筛选，实时监控）
-const normalizeStatus = (status) => {
-  if (!status) return '';
-  if (status === 'online') return '正常';
-  if (status === 'offline') return '离线';
-  if (status === 'alarm') return '告警中';
-  if (status === 'handle') return '已处置';
-  return status;
+// AI识别组件引用
+const aiRecognitionRef = ref(null);
+const setAiRecognitionRef = (el) => {
+  if (el) aiRecognitionRef.value = el;
 };
 
 // ========== 实时监控图表事件 ==========
@@ -113,7 +121,6 @@ const onVideoBarSelect = async ({ field, value }) => {
   }
   videoPlaybackRef.value.clearFilters();
   if (field === 'videoTime') {
-    // 这里需要转换日期为时间戳范围，简化为点击日期筛选当天
     videoPlaybackRef.value.handleFilterTagClick('videoTime', value);
   } else if (field === 'cameraName') {
     videoPlaybackRef.value.handleFilterTagClick('cameraName', value);
@@ -130,6 +137,34 @@ const onVideoLineSelect = async ({ field, value }) => {
   videoPlaybackRef.value.handleFilterTagClick('videoTime', value);
 };
 
+// ========== AI识别图表事件 ==========
+const onAiCardSelect = async (status) => {
+  await nextTick();
+  if (!aiRecognitionRef.value) {
+    ElMessage.warning('AI识别列表组件未就绪');
+    return;
+  }
+  aiRecognitionRef.value.clearFilters();
+  if (status === 'alarm') {
+    // 告警总数筛选告警状态
+    aiRecognitionRef.value.handleFilterTagClick('alarmCount', null);
+  }
+};
+
+const onAiPieSelect = async ({ field, value, type }) => {
+  await nextTick();
+  if (!aiRecognitionRef.value) {
+    ElMessage.warning('AI识别列表组件未就绪');
+    return;
+  }
+  aiRecognitionRef.value.clearFilters();
+  if (type === 'type' && field === 'ruleType') {
+    aiRecognitionRef.value.handleFilterTagClick('ruleType', value);
+  } else if (type === 'accuracy' && field === 'ruleName') {
+    aiRecognitionRef.value.handleFilterTagClick('ruleName', value);
+  }
+};
+
 const currentTab = computed(() => tabArray.value.find(item => item.label === activeName.value) || tabArray.value[0]);
 const currentChartComponent = computed(() => currentTab.value.chartComponent);
 const currentArrowShow = computed(() => currentTab.value.arrowShow);
@@ -137,6 +172,7 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
 
 <template>
   <div class="common-index">
+    <!-- 实时监控图表 -->
     <component
       v-if="currentArrowShow && activeName === '实时监控'"
       :is="currentChartComponent"
@@ -144,11 +180,19 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
       @barSelect="onRealBarSelect"
       @markerSelect="onRealMarkerSelect"
     />
+    <!-- 录像回放图表 -->
     <component
       v-if="currentArrowShow && activeName === '录像回放'"
       :is="currentChartComponent"
       @barSelect="onVideoBarSelect"
       @lineSelect="onVideoLineSelect"
+    />
+    <!-- AI识别图表 -->
+    <component
+      v-if="currentArrowShow && activeName === 'AI识别'"
+      :is="currentChartComponent"
+      @cardSelect="onAiCardSelect"
+      @pieSelect="onAiPieSelect"
     />
     <el-tabs v-model="activeName" class="common-tabs" type="card">
       <el-tab-pane v-for="item in tabArray" :key="item.label" :name="item.label">
@@ -165,9 +209,18 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
           @arrow-change="arrowChange"
         />
         <component
-          v-else
+          v-else-if="item.label === '录像回放'"
           :is="item.components"
           :ref="setVideoPlaybackRef"
+          :second-show="item.secondShow"
+          :key="item.label"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
+        />
+        <component
+          v-else
+          :is="item.components"
+          :ref="setAiRecognitionRef"
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"

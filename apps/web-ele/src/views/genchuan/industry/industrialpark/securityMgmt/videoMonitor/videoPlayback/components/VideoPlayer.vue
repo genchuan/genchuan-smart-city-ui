@@ -2,7 +2,6 @@
   <div class="video-player-container">
     <video
       ref="videoRef"
-      id="video-player-element"
       class="video-element"
       :src="src"
       controls
@@ -13,16 +12,6 @@
     </video>
     <div class="player-controls">
       <span class="time-display">{{ currentTimeDisplay }} / {{ durationDisplay }}</span>
-      <div class="speed-control">
-        <span>倍速：</span>
-        <el-button-group>
-          <el-button size="small" @click="setPlaybackRate(0.5)" :type="playbackRate === 0.5 ? 'primary' : 'default'">0.5x</el-button>
-          <el-button size="small" @click="setPlaybackRate(1)" :type="playbackRate === 1 ? 'primary' : 'default'">1x</el-button>
-          <el-button size="small" @click="setPlaybackRate(2)" :type="playbackRate === 2 ? 'primary' : 'default'">2x</el-button>
-          <el-button size="small" @click="setPlaybackRate(4)" :type="playbackRate === 4 ? 'primary' : 'default'">4x</el-button>
-          <el-button size="small" @click="setPlaybackRate(8)" :type="playbackRate === 8 ? 'primary' : 'default'">8x</el-button>
-        </el-button-group>
-      </div>
     </div>
   </div>
 </template>
@@ -36,6 +25,8 @@ const props = defineProps({
     default: '',
   },
 });
+
+const emit = defineEmits(['screenshot']);
 
 const videoRef = ref(null);
 const currentTime = ref(0);
@@ -76,11 +67,19 @@ const setPlaybackRate = (rate) => {
   }
 };
 
-// 暴露 video 元素和倍速相关方法，供父组件直接调用（兼容原有 currentVideoElement 逻辑）
+const takeScreenshot = () => {
+  if (videoRef.value) {
+    emit('screenshot', videoRef.value.currentTime);
+  } else {
+    console.warn('video element not ready');
+  }
+};
+
 defineExpose({
   videoElement: videoRef,
   setPlaybackRate,
   playbackRate,
+  takeScreenshot,
 });
 
 watch(() => props.src, () => {
@@ -89,7 +88,6 @@ watch(() => props.src, () => {
   }
 });
 
-// 启动时间更新循环
 updateTime();
 
 onBeforeUnmount(() => {
@@ -103,19 +101,22 @@ onBeforeUnmount(() => {
 <style scoped lang="scss">
 .video-player-container {
   width: 100%;
+  height: 100%;           // 关键：让容器占满父级高度
   background: #000;
   border-radius: 8px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   .video-element {
     width: 100%;
-    max-height: 400px;
+    flex: 1;              // 让视频区域自动撑开剩余高度
     outline: none;
   }
 
   .player-controls {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     padding: 8px 16px;
     background: rgba(0, 0, 0, 0.7);
@@ -124,13 +125,6 @@ onBeforeUnmount(() => {
     .time-display {
       font-family: monospace;
       font-size: 14px;
-    }
-
-    .speed-control {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
     }
   }
 }

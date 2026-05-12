@@ -40,7 +40,7 @@ const geometriesArray = computed(() => {
   const points = chartData.value.cameraMapList || [];
   return points.map(point => ({
     id: point.id,
-    stationName: point.cameraName,
+    cameraName: point.cameraName,
     lon: point.lon,
     lat: point.lat,
     stationStatus: point.runStatus === '正常' ? 'enabled' : (point.runStatus === '异常' ? 'disabled' : 'wait'),
@@ -58,8 +58,8 @@ const handleBarClick = (areaName) => {
   emit('barSelect', { field: 'area', value: areaName });
 };
 
-const handleMarkerClick = (stationName) => {
-  emit('markerSelect', stationName);
+const handleMarkerClick = (cameraName) => {
+  emit('markerSelect', cameraName);
 };
 
 const loadData = async () => {
