@@ -2,7 +2,7 @@
 <script setup>
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 import * as echarts from 'echarts';
-import { getAreaMonitorChart } from '#/api/genchuan/industry/industrialPark/energyMgmt/energyMonitor/areaMonitor/index.js';
+import { getAreaMonitorChart } from '#/api/genchuan/industry/industrialpark/energyMgmt/energyMonitor/areaMonitor/index.js';
 import { ElMessage } from 'element-plus';
 import MapComponent from './Mapindex.vue';
 

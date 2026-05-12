@@ -22,7 +22,7 @@ import {
   optimizeAreaMonitor,
   getUserDetail,
   getDeviceListByArea,
-} from '#/api/genchuan/industry/industrialPark/energyMgmt/energyMonitor/areaMonitor/index.js';
+} from '#/api/genchuan/industry/industrialpark/energyMgmt/energyMonitor/areaMonitor/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import AreaDetailDrawer from './detail.vue';
 import UserDetailDrawer from '#/views/genchuan/industry/chargePark/carService/carGuide/nearStation/table/userDetail.vue';
