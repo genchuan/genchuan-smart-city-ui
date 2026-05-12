@@ -135,9 +135,14 @@ export function useGridColumns() {
     },
     {
       field: 'handleDuration',
-      title: '处理时长(秒)',
+      title: '处理时长(分钟)',
       minWidth: 120,
       sortable: true,
+      formatter: ({ cellValue }) => {
+        if (cellValue == null || cellValue === '') return '';
+        const s = Number(cellValue);
+        return isFinite(s) ? Math.round(s / 60) : '';
+      },
     },
     {
       field: 'score',
