@@ -77,6 +77,26 @@ export function useFormSchema() {
   ];
 }
 
+/** 将秒数格式化为 X天Y小时Z分钟（自动省略值为0的单位） */
+function formatDurationFromSeconds(seconds) {
+  if (seconds == null || seconds === '' || isNaN(seconds)) return '-';
+  let totalSec = Number(seconds);
+  if (!isFinite(totalSec) || totalSec < 0) return '-';
+
+  const days = Math.floor(totalSec / 86400);
+  totalSec %= 86400;
+  const hours = Math.floor(totalSec / 3600);
+  totalSec %= 3600;
+  const minutes = Math.floor(totalSec / 60);
+
+  const parts = [];
+  if (days > 0) parts.push(`${days}天`);
+  if (hours > 0) parts.push(`${hours}小时`);
+  if (minutes > 0) parts.push(`${minutes}分钟`);
+
+  if (parts.length === 0) return '0分钟';
+  return parts.join('');
+}
 /** 救援信息表格列配置（带钻取交互） */
 export function useGridColumns() {
   return [
@@ -135,14 +155,10 @@ export function useGridColumns() {
     },
     {
       field: 'handleDuration',
-      title: '处理时长(分钟)',
+      title: '处理时长',
       minWidth: 120,
       sortable: true,
-      formatter: ({ cellValue }) => {
-        if (cellValue == null || cellValue === '') return '';
-        const s = Number(cellValue);
-        return isFinite(s) ? Math.round(s / 60) : '';
-      },
+      formatter: ({ cellValue }) => formatDurationFromSeconds(cellValue),
     },
     {
       field: 'score',
