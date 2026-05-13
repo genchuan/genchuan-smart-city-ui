@@ -1,76 +1,34 @@
-/** 资金变动记录搜索表单配置 */
+/** 代付规则搜索表单配置 */
 export function useFormSchema() {
   return [
     {
-      fieldName: 'id',
-      label: '主键ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入主键ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-      isSearch: true,
-    },
-    {
-      fieldName: 'recordNo',
-      label: '记录编号',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入记录编号',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-      isSearch: true,
-    }, 
-    {
-      fieldName: 'orderNo',
-      label: '关联订单编号',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入关联订单编号',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-    }, 
-    {
       fieldName: 'merchantName',
-      label: '商户名称',
+      label: '所属商户',
       component: 'Input',
       componentProps: {
         placeholder: '请输入商户名称',
         maxLength: 50,
       },
       labelWidth: 120,
+      isSearch: true,
     },
     {
-      fieldName: 'amount',
-      label: '变动金额',
-      component: 'InputNumber',
+      fieldName: 'orderNo',
+      label: '关联订单编号',
+      component: 'Input',
       componentProps: {
-        placeholder: '请输入变动金额',
-        precision: 2,
-        min: 0,
+        placeholder: '请输入订单编号',
+        maxLength: 50,
       },
       labelWidth: 120,
+      isSearch: true,
     },
     {
-      fieldName: 'tradeTime',
-      label: '交易时间',
-      component: 'DateTimePicker',
-      componentProps: {
-        placeholder: '请选择交易时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'status',
-      label: '状态',
+      fieldName: 'agentType',
+      label: '记录状态',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择状态',
+        placeholder: '请选择记录状态',
         options: [ 
           { label: '正常记录', value: 'normal' },
           { label: '异常记录', value: 'abnormal' }, 
@@ -78,61 +36,7 @@ export function useFormSchema() {
       },
       labelWidth: 120,
       isSearch: true,
-    }, 
-    {
-      fieldName: 'checkerName',
-      label: '核查人名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入核查人名称',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'checkTime',
-      label: '核查时间',
-      component: 'DateTimePicker',
-      componentProps: {
-        placeholder: '请选择核查时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'checkResult',
-      label: '核查结果',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择核查结果',
-        options: [
-          { label: '待核查', value: 'pending' },
-          { label: '核查通过', value: 'passed' },
-          { label: '核查驳回', value: 'rejected' },
-        ],
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'remark',
-      label: '备注',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入备注',
-        maxLength: 200,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'creator',
-      label: '创建者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入创建者',
-        maxLength: 50,
-      }, 
-      labelWidth: 120,
-    },
+    },  
   ];
 }
 /** 资金变动记录表格列配置 */
