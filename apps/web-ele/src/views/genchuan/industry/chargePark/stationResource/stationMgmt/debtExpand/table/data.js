@@ -61,6 +61,20 @@ export const searchFields = [
     options: statusOptions,
     required: false,
   },
+  {
+    field: 'createTimeStart',
+    label: '创建开始时间',
+    type: 'date',
+    required: false,
+  },
+  {
+    field: 'createTimeEnd',
+    label: '创建结束时间',
+    type: 'date',
+    required: false,
+  },
+  { field: 'creator', label: '创建者', type: 'input', required: false },
+  { field: 'updater', label: '更新者', type: 'input', required: false },
 ];
 
 export const formFields = [

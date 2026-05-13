@@ -21,17 +21,49 @@ export function formatDateTime(value) {
   return normalized.length >= 19 ? normalized.slice(0, 19) : normalized;
 }
 
-function formatDateTimeRange(startTime, endTime) {
+export function formatDateTimeRange(startTime, endTime) {
   const start = formatDateTime(startTime);
   const end = formatDateTime(endTime);
   if (start === '--' && end === '--') return '--';
   return [start, end].filter((item) => item !== '--').join(' - ');
 }
 
+function pickFirstValue(row, keys) {
+  for (const key of keys) {
+    const value = row?.[key];
+    if (value !== undefined && value !== null && value !== '') return value;
+  }
+  return '';
+}
+
+export function formatStatPeriod(row = {}, cellValue = '') {
+  const startTime = pickFirstValue(row, [
+    'reportStartTime',
+    'statStartTime',
+    'statisticsStartTime',
+    'startTime',
+    'beginTime',
+  ]);
+  const endTime = pickFirstValue(row, [
+    'reportEndTime',
+    'statEndTime',
+    'statisticsEndTime',
+    'endTime',
+    'finishTime',
+  ]);
+  if (startTime || endTime) {
+    return formatDateTimeRange(startTime, endTime);
+  }
+  return (
+    pickFirstValue(row, ['statPeriod', 'reportPeriod', 'period']) ||
+    formatDateTime(cellValue)
+  );
+}
+
 export const pageConfig = {
   apiName: 'StationOpReport',
   title: '场站资源周期报表',
-  exportName: '场站资源周期报表.xlsx',
+  exportName: '场站周期报表.xlsx',
   nameField: 'reportCycle',
   primaryField: 'id',
   toolbar: ['create', 'search', 'export', 'refresh'],
@@ -116,10 +148,7 @@ export const tableColumns = [
     field: 'statPeriod',
     label: '统计时段',
     minWidth: 260,
-    formatter: ({ cellValue, row }) =>
-      row?.reportStartTime || row?.reportEndTime
-        ? formatDateTimeRange(row.reportStartTime, row.reportEndTime)
-        : formatDateTime(cellValue),
+    formatter: ({ cellValue, row }) => formatStatPeriod(row, cellValue),
   },
   {
     field: 'totalAreaCount',
