@@ -3,15 +3,15 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（替换为广告详情数据）
+// 定义组件接收的属性（替换为分账方案详情数据）
 const props = defineProps({
-  // 详情数据对象（广告详情数据）
+  // 详情数据对象（分账方案详情数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的roadSectionName）
+  // 抽屉标题（可选，默认使用方案名称）
   title: {
     type: String,
     default: '',
@@ -20,18 +20,69 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先用路段名称，兜底显示默认值
+// 计算属性处理标题，优先用方案名称，兜底显示默认值
 const drawerTitle = computed(() => {
-  const roadSectionName = detailObj.value?.roadSectionName || '分账比例';
-  return title.value || `${roadSectionName}详情`;
+  const sharingName = detailObj.value?.sharingName || '分账方案';
+  return title.value || `${sharingName}详情`;
 });
 
-// 初始化抽屉实例（加宽适配广告详情更多字段）
+// 分账类型字典映射（可根据实际芋道字典配置调整）
+const sharingTypeMap = {
+  '0': '固定比例',
+  '1': '阶梯比例',
+  '2': '动态比例',
+  // 可根据实际业务需求添加更多映射
+};
+
+// 分账状态样式映射
+const statusMap = {
+  '未生效': { text: '未生效', class: 'status-inactive' },
+  '已生效': { text: '已生效', class: 'status-active' },
+  '已失效': { text: '已失效', class: 'status-expired' },
+};
+
+// 格式化分账类型显示
+const formatSharingType = (type) => {
+  if (!type) return '-';
+  return sharingTypeMap[type] || type;
+};
+
+// 格式化分账状态显示
+const formatSharingStatus = (status) => {
+  if (!status) return '-';
+  const statusInfo = statusMap[status];
+  return statusInfo ? statusInfo.text : status;
+};
+
+// 获取状态样式类
+const getStatusClass = (status) => {
+  if (!status) return '';
+  const statusInfo = statusMap[status];
+  return statusInfo ? statusInfo.class : '';
+};
+
+// 格式化时间戳（如果接口返回的是时间戳）
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return '-';
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return timestamp;
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+};
+
+// 初始化抽屉实例
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 800, // 加宽到800px适配广告详情字段
+  width: 800,
   onCancel() {
     detailDrawerApi.close();
   },
@@ -53,7 +104,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">方案编号:</div>
         <div class="detail-row-right">
-          {{ detailObj.plan_code || '-' }}
+          {{ detailObj.sharingCode || '-' }}
         </div>
       </div>
 
@@ -61,15 +112,23 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">方案名称:</div>
         <div class="detail-row-right">
-          {{ detailObj.plan_name || '-' }}
+          {{ detailObj.sharingName || '-' }}
         </div>
       </div>
 
-      <!-- 合作方名称 -->
+      <!-- 合作方 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">合作方名称:</div>
+        <div class="detail-row-left">合作方:</div>
         <div class="detail-row-right">
-          {{ detailObj.partner_name || '-' }}
+          {{ detailObj.cooperator || '-' }}
+        </div>
+      </div>
+
+      <!-- 分账类型 -->
+      <div class="detail-card-row">
+        <div class="detail-row-left">分账类型:</div>
+        <div class="detail-row-right">
+          {{ formatSharingType(detailObj.sharingType) }}
         </div>
       </div>
 
@@ -77,15 +136,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">分账比例:</div>
         <div class="detail-row-right">
-          {{ detailObj.share_ratio || '-' }}
-        </div>
-      </div>
-
-      <!-- 适用场站 -->
-      <div class="detail-card-row">
-        <div class="detail-row-left">适用场站:</div>
-        <div class="detail-row-right">
-          {{ detailObj.station_ids || '-' }}
+          {{ detailObj.shareRatio ? `${detailObj.shareRatio}%` : '-' }}
         </div>
       </div>
 
@@ -93,7 +144,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">生效时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.effect_time || '-' }}
+          {{ formatTimestamp(detailObj.effectTime) }}
         </div>
       </div>
 
@@ -101,15 +152,25 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">方案状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.status || '-' }}
+          <span :class="['status-badge', getStatusClass(detailObj.sharingStatus)]">
+            {{ formatSharingStatus(detailObj.sharingStatus) }}
+          </span>
         </div>
       </div>
 
-      <!-- 创建时间 -->
-      <div class="detail-card-row">
+      <!-- 创建时间（如果接口返回该字段） -->
+      <div class="detail-card-row" v-if="detailObj.createTime">
         <div class="detail-row-left">创建时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.create_time || '-' }}
+          {{ formatTimestamp(detailObj.createTime) }}
+        </div>
+      </div>
+
+      <!-- 更新时间（如果接口返回该字段） -->
+      <div class="detail-card-row" v-if="detailObj.updateTime">
+        <div class="detail-row-left">更新时间:</div>
+        <div class="detail-row-right">
+          {{ formatTimestamp(detailObj.updateTime) }}
         </div>
       </div>
     </div>
@@ -120,7 +181,7 @@ defineExpose({
 // 响应式适配
 @media (max-width: 768px) {
   .detail-row-left {
-    width: 110px; // 小屏适配标签宽度
+    width: 110px;
   }
 
   .detail-card {
@@ -131,10 +192,10 @@ defineExpose({
 }
 
 .detail-card {
-  min-height: 500px; // 适配广告详情字段数量，提升最小高度
-  max-height: 75vh; // 提高最大高度，容纳更多内容
+  min-height: 500px;
+  max-height: 75vh;
   padding: 20px;
-  overflow-y: auto; // 内容过多时显示滚动条
+  overflow-y: auto;
   background-color: #f9fafb;
   border-radius: 8px;
 }
@@ -142,16 +203,14 @@ defineExpose({
 // 每行的布局
 .detail-card-row {
   display: flex;
-  align-items: flex-start; // 顶部对齐，适配多行文本
+  align-items: flex-start;
   padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0; // 分隔线增强可读性
+  border-bottom: 1px solid #f0f0f0;
 
-  // 最后一行去掉分隔线
   &:last-child {
     border-bottom: none;
   }
 
-  // 鼠标悬浮高亮
   &:hover {
     padding-right: 8px;
     padding-left: 8px;
@@ -165,22 +224,47 @@ defineExpose({
 
 // 左侧标签样式
 .detail-row-left {
-  flex-shrink: 0; // 不收缩
-  width: 130px; // 加宽标签宽度，适配"监测设备编号"等长标签
+  flex-shrink: 0;
+  width: 130px;
   font-size: 14px;
-  font-weight: 500; // 加粗突出标签
-  line-height: 18px; // 统一行高
-  color: #606266; // 灰色调，区分内容
+  font-weight: 500;
+  line-height: 18px;
+  color: #606266;
 }
 
 // 右侧内容样式
 .detail-row-right {
-  flex: 1; // 剩余宽度自适应
+  flex: 1;
   padding-right: 10px;
   font-size: 14px;
   line-height: 18px;
-  color: #303133; // 主文本色
-  word-break: break-all; // 处理长文本换行（如指标阈值范围）
+  color: #303133;
+  word-break: break-all;
+}
+
+// 状态徽章样式
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  border-radius: 4px;
+
+  &.status-active {
+    color: #67c23a;
+    background-color: #f0f9ff;
+  }
+
+  &.status-inactive {
+    color: #909399;
+    background-color: #f4f4f5;
+  }
+
+  &.status-expired {
+    color: #f56c6c;
+    background-color: #fef0f0;
+  }
 }
 
 // 滚动条样式优化
@@ -200,5 +284,5 @@ defineExpose({
 
 .detail-card::-webkit-scrollbar-thumb:hover {
   background: #c0c4cc;
-} // 详情卡片整体样式
+}
 </style>
