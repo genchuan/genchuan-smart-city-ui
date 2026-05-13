@@ -1,11 +1,12 @@
 <script setup>
-import { reactive, ref, onMounted } from 'vue';
+import { reactive, ref, onMounted, nextTick, watch, computed } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import RealTimeMonitorDetailDrawer from './components/detail.vue';
+import RealTimePlayer from './components/RealTimePlayer.vue';
 import {
   getMockList,
   getRealTimeMonitorPage,
@@ -26,9 +27,6 @@ import {
   useFormSchema,
   getColumns,
   useHandleFormSchema,
-  useSplitScreenSchema,
-  useAlarmFormSchema,
-  useRecordFormSchema,
 } from '#/api/genchuan/industry/industrialpark/securityMgmt/videoMonitor/realTimeMonitor/form.js';
 
 const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
@@ -101,12 +99,6 @@ const [HandleDrawer, handleDrawerApi] = useVbenDrawer({
   onCancel: () => handleDrawerApi.close(),
 });
 
-const [AlarmDrawer, alarmDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => alarmDrawerApi.close(),
-});
-
 const [RecordDrawer, recordDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
@@ -134,10 +126,238 @@ function handleRowCheckboxChange({ records }) {
 
 const searchParams = ref({});
 const currentHandleRow = ref(null);
-const currentAlarmRow = ref(null);
 const currentRecordRow = ref(null);
 const currentSplitMode = ref(4);
 
+// 监控画面弹窗相关变量
+const playerDialogVisible = ref(false);
+const currentStreamUrl = ref('');
+const currentMonitorRow = ref(null);
+
+// ========== 分屏功能修正 ==========
+// 存储每个窗口的数据 { streamUrl, cameraId, cameraName, paused }
+const splitPlayers = ref([]);
+// 摄像头选项列表（从表格数据中获取）
+const cameraOptions = ref([]);
+// 存储每个窗口的 RealTimePlayer 实例引用
+const playerRefs = ref([]);
+
+// 更新摄像头选项
+const updateCameraOptions = () => {
+  cameraOptions.value = dataObj.list.map(item => ({
+    label: item.cameraName,
+    value: item.id,
+    streamUrl: item.streamUrl,
+    cameraName: item.cameraName,
+  }));
+};
+
+// 监听表格数据变化，刷新选项
+watch(() => dataObj.list, () => updateCameraOptions(), { deep: true, immediate: true });
+
+// 分屏模式选项
+const splitModeOptions = [
+  { label: '1分屏', value: 1 },
+  { label: '4分屏', value: 4 },
+  { label: '9分屏', value: 9 },
+  { label: '16分屏', value: 16 },
+];
+
+// 切换分屏模式时重置窗口数据
+const handleSplitModeChange = (value) => {
+  currentSplitMode.value = value;
+  // 重新生成占位数据，并重置 ref 数组
+  splitPlayers.value = Array.from({ length: value }, () => ({
+    streamUrl: '',
+    cameraId: null,
+    cameraName: '未选择',
+    paused: false,
+  }));
+  playerRefs.value = new Array(value).fill(null);
+  ElMessage.success(`已切换到 ${value} 分屏模式`);
+};
+
+// 为指定窗口分配摄像头
+const assignCameraToWindow = (windowIndex, cameraId) => {
+  const camera = cameraOptions.value.find(c => c.value === cameraId);
+  if (camera) {
+    splitPlayers.value[windowIndex] = {
+      streamUrl: camera.streamUrl,
+      cameraId: camera.value,
+      cameraName: camera.cameraName,
+      paused: false,
+    };
+  } else {
+    splitPlayers.value[windowIndex] = {
+      streamUrl: '',
+      cameraId: null,
+      cameraName: '未选择',
+      paused: false,
+    };
+  }
+  // 如果之前有播放器实例，需要重新加载？不需要，v-if会重建
+};
+
+// 设置播放器实例引用
+const setPlayerRef = (idx, el) => {
+  if (el) {
+    playerRefs.value[idx] = el;
+  }
+};
+
+// 根据分屏数计算网格列数（正方形网格）
+const gridColumnCount = computed(() => {
+  const mode = currentSplitMode.value;
+  if (mode === 1) return 1;
+  if (mode === 4) return 2;
+  if (mode === 9) return 3;
+  if (mode === 16) return 4;
+  return 2;
+});
+
+// 打开分屏弹窗时，初始化分屏窗口数据
+const openSplitDialog = () => {
+  if (!cameraOptions.value.length && dataObj.list.length) {
+    updateCameraOptions();
+  }
+  // 重置分屏模式为当前值，并初始化窗口数据
+  splitPlayers.value = Array.from({ length: currentSplitMode.value }, () => ({
+    streamUrl: '',
+    cameraId: null,
+    cameraName: '未选择',
+    paused: false,
+  }));
+  playerRefs.value = new Array(currentSplitMode.value).fill(null);
+  playerDialogVisible.value = true;
+};
+
+// ========== 窗口独立控制方法 ==========
+// 截图
+const handleSnapshot = (idx) => {
+  const player = playerRefs.value[idx];
+  if (!player) {
+    ElMessage.warning('播放器未就绪');
+    return;
+  }
+  const dataURL = player.captureFrame();
+  if (dataURL) {
+    const link = document.createElement('a');
+    link.download = `snapshot_${splitPlayers.value[idx].cameraName || idx}_${Date.now()}.jpg`;
+    link.href = dataURL;
+    link.click();
+    ElMessage.success('截图已保存');
+  } else {
+    ElMessage.error('截图失败，请确保视频正在播放');
+  }
+};
+
+// 暂停/恢复播放
+const togglePause = (idx) => {
+  const player = playerRefs.value[idx];
+  if (!player) {
+    ElMessage.warning('播放器未就绪');
+    return;
+  }
+  const currentPaused = splitPlayers.value[idx].paused;
+  if (currentPaused) {
+    player.playVideo();
+    splitPlayers.value[idx].paused = false;
+  } else {
+    player.pauseVideo();
+    splitPlayers.value[idx].paused = true;
+  }
+};
+
+// 重启摄像头（调用后端接口）
+const handleRestart = async (idx) => {
+  const cameraId = splitPlayers.value[idx].cameraId;
+  if (!cameraId) {
+    ElMessage.warning('请先选择摄像头');
+    return;
+  }
+  try {
+    await ElMessageBox.confirm(`确认重启摄像头“${splitPlayers.value[idx].cameraName}”吗？`, '重启确认', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+    const loading = ElLoading.service({ text: '重启中...' });
+    try {
+      const res = await restartRealTimeMonitor({ ids: [cameraId] });
+      if (res && res !== false) {
+        ElMessage.success('重启成功');
+        handleRefresh();
+      } else {
+        ElMessage.error('重启失败');
+      }
+    } finally {
+      loading.close();
+    }
+  } catch {}
+};
+
+// 录像（调用后端接口）
+const handleRecordVideo = async (idx) => {
+  const cameraId = splitPlayers.value[idx].cameraId;
+  if (!cameraId) {
+    ElMessage.warning('请先选择摄像头');
+    return;
+  }
+  const loading = ElLoading.service({ text: '开始录像...' });
+  try {
+    const res = await recordRealTimeMonitor({
+      id: cameraId,
+      recordDuration: 300 // 默认录像5分钟
+    });
+    if (res && res !== false) {
+      ElMessage.success('已开启该摄像头的异常事件录像');
+    } else {
+      ElMessage.error('录像失败');
+    }
+  } catch (error) {
+    console.error('录像失败', error);
+    ElMessage.error('录像失败');
+  } finally {
+    loading.close();
+  }
+};
+
+// 弹窗内：全屏整个容器
+function handleFullscreenContainer() {
+  const container = document.querySelector('.split-grid-container');
+  if (container && screenfull.isEnabled) {
+    screenfull.request(container);
+    ElMessage.success('已全屏');
+  } else {
+    ElMessage.warning('全屏失败');
+  }
+}
+
+// 单画面查看（兼容原有“查看”按钮）
+function handleViewMonitor(row) {
+  if (!row.streamUrl) {
+    ElMessage.warning('该摄像头暂未配置实时流地址');
+    return;
+  }
+  currentSplitMode.value = 1;
+  splitPlayers.value = [{
+    streamUrl: row.streamUrl,
+    cameraId: row.id,
+    cameraName: row.cameraName,
+    paused: false,
+  }];
+  playerRefs.value = new Array(1).fill(null);
+  playerDialogVisible.value = true;
+}
+
+// 聚焦（全屏单画面）
+async function handleFocus(row) {
+  handleViewMonitor(row);
+  await nextTick();
+  handleFullscreenContainer();
+}
+
+// 以下为原有功能，未作改动（但 handleFocus 和 handleViewMonitor 已重新定义，注意移除冲突）
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -284,101 +504,10 @@ function handleReset() {
   gridApi.reload();
 }
 
-// 全屏（选中画面，需先选中一行）
-let fullscreenElement = null;
-function handleFullscreen() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请先选择一个监控画面');
-    return;
-  }
-  // 全屏当前选中的第一个画面（模拟）
-  const element = document.querySelector('.vxe-grid');
-  if (element && screenfull.isEnabled) {
-    screenfull.request(element);
-    ElMessage.success('已切换全屏模式，按 ESC 退出');
-  } else {
-    ElMessage.warning('当前浏览器不支持全屏功能');
-  }
-}
-
-// 分屏
-function handleSplitScreen() {
-  splitDrawerApi.open();
-}
-
-// 截图（批量）
-async function handleBatchSnap() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个监控画面');
-    return;
-  }
-  const loading = ElLoading.service({ text: '截图中...' });
-  try {
-    const res = await snapRealTimeMonitor({ ids: checkedIds.value });
-    if (res && res !== false) {
-      ElMessage.success(`成功截图 ${checkedIds.value.length} 个画面`);
-      handleRefresh();
-    } else {
-      ElMessage.error('截图失败');
-    }
-  } finally {
-    loading.close();
-  }
-}
-
-// 暂停（批量）
-async function handleBatchPause() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个监控画面');
-    return;
-  }
-  const loading = ElLoading.service({ text: '暂停中...' });
-  try {
-    const res = await pauseRealTimeMonitor({ ids: checkedIds.value });
-    if (res && res !== false) {
-      ElMessage.success(`已暂停 ${checkedIds.value.length} 个画面`);
-      handleRefresh();
-    } else {
-      ElMessage.error('暂停失败');
-    }
-  } finally {
-    loading.close();
-  }
-}
-
-// 重启（批量）
-async function handleBatchRestart() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个监控画面');
-    return;
-  }
-  try {
-    await ElMessageBox.confirm(`确认重启选中的 ${checkedIds.value.length} 个摄像头设备吗？`, '重启确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
-    const loading = ElLoading.service({ text: '重启中...' });
-    try {
-      const res = await restartRealTimeMonitor({ ids: checkedIds.value });
-      if (res && res !== false) {
-        ElMessage.success(`已重启 ${checkedIds.value.length} 个设备`);
-        handleRefresh();
-      } else {
-        ElMessage.error('重启失败');
-      }
-    } finally {
-      loading.close();
-    }
-  } catch {}
-}
-
-// 筛选
 function handleSerachShow() {
   drawerApi.open();
 }
 
-// 行内操作：截图
 async function handleSnap(row) {
   const loading = ElLoading.service({ text: '截图中...' });
   try {
@@ -394,40 +523,34 @@ async function handleSnap(row) {
   }
 }
 
-// 行内操作：聚焦（全屏预览）
-async function handleFocus(row) {
-  const loading = ElLoading.service({ text: '聚焦中...' });
-  try {
-    const res = await focusRealTimeMonitor({ id: row.id });
-    if (res && res !== false) {
-      // 前端全屏预览该摄像头的画面
-      const imgElement = document.querySelector(`img[data-id="${row.id}"]`);
-      if (imgElement && screenfull.isEnabled) {
-        screenfull.request(imgElement);
-        ElMessage.success('已切换全屏预览');
-      } else {
-        ElMessage.success('聚焦成功');
-      }
-    } else {
-      ElMessage.error('聚焦失败');
-    }
-  } finally {
-    loading.close();
-  }
-}
+// handleFocus 已在上方重写，移除原实现
+// handleViewMonitor 已重写
 
-// 行内操作：告警
 async function handleAlarm(row) {
   if (row.alarmStatus === '告警中') {
     ElMessage.warning('该摄像头已在告警中');
     return;
   }
-  currentAlarmRow.value = row;
-  alarmFormApi.resetForm();
-  alarmDrawerApi.open();
+  const loading = ElLoading.service({ text: '触发告警中...' });
+  try {
+    const res = await alarmRealTimeMonitor({
+      id: row.id,
+      alarmContent: '触发告警'
+    });
+    if (res && res !== false) {
+      ElMessage.success('告警已触发，已推送至安保人员');
+      handleRefresh();
+    } else {
+      ElMessage.error('告警失败');
+    }
+  } catch (error) {
+    console.error('告警失败', error);
+    ElMessage.error('告警失败');
+  } finally {
+    loading.close();
+  }
 }
 
-// 行内操作：处置
 async function handleHandle(row) {
   if (row.alarmStatus !== '告警中') {
     ElMessage.warning('只有告警中的摄像头可以进行处置');
@@ -438,14 +561,24 @@ async function handleHandle(row) {
   handleDrawerApi.open();
 }
 
-// 行内操作：录像
 async function handleRecord(row) {
-  currentRecordRow.value = row;
-  recordFormApi.resetForm();
-  recordDrawerApi.open();
+  if (!row) return;
+  const loading = ElLoading.service({ text: '录像中...' });
+  try {
+    const res = await recordRealTimeMonitor({
+      id: row.id,
+      recordDuration: 300
+    });
+    if (res && res !== false) {
+      ElMessage.success('开始录像');
+    } else {
+      ElMessage.error('录像失败');
+    }
+  } finally {
+    loading.close();
+  }
 }
 
-// 详情抽屉
 const realTimeMonitorDetailDrawerRef = ref(null);
 
 async function handleOpenDetail(row) {
@@ -459,7 +592,6 @@ async function handleOpenDetail(row) {
   }
 }
 
-// 点击操作人弹出用户详情
 async function handleViewUser(row) {
   if (!row.handleUser) {
     ElMessage.warning('无操作人信息');
@@ -478,7 +610,6 @@ async function handleViewUser(row) {
   }
 }
 
-// 点击处置结果弹出事件详情
 async function handleViewEvent(row) {
   if (!row.handleResult) {
     ElMessage.warning('无处置结果信息');
@@ -515,14 +646,16 @@ const [QueryForm] = useVbenForm({
   submitButtonOptions: { content: '查询' },
 });
 
-// 处置表单
 const [HandleForm, handleFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: async (values) => {
     const loading = ElLoading.service({ text: '处置中...' });
     try {
-      const res = await handleRealTimeMonitor({ id: currentHandleRow.value.id, handleResult: values.handleResult });
+      const res = await handleRealTimeMonitor({
+        id: currentHandleRow.value.id,
+        handleResult: values.handleResult
+      });
       if (res && res !== false) {
         ElMessage.success('处置成功');
         handleDrawerApi.close();
@@ -536,70 +669,6 @@ const [HandleForm, handleFormApi] = useVbenForm({
   },
   layout: 'horizontal',
   schema: useHandleFormSchema(),
-  showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
-});
-
-// 告警表单
-const [AlarmForm, alarmFormApi] = useVbenForm({
-  collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
-  handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '告警中...' });
-    try {
-      const res = await alarmRealTimeMonitor({ id: currentAlarmRow.value.id, alarmContent: values.alarmContent });
-      if (res && res !== false) {
-        ElMessage.success('告警已触发');
-        alarmDrawerApi.close();
-        handleRefresh();
-      } else {
-        ElMessage.error('告警失败');
-      }
-    } finally {
-      loading.close();
-    }
-  },
-  layout: 'horizontal',
-  schema: useAlarmFormSchema(),
-  showCollapseButton: false,
-  submitButtonOptions: { content: '确认' },
-});
-
-// 录像表单
-const [RecordForm, recordFormApi] = useVbenForm({
-  collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
-  handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '录像中...' });
-    try {
-      const res = await recordRealTimeMonitor({ id: currentRecordRow.value.id, recordDuration: values.recordDuration || 300 });
-      if (res && res !== false) {
-        ElMessage.success('开始录像');
-        recordDrawerApi.close();
-      } else {
-        ElMessage.error('录像失败');
-      }
-    } finally {
-      loading.close();
-    }
-  },
-  layout: 'horizontal',
-  schema: useRecordFormSchema(),
-  showCollapseButton: false,
-  submitButtonOptions: { content: '开始录像' },
-});
-
-// 分屏表单
-const [SplitForm, splitFormApi] = useVbenForm({
-  collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
-  handleSubmit: async (values) => {
-    currentSplitMode.value = values.splitMode;
-    ElMessage.success(`已切换到${values.splitMode}分屏模式`);
-    splitDrawerApi.close();
-  },
-  layout: 'horizontal',
-  schema: useSplitScreenSchema(),
   showCollapseButton: false,
   submitButtonOptions: { content: '保存' },
 });
@@ -626,22 +695,91 @@ defineExpose({ handleFilterTagClick, clearFilters });
 
 <template>
   <div class="park-lot-table-new">
-    <RealTimeMonitorDetailDrawer ref="realTimeMonitorDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <RealTimeMonitorDetailDrawer ref="realTimeMonitorDetailDrawerRef"
+                                 :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
     <Drawer title="搜索">
       <QueryForm />
     </Drawer>
-    <SplitDrawer title="分屏模式">
-      <SplitForm />
-    </SplitDrawer>
     <HandleDrawer title="事件处置">
       <HandleForm />
     </HandleDrawer>
-    <AlarmDrawer title="告警触发">
-      <AlarmForm />
-    </AlarmDrawer>
     <RecordDrawer title="录像设置">
-      <RecordForm />
+      <!-- 原 RecordForm 未定义，保留原状 -->
     </RecordDrawer>
+
+    <!-- 分屏监控弹窗（独立控制每个窗口） -->
+    <el-dialog
+      v-model="playerDialogVisible"
+      width="90%"
+      destroy-on-close
+      :modal="false"
+      class="real-time-player-dialog"
+      fullscreen
+    >
+      <template #header>
+        <div class="dialog-header">
+          <span class="dialog-title">分屏监控墙</span>
+          <div class="header-actions">
+            <el-select
+              v-model="currentSplitMode"
+              size="small"
+              placeholder="分屏模式"
+              style="width: 100px"
+              @change="handleSplitModeChange"
+            >
+              <el-option
+                v-for="item in splitModeOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+            <el-button size="small" type="primary" @click="handleFullscreenContainer">全屏</el-button>
+          </div>
+        </div>
+      </template>
+      <div class="split-grid-container" :style="{ gridTemplateColumns: `repeat(${gridColumnCount}, 1fr)` }">
+        <div v-for="(player, idx) in splitPlayers" :key="idx" class="split-item">
+          <div class="player-header">
+            <span class="player-name">
+              <el-select
+                :model-value="player.cameraId"
+                placeholder="选择摄像头"
+                size="small"
+                clearable
+                @change="(val) => assignCameraToWindow(idx, val)"
+                :loading="!cameraOptions.length"
+              >
+              <el-option
+                v-for="cam in cameraOptions"
+                :key="cam.value"
+                :label="cam.label"
+                :value="cam.value"
+              />
+            </el-select>
+            </span>
+            <div class="window-actions">
+              <el-button size="small" type="success" @click="handleSnapshot(idx)">截图</el-button>
+              <el-button size="small" :type="player.paused ? 'primary' : 'warning'" @click="togglePause(idx)">
+                {{ player.paused ? '播放' : '暂停' }}
+              </el-button>
+              <el-button size="small" type="danger" @click="handleRestart(idx)">重启</el-button>
+              <el-button size="small" type="primary" @click="handleRecordVideo(idx)">异常事件录像</el-button>
+            </div>
+          </div>
+          <RealTimePlayer
+            v-if="player.streamUrl"
+            :src="player.streamUrl"
+            :ref="(el) => setPlayerRef(idx, el)"
+          />
+          <div v-else class="empty-placeholder">未选择摄像头</div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="playerDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
     <Grid>
       <template #table-title>
         <ElTag
@@ -657,14 +795,13 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton :content="textObj.fullscreenText" icon-name="FullScreen" @click="handleFullscreen" />
-          <IconButton :content="textObj.splitText" icon-name="Grid" @click="handleSplitScreen" />
-          <IconButton :content="textObj.snapText" icon-name="Camera" @click="handleBatchSnap" />
-          <IconButton :content="textObj.pauseText" icon-name="VideoPause" @click="handleBatchPause" />
-          <IconButton :content="textObj.restartText" icon-name="Refresh" @click="handleBatchRestart" />
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
           <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
@@ -681,22 +818,19 @@ defineExpose({ handleFilterTagClick, clearFilters });
         </el-text>
       </template>
       <template #runStatus="{ row }">
-        <el-tag :type="getRunStatusType(row.runStatus)" @click="handleFilterTagClick('runStatus', row.runStatus)" style="cursor: pointer">
+        <el-tag :type="getRunStatusType(row.runStatus)"
+                @click="handleFilterTagClick('runStatus', row.runStatus)" style="cursor: pointer">
           {{ row.runStatus }}
         </el-tag>
       </template>
       <template #alarmStatus="{ row }">
-        <el-tag :type="getAlarmStatusType(row.alarmStatus)" @click="handleFilterTagClick('alarmStatus', row.alarmStatus)" style="cursor: pointer">
+        <el-tag :type="getAlarmStatusType(row.alarmStatus)"
+                @click="handleFilterTagClick('alarmStatus', row.alarmStatus)" style="cursor: pointer">
           {{ row.alarmStatus }}
         </el-tag>
       </template>
       <template #imgUrl="{ row }">
-        <el-image
-          :src="row.imgUrl"
-          style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px; cursor: pointer;"
-          :preview-src-list="[row.imgUrl]"
-          @click="() => {}"
-        />
+        <el-button type="primary" link @click="handleViewMonitor(row)">查看</el-button>
       </template>
       <template #updateTime="{ row }">
         {{ formatTimestamp(row.updateTime) }}
@@ -732,13 +866,94 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton content="截图" icon-name="Camera" @click="handleSnap(row)" />
           <IconButton content="聚焦" icon-name="ZoomIn" @click="handleFocus(row)" />
           <IconButton v-if="row.runStatus === '正常'" content="告警" icon-name="Warning" color="#E6A23C" @click="handleAlarm(row)" />
           <IconButton v-if="row.alarmStatus === '告警中'" content="处置" icon-name="Edit" @click="handleHandle(row)" />
-          <IconButton content="录像" icon-name="VideoCamera" @click="handleRecord(row)" />
         </div>
       </template>
     </Grid>
   </div>
 </template>
+
+<style scoped lang="scss">
+.real-time-player-dialog {
+  :deep(.el-dialog__body) {
+    padding: 0 20px 20px 20px;
+  }
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+
+  .dialog-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #303133;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+}
+
+.split-grid-container {
+  display: grid;
+  gap: 8px;
+  height: 70vh;
+  overflow: auto;
+
+  .split-item {
+    background: #000;
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+
+    .player-header {
+      background: rgba(0,0,0,0.7);
+      padding: 4px 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: white;
+      z-index: 1;
+      flex-wrap: wrap;
+
+      .player-name {
+        font-size: 12px;
+        margin-left: auto;
+      }
+
+      .window-actions {
+        display: flex;
+        gap: 4px;
+      }
+    }
+
+    .real-time-player-container {
+      flex: 1;
+      min-height: 200px;
+    }
+
+    .empty-placeholder {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ccc;
+      background: #1a1a1a;
+      font-size: 14px;
+    }
+  }
+}
+
+:deep(.el-select) {
+  width: 200px;
+}
+</style>

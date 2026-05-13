@@ -1,8 +1,8 @@
 <script setup>
 import { computed, toRefs, ref, onMounted } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
-import { ElMessage } from 'element-plus';
-import { getCameraDetail } from '#/api/genchuan/industry/industrialpark/securityMgmt/videoMonitor/realTimeMonitor/data.js';
+import { getCameraDetail, getAiRecognitionDetail } from '#/api/genchuan/industry/industrialpark/securityMgmt/videoMonitor/aiRecognition/data.js';
+import { formatTimestamp } from '#/api/genchuan/industry/industrialpark/securityMgmt/videoMonitor/aiRecognition/form.js';
 
 const props = defineProps({
   detailObj: { type: Object, required: true, default: () => ({}) },
@@ -12,23 +12,10 @@ const emit = defineEmits(['refresh']);
 
 const { detailObj, title } = toRefs(props);
 
-const formatTimestamp = (timestamp) => {
-  if (!timestamp) return '-';
-  const date = new Date(parseInt(timestamp));
-  if (isNaN(date.getTime())) return timestamp;
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-};
-
 const cameraDetail = ref(null);
 
 const drawerTitle = computed(() => {
-  const name = detailObj.value?.cameraName ? `${detailObj.value.cameraName} 详情` : '监控详情';
+  const name = detailObj.value?.ruleName ? `${detailObj.value.ruleName} 规则详情` : 'AI识别规则详情';
   return title.value || name;
 });
 
@@ -59,16 +46,21 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 监控基础信息 -->
-      <div class="detail-section">📹 监控基础信息</div>
-      <div class="detail-card-row"><div class="detail-row-left">摄像头名称：</div><div class="detail-row-right">{{ detailObj.cameraName || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">安装区域：</div><div class="detail-row-right">{{ detailObj.area || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">运行状态：</div><div class="detail-row-right">{{ detailObj.runStatus || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">告警状态：</div><div class="detail-row-right">{{ detailObj.alarmStatus || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">最后更新时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.updateTime) }}</div></div>
+      <!-- 规则基础信息 -->
+      <div class="detail-section">🤖 规则基本信息</div>
+      <div class="detail-card-row"><div class="detail-row-left">规则名称：</div><div class="detail-row-right">{{ detailObj.ruleName || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">识别类型：</div><div class="detail-row-right">{{ detailObj.ruleType || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">关联摄像头：</div><div class="detail-row-right">{{ detailObj.cameraId || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">规则状态：</div><div class="detail-row-right">{{ detailObj.ruleStatus || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">识别准确率：</div><div class="detail-row-right">{{ detailObj.accuracy || '-' }}%</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">识别总数：</div><div class="detail-row-right">{{ detailObj.recognizeCount || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">告警总数：</div><div class="detail-row-right">{{ detailObj.alarmCount || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">核实率：</div><div class="detail-row-right">{{ detailObj.checkRate || '-' }}%</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">处置率：</div><div class="detail-row-right">{{ detailObj.handleRate || '-' }}%</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">操作人：</div><div class="detail-row-right">{{ detailObj.handleUser || '-' }}</div></div>
 
-      <!-- 摄像头设备详情（关联camera_mgmt） -->
-      <div class="detail-section">📷 摄像头设备详情</div>
+      <!-- 摄像头设备信息 -->
+      <div class="detail-section">📷 关联摄像头信息</div>
       <div class="detail-card-row"><div class="detail-row-left">设备名称：</div><div class="detail-row-right">{{ cameraDetail?.name || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">安装位置：</div><div class="detail-row-right">{{ cameraDetail?.location || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">设备状态：</div><div class="detail-row-right">{{ cameraDetail?.status || '-' }}</div></div>
