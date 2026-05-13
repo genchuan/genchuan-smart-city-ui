@@ -9,6 +9,8 @@ const props = defineProps({
   seriesData: { type: Array, required: true },
   valueSuffix: { type: String, default: '' },
   yName: { type: String, default: '' },
+  isEmitNodeData: { type: Boolean, default: false },
+  nodeData: { type: Array, required: false },
 });
 
 const emit = defineEmits(['barClick']);
@@ -152,7 +154,11 @@ const initChart = async () => {
       if (params.componentType === 'series' && params.data) {
         const areaName = params.name;
         if (areaName) {
-          emit('barClick', areaName);
+          if (!!props.isEmitNodeData) {
+            emit('barClick', props.nodeData.find((item) => item.name === params.name))
+          } else {
+            emit('barClick', areaName);
+          }
         }
       }
     });

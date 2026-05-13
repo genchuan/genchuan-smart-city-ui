@@ -356,15 +356,15 @@ export function useSearchFormSchema() {
         options: spareOptions,
       },
     },
-    {
-      fieldName: 'stationName',
-      label: '所属仓库',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入所属仓库',
-        clearable: true,
-      },
-    },
+    // {
+    //   fieldName: 'stationName',
+    //   label: '所属仓库',
+    //   component: 'Input',
+    //   componentProps: {
+    //     placeholder: '请输入所属仓库',
+    //     clearable: true,
+    //   },
+    // },
     {
       fieldName: 'status',
       label: '库存状态',
@@ -404,6 +404,14 @@ export function useInFormSchema() {
       componentProps: {
         placeholder: '请选择关联备件',
         options: spareOptions,
+        onChange: (value) => {
+          const spare = spareOptions.find((item) => item.value === value);
+          if (spare) {
+            actionFormApi.setValues({
+              spareName: spare.label,
+            });
+          }
+        },
       },
       rules: 'required',
     },
@@ -585,7 +593,7 @@ export const detailFields = [
     tagType: getSpareStatusTagType,
     formatter: getSpareStatusLabel,
   },
-  { key: 'warehouseName', label: '所属仓库' },
+  // { key: 'warehouseName', label: '所属仓库' },
   { key: 'inTimeStr', label: '入库时间' },
   { key: 'outTimeStr', label: '出库时间' },
   { key: 'inRecord', label: '入库记录' },
