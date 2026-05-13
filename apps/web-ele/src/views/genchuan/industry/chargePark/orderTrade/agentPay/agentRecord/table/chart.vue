@@ -308,3 +308,14 @@ onMounted(() => {
     </DrawerGrid>
   </Drawer>
 </template>
+<style scoped lang="scss"> 
+ 
+.left-card {
+  flex:1;
+  width: 330px; 
+
+  :deep(.stat-card) {
+    flex:1;
+  }
+}
+</style>
