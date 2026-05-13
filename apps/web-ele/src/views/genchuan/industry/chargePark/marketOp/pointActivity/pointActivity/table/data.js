@@ -1,10 +1,14 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
+import { ref } from 'vue';
 
+import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
-/** 场站选项配置 */
+import { getStationSimpleList } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
+
+/** 场站选项配置 - 静态数据作为默认值 */
 export const stationOptions = [
   { label: '芗城区XX社区停车场', value: '1' },
   { label: '龙文区碧湖公园停车场', value: '2' },
@@ -19,6 +23,35 @@ export const stationOptions = [
   { label: '龙文区步文街道停车场', value: '11' },
   { label: '芗城区东铺头街道停车场', value: '12' },
 ];
+
+/** 动态场站选项（从接口获取） */
+export let dynamicStationOptions = ref([]);
+
+/** 获取当前可用的场站选项（优先使用动态数据） */
+export function getCurrentStationOptions() {
+  return dynamicStationOptions.value.length > 0
+    ? dynamicStationOptions.value
+    : stationOptions;
+}
+
+/** 获取场站精简列表 */
+export async function fetchStationOptions() {
+  try {
+    const res = await getStationSimpleList();
+    if (res && Array.isArray(res)) {
+      // 将接口返回数据转换为 Select 组件需要的格式
+      dynamicStationOptions.value = res.map((item) => ({
+        label: item.name,
+        value: String(item.id),
+      }));
+      return dynamicStationOptions.value;
+    }
+  } catch (error) {
+    console.error('获取场站列表失败:', error);
+  }
+  // 接口失败时使用静态数据作为兜底
+  return stationOptions;
+}
 
 /** 根据场站ID获取场站名称 */
 export function getStationNamesByIds(stationIds) {
@@ -349,25 +382,17 @@ export function useSearchFormSchema() {
     {
       fieldName: 'startTime',
       label: '开始时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择开始时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'x',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     {
       fieldName: 'endTime',
       label: '结束时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择结束时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'x',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     {
@@ -454,6 +479,7 @@ export function useFormSchema() {
         placeholder: '请选择适用场站',
         multiple: true,
         options: stationOptions,
+        filterable: true,
       },
     },
     {
@@ -585,7 +611,6 @@ export function useGridColumns() {
       title: '参与人数',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'joinCount' },
     },
     {
       field: 'status',
@@ -606,7 +631,6 @@ export function useGridColumns() {
       title: '审核人',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'auditorName' },
     },
     {
       field: 'auditTime',
@@ -644,6 +668,60 @@ export const textObj = {
   excelAllName: '积分活动数据.xlsx',
   total: ' 总计: 积分活动数量12;进行中:6;已结束:2;已暂停:2;待生效:2',
 };
+
+/** 场站详情字段配置 - 不包含xxid字段，正确处理时间字段 */
+export const stationDetailFields = [
+  { key: 'stationNo', label: '场站编号' },
+  { key: 'name', label: '场站名称' },
+  {
+    key: 'type',
+    label: '场站类型',
+    type: 'tag',
+    formatter: (value) => value || '-',
+    tagType: () => 'primary',
+  },
+  { key: 'address', label: '地址' },
+  { key: 'spaceTotal', label: '总车位数量' },
+  {
+    key: 'operateType',
+    label: '运营类型',
+    type: 'tag',
+    formatter: (value) => value || '-',
+    tagType: () => 'primary',
+  },
+  {
+    key: 'status',
+    label: '状态',
+    type: 'tag',
+    formatter: (value) => value || '-',
+    tagType: () => 'primary',
+  },
+  { key: 'feeStandard', label: '收费标准' },
+  { key: 'deviceCount', label: '设备数量' },
+  { key: 'spaceCount', label: '可用车位数' },
+  { key: 'leaderName', label: '负责人', formatter: (value) => value || '-' },
+  { key: 'remark', label: '备注', formatter: (value) => value || '-' },
+  {
+    key: 'bindTime',
+    label: '绑定时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
+  { key: 'creator', label: '创建者' },
+  { key: 'updater', label: '更新者' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
+];
 
 /** 详情抽屉字段配置 */
 export const detailFields = [

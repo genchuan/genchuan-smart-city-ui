@@ -351,7 +351,6 @@ onUnmounted(() => {
         :key="`card-${index}`"
         class="stat-card"
         :style="{ borderLeftColor: card.color || '#13ce66' }"
-        @click="handleCardClick(card)"
       >
         <div class="card-header">
           <h3 class="card-title">{{ card.title }}</h3>
@@ -398,21 +397,14 @@ onUnmounted(() => {
 .stat-card {
   flex: 1;
   padding: 12px;
-  cursor: pointer;
   background-color: #fff;
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
-  transition: all 0.3s ease;
 }
 
 .stat-card:last-child {
   margin-bottom: 0;
-}
-
-.stat-card:hover {
-  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
-  transform: translateY(-2px);
 }
 
 .card-header {
