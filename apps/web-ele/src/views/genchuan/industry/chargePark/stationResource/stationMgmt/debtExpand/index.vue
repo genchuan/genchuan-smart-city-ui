@@ -654,9 +654,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
       ajax: {
         query: async ({ page }, formValues = {}) => {
           const explicitValues = sanitizeParams(formValues);
-          const query = Object.keys(explicitValues).length
-            ? explicitValues
-            : sanitizeParams(appliedQuery.value);
+          const query =
+            Object.keys(explicitValues).length > 0
+              ? explicitValues
+              : sanitizeParams(appliedQuery.value);
           return await pageApi[`get${apiName}Page`]({
             pageNo: page.currentPage,
             pageSize: page.pageSize,

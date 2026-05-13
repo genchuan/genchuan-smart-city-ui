@@ -193,7 +193,6 @@ const onMarkerClick = (evt) => {
   const { position, properties } = evt.geometry;
   if (!infoWindow || !properties) return;
 
-
   infoWindow.setPosition(position);
   infoWindow.setContent(generateInfoWindowContent(properties));
   infoWindow.open();
