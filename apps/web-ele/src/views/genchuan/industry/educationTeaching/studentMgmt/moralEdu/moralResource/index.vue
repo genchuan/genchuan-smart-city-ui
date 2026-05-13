@@ -1,11 +1,11 @@
 <script setup>
-import {computed, reactive, ref, watch, nextTick} from 'vue';
-import {confirm, useVbenDrawer} from '@vben/common-ui';
-import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
+import { computed, reactive, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
-import {useVbenForm} from '#/adapter/form';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
-import {downloadFileFromBlobPart} from '@vben/utils';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import MoralResourceDetailDrawer from './components/moralResourceDetail.vue';
 import {
   getMoralResourcePage,
@@ -23,16 +23,11 @@ import {
   useCreateFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/moralEdu/moralResource/form.js';
 
-// 辅助函数：状态标签类型
 const getStatusType = (status) => {
-  const map = {
-    '未上架': 'warning',
-    '已上架': 'success',
-  };
+  const map = { '未上架': 'warning', '已上架': 'success' };
   return map[status] || 'info';
 };
 
-// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -46,7 +41,6 @@ const formatTimestamp = (timestamp) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
-// 提取日期部分（用于筛选）
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(parseInt(timestamp));
@@ -63,31 +57,36 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -110,7 +109,7 @@ function getTagDisplayText(field, value) {
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
 
 const dataObj = reactive({
@@ -136,64 +135,37 @@ const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
       ...searchParams.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
+      resourceType: tagFilters.value.resourceType,
+      status: tagFilters.value.status,
+      creator: tagFilters.value.creator,
+      resourceName: tagFilters.value.resourceName,
     };
-
-    const res = await getMoralResourcePage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'resourceType':
-            itemValue = item.resourceType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          case 'resourceName':
-            itemValue = item.resourceName;
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    // 处理 createTime 日期范围
+    if (tagFilters.value.createTime && Array.isArray(tagFilters.value.createTime) && tagFilters.value.createTime.length === 2) {
+      params.createTimeStart = tagFilters.value.createTime[0];
+      params.createTimeEnd = tagFilters.value.createTime[1];
+    } else if (tagFilters.value.createTime && typeof tagFilters.value.createTime === 'string') {
+      params.createTimeStart = tagFilters.value.createTime;
+      params.createTimeEnd = tagFilters.value.createTime;
+    }
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getMoralResourcePage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取资源列表失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -202,47 +174,38 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportMoralResource(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportMoralResource(searchParams.value);
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
-// 批量上架
 async function handleBatchOnline() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个资源');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个资源');
   const offlineRows = checkedRows.value.filter(row => row.status === '未上架');
-  if (offlineRows.length === 0) {
-    ElMessage.warning('请选择状态为【未上架】的资源进行上架');
-    return;
-  }
+  if (offlineRows.length === 0) return ElMessage.warning('请选择状态为【未上架】的资源进行上架');
   try {
     await ElMessageBox.confirm(`确认上架选中的 ${offlineRows.length} 个资源？上架后学生可见。`, '批量上架确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '上架中...'});
     try {
@@ -261,22 +224,15 @@ async function handleBatchOnline() {
   }
 }
 
-// 批量下架
 async function handleBatchOffline() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个资源');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个资源');
   const onlineRows = checkedRows.value.filter(row => row.status === '已上架');
-  if (onlineRows.length === 0) {
-    ElMessage.warning('请选择状态为【已上架】的资源进行下架');
-    return;
-  }
+  if (onlineRows.length === 0) return ElMessage.warning('请选择状态为【已上架】的资源进行下架');
   try {
     await ElMessageBox.confirm(`确认下架选中的 ${onlineRows.length} 个资源？下架后学生不可见。`, '批量下架确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '下架中...'});
     try {
@@ -298,26 +254,22 @@ async function handleBatchOffline() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  createDrawerApi.open();
 }
 
 function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  createDrawerApi.open();
 }
 
-// 单行上架
 async function handleOnline(row) {
-  if (row.status !== '未上架') {
-    ElMessage.warning('只有未上架的资源可以上架');
-    return;
-  }
+  if (row.status !== '未上架') return ElMessage.warning('只有未上架的资源可以上架');
   try {
     await ElMessageBox.confirm(`确认上架资源"${row.resourceName}"？上架后学生可见。`, '上架确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '上架中...'});
     try {
@@ -335,17 +287,13 @@ async function handleOnline(row) {
   }
 }
 
-// 单行下架
 async function handleOffline(row) {
-  if (row.status !== '已上架') {
-    ElMessage.warning('只有已上架的资源可以下架');
-    return;
-  }
+  if (row.status !== '已上架') return ElMessage.warning('只有已上架的资源可以下架');
   try {
     await ElMessageBox.confirm(`确认下架资源"${row.resourceName}"？下架后学生不可见。`, '下架确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '下架中...'});
     try {
@@ -371,14 +319,8 @@ const [CreateForm, createFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '上传中...'});
     try {
       let res;
-      if (isEditMode.value) {
-        // 编辑时传递 status（表单中已包含）
-        res = await updateMoralResource({...values, id: currentEditId.value});
-      } else {
-        // 新增时确保 status 字段存在（默认未上架）
-        const submitData = {...values, status: values.status || '未上架'};
-        res = await createMoralResource(submitData);
-      }
+      if (isEditMode.value) res = await updateMoralResource({...values, id: currentEditId.value});
+      else res = await createMoralResource({...values, status: values.status || '未上架'});
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '上传成功');
         createDrawerApi.close();
@@ -396,16 +338,13 @@ const [CreateForm, createFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 修复的核心：在抽屉打开时重置表单并加载编辑数据
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => createDrawerApi.close(),
   async onOpenChange(isOpen) {
     if (isOpen) {
-      // 每次打开前先重置表单（清空值 + 清除校验错误）
       await createFormApi.resetForm();
-      // 如果是编辑模式，则填充数据
       if (isEditMode.value && currentEditId.value) {
         try {
           const detail = await getMoralResourceDetail({id: currentEditId.value});
@@ -419,17 +358,15 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
         } catch (error) {
           console.error('加载详情失败', error);
           ElMessage.error('加载详情失败，请检查网络或联系管理员');
-          createDrawerApi.close(); // 加载失败则关闭抽屉
+          createDrawerApi.close();
         }
       } else {
-        // 新增模式：设置默认状态为“未上架”
         await createFormApi.setValues({status: '未上架'});
       }
     }
   },
 });
 
-// 查看详情
 const moralResourceDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -443,7 +380,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -471,13 +408,30 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 const showChart = ref(true);
 const toggleChart = () => {
   showChart.value = !showChart.value;
 };
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'resourceType') {
+    handleFilterTagClick('resourceType', value);
+  } else if (type === 'status') {
+    handleFilterTagClick('status', value);
+  } else if (type === 'createTime') {
+    handleFilterTagClick('createTime', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('moral-resource-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('moral-resource-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -513,13 +467,10 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
-      <!-- 钻取列 -->
       <template #resourceName="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
           {{ row.resourceName }}
@@ -527,8 +478,7 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #resourceType="{ row }">
         <el-text @click="handleFilterTagClick('resourceType', row.resourceType)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.resourceType }}
+                 style="cursor: pointer;">{{ row.resourceType }}
         </el-text>
       </template>
       <template #status="{ row }">
@@ -539,18 +489,14 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.creator || '-' }}
+                 style="cursor: pointer;">{{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">
-          {{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
-
-      <!-- 时间格式化 -->
       <template #publishTime="{ row }">
         <el-text>{{ formatTimestamp(row.publishTime) }}</el-text>
       </template>
@@ -561,7 +507,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>

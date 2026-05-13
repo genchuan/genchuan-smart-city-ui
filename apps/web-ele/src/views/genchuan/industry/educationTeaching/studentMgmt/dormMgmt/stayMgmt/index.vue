@@ -1,11 +1,11 @@
 <script setup>
-import {computed, reactive, ref, watch, nextTick} from 'vue';
-import {confirm, useVbenDrawer} from '@vben/common-ui';
-import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
+import { computed, reactive, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
-import {useVbenForm} from '#/adapter/form';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
-import {downloadFileFromBlobPart} from '@vben/utils';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import StayDetailDrawer from './components/stayDetail.vue';
 import {
   getStayMgmtPage,
@@ -24,17 +24,10 @@ import {
   useApplyFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/dormMgmt/stayMgmt/form.js';
 
-// 辅助函数：状态标签类型
 const getStatusType = (status) => {
-  const map = {
-    '待确认': 'warning',
-    '待审核': 'primary',
-    '已通过': 'success',
-  };
+  const map = { '待确认': 'warning', '待审核': 'primary', '已通过': 'success' };
   return map[status] || 'info';
 };
-
-// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -47,8 +40,6 @@ const formatTimestamp = (timestamp) => {
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
-
-// 提取日期部分（用于筛选）
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(parseInt(timestamp));
@@ -58,22 +49,16 @@ const getDateFromTimestamp = (timestamp) => {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
-
-// 将后端返回的数组日期 [year, month, day] 格式化为 YYYY-MM-DD
 const formatStayDate = (stayDate) => {
   if (!stayDate || !Array.isArray(stayDate) || stayDate.length < 3) return '-';
   const [year, month, day] = stayDate;
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 };
-
-// 将数组日期转换为时间戳（用于表单回显和筛选比较）
 const stayDateToTimestamp = (stayDate) => {
   if (!stayDate || !Array.isArray(stayDate) || stayDate.length < 3) return null;
   const [year, month, day] = stayDate;
   return new Date(year, month - 1, day).getTime();
 };
-
-// 将时间戳转换为数组日期（用于表单提交）
 const timestampToStayDateArray = (timestamp) => {
   if (!timestamp) return null;
   const date = new Date(parseInt(timestamp));
@@ -89,31 +74,36 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -122,6 +112,8 @@ function getFieldLabel(field) {
     creator: '创建人',
     createTime: '创建时间',
     studentId: '学号',
+    className: '班级',
+    stayDate: '留宿日期'
   };
   return map[field] || field;
 }
@@ -131,11 +123,11 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// ---------- 抽屉组件 ----------
+// ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
 
 const dataObj = reactive({
@@ -163,66 +155,30 @@ const currentEditId = ref(null);
 const confirmIds = ref([]);
 const auditIds = ref([]);
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
       ...searchParams.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
+      status: tagFilters.value.status,
+      creator: tagFilters.value.creator,
+      studentId: tagFilters.value.studentId,
+      className: tagFilters.value.className,
+      stayDate: tagFilters.value.stayDate,
     };
-
-    const res = await getStayMgmtPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          case 'studentId':
-            itemValue = item.studentId;
-            break;
-          case 'stayDate':
-            const filterDateStr = getDateFromTimestamp(filterValue);
-            const rowDateStr = formatStayDate(item.stayDate);
-            itemValue = rowDateStr;
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getStayMgmtPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取留宿申请列表失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -231,47 +187,38 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportStayMgmt(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportStayMgmt(searchParams.value);
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
-// 批量确认
 async function handleBatchConfirm() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个留宿记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个留宿记录');
   const pendingRows = checkedRows.value.filter(row => row.status === '待确认');
-  if (pendingRows.length === 0) {
-    ElMessage.warning('请选择状态为【待确认】的记录进行确认');
-    return;
-  }
+  if (pendingRows.length === 0) return ElMessage.warning('请选择状态为【待确认】的记录进行确认');
   try {
     await ElMessageBox.confirm(`确认家长确认选中的 ${pendingRows.length} 条留宿申请？确认后状态将变为“待审核”。`, '批量确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '确认中...'});
     try {
@@ -290,22 +237,15 @@ async function handleBatchConfirm() {
   }
 }
 
-// 批量审核
 async function handleBatchAudit() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个留宿记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个留宿记录');
   const pendingRows = checkedRows.value.filter(row => row.status === '待审核');
-  if (pendingRows.length === 0) {
-    ElMessage.warning('请选择状态为【待审核】的记录进行审核');
-    return;
-  }
+  if (pendingRows.length === 0) return ElMessage.warning('请选择状态为【待审核】的记录进行审核');
   try {
     await ElMessageBox.confirm(`确认审核选中的 ${pendingRows.length} 条留宿申请？审核后状态将变为“已通过”。`, '批量审核', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
@@ -324,30 +264,25 @@ async function handleBatchAudit() {
   }
 }
 
-// 新增申请
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  applyDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  applyDrawerApi.open();
 }
 
 function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  applyDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  applyDrawerApi.open();
 }
 
-// 单行确认
 async function handleConfirm(row) {
-  if (row.status !== '待确认') {
-    ElMessage.warning('只有待确认状态的申请可以确认');
-    return;
-  }
+  if (row.status !== '待确认') return ElMessage.warning('只有待确认状态的申请可以确认');
   try {
     await ElMessageBox.confirm(`确认家长确认学号"${row.studentId}"的留宿申请？确认后状态将变为“待审核”。`, '确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '确认中...'});
     try {
@@ -365,17 +300,13 @@ async function handleConfirm(row) {
   }
 }
 
-// 单行审核
 async function handleAudit(row) {
-  if (row.status !== '待审核') {
-    ElMessage.warning('只有待审核状态的申请可以审核');
-    return;
-  }
+  if (row.status !== '待审核') return ElMessage.warning('只有待审核状态的申请可以审核');
   try {
     await ElMessageBox.confirm(`确认审核学号"${row.studentId}"的留宿申请？审核后状态将变为“已通过”。`, '审核', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
@@ -401,19 +332,9 @@ const [ApplyForm, applyFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '保存中...' : '提交中...'});
     try {
       let res;
-      // 转换 stayDate 为数组格式
-      const submitValues = {
-        ...values,
-        stayDate: timestampToStayDateArray(values.stayDate),
-        // applyTime 已经是时间戳，直接传递
-      };
-      if (isEditMode.value) {
-        res = await updateStayMgmt({...submitValues, id: currentEditId.value});
-      } else {
-        // 确保 status 字段存在
-        const finalValues = {...submitValues, status: submitValues.status || '待确认'};
-        res = await createStayMgmt(finalValues);
-      }
+      const submitValues = {...values, stayDate: timestampToStayDateArray(values.stayDate)};
+      if (isEditMode.value) res = await updateStayMgmt({...submitValues, id: currentEditId.value});
+      else res = await createStayMgmt({...submitValues, status: submitValues.status || '待确认'});
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '编辑成功' : '申请成功');
         applyDrawerApi.close();
@@ -431,16 +352,13 @@ const [ApplyForm, applyFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 修复的核心：在抽屉打开时重置表单并加载编辑数据
 const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => applyDrawerApi.close(),
   async onOpenChange(isOpen) {
     if (isOpen) {
-      // 每次打开前先重置表单（清空值 + 清除校验错误）
       await applyFormApi.resetForm();
-      // 如果是编辑模式，则填充数据
       if (isEditMode.value && currentEditId.value) {
         try {
           const detail = await getStayMgmtDetail({id: currentEditId.value});
@@ -455,17 +373,15 @@ const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
         } catch (error) {
           console.error('加载详情失败', error);
           ElMessage.error('加载详情失败，请检查网络或联系管理员');
-          applyDrawerApi.close(); // 加载失败则关闭抽屉
+          applyDrawerApi.close();
         }
       } else {
-        // 新增模式：设置默认申请时间为当前时间，默认状态为“待确认”
         await applyFormApi.setValues({applyTime: Date.now(), status: '待确认'});
       }
     }
   },
 });
 
-// 动态注入学生选项
 const studentOptions = ref([]);
 const loadStudentOptions = async () => {
   const res = await getStudentOptions();
@@ -477,13 +393,10 @@ watch(applyFormApi, (api) => {
   if (api && studentOptions.value.length) {
     const schema = api.getSchema();
     const studentField = schema.find(f => f.fieldName === 'studentId');
-    if (studentField) {
-      studentField.componentProps.options = studentOptions.value;
-    }
+    if (studentField) studentField.componentProps.options = studentOptions.value;
   }
 }, {immediate: true});
 
-// 详情抽屉
 const stayDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -497,7 +410,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -525,13 +438,30 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 const showChart = ref(true);
 const toggleChart = () => {
   showChart.value = !showChart.value;
 };
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'status') {
+    handleFilterTagClick('status', value);
+  } else if (type === 'className') {
+    handleFilterTagClick('className', value);
+  } else if (type === 'stayDate') {
+    handleFilterTagClick('stayDate', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('stay-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('stay-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -567,13 +497,10 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
-      <!-- 钻取列 -->
       <template #studentId="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
           {{ row.studentId }}
@@ -587,18 +514,14 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.creator || '-' }}
+                 style="cursor: pointer;">{{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">
-          {{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
-
-      <!-- 时间格式化 -->
       <template #stayDate="{ row }">
         <el-text>{{ formatStayDate(row.stayDate) }}</el-text>
       </template>
@@ -615,7 +538,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>

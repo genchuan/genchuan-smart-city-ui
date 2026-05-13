@@ -141,61 +141,33 @@ const confirmIds = ref([]);    // 待确认的ID列表
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
+    // 1️⃣ 合并搜索参数 + 标签筛选参数
     const params = {
       ...searchParams.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
+      // 将 tagFilters 中的字段映射到后端接口参数
+      major: tagFilters.value.major,
+      status: tagFilters.value.status,
+      creator: tagFilters.value.creator,
+      studentName: tagFilters.value.studentName,
+      // 注意：createTime 需要特殊处理（见下方说明）
     };
-
-    const res = await getRegisterMgmtPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'major':
-            itemValue = item.major;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          case 'studentName':
-            itemValue = item.studentName;
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    // 2️⃣ 删除无效参数
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getRegisterMgmtPage(params);
+    // 3️⃣ 直接使用后端返回的数据
+    dataObj.total = res.total || 0;   // ✅ 正确的总记录数
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取报名记录失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -525,9 +497,7 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 

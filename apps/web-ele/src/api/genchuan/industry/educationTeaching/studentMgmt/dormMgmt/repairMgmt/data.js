@@ -15,12 +15,12 @@ const repairTypeReverse = {
 
 // 状态映射
 const statusMap = {
-  '待派单': 'pending',
+  '待派单': 'pending_dispatch',
   '维修中': 'repairing',
   '已维修': 'completed',
 };
 const statusReverse = {
-  'pending': '待派单',
+  'pending_dispatch': '待派单',
   'repairing': '维修中',
   'completed': '已维修',
 };

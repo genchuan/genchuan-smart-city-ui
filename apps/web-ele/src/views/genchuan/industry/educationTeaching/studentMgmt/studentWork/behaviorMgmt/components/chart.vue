@@ -14,18 +14,14 @@ const loading = ref(true);
 const overviewData = ref({});
 const classData = ref([]);
 
-// ========== 时间范围选择器 ==========
+// 时间范围选择器
 const timeRange = ref([]);
-
-// 获取默认时间范围（最近30天，结束时间为当天）
 const getDefaultTimeRange = () => {
   const end = new Date();
   const start = new Date();
   start.setDate(end.getDate() - 30);
   return [start, end];
 };
-
-// 格式化单个日期时间为后端要求的格式（带 T 分隔）
 const formatDateTime = (date, isEnd = false) => {
   if (!date) return '';
   const d = new Date(date);
@@ -35,8 +31,6 @@ const formatDateTime = (date, isEnd = false) => {
   const time = isEnd ? '23:59:59' : '00:00:00';
   return `${year}-${month}-${day}T${time}`;
 };
-
-// 生成 timeRange 字符串（格式："起始时间,结束时间"）
 const getTimeRangeParam = () => {
   if (timeRange.value && timeRange.value.length === 2) {
     const startStr = formatDateTime(timeRange.value[0], false);
@@ -46,8 +40,6 @@ const getTimeRangeParam = () => {
   const [defaultStart, defaultEnd] = getDefaultTimeRange();
   return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
 };
-
-// 日期范围变化时重新加载数据
 const handleDateRangeChange = () => {
   loadChartData();
 };
@@ -66,16 +58,13 @@ const cardList = computed(() => {
   ];
 });
 
-// 请假类型分布饼图：将后端返回的 {name, count} 转换为 {name, value}（Pie组件需要value）
+// 请假类型分布饼图
 const leaveTypePieData = computed(() => {
   const distribution = overviewData.value.leaveTypeDistribution || [];
-  return distribution.map(item => ({
-    name: item.name,
-    value: item.count
-  }));
+  return distribution.map(item => ({name: item.name, value: item.count}));
 });
 
-// 每日请假趋势（折线图数据）：后端返回 {name, count}，直接使用 name 作为 x 轴，count 作为数据
+// 每日请假趋势
 const dailyTrendXData = computed(() => {
   const trend = overviewData.value.dailyLeaveTrend || [];
   return trend.map(item => item.name);
@@ -112,21 +101,40 @@ const chartOptions = computed(() => [
 const activeChartIndex = ref(0);
 const currentChart = computed(() => chartOptions.value[activeChartIndex.value] || chartOptions.value[0]);
 
-// 切换图表
 const handleChartChange = (index) => {
   activeChartIndex.value = index;
 };
 
-const emit = defineEmits(['cardClick', 'pieClick', 'barClick', 'lineClick']);
-
-// 卡片点击
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
+// 卡片点击：映射为筛选字段
 const handleCardClick = (cardInfo) => {
-  emit('cardClick', cardInfo.status);
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'pending':   // 待审批数 → 筛选状态为“待审批”
+      filterType = 'status';
+      filterValue = '待审批';
+      break;
+    case 'synced':    // 已同步数 → 筛选考勤同步状态为“已同步”
+      filterType = 'attendanceSync';
+      filterValue = '已同步';
+      break;
+    case 'totalLeave':
+    case 'abnormal':
+    default:
+      // 请假总次数和考勤异常人数不清除筛选，也不添加筛选
+      return;
+  }
+  window.dispatchEvent(new CustomEvent('behavior-chart-filter', {
+    detail: {type: filterType, value: filterValue}
+  }));
 };
 
-// 饼图点击
+// 饼图点击（请假类型）
 const handlePieClick = (item) => {
-  emit('pieClick', {type: 'leaveType', value: item.name});
+  window.dispatchEvent(new CustomEvent('behavior-chart-filter', {
+    detail: {type: 'leaveType', value: item.name}
+  }));
 };
 
 // 柱状图点击（班级筛选）
@@ -138,17 +146,24 @@ const handleBarClick = (params) => {
     className = params.name || params.className;
   }
   if (className) {
-    emit('barClick', {className});
+    window.dispatchEvent(new CustomEvent('behavior-chart-filter', {
+      detail: {type: 'className', value: className}
+    }));
   } else {
     console.warn('柱状图点击未能获取班级名称', params);
   }
 };
 
-// 折线图点击（日期筛选）
+// 折线图点击（日期筛选 - 按该日期筛选请假记录）
 const handleTrendClick = (params) => {
-  emit('lineClick', {date: params.name});
+  // params.name 是日期字符串，例如 "03-01"，可转换成完整日期格式再传给后端
+  // 这里简单传递日期字符串，列表组件需处理 createTime 筛选
+  window.dispatchEvent(new CustomEvent('behavior-chart-filter', {
+    detail: {type: 'createTime', value: params.name}
+  }));
 };
 
+// 数据加载函数（保持不变）
 const loadChartData = async () => {
   loading.value = true;
   try {
@@ -160,7 +175,6 @@ const loadChartData = async () => {
     if (overviewRes.status === 'fulfilled') {
       overviewData.value = overviewRes.value;
     } else {
-      // 模拟数据字段与后端一致：使用 name/count
       overviewData.value = {
         totalLeaveCount: 86,
         pendingAuditCount: 12,
@@ -204,7 +218,6 @@ onMounted(() => {
 
 <template>
   <div v-loading="loading" class="chart-box">
-    <!-- 看板卡片区 -->
     <div class="box-left" style="flex: 1 !important;">
       <Indicator
         class="left-card"
@@ -215,7 +228,6 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 请假类型分布饼图（固定） -->
     <Pie
       style="flex: 1 !important;"
       title-text="请假类型分布"
@@ -223,25 +235,13 @@ onMounted(() => {
       @pie-click="handlePieClick"
     />
 
-    <!-- 图表切换区域（折线图/柱状图） -->
     <div class="chart-area">
-      <!-- 图表切换下拉框 -->
       <div class="chart-select-wrapper">
-        <el-select
-          v-model="activeChartIndex"
-          size="small"
-          @change="handleChartChange"
-        >
-          <el-option
-            v-for="(opt, idx) in chartOptions"
-            :key="idx"
-            :label="opt.title"
-            :value="idx"
-          />
+        <el-select v-model="activeChartIndex" size="small" @change="handleChartChange">
+          <el-option v-for="(opt, idx) in chartOptions" :key="idx" :label="opt.title" :value="idx"/>
         </el-select>
       </div>
 
-      <!-- 日期范围选择器（紧凑样式，位于右上角） -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="timeRange"
@@ -261,7 +261,6 @@ onMounted(() => {
         />
       </div>
 
-      <!-- 动态渲染当前图表组件 -->
       <lineChart
         v-if="currentChart.type === 'line'"
         :title="currentChart.title"
@@ -305,7 +304,6 @@ onMounted(() => {
   }
 }
 
-/* 图表切换区域样式 */
 .chart-area {
   position: relative;
   flex: 1.5;
@@ -328,7 +326,6 @@ onMounted(() => {
   z-index: 10;
 }
 
-/* 紧凑的时间选择器样式 */
 :deep(.el-date-editor) {
   --el-date-editor-width: 240px;
 

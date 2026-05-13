@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
+import {ref, computed, onMounted} from 'vue';
+import {ElSelect, ElOption, ElDatePicker} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
@@ -13,10 +13,8 @@ const loading = ref(true);
 const chartData = ref({});
 const classStats = ref({});
 
-// 时间范围（数组形式，用于日期选择器）
 const timeRange = ref([]);
 
-// 获取默认时间范围（最近30天，结束时间为当天）
 const getDefaultTimeRange = () => {
   const end = new Date();
   const start = new Date();
@@ -24,8 +22,6 @@ const getDefaultTimeRange = () => {
   return [start, end];
 };
 
-// 格式化单个日期时间为后端要求的格式
-// isEnd: 是否为结束时间（结束时间用 23:59:59，起始用 00:00:00）
 const formatDateTime = (date, isEnd = false) => {
   if (!date) return '';
   const d = new Date(date);
@@ -36,45 +32,39 @@ const formatDateTime = (date, isEnd = false) => {
   return `${year}-${month}-${day} ${time}`;
 };
 
-// 生成 timeRange 字符串（格式："起始时间,结束时间"）
 const getTimeRangeParam = () => {
   if (timeRange.value && timeRange.value.length === 2) {
     const startStr = formatDateTime(timeRange.value[0], false);
     const endStr = formatDateTime(timeRange.value[1], true);
     return `${startStr},${endStr}`;
   }
-  // 默认：最近30天
   const [defaultStart, defaultEnd] = getDefaultTimeRange();
   return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
 };
 
-// 日期范围变化时重新加载数据
 const handleDateRangeChange = () => {
   loadData();
 };
 
-// ========== 卡片数据 ==========
 const cardList = computed(() => {
   const total = chartData.value.totalApplyCount || 0;
   const pending = chartData.value.pendingAuditCount || 0;
   const passed = chartData.value.passedCount || 0;
   return [
-    { title: '总申请次数', value: total, color: '#409EFF', status: 'total' },
-    { title: '待审核申请数', value: pending, color: '#E6A23C', status: 'pending' },
-    { title: '已通过申请数', value: passed, color: '#67C23A', status: 'passed' },
+    {title: '总申请次数', value: total, color: '#409EFF', status: 'total'},
+    {title: '待审核申请数', value: pending, color: '#E6A23C', status: 'pending'},
+    {title: '已通过申请数', value: passed, color: '#67C23A', status: 'passed'},
   ];
 });
 
-// 折线图数据（每日申请趋势）
 const lineData = computed(() => {
   const trend = chartData.value.dailyTrend || [];
   return {
     xAxis: trend.map(item => item.date),
-    series: [{ name: '申请次数', data: trend.map(item => item.count) }],
+    series: [{name: '申请次数', data: trend.map(item => item.count)}],
   };
 });
 
-// 柱状图配置（支持切换）
 const barOptions = computed(() => [
   {
     title: '各班级申请次数',
@@ -83,7 +73,7 @@ const barOptions = computed(() => [
       const stats = classStats.value.classStatistics || [];
       return {
         xData: stats.map(item => item.className),
-        seriesData: [{ name: '申请次数', data: stats.map(item => item.totalCount) }],
+        seriesData: [{name: '申请次数', data: stats.map(item => item.totalCount)}],
       };
     },
     yName: '申请次数',
@@ -95,7 +85,7 @@ const barOptions = computed(() => [
       const distribution = chartData.value.typeDistribution || [];
       return {
         xData: distribution.map(item => item.type),
-        seriesData: [{ name: '数量', data: distribution.map(item => item.count) }],
+        seriesData: [{name: '数量', data: distribution.map(item => item.count)}],
       };
     },
     yName: '数量',
@@ -103,35 +93,63 @@ const barOptions = computed(() => [
 ]);
 
 const activeBarIndex = ref(0);
-const currentBarData = computed(() => barOptions.value[activeBarIndex.value]?.getData() || { xData: [], seriesData: [] });
+const currentBarData = computed(() => barOptions.value[activeBarIndex.value]?.getData() || {
+  xData: [],
+  seriesData: []
+});
 const currentBarTitle = computed(() => barOptions.value[activeBarIndex.value]?.title || '');
 const currentYName = computed(() => barOptions.value[activeBarIndex.value]?.yName || '');
-
 const handleBarChange = (index) => {
   activeBarIndex.value = index;
 };
 
-// 事件发射
-const emit = defineEmits(['cardSelect', 'barSelect', 'lineSelect']);
-
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'pending':
+      filterType = 'status';
+      filterValue = '待审核';
+      break;
+    case 'passed':
+      filterType = 'status';
+      filterValue = '已通过';
+      break;
+    case 'total':
+    default:
+      return;
+  }
+  window.dispatchEvent(new CustomEvent('access-apply-chart-filter', {
+    detail: {type: filterType, value: filterValue}
+  }));
 };
 
 const handleBarClick = (name) => {
   const currentType = barOptions.value[activeBarIndex.value]?.type;
   if (currentType === 'classCount') {
-    emit('barSelect', {field: 'className', value: name});
+    window.dispatchEvent(new CustomEvent('access-apply-chart-filter', {
+      detail: {type: 'className', value: name}
+    }));
   } else if (currentType === 'typeDistribution') {
-    emit('barSelect', {field: 'applyType', value: name});
+    window.dispatchEvent(new CustomEvent('access-apply-chart-filter', {
+      detail: {type: 'applyType', value: name}
+    }));
   }
 };
 
 const handleLineClick = (params) => {
-  emit('lineSelect', {field: 'date', value: params.xValue});
+  // params 可能包含 xValue（日期），如 "2025-03-25"
+  const date = params.xValue || params.name;
+  if (date) {
+    // 将单日筛选转换为该天的日期范围
+    window.dispatchEvent(new CustomEvent('access-apply-chart-filter', {
+      detail: {type: 'createTime', value: [date, date]}
+    }));
+  }
 };
 
-// 加载数据
+// 数据加载函数（保持不变）
 const loadData = async () => {
   loading.value = true;
   try {
@@ -140,9 +158,8 @@ const loadData = async () => {
       getAccessApplyChart({timeRange: timeRangeParam}),
       getAccessApplyCount({timeRange: timeRangeParam}),
     ]);
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
-    } else {
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else {
       console.warn('看板接口失败，使用模拟数据', chartRes.reason);
       chartData.value = {
         totalApplyCount: 128,
@@ -163,9 +180,8 @@ const loadData = async () => {
         ],
       };
     }
-    if (classRes.status === 'fulfilled') {
-      classStats.value = classRes.value;
-    } else {
+    if (classRes.status === 'fulfilled') classStats.value = classRes.value;
+    else {
       console.warn('班级统计接口失败，使用模拟数据', classRes.reason);
       classStats.value = {
         classStatistics: [
@@ -183,7 +199,6 @@ const loadData = async () => {
 };
 
 onMounted(() => {
-  // 初始化时间范围（默认最近30天）
   timeRange.value = getDefaultTimeRange();
   loadData();
 });
@@ -191,20 +206,12 @@ onMounted(() => {
 
 <template>
   <div v-loading="loading" class="chart-box">
-    <!-- 卡片区 -->
     <div class="chart-box-left">
-      <Indicator
-        class="left-card"
-        v-for="item in cardList"
-        :key="item.title"
-        v-bind="item"
-        @click="handleCardClick"
-      />
+      <Indicator class="left-card" v-for="item in cardList" :key="item.title" v-bind="item"
+                 @click="handleCardClick"/>
     </div>
 
-    <!-- 折线图区域（包含日期选择器） -->
     <div class="line-chart-container" style="flex: 1 !important; position: relative;">
-      <!-- 日期范围选择器（紧凑样式，位于右上角） -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="timeRange"
@@ -232,7 +239,6 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 柱状图（可切换） -->
     <div class="chart-area">
       <div class="chart-select-wrapper">
         <el-select v-model="activeBarIndex" size="small" @change="handleBarChange">
@@ -268,7 +274,6 @@ onMounted(() => {
     margin: 0;
   }
 
-  /* 折线图容器特殊样式，用于绝对定位日期选择器 */
   .line-chart-container {
     position: relative;
     flex: 1;
@@ -298,7 +303,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的日期选择器样式 */
   :deep(.el-date-editor) {
     --el-date-editor-width: 240px;
 

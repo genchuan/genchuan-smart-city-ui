@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
+import {ref, computed, onMounted} from 'vue';
+import {ElSelect, ElOption, ElDatePicker} from 'element-plus';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import LineChart from '#/genchuan-components/stats/lineChartClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
@@ -13,7 +13,6 @@ const loading = ref(true);
 const chartData = ref({});
 const typeCountData = ref({});
 
-// 时间范围选择器相关
 const dateRange = ref([new Date('2024-01-01'), new Date('2026-12-31')]);
 
 const formatLocalDateTime = (date) => {
@@ -35,9 +34,9 @@ const pieOptions = computed(() => [
     getData: () => {
       const typeCount = chartData.value.resourceTypeCount || {};
       return [
-        { name: '课程', value: typeCount['课程'] || 0 },
-        { name: '图书', value: typeCount['图书'] || 0 },
-        { name: '专题包', value: typeCount['专题包'] || 0 },
+        {name: '课程', value: typeCount['课程'] || 0},
+        {name: '图书', value: typeCount['图书'] || 0},
+        {name: '专题包', value: typeCount['专题包'] || 0},
       ];
     },
   },
@@ -47,7 +46,7 @@ const pieOptions = computed(() => [
     getData: () => {
       const typeList = typeCountData.value.typeList || [];
       const learnRateList = typeCountData.value.learnRateList || [];
-      return typeList.map((name, idx) => ({ name, value: learnRateList[idx] || 0 }));
+      return typeList.map((name, idx) => ({name, value: learnRateList[idx] || 0}));
     },
   },
 ]);
@@ -60,14 +59,12 @@ const handlePieChange = (index) => {
   activePieIndex.value = index;
 };
 
-// ========== 柱状图数据（固定为资源状态分布） ==========
+// ========== 柱状图数据 ==========
 const barData = computed(() => {
   const status = chartData.value.statusCount || {};
   return {
     xData: ['未上架', '已上架'],
-    seriesData: [
-      { name: '资源数量', data: [status['未上架'] || 0, status['已上架'] || 0] },
-    ],
+    seriesData: [{name: '资源数量', data: [status['未上架'] || 0, status['已上架'] || 0]}],
   };
 });
 
@@ -81,7 +78,7 @@ const lineOptions = computed(() => [
       const sorted = [...trend].sort((a, b) => new Date(a.date) - new Date(b.date));
       return {
         xData: sorted.map(item => item.date),
-        seriesData: [{ name: '学习人数', data: sorted.map(item => item.count) }],
+        seriesData: [{name: '学习人数', data: sorted.map(item => item.count)}],
       };
     },
     yName: '学习人数',
@@ -94,7 +91,7 @@ const lineOptions = computed(() => [
       const sorted = [...trend].sort((a, b) => new Date(a.date) - new Date(b.date));
       return {
         xData: sorted.map(item => item.date),
-        seriesData: [{ name: '完成率(%)', data: sorted.map(item => item.rate) }],
+        seriesData: [{name: '完成率(%)', data: sorted.map(item => item.rate)}],
       };
     },
     yName: '完成率(%)',
@@ -113,32 +110,42 @@ const handleLineChange = (index) => {
   activeLineIndex.value = index;
 };
 
-const emit = defineEmits(['barSelect', 'pieSelect', 'lineSelect']);
-
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
 const handlePieClick = (item) => {
   const currentType = pieOptions.value[activePieIndex.value]?.type;
   if (currentType === 'resourceType') {
-    emit('pieSelect', { field: 'resourceType', value: item.name });
+    window.dispatchEvent(new CustomEvent('moral-resource-chart-filter', {
+      detail: {type: 'resourceType', value: item.name}
+    }));
   }
+  // learnRate 饼图不触发筛选
 };
 
 const handleBarClick = (name) => {
-  emit('barSelect', { field: 'status', value: name });
+  window.dispatchEvent(new CustomEvent('moral-resource-chart-filter', {
+    detail: {type: 'status', value: name}
+  }));
 };
 
 const handleLineClick = (date) => {
-  emit('lineSelect', { field: 'month', value: date });
+  // 将日期（如 "2025-07"）转换为该月的日期范围
+  const [year, month] = date.split('-');
+  const startDate = `${year}-${month}-01`;
+  const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+  const endDate = `${year}-${month}-${lastDay}`;
+  window.dispatchEvent(new CustomEvent('moral-resource-chart-filter', {
+    detail: {type: 'createTime', value: [startDate, endDate]}
+  }));
 };
 
+// 数据加载函数（保持不变）
 const loadChartData = async () => {
   try {
     const params = {};
     if (dateRange.value && dateRange.value.length === 2) {
       const startDate = dateRange.value[0];
       const endDate = dateRange.value[1];
-      if (startDate) {
-        params.startTime = formatLocalDateTime(startDate);
-      }
+      if (startDate) params.startTime = formatLocalDateTime(startDate);
       if (endDate) {
         const endDateTime = new Date(endDate);
         endDateTime.setHours(23, 59, 59, 999);
@@ -150,17 +157,17 @@ const loadChartData = async () => {
   } catch (error) {
     console.warn('图表总览接口失败，使用模拟数据', error);
     chartData.value = {
-      statusCount: { unOnlineCount: 3, onlineCount: 17 },
-      resourceTypeCount: { courseCount: 10, bookCount: 6, packageCount: 4 },
+      statusCount: {unOnlineCount: 3, onlineCount: 17},
+      resourceTypeCount: {courseCount: 10, bookCount: 6, packageCount: 4},
       learnTrend: [
-        { date: '2025-07', count: 1 },
-        { date: '2025-08', count: 8 },
-        { date: '2025-09', count: 1 },
+        {date: '2025-07', count: 1},
+        {date: '2025-08', count: 8},
+        {date: '2025-09', count: 1},
       ],
       rateTrend: [
-        { date: '2025-07', rate: 58.2 },
-        { date: '2025-08', rate: 81.53 },
-        { date: '2025-09', rate: 65.3 },
+        {date: '2025-07', rate: 58.2},
+        {date: '2025-08', rate: 81.53},
+        {date: '2025-09', rate: 65.3},
       ],
     };
   }
@@ -172,9 +179,7 @@ const loadCountData = async () => {
     if (dateRange.value && dateRange.value.length === 2) {
       const startDate = dateRange.value[0];
       const endDate = dateRange.value[1];
-      if (startDate) {
-        params.startTime = formatLocalDateTime(startDate);
-      }
+      if (startDate) params.startTime = formatLocalDateTime(startDate);
       if (endDate) {
         const endDateTime = new Date(endDate);
         endDateTime.setHours(23, 59, 59, 999);
@@ -211,35 +216,25 @@ const loadData = async () => {
       getMoralResourceChart({}),
       getMoralResourceCount({}),
     ]);
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
-    } else {
-      console.warn('图表总览接口失败，使用模拟数据');
-      chartData.value = {
-        statusCount: { unOnlineCount: 3, onlineCount: 17 },
-        resourceTypeCount: { courseCount: 10, bookCount: 6, packageCount: 4 },
-        learnTrend: [
-          { date: '2025-07', count: 1 },
-          { date: '2025-08', count: 8 },
-          { date: '2025-09', count: 1 },
-        ],
-        rateTrend: [
-          { date: '2025-07', rate: 58.2 },
-          { date: '2025-08', rate: 81.53 },
-          { date: '2025-09', rate: 65.3 },
-        ],
-      };
-    }
-    if (countRes.status === 'fulfilled') {
-      typeCountData.value = countRes.value;
-    } else {
-      console.warn('资源数量统计接口失败，使用模拟数据');
-      typeCountData.value = {
-        typeList: ['课程', '图书', '专题包'],
-        resourceCountList: [10, 6, 4],
-        learnRateList: [85.5, 78.0, 90.0],
-      };
-    }
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else chartData.value = {
+      statusCount: {unOnlineCount: 3, onlineCount: 17},
+      resourceTypeCount: {courseCount: 10, bookCount: 6, packageCount: 4},
+      learnTrend: [{date: '2025-07', count: 1}, {date: '2025-08', count: 8}, {
+        date: '2025-09',
+        count: 1
+      }],
+      rateTrend: [{date: '2025-07', rate: 58.2}, {date: '2025-08', rate: 81.53}, {
+        date: '2025-09',
+        rate: 65.3
+      }],
+    };
+    if (countRes.status === 'fulfilled') typeCountData.value = countRes.value;
+    else typeCountData.value = {
+      typeList: ['课程', '图书', '专题包'],
+      resourceCountList: [10, 6, 4],
+      learnRateList: [85.5, 78.0, 90.0],
+    };
   } catch (error) {
     console.error('加载图表数据失败', error);
   } finally {
@@ -261,7 +256,6 @@ onMounted(() => {
           <el-option v-for="(opt, idx) in pieOptions" :key="idx" :label="opt.title" :value="idx"/>
         </el-select>
       </div>
-      <!-- 时间范围选择器 -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="dateRange"

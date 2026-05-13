@@ -1,11 +1,11 @@
 <script setup>
-import {computed, reactive, ref, watch, nextTick} from 'vue';
-import {confirm, useVbenDrawer} from '@vben/common-ui';
-import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
+import { computed, reactive, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
-import {useVbenForm} from '#/adapter/form';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
-import {downloadFileFromBlobPart} from '@vben/utils';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import StudentDetailDrawer from './components/studentDetail.vue';
 import {
   getStudentInfoPage,
@@ -23,18 +23,10 @@ import {
   useCreateFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/studentWork/studentInfo/form.js';
 
-// 辅助函数：状态标签类型
 const getStatusType = (status) => {
-  const map = {
-    '在籍': 'success',
-    '休学': 'warning',
-    '退学': 'danger',
-    '异动': 'info',
-  };
+  const map = { '在籍': 'success', '休学': 'warning', '退学': 'danger', '异动': 'info' };
   return map[status] || 'info';
 };
-
-// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -47,8 +39,6 @@ const formatTimestamp = (timestamp) => {
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
-
-// 提取日期部分
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(parseInt(timestamp));
@@ -59,37 +49,42 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 
-const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
+const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -99,21 +94,17 @@ function getFieldLabel(field) {
     status: '学籍状态',
     creator: '创建人',
     createTime: '创建时间',
+    grade: '年级',
   };
   return map[field] || field;
 }
-
 function getTagDisplayText(field, value) {
   if (Array.isArray(value)) return value.join('、');
   return value || '-';
 }
 
 // ---------- 原有变量 ----------
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => drawerApi.close(),
-});
+const [Drawer, drawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => drawerApi.close() });
 
 const dataObj = reactive({
   totalShow: false,
@@ -130,7 +121,7 @@ const gridColumns = ref(getColumnsByStatus(activeName.value));
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({records}) {
+function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -146,57 +137,35 @@ const getTableData = async ({ page }) => {
       ...searchParams.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
+      major: tagFilters.value.major,
+      className: tagFilters.value.className,
+      status: tagFilters.value.status,
+      creator: tagFilters.value.creator,
+      grade: tagFilters.value.grade,
+      createTime: tagFilters.value.createTime,
     };
-
-    const res = await getStudentInfoPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'major':
-            itemValue = item.major;
-            break;
-          case 'className':
-            itemValue = item.className;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    // 处理 createTime 日期范围
+    if (params.createTime && typeof params.createTime === 'string') {
+      // 如果是单日期字符串，作为精确日期筛选
+      params.createTimeStart = params.createTime;
+      params.createTimeEnd = params.createTime;
+      delete params.createTime;
+    } else if (Array.isArray(params.createTime) && params.createTime.length === 2) {
+      params.createTimeStart = params.createTime[0];
+      params.createTimeEnd = params.createTime[1];
+      delete params.createTime;
+    }
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getStudentInfoPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取学生列表失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -204,58 +173,30 @@ const getTableData = async ({ page }) => {
   }
 };
 
-function handleRefresh() {
-  gridApi.reload();
-}
-
-function handleReset() {
-  searchParams.value = {};
-  tagFilters.value = {};
-  gridApi.reload();
-}
+function handleRefresh() { gridApi.query(); }
+function handleReset() { searchParams.value = {}; tagFilters.value = {}; gridApi.query(); }
 
 async function handleExport() {
+  const loading = ElLoading.service({ text: '正在导出...' });
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportStudentInfo(searchParams.value);
-      downloadFileFromBlobPart({fileName: '学生信息列表.xls', source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
-  } catch (error) {
-    console.error('导出失败:', error);
-    ElMessage.error('导出失败');
-  }
+    const data = await exportStudentInfo(searchParams.value);
+    downloadFileFromBlobPart({ fileName: '学生信息列表.xls', source: data });
+    ElMessage.success('导出成功');
+  } catch (error) { console.error('导出失败:', error); ElMessage.error('导出失败'); }
+  finally { loading.close(); }
 }
 
 async function handleBatchDelete() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一条学生记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一条学生记录');
   try {
-    await ElMessageBox.confirm(`确认删除选中的 ${checkedIds.value.length} 条学生记录？删除后不可恢复。`, '批量删除确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
-    const loading = ElLoading.service({text: '删除中...'});
+    await ElMessageBox.confirm(`确认删除选中的 ${checkedIds.value.length} 条学生记录？删除后不可恢复。`, '批量删除确认', { confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning' });
+    const loading = ElLoading.service({ text: '删除中...' });
     try {
-      const res = await deleteStudentInfoList({ids: checkedIds.value});
-      if (res && res !== false) {
-        ElMessage.success('批量删除成功');
-        handleRefresh();
-      } else {
-        ElMessage.error('批量删除失败');
-      }
-    } finally {
-      loading.close();
-    }
-  } catch {
-    // 取消操作
-  }
+      const res = await deleteStudentInfoList({ ids: checkedIds.value });
+      if (res && res !== false) { ElMessage.success('批量删除成功'); handleRefresh(); }
+      else { ElMessage.error('批量删除失败'); }
+    } finally { loading.close(); }
+  } catch { }
 }
 
 function handleCreate() {
@@ -263,79 +204,51 @@ function handleCreate() {
   currentEditId.value = null;
   createDrawerApi.open();
 }
-
 function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
   createDrawerApi.open();
 }
-
 async function handleDelete(row) {
   try {
-    await ElMessageBox.confirm(`确认删除学生 ${row.name}（学号：${row.studentNo}）？删除后不可恢复。`, '删除确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
-    const loading = ElLoading.service({text: '删除中...'});
+    await ElMessageBox.confirm(`确认删除学生 ${row.name}（学号：${row.studentNo}）？删除后不可恢复。`, '删除确认', { confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning' });
+    const loading = ElLoading.service({ text: '删除中...' });
     try {
-      const res = await deleteStudentInfo({id: row.id});
-      if (res && res !== false) {
-        ElMessage.success('删除成功');
-        handleRefresh();
-      } else {
-        ElMessage.error('删除失败');
-      }
-    } finally {
-      loading.close();
-    }
-  } catch {
-    // 取消操作
-  }
+      const res = await deleteStudentInfo({ id: row.id });
+      if (res && res !== false) { ElMessage.success('删除成功'); handleRefresh(); }
+      else { ElMessage.error('删除失败'); }
+    } finally { loading.close(); }
+  } catch { }
 }
 
 // 新增/编辑表单
 const [CreateForm, createFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: async (values) => {
-    // 校验唯一性（模拟）
     if (!isEditMode.value) {
       const exist = dataObj.list.some(item => item.studentNo === values.studentNo || item.idCard === values.idCard);
-      if (exist) {
-        ElMessage.error('学号或身份证号已存在');
-        return;
-      }
+      if (exist) { ElMessage.error('学号或身份证号已存在'); return; }
     } else {
       const exist = dataObj.list.some(item => item.id !== currentEditId.value && (item.studentNo === values.studentNo || item.idCard === values.idCard));
-      if (exist) {
-        ElMessage.error('学号或身份证号已存在');
-        return;
-      }
+      if (exist) { ElMessage.error('学号或身份证号已存在'); return; }
     }
-    const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '保存中...'});
+    const loading = ElLoading.service({ text: isEditMode.value ? '更新中...' : '保存中...' });
     try {
       let res;
-      if (isEditMode.value) {
-        res = await updateStudentInfo({...values, id: currentEditId.value});
-      } else {
-        res = await createStudentInfo(values);
-      }
+      if (isEditMode.value) res = await updateStudentInfo({ ...values, id: currentEditId.value });
+      else res = await createStudentInfo(values);
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '新增成功');
         createDrawerApi.close();
         handleRefresh();
-      } else {
-        ElMessage.error(isEditMode.value ? '更新失败' : '新增失败');
-      }
-    } finally {
-      loading.close();
-    }
+      } else { ElMessage.error(isEditMode.value ? '更新失败' : '新增失败'); }
+    } finally { loading.close(); }
   },
   layout: 'horizontal',
   schema: useCreateFormSchema(isEditMode.value),
   showCollapseButton: false,
-  submitButtonOptions: {content: '保存'},
+  submitButtonOptions: { content: '保存' },
 });
 
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
@@ -347,7 +260,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
       await createFormApi.resetForm();
       if (isEditMode.value && currentEditId.value) {
         try {
-          const detail = await getStudentInfoDetail({id: currentEditId.value});
+          const detail = await getStudentInfoDetail({ id: currentEditId.value });
           await createFormApi.setValues({
             studentNo: detail.studentNo,
             name: detail.name,
@@ -373,9 +286,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   },
 });
 
-// 查看详情
 const studentDetailDrawerRef = ref(null);
-
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   studentDetailDrawerRef.value.open();
@@ -383,32 +294,29 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: (values) => {
-    searchParams.value = {...values};
+    searchParams.value = { ...values };
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
-  schema: useFormSchema().map(v => {
-    delete v.rules;
-    return v;
-  }),
+  schema: useFormSchema().map(v => { delete v.rules; return v; }),
   showCollapseButton: true,
-  submitButtonOptions: {content: '查询'},
+  submitButtonOptions: { content: '查询' },
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: {ajax: {query: getTableData}},
-    rowConfig: {keyField: 'id', isHover: true},
+    proxyConfig: { ajax: { query: getTableData } },
+    rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
-    toolbarConfig: {refresh: true, search: true},
+    toolbarConfig: { refresh: true, search: true },
     showOverflow: true,
   },
-  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
+  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
   showSearchForm: false,
 });
 
@@ -416,32 +324,46 @@ watch(activeName, (newVal) => {
   tagFilters.value = {};
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({columns: gridColumns.value});
-  gridApi.reload();
+  else gridApi.setGridOptions?.({ columns: gridColumns.value });
+  gridApi.query();
 });
 
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 const showChart = ref(true);
-const toggleChart = () => {
-  showChart.value = !showChart.value;
+const toggleChart = () => { showChart.value = !showChart.value; };
+defineExpose({ handleFilterTagClick, clearFilters });
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const { type, value } = event.detail;
+  if (type === 'status') {
+    handleFilterTagClick('status', value);
+  } else if (type === 'grade') {
+    handleFilterTagClick('grade', value);
+  } else if (type === 'major') {
+    handleFilterTagClick('major', value);
+  } else if (type === 'className') {
+    handleFilterTagClick('className', value);
+  } else if (type === 'createTime') {
+    handleFilterTagClick('createTime', value);
+  }
 };
 
-defineExpose({handleFilterTagClick, clearFilters});
+onMounted(() => {
+  window.addEventListener('student-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('student-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
-  <div class="park-lot-table-new">
-    <StudentDetailDrawer ref="studentDetailDrawerRef" :detail-obj="dataObj.detailObj"
-                         @refresh="handleRefresh"/>
-    <Drawer title="搜索">
-      <QueryForm/>
-    </Drawer>
-    <CreateDrawer :title="isEditMode ? '编辑学生信息' : '新增学生信息'">
-      <CreateForm/>
-    </CreateDrawer>
+  <div class="tools-table-new">
+    <StudentDetailDrawer ref="studentDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh"/>
+    <Drawer title="搜索"><QueryForm/></Drawer>
+    <CreateDrawer :title="isEditMode ? '编辑学生信息' : '新增学生信息'"><CreateForm/></CreateDrawer>
     <Grid>
       <template #table-title>
         <ElTag
@@ -461,51 +383,31 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="导出" icon-name="download" @click="handleExport"/>
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
-          <IconButton content="批量删除" icon-name="Delete" color="#F56C6C"
-                      @click="handleBatchDelete"/>
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
-                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+          <IconButton content="批量删除" icon-name="Delete" color="#F56C6C" @click="handleBatchDelete"/>
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
       <template #name="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{
-            row.name
-          }}
-        </el-text>
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.name }}</el-text>
       </template>
       <template #major="{ row }">
-        <el-text @click="handleFilterTagClick('major', row.major)" type="primary"
-                 style="cursor: pointer;">{{ row.major }}
-        </el-text>
+        <el-text @click="handleFilterTagClick('major', row.major)" type="primary" style="cursor: pointer;">{{ row.major }}</el-text>
       </template>
       <template #className="{ row }">
-        <el-text @click="handleFilterTagClick('className', row.className)" type="primary"
-                 style="cursor: pointer;">{{ row.className }}
-        </el-text>
+        <el-text @click="handleFilterTagClick('className', row.className)" type="primary" style="cursor: pointer;">{{ row.className }}</el-text>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)"
-                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
-          {{ row.status }}
-        </el-tag>
+        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">{{ row.status }}</el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer;">{{ row.creator || '-' }}
-        </el-text>
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
-        </el-text>
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
       </template>
-      <template #updateTime="{ row }">
-        <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
-      </template>
+      <template #updateTime="{ row }"><el-text>{{ formatTimestamp(row.updateTime) }}</el-text></template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

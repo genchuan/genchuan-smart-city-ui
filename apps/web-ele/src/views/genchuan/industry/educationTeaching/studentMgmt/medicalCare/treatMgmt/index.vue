@@ -1,11 +1,11 @@
 <script setup>
-import {computed, reactive, ref, watch, nextTick} from 'vue';
-import {confirm, useVbenDrawer} from '@vben/common-ui';
-import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
+import { computed, reactive, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
-import {useVbenForm} from '#/adapter/form';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
-import {downloadFileFromBlobPart} from '@vben/utils';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import TreatDetailDrawer from './components/treatDetail.vue';
 import {
   getTreatMgmtPage,
@@ -27,16 +27,10 @@ import {
   useRegisterFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/medicalCare/treatMgmt/form.js';
 
-// 辅助函数：状态标签类型
 const getStatusType = (status) => {
-  const map = {
-    '待审核': 'warning',
-    '已就诊': 'success',
-  };
+  const map = { '待审核': 'warning', '已就诊': 'success' };
   return map[status] || 'info';
 };
-
-// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -49,8 +43,6 @@ const formatTimestamp = (timestamp) => {
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
-
-// 提取日期部分（用于筛选）
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(parseInt(timestamp));
@@ -67,31 +59,36 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -101,6 +98,7 @@ function getFieldLabel(field) {
     creator: '创建人',
     createTime: '创建时间',
     studentId: '学号',
+    grade: '年级',
   };
   return map[field] || field;
 }
@@ -110,43 +108,31 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// ---------- 抽屉组件 ----------
+// ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
-
-// 新增预约抽屉
 const [CreateAppointDrawer, createAppointDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => createAppointDrawerApi.close(),
+  onCancel: () => createAppointDrawerApi.close()
 });
-
-// 编辑抽屉（原预约抽屉，但仅用于编辑）
 const [EditAppointDrawer, editAppointDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => editAppointDrawerApi.close(),
+  onCancel: () => editAppointDrawerApi.close()
 });
-
 const [RegisterDrawer, registerDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => registerDrawerApi.close(),
+  onCancel: () => registerDrawerApi.close()
 });
 
 const dataObj = reactive({
-  totalShow: false,
-  detailObj: {},
-  total: 0,
-  currentPage: 1,
-  pageSize: 10,
-  list: [],
-  loading: false,
+  totalShow: false, detailObj: {}, total: 0, currentPage: 1, pageSize: 10, list: [], loading: false,
 });
-
 const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
@@ -161,70 +147,39 @@ const isEditMode = ref(false);
 const currentEditId = ref(null);
 const auditIds = ref([]);
 const registerIds = ref([]);
-
-// 反馈弹窗
 const feedbackVisible = ref(false);
 const feedbackContent = ref('');
 const currentFeedbackId = ref(null);
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
       ...searchParams.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
+      treatType: tagFilters.value.treatType,
+      status: tagFilters.value.status,
+      creator: tagFilters.value.creator,
+      studentId: tagFilters.value.studentId,
+      grade: tagFilters.value.grade,
     };
-
-    const res = await getTreatMgmtPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'treatType':
-            itemValue = item.treatType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          case 'studentId':
-            itemValue = item.studentId;
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    // 处理 createTime 日期范围
+    if (tagFilters.value.createTime && Array.isArray(tagFilters.value.createTime) && tagFilters.value.createTime.length === 2) {
+      params.createTimeStart = tagFilters.value.createTime[0];
+      params.createTimeEnd = tagFilters.value.createTime[1];
+    }
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getTreatMgmtPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取就诊记录失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -233,47 +188,38 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportTreatMgmt(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportTreatMgmt(searchParams.value);
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
-// 批量审核
 async function handleBatchAudit() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个就诊记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个就诊记录');
   const pendingRows = checkedRows.value.filter(row => row.status === '待审核');
-  if (pendingRows.length === 0) {
-    ElMessage.warning('请选择状态为【待审核】的记录进行审核');
-    return;
-  }
+  if (pendingRows.length === 0) return ElMessage.warning('请选择状态为【待审核】的记录进行审核');
   try {
     await ElMessageBox.confirm(`确认审核选中的 ${pendingRows.length} 条就诊记录？审核后状态将变为“已就诊”。`, '批量审核确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
@@ -292,37 +238,26 @@ async function handleBatchAudit() {
   }
 }
 
-// 批量登记
 async function handleBatchRegister() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个就诊记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个就诊记录');
   const finishedRows = checkedRows.value.filter(row => row.status === '已就诊');
-  if (finishedRows.length === 0) {
-    ElMessage.warning('请选择已就诊的就诊记录');
-    return;
-  }
+  if (finishedRows.length === 0) return ElMessage.warning('请选择已就诊的就诊记录');
   registerIds.value = finishedRows.map(row => row.id);
   registerFormApi.resetForm();
   registerDrawerApi.open();
 }
 
-// 新增预约
 function handleCreate() {
   createAppointFormApi.resetForm();
-  // 设置默认状态为“待审核”和当前预约时间
   createAppointFormApi.setValues({status: '待审核', applyTime: Date.now()});
   createAppointDrawerApi.open();
 }
 
-// 编辑
 async function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
   try {
     const detail = await getTreatMgmtDetail({id: row.id});
-    // 如果原记录没有 registerTime，则设置一个默认值（当前时间），以满足后端要求
     const registerTime = detail.registerTime || Date.now();
     editAppointFormApi.setValues({
       studentId: detail.studentId,
@@ -340,17 +275,13 @@ async function handleEdit(row) {
   }
 }
 
-// 单行审核
 async function handleAudit(row) {
-  if (row.status !== '待审核') {
-    ElMessage.warning('只有待审核状态的记录可以审核');
-    return;
-  }
+  if (row.status !== '待审核') return ElMessage.warning('只有待审核状态的记录可以审核');
   try {
     await ElMessageBox.confirm(`确认审核学号"${row.studentId}"的就诊申请？审核后状态将变为“已就诊”。`, '审核确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
@@ -372,12 +303,8 @@ async function handleAudit(row) {
   }
 }
 
-// 单行反馈
 async function handleFeedback(row) {
-  if (row.status !== '已就诊') {
-    ElMessage.warning('只有已就诊状态的记录可以反馈');
-    return;
-  }
+  if (row.status !== '已就诊') return ElMessage.warning('只有已就诊状态的记录可以反馈');
   currentFeedbackId.value = row.id;
   feedbackContent.value = '';
   feedbackVisible.value = true;
@@ -393,7 +320,7 @@ async function submitFeedback() {
     const res = await feedbackTreatMgmt({
       id: currentFeedbackId.value,
       feedbackContent: feedbackContent.value,
-      feedbackTime: Date.now(),
+      feedbackTime: Date.now()
     });
     if (res && res !== false) {
       ElMessage.success('反馈成功');
@@ -407,16 +334,14 @@ async function submitFeedback() {
   }
 }
 
-// ----- 新增预约表单 -----
+// 新增预约表单
 const [CreateAppointForm, createAppointFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
     const loading = ElLoading.service({text: '预约中...'});
     try {
-      // 新增时确保 status 字段存在（默认待审核）
-      const submitData = {...values, status: values.status || '待审核'};
-      const res = await appointTreatMgmt(submitData);
+      const res = await appointTreatMgmt({...values, status: values.status || '待审核'});
       if (res && res !== false) {
         ElMessage.success('预约成功');
         createAppointDrawerApi.close();
@@ -434,7 +359,7 @@ const [CreateAppointForm, createAppointFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// ----- 编辑表单（含 registerTime）-----
+// 编辑表单
 const [EditAppointForm, editAppointFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
@@ -454,12 +379,12 @@ const [EditAppointForm, editAppointFormApi] = useVbenForm({
     }
   },
   layout: 'horizontal',
-  schema: useAppointFormSchema(true), // 编辑模式，含 registerTime
+  schema: useAppointFormSchema(true),
   showCollapseButton: false,
   submitButtonOptions: {content: '保存'},
 });
 
-// ----- 登记表单 -----
+// 登记表单
 const [RegisterForm, registerFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
@@ -484,7 +409,7 @@ const [RegisterForm, registerFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 动态注入学生选项
+// 学生选项注入
 const studentOptions = ref([]);
 const loadStudentOptions = async () => {
   const res = await getStudentOptions();
@@ -492,29 +417,21 @@ const loadStudentOptions = async () => {
 };
 loadStudentOptions();
 
-// 为新增预约表单注入学生选项
 watch(createAppointFormApi, (api) => {
   if (api && studentOptions.value.length) {
     const schema = api.getSchema();
     const studentField = schema.find(f => f.fieldName === 'studentId');
-    if (studentField) {
-      studentField.componentProps.options = studentOptions.value;
-    }
+    if (studentField) studentField.componentProps.options = studentOptions.value;
   }
 }, {immediate: true});
-
-// 为编辑表单注入学生选项
 watch(editAppointFormApi, (api) => {
   if (api && studentOptions.value.length) {
     const schema = api.getSchema();
     const studentField = schema.find(f => f.fieldName === 'studentId');
-    if (studentField) {
-      studentField.componentProps.options = studentOptions.value;
-    }
+    if (studentField) studentField.componentProps.options = studentOptions.value;
   }
 }, {immediate: true});
 
-// 详情抽屉
 const treatDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -528,7 +445,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -556,13 +473,32 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 const showChart = ref(true);
 const toggleChart = () => {
   showChart.value = !showChart.value;
 };
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'status') {
+    handleFilterTagClick('status', value);
+  } else if (type === 'treatType') {
+    handleFilterTagClick('treatType', value);
+  } else if (type === 'grade') {
+    handleFilterTagClick('grade', value);
+  } else if (type === 'createTime') {
+    handleFilterTagClick('createTime', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('treat-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('treat-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -572,11 +508,9 @@ defineExpose({handleFilterTagClick, clearFilters});
     <Drawer title="搜索">
       <QueryForm/>
     </Drawer>
-    <!-- 新增预约抽屉 -->
     <CreateAppointDrawer title="预约">
       <CreateAppointForm/>
     </CreateAppointDrawer>
-    <!-- 编辑抽屉 -->
     <EditAppointDrawer title="编辑">
       <EditAppointForm/>
     </EditAppointDrawer>
@@ -584,16 +518,11 @@ defineExpose({handleFilterTagClick, clearFilters});
       <RegisterForm/>
     </RegisterDrawer>
 
-    <!-- 反馈弹窗 -->
     <el-dialog v-model="feedbackVisible" title="家长反馈" width="400px">
       <el-form label-width="80px">
         <el-form-item label="反馈内容">
-          <el-input
-            v-model="feedbackContent"
-            type="textarea"
-            rows="4"
-            placeholder="请输入反馈内容"
-          />
+          <el-input v-model="feedbackContent" type="textarea" rows="4"
+                    placeholder="请输入反馈内容"/>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -625,13 +554,10 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
-      <!-- 钻取列 -->
       <template #studentId="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
           {{ row.studentId }}
@@ -639,8 +565,7 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #treatType="{ row }">
         <el-text @click="handleFilterTagClick('treatType', row.treatType)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.treatType }}
+                 style="cursor: pointer;">{{ row.treatType }}
         </el-text>
       </template>
       <template #status="{ row }">
@@ -651,18 +576,14 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.creator || '-' }}
+                 style="cursor: pointer;">{{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">
-          {{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
-
-      <!-- 时间格式化 -->
       <template #registerTime="{ row }">
         <el-text>{{ formatTimestamp(row.registerTime) }}</el-text>
       </template>
@@ -679,12 +600,10 @@ defineExpose({handleFilterTagClick, clearFilters});
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton content="编辑" icon-name="Edit"
-                      @click="handleEdit(row)"/>
+          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check"
                       @click="handleAudit(row)"/>
           <IconButton v-if="row.status === '已就诊'" content="反馈" icon-name="ChatLineSquare"

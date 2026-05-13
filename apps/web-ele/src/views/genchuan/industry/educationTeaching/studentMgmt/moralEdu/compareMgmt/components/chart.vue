@@ -8,22 +8,14 @@ import { getCompareMgmtChart } from '#/api/genchuan/industry/educationTeaching/s
 const loading = ref(true);
 const chartData = ref({});
 
-// 周期筛选（前端中文值）
 const cycleFilter = ref('月');
 const cycleOptions = [
   { label: '周', value: '周' },
   { label: '月', value: '月' },
   { label: '学期', value: '学期' },
 ];
+const cycleMap = { '周': 'week', '月': 'month', '学期': 'semester' };
 
-// 周期中文 -> 英文映射（用于接口请求）
-const cycleMap = {
-  '周': 'week',
-  '月': 'month',
-  '学期': 'semester',
-};
-
-// ========== 横向条形图（班级德育得分排名 - 只展示前3名）==========
 const barHorizontalData = computed(() => {
   const rankList = [...(chartData.value.rankList || [])];
   const sortedDesc = rankList.sort((a, b) => b.total_score - a.total_score);
@@ -35,37 +27,29 @@ const barHorizontalData = computed(() => {
   };
 });
 
-// ========== 柱状图（各班级得分统计）==========
-// 数据源改为 chartData.rankList，直接使用后端返回的班级和得分
 const barData = computed(() => {
   const rankList = chartData.value.rankList || [];
-  // 按排名顺序展示（rank_no 越小排名越前），也可按得分排序，这里保持后端返回的顺序
-  const classList = rankList.map(item => item.class_name);
-  const scoreList = rankList.map(item => item.total_score);
   return {
-    xData: classList,
-    seriesData: [{ name: '总得分', data: scoreList }],
+    xData: rankList.map(item => item.class_name),
+    seriesData: [{ name: '总得分', data: rankList.map(item => item.total_score) }],
   };
 });
 
-const emit = defineEmits(['barSelect']);
-
-// 柱状图点击（筛选班级）
+// ========== 核心修改：柱状图点击改为派发自定义事件 ==========
 const handleBarClick = (className) => {
-  emit('barSelect', { field: 'className', value: className });
+  window.dispatchEvent(new CustomEvent('compare-chart-filter', {
+    detail: { type: 'className', value: className }
+  }));
 };
 
-// 加载图表数据
 const loadData = async () => {
   loading.value = true;
   try {
-    // 将前端中文周期转换为后端英文枚举
     const cycleEnum = cycleMap[cycleFilter.value];
     const res = await getCompareMgmtChart({ cycle: cycleEnum });
     chartData.value = res;
   } catch (error) {
     console.error('加载图表数据失败', error);
-    // 使用模拟数据（仅用于降级）
     chartData.value = {
       rankList: [
         { class_name: '高一(1)班', total_score: 92.5, rank_no: 1 },
@@ -79,7 +63,6 @@ const loadData = async () => {
   }
 };
 
-// 周期变化时重新加载数据
 const onCycleChange = () => {
   loadData();
 };
@@ -91,19 +74,12 @@ onMounted(() => {
 
 <template>
   <div v-loading="loading" class="chart-box">
-    <!-- 周期筛选单选框（置于顶部右侧） -->
     <div class="cycle-radio">
       <el-radio-group v-model="cycleFilter" @change="onCycleChange">
-        <el-radio-button
-          v-for="opt in cycleOptions"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
-        />
+        <el-radio-button v-for="opt in cycleOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
       </el-radio-group>
     </div>
 
-    <!-- 横向条形图：班级德育得分排名 -->
     <BarHorizontal
       style="flex: 1.5 !important;"
       title="班级德育得分排名"
@@ -113,7 +89,6 @@ onMounted(() => {
       @bar-click="handleBarClick"
     />
 
-    <!-- 柱状图：各班级得分统计 -->
     <Bar
       style="flex: 2 !important;"
       title="各班级得分统计"

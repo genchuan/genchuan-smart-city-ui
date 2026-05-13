@@ -10,15 +10,12 @@ import {
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/moralEdu/moralActivity/data.js';
 
 const loading = ref(true);
-const chartData = ref({});       // 柱状图数据（活动类型数量/参与人数）
-const trendData = ref({});       // 折线图数据（月度趋势）
-const overviewData = ref({});    // 饼图数据（状态分布、类型分布）
+const chartData = ref({});
+const trendData = ref({});
+const overviewData = ref({});
 
-// 时间范围选择器相关（针对两个接口）
-// 默认值：开始时间 2024-01-01，结束时间 2026-12-31
 const dateRange = ref([new Date('2024-01-01'), new Date('2026-12-31')]);
 
-// 格式化日期为后端需要的 ISO 8601 格式 (LocalDateTime)
 const formatLocalDateTime = (date) => {
   if (!date) return '';
   const year = date.getFullYear();
@@ -38,10 +35,7 @@ const barOptions = computed(() => [
     getData: () => {
       const typeList = chartData.value.typeList || [];
       const activityCountList = chartData.value.activityCountList || [];
-      return {
-        xData: typeList,
-        seriesData: [{name: '活动数量', data: activityCountList}]
-      };
+      return {xData: typeList, seriesData: [{name: '活动数量', data: activityCountList}]};
     },
     yName: '活动数量',
   },
@@ -51,10 +45,7 @@ const barOptions = computed(() => [
     getData: () => {
       const typeList = chartData.value.typeList || [];
       const joinCountList = chartData.value.joinCountList || [];
-      return {
-        xData: typeList,
-        seriesData: [{name: '参与人数', data: joinCountList}]
-      };
+      return {xData: typeList, seriesData: [{name: '参与人数', data: joinCountList}]};
     },
     yName: '参与人数',
   },
@@ -72,7 +63,7 @@ const handleBarChange = (index) => {
   activeBarIndex.value = index;
 };
 
-// ========== 折线图配置（适配后端字段 date, totalCount） ==========
+// ========== 折线图配置 ==========
 const lineOptions = computed(() => [
   {
     title: '月度活动数量趋势',
@@ -112,7 +103,7 @@ const handleLineChange = (index) => {
   activeLineIndex.value = index;
 };
 
-// ========== 饼图配置（适配后端 statusCount 和 activityTypeCount 的键名） ==========
+// ========== 饼图配置 ==========
 const pieOptions = computed(() => [
   {
     title: '活动状态分布',
@@ -147,54 +138,55 @@ const pieOptions = computed(() => [
 const activePieIndex = ref(0);
 const currentPieData = computed(() => pieOptions.value[activePieIndex.value]?.getData() || []);
 const currentPieTitle = computed(() => pieOptions.value[activePieIndex.value]?.title || '');
-
 const handlePieChange = (index) => {
   activePieIndex.value = index;
 };
 
-// ========== 事件发射 ==========
-const emit = defineEmits(['barSelect']);
-
-// 柱状图点击：筛选对应类型的活动记录
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
 const handleBarClick = (typeName) => {
-  emit('barSelect', {field: 'activityType', value: typeName});
+  window.dispatchEvent(new CustomEvent('moral-activity-chart-filter', {
+    detail: {type: 'activityType', value: typeName}
+  }));
 };
 
-// 折线图点击：筛选对应月份的活动记录
 const handleLineClick = (month) => {
-  emit('barSelect', {field: 'month', value: month});
+  // 将月份（如 "2025-03"）转换为该月的日期范围
+  const [year, monthNum] = month.split('-');
+  const startDate = `${year}-${monthNum}-01`;
+  const lastDay = new Date(parseInt(year), parseInt(monthNum), 0).getDate();
+  const endDate = `${year}-${monthNum}-${lastDay}`;
+  window.dispatchEvent(new CustomEvent('moral-activity-chart-filter', {
+    detail: {type: 'createTime', value: [startDate, endDate]}
+  }));
 };
 
-// 饼图点击：根据当前饼图类型发射筛选事件
 const handlePieClick = (item) => {
   const currentType = pieOptions.value[activePieIndex.value]?.type;
   if (currentType === 'status') {
-    emit('barSelect', {field: 'status', value: item.name});
+    window.dispatchEvent(new CustomEvent('moral-activity-chart-filter', {
+      detail: {type: 'status', value: item.name}
+    }));
   } else if (currentType === 'activityType') {
-    emit('barSelect', {field: 'activityType', value: item.name});
+    window.dispatchEvent(new CustomEvent('moral-activity-chart-filter', {
+      detail: {type: 'activityType', value: item.name}
+    }));
   }
 };
 
-// 加载活动数量统计（带时间范围参数）
+// 数据加载函数（保持不变）
 const loadActivityCount = async () => {
   try {
     const params = {};
-
-    // 只有当时间范围存在时才添加参数
     if (dateRange.value && dateRange.value.length === 2) {
       const startDate = dateRange.value[0];
       const endDate = dateRange.value[1];
-      if (startDate) {
-        params.startTime = formatLocalDateTime(startDate);
-      }
+      if (startDate) params.startTime = formatLocalDateTime(startDate);
       if (endDate) {
-        // 设置结束时间为当天的 23:59:59
         const endDateTime = new Date(endDate);
         endDateTime.setHours(23, 59, 59, 999);
         params.endTime = formatLocalDateTime(endDateTime);
       }
     }
-
     const res = await getMoralActivityCount(params);
     chartData.value = res;
   } catch (error) {
@@ -202,31 +194,24 @@ const loadActivityCount = async () => {
     chartData.value = {
       typeList: ['党团活动', '志愿活动', '其他'],
       activityCountList: [5, 7, 3],
-      joinCountList: [200, 280, 50],
+      joinCountList: [200, 280, 50]
     };
   }
 };
 
-// 加载图表总览数据（带时间范围参数）
 const loadActivityChart = async () => {
   try {
     const params = {};
-
-    // 只有当时间范围存在时才添加参数
     if (dateRange.value && dateRange.value.length === 2) {
       const startDate = dateRange.value[0];
       const endDate = dateRange.value[1];
-      if (startDate) {
-        params.startTime = formatLocalDateTime(startDate);
-      }
+      if (startDate) params.startTime = formatLocalDateTime(startDate);
       if (endDate) {
-        // 设置结束时间为当天的 23:59:59
         const endDateTime = new Date(endDate);
         endDateTime.setHours(23, 59, 59, 999);
         params.endTime = formatLocalDateTime(endDateTime);
       }
     }
-
     const res = await getMoralActivityChart(params);
     overviewData.value = res;
     trendData.value = res;
@@ -235,101 +220,62 @@ const loadActivityChart = async () => {
     const mockData = {
       statusCount: {ongoing: 3, ended: 5, unpublished: 2},
       activityTypeCount: {party_league: 4, volunteer: 3, other: 3},
-      monthTrend: [
-        {date: '2025-03', totalCount: 2},
-        {date: '2025-04', totalCount: 1},
-        {date: '2025-06', totalCount: 1},
-      ],
-      joinTrend: [
-        {date: '2025-03', totalCount: 1},
-        {date: '2025-04', totalCount: 1},
-        {date: '2025-05', totalCount: 1},
-      ],
+      monthTrend: [{date: '2025-03', totalCount: 2}, {
+        date: '2025-04',
+        totalCount: 1
+      }, {date: '2025-06', totalCount: 1}],
+      joinTrend: [{date: '2025-03', totalCount: 1}, {
+        date: '2025-04',
+        totalCount: 1
+      }, {date: '2025-05', totalCount: 1}]
     };
     overviewData.value = mockData;
     trendData.value = mockData;
   }
 };
 
-// 时间范围变化处理
 const handleDateRangeChange = async () => {
   if (dateRange.value && dateRange.value.length === 2) {
     loading.value = true;
     try {
-      await Promise.all([
-        loadActivityCount(),
-        loadActivityChart(),
-      ]);
+      await Promise.all([loadActivityCount(), loadActivityChart()]);
     } finally {
       loading.value = false;
     }
   }
 };
 
-// ========== 加载数据 ==========
 const loadData = async () => {
   loading.value = true;
   try {
-    // 初始化时不传时间参数，让后端返回全部数据
-    const [countRes, chartRes] = await Promise.allSettled([
-      getMoralActivityCount({}),
-      getMoralActivityChart({})
-    ]);
-    if (countRes.status === 'fulfilled') {
-      chartData.value = countRes.value;
-    } else {
-      console.warn('活动数量统计接口失败，使用模拟数据');
-      chartData.value = {
-        typeList: ['党团活动', '志愿活动', '其他'],
-        activityCountList: [5, 7, 3],
-        joinCountList: [200, 280, 50],
-      };
-    }
+    const [countRes, chartRes] = await Promise.allSettled([getMoralActivityCount({}), getMoralActivityChart({})]);
+    if (countRes.status === 'fulfilled') chartData.value = countRes.value;
+    else chartData.value = {
+      typeList: ['党团活动', '志愿活动', '其他'],
+      activityCountList: [5, 7, 3],
+      joinCountList: [200, 280, 50]
+    };
     if (chartRes.status === 'fulfilled') {
       overviewData.value = chartRes.value;
       trendData.value = chartRes.value;
     } else {
-      console.warn('图表总览接口失败，使用模拟数据');
       const mockData = {
         statusCount: {ongoing: 3, ended: 5, unpublished: 2},
         activityTypeCount: {party_league: 4, volunteer: 3, other: 3},
-        monthTrend: [
-          {date: '2025-03', totalCount: 2},
-          {date: '2025-04', totalCount: 1},
-          {date: '2025-06', totalCount: 1},
-        ],
-        joinTrend: [
-          {date: '2025-03', totalCount: 1},
-          {date: '2025-04', totalCount: 1},
-          {date: '2025-05', totalCount: 1},
-        ],
+        monthTrend: [{date: '2025-03', totalCount: 2}, {
+          date: '2025-04',
+          totalCount: 1
+        }, {date: '2025-06', totalCount: 1}],
+        joinTrend: [{date: '2025-03', totalCount: 1}, {
+          date: '2025-04',
+          totalCount: 1
+        }, {date: '2025-05', totalCount: 1}]
       };
       overviewData.value = mockData;
       trendData.value = mockData;
     }
   } catch (error) {
     console.error('加载图表数据失败', error);
-    chartData.value = {
-      typeList: ['党团活动', '志愿活动', '其他'],
-      activityCountList: [5, 7, 3],
-      joinCountList: [200, 280, 50],
-    };
-    const mockData = {
-      statusCount: {ongoing: 3, ended: 5, unpublished: 2},
-      activityTypeCount: {party_league: 4, volunteer: 3, other: 3},
-      monthTrend: [
-        {date: '2025-03', totalCount: 2},
-        {date: '2025-04', totalCount: 1},
-        {date: '2025-06', totalCount: 1},
-      ],
-      joinTrend: [
-        {date: '2025-03', totalCount: 1},
-        {date: '2025-04', totalCount: 1},
-        {date: '2025-05', totalCount: 1},
-      ],
-    };
-    overviewData.value = mockData;
-    trendData.value = mockData;
   } finally {
     loading.value = false;
   }
@@ -346,15 +292,9 @@ onMounted(() => {
     <div class="chart-area">
       <div class="chart-select-wrapper">
         <el-select v-model="activePieIndex" size="small" @change="handlePieChange">
-          <el-option
-            v-for="(opt, idx) in pieOptions"
-            :key="idx"
-            :label="opt.title"
-            :value="idx"
-          />
+          <el-option v-for="(opt, idx) in pieOptions" :key="idx" :label="opt.title" :value="idx"/>
         </el-select>
       </div>
-      <!-- 时间范围选择器（只针对两个接口） -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="dateRange"
@@ -371,53 +311,31 @@ onMounted(() => {
           @change="handleDateRangeChange"
         />
       </div>
-      <Pie
-        :title-text="currentPieTitle"
-        :data="currentPieData"
-        @pie-click="handlePieClick"
-      />
+      <Pie :title-text="currentPieTitle" :data="currentPieData" @pie-click="handlePieClick"/>
     </div>
 
     <!-- 柱状图区域 -->
     <div class="chart-area bar-chart-container">
       <div class="chart-select-wrapper">
         <el-select v-model="activeBarIndex" size="small" @change="handleBarChange">
-          <el-option
-            v-for="(opt, idx) in barOptions"
-            :key="idx"
-            :label="opt.title"
-            :value="idx"
-          />
+          <el-option v-for="(opt, idx) in barOptions" :key="idx" :label="opt.title" :value="idx"/>
         </el-select>
       </div>
-      <Bar
-        :title="currentBarTitle"
-        :x-data="currentBarData.xData"
-        :series-data="currentBarData.seriesData"
-        :y-name="currentYName"
-        @bar-click="handleBarClick"
-      />
+      <Bar :title="currentBarTitle" :x-data="currentBarData.xData"
+           :series-data="currentBarData.seriesData" :y-name="currentYName"
+           @bar-click="handleBarClick"/>
     </div>
 
     <!-- 折线图区域 -->
     <div class="chart-area">
       <div class="chart-select-wrapper">
         <el-select v-model="activeLineIndex" size="small" @change="handleLineChange">
-          <el-option
-            v-for="(opt, idx) in lineOptions"
-            :key="idx"
-            :label="opt.title"
-            :value="idx"
-          />
+          <el-option v-for="(opt, idx) in lineOptions" :key="idx" :label="opt.title" :value="idx"/>
         </el-select>
       </div>
-      <LineChart
-        :title="currentLineTitle"
-        :x-data="currentLineData.xData"
-        :series-data="currentLineData.seriesData"
-        :y-name="currentLineYName"
-        @line-click="handleLineClick"
-      />
+      <LineChart :title="currentLineTitle" :x-data="currentLineData.xData"
+                 :series-data="currentLineData.seriesData" :y-name="currentLineYName"
+                 @line-click="handleLineClick"/>
     </div>
   </div>
 </template>
@@ -445,7 +363,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 柱状图容器特殊样式，用于绝对定位时间选择器 */
   .bar-chart-container {
     position: relative;
   }
@@ -457,7 +374,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的时间选择器样式 */
   :deep(.el-date-editor) {
     --el-date-editor-width: 240px;
 
