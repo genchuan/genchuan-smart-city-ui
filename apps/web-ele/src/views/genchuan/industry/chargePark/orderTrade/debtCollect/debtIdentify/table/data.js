@@ -18,7 +18,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
-        options: [
+        options: [ 
           { label: '待识别', value: 'pending' },
           { label: '已识别', value: 'identified' },
           { label: '已标记（非逃费）', value: 'marked ' },
@@ -51,6 +51,7 @@ export function useFormSchema() {
       labelWidth: 120,
       isSearch: true,
     },
+ 
   ];
 }
 /** 欠费识别记录表格列配置 */

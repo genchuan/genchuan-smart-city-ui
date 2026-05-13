@@ -1,71 +1,16 @@
-/** 退款申请搜索表单配置 */
+/** 欠费识别记录搜索表单配置 */
 export function useFormSchema() {
   return [
-    {
-      fieldName: 'id',
-      label: '主键ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入主键ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-      isSearch: true,
-    },
-    {
-      fieldName: 'applyNo',
-      label: '申请编号',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入申请编号',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-      isSearch: true,
-    },
-    {
-      fieldName: 'orderId',
-      label: '关联订单ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入关联订单ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-      isSearch: true,
-    },
-    {
-      fieldName: 'refundAmount',
-      label: '退款金额',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入退款金额',
-        precision: 2,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
     {
       fieldName: 'refundReason',
       label: '退款原因',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入退款原因',
-        maxLength: 200,
+        placeholder: '请输入退款原因',  
+        maxLength: 50,
       },
       labelWidth: 120,
-    },
-    {
-      fieldName: 'applyTime',
-      label: '申请时间',
-      component: 'DateTimePicker',
-      componentProps: {
-        placeholder: '请选择申请时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-      },
-      labelWidth: 120,
+      isSearch: true,
     },
     {
       fieldName: 'status',
@@ -73,117 +18,39 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
-        options: [
-          { label: '待审核', value: 'pending' },
-          { label: '审核通过', value: 'approved' },
-          { label: '审核拒绝', value: 'rejected' },
+        options: [ 
+          { label: '待审核', value: 'pending_audit' },
+          { label: '待执行', value: 'pending_exec' },
+          { label: '已完成', value: 'completed' },
+          { label: '已标记（非逃费）', value: 'marked ' },
         ],
       },
       labelWidth: 120,
       isSearch: true,
     },
     {
-      fieldName: 'applicantId',
-      label: '申请人ID',
-      component: 'InputNumber',
+      fieldName: 'applyTimeStart',
+      label: '申请时间开始',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: '请输入申请人ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'auditUserId',
-      label: '审核人ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入审核人ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'auditTime',
-      label: '审核时间',
-      component: 'DateTimePicker',
-      componentProps: {
-        placeholder: '请选择审核时间',
+        type: 'datetime',
         format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
+      isSearch: true,
     },
     {
-      fieldName: 'operatorId',
-      label: '操作人ID',
-      component: 'InputNumber',
+      fieldName: 'applyTimeEnd',
+      label: '申请结束时间',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: '请输入操作人ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'reserve1',
-      label: '备用字段1',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入备用字段1',
-        maxLength: 100,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'reserve2',
-      label: '备用字段2',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入备用字段2',
-        maxLength: 100,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'creator',
-      label: '创建者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入创建者',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'updater',
-      label: '更新者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入更新者',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'createTime',
-      label: '创建时间',
-      component: 'DateTimePicker',
-      componentProps: {
-        placeholder: '请选择创建时间',
+        type: 'datetime',
         format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
-    },
-    {
-      fieldName: 'updateTime',
-      label: '更新时间',
-      component: 'DateTimePicker',
-      componentProps: {
-        placeholder: '请选择更新时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-      },
-      labelWidth: 120,
+      isSearch: true,
     },
   ];
 }
@@ -261,7 +128,7 @@ export function useGridColumns() {
       title: '操作人ID',
       minWidth: 120,
       sortable: true,
-    }, 
+    },
     {
       field: 'creator',
       title: '创建者',

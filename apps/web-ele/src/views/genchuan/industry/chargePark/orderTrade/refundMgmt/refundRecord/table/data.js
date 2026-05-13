@@ -1,167 +1,43 @@
-/** 退款记录搜索表单配置 */
+/** 欠费识别记录搜索表单配置 */
 export function useFormSchema() {
-  return [
-    {
-      fieldName: 'id',
-      label: '主键ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入主键ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-      isSearch: true,
-    },
-    {
-      fieldName: 'recordNo',
-      label: '记录编号',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入记录编号',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-      isSearch: true,
-    },
-    {
-      fieldName: 'applyId',
-      label: '关联退款申请ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入关联退款申请ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'orderId',
-      label: '关联订单ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入关联订单ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'refundAmount',
-      label: '退款金额',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入退款金额',
-        precision: 2,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'refundTime',
-      label: '退款时间',
-      component: 'DateTimePicker',
-      componentProps: {
-        placeholder: '请选择退款时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-      },
-      labelWidth: 120,
-    },
+  return [ 
     {
       fieldName: 'status',
       label: '状态',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择状态',
-        options: [
-          { label: '待处理', value: 'pending' },
-          { label: '已完成', value: 'completed' },
-          { label: '退款失败', value: 'failed' },
+        placeholder: '请选择状态',  
+        options: [ 
+          { label: '正常记录', value: 'normal' },
+          { label: '异常记录', value: 'abnormal' }, 
         ],
       },
       labelWidth: 120,
       isSearch: true,
     },
     {
-      fieldName: 'checkReason',
-      label: '核查理由',
-      component: 'Input',
+      fieldName: 'refundTimeStart',
+      label: '退款时间开始',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: '请输入核查理由',
-        maxLength: 200,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'operatorId',
-      label: '操作人ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入操作人ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'reserve1',
-      label: '备用字段1',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入备用字段1',
-        maxLength: 100,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'reserve2',
-      label: '备用字段2',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入备用字段2',
-        maxLength: 100,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'creator',
-      label: '创建者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入创建者',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'updater',
-      label: '更新者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入更新者',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'createTime',
-      label: '创建时间',
-      component: 'DateTimePicker',
-      componentProps: {
-        placeholder: '请选择创建时间',
+        type: 'datetime',
         format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
+      isSearch: true,
     },
     {
-      fieldName: 'updateTime',
-      label: '更新时间',
-      component: 'DateTimePicker',
+      fieldName: 'refundTimeEnd',
+      label: '退款结束时间',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择更新时间',
+        type: 'datetime',
         format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
+      isSearch: true,
     },
   ];
 }
