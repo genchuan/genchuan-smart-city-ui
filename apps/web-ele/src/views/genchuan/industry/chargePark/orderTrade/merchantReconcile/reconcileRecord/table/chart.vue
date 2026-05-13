@@ -283,41 +283,15 @@ onMounted(() => {
   </Drawer>
 </template>
 
-<style scoped lang="scss">
-.park-chart-box {
-  display: flex;
-  gap: 20px;
-  padding: 20px;
-  background-color: hsl(var(--card));
-  border-radius: 8px;
-}
+<style scoped lang="scss"> 
+ 
+.left-card {
+  flex:1;
+  width: 330px; 
 
-.chart-box-left {
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  grid-template-rows: repeat(2, 1fr) !important;
-  gap: 16px !important;
-  flex-shrink: 0;
-  width: 30%;
-}
-
-.chart-box-left :deep(.left-card) {
-  width: 100% !important;
-  flex-shrink: 0;
-}
-
-.chart-box-left :deep(.stat-card) {
-  width: 100% !important;
-  height: 100px !important;
-  min-width: unset !important;
-  max-width: unset !important;
-}
-
-.simple-bar-chart {
-  width: 100%;
-  height: 200px;
-  background-color: #f9fafb;
-  border-radius: 8px;
-  padding: 16px;
+  :deep(.stat-card) {
+    flex:1;
+  }
 }
 </style>
+
