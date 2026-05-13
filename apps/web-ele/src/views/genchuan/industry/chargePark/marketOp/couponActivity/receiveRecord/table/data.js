@@ -1,6 +1,7 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -318,13 +319,9 @@ export function useSearchFormSchema() {
     {
       fieldName: 'receiveTime',
       label: '领用时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择领用时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     {
@@ -356,7 +353,7 @@ export function useGridColumns() {
       title: '用户名称',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'userName' },
+      // slots: { default: 'userName' },
     },
     {
       field: 'couponName',
@@ -391,7 +388,7 @@ export function useGridColumns() {
       title: '核查结果',
       minWidth: 200,
       sortable: true,
-      slots: { default: 'checkResult' },
+      // slots: { default: 'checkResult' },
     },
     {
       field: 'syncStatusName',

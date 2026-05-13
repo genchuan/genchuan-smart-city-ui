@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 
@@ -14,6 +14,7 @@ import {
   getCouponMgmtPage,
   updateCouponMgmt,
 } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
+import { getStationInfoDetail } from '#/api/genchuan/industry/chargePark/stationResource/stationMgmt/stationInfo';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { formatDate } from '#/utils/genchuan/formatTime';
@@ -23,13 +24,19 @@ import ResendConfirmDialog from '../components/ResendConfirmDialog.vue';
 import SendCouponDialog from '../components/SendCouponDialog.vue';
 import VerifyConfirmDialog from '../components/VerifyConfirmDialog.vue';
 import {
-  dataList,
   detailFields,
+  dynamicStationOptions,
+  fetchStationOptions,
+  getCurrentStationOptions,
   getCouponStatusLabel,
   getCouponStatusTagType,
   getCouponTypeLabel,
   getCouponTypeTagType,
+  getStationNamesByIds,
+  stationDetailFields,
+  stationOptions,
   textObj,
+  useEditFormSchema,
   useFormSchema,
   useGridColumns,
   useSearchFormSchema,
@@ -66,11 +73,14 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const detailDrawerRef = ref(null);
+const stationDetailDrawerRef = ref(null);
 const importExcelDialogRef = ref(null);
 const sendCouponDialogRef = ref(null);
 const verifyConfirmDialogRef = ref(null);
 const resendConfirmDialogRef = ref(null);
 const formData = ref();
+const stationDetailData = ref([]);
+const stationDetailTitle = ref('场站详情');
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -97,12 +107,27 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       return;
     }
     const values = await formApi.getValues();
+
+    // 处理场站数据
+    let submitStationIds = values.stationIds;
+
+    // 将stationIds数组转换为逗号分隔的字符串
+    if (Array.isArray(submitStationIds)) {
+      submitStationIds = submitStationIds.join(',');
+    }
+
+    // 处理提交数据
+    const submitData = {
+      ...values,
+      stationIds: submitStationIds,
+    };
+
     try {
       if (formData.value?.id) {
-        await updateCouponMgmt({ ...values, id: formData.value.id });
+        await updateCouponMgmt({ ...submitData, id: formData.value.id });
         ElMessage.success($t('ui.actionMessage.editSuccess'));
       } else {
-        await createCouponMgmt(values);
+        await createCouponMgmt(submitData);
         ElMessage.success($t('ui.actionMessage.addSuccess'));
       }
       formDrawerApi.close();
@@ -119,8 +144,30 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
+
+      // 确保场站数据已加载（如果还未加载或加载失败）
+      if (dynamicStationOptions.value.length === 0) {
+        await fetchStationOptions();
+      }
+
+      // 动态更新场站选项到表单组件
+      const currentStationOptions = getCurrentStationOptions();
+      await formApi.updateSchema([
+        {
+          fieldName: 'stationIds',
+          componentProps: {
+            options: currentStationOptions,
+          },
+        },
+      ]);
+
       if (formData.value?.id) {
-        await formApi.setValues(formData.value);
+        // 编辑模式：将stationIds字符串转换为数组以支持多选回显
+        const editData = { ...formData.value };
+        if (editData.stationIds && typeof editData.stationIds === 'string') {
+          editData.stationIds = editData.stationIds.split(',');
+        }
+        await formApi.setValues(editData);
       } else {
         formApi.resetForm();
       }
@@ -159,7 +206,9 @@ async function handleExport() {
 }
 
 /** 创建 */
-function handleCreate() {
+async function handleCreate() {
+  // 切换到新增表单schema（所有字段可编辑）
+  await formApi.setState({ schema: useFormSchema() });
   formDrawerApi
     .setData({
       title: textObj.addText,
@@ -168,7 +217,9 @@ function handleCreate() {
 }
 
 /** 编辑 */
-function handleEdit(row) {
+async function handleEdit(row) {
+  // 切换到编辑表单schema（核心字段不可编辑）
+  await formApi.setState({ schema: useEditFormSchema() });
   formDrawerApi
     .setData({
       title: textObj.editText,
@@ -258,7 +309,6 @@ const dataObj = reactive({
   apilist: [],
   list: [],
   searchParams: {},
-  useStaticData: true,
 });
 
 const changeTotalShow = () => {
@@ -271,124 +321,51 @@ const getTableData = async (pageObj) => {
   dataObj.currentPage = page.currentPage;
   dataObj.pageSize = page.pageSize;
 
-  try {
-    const queryParams = {
-      pageNo: page.currentPage,
-      pageSize: page.pageSize,
-      name: dataObj.searchParams.name,
-      type: filterType.value || dataObj.searchParams.type,
-      status: filterStatus.value || dataObj.searchParams.status,
-      date: filterDate.value || dataObj.searchParams.date,
-      amount: dataObj.searchParams.amount,
-      useCondition: dataObj.searchParams.useCondition,
-      senderName: dataObj.searchParams.senderName,
-      receiverName: dataObj.searchParams.receiverName,
-    };
+  // 构建查询参数 - 直接使用 searchParams 中的值，RangePicker 返回的数组会自动转换为同名字段传给后端
+  const queryParams = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+    name: dataObj.searchParams.name,
+    type: filterType.value || dataObj.searchParams.type,
+    status: filterStatus.value || dataObj.searchParams.status,
+    date: filterDate.value || dataObj.searchParams.date,
+    amount: dataObj.searchParams.amount,
+    useCondition: dataObj.searchParams.useCondition,
+    senderName: dataObj.searchParams.senderName,
+    receiverName: dataObj.searchParams.receiverName,
+    // RangePicker 返回数组格式 [start, end]，后端会接收为两个同名参数
+    createTime:
+      !dataObj.searchParams.createTime ? undefined : dataObj.searchParams.createTime,
+    sendTime:
+      !dataObj.searchParams.sendTime ? undefined : dataObj.searchParams.sendTime,
+    verifyTime:
+      !dataObj.searchParams.verifyTime ? undefined : dataObj.searchParams.verifyTime,
+    validTime:
+      !dataObj.searchParams.validTime ? undefined : dataObj.searchParams.validTime,
+  };
 
-    // 处理有效期范围
-    if (
-      dataObj.searchParams.validTime &&
-      dataObj.searchParams.validTime.length === 2
-    ) {
-      queryParams.validTimeStart = dataObj.searchParams.validTime[0];
-      queryParams.validTimeEnd = dataObj.searchParams.validTime[1];
-    }
-
-    // 处理创建时间范围
-    if (
-      dataObj.searchParams.createTime &&
-      dataObj.searchParams.createTime.length === 2
-    ) {
-      queryParams.createTimeStart = dataObj.searchParams.createTime[0];
-      queryParams.createTimeEnd = dataObj.searchParams.createTime[1];
-    }
-
-    // 处理发放时间范围
-    if (
-      dataObj.searchParams.sendTime &&
-      dataObj.searchParams.sendTime.length === 2
-    ) {
-      queryParams.sendTimeStart = dataObj.searchParams.sendTime[0];
-      queryParams.sendTimeEnd = dataObj.searchParams.sendTime[1];
-    }
-
-    // 处理核销时间范围
-    if (
-      dataObj.searchParams.verifyTime &&
-      dataObj.searchParams.verifyTime.length === 2
-    ) {
-      queryParams.verifyTimeStart = dataObj.searchParams.verifyTime[0];
-      queryParams.verifyTimeEnd = dataObj.searchParams.verifyTime[1];
-    }
-
-    const response = await getCouponMgmtPage(queryParams);
-    if (response && response.list && response.list.length > 0) {
-      dataObj.useStaticData = false;
-      dataObj.total = response.total;
-      // 接口返回的list已经是分页后的数据，直接使用
-      dataObj.list = response.list.map((item) => ({
-        ...item,
-        createTimeStr: formatDate(item.createTime),
-        updateTimeStr: formatDate(item.updateTime),
-        sendTimeStr: formatDate(item.sendTime),
-        verifyTimeStr: formatDate(item.verifyTime),
-        validTimeStr: formatDate(item.validTime),
-      }));
-      dataObj.apilist = dataObj.list;
-      return dataObj;
-    } else {
-      // 接口返回为空，使用静态数据
-      console.log('分页接口返回为空，使用静态数据');
-      dataObj.useStaticData = true;
-    }
-  } catch (error) {
-    // 接口调用失败，错误信息打印到控制台，使用静态数据
-    console.error('分页接口调用失败，使用静态数据:', error);
-    dataObj.useStaticData = true;
+  const response = await getCouponMgmtPage(queryParams);
+  if (response && response.list) {
+    dataObj.total = response.total;
+    dataObj.list = response.list.map((item) => ({
+      ...item,
+      createTimeStr: formatDate(item.createTime),
+      updateTimeStr: formatDate(item.updateTime),
+      sendTimeStr: formatDate(item.sendTime),
+      verifyTimeStr: formatDate(item.verifyTime),
+      validTimeStr: formatDate(item.validTime),
+      // 优先使用后端接口返回的 stationNames，如果没有则使用本地函数作为回退
+      stationNames:
+        item.stationNames || getStationNamesByIds(item.stationIds),
+    }));
+    dataObj.apilist = dataObj.list;
+  } else {
+    // 接口返回为空或无数据，清空列表
+    dataObj.total = 0;
+    dataObj.list = [];
+    dataObj.apilist = [];
   }
 
-  // 使用静态数据时的处理
-  const staticData = dataList();
-  dataObj.apilist = staticData;
-
-  // 根据searchParams和快捷筛选变量筛选数据
-  const filteredList = staticData.filter((v) => {
-    let searchMatch = true;
-    Object.keys(dataObj.searchParams).forEach((key) => {
-      const value = dataObj.searchParams[key];
-      if (
-        value &&
-        !['createTime', 'date', 'sendTime', 'validTime', 'verifyTime'].includes(
-          key,
-        )
-      ) {
-        searchMatch =
-          typeof value === 'string'
-            ? searchMatch && v[key]?.toString().includes(value)
-            : searchMatch && v[key] === value;
-      }
-    });
-    // 应用快捷筛选变量
-    if (filterType.value && v.type !== filterType.value) {
-      searchMatch = false;
-    }
-    if (filterStatus.value && v.status !== filterStatus.value) {
-      searchMatch = false;
-    }
-    if (filterDate.value) {
-      const sendTimeStr = v.sendTimeStr || '';
-      if (!sendTimeStr.includes(filterDate.value)) {
-        searchMatch = false;
-      }
-    }
-    return searchMatch;
-  });
-
-  dataObj.total = filteredList.length;
-  dataObj.list = filteredList.slice(
-    (page.currentPage - 1) * page.pageSize,
-    page.currentPage * page.pageSize,
-  );
   return dataObj;
 };
 
@@ -412,7 +389,7 @@ const [QueryForm] = useVbenForm({
 
 // 搜索表单查询
 function onSubmit(values) {
-  dataObj.searchParams = values;
+  dataObj.searchParams = { ...values };
   handleRefresh();
   drawerApi.close();
 }
@@ -457,6 +434,64 @@ const handleNameClick = (row) => {
   handleOpenDetail(row);
 };
 
+// 处理场站点击 - 打开场站详情弹窗，展示多个场站的详情
+async function handleStationClick(stationIds) {
+  if (!stationIds) {
+    ElMessage.warning('该优惠券未配置适用场站');
+    return;
+  }
+
+  const stationIdArr = stationIds.split(',').filter((id) => id.trim());
+  if (stationIdArr.length === 0) {
+    ElMessage.warning('该优惠券未配置适用场站');
+    return;
+  }
+
+  try {
+    const loadingInstance = ElLoading.service({
+      text: '正在加载场站详情...',
+    });
+
+    // 并发请求所有场站详情
+    const detailPromises = stationIdArr.map((id) =>
+      getStationInfoDetail(Number(id.trim())).catch((error) => {
+        console.error(`获取场站ID ${id} 详情失败:`, error);
+        return null;
+      }),
+    );
+
+    const detailResults = await Promise.all(detailPromises);
+
+    // 过滤掉请求失败的
+    const formattedDetails = detailResults.filter(
+      (detail) => detail && detail.id,
+    );
+
+    loadingInstance.close();
+
+    if (formattedDetails.length === 0) {
+      ElMessage.error('未能获取到任何场站详情');
+      return;
+    }
+
+    // 设置数据并更新标题
+    stationDetailData.value = formattedDetails;
+    stationDetailTitle.value = `适用场站 (${formattedDetails.length}个)`;
+
+    // 使用nextTick确保DOM更新后再打开抽屉
+    await nextTick();
+    if (stationDetailDrawerRef.value) {
+      stationDetailDrawerRef.value.open();
+    } else {
+      console.error('场站详情抽屉组件未找到');
+      ElMessage.error('打开详情失败，请重试');
+    }
+  } catch (error) {
+    console.error('获取场站详情失败:', error);
+    ElMessage.error('获取场站详情失败');
+  }
+}
+
 // ==================== 快捷筛选处理 ====================
 
 // 处理券类型点击
@@ -485,16 +520,6 @@ const handleCancelStatusFilter = () => {
 const handleCancelDateFilter = () => {
   filterDate.value = '';
   gridApi.query();
-};
-
-// 处理发放人点击 - 跳转操作人员详情
-const handleSenderClick = (row) => {
-  ElMessage.info(`查看操作人员详情: ${row.senderName}`);
-};
-
-// 处理领取人点击 - 跳转用户详情
-const handleReceiverClick = (row) => {
-  ElMessage.info(`查看用户详情: ${row.receiverName}`);
 };
 
 /** 处理统计组件的钻取筛选 */
@@ -537,6 +562,11 @@ defineExpose({
   handleStatsFilter,
 });
 
+// 页面加载时获取场站列表
+onMounted(async () => {
+  await fetchStationOptions();
+});
+
 const handleSerachShow = () => {
   drawerApi.open();
 };
@@ -557,6 +587,13 @@ const handleFullShow = () => {
       :title="`${dataObj.detailObj.name || '优惠券'}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
+    />
+    <!--   场站详情抽屉 - 展示多个场站详情-->
+    <DetailDrawer
+      ref="stationDetailDrawerRef"
+      :title="stationDetailTitle"
+      :data="stationDetailData"
+      :fields="stationDetailFields"
     />
     <!-- 导入弹窗 -->
     <ImportExcelDialog ref="importExcelDialogRef" @success="handleRefresh" />
@@ -671,30 +708,20 @@ const handleFullShow = () => {
           {{ getCouponStatusLabel(row.status) }}
         </ElTag>
       </template>
-      <!-- 发放人插槽 - 点击跳转操作人员详情 -->
-      <template #senderName="{ row }">
+      <!-- 适用场站插槽 - 点击打开场站详情弹窗 -->
+      <template #stationNames="{ row }">
         <el-text
-          v-if="row.senderName"
-          @click="handleSenderClick(row)"
+          v-if="row.stationIds"
+          @click="handleStationClick(row.stationIds)"
+          class="common-align"
           type="primary"
           style="cursor: pointer"
         >
-          {{ row.senderName }}
+          {{ row.stationNames }}
         </el-text>
         <span v-else>-</span>
       </template>
-      <!-- 领取人插槽 - 点击跳转用户详情 -->
-      <template #receiverName="{ row }">
-        <el-text
-          v-if="row.receiverName"
-          @click="handleReceiverClick(row)"
-          type="primary"
-          style="cursor: pointer"
-        >
-          {{ row.receiverName }}
-        </el-text>
-        <span v-else>-</span>
-      </template>
+
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
