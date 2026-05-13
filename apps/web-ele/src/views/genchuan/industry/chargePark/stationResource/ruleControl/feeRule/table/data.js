@@ -53,6 +53,8 @@ export const searchFields = [
     options: statusOptions,
     required: false,
   },
+  { field: 'creator', label: '创建人', type: 'input', required: false },
+  { field: 'updater', label: '更新人', type: 'input', required: false },
 ];
 
 export const formFields = [
@@ -110,6 +112,7 @@ export const tableColumns = [
     field: 'stationId',
     label: '所属场站',
     minWidth: 160,
+    displayField: 'stationName',
     drillType: 'dialog',
     drillLabel: '场站详情',
   },
@@ -126,7 +129,7 @@ export const tableColumns = [
   { field: 'maxPrice', label: '最高费用', minWidth: 120 },
   { field: 'peakValleyConfig', label: '峰谷配置', minWidth: 160 },
   { field: 'memberConfig', label: '会员配置', minWidth: 160 },
-  { field: 'matchRate', label: '匹配率', minWidth: 120 },
+  { field: 'matchRate', label: '匹配率', minWidth: 120, suffix: '%' },
   { field: 'status', label: '状态', minWidth: 120, drillType: 'filter' },
   {
     field: 'auditTime',
@@ -134,7 +137,12 @@ export const tableColumns = [
     minWidth: 180,
     formatter: 'formatDateTime',
   },
-  { field: 'auditUserId', label: '审核人ID', minWidth: 120 },
+  {
+    field: 'auditUserName',
+    label: '审核人',
+    minWidth: 120,
+    displayField: 'auditUserName',
+  },
   { field: 'creator', label: '创建人', minWidth: 120, drillType: 'filter' },
   {
     field: 'createTime',
@@ -153,7 +161,7 @@ export const tableColumns = [
 
 export const detailFields = [
   { key: 'id', label: '规则编号', section: '基础信息' },
-  { key: 'stationId', label: '所属场站ID', section: '基础信息' },
+  { key: 'stationName', label: '所属场站', section: '基础信息' },
   { key: 'status', label: '状态', section: '基础信息' },
   { key: 'rateType', label: '费率类型', section: '费率内容' },
   { key: 'freeTime', label: '免费时长(分)', section: '费率内容' },
@@ -163,14 +171,27 @@ export const detailFields = [
   { key: 'maxPrice', label: '最高费用', section: '费率内容' },
   { key: 'peakValleyConfig', label: '峰谷配置', section: '费率内容' },
   { key: 'memberConfig', label: '会员配置', section: '费率内容' },
-  { key: 'matchRate', label: '匹配率', section: '运营信息' },
+  { key: 'matchRate', label: '匹配率', section: '运营信息', suffix: '%' },
   { key: 'remark', label: '备注', section: '费率内容' },
-  { key: 'reserve1', label: '备用字段1', section: '扩展信息' },
-  { key: 'reserve2', label: '备用字段2', section: '扩展信息' },
-  { key: 'auditTime', label: '审核时间', section: '审计信息' },
-  { key: 'auditUserId', label: '审核人ID', section: '审计信息' },
+  {
+    key: 'auditTime',
+    label: '审核时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
+  { key: 'auditUserName', label: '审核人', section: '审计信息' },
   { key: 'creator', label: '创建人', section: '审计信息' },
-  { key: 'createTime', label: '创建时间', section: '审计信息' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'updater', label: '更新人', section: '审计信息' },
-  { key: 'updateTime', label: '更新时间', section: '审计信息' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
 ];

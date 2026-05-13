@@ -168,20 +168,20 @@ const generateInfoWindowContent = (properties) => {
   let fieldsHtml = '';
   if (config.fields) {
     config.fields.forEach((field) => {
-      const value = properties[field.key] || '';
+      const value = properties[field.key] ?? '--';
       const style = field.bold ? 'font-weight:bold;' : '';
       fieldsHtml += `
         <tr>
-          <td style="width:90px;padding-right:8px;text-align:right;">${field.label}：</td>
-          <td style="${style}">${value}</td>
+          <td style="width:96px;padding:3px 10px 3px 0;text-align:right;color:#606266;white-space:nowrap;vertical-align:top;">${field.label}：</td>
+          <td style="${style}padding:3px 0;color:#303133;word-break:break-all;white-space:normal;vertical-align:top;">${value}</td>
         </tr>
       `;
     });
   }
 
   return `
-    <div style="padding:10px;min-width:220px;">
-      <h3 style="margin:0 0 8px;font-size:15px;">${title}</h3>
+    <div style="box-sizing:border-box;max-width:420px;min-width:300px;padding:12px 14px;">
+      <h3 style="margin:0 0 10px;font-size:15px;line-height:20px;color:#303133;word-break:break-all;">${title}</h3>
       <table style="width:100%;border-collapse:collapse;">
         ${fieldsHtml}
       </table>
@@ -193,7 +193,6 @@ const onMarkerClick = (evt) => {
   const { position, properties } = evt.geometry;
   if (!infoWindow || !properties) return;
 
-  console.log('onMarkerClick', position, properties);
   infoWindow.setPosition(position);
   infoWindow.setContent(generateInfoWindowContent(properties));
   infoWindow.open();
@@ -229,7 +228,7 @@ const renderMarkers = () => {
         .map((point) => {
           const lng = Number(point.lng ?? point.lon ?? point.longitude);
           const lat = Number(point.lat ?? point.latitude);
-          if (isNaN(lng) || isNaN(lat)) return null;
+          if (Number.isNaN(lng) || Number.isNaN(lat)) return null;
           const pointLatLng = new TMapInstance.LatLng(lat, lng);
           bounds.extend(pointLatLng);
           return pointLatLng;
@@ -246,8 +245,7 @@ const renderMarkers = () => {
           });
         }
         if (polylineLayer) {
-          const closedPath =
-            path.length > 2 ? [...path, path[0]] : [...path];
+          const closedPath = path.length > 2 ? [...path, path[0]] : [...path];
           areaLines.push({
             id: `polyline-${item.id}`,
             styleId: 'line',
@@ -298,8 +296,7 @@ const renderMarkers = () => {
     polylineLayer.setGeometries(areaLines);
   }
 
-  const focusFirst =
-    props.locateFocusKey && props.data[0]?.coordinate;
+  const focusFirst = props.locateFocusKey && props.data[0]?.coordinate;
   if (focusFirst) {
     const [lng, lat] = props.data[0].coordinate.split(',').map(Number);
     if (!Number.isNaN(lng) && !Number.isNaN(lat)) {
@@ -308,9 +305,7 @@ const renderMarkers = () => {
       map.setZoom(16);
       if (infoWindow) {
         infoWindow.setPosition(position);
-        infoWindow.setContent(
-          generateInfoWindowContent(props.data[0]),
-        );
+        infoWindow.setContent(generateInfoWindowContent(props.data[0]));
         infoWindow.open();
       }
       return;
@@ -319,8 +314,7 @@ const renderMarkers = () => {
 
   if (!bounds.isEmpty()) {
     map.fitBounds(bounds, { padding: 100 });
-  }
-  else if (props.data.length > 0) {
+  } else if (props.data.length > 0) {
     const firstItem = props.data[0];
     if (firstItem.coordinate) {
       const [lng, lat] = firstItem.coordinate.split(',').map(Number);

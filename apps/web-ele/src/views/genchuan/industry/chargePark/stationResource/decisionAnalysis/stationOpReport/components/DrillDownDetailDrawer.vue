@@ -38,6 +38,7 @@ const metricMetaMap = {
   stationOrderBar: { label: '场站订单量分布', category: 'order' },
   recoveryRateBar: { label: '场站追缴完成率', category: 'recovery' },
   trendLine: { label: '周期订单及业务趋势', category: 'trend' },
+  mapStation: { label: '地图场站', category: 'station' },
 };
 
 const statusTypeMap = {
@@ -109,12 +110,15 @@ function getGridColumns() {
       { field: 'managerName', title: '负责人', minWidth: 120 },
     ],
     station: [
+      { field: 'stationNo', title: '场站编码', minWidth: 140 },
       { field: 'stationName', title: '场站名称', minWidth: 180 },
       { field: 'areaName', title: '所属片区', minWidth: 140 },
       { field: 'stationType', title: '场站类型', minWidth: 120 },
       { field: 'stationStatus', title: '运营状态', minWidth: 110 },
       { field: 'spaceCount', title: '车位数', minWidth: 100 },
       { field: 'orderCount', title: '订单量', minWidth: 100 },
+      { field: 'revenue', title: '营收', minWidth: 100 },
+      { field: 'coordinate', title: '地图坐标', minWidth: 160 },
     ],
     space: [
       { field: 'stationName', title: '场站名称', minWidth: 180 },
@@ -189,13 +193,32 @@ function getBaseName(index) {
   return names[index % names.length];
 }
 
+function getDrillRowCount(sourceRow) {
+  if (drillInfo.source === 'map') {
+    return 1;
+  }
+
+  const directValue = Number(drillInfo.drillValue);
+  if (Number.isFinite(directValue) && directValue > 0) {
+    return Math.min(Math.floor(directValue), 500);
+  }
+
+  const metricValue = Number(sourceRow?.[drillInfo.drillType]);
+  if (Number.isFinite(metricValue) && metricValue > 0) {
+    return Math.min(Math.floor(metricValue), 500);
+  }
+
+  return 12;
+}
+
 function createRows() {
   const category = getMetricMeta().category;
   const sourceRow = drillInfo.row || {};
   const name = drillInfo.drillName || drillInfo.drillValue || getMetricLabel();
   const baseTime = sourceRow.generateTime || Date.now();
+  const rowCount = getDrillRowCount(sourceRow);
 
-  return Array.from({ length: 12 }, (_, index) => {
+  return Array.from({ length: rowCount }, (_, index) => {
     const no = index + 1;
     const baseName = getBaseName(index);
     const stationName = sourceRow.stationName || `${baseName}充停一体场站${no}`;
@@ -218,12 +241,28 @@ function createRows() {
       },
       station: {
         ...common,
-        stationType: ['公共快充', '园区专用', '路侧停车', '综合枢纽'][
-          index % 4
-        ],
-        stationStatus: index % 5 === 0 ? '异常' : '正常',
-        spaceCount: 24 + no,
-        orderCount: sourceRow.orderCount || 120 + no * 7,
+        coordinate: sourceRow.coordinate || '',
+        revenue: sourceRow.revenue ?? sourceRow.totalRevenue ?? '',
+        spaceCount:
+          sourceRow.spaceCount ?? sourceRow.totalSpaceCount ?? 24 + no,
+        stationNo:
+          sourceRow.stationNo ||
+          sourceRow.stationCode ||
+          sourceRow.geoCode ||
+          sourceRow.id ||
+          '',
+        stationStatus:
+          sourceRow.stationStatus ||
+          sourceRow.statusName ||
+          sourceRow.status ||
+          (index % 5 === 0 ? '异常' : '正常'),
+        stationType:
+          sourceRow.stationType ||
+          sourceRow.typeName ||
+          sourceRow.type ||
+          ['公共快充', '园区专用', '路侧停车', '综合枢纽'][index % 4],
+        orderCount:
+          sourceRow.orderCount ?? sourceRow.totalOrderCount ?? 120 + no * 7,
       },
       space: {
         ...common,

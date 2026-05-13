@@ -3,6 +3,9 @@ import { computed } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
+import { Picture } from '@element-plus/icons-vue';
+import { ElIcon, ElImage, ElTag } from 'element-plus';
+
 const props = defineProps({
   title: {
     type: String,
@@ -113,13 +116,19 @@ const formatValue = (field, value) => {
 // 获取完整图片URL
 const getFullImageUrl = (url) => {
   if (!url) return '';
+  const imageUrl = Array.isArray(url) ? url[0] : url;
+  if (!imageUrl) return '';
   // 如果已经是完整URL，直接返回
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
+  if (
+    imageUrl.startsWith('http://') ||
+    imageUrl.startsWith('https://') ||
+    imageUrl.startsWith('data:image/')
+  ) {
+    return imageUrl;
   }
   // 如果是相对路径，拼接BASE_URL
   const baseUrl = import.meta.env.VITE_BASE_URL || '';
-  return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  return `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
 };
 
 defineExpose({
@@ -141,7 +150,7 @@ defineExpose({
             <span class="detail-label">{{ field.label }}:</span>
             <span class="detail-value">
               <template v-if="field.type === 'tag'">
-                <el-tag
+                <ElTag
                   :type="
                     (() => {
                       const type = field.tagType?.(item[field.key]) || 'info';
@@ -167,11 +176,11 @@ defineExpose({
                   "
                 >
                   {{ formatValue(field, item[field.key]) }}
-                </el-tag>
+                </ElTag>
               </template>
               <template v-else-if="field.type === 'tags'">
                 <div class="tags-container">
-                  <el-tag
+                  <ElTag
                     v-for="(tag, tagIndex) in formatValue(
                       field,
                       item[field.key],
@@ -204,11 +213,11 @@ defineExpose({
                     style="margin-right: 4px; margin-bottom: 2px"
                   >
                     {{ tag.label }}
-                  </el-tag>
+                  </ElTag>
                 </div>
               </template>
               <template v-else-if="field.type === 'image'">
-                <el-image
+                <ElImage
                   v-if="item[field.key]"
                   :src="getFullImageUrl(item[field.key])"
                   :preview-src-list="[getFullImageUrl(item[field.key])]"
@@ -217,11 +226,11 @@ defineExpose({
                 >
                   <template #error>
                     <div class="image-error">
-                      <el-icon><Picture /></el-icon>
+                      <ElIcon><Picture /></ElIcon>
                       <span>加载失败</span>
                     </div>
                   </template>
-                </el-image>
+                </ElImage>
                 <span v-else class="text-placeholder">暂无图片</span>
               </template>
               <template v-else>
