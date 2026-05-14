@@ -192,6 +192,33 @@ const getSharingStatusType = (status) => {
   return typeMap[status] || 'info';
 };
 
+// ==================== 生成副本编号 ====================
+const generateCopyCode = (originalCode) => {
+  // 匹配原编号末尾的数字
+  const match = originalCode.match(/(.+?)(\d+)?$/);
+  if (match[2]) {
+    // 如果有数字后缀，数字+1
+    const newNum = parseInt(match[2]) + 1;
+    return `${match[1]}${newNum}`;
+  } else {
+    // 如果没有数字后缀，直接加_副本
+    return `${originalCode}_副本`;
+  }
+};
+
+const generateCopyName = (originalName) => {
+  // 匹配原名称末尾的数字
+  const match = originalName.match(/(.+?)(\d+)?$/);
+  if (match[2]) {
+    // 如果有数字后缀，数字+1
+    const newNum = parseInt(match[2]) + 1;
+    return `${match[1]}${newNum}`;
+  } else {
+    // 如果没有数字后缀，直接加_副本
+    return `${originalName}_副本`;
+  }
+};
+
 // ==================== 表单配置 ====================
 function useFormSchema() {
   return [
@@ -388,15 +415,16 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     const payload = formDrawerApi.getData();
 
     // 检查必填字段
-    if (!obj.sharingCode || !obj.sharingName || !obj.cooperator || !obj.sharingType || !obj.sharingRatio === undefined || !obj.effectTime) {
+    if (!obj.sharingCode || !obj.sharingName || !obj.cooperator || !obj.sharingType || obj.sharingRatio === undefined || !obj.effectTime) {
       ElMessage.warning('请填写所有必填项');
       return;
     }
 
     try {
-      if (payload?.title === '新增') {
+      if (payload?.title === '新增' || payload?.isCopy) {
+        // 新增或复制都调用新增接口
         await createSharingRatio(obj);
-        ElMessage.success('新增成功');
+        ElMessage.success(payload?.isCopy ? '复制成功' : '新增成功');
       } else {
         await updateSharingRatio({ ...obj, id: formData.value?.id });
         ElMessage.success('编辑成功');
@@ -413,7 +441,8 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       const data = formDrawerApi.getData();
       formData.value = data;
 
-      if (data?.id) {
+      if (data?.id && !data?.isCopy) {
+        // 编辑模式：获取详情
         try {
           const detail = await getSharingRatio({ id: data.id });
           await formApi.setValues(detail);
@@ -421,7 +450,11 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
           console.error('获取详情失败:', error);
           ElMessage.error('获取详情失败');
         }
+      } else if (data?.isCopy && data?.copyData) {
+        // 复制模式：直接填充复制的数据
+        await formApi.setValues(data.copyData);
       } else {
+        // 新增模式：重置表单
         formApi.resetForm();
       }
     }
@@ -679,21 +712,56 @@ async function handleDisable(row) {
   }
 }
 
+// ==================== 修复后的复制功能（前端模拟） ====================
 async function handleCopy(row) {
   try {
-    await confirm(`确定复制方案"${row.sharingName}"吗？`);
+    await confirm(`确定复制方案"${row.sharingName}"吗？复制后将生成一个新的未生效方案，请修改后保存。`);
+
+    // 准备复制数据
+    const copyData = {
+      sharingCode: generateCopyCode(row.sharingCode),
+      sharingName: generateCopyName(row.sharingName),
+      cooperator: row.cooperator,
+      sharingType: row.sharingType,
+      sharingRatio: row.sharingRatio,
+      effectTime: row.effectTime || Date.now(),
+      remark: row.remark || '',
+    };
+
+    // 如果需要尝试调用后端复制接口（可选，如果后端修复了可以启用）
+    // 暂时注释掉，因为后端接口报错
+    /*
     const loadingInstance = ElLoading.service({ text: '复制中...' });
     try {
-      await copySharingRatio({ id: row.id });
-      ElMessage.success('复制成功');
-      handleRefresh();
-    } finally {
-      loadingInstance.close();
+      const result = await copySharingRatio({ id: row.id });
+      if (result && (result.id || result.data?.id)) {
+        const newId = result.id || result.data?.id;
+        const detail = await getSharingRatio({ id: newId });
+        formDrawerApi.setData({ title: '编辑', ...detail }).open();
+        ElMessage.success('复制成功，请完善信息后保存');
+        handleRefresh();
+        loadingInstance.close();
+        return;
+      }
+    } catch (err) {
+      console.warn('后端复制接口调用失败，使用前端模拟复制', err);
     }
+    loadingInstance.close();
+    */
+
+    // 前端模拟复制：打开新增弹窗并预填数据
+    formDrawerApi.setData({
+      title: '新增',
+      isCopy: true,
+      copyData: copyData
+    }).open();
+
+    ElMessage.info('已复制方案信息，请修改编号、名称等必要信息后保存');
+
   } catch (error) {
     if (error !== 'cancel') {
       console.error('复制失败:', error);
-      ElMessage.error('复制失败');
+      ElMessage.error('复制失败，请稍后重试');
     }
   }
 }
