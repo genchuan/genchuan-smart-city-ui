@@ -450,9 +450,14 @@ const handleRefund = (row) => {
 
 // 提交退款
 const handleRefundSubmit = async () => {
-  // 校验退款申请内容长度
-  if (refundForm.remark && refundForm.remark.length < 10) {
-    ElMessage.error('退款申请内容需要≥10个字符');
+  // 校验退款申请备注不能为空
+  if (!refundForm.remark || refundForm.remark.trim() === '') {
+    ElMessage.error('退款备注不能为空');
+    return;
+  }
+  // 校验退款申请内容长度需要大于10个字符
+  if (refundForm.remark.length <= 10) {
+    ElMessage.error('退款备注需要大于10个字符');
     return;
   }
 
