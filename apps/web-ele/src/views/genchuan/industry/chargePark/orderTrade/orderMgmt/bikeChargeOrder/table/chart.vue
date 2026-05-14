@@ -1,34 +1,12 @@
 <script setup>
-import { onMounted, reactive, ref, computed } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import * as echarts from 'echarts';
-import { useVbenDrawer } from '@vben/common-ui';
-import { ElMessage, ElTag } from 'element-plus';
-import { getBikeChargeOrderChart, getBikeChargeOrderPage } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { ElMessage } from 'element-plus';
+import { getBikeChargeOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { formatTimestamp } from '#/utils';
-import { useGridColumns } from './data';
 
-// 订单状态映射
-const statusMap = {
-  charging: { label: '充电中', type: 'primary' },
-  pending_pay: { label: '待支付', type: 'warning' },
-  paid: { label: '已支付', type: 'success' },
-  completed: { label: '已完成', type: 'success' },
-  cancelled: { label: '已取消', type: 'info' },
-  refunding: { label: '退款中', type: 'danger' },
-};
-
-// 获取状态标签
-const getStatusLabel = (status) => {
-  return statusMap[status]?.label || status || '-';
-};
-
-// 获取状态类型
-const getStatusType = (status) => {
-  return statusMap[status]?.type || 'default';
-};
+const emit = defineEmits(['filter-change']);
 
 const state = reactive({
   cardList: [
@@ -43,173 +21,40 @@ const state = reactive({
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 选中的日期和场站
-const selectedDate = ref(null);
-const selectedStation = ref(null);
-const useDateFilter = ref(true);
-
-// 获取今日时间范围
-const getTodayTimeRange = () => {
-  const today = new Date();
-  const start = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')} 00:00:00`;
-  const end = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')} 23:59:59`;
-  return { start, end };
-};
-
-// 抽屉配置
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  width: '75%',
-  title: computed(() => {
-    if (selectedDate.value && selectedStation.value) {
-      return `${selectedDate.value} ${selectedStation.value}订单`;
-    }
-    else if (selectedDate.value) {
-      return `${selectedDate.value}订单`;
-    }
-    else if (selectedStation.value) {
-      return `${selectedStation.value}订单`;
-    }
-    return '订单列表';
-  }),
-  class: 'genchuan-detail-drawer',
-  onCancel() {
-    drawerApi.close();
-  },
-});
-
-// 抽屉表格数据
-const drawerDataObj = reactive({
-  total: 0,
-  list: [],
-  loading: false,
-});
-const drawerSearchObj = reactive({});
-
-// 获取抽屉表格数据
-const getDrawerTableData = async (pageObj) => {
-  const page = pageObj.page;
-  const params = {
-    pageNo: page.currentPage,
-    pageSize: page.pageSize,
-  };
-  // 如果使用日期筛选，添加日期参数
-  if (useDateFilter.value) {
-    let start, end;
-    // 如果 drawerSearchObj 已有时间范围（柱状图点击设置的），直接使用
-    if (drawerSearchObj.createOrderTimeStart && drawerSearchObj.createOrderTimeEnd) {
-      start = drawerSearchObj.createOrderTimeStart;
-      end = drawerSearchObj.createOrderTimeEnd;
-    } else if (selectedDate.value) {
-      start = selectedDate.value + ' 00:00:00';
-      end = selectedDate.value + ' 23:59:59';
-    }
-    else {
-      ({ start, end } = getTodayTimeRange());
-    }
-    params.createOrderTimeStart = start;
-    params.createOrderTimeEnd = end;
-  }
-  // 如果选中了场站，传递场站参数
-  if (selectedStation.value) {
-    params.stationName = selectedStation.value;
-  }
-  Object.assign(params, drawerSearchObj);
-  try {
-    drawerDataObj.loading = true;
-    const res = await getBikeChargeOrderPage(params);
-    drawerDataObj.total = res.total;
-    drawerDataObj.list = res.list.map((v) => {
-      return {
-        ...v,
-        createOrderTime: formatTimestamp(v.createOrderTime),
-        payTime: formatTimestamp(v.payTime),
-        archiveTime: formatTimestamp(v.archiveTime),
-        createTime: formatTimestamp(v.createTime),
-        updateTime: formatTimestamp(v.updateTime),
-      };
-    });
-    return drawerDataObj;
-  }
-  catch (error) {
-    console.error('获取订单列表失败:', error);
-    ElMessage.error('获取订单列表失败');
-    return drawerDataObj;
-  }
-  finally {
-    drawerDataObj.loading = false;
-  }
-};
-
-// 抽屉表格
-const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: useGridColumns().slice(0, -1),
-    keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getDrawerTableData({ page }),
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: drawerDataObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-    },
-    showOverflow: true,
-  },
-  showSearchForm: false,
-});
-
-// 点击卡片事件
+// 点击卡片事件 - 查询今日数据
 const handleCardClick = () => {
-  selectedDate.value = null;
-  selectedStation.value = null;
-  useDateFilter.value = true;
-  // 清除近一个月的时间范围
-  delete drawerSearchObj.createOrderTimeStart;
-  delete drawerSearchObj.createOrderTimeEnd;
-  drawerGridApi.query();
-  drawerApi.open();
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  emit('filter-change', {
+    createOrderTimeStart: todayStr + ' 00:00:00',
+    createOrderTimeEnd: todayStr + ' 23:59:59',
+    stationName: null,
+  });
 };
 
 // 折线图点击事件处理
 const handleLineChartClick = (params) => {
   if (params && params.name) {
-    selectedDate.value = params.name;
-    selectedStation.value = null;
-    useDateFilter.value = true;
-    // 清除近一个月的时间范围
-    delete drawerSearchObj.createOrderTimeStart;
-    delete drawerSearchObj.createOrderTimeEnd;
-    drawerGridApi.query();
-    drawerApi.open();
+    emit('filter-change', {
+      createOrderTimeStart: params.name + ' 00:00:00',
+      createOrderTimeEnd: params.name + ' 23:59:59',
+      stationName: null,
+    });
   }
 };
 
 // 柱状图点击事件处理
 const handleBarChartClick = (params) => {
   if (params && params.name) {
-    selectedStation.value = params.name;
-    // 计算近一个月的时间范围
     const today = new Date();
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const start = firstDayOfMonth.toISOString().split('T')[0] + ' 00:00:00';
+    const thirtyDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
+    const start = thirtyDaysAgo.toISOString().split('T')[0] + ' 00:00:00';
     const end = today.toISOString().split('T')[0] + ' 23:59:59';
-    selectedDate.value = `${start.split(' ')[0]} 至 ${end.split(' ')[0]}`;
-    // 使用日期筛选（近一个月）
-    useDateFilter.value = true;
-    // 存储近一个月的时间范围用于参数传递
-    drawerSearchObj.createOrderTimeStart = start;
-    drawerSearchObj.createOrderTimeEnd = end;
-    drawerGridApi.query();
-    drawerApi.open();
+    emit('filter-change', {
+      createOrderTimeStart: start,
+      createOrderTimeEnd: end,
+      stationName: params.name,
+    });
   }
 };
 
@@ -217,7 +62,6 @@ const handleBarChartClick = (params) => {
 const fetchOrderChartData = async () => {
   try {
     const res = await getBikeChargeOrderChart();
-    // 从 cardData 中获取卡片数据
     if (res.cardData) {
       state.cardList[0].value = res.cardData.todayOrderCount || 0;
       state.cardList[1].value = res.cardData.todayRevenue || 0;
@@ -227,30 +71,21 @@ const fetchOrderChartData = async () => {
       state.cardList[1].value = res.todayRevenue || 0;
       state.cardList[2].value = res.todayChargeQuantity || 0;
     }
-    // 如果trendData为空，使用假数据
-    state.trendData =
-      res.trendData && res.trendData.length > 0
-        ? res.trendData
-        : [
-            { date: '2025-04-01', count: 12 },
-            { date: '2025-04-02', count: 15 },
-            { date: '2025-04-03', count: 8 },
-            { date: '2025-04-04', count: 20 },
-            { date: '2025-04-05', count: 14 },
-          ];
-    // stationData数据结构: [{ station, count }, ...]
-    state.stationData =
-      res.stationData && Array.isArray(res.stationData) && res.stationData.length > 0
-        ? res.stationData
-        : [
-            { station: '晋安湖公园东侧场站', count: 25 },
-            { station: '仓山万达地下停车场', count: 18 },
-          ];
-    // 更新图表
+    state.trendData = res.trendData && res.trendData.length > 0 ? res.trendData : [
+      { date: '2025-04-01', count: 12 },
+      { date: '2025-04-02', count: 15 },
+      { date: '2025-04-03', count: 8 },
+      { date: '2025-04-04', count: 20 },
+      { date: '2025-04-05', count: 14 },
+    ];
+    state.stationData = res.stationData && Array.isArray(res.stationData) && res.stationData.length > 0 ? res.stationData : [
+      { station: '晋安湖公园东侧场站', count: 25 },
+      { station: '仓山万达地下停车场', count: 18 },
+    ];
     updateLineChart();
   } catch (error) {
     console.error('获取订单图表数据失败:', error);
-    // 接口调用失败时使用假数据
+    ElMessage.error('获取订单图表数据失败');
     state.cardList[0].value = 50;
     state.cardList[1].value = 1500;
     state.cardList[2].value = 120;
@@ -265,7 +100,6 @@ const fetchOrderChartData = async () => {
       { station: '晋安湖公园东侧场站', count: 25 },
       { station: '仓山万达地下停车场', count: 18 },
     ];
-    // 更新图表
     updateLineChart();
   }
 };
@@ -334,7 +168,6 @@ const initLineChart = () => {
 
   lineChartInstance.setOption(option);
 
-  // 添加折线图点击事件监听（通过Zr层捕获点击）
   lineChartInstance.getZr().on('click', (e) => {
     const pointInPixel = [e.offsetX, e.offsetY];
     const pointInGrid = lineChartInstance.convertFromPixel({ seriesIndex: 0 }, pointInPixel);
@@ -395,23 +228,4 @@ onMounted(() => {
       @bar-click="handleBarChartClick"
     />
   </div>
-
-  <Drawer>
-    <DrawerGrid>
-      <template #orderNo="{ row }">
-        {{ row.orderNo }}
-      </template>
-      <template #status="{ row }">
-        <ElTag :type="getStatusType(row.status)">
-          {{ getStatusLabel(row.status) }}
-        </ElTag>
-      </template>
-      <template #payMethod="{ row }">
-        <span v-if="row.payMethod === 'wechat'">微信支付</span>
-        <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
-        <span v-else-if="row.payMethod === 'cash'">现金</span>
-        <span v-else>{{ row.payMethod || '-' }}</span>
-      </template>
-    </DrawerGrid>
-  </Drawer>
 </template>
