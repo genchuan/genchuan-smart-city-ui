@@ -5,7 +5,11 @@ import { getAssetInfoChart } from '#/api/genchuan/industry/chargePark/inspectOp/
 import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
-import { getAssetTypeLabel, getMockChartData } from './data';
+import {
+  getAssetInfoStatusOptionValue,
+  getAssetTypeLabel,
+  getMockChartData,
+} from './data';
 
 const emit = defineEmits(['statusFilter', 'typeFilter']);
 
@@ -22,7 +26,8 @@ const state = reactive({
       title: '正常资产',
       value: 0,
       desc: '状态正常',
-      status: '正常',
+      // status: '正常',
+      status: getAssetInfoStatusOptionValue('正常'),
       color: '#27ae60',
     },
   ],

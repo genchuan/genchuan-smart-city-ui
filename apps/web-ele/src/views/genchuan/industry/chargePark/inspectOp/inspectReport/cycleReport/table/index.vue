@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, nextTick, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
@@ -51,6 +51,11 @@ const props = defineProps({
     type: Function,
     default: () => {},
   },
+  /** 当前页签对应的报表周期，与顶部 tab 同步 */
+  activeReportCycle: {
+    type: String,
+    default: '',
+  },
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -66,7 +71,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
 const detailDrawerRef = ref(null);
 const checkedIds = ref([]);
-const filterReportCycle = ref('');
+const filterReportCycle = ref(props.activeReportCycle ?? '');
 const filterStationId = ref('');
 const filterGenerateStatus = ref('');
 const filterTrendTime = ref('');
@@ -426,6 +431,25 @@ function cancelFilter(type) {
   gridApi.query();
 }
 
+/** 与营销运营报表一致：页签 / 父组件驱动报表周期筛选 */
+function handleStatsFilter(type, value) {
+  if (type === 'reportCycle') {
+    filterReportCycle.value = value ?? '';
+    gridApi.query();
+  }
+}
+
+watch(
+  () => props.activeReportCycle,
+  (newVal) => {
+    const v = newVal ?? '';
+    if (filterReportCycle.value === v) return;
+    filterReportCycle.value = v;
+    nextTick(() => gridApi.query());
+  },
+  { immediate: true },
+);
+
 watch(
   () => props.chartFilter,
   (filter) => {
@@ -443,6 +467,10 @@ watch(
   },
   { deep: true },
 );
+
+defineExpose({
+  handleStatsFilter,
+});
 </script>
 
 <template>

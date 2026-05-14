@@ -9,6 +9,7 @@ export type UserCreditVO = {
   creditLevel: string;
   creditScore: number;
   id?: number;
+  nickname?: string;
   phone?: string;
   remark?: string;
   reserve1?: null | string;
@@ -26,9 +27,10 @@ export type UserCreditVO = {
 export type UserCreditPageReqVO = PageParam & {
   creditLevel?: string;
   creditScore?: number | string;
+  nickname?: string;
   remark?: string;
   ruleCode?: string;
-  updateTime?: string;
+  updateTime?: string[];
   userId?: number;
 };
 
@@ -91,9 +93,12 @@ export const UserCreditApi = {
   },
 
   exportUserCredit: async (params: UserCreditPageReqVO) => {
-    return await requestClient.download('/usermerchant/user-credit/export', {
-      params,
-    });
+    return await requestClient.download(
+      '/usermerchant/user-credit/export-excel',
+      {
+        params,
+      },
+    );
   },
 
   remindUserCredit: async (data: UserCreditOperateReqVO) => {

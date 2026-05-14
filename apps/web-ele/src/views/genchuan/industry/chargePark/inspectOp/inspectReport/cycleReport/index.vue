@@ -1,24 +1,36 @@
 <script setup>
-import { shallowRef } from 'vue';
+import { computed, nextTick, ref, shallowRef } from 'vue';
 
+import DrillDetailDrawer from './components/DrillDetailDrawer.vue';
 import Chart from './table/chart.vue';
+import { reportCycleTabs } from './table/data';
 import Table from './table/index.vue';
 
 import '#/genchuan-components/page/index.scss';
 
-const activeName = shallowRef('周期报表');
+const activeName = ref(reportCycleTabs[0].label);
 const secondShow = shallowRef(false);
 const chartFilter = shallowRef(null);
-const showStats = shallowRef(false);
+const showStats = shallowRef(true);
 
-const tabArray = shallowRef([
-  {
-    label: '周期报表',
+const tabArray = ref(
+  reportCycleTabs.map((tab) => ({
+    label: tab.label,
+    value: tab.value,
     components: Table,
     showSecondary: true,
     secondShow: false,
-  },
-]);
+  })),
+);
+
+const drillDetailDrawerRef = ref(null);
+
+const showStatsValue = computed(() => showStats.value);
+
+const activeReportCycleValue = computed(() => {
+  const row = tabArray.value.find((t) => t.label === activeName.value);
+  return row?.value ?? '';
+});
 
 function changeArrowStatus() {
   secondShow.value = !secondShow.value;
@@ -32,28 +44,58 @@ function toggleStats() {
   showStats.value = !showStats.value;
 }
 
+function openDrillDrawer(payload) {
+  nextTick(() => {
+    drillDetailDrawerRef.value?.open({
+      ...payload,
+      activeReportCycle: activeReportCycleValue.value,
+    });
+  });
+}
+
 function handleMetricFilter(metricKey) {
-  chartFilter.value = {
-    type: 'metric',
-    value: metricKey,
-    filterKey: Date.now(),
-  };
+  // chartFilter.value = {
+  //   type: 'metric',
+  //   value: metricKey,
+  //   filterKey: Date.now(),
+  // };
+  openDrillDrawer({ source: 'card', cardKey: metricKey });
 }
 
-function handleStationFilter(stationName) {
-  chartFilter.value = {
-    type: 'station',
-    value: stationName,
-    filterKey: Date.now(),
-  };
+function handleStationFilter(payload) {
+  const stationName =
+    typeof payload === 'string' ? payload : (payload?.stationName ?? '');
+  const barChartKey =
+    typeof payload === 'object' ? payload?.barChartKey : undefined;
+  // chartFilter.value = {
+  //   type: 'station',
+  //   value: stationName,
+  //   barChartKey,
+  //   filterKey: Date.now(),
+  // };
+  openDrillDrawer({
+    source: 'bar',
+    stationName,
+    barChartKey,
+  });
 }
 
-function handleTrendFilter(time) {
-  chartFilter.value = {
-    type: 'trendTime',
-    value: time,
-    filterKey: Date.now(),
-  };
+function handleTrendFilter(payload) {
+  const trendDate =
+    typeof payload === 'string' ? payload : (payload?.trendDate ?? '');
+  const lineChartKey =
+    typeof payload === 'object' ? payload?.lineChartKey : undefined;
+  // chartFilter.value = {
+  //   type: 'trendTime',
+  //   value: trendDate,
+  //   lineChartKey,
+  //   filterKey: Date.now(),
+  // };
+  openDrillDrawer({
+    source: 'line',
+    trendDate,
+    lineChartKey,
+  });
 }
 </script>
 
@@ -81,10 +123,12 @@ function handleTrendFilter(time) {
         <ArrowUp />
       </el-icon>
     </div>
+    <DrillDetailDrawer ref="drillDetailDrawerRef" />
     <el-tabs v-model="activeName" class="common-tabs" type="card">
       <el-tab-pane
         v-for="item in tabArray"
         :key="item.label"
+        lazy
         :name="item.label"
       >
         <template #label>
@@ -95,9 +139,10 @@ function handleTrendFilter(time) {
         <component
           :is="item.components"
           :key="item.label"
+          :active-report-cycle="item.value"
           :chart-filter="chartFilter"
           :second-show="item.secondShow"
-          :show-stats="showStats"
+          :show-stats="showStatsValue"
           :toggle-stats="toggleStats"
         />
       </el-tab-pane>

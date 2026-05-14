@@ -2,7 +2,7 @@ import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const ASSET_STOCK_STATUS_DICT = DICT_TYPE.ASSET_STOCK_STATUS;
 
@@ -37,6 +37,14 @@ export const stockStatusOptions = getDictOptions(
   ASSET_STOCK_STATUS_DICT,
   'string',
 );
+
+/** 按资产库存状态字典 label 取 value，供图表卡片筛选 */
+export function getAssetStockStatusOptionValue(label) {
+  const opt = stockStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
 
 export const assetOptions = [
   { label: '车位监测摄像头', type: '监测设备', value: 1 },
@@ -75,8 +83,7 @@ const baseTime = 1_775_011_986_000;
 export function formatStockTime(value) {
   if (!value) return '-';
   const text = String(value);
-  const timestamp = /^\d{10}$/.test(text) ? Number(text) * 1000 : value;
-  return formatDate(timestamp) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 export function getAssetName(assetId) {
@@ -284,13 +291,12 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationId',
+      fieldName: 'stationName',
       label: '所属仓库',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择所属仓库',
+        placeholder: '请输入所属仓库',
         clearable: true,
-        options: stationOptions,
       },
     },
     {

@@ -348,6 +348,7 @@ async function saveProcess() {
     const payload = {
       // processMethod: processForm.processMethod,
       // processUserId: processForm.processUserId,
+      processStatus: '2',
       processProgress: processForm.processProgress,
     };
 
@@ -360,7 +361,8 @@ async function saveProcess() {
     } else {
       await processOilMonitor({
         ...payload,
-        id: processRows.value[0].id,
+        // id: processRows.value[0].id,
+        ids:[processRows.value[0].id]
       });
       ElMessage.success('处置已提交');
     }

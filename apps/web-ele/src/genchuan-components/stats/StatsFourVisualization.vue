@@ -64,11 +64,39 @@ const props = defineProps({
     default: () => [],
     // 格式: [{ label: '选项1', value: 'key1', data: [...] }, ...]
   },
-  // 柱状/折线图选项列表，用于下拉切换
+  // 柱状/折线图选项列表，用于下拉切换（chartsMode 为 default 时右侧单图区）
   barLineChartOptions: {
     type: Array,
     default: () => [],
     // 格式: [{ label: '选项1', value: 'key1', type: 'bar', data: {...} }, ...]
+  },
+  /**
+   * 图表区布局：
+   * default — 双饼图 + 右侧柱状/折线（沿用原结构）
+   * bar-line — 无饼图，左侧柱状、右侧折线，各自独立下拉（需传 barChartOptions / lineChartOptions）
+   */
+  chartsMode: {
+    type: String,
+    default: 'default',
+    validator: (v) => v === 'default' || v === 'bar-line',
+  },
+  /** chartsMode=bar-line 时：柱状图多组配置，格式同 barLineChartOptions 中单条且 type 为 bar */
+  barChartOptions: {
+    type: Array,
+    default: () => [],
+  },
+  /** chartsMode=bar-line 时：折线图多组配置，格式同 barLineChartOptions 中单条且 type 为 line */
+  lineChartOptions: {
+    type: Array,
+    default: () => [],
+  },
+  currentBarChartIndex: {
+    type: Number,
+    default: 0,
+  },
+  currentLineChartIndex: {
+    type: Number,
+    default: 0,
   },
   // 当前选中的圆环图索引（可由父组件控制）
   currentPieIndex: {
@@ -100,8 +128,12 @@ const props = defineProps({
 const emit = defineEmits([
   'update:currentPieIndex',
   'update:currentBarLineIndex',
+  'update:currentBarChartIndex',
+  'update:currentLineChartIndex',
   'pieChartChange',
   'barLineChartChange',
+  'barChartChange',
+  'lineChartChange',
   'cardClick',
   'pieClick',
   'barLineClick',
@@ -111,9 +143,14 @@ const emit = defineEmits([
 const pieChartRef1 = ref(null);
 const pieChartRef2 = ref(null);
 const barLineChartRef = ref(null);
+/** chartsMode=bar-line：独立柱状 / 折线容器 */
+const barOnlyChartRef = ref(null);
+const lineOnlyChartRef = ref(null);
 let pieChartInstance1 = null;
 let pieChartInstance2 = null;
 let barLineChartInstance = null;
+let barOnlyChartInstance = null;
+let lineOnlyChartInstance = null;
 
 // 显示地图状态
 const showMap = ref(props.defaultShowMap);
@@ -125,6 +162,8 @@ const localPieIndex2 = ref(
   props.currentPieIndex > 0 ? props.currentPieIndex : 1,
 );
 const localBarLineIndex = ref(props.currentBarLineIndex);
+const localBarChartIndex = ref(props.currentBarChartIndex);
+const localLineChartIndex = ref(props.currentLineChartIndex);
 
 // 计算第一个圆环图数据
 const currentPieData1 = computed(() => {
@@ -154,6 +193,24 @@ const currentBarLineData = computed(() => {
     return props.barLineChartOptions[0];
   }
   return props.barLineChartOptions[index];
+});
+
+const currentBarChartData = computed(() => {
+  if (props.barChartOptions.length === 0) return null;
+  const index = localBarChartIndex.value;
+  if (index < 0 || index >= props.barChartOptions.length) {
+    return props.barChartOptions[0];
+  }
+  return props.barChartOptions[index];
+});
+
+const currentLineChartData = computed(() => {
+  if (props.lineChartOptions.length === 0) return null;
+  const index = localLineChartIndex.value;
+  if (index < 0 || index >= props.lineChartOptions.length) {
+    return props.lineChartOptions[0];
+  }
+  return props.lineChartOptions[index];
 });
 
 // 切换地图/图表视图
@@ -190,6 +247,20 @@ const handleBarLineChange = (index) => {
   emit('update:currentBarLineIndex', index);
   emit('barLineChartChange', props.barLineChartOptions[index]);
   initBarLineChart();
+};
+
+const handleBarOnlyChange = (index) => {
+  localBarChartIndex.value = index;
+  emit('update:currentBarChartIndex', index);
+  emit('barChartChange', props.barChartOptions[index]);
+  initBarOnlyChart();
+};
+
+const handleLineOnlyChange = (index) => {
+  localLineChartIndex.value = index;
+  emit('update:currentLineChartIndex', index);
+  emit('lineChartChange', props.lineChartOptions[index]);
+  initLineOnlyChart();
 };
 
 // 获取圆环图配置
@@ -522,6 +593,7 @@ const initBarLineChart = () => {
     barLineChartInstance.setOption(option);
     barLineChartInstance.on('click', (params) => {
       emit('barLineClick', {
+        chartSlot: 'barLine',
         chartType: currentBarLineData.value?.type || 'bar',
         chartKey: currentBarLineData.value?.value,
         data: params,
@@ -532,24 +604,140 @@ const initBarLineChart = () => {
   }
 };
 
+function disposeAllChartInstances() {
+  if (pieChartInstance1) {
+    pieChartInstance1.dispose();
+    pieChartInstance1 = null;
+  }
+  if (pieChartInstance2) {
+    pieChartInstance2.dispose();
+    pieChartInstance2 = null;
+  }
+  if (barLineChartInstance) {
+    barLineChartInstance.dispose();
+    barLineChartInstance = null;
+  }
+  if (barOnlyChartInstance) {
+    barOnlyChartInstance.dispose();
+    barOnlyChartInstance = null;
+  }
+  if (lineOnlyChartInstance) {
+    lineOnlyChartInstance.dispose();
+    lineOnlyChartInstance = null;
+  }
+}
+
+// chartsMode=bar-line：仅柱状图
+const initBarOnlyChart = () => {
+  if (
+    !barOnlyChartRef.value ||
+    !currentBarChartData.value ||
+    !currentBarChartData.value.data
+  )
+    return;
+  if (
+    !currentBarChartData.value.data.xAxis ||
+    currentBarChartData.value.data.xAxis.length === 0
+  )
+    return;
+
+  try {
+    if (barOnlyChartInstance) {
+      barOnlyChartInstance.dispose();
+      barOnlyChartInstance = null;
+    }
+
+    barOnlyChartInstance = echarts.init(barOnlyChartRef.value);
+    const option = getBarLineOption({
+      ...currentBarChartData.value,
+      type: currentBarChartData.value.type || 'bar',
+    });
+    barOnlyChartInstance.setOption(option);
+    barOnlyChartInstance.on('click', (params) => {
+      emit('barLineClick', {
+        chartSlot: 'bar',
+        chartType: 'bar',
+        chartKey: currentBarChartData.value?.value,
+        data: params,
+      });
+    });
+  } catch (error) {
+    console.error('初始化柱状图失败:', error);
+  }
+};
+
+// chartsMode=bar-line：仅折线图
+const initLineOnlyChart = () => {
+  if (
+    !lineOnlyChartRef.value ||
+    !currentLineChartData.value ||
+    !currentLineChartData.value.data
+  )
+    return;
+  if (
+    !currentLineChartData.value.data.xAxis ||
+    currentLineChartData.value.data.xAxis.length === 0
+  )
+    return;
+
+  try {
+    if (lineOnlyChartInstance) {
+      lineOnlyChartInstance.dispose();
+      lineOnlyChartInstance = null;
+    }
+
+    lineOnlyChartInstance = echarts.init(lineOnlyChartRef.value);
+    const option = getBarLineOption({
+      ...currentLineChartData.value,
+      type: currentLineChartData.value.type || 'line',
+    });
+    lineOnlyChartInstance.setOption(option);
+    lineOnlyChartInstance.on('click', (params) => {
+      emit('barLineClick', {
+        chartSlot: 'line',
+        chartType: 'line',
+        chartKey: currentLineChartData.value?.value,
+        data: params,
+      });
+    });
+  } catch (error) {
+    console.error('初始化折线图失败:', error);
+  }
+};
+
 // 初始化所有图表
 const initCharts = () => {
-  initPieCharts();
-  initBarLineChart();
+  disposeAllChartInstances();
+  nextTick(() => {
+    if (props.chartsMode === 'bar-line') {
+      initBarOnlyChart();
+      initLineOnlyChart();
+    } else {
+      initPieCharts();
+      initBarLineChart();
+    }
+  });
 };
 
 // 处理窗口大小变化
 const handleResize = () => {
-  pieChartInstance1?.resize();
-  pieChartInstance2?.resize();
-  barLineChartInstance?.resize();
+  if (props.chartsMode === 'bar-line') {
+    barOnlyChartInstance?.resize();
+    lineOnlyChartInstance?.resize();
+  } else {
+    pieChartInstance1?.resize();
+    pieChartInstance2?.resize();
+    barLineChartInstance?.resize();
+  }
 };
 
 // 监听数据变化
 watch(
   () => props.pieChartOptions,
   () => {
-    initPieCharts();
+    if (props.chartsMode === 'default') {
+      initPieCharts();
+    }
   },
   { deep: true },
 );
@@ -557,9 +745,31 @@ watch(
 watch(
   () => props.barLineChartOptions,
   () => {
-    initBarLineChart();
+    if (props.chartsMode === 'default') {
+      initBarLineChart();
+    }
   },
   { deep: true },
+);
+
+watch(
+  () => [props.barChartOptions, props.lineChartOptions],
+  () => {
+    if (props.chartsMode === 'bar-line') {
+      nextTick(() => {
+        initBarOnlyChart();
+        initLineOnlyChart();
+      });
+    }
+  },
+  { deep: true },
+);
+
+watch(
+  () => props.chartsMode,
+  () => {
+    initCharts();
+  },
 );
 
 watch(
@@ -583,6 +793,28 @@ watch(
 );
 
 watch(
+  () => props.currentBarChartIndex,
+  (newVal) => {
+    if (props.chartsMode !== 'bar-line') return;
+    if (newVal !== localBarChartIndex.value) {
+      localBarChartIndex.value = newVal;
+      initBarOnlyChart();
+    }
+  },
+);
+
+watch(
+  () => props.currentLineChartIndex,
+  (newVal) => {
+    if (props.chartsMode !== 'bar-line') return;
+    if (newVal !== localLineChartIndex.value) {
+      localLineChartIndex.value = newVal;
+      initLineOnlyChart();
+    }
+  },
+);
+
+watch(
   () => props.defaultShowMap,
   (newVal) => {
     showMap.value = newVal;
@@ -599,18 +831,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
-  if (pieChartInstance1) {
-    pieChartInstance1.dispose();
-    pieChartInstance1 = null;
-  }
-  if (pieChartInstance2) {
-    pieChartInstance2.dispose();
-    pieChartInstance2 = null;
-  }
-  if (barLineChartInstance) {
-    barLineChartInstance.dispose();
-    barLineChartInstance = null;
-  }
+  disposeAllChartInstances();
 });
 </script>
 
@@ -666,73 +887,114 @@ onUnmounted(() => {
         />
       </div>
 
-      <!-- 图表视图 - 两个圆环图 + 一个较宽图表 -->
-      <div v-else class="charts-section">
-        <!-- 第一个圆环图展示区（带切换） -->
-        <div class="pie-chart-area">
-          <!-- 下拉切换按钮 -->
-          <div v-if="pieChartOptions.length > 1" class="chart-select-wrapper">
-            <ElSelect
-              :model-value="localPieIndex1"
-              size="small"
-              class="chart-select"
-              @change="handlePie1Change"
-            >
-              <ElOption
-                v-for="(option, idx) in pieChartOptions"
-                :key="idx"
-                :label="option.label"
-                :value="idx"
-              />
-            </ElSelect>
+      <!-- 图表视图：default = 双饼图 + 右侧柱状/折线；bar-line = 双区柱状 + 折线（无饼图） -->
+      <div
+        v-else
+        class="charts-section"
+        :class="{ 'charts-section--bar-line-mode': chartsMode === 'bar-line' }"
+      >
+        <template v-if="chartsMode === 'default'">
+          <!-- 第一个圆环图展示区（带切换） -->
+          <div class="pie-chart-area">
+            <div v-if="pieChartOptions.length > 1" class="chart-select-wrapper">
+              <ElSelect
+                :model-value="localPieIndex1"
+                size="small"
+                class="chart-select"
+                @change="handlePie1Change"
+              >
+                <ElOption
+                  v-for="(option, idx) in pieChartOptions"
+                  :key="idx"
+                  :label="option.label"
+                  :value="idx"
+                />
+              </ElSelect>
+            </div>
+            <div ref="pieChartRef1" class="chart-container"></div>
           </div>
-          <div ref="pieChartRef1" class="chart-container"></div>
-        </div>
 
-        <!-- 第二个圆环图展示区（带切换） -->
-        <div class="pie-chart-area">
-          <!-- 下拉切换按钮 -->
-          <div v-if="pieChartOptions.length > 1" class="chart-select-wrapper">
-            <ElSelect
-              :model-value="localPieIndex2"
-              size="small"
-              class="chart-select"
-              @change="handlePie2Change"
-            >
-              <ElOption
-                v-for="(option, idx) in pieChartOptions"
-                :key="idx"
-                :label="option.label"
-                :value="idx"
-              />
-            </ElSelect>
+          <div class="pie-chart-area">
+            <div v-if="pieChartOptions.length > 1" class="chart-select-wrapper">
+              <ElSelect
+                :model-value="localPieIndex2"
+                size="small"
+                class="chart-select"
+                @change="handlePie2Change"
+              >
+                <ElOption
+                  v-for="(option, idx) in pieChartOptions"
+                  :key="idx"
+                  :label="option.label"
+                  :value="idx"
+                />
+              </ElSelect>
+            </div>
+            <div ref="pieChartRef2" class="chart-container"></div>
           </div>
-          <div ref="pieChartRef2" class="chart-container"></div>
-        </div>
 
-        <!-- 柱状/折线图展示区（更宽） -->
-        <div class="bar-line-chart-area">
-          <!-- 下拉切换按钮 -->
-          <div
-            v-if="barLineChartOptions.length > 1"
-            class="chart-select-wrapper bar-line-select"
-          >
-            <ElSelect
-              :model-value="localBarLineIndex"
-              size="small"
-              class="chart-select"
-              @change="handleBarLineChange"
+          <div class="bar-line-chart-area">
+            <div
+              v-if="barLineChartOptions.length > 1"
+              class="chart-select-wrapper bar-line-select"
             >
-              <ElOption
-                v-for="(option, idx) in barLineChartOptions"
-                :key="idx"
-                :label="option.label"
-                :value="idx"
-              />
-            </ElSelect>
+              <ElSelect
+                :model-value="localBarLineIndex"
+                size="small"
+                class="chart-select"
+                @change="handleBarLineChange"
+              >
+                <ElOption
+                  v-for="(option, idx) in barLineChartOptions"
+                  :key="idx"
+                  :label="option.label"
+                  :value="idx"
+                />
+              </ElSelect>
+            </div>
+            <div ref="barLineChartRef" class="chart-container"></div>
           </div>
-          <div ref="barLineChartRef" class="chart-container"></div>
-        </div>
+        </template>
+
+        <template v-else>
+          <div class="dual-bar-chart-area">
+            <div v-if="barChartOptions.length > 1" class="chart-select-wrapper">
+              <ElSelect
+                :model-value="localBarChartIndex"
+                size="small"
+                class="chart-select chart-select-wide"
+                @change="handleBarOnlyChange"
+              >
+                <ElOption
+                  v-for="(option, idx) in barChartOptions"
+                  :key="idx"
+                  :label="option.label"
+                  :value="idx"
+                />
+              </ElSelect>
+            </div>
+            <div ref="barOnlyChartRef" class="chart-container"></div>
+          </div>
+
+          <div class="dual-line-chart-area">
+            <div v-if="lineChartOptions.length > 1" class="chart-select-wrapper">
+              <ElSelect
+                :model-value="localLineChartIndex"
+                size="small"
+                class="chart-select chart-select-wide"
+                @change="handleLineOnlyChange"
+              >
+                <ElOption
+                  v-for="(option, idx) in lineChartOptions"
+                  :key="idx"
+                  :label="option.label"
+                  :value="idx"
+                />
+              </ElSelect>
+            </div>
+            <div ref="lineOnlyChartRef" class="chart-container"></div>
+          </div>
+        </template>
       </div>
     </div>
   </div>
@@ -903,5 +1165,22 @@ onUnmounted(() => {
 
 .bar-line-select {
   left: 10px;
+}
+
+/* 无饼图：柱状 + 折线双区 */
+.charts-section--bar-line-mode {
+  gap: 16px;
+}
+
+.dual-bar-chart-area,
+.dual-line-chart-area {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 320px;
+}
+
+.chart-select-wide {
+  width: 148px;
 }
 </style>

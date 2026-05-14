@@ -27,7 +27,7 @@ export const searchFields = [
   { field: 'areaNo', label: '片区编号', type: 'input', required: false },
   { field: 'name', label: '片区名称', type: 'input', required: false },
   { field: 'district', label: '所属行政区划', type: 'input', required: false },
-  { field: 'userId', label: '负责人', type: 'number', required: false },
+  { field: 'userId', label: '负责人', type: 'input', required: false },
   { field: 'phone', label: '联系电话', type: 'input', required: false },
   {
     field: 'status',
@@ -36,6 +36,9 @@ export const searchFields = [
     options: statusOptions,
     required: false,
   },
+  { field: 'bindUserId', label: '绑定人', type: 'input', required: false },
+  { field: 'creator', label: '创建者', type: 'input', required: false },
+  { field: 'updater', label: '更新者', type: 'input', required: false },
 ];
 
 export const formFields = [
@@ -48,7 +51,7 @@ export const formFields = [
     required: true,
     placeholder: '请选择省/市/区',
   },
-  { field: 'userId', label: '负责人', type: 'number', required: true },
+  { field: 'userId', label: '负责人', type: 'input', required: true },
   {
     field: 'phone',
     label: '联系电话',

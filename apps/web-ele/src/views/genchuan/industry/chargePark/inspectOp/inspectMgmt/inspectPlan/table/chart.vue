@@ -6,7 +6,11 @@ import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData, getPlanTypeLabel } from './data';
+import {
+  getMockChartData,
+  getPlanStatusOptionValue,
+  getPlanTypeLabel,
+} from './data';
 
 const emit = defineEmits(['statusFilter', 'trendFilter', 'typeFilter']);
 
@@ -23,7 +27,7 @@ const state = reactive({
       title: '执行完成率',
       value: '0%',
       desc: '已完成计划',
-      status: '已完成',
+      status: getPlanStatusOptionValue('已完成'),
       color: '#27ae60',
     },
   ],

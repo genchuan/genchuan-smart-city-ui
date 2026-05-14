@@ -47,8 +47,8 @@ export type UserCarUpdateReqVO = UserCarCreateReqVO & {
 // 用户车辆分页请求
 export type UserCarPageReqVO = PageParam & {
   auditorId?: number;
-  auditTime?: string;
-  bindTime?: string;
+  auditTime?: string[];
+  bindTime?: string[];
   carType?: string;
   plateColor?: string;
   plateNo?: string;
@@ -148,6 +148,10 @@ export const UserCarApi = {
     return await requestClient.upload('/usermerchant/user-car/import', {
       file,
     });
+  },
+
+  importUserCarTemplate: async () => {
+    return await requestClient.download('/usermerchant/user-car/template');
   },
 
   exportUserCar: async (params: UserCarPageReqVO) => {

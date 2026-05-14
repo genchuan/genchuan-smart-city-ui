@@ -134,7 +134,7 @@ const props = defineProps({
   secondShow: Boolean,
   arrowShow: { type: Boolean, default: false },
 });
-const emit = defineEmits(['arrow-change']);
+const emit = defineEmits(['arrow-change', 'refresh-chart']);
 const arrowChange = () => emit('arrow-change');
 
 const dataObj = reactive({
@@ -314,6 +314,7 @@ const handleProcess = async (row) => {
   await handleSuggestion({ id: row.id });
   ElMessage.success('已认领，状态更新为处理中');
   handleRefresh();
+  emit('refresh-chart');
 };
 
 const progressForm = reactive({ progress: '' });
@@ -327,6 +328,7 @@ const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
     ElMessage.success('进度更新成功');
     progressDrawerApi.close();
     handleRefresh();
+    emit('refresh-chart');
   },
 });
 const openUpdateProgress = (row) => {
@@ -346,6 +348,7 @@ const [FeedbackDrawer, feedbackDrawerApi] = useVbenDrawer({
     ElMessage.success('反馈成功，状态已变更为已关闭');
     feedbackDrawerApi.close();
     handleRefresh();
+    emit('refresh-chart');
   },
 });
 const openFeedback = (row) => {

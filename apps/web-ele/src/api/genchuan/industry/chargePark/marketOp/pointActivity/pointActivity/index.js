@@ -88,3 +88,14 @@ export function updatePointActivity(data) {
 export function getPointActivityChart() {
   return requestClient.get('/marketop/point-activity/chart');
 }
+
+// ==================== 场站相关接口  ====================
+
+/** 获取场站精简列表（用于下拉选择） */
+export function getStationSimpleList() {
+  return requestClient.get('/marketop/point-activity/station-simple-list');
+}
+/** 获取积分活动 精简列表（用于下拉选择） */
+export function getPointActivitySimpleList() {
+  return requestClient.get('/marketop/point-activity/simple-list');
+}

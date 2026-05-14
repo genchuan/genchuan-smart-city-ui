@@ -3,7 +3,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const INSPECT_USER_STATUS_DICT = DICT_TYPE.INSPECT_USER_STATUS;
 export const INSPECT_USER_ONLINE_STATUS_DICT =
@@ -60,6 +60,14 @@ export const onlineStatusOptions = getDictOptions(
   'string',
 );
 
+/** 按在线状态字典 label 取 value，供图表卡片筛选 */
+export function getOnlineStatusOptionValue(label) {
+  const opt = onlineStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 export const deviceOptions = [
   { label: '巡检终端 A101', value: 101, area: '丰泽区' },
   { label: '巡检终端 B102', value: 102, area: '鲤城区' },
@@ -99,8 +107,7 @@ function normalizeTimeValue(value) {
 
 export function formatUserTime(value) {
   if (!value) return '-';
-  const timestamp = normalizeTimeValue(value);
-  return formatDate(timestamp) || String(value);
+  return formatLocalDateTime(value) || String(value);
 }
 
 export function maskPhone(phone) {
@@ -330,11 +337,11 @@ export function useSearchFormSchema() {
     {
       fieldName: 'area',
       label: '所属片区',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择所属片区',
+        placeholder: '请输入所属片区',
         clearable: true,
-        options: areaOptions,
+        // options: areaOptions,
       },
     },
     {

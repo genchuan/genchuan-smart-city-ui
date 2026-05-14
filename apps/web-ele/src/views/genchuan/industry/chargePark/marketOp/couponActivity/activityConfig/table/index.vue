@@ -464,10 +464,11 @@ function handleStatsFilter(filterSource, filterValue) {
         // 点击生效配置数 - 筛选已生效的配置
         filterStatus.value = '1';
         gridApi.query();
-      } else if (filterValue === 'join') {
-        // 点击活动参与率
-        ElMessage.info('按参与率筛选');
       }
+      // else if (filterValue === 'join') {
+      //   // 点击活动参与率
+      //   ElMessage.info('按参与率筛选');
+      // }
 
       break;
     }
@@ -536,7 +537,7 @@ defineExpose({
           <!-- 适用人群筛选标签 -->
           <ElTag
             v-if="filterUserGroup"
-            type="success"
+            type="warning"
             closable
             @close="handleCancelUserGroupFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
@@ -546,7 +547,7 @@ defineExpose({
           <!-- 配置状态筛选标签 -->
           <ElTag
             v-if="filterStatus"
-            type="warning"
+            type="success"
             closable
             @close="handleCancelStatusFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"

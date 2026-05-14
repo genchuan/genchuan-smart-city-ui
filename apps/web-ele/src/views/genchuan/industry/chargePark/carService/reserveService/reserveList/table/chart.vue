@@ -103,15 +103,22 @@ const handleCardClick = (index) => {
   else if (card.key === 'reserveSuccessRate') emit('refresh', { reserveSuccessRate: true });
 };
 
+const refreshStats = () => {
+  fetchChartData();
+};
+
 onMounted(() => {
   nextTick(() => {
     fetchChartData();
     window.addEventListener('resize', handleResize);
+    // 监听表格操作触发的刷新事件
+    window.addEventListener('reserve-stats-refresh', refreshStats);
   });
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
+  window.removeEventListener('reserve-stats-refresh', refreshStats);
   lineChart?.dispose();
   barChart?.dispose();
 });

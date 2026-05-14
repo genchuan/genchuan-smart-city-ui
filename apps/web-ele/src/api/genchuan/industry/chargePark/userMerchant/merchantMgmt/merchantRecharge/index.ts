@@ -47,11 +47,11 @@ export type MerchantRechargeDetailVO = MerchantRechargeVO & {
 // 商户充值分页请求
 export type MerchantRechargePageReqVO = PageParam & {
   amount?: number | string;
-  confirmTime?: string;
+  confirmTime?: string[];
   merchantId?: number;
   orderNo?: string;
   payChannel?: string;
-  payTime?: string;
+  payTime?: string[];
   remark?: string;
   status?: string;
 };
@@ -84,15 +84,6 @@ export const MerchantRechargeApi = {
     return await requestClient.get<PageResult<MerchantRechargeVO>>(
       '/usermerchant/merchant-recharge/page',
       { params },
-    );
-  },
-
-  getMerchantRecharge: async (id: number) => {
-    return await requestClient.get<MerchantRechargeDetailVO>(
-      '/usermerchant/merchant-recharge/get',
-      {
-        params: { id },
-      },
     );
   },
 

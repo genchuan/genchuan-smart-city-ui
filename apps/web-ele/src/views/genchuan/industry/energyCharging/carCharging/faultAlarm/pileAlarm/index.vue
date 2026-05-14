@@ -154,7 +154,7 @@ function handleRowCheckboxChange({records}) {
 
 const searchParams = ref({});
 
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -162,6 +162,7 @@ const getTableData = async ({page}) => {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
+
     if (
       params.alarmTime &&
       Array.isArray(params.alarmTime) &&
@@ -171,11 +172,14 @@ const getTableData = async ({page}) => {
       params.alarmTimeEnd = params.alarmTime[1];
       delete params.alarmTime;
     }
+
     const res = await getPileAlarmPage(params);
-    // 直接使用返回的数据，不再判断 res.code
+
     let filtered = res.list.filter(
-      (v) => activeName.value === '全部' || v.alarmStatus === activeName.value,
+      (v) =>
+        activeName.value === '全部' || v.alarmStatus === activeName.value,
     );
+
     // 应用标签筛选（支持数组多值）
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
       filtered = filtered.filter((item) => {
@@ -191,10 +195,9 @@ const getTableData = async ({page}) => {
             itemValue = item.alarmLevel;
             break;
           case 'alarmTime':
-            const alarmDate = item.alarmTime
+            itemValue = item.alarmTime
               ? item.alarmTime.split(' ')[0]
               : '';
-            itemValue = alarmDate;
             break;
           case 'handleUser':
             itemValue = item.handleUserName || item.handleUser;
@@ -203,10 +206,9 @@ const getTableData = async ({page}) => {
             itemValue = item.alarmStatus;
             break;
           case 'disposeTime':
-            const disposeDate = item.disposeTime
+            itemValue = item.disposeTime
               ? item.disposeTime.split(' ')[0]
               : '';
-            itemValue = disposeDate;
             break;
           case 'operator':
             itemValue = item.createBy || '-';
@@ -214,6 +216,7 @@ const getTableData = async ({page}) => {
           default:
             itemValue = item[field];
         }
+
         if (Array.isArray(filterValue)) {
           return filterValue.includes(String(itemValue));
         } else {
@@ -221,16 +224,21 @@ const getTableData = async ({page}) => {
         }
       });
     });
-    // ✅ 修改点1：使用后端返回的总记录数
-    dataObj.total = res.total;
-    // ✅ 修改点2：直接使用当前页数据（res.list 已经是当前页数据，不需要再 slice）
+
+    // ✅ 关键修复点：使用前端筛选后的长度
+    dataObj.total = filtered.length;
     dataObj.list = filtered;
+
+    return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
+
     const mockData = dataList();
     let filtered = mockData.filter(
-      (v) => activeName.value === '全部' || v.alarmStatus === activeName.value,
+      (v) =>
+        activeName.value === '全部' || v.alarmStatus === activeName.value,
     );
+
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
       filtered = filtered.filter((item) => {
         let itemValue;
@@ -245,10 +253,9 @@ const getTableData = async ({page}) => {
             itemValue = item.alarmLevel;
             break;
           case 'alarmTime':
-            const alarmDate = item.alarmTime
+            itemValue = item.alarmTime
               ? item.alarmTime.split(' ')[0]
               : '';
-            itemValue = alarmDate;
             break;
           case 'handleUser':
             itemValue = item.handleUserName || item.handleUser;
@@ -257,10 +264,9 @@ const getTableData = async ({page}) => {
             itemValue = item.alarmStatus;
             break;
           case 'disposeTime':
-            const disposeDate = item.disposeTime
+            itemValue = item.disposeTime
               ? item.disposeTime.split(' ')[0]
               : '';
-            itemValue = disposeDate;
             break;
           case 'operator':
             itemValue = 'admin';
@@ -268,6 +274,7 @@ const getTableData = async ({page}) => {
           default:
             itemValue = item[field];
         }
+
         if (Array.isArray(filterValue)) {
           return filterValue.includes(String(itemValue));
         } else {
@@ -275,16 +282,17 @@ const getTableData = async ({page}) => {
         }
       });
     });
+
     dataObj.total = filtered.length;
-    // 模拟数据时仍需要前端分页
     dataObj.list = filtered.slice(
       (page.currentPage - 1) * page.pageSize,
       page.currentPage * page.pageSize,
     );
+
+    return dataObj;
   } finally {
     dataObj.loading = false;
   }
-  return dataObj;
 };
 
 function handleRefresh() {

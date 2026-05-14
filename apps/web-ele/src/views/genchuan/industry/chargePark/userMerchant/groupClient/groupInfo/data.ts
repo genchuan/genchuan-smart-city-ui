@@ -14,6 +14,8 @@ import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
+const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+
 export type GroupStatus = '已驳回' | '待审核' | '正常' | '禁用';
 
 export interface GroupAccountLog {
@@ -346,8 +348,8 @@ export function buildGroupRowFromApi(
     data.auditorName ||
     data.auditorInfo?.name ||
     data.auditorInfo?.nickname ||
-    (data.auditorId ? operatorNameByIdMap[data.auditorId] : undefined) ||
     fallback.auditorName ||
+    (data.auditorId ? operatorNameByIdMap[data.auditorId] : undefined) ||
     '-';
   const auditorInfo = (() => {
     if (auditorName === '-') {
@@ -521,7 +523,10 @@ export function buildGroupInfoQueryParams(
     registerTime:
       Array.isArray(formValues.registerTime) &&
       formValues.registerTime.length === 2
-        ? `${dayjs(formValues.registerTime[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(formValues.registerTime[1]).format('YYYY-MM-DD HH:mm:ss')}`
+        ? [
+            dayjs(formValues.registerTime[0]).format(QUERY_TIME_FORMAT),
+            dayjs(formValues.registerTime[1]).format(QUERY_TIME_FORMAT),
+          ]
         : undefined,
   };
 

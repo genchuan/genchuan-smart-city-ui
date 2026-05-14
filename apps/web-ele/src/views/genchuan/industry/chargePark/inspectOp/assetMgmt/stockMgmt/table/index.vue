@@ -371,6 +371,7 @@ function cancelFilter(type) {
   const clearMap = {
     assetName: () => {
       filterAssetName.value = '';
+      filterAssetId.value = '';
     },
     stationId: () => {
       filterStationId.value = '';
@@ -399,7 +400,8 @@ watch(
       filterTrendTime.value = filter.value;
     }
     if (filter.type === 'assetName') {
-      filterAssetName.value = filter.value;
+      filterAssetId.value = filter.value?.assetId;
+      filterAssetName.value = filter.value?.assetName;
     }
     gridApi.query();
   },

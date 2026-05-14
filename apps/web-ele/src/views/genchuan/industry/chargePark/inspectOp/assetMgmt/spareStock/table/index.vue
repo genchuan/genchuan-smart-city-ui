@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
@@ -27,6 +27,7 @@ import {
   getSpareStatusTagType,
   getWarehouseName,
   isSpareStatusLabel,
+  loadSpareOptions,
   normalizeSpareStockRow,
   textObj,
   useGridColumns,
@@ -135,6 +136,7 @@ const [ActionDrawer, actionDrawerApi] = useVbenDrawer({
       if (actionType.value === 'in') {
         await inSpareStock({
           spareId: values.spareId,
+          spareName: values.spareName,
           inCount: Number(values.inCount || 0),
           supplier: values.supplier,
         });
@@ -228,7 +230,14 @@ async function getTableData({ page }) {
   return dataObj;
 }
 
-const [QueryForm] = useVbenForm({
+function buildSearchFormSchema() {
+  return useSearchFormSchema().map((item) => {
+    delete item.rules;
+    return { ...item };
+  });
+}
+
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -239,10 +248,7 @@ const [QueryForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema().map((item) => {
-    delete item.rules;
-    return { ...item };
-  }),
+  schema: buildSearchFormSchema(),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -381,8 +387,7 @@ function handleStatusClick(status) {
 }
 
 function handleWarehouseClick(warehouseId) {
-  filterWarehouseId.value =
-    Number(filterWarehouseId.value) === Number(warehouseId) ? '' : warehouseId;
+  filterWarehouseId.value = warehouseId
   gridApi.query();
 }
 
@@ -424,6 +429,12 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(async () => {
+  await loadSpareOptions();
+  await queryFormApi.setState({ schema: buildSearchFormSchema() });
+  await actionFormApi.setState({ schema: useInFormSchema() });
+});
 </script>
 
 <template>
@@ -468,7 +479,7 @@ watch(
             type="primary"
             @close="cancelFilter('warehouseId')"
           >
-            所属仓库：{{ getWarehouseName(filterWarehouseId) }}
+            所属仓库：{{ filterWarehouseId }}
           </ElTag>
           <ElTag
             v-if="filterTrendTime"
@@ -550,7 +561,7 @@ watch(
           class="common-align"
           style="cursor: pointer"
           type="primary"
-          @click="handleWarehouseClick(row.warehouseId)"
+          @click="handleWarehouseClick(row.warehouseName)"
         >
           {{ row.warehouseName }}
         </el-text>

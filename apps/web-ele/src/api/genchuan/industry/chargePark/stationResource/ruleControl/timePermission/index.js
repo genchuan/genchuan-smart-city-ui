@@ -36,6 +36,10 @@ export function importTimePermission(file, updateSupport = false) {
   });
 }
 
+export function getTimePermissionImportTemplate() {
+  return requestClient.download(`${baseUrl}/get-import-template`);
+}
+
 export function exportTimePermission(params) {
   return requestClient.download(`${baseUrl}/export`, { params });
 }

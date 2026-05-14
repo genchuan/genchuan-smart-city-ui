@@ -36,11 +36,15 @@ const arrowChange = () => {
 const handleChartRefresh = (filters) => {
   window.dispatchEvent(new CustomEvent('rescue-chart-refresh', { detail: filters }));
 };
+// 新增：刷新图表数据
+const refreshChartData = () => {
+  chartRef.value?.refresh();
+};
 </script>
 
 <template>
   <div class="common-index">
-    <RescueChart v-if="tabArray[0].arrowShow" @refresh="handleChartRefresh" />
+    <RescueChart ref="chartRef" v-if="tabArray[0].arrowShow" @refresh="handleChartRefresh" />
     <div class="icon-change">
       <el-icon class="tabel-tab-icon" v-if="secondShow" @click="changeArrowStatus"><ArrowDown /></el-icon>
       <el-icon class="tabel-tab-icon" v-if="!secondShow" @click="changeArrowStatus"><ArrowUp /></el-icon>
@@ -55,6 +59,7 @@ const handleChartRefresh = (filters) => {
           :second-show="item.secondShow"
           :arrow-show="item.arrowShow"
           @arrow-change="arrowChange"
+          @refresh-chart="refreshChartData"
           :key="item.label"
         />
       </el-tab-pane>

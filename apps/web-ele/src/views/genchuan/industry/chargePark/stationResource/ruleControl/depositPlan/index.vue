@@ -14,6 +14,7 @@ import * as stationInfoApi from '#/api/genchuan/industry/chargePark/stationResou
 import CommonDetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import IconButton from '#/genchuan-components/IconButton.vue';
 
+import ChartDrillDrawer from '../../components/ChartDrillDrawer.vue';
 import DetailDrawer from './detail.vue';
 import gateChart from './gateChart.vue';
 import {
@@ -51,6 +52,7 @@ const importLoading = ref(false);
 const importResult = ref(null);
 const importUpdateSupport = ref(false);
 const chartData = ref({});
+const chartDrillDrawerRef = ref(null);
 const selectOptionsMap = ref({});
 
 function normalizeOptions(options = []) {
@@ -497,7 +499,7 @@ async function handleFormConfirm() {
   }
 
   formDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -557,11 +559,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     proxyConfig: {
       ajax: {
-        query: async ({ page }) => {
+        query: async ({ page }, formValues = {}) => {
+          const query = sanitizeParams({
+            ...appliedQuery.value,
+            ...formValues,
+          });
           return await pageApi[`get${apiName}Page`]({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
-            ...appliedQuery.value,
+            ...query,
           });
         },
       },
@@ -595,16 +601,17 @@ function handleCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
-function handleRefresh() {
+function handleRefresh(query = appliedQuery.value) {
+  const nextQuery = sanitizeParams(query);
   if (gridApi.query) {
-    gridApi.query();
+    gridApi.query(nextQuery);
   } else {
-    gridApi.reload?.();
+    gridApi.reload?.(nextQuery);
   }
-  loadChart();
+  loadChart(nextQuery);
 }
 
-async function loadChart() {
+async function loadChart(query = appliedQuery.value) {
   if (
     !pageConfig.chart ||
     typeof pageApi[`get${apiName}Chart`] !== 'function'
@@ -614,7 +621,7 @@ async function loadChart() {
   chartLoading.value = true;
   try {
     chartData.value =
-      (await pageApi[`get${apiName}Chart`](appliedQuery.value)) || {};
+      (await pageApi[`get${apiName}Chart`](sanitizeParams(query))) || {};
   } finally {
     chartLoading.value = false;
   }
@@ -623,14 +630,14 @@ async function loadChart() {
 async function handleQuerySubmit() {
   appliedQuery.value = sanitizeParams(queryFormApi.form.values || {});
   searchDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleResetSearch() {
   appliedQuery.value = {};
   await queryFormApi.resetForm();
   searchDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 function handleCreate() {
@@ -695,7 +702,7 @@ async function handleBind(row) {
     id: row.id,
   });
   ElMessage.success('绑定成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleSave() {
@@ -705,7 +712,7 @@ async function handleSave() {
   }
   await pageApi[`save${apiName}`]({ ids: checkedIds.value });
   ElMessage.success('保存成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleResetConfig() {
@@ -719,7 +726,7 @@ async function handleResetConfig() {
   );
   await pageApi[`reset${apiName}`]({ stationId: Number(value) });
   ElMessage.success('重置成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleBatchSync() {
@@ -729,7 +736,7 @@ async function handleBatchSync() {
   }
   await pageApi[`batchSync${apiName}`]({ ids: checkedIds.value });
   ElMessage.success('批量同步成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleExport(extraParams = {}) {
@@ -865,22 +872,26 @@ function handleRowAction(action, row) {
     return ElMessage.warning(`已触发告警：${row[primaryField] || row.id}`);
 }
 
-async function applySearchPatch(patch) {
+async function syncQueryForm(values = {}) {
+  const nextValues = sanitizeParams(values);
+  try {
+    await queryFormApi.resetForm();
+    if (!isEmpty(nextValues)) {
+      await queryFormApi.setValues(nextValues);
+    }
+  } catch (error) {
+    console.warn('Failed to set form values', error);
+  }
+}
+function applySearchPatch(patch) {
   const nextQuery = sanitizeParams({
     ...appliedQuery.value,
     ...patch,
   });
   appliedQuery.value = nextQuery;
-  handleRefresh();
+  handleRefresh(nextQuery);
   nextTick(() => {
-    try {
-      const result = queryFormApi.setValues(nextQuery);
-      Promise.resolve(result).catch((error) => {
-        console.warn('Failed to set form values', error);
-      });
-    } catch (error) {
-      console.warn('Failed to set form values', error);
-    }
+    syncQueryForm(nextQuery);
   });
 }
 
@@ -900,24 +911,18 @@ function getTagDisplayText(field, value) {
   return value;
 }
 
-function removeFilterTag(field) {
+async function removeFilterTag(field) {
   const nextQuery = { ...appliedQuery.value };
   delete nextQuery[field];
-  appliedQuery.value = nextQuery;
-  try {
-    queryFormApi.setValues(nextQuery);
-  } catch (error) {
-    console.warn('Failed to set form values', error);
-  }
-  nextTick(() => {
-    handleRefresh();
-  });
+  appliedQuery.value = sanitizeParams(nextQuery);
+  await syncQueryForm(appliedQuery.value);
+  handleRefresh(appliedQuery.value);
 }
 
-function clearFilters() {
+async function clearFilters() {
   appliedQuery.value = {};
-  queryFormApi.resetForm();
-  handleRefresh();
+  await syncQueryForm({});
+  handleRefresh(appliedQuery.value);
 }
 
 function getCellDisplayText(column, row) {
@@ -930,18 +935,15 @@ function getCellDisplayText(column, row) {
   }
   return '--';
 }
-
-function isSearchField(field) {
-  return searchFields.some((item) => item.field === field);
-}
-
-function applyChartSearch(field, value) {
-  if (!field || isEmpty(value)) return;
-  if (!isSearchField(field)) {
-    ElMessage.info('当前图表未返回可筛选字段，已保留展示不发起筛选');
-    return;
-  }
-  applySearchPatch({ [field]: value });
+function openChartDrill(chartType, value, field, title) {
+  chartDrillDrawerRef.value?.open({
+    chartType,
+    field,
+    label: getFieldLabel(field),
+    pageTitle: pageConfig.title,
+    title,
+    value,
+  });
 }
 
 function handleCardClick(item) {
@@ -951,17 +953,22 @@ function handleCardClick(item) {
 
 function handleBarClick(name) {
   const field = pageConfig.chart?.bar?.[4] || pageConfig.chart?.bar?.[1];
-  applyChartSearch(field, name);
+  openChartDrill('bar', name, field, `${pageConfig.title}分布`);
 }
 
 function handleLineClick(payload) {
   const field = pageConfig.chart?.line?.[4] || pageConfig.chart?.line?.[1];
-  applyChartSearch(field, payload?.categoryName || payload?.name);
+  openChartDrill(
+    'line',
+    payload?.categoryName || payload?.name,
+    field,
+    `${pageConfig.title}趋势`,
+  );
 }
 
 function handlePieClick(payload) {
   const field = pageConfig.chart?.pie?.[3] || pageConfig.chart?.pie?.[1];
-  applyChartSearch(field, payload?.name);
+  openChartDrill('pie', payload?.name, field, `${pageConfig.title}占比`);
 }
 
 function getDrillValue(column, row) {
@@ -1030,8 +1037,11 @@ function handleToggleOverview() {
   showOverview.value = !showOverview.value;
 }
 
-function handleOpenSearch() {
+async function handleOpenSearch() {
+  await syncQueryForm(appliedQuery.value);
   searchDrawerApi.open();
+  await nextTick();
+  await syncQueryForm(appliedQuery.value);
 }
 
 function handleFullScreen() {
@@ -1089,6 +1099,8 @@ defineExpose({
         :fields="drillDetailFields"
         width="38%"
       />
+
+      <ChartDrillDrawer ref="chartDrillDrawerRef" />
 
       <SearchDrawer title="筛选">
         <QueryForm class="query-form" @reset="handleResetSearch" />

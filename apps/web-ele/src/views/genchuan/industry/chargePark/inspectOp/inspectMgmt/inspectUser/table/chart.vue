@@ -5,7 +5,7 @@ import { getInspectUserChart } from '#/api/genchuan/industry/chargePark/inspectO
 import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 
-import { getMockChartData } from './data';
+import { getMockChartData, getOnlineStatusOptionValue } from './data';
 
 const emit = defineEmits(['areaFilter', 'onlineFilter', 'statusFilter']);
 
@@ -15,14 +15,14 @@ const state = reactive({
       title: '人员数',
       value: 0,
       desc: '全部巡检人员',
-      filterType: 'all',
+      status: '',
       color: '#2f80ed',
     },
     {
       title: '在线人员数',
       value: 0,
       desc: '当前在线人员',
-      filterType: 'online',
+      status: getOnlineStatusOptionValue('在线'),
       color: '#27ae60',
     },
   ],
@@ -66,8 +66,8 @@ async function fetchChartData() {
 }
 
 function handleCardClick(card) {
-  if (card.status === 'online') {
-    emit('onlineFilter', '1');
+  if (card.status) {
+    emit('onlineFilter', card.status);
     return;
   }
   emit('statusFilter', '');
@@ -93,7 +93,7 @@ onMounted(() => {
         :key="card.title"
         :color="card.color"
         :desc="card.desc"
-        :status="card.filterType"
+        :status="card.status"
         :title="card.title"
         :value="card.value"
         @click="handleCardClick"

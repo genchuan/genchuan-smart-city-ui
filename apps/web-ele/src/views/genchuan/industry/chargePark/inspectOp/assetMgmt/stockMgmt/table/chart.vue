@@ -6,7 +6,7 @@ import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
-import { getMockChartData } from './data';
+import { getAssetStockStatusOptionValue, getMockChartData } from './data';
 
 const emit = defineEmits(['assetFilter', 'statusFilter', 'trendFilter']);
 
@@ -23,7 +23,7 @@ const state = reactive({
       title: '预警库存数',
       value: 0,
       desc: '需处理库存',
-      status: '预警库存',
+      status: getAssetStockStatusOptionValue('预警库存'),
       color: '#e74c3c',
     },
   ],
@@ -66,6 +66,11 @@ function normalizeChartData(data) {
     : [];
 }
 
+const stockNodeData = computed(() => state.stockData.map((item) => ({
+  ...item,
+  name: item.assetName,
+})));
+
 async function fetchChartData() {
   try {
     const response = await getAssetStockChart();
@@ -86,8 +91,9 @@ function handleTrendClick(payload) {
   }
 }
 
-function handleStockClick(assetName) {
-  emit('assetFilter', assetName);
+function handleStockClick(assetInfo) {
+  console.log('assetInfo', assetInfo);
+  emit('assetFilter', assetInfo);
 }
 
 onMounted(() => {
@@ -125,6 +131,8 @@ onMounted(() => {
       :series-data="stockSeriesData"
       :x-data="stockXData"
       y-name="库存数"
+      :node-data="stockNodeData"
+      :is-emit-node-data="true"
       @bar-click="handleStockClick"
     />
   </div>

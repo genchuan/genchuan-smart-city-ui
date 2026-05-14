@@ -12,6 +12,8 @@ import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
+const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+
 export const textObj = {
   addText: '新增车辆',
   editText: '编辑车辆',
@@ -400,8 +402,8 @@ export function buildUserCarRowFromApi(
     data.auditorName ||
     data.auditorInfo?.name ||
     data.auditorInfo?.nickname ||
-    (data.auditorId ? operatorNameByIdMap[data.auditorId] : undefined) ||
     fallback.auditorName ||
+    (data.auditorId ? operatorNameByIdMap[data.auditorId] : undefined) ||
     '-';
   let auditorInfo: OperatorInfo | undefined;
 
@@ -715,7 +717,10 @@ export function buildUserCarQueryParams(formValues: Record<string, any>) {
     ...formValues,
     bindTime:
       Array.isArray(formValues.bindTime) && formValues.bindTime.length === 2
-        ? `${dayjs(formValues.bindTime[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(formValues.bindTime[1]).format('YYYY-MM-DD HH:mm:ss')}`
+        ? [
+            dayjs(formValues.bindTime[0]).format(QUERY_TIME_FORMAT),
+            dayjs(formValues.bindTime[1]).format(QUERY_TIME_FORMAT),
+          ]
         : undefined,
   };
 

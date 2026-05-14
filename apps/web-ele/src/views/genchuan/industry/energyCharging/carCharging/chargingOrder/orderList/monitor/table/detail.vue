@@ -3,15 +3,15 @@ import { computed, defineProps, toRefs } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
-// 定义组件接收的属性（替换为广告详情数据）
+// 定义组件接收的属性（替换为订单详情数据）
 const props = defineProps({
-  // 详情数据对象（广告详情数据）
+  // 详情数据对象（订单详情数据）
   detailObj: {
     type: Object,
     required: true,
     default: () => ({}),
   },
-  // 抽屉标题（可选，默认使用详情对象的roadSectionName）
+  // 抽屉标题（可选，默认使用订单编号）
   title: {
     type: String,
     default: '',
@@ -20,18 +20,18 @@ const props = defineProps({
 
 const { detailObj, title } = toRefs(props);
 
-// 计算属性处理标题，优先用路段名称，兜底显示默认值
+// 计算属性处理标题
 const drawerTitle = computed(() => {
-  const roadSectionName = detailObj.value?.roadSectionName || '订单';
-  return title.value || `${roadSectionName}详情`;
+  const orderCode = detailObj.value?.orderCode || '订单';
+  return title.value || `${orderCode}详情`;
 });
 
-// 初始化抽屉实例（加宽适配广告详情更多字段）
+// 初始化抽屉实例
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
   footer: false,
-  width: 800, // 加宽到800px适配广告详情字段
+  width: 800,
   onCancel() {
     detailDrawerApi.close();
   },
@@ -44,17 +44,30 @@ defineExpose({
   open: () => detailDrawerApi.open(),
   close: () => detailDrawerApi.close(),
 });
+
+// 格式化时间
+const formatTime = (time) => {
+  if (!time) return '-';
+  return new Date(time).toLocaleString();
+};
+
+// 格式化金额
+const formatMoney = (money) => {
+  if (money === null || money === undefined) return '-';
+  return `¥${(money || 0).toFixed(2)}`;
+};
 </script>
 
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 广告详情基础信息 -->
+      <!-- 订单详情基础信息 -->
+
       <!-- 订单编号 -->
       <div class="detail-card-row">
         <div class="detail-row-left">订单编号:</div>
         <div class="detail-row-right">
-          {{ detailObj.order_code || '-' }}
+          {{ detailObj.orderCode || '-' }}
         </div>
       </div>
 
@@ -62,7 +75,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">用户ID:</div>
         <div class="detail-row-right">
-          {{ detailObj.user_id || '-' }}
+          {{ detailObj.userId || '-' }}
         </div>
       </div>
 
@@ -70,7 +83,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">车牌号:</div>
         <div class="detail-row-right">
-          {{ detailObj.car_no || '-' }}
+          {{ detailObj.plateNo || '-' }}
         </div>
       </div>
 
@@ -78,15 +91,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">充电桩编号:</div>
         <div class="detail-row-right">
-          {{ detailObj.pile_id || '-' }}
-        </div>
-      </div>
-
-      <!-- 所属场站 -->
-      <div class="detail-card-row">
-        <div class="detail-row-left">所属场站:</div>
-        <div class="detail-row-right">
-          {{ detailObj.station_id || '-' }}
+          {{ detailObj.pileCode || '-' }}
         </div>
       </div>
 
@@ -94,7 +99,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">充电时长:</div>
         <div class="detail-row-right">
-          {{ detailObj.charge_hour || '-' }}
+          {{ detailObj.chargeTime ? `${detailObj.chargeTime}小时` : '-' }}
         </div>
       </div>
 
@@ -102,15 +107,15 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">充电量:</div>
         <div class="detail-row-right">
-          {{ detailObj.charge_elec || '-' }}
+          {{ detailObj.chargeAmount ? `${detailObj.chargeAmount}度` : '-' }}
         </div>
       </div>
 
-      <!-- 订单金额 -->
+      <!-- 充电金额 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">订单金额:</div>
+        <div class="detail-row-left">充电金额:</div>
         <div class="detail-row-right">
-          {{ detailObj.amount || '-' }}
+          {{ formatMoney(detailObj.chargeMoney) }}
         </div>
       </div>
 
@@ -118,15 +123,17 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">支付方式:</div>
         <div class="detail-row-right">
-          {{ detailObj.pay_type || '-' }}
+          {{ detailObj.payType || '-' }}
         </div>
       </div>
 
-      <!-- 支付时间 -->
+      <!-- 支付状态 -->
       <div class="detail-card-row">
-        <div class="detail-row-left">支付时间:</div>
+        <div class="detail-row-left">支付状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.pay_time || '-' }}
+          <el-tag :type="detailObj.payStatus === '已支付' ? 'success' : 'danger'">
+            {{ detailObj.payStatus || '-' }}
+          </el-tag>
         </div>
       </div>
 
@@ -134,7 +141,17 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">订单状态:</div>
         <div class="detail-row-right">
-          {{ detailObj.status || '-' }}
+          <el-tag :type="getOrderStatusType(detailObj.orderStatus)">
+            {{ detailObj.orderStatus || '-' }}
+          </el-tag>
+        </div>
+      </div>
+
+      <!-- 备注 -->
+      <div class="detail-card-row" v-if="detailObj.remark">
+        <div class="detail-row-left">备注:</div>
+        <div class="detail-row-right">
+          {{ detailObj.remark }}
         </div>
       </div>
 
@@ -142,18 +159,47 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">创建时间:</div>
         <div class="detail-row-right">
-          {{ detailObj.create_time || '-' }}
+          {{ formatTime(detailObj.createTime) }}
+        </div>
+      </div>
+
+      <!-- 支付时间 -->
+      <div class="detail-card-row" v-if="detailObj.payTime">
+        <div class="detail-row-left">支付时间:</div>
+        <div class="detail-row-right">
+          {{ formatTime(detailObj.payTime) }}
+        </div>
+      </div>
+
+      <!-- 完成时间 -->
+      <div class="detail-card-row" v-if="detailObj.completeTime">
+        <div class="detail-row-left">完成时间:</div>
+        <div class="detail-row-right">
+          {{ formatTime(detailObj.completeTime) }}
         </div>
       </div>
     </div>
   </DetailDrawer>
 </template>
 
+<script>
+// 添加订单状态样式辅助函数
+const getOrderStatusType = (status) => {
+  const typeMap = {
+    '待支付': 'warning',
+    '充电中': 'primary',
+    '已完成': 'success',
+    '已取消': 'info'
+  };
+  return typeMap[status] || 'info';
+};
+</script>
+
 <style scoped lang="scss">
 // 响应式适配
 @media (max-width: 768px) {
   .detail-row-left {
-    width: 110px; // 小屏适配标签宽度
+    width: 110px;
   }
 
   .detail-card {
@@ -164,10 +210,10 @@ defineExpose({
 }
 
 .detail-card {
-  min-height: 500px; // 适配广告详情字段数量，提升最小高度
-  max-height: 75vh; // 提高最大高度，容纳更多内容
+  min-height: 500px;
+  max-height: 75vh;
   padding: 20px;
-  overflow-y: auto; // 内容过多时显示滚动条
+  overflow-y: auto;
   background-color: #f9fafb;
   border-radius: 8px;
 }
@@ -175,9 +221,9 @@ defineExpose({
 // 每行的布局
 .detail-card-row {
   display: flex;
-  align-items: flex-start; // 顶部对齐，适配多行文本
+  align-items: flex-start;
   padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0; // 分隔线增强可读性
+  border-bottom: 1px solid #f0f0f0;
 
   // 最后一行去掉分隔线
   &:last-child {
@@ -198,22 +244,22 @@ defineExpose({
 
 // 左侧标签样式
 .detail-row-left {
-  flex-shrink: 0; // 不收缩
-  width: 130px; // 加宽标签宽度，适配"监测设备编号"等长标签
+  flex-shrink: 0;
+  width: 130px;
   font-size: 14px;
-  font-weight: 500; // 加粗突出标签
-  line-height: 18px; // 统一行高
-  color: #606266; // 灰色调，区分内容
+  font-weight: 500;
+  line-height: 18px;
+  color: #606266;
 }
 
 // 右侧内容样式
 .detail-row-right {
-  flex: 1; // 剩余宽度自适应
+  flex: 1;
   padding-right: 10px;
   font-size: 14px;
   line-height: 18px;
-  color: #303133; // 主文本色
-  word-break: break-all; // 处理长文本换行（如指标阈值范围）
+  color: #303133;
+  word-break: break-all;
 }
 
 // 滚动条样式优化
@@ -233,5 +279,5 @@ defineExpose({
 
 .detail-card::-webkit-scrollbar-thumb:hover {
   background: #c0c4cc;
-} // 详情卡片整体样式
+}
 </style>

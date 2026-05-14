@@ -3,7 +3,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const ASSET_INFO_TYPE_DICT = DICT_TYPE.ASSET_INFO_TYPE;
 export const ASSET_INFO_STATUS_DICT = DICT_TYPE.ASSET_INFO_STATUS;
@@ -49,6 +49,14 @@ export const assetStatusOptions = getDictOptions(
   ASSET_INFO_STATUS_DICT,
   'string',
 );
+
+/** 按资产状态字典 label 取 value，供图表卡片筛选 */
+export function getAssetInfoStatusOptionValue(label) {
+  const opt = assetStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
 
 const MOCK_ASSET_TYPE_VALUES = ['监测设备', '充电设备', '巡检工具'];
 const MOCK_ASSET_STATUS_VALUES = ['正常', '禁用', '报废'];
@@ -106,8 +114,7 @@ const baseTime = 1_775_011_986_000;
 export function formatAssetTime(value) {
   if (!value) return '-';
   const text = String(value);
-  const timestamp = /^\d{10}$/.test(text) ? Number(text) * 1000 : value;
-  return formatDate(timestamp) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 export function getStationName(stationId) {
@@ -437,11 +444,11 @@ export function useGridColumns() {
     //   sortable: true,
     // },
     {
-      field: 'changeRecord',
-      title: '变更记录',
+      field: 'reserve1',
+      title: '报废理由',
       minWidth: 220,
       sortable: true,
-      slots: { default: 'changeRecord' },
+      slots: { default: 'reserve1' },
     },
     {
       field: 'createTimeStr',
@@ -479,9 +486,9 @@ export const detailFields = [
   { key: 'stationName', label: '所属场站' },
   { key: 'deviceName', label: '绑定设备' },
   { key: 'effectTimeStr', label: '生效时间' },
-  { key: 'changeRecord', label: '变更记录' },
-  { key: 'reserve1', label: '备用字段1' },
-  { key: 'reserve2', label: '备用字段2' },
+  // { key: 'changeRecord', label: '变更记录' },
+  { key: 'reserve1', label: '报废理由' },
+  // { key: 'reserve2', label: '备用字段2' },
   { key: 'creator', label: '创建者' },
   { key: 'updater', label: '更新者' },
   { key: 'createTimeStr', label: '创建时间' },

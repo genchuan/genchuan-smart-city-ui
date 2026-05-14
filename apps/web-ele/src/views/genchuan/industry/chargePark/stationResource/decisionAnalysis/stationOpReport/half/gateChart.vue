@@ -1,16 +1,24 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import * as pageApi from '#/api/genchuan/industry/chargePark/stationResource/decisionAnalysis/stationOpReport/index.js';
 import StatsMap from '#/genchuan-components/Map/index.vue';
 import BarClick from '#/genchuan-components/stats/barClick.vue';
-import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
 
+import DrillDownDetailDrawer from '../components/DrillDownDetailDrawer.vue';
 import { pageConfig, REPORT_TYPE } from './data.js';
+
+const props = defineProps({
+  reportCycle: {
+    type: String,
+    default: undefined,
+  },
+});
 
 const loading = ref(false);
 const chartData = ref({});
+const drillDownDrawerRef = ref(null);
 
 const reportPeriodMap = {
   day: '日报',
@@ -22,8 +30,124 @@ const reportPeriodMap = {
   customize: '自定义报表',
 };
 
+const allReportCycles = [
+  '日报',
+  '周报',
+  '月报',
+  '季报',
+  '半年报',
+  '年报',
+  '自定义报表',
+];
+
 function currentReportPeriod() {
+  if (props.reportCycle !== undefined) {
+    return props.reportCycle;
+  }
   return reportPeriodMap[REPORT_TYPE] || REPORT_TYPE;
+}
+
+function hasChartContent(data = {}) {
+  return Boolean(
+    Object.keys(data.cardData || {}).length > 0 ||
+    data.mapData?.length ||
+    data.stationMapList?.length ||
+    data.stationMapData?.length ||
+    data.mapList?.length ||
+    data.stationList?.length ||
+    data.lineData?.length ||
+    data.areaStationBarData?.length ||
+    data.areaBarData?.length ||
+    data.stationTypeBarData?.length ||
+    data.typeBarData?.length ||
+    data.stationOrderCountBarData?.length ||
+    data.stationOrderBarData?.length ||
+    data.stationRecoverFinishBarData?.length ||
+    data.stationRecoveryRateBarData?.length ||
+    data.recoveryRateBarData?.length ||
+    data.barData?.length,
+  );
+}
+
+function mergeCardData(target = {}, source = {}) {
+  const result = { ...target };
+  Object.entries(source).forEach(([key, value]) => {
+    const current = result[key];
+    if (typeof value === 'number' && typeof current === 'number') {
+      result[key] = current + value;
+    } else if (typeof value === 'number' && current === undefined) {
+      result[key] = value;
+    } else if (current === undefined) {
+      result[key] = value;
+    }
+  });
+  return result;
+}
+
+function mergeChartData(list) {
+  let result = {};
+  for (const item of list) {
+    result = {
+      ...result,
+      cardData: mergeCardData(result.cardData, item.cardData),
+      mapData: [...(result.mapData || []), ...pickMapList(item)],
+      lineData: [...(result.lineData || []), ...(item.lineData || [])],
+      areaStationBarData: [
+        ...(result.areaStationBarData || []),
+        ...(item.areaStationBarData || []),
+      ],
+      areaBarData: [...(result.areaBarData || []), ...(item.areaBarData || [])],
+      stationTypeBarData: [
+        ...(result.stationTypeBarData || []),
+        ...(item.stationTypeBarData || []),
+      ],
+      typeBarData: [...(result.typeBarData || []), ...(item.typeBarData || [])],
+      stationOrderCountBarData: [
+        ...(result.stationOrderCountBarData || []),
+        ...(item.stationOrderCountBarData || []),
+      ],
+      stationOrderBarData: [
+        ...(result.stationOrderBarData || []),
+        ...(item.stationOrderBarData || []),
+      ],
+      stationRecoverFinishBarData: [
+        ...(result.stationRecoverFinishBarData || []),
+        ...(item.stationRecoverFinishBarData || []),
+      ],
+      stationRecoveryRateBarData: [
+        ...(result.stationRecoveryRateBarData || []),
+        ...(item.stationRecoveryRateBarData || []),
+      ],
+      recoveryRateBarData: [
+        ...(result.recoveryRateBarData || []),
+        ...(item.recoveryRateBarData || []),
+      ],
+      barData: [...(result.barData || []), ...(item.barData || [])],
+    };
+  }
+  return result;
+}
+
+async function loadAllCycleChart() {
+  const response = await pageApi.getStationOpReportChart({
+    reportCycle: '全部',
+  });
+  if (hasChartContent(response)) return response;
+
+  const cycleCharts = await Promise.all(
+    allReportCycles.map(async (reportCycle) => {
+      try {
+        return (
+          (await pageApi.getStationOpReportChart({
+            reportCycle,
+          })) || {}
+        );
+      } catch {
+        return {};
+      }
+    }),
+  );
+  return mergeChartData(cycleCharts);
 }
 
 function pickList(keys) {
@@ -34,11 +158,75 @@ function pickList(keys) {
   return [];
 }
 
+function pickMapList(source = chartData.value) {
+  const keys = [
+    'mapData',
+    'stationMapList',
+    'stationMapData',
+    'stationMap',
+    'mapList',
+    'stationList',
+    'stationData',
+  ];
+  for (const key of keys) {
+    const value = source?.[key];
+    if (Array.isArray(value) && value.length > 0) return value;
+  }
+  return [];
+}
+
 function pickValue(item, keys, fallback = 0) {
   for (const key of keys) {
     if (item?.[key] !== undefined && item?.[key] !== null) return item[key];
   }
   return fallback;
+}
+
+function pickText(item, keys, fallback = '') {
+  for (const key of keys) {
+    const value = item?.[key];
+    if (value !== undefined && value !== null && value !== '') return value;
+  }
+  return fallback;
+}
+
+function normalizeCoordinateValue(value) {
+  if (Array.isArray(value) && value.length >= 2) {
+    return `${value[0]},${value[1]}`;
+  }
+
+  if (value && typeof value === 'object') {
+    const lng = pickText(value, ['longitude', 'lng', 'lon', 'x']);
+    const lat = pickText(value, ['latitude', 'lat', 'y']);
+    return lng !== '' && lat !== '' ? `${lng},${lat}` : '';
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().replace('，', ',');
+  }
+
+  return value === undefined || value === null ? '' : `${value}`;
+}
+
+function getCoordinate(item) {
+  const direct = pickText(item, [
+    'coordinate',
+    'coordinateInfo',
+    'coordinates',
+    'location',
+    'position',
+  ]);
+  const directCoordinate = normalizeCoordinateValue(direct);
+  if (directCoordinate) return directCoordinate;
+
+  const lng = pickText(item, ['longitude', 'lng', 'lon', 'x']);
+  const lat = pickText(item, ['latitude', 'lat', 'y']);
+  return lng !== '' && lat !== '' ? `${lng},${lat}` : '';
+}
+
+function isValidCoordinate(coordinate) {
+  const [lng, lat] = `${coordinate}`.split(',').map(Number);
+  return Number.isFinite(lng) && Number.isFinite(lat);
 }
 
 const chartCards = computed(() => {
@@ -52,27 +240,81 @@ const chartCards = computed(() => {
 });
 
 const mapData = computed(() =>
-  (chartData.value?.mapData || []).map((item, index) => ({
-    ...item,
-    coordinate:
-      item.coordinate ||
-      (item.longitude && item.latitude
-        ? `${item.longitude},${item.latitude}`
-        : ''),
-    geoCode: item.geoCode || item.id || `station-report-map-${index}`,
-    locationName:
-      item.locationName || item.stationName || item.areaName || '场站资源',
-    statusName: item.statusName || item.status || '正常',
-  })),
+  pickMapList()
+    .map((item, index) => {
+      const coordinate = getCoordinate(item);
+      const stationNo = pickText(item, [
+        'stationNo',
+        'stationCode',
+        'geoCode',
+        'code',
+      ]);
+      const stationId = pickText(item, ['stationId', 'id']);
+      const stationName = pickText(item, [
+        'stationName',
+        'station_name',
+        'name',
+        'station',
+        'locationName',
+        'pointName',
+      ]);
+      const locationName = pickText(
+        item,
+        ['locationName', 'stationName', 'name', 'areaName'],
+        '场站资源',
+      );
+      const stationCount = pickText(item, [
+        'stationCount',
+        'totalStationCount',
+        'coverStationCount',
+      ]);
+      const spaceCount = pickText(item, [
+        'spaceCount',
+        'totalSpaceCount',
+        'availableSpaceCount',
+      ]);
+      const statusName = pickText(
+        item,
+        ['statusName', 'stationStatus', 'status'],
+        '正常',
+      );
+
+      return {
+        ...item,
+        areaName: pickText(item, ['areaName', 'regionName']),
+        coordinate,
+        geoCode: pickText(
+          item,
+          ['geoCode', 'stationNo', 'stationCode', 'stationId', 'id', 'code'],
+          `station-report-map-${index}`,
+        ),
+        locationName,
+        orderCount: pickText(item, ['orderCount', 'totalOrderCount']),
+        revenue: pickText(item, ['revenue', 'totalRevenue', 'amount']),
+        spaceCount,
+        stationCount,
+        stationId,
+        stationName,
+        stationNo,
+        stationStatus: statusName,
+        stationType: pickText(item, ['stationType', 'typeName', 'type']),
+        statusName,
+      };
+    })
+    .filter((item) => isValidCoordinate(item.coordinate)),
 );
 
 const mapInfoWindowConfig = {
   title: 'locationName',
   fields: [
+    { key: 'geoCode', label: '场站编码' },
     { key: 'areaName', label: '片区' },
     { key: 'stationName', label: '场站' },
-    { key: 'stationCount', label: '场站数', bold: true },
+    { key: 'coordinate', label: '坐标' },
+    { key: 'stationCount', label: '场站数' },
     { key: 'spaceCount', label: '车位数' },
+    { key: 'orderCount', label: '订单量', bold: true },
+    { key: 'revenue', label: '营收' },
     { key: 'statusName', label: '状态' },
   ],
 };
@@ -203,215 +445,319 @@ const hasOrderBar = computed(() => orderBarXData.value.length > 0);
 const hasRecoveryBar = computed(() => recoveryBarXData.value.length > 0);
 const hasLine = computed(() => lineXData.value.length > 0);
 
+const barChartPanels = computed(() =>
+  [
+    {
+      drillType: 'areaStationBar',
+      hasData: hasAreaBar.value,
+      seriesData: areaBarSeriesData.value,
+      title: '各片区场站数分布',
+      xData: areaBarXData.value,
+      yName: '数量',
+    },
+    {
+      drillType: 'stationTypeBar',
+      hasData: hasTypeBar.value,
+      seriesData: typeBarSeriesData.value,
+      title: '各类型场站数分布',
+      xData: typeBarXData.value,
+      yName: '数量',
+    },
+    {
+      drillType: 'stationOrderBar',
+      hasData: hasOrderBar.value,
+      seriesData: orderBarSeriesData.value,
+      title: '各场站订单量分布',
+      xData: orderBarXData.value,
+      yName: '数量',
+    },
+    {
+      drillType: 'recoveryRateBar',
+      hasData: hasRecoveryBar.value,
+      seriesData: recoveryBarSeriesData.value,
+      title: '各场站追缴完成率',
+      xData: recoveryBarXData.value,
+      yName: '完成率(%)',
+    },
+  ].filter((item) => item.hasData),
+);
+
+const firstBarPanel = computed(() => barChartPanels.value[0]);
+const secondBarPanel = computed(() =>
+  hasMap.value ? barChartPanels.value[0] : barChartPanels.value[1],
+);
+const firstChartUsesMap = computed(() => hasMap.value);
+const firstChartUsesBar = computed(() => !hasMap.value && firstBarPanel.value);
+
 async function loadChart() {
   loading.value = true;
   try {
+    const reportCycle = currentReportPeriod();
     chartData.value =
-      (await pageApi.getStationOpReportChart({
-        reportCycle: currentReportPeriod(),
-      })) || {};
+      reportCycle === '全部'
+        ? await loadAllCycleChart()
+        : ((await pageApi.getStationOpReportChart({
+            ...(reportCycle ? { reportCycle } : {}),
+          })) ?? {});
   } finally {
     loading.value = false;
   }
 }
 
 onMounted(loadChart);
+
+watch(
+  () => props.reportCycle,
+  () => {
+    loadChart();
+  },
+);
+
+function openDrillDown(info) {
+  drillDownDrawerRef.value?.open({
+    reportCycle: currentReportPeriod() || '全部',
+    ...info,
+  });
+}
+
+function handleCardClick(card) {
+  openDrillDown({
+    source: 'card',
+    drillType: card.key,
+    drillLabel: card.title,
+    drillName: card.title,
+    drillValue: card.value,
+  });
+}
+
+function handleBarClick(drillType, drillLabel, drillValue) {
+  openDrillDown({
+    source: 'chart',
+    drillType,
+    drillLabel,
+    drillName: drillValue,
+    drillValue,
+  });
+}
+
+function handleLineClick(info) {
+  openDrillDown({
+    source: 'chart',
+    drillType: 'trendLine',
+    drillLabel: info?.seriesName || '周期订单及业务趋势',
+    drillName: info?.categoryName,
+    drillValue: info?.value,
+  });
+}
+
+function handleMapMarkerClick(marker) {
+  openDrillDown({
+    source: 'map',
+    drillType: 'mapStation',
+    drillLabel: '地图场站',
+    drillName:
+      marker?.stationName ||
+      marker?.locationName ||
+      marker?.stationNo ||
+      marker?.geoCode,
+    drillValue: 1,
+    row: marker || {},
+  });
+}
 </script>
 
 <template>
-  <div v-loading="loading" class="park-chart-box">
+  <div v-loading="loading" class="rule-chart-box">
     <div v-if="hasCards" class="chart-box-left">
-      <IndicatorClick
+      <div
         v-for="item in chartCards"
         :key="item.key"
-        :title="item.title"
-        :value="item.value"
-        :color="item.color"
-      />
+        class="stat-card"
+        :style="{ borderLeftColor: item.color || '#4A90E2' }"
+        @click="handleCardClick(item)"
+      >
+        <div class="card-header">
+          <h3 class="card-title">{{ item.title }}</h3>
+          <div
+            class="card-indicator"
+            :style="{ backgroundColor: item.color || '#4A90E2' }"
+          ></div>
+        </div>
+        <div class="card-body">
+          <div class="card-value">{{ item.value }}</div>
+          <div v-if="item.desc" class="card-desc">{{ item.desc }}</div>
+        </div>
+      </div>
     </div>
 
     <div class="charts-wrapper">
-      <div v-if="hasMap" class="chart-wrapper map-wrapper">
+      <div v-if="firstChartUsesMap" class="chart-area">
         <StatsMap
           :data="mapData"
           :info-window-config="mapInfoWindowConfig"
           class="chart-panel-inner"
+          @marker-click="handleMapMarkerClick"
         />
       </div>
 
-      <div v-if="hasAreaBar" class="chart-wrapper">
+      <div v-else-if="firstChartUsesBar" class="chart-area">
         <BarClick
           class="chart-panel-inner"
-          title="各片区场站数分布"
-          :x-data="areaBarXData"
-          :series-data="areaBarSeriesData"
-          y-name="数量"
+          :title="firstBarPanel.title"
+          :x-data="firstBarPanel.xData"
+          :series-data="firstBarPanel.seriesData"
+          :y-name="firstBarPanel.yName"
+          @bar-click="
+            handleBarClick(firstBarPanel.drillType, firstBarPanel.title, $event)
+          "
         />
       </div>
 
-      <div v-if="hasTypeBar" class="chart-wrapper">
+      <div v-if="secondBarPanel" class="chart-area">
         <BarClick
           class="chart-panel-inner"
-          title="各类型场站数分布"
-          :x-data="typeBarXData"
-          :series-data="typeBarSeriesData"
-          y-name="数量"
+          :title="secondBarPanel.title"
+          :x-data="secondBarPanel.xData"
+          :series-data="secondBarPanel.seriesData"
+          :y-name="secondBarPanel.yName"
+          @bar-click="
+            handleBarClick(
+              secondBarPanel.drillType,
+              secondBarPanel.title,
+              $event,
+            )
+          "
         />
       </div>
 
-      <div v-if="hasOrderBar" class="chart-wrapper">
-        <BarClick
-          class="chart-panel-inner"
-          title="各场站订单量分布"
-          :x-data="orderBarXData"
-          :series-data="orderBarSeriesData"
-          y-name="数量"
-        />
-      </div>
-
-      <div v-if="hasRecoveryBar" class="chart-wrapper">
-        <BarClick
-          class="chart-panel-inner"
-          title="各场站追缴完成率"
-          :x-data="recoveryBarXData"
-          :series-data="recoveryBarSeriesData"
-          y-name="完成率(%)"
-        />
-      </div>
-
-      <div v-if="hasLine" class="chart-wrapper line-wrapper">
+      <div v-if="hasLine" class="chart-area line-chart-area">
         <LineChartClick
           class="chart-panel-inner"
           title="周期订单及业务趋势"
           :x-data="lineXData"
           :series-data="lineSeriesData"
           y-name="数量"
+          @line-click="handleLineClick"
         />
       </div>
     </div>
   </div>
+  <DrillDownDetailDrawer ref="drillDownDrawerRef" />
 </template>
 
 <style scoped lang="scss">
-.park-chart-box {
-  display: grid;
-  grid-template-columns: 480px repeat(2, minmax(320px, 1fr));
-  gap: 12px;
-  align-items: start;
+.rule-chart-box {
+  display: flex;
+  flex-wrap: nowrap;
   width: 100%;
+  height: auto;
   min-height: 280px;
-  overflow: visible;
+  padding-bottom: 0.5rem;
+  overflow: hidden;
+}
 
-  @media (max-width: 1280px) {
-    grid-template-columns: repeat(2, minmax(320px, 1fr));
+.chart-box-left {
+  display: flex;
+  flex-shrink: 0;
+  flex-flow: row wrap;
+  gap: 4px;
+  align-content: stretch;
+  width: 480px;
+  height: 280px;
+  padding: 4px;
+  overflow: hidden;
+}
 
-    .chart-box-left {
-      grid-column: 1 / -1;
-      width: 100%;
-      min-width: 0;
-      max-width: 100%;
-    }
+.stat-card {
+  box-sizing: border-box;
+  display: flex;
+  flex: 1 1 calc(33.333% - 3px);
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  padding: 4px 8px;
+  cursor: pointer;
+  background-color: var(--el-bg-color, #fff);
+  border-left: 4px solid;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  transition: all 0.3s ease;
+}
 
-    .line-wrapper {
-      grid-column: 1 / -1;
-    }
-  }
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+  transform: translateY(-2px);
+}
 
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
 
-    .chart-box-left,
-    .line-wrapper {
-      grid-column: 1;
-    }
-  }
+.card-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6e7e91;
+}
 
-  .chart-box-left {
-    display: flex !important;
-    flex: 0 0 480px !important;
-    flex-flow: row wrap;
-    grid-column: 1;
-    gap: 4px;
-    align-content: stretch;
-    width: 480px;
-    min-width: 480px;
-    max-width: 480px;
-    height: auto;
-    min-height: 280px;
-    padding: 4px;
-    overflow: visible;
+.card-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
 
-    :deep(.stat-card) {
-      box-sizing: border-box;
-      display: flex;
-      flex: 1 1 calc(33.333% - 3px);
-      flex-direction: column;
-      justify-content: center;
-      min-width: 0;
-      height: auto !important;
-      min-height: 64px !important;
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
+.card-body {
+  display: flex;
+  flex-direction: column;
+}
 
-    :deep(.card-header) {
-      margin-bottom: 4px;
-    }
+.card-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #4a90e2;
+}
 
-    :deep(.card-title) {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      font-size: 12px;
-      line-height: 16px;
-      white-space: nowrap;
-    }
+.card-desc {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #909399;
+}
 
-    :deep(.card-indicator) {
-      flex: 0 0 6px;
-      width: 6px;
-      height: 6px;
-    }
+.charts-wrapper {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  min-width: 0;
+  height: 280px;
+  padding: 4px;
+}
 
-    :deep(.card-value) {
-      margin-bottom: 2px;
-      font-size: 20px;
-      line-height: 1.1;
-    }
+.chart-area {
+  position: relative;
+  box-sizing: border-box;
+  flex: 0 0 28%;
+  min-width: 0;
+  height: 272px;
+}
 
-    :deep(.card-desc) {
-      font-size: 11px;
-    }
-  }
+.line-chart-area {
+  flex: 1;
+  height: 272px;
+}
 
-  .charts-wrapper {
-    display: contents;
-  }
+:deep(.chart-panel-inner) {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 272px !important;
+  border-radius: 0 !important;
+}
 
-  .chart-wrapper {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    height: 280px;
-    min-height: 280px;
-  }
-
-  .line-wrapper {
-    grid-column: 1 / -1;
-    height: 320px;
-    min-height: 320px;
-  }
-
-  :deep(.chart-panel-inner) {
-    flex: 1 1 auto;
-    width: 100%;
-    height: 280px !important;
-    min-height: 280px !important;
-  }
-
-  .line-wrapper :deep(.chart-panel-inner) {
-    height: 320px !important;
-    min-height: 320px !important;
-  }
+:deep(.chart-panel-inner > div) {
+  height: 100% !important;
 }
 </style>

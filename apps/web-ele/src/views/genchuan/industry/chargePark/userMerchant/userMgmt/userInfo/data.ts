@@ -1,5 +1,6 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { UserCarVO } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userCar';
 import type {
   UserInfoAuditLogVO,
   UserInfoCarVO,
@@ -12,6 +13,8 @@ import type {
 import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
+
+const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
 export type UserStatus = '正常' | '禁用';
 
@@ -256,7 +259,9 @@ export function formatApiTime(value?: null | number | string) {
     : '-';
 }
 
-function buildCarInfo(data?: null | Partial<UserInfoCarVO>): CarInfo {
+export function buildCarInfo(
+  data?: null | Partial<UserCarVO & UserInfoCarVO>,
+): CarInfo {
   return {
     plateColor: data?.plateColor || '-',
     plateNo: data?.plateNo || '-',
@@ -650,13 +655,19 @@ export function buildStatsDataFromApi(data?: Partial<UserInfoChartVO>) {
  * 构建查询参数
  */
 export function buildUserInfoQueryParams(formValues: Record<string, any>) {
+  const registerTimeRange =
+    Array.isArray(formValues.registerTime) &&
+    formValues.registerTime.length === 2 &&
+    formValues.registerTime.every((item) => dayjs(item).isValid())
+      ? [
+          dayjs(formValues.registerTime[0]).format(QUERY_TIME_FORMAT),
+          dayjs(formValues.registerTime[1]).format(QUERY_TIME_FORMAT),
+        ]
+      : undefined;
+
   const params = {
     ...formValues,
-    registerTime:
-      Array.isArray(formValues.registerTime) &&
-      formValues.registerTime.length === 2
-        ? `${dayjs(formValues.registerTime[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(formValues.registerTime[1]).format('YYYY-MM-DD HH:mm:ss')}`
-        : undefined,
+    registerTime: registerTimeRange,
   };
 
   return Object.fromEntries(

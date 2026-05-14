@@ -47,13 +47,13 @@ export function useFormSchema() {
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-    { field: 'id', title: '推送ID', minWidth: 100, slots: { default: 'id' } },
-    { field: 'userName', title: '用户', minWidth: 120, slots: { default: 'userName' } },
-    { field: 'stationName', title: '场站', minWidth: 150, slots: { default: 'stationName' } },
-    { field: 'spaceInfo', title: '空位信息', minWidth: 150, slots: { default: 'spaceInfo' } },
-    { field: 'pushTime', title: '推送时间', minWidth: 160 },
-    { field: 'status', title: '推送状态', minWidth: 100, slots: { default: 'status' } },
-    { field: 'pushResult', title: '推送结果', minWidth: 100, slots: { default: 'pushResult' } },
+    { field: 'id', title: '推送ID', minWidth: 100, sortable: true,slots: { default: 'id' } },
+    { field: 'userName', title: '用户', minWidth: 120, sortable: true,slots: { default: 'userName' } },
+    { field: 'stationName', title: '场站', minWidth: 150, sortable: true,slots: { default: 'stationName' } },
+    { field: 'spaceInfo', title: '空位信息', minWidth: 150,sortable: true, slots: { default: 'spaceInfo' } },
+    { field: 'pushTime', title: '推送时间', minWidth: 160 ,sortable: true,},
+    { field: 'status', title: '推送状态', minWidth: 100, sortable: true,slots: { default: 'status' } },
+    { field: 'pushResult', title: '推送结果', minWidth: 100, sortable: true,slots: { default: 'pushResult' } },
     { title: '操作', width: 150, fixed: 'right', slots: { default: 'actions' } },
   ];
 }

@@ -3,7 +3,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const INSPECT_REPORT_TYPE_DICT = DICT_TYPE.INSPECT_REPORT_TYPE;
 export const INSPECT_REPORT_STATUS_DICT = DICT_TYPE.INSPECT_REPORT_STATUS;
@@ -62,6 +62,14 @@ export const statusOptions = getDictOptions(
   'string',
 );
 
+/** 按上报状态字典 label 取 value，供图表卡片筛选 */
+export function getReportStatusOptionValue(label) {
+  const opt = statusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
 const MOCK_REPORT_TYPE_VALUES = ['设备故障', '占位异常', '其他'];
 const MOCK_REPORT_STATUS_VALUES = ['待审核', '待处置', '已完成', '已驳回'];
 
@@ -109,8 +117,7 @@ function normalizeTimeValue(value) {
 export function formatReportTime(value) {
   if (!value) return '-';
   const text = String(value);
-  const timestamp = /^\d{10}$/.test(text) ? Number(text) * 1000 : value;
-  return formatDate(timestamp) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 export function getTaskName(taskId) {

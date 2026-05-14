@@ -4,7 +4,7 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 import { getInspectUserPage } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectUser';
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 
 export const INSPECT_TRACK_STATUS_DICT = DICT_TYPE.INSPECT_TRACK_STATUS;
 
@@ -141,14 +141,12 @@ function normalizeTimeValue(value) {
 export function formatTrackTime(value) {
   if (!value) return '-';
   const text = String(value);
-  const timestamp = /^\d{10}$/.test(text) ? Number(text) * 1000 : value;
-  return formatDate(timestamp) || text;
+  return formatLocalDateTime(value) || text;
 }
 
 export function formatTrendTime(value) {
   if (!value) return '-';
-  const timestamp = normalizeTimeValue(value);
-  return formatDate(timestamp, 'YYYY-MM-DD') || String(value);
+  return formatLocalDateTime(value, 'YYYY-MM-DD') || String(value);
 }
 
 export function formatDuration(minutes) {
@@ -506,12 +504,12 @@ export function useSearchFormSchema() {
     {
       fieldName: 'area',
       label: '所属片区',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        placeholder: '请选择所属片区',
+        placeholder: '请输入所属片区',
         clearable: true,
-        filterable: true,
-        options: areaOptions,
+        // filterable: true,
+        // options: areaOptions,
       },
     },
     // {

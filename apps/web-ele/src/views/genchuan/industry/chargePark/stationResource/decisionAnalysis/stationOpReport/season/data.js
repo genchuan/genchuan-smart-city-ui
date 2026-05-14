@@ -11,7 +11,7 @@ export const REPORT_TYPE = 'season';
 export const pageConfig = {
   ...basePageConfig,
   title: '场站资源季报',
-  exportName: '场站资源季报.xlsx',
+  exportName: '场站周期报表.xlsx',
   enableGenerate: true,
   generateButtonText: '生成季报',
 };

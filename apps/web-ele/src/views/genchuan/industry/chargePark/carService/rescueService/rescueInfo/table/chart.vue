@@ -286,7 +286,7 @@ onUnmounted(() => {
   lineChartInstance?.dispose();
 });
 
-defineExpose({ locateAddress, refresh });
+defineExpose({ locateAddress, refresh: fetchChartData });
 </script>
 
 <template>

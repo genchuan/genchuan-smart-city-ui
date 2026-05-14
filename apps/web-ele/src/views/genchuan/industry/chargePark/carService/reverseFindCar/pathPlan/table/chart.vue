@@ -41,13 +41,7 @@ const fetchChartData = async () => {
       let rate = data.planSuccessRate ?? 0;
       const percent = rate <= 1 ? (rate * 100).toFixed(1) : rate;
       state.cardList[1].value = `${percent}%`;
-
-      state.pathList = (data.pathList || []).map((item, index) => ({
-        id: `chart_path_${index}`,
-        path: item.path,
-        pathLength: null,
-        expectDuration: null,
-      }));
+      // 不再默认绘制近 7 天全部路径,等用户点列表行触发 draw-path-plan 事件再单独绘制
     }
   } catch (error) {
     console.error('获取路径规划统计数据失败', error);

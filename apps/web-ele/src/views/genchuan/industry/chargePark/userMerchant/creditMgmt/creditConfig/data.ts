@@ -9,6 +9,8 @@ import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
+const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+
 type CreditConfigApiExtraVO = CreditConfigVO & {
   accuracy?: number;
   applyRecords?: ApplyRecord[];
@@ -286,7 +288,10 @@ export function buildStatsDataFromApi(data?: Partial<CreditConfigChartVO>) {
 export function buildCreditConfigQueryParams(formValues: Record<string, any>) {
   const effectTime =
     Array.isArray(formValues.effectTime) && formValues.effectTime.length === 2
-      ? `${dayjs(formValues.effectTime[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(formValues.effectTime[1]).format('YYYY-MM-DD HH:mm:ss')}`
+      ? [
+          dayjs(formValues.effectTime[0]).format(QUERY_TIME_FORMAT),
+          dayjs(formValues.effectTime[1]).format(QUERY_TIME_FORMAT),
+        ]
       : undefined;
 
   return {
