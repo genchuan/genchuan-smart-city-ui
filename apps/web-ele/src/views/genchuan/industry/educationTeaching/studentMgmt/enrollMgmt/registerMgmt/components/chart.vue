@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
+import {ref, computed, onMounted} from 'vue';
+import {ElSelect, ElOption, ElDatePicker} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
@@ -10,13 +10,11 @@ import {
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/enrollMgmt/registerMgmt/data.js';
 
 const loading = ref(true);
-const chartData = ref({});          // 卡片 + 折线图
-const enrollData = ref({});         // 专业报名录取数据
+const chartData = ref({});
+const enrollData = ref({});
 
-// 时间范围选择器绑定的值（数组格式 [startDate, endDate]）
 const timeRange = ref([]);
 
-// 获取默认时间范围（最近30天，结束时间为当天）
 const getDefaultTimeRange = () => {
   const end = new Date();
   const start = new Date();
@@ -24,8 +22,6 @@ const getDefaultTimeRange = () => {
   return [start, end];
 };
 
-// 格式化单个日期时间为后端要求的格式（带 T 分隔，如 "2023-01-01T00:00:00"）
-// isEnd: 是否为结束时间（结束时间用 23:59:59，起始用 00:00:00）
 const formatDateTime = (date, isEnd = false) => {
   if (!date) return '';
   const d = new Date(date);
@@ -36,7 +32,6 @@ const formatDateTime = (date, isEnd = false) => {
   return `${year}-${month}-${day}T${time}`;
 };
 
-// 生成 timeRange 字符串（格式："起始时间,结束时间"）
 const getTimeRangeParam = () => {
   if (timeRange.value && timeRange.value.length === 2) {
     const startStr = formatDateTime(timeRange.value[0], false);
@@ -47,47 +42,42 @@ const getTimeRangeParam = () => {
   return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
 };
 
-// 日期范围变化时重新加载数据
 const handleDateRangeChange = () => {
   loadData();
 };
 
-// ========== 卡片数据 ==========
 const cardList = computed(() => {
   const total = chartData.value.totalApplyCount || 0;
   const pending = chartData.value.pendingAuditCount || 0;
   const admitted = chartData.value.admittedCount || 0;
   const confirmed = chartData.value.confirmedCount || 0;
   return [
-    { title: '总报名人数', value: total, color: '#409EFF', status: 'total' },
-    { title: '待审核人数', value: pending, color: '#E6A23C', status: 'pending' },
-    { title: '已录取人数', value: admitted, color: '#67C23A', status: 'admitted' },
-    { title: '已确认人数', value: confirmed, color: '#909399', status: 'confirmed' },
+    {title: '总报名人数', value: total, color: '#409EFF', status: 'total'},
+    {title: '待审核人数', value: pending, color: '#E6A23C', status: 'pending'},
+    {title: '已录取人数', value: admitted, color: '#67C23A', status: 'admitted'},
+    {title: '已确认人数', value: confirmed, color: '#909399', status: 'confirmed'},
   ];
 });
 
-// ========== 折线图数据（近一周报名趋势） ==========
 const lineData = computed(() => {
   const trend = chartData.value.recentWeekApplyTrend || [];
   return {
     xAxis: trend.map(item => item.date),
-    series: [{ name: '报名人数', data: trend.map(item => item.count) }],
+    series: [{name: '报名人数', data: trend.map(item => item.count)}],
   };
 });
 
-// ========== 柱状图数据（各专业报名/录取人数） ==========
 const barData = computed(() => {
   const data = enrollData.value.majorEnrollData || [];
   return {
     xData: data.map(item => item.major),
     seriesData: [
-      { name: '报名人数', data: data.map(item => item.applyCount) },
-      { name: '录取人数', data: data.map(item => item.admitCount) },
+      {name: '报名人数', data: data.map(item => item.applyCount)},
+      {name: '录取人数', data: data.map(item => item.admitCount)},
     ],
   };
 });
 
-// ========== 图表切换选项 ==========
 const chartOptions = computed(() => [
   {
     type: 'bar',
@@ -112,33 +102,57 @@ const handleChartChange = (index) => {
   activeChartIndex.value = index;
 };
 
-// ========== 事件发射 ==========
-const emit = defineEmits(['cardSelect', 'barSelect', 'lineSelect']);
-
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'pending':
+      filterType = 'status';
+      filterValue = '待审核';
+      break;
+    case 'admitted':
+      filterType = 'status';
+      filterValue = '已录取';
+      break;
+    case 'confirmed':
+      filterType = 'status';
+      filterValue = '已确认';
+      break;
+    case 'total':
+    default:
+      return;
+  }
+  window.dispatchEvent(new CustomEvent('register-chart-filter', {
+    detail: {type: filterType, value: filterValue}
+  }));
 };
 
 const handleBarClick = (majorName) => {
-  emit('barSelect', { field: 'major', value: majorName });
+  window.dispatchEvent(new CustomEvent('register-chart-filter', {
+    detail: {type: 'major', value: majorName}
+  }));
 };
 
 const handleLineClick = (params) => {
-  emit('lineSelect', { field: 'date', value: params.xValue });
+  const date = params.xValue || params.name;
+  if (date) {
+    window.dispatchEvent(new CustomEvent('register-chart-filter', {
+      detail: {type: 'createTime', value: [date, date]}
+    }));
+  }
 };
 
-// ========== 加载数据 ==========
 const loadData = async () => {
   loading.value = true;
   try {
     const timeRangeParam = getTimeRangeParam();
     const [chartRes, enrollRes] = await Promise.allSettled([
-      getRegisterMgmtChart({ timeRange: timeRangeParam }),
-      getRegisterMgmtEnrollCount({ timeRange: timeRangeParam }),
+      getRegisterMgmtChart({timeRange: timeRangeParam}),
+      getRegisterMgmtEnrollCount({timeRange: timeRangeParam}),
     ]);
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
-    } else {
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else {
       console.warn('看板接口失败，使用模拟数据', chartRes.reason);
       chartData.value = {
         totalApplyCount: 156,
@@ -146,27 +160,26 @@ const loadData = async () => {
         admittedCount: 134,
         confirmedCount: 118,
         recentWeekApplyTrend: [
-          { date: '2025-03-25', count: 12 },
-          { date: '2025-03-26', count: 18 },
-          { date: '2025-03-27', count: 22 },
-          { date: '2025-03-28', count: 16 },
-          { date: '2025-03-29', count: 14 },
-          { date: '2025-03-30', count: 10 },
-          { date: '2025-03-31', count: 8 },
+          {date: '2025-03-25', count: 12},
+          {date: '2025-03-26', count: 18},
+          {date: '2025-03-27', count: 22},
+          {date: '2025-03-28', count: 16},
+          {date: '2025-03-29', count: 14},
+          {date: '2025-03-30', count: 10},
+          {date: '2025-03-31', count: 8},
         ],
       };
     }
-    if (enrollRes.status === 'fulfilled') {
-      enrollData.value = enrollRes.value;
-    } else {
+    if (enrollRes.status === 'fulfilled') enrollData.value = enrollRes.value;
+    else {
       console.warn('专业统计接口失败，使用模拟数据', enrollRes.reason);
       enrollData.value = {
         majorEnrollData: [
-          { major: '计算机应用技术', applyCount: 45, admitCount: 40 },
-          { major: '电子商务', applyCount: 32, admitCount: 28 },
-          { major: '机电一体化', applyCount: 28, admitCount: 25 },
-          { major: '会计电算化', applyCount: 25, admitCount: 22 },
-          { major: '学前教育', applyCount: 26, admitCount: 19 },
+          {major: '计算机应用技术', applyCount: 45, admitCount: 40},
+          {major: '电子商务', applyCount: 32, admitCount: 28},
+          {major: '机电一体化', applyCount: 28, admitCount: 25},
+          {major: '会计电算化', applyCount: 25, admitCount: 22},
+          {major: '学前教育', applyCount: 26, admitCount: 19},
         ],
       };
     }
@@ -196,23 +209,12 @@ onMounted(() => {
     </div>
 
     <div class="chart-area main-chart-container">
-      <!-- 图表切换下拉框 -->
       <div class="chart-select-wrapper">
-        <el-select
-          v-model="activeChartIndex"
-          size="small"
-          @change="handleChartChange"
-        >
-          <el-option
-            v-for="(opt, idx) in chartOptions"
-            :key="idx"
-            :label="opt.title"
-            :value="idx"
-          />
+        <el-select v-model="activeChartIndex" size="small" @change="handleChartChange">
+          <el-option v-for="(opt, idx) in chartOptions" :key="idx" :label="opt.title" :value="idx"/>
         </el-select>
       </div>
 
-      <!-- 时间范围选择器（紧凑样式，位于右上角） -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="timeRange"
@@ -289,7 +291,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 主图表容器（用于定位时间选择器） */
   .main-chart-container {
     position: relative;
   }
@@ -301,7 +302,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的时间选择器样式 */
   :deep(.el-date-editor) {
     --el-date-editor-width: 240px;
 

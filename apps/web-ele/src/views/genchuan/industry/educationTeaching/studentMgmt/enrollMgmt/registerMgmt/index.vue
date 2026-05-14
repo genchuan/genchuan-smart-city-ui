@@ -1,5 +1,5 @@
 <script setup>
-import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {computed, reactive, ref, watch, nextTick, onMounted, onUnmounted} from 'vue';
 import {confirm, useVbenDrawer} from '@vben/common-ui';
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
@@ -23,16 +23,10 @@ import {
   useApplyFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/enrollMgmt/registerMgmt/form.js';
 
-// 辅助函数：状态标签类型
 const getStatusType = (status) => {
-  const map = {
-    '待审核': 'warning',
-    '已录取': 'success',
-  };
+  const map = {'待审核': 'warning', '已录取': 'success'};
   return map[status] || 'info';
 };
-
-// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -45,8 +39,6 @@ const formatTimestamp = (timestamp) => {
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
-
-// 提取日期部分（用于筛选）
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(parseInt(timestamp));
@@ -63,31 +55,36 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -106,11 +103,11 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// ---------- 抽屉组件 ----------
+// ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
 
 const dataObj = reactive({
@@ -135,33 +132,31 @@ function handleRowCheckboxChange({records}) {
 const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
-const auditIds = ref([]);      // 待审核的ID列表
-const confirmIds = ref([]);    // 待确认的ID列表
+const auditIds = ref([]);
+const confirmIds = ref([]);
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
-    // 1️⃣ 合并搜索参数 + 标签筛选参数
     const params = {
       ...searchParams.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      // 将 tagFilters 中的字段映射到后端接口参数
       major: tagFilters.value.major,
       status: tagFilters.value.status,
       creator: tagFilters.value.creator,
       studentName: tagFilters.value.studentName,
-      // 注意：createTime 需要特殊处理（见下方说明）
     };
-    // 2️⃣ 删除无效参数
+    // 处理 createTime 日期范围
+    if (tagFilters.value.createTime && Array.isArray(tagFilters.value.createTime) && tagFilters.value.createTime.length === 2) {
+      params.createTimeStart = tagFilters.value.createTime[0];
+      params.createTimeEnd = tagFilters.value.createTime[1];
+    }
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) {
-        delete params[key];
-      }
+      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
     });
     const res = await getRegisterMgmtPage(params);
-    // 3️⃣ 直接使用后端返回的数据
-    dataObj.total = res.total || 0;   // ✅ 正确的总记录数
+    dataObj.total = res.total || 0;
     dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
@@ -176,47 +171,38 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportRegisterMgmt(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportRegisterMgmt(searchParams.value);
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
-// 批量审核
 async function handleBatchAudit() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个报名记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个报名记录');
   const pendingRows = checkedRows.value.filter(row => row.status === '待审核');
-  if (pendingRows.length === 0) {
-    ElMessage.warning('请选择状态为【待审核】的记录进行审核');
-    return;
-  }
+  if (pendingRows.length === 0) return ElMessage.warning('请选择状态为【待审核】的记录进行审核');
   try {
     await ElMessageBox.confirm(`确认审核选中的 ${pendingRows.length} 条报名记录？审核后状态将变为“已录取”。`, '批量审核确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
@@ -235,22 +221,15 @@ async function handleBatchAudit() {
   }
 }
 
-// 批量确认
 async function handleBatchConfirm() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个报名记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个报名记录');
   const admittedRows = checkedRows.value.filter(row => row.status === '已录取');
-  if (admittedRows.length === 0) {
-    ElMessage.warning('请选择已录取的报名记录进行确认');
-    return;
-  }
+  if (admittedRows.length === 0) return ElMessage.warning('请选择已录取的报名记录进行确认');
   try {
     await ElMessageBox.confirm(`确认选中的 ${admittedRows.length} 条报名记录？确认后将更新录取确认时间。`, '批量确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '确认中...'});
     try {
@@ -269,34 +248,26 @@ async function handleBatchConfirm() {
   }
 }
 
-// 报名
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  applyDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  applyDrawerApi.open();
 }
 
 function handleEdit(row) {
-  if (row.status !== '待审核') {
-    ElMessage.warning('只有待审核状态的报名可以编辑');
-    return;
-  }
+  if (row.status !== '待审核') return ElMessage.warning('只有待审核状态的报名可以编辑');
   isEditMode.value = true;
   currentEditId.value = row.id;
-  applyDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  applyDrawerApi.open();
 }
 
-// 单行审核
 async function handleAudit(row) {
-  if (row.status !== '待审核') {
-    ElMessage.warning('只有待审核状态的报名可以审核');
-    return;
-  }
+  if (row.status !== '待审核') return ElMessage.warning('只有待审核状态的报名可以审核');
   try {
     await ElMessageBox.confirm(`确认审核学生"${row.studentName}"的报名？审核后状态将变为“已录取”。`, '审核确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
@@ -318,17 +289,13 @@ async function handleAudit(row) {
   }
 }
 
-// 单行确认
 async function handleConfirm(row) {
-  if (row.status !== '已录取') {
-    ElMessage.warning('只有已录取状态的报名可以确认');
-    return;
-  }
+  if (row.status !== '已录取') return ElMessage.warning('只有已录取状态的报名可以确认');
   try {
     await ElMessageBox.confirm(`确认学生"${row.studentName}"的录取结果？确认后将同步至学籍系统。`, '确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '确认中...'});
     try {
@@ -354,13 +321,12 @@ const [ApplyForm, applyFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '保存中...' : '报名中...'});
     try {
       let res;
-      // 确保 status 字段存在（新增时默认为待审核）
       const submitData = {...values, status: values.status || '待审核'};
-      if (isEditMode.value) {
-        res = await updateRegisterMgmt({...submitData, id: currentEditId.value});
-      } else {
-        res = await createRegisterMgmt(submitData);
-      }
+      if (isEditMode.value) res = await updateRegisterMgmt({
+        ...submitData,
+        id: currentEditId.value
+      });
+      else res = await createRegisterMgmt(submitData);
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '编辑成功' : '报名成功');
         applyDrawerApi.close();
@@ -378,16 +344,13 @@ const [ApplyForm, applyFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 修复的核心：在抽屉打开时重置表单并加载编辑数据
 const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => applyDrawerApi.close(),
   async onOpenChange(isOpen) {
     if (isOpen) {
-      // 每次打开前先重置表单（清空值 + 清除校验错误）
       await applyFormApi.resetForm();
-      // 如果是编辑模式，则填充数据
       if (isEditMode.value && currentEditId.value) {
         try {
           const detail = await getRegisterMgmtDetail({id: currentEditId.value});
@@ -403,17 +366,15 @@ const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
         } catch (error) {
           console.error('加载详情失败', error);
           ElMessage.error('加载详情失败，请检查网络或联系管理员');
-          applyDrawerApi.close(); // 加载失败则关闭抽屉
+          applyDrawerApi.close();
         }
       } else {
-        // 新增模式：设置默认状态为“待审核”
         await applyFormApi.setValues({status: '待审核'});
       }
     }
   },
 });
 
-// 详情抽屉
 const registerDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -427,7 +388,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -455,13 +416,30 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 const showChart = ref(true);
 const toggleChart = () => {
   showChart.value = !showChart.value;
 };
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'status') {
+    handleFilterTagClick('status', value);
+  } else if (type === 'major') {
+    handleFilterTagClick('major', value);
+  } else if (type === 'createTime') {
+    handleFilterTagClick('createTime', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('register-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('register-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -501,7 +479,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         </div>
       </template>
 
-      <!-- 钻取列 -->
       <template #studentName="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
           {{ row.studentName }}
@@ -509,8 +486,7 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #major="{ row }">
         <el-text @click="handleFilterTagClick('major', row.major)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.major }}
+                 style="cursor: pointer;">{{ row.major }}
         </el-text>
       </template>
       <template #status="{ row }">
@@ -521,18 +497,14 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.creator || '-' }}
+                 style="cursor: pointer;">{{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">
-          {{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
-
-      <!-- 时间格式化 -->
       <template #applyTime="{ row }">
         <el-text>{{ formatTimestamp(row.applyTime) }}</el-text>
       </template>
@@ -546,7 +518,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>

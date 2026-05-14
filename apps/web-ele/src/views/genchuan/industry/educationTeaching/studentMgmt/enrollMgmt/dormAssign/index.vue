@@ -1,11 +1,11 @@
 <script setup>
-import { reactive, ref } from 'vue';
-import { useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {reactive, ref, onMounted, onUnmounted} from 'vue';
+import {useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import DormAssignDetailDrawer from './components/dormAssignDetail.vue';
 import {
   getDormAssignPage,
@@ -24,37 +24,42 @@ import {
   useEditFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/enrollMgmt/dormAssign/form.js';
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
-// 标签筛选
+// ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -73,29 +78,26 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// 抽屉组件
+// ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
-
 const [AssignDrawer, assignDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => assignDrawerApi.close(),
+  onCancel: () => assignDrawerApi.close()
 });
-
 const [AdjustDrawer, adjustDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => adjustDrawerApi.close(),
+  onCancel: () => adjustDrawerApi.close()
 });
-
 const [EditDrawer, editDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => editDrawerApi.close(),
+  onCancel: () => editDrawerApi.close()
 });
 
 const dataObj = reactive({
@@ -119,7 +121,7 @@ function handleRowCheckboxChange({records}) {
 
 const searchParams = ref({});
 const currentEditId = ref(null);
-const batchIds = ref([]);      // 批量操作选中的ID列表
+const batchIds = ref([]);
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
@@ -145,37 +147,27 @@ const getDateFromTimestamp = (timestamp) => {
 };
 
 const getStatusType = (status) => {
-  const map = {
-    '未分配': 'warning',
-    '已分配': 'success',
-  };
+  const map = {'未分配': 'warning', '已分配': 'success'};
   return map[status] || 'info';
 };
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
-    // 1️⃣ 合并搜索参数 + 标签筛选参数
     const params = {
       ...searchParams.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      // 将 tagFilters 中的字段映射到后端接口参数
       dormNum: tagFilters.value.dormNum,
       status: tagFilters.value.status,
       creator: tagFilters.value.creator,
       studentId: tagFilters.value.studentId,
-      // 注意：createTime 需要特殊处理（见下方说明）
     };
-    // 2️⃣ 删除无效参数
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) {
-        delete params[key];
-      }
+      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
     });
     const res = await getDormAssignPage(params);
-    // 3️⃣ 直接使用后端返回的数据
-    dataObj.total = res.total || 0;   // ✅ 正确的总记录数
+    dataObj.total = res.total || 0;
     dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
@@ -190,42 +182,34 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportDormAssign(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportDormAssign(searchParams.value);
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
 // 批量分配
 function handleBatchAssign() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个分配记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个分配记录');
   const unassignedRows = checkedRows.value.filter(row => row.status === '未分配');
-  if (unassignedRows.length === 0) {
-    ElMessage.warning('请选择状态为【未分配】的记录进行分配');
-    return;
-  }
+  if (unassignedRows.length === 0) return ElMessage.warning('请选择状态为【未分配】的记录进行分配');
   batchIds.value = unassignedRows.map(row => row.id);
   assignFormApi.resetForm();
   assignDrawerApi.open();
@@ -233,15 +217,9 @@ function handleBatchAssign() {
 
 // 批量调整
 function handleBatchAdjust() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个分配记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个分配记录');
   const assignedRows = checkedRows.value.filter(row => row.status === '已分配');
-  if (assignedRows.length === 0) {
-    ElMessage.warning('请选择状态为【已分配】的记录进行调整');
-    return;
-  }
+  if (assignedRows.length === 0) return ElMessage.warning('请选择状态为【已分配】的记录进行调整');
   batchIds.value = assignedRows.map(row => row.id);
   adjustFormApi.resetForm();
   adjustDrawerApi.open();
@@ -249,10 +227,7 @@ function handleBatchAdjust() {
 
 // 单行分配
 async function handleAssign(row) {
-  if (row.status !== '未分配') {
-    ElMessage.warning('只有未分配状态的记录可以分配');
-    return;
-  }
+  if (row.status !== '未分配') return ElMessage.warning('只有未分配状态的记录可以分配');
   batchIds.value = [row.id];
   assignFormApi.resetForm();
   assignDrawerApi.open();
@@ -260,26 +235,22 @@ async function handleAssign(row) {
 
 // 单行调整
 async function handleAdjust(row) {
-  if (row.status !== '已分配') {
-    ElMessage.warning('只有已分配状态的记录可以调整');
-    return;
-  }
+  if (row.status !== '已分配') return ElMessage.warning('只有已分配状态的记录可以调整');
   batchIds.value = [row.id];
   adjustFormApi.resetForm();
   adjustDrawerApi.open();
 }
 
-// 分配表单提交
+// 分配表单
 const [AssignForm, assignFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
     const loading = ElLoading.service({text: '分配中...'});
     try {
-      // 生成床位ID数组（起始床位号 + 索引）
       const bedStartNum = values.bedStartNum;
       const newBedIds = batchIds.value.map((_, idx) => bedStartNum + idx);
-      const dormId = values.dormNum; // 模拟数据中 dormId 使用 dormNum 字符串（实际应转换，这里简化）
+      const dormId = values.dormNum;
       const res = await assignDormAssign({
         ids: batchIds.value,
         dormId: dormId,
@@ -304,7 +275,7 @@ const [AssignForm, assignFormApi] = useVbenForm({
   submitButtonOptions: {content: '确认分配'},
 });
 
-// 调整表单提交
+// 调整表单
 const [AdjustForm, adjustFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
@@ -313,7 +284,7 @@ const [AdjustForm, adjustFormApi] = useVbenForm({
     try {
       const bedStartNum = values.newBedStartNum;
       const newBedIds = batchIds.value.map((_, idx) => bedStartNum + idx);
-      const newDormId = values.newDormNum; // 简化，实际应为宿舍ID
+      const newDormId = values.newDormNum;
       const res = await adjustDormAssign({
         ids: batchIds.value,
         newDormId: newDormId,
@@ -347,7 +318,7 @@ async function handleEdit(row) {
       studentId: detail.studentId,
       dormNum: detail.dormNum,
       bedId: detail.bedId,
-      status: detail.status,     // 补充状态赋值
+      status: detail.status,
       remark: detail.remark,
     });
     editDrawerApi.open();
@@ -364,7 +335,6 @@ const [EditForm, editFormApi] = useVbenForm({
   handleSubmit: async (values) => {
     const loading = ElLoading.service({text: '保存中...'});
     try {
-      // 确保 status 字段被传递
       const res = await updateDormAssign({...values, id: currentEditId.value});
       if (res && res !== false) {
         ElMessage.success('编辑成功');
@@ -383,7 +353,6 @@ const [EditForm, editFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 详情抽屉
 const dormAssignDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -397,7 +366,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -425,8 +394,24 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'status') {
+    handleFilterTagClick('status', value);
+  } else if (type === 'dormNum') {
+    handleFilterTagClick('dormNum', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('dormassign-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('dormassign-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -471,7 +456,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         </div>
       </template>
 
-      <!-- 钻取列 -->
       <template #studentId="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
           {{ row.studentId }}
@@ -479,8 +463,7 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #dormNum="{ row }">
         <el-text @click="handleFilterTagClick('dormNum', row.dormNum)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.dormNum || '-' }}
+                 style="cursor: pointer;">{{ row.dormNum || '-' }}
         </el-text>
       </template>
       <template #status="{ row }">
@@ -494,18 +477,14 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer">
-          {{ row.creator || '-' }}
+                 style="cursor: pointer">{{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer">
-          {{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
-
-      <!-- 时间格式化 -->
       <template #assignTime="{ row }">
         <el-text>{{ formatTimestamp(row.assignTime) }}</el-text>
       </template>
@@ -516,7 +495,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>

@@ -13,10 +13,8 @@ const loading = ref(true);
 const chartData = ref({});
 const distributionData = ref({});
 
-// 时间范围选择器绑定的值（数组格式 [startDate, endDate]）
 const timeRange = ref([]);
 
-// 获取默认时间范围（最近30天，结束时间为当天）
 const getDefaultTimeRange = () => {
   const end = new Date();
   const start = new Date();
@@ -24,8 +22,6 @@ const getDefaultTimeRange = () => {
   return [start, end];
 };
 
-// 格式化单个日期时间为后端要求的格式（带 T 分隔，如 "2023-01-01T00:00:00"）
-// isEnd: 是否为结束时间（结束时间用 23:59:59，起始用 00:00:00）
 const formatDateTime = (date, isEnd = false) => {
   if (!date) return '';
   const d = new Date(date);
@@ -36,7 +32,6 @@ const formatDateTime = (date, isEnd = false) => {
   return `${year}-${month}-${day}T${time}`;
 };
 
-// 生成 timeRange 字符串（格式："起始时间,结束时间"）
 const getTimeRangeParam = () => {
   if (timeRange.value && timeRange.value.length === 2) {
     const startStr = formatDateTime(timeRange.value[0], false);
@@ -47,53 +42,47 @@ const getTimeRangeParam = () => {
   return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
 };
 
-// 日期范围变化时重新加载数据
 const handleDateRangeChange = () => {
   loadData();
 };
 
-// 卡片数据
 const cardList = computed(() => {
   const total = chartData.value.totalAssignTaskCount || 0;
   const unassigned = chartData.value.unassignedCount || 0;
   const assigned = chartData.value.assignedCount || 0;
   const totalStudents = chartData.value.totalAssignedStudentCount || 0;
   return [
-    { title: '总分班任务数', value: total, color: '#409EFF', status: 'total' },
-    { title: '未分班任务数', value: unassigned, color: '#E6A23C', status: 'unassigned' },
-    { title: '已分班任务数', value: assigned, color: '#67C23A', status: 'assigned' },
-    { title: '已分班学生总数', value: totalStudents, color: '#909399', status: 'totalStudents' },
+    {title: '总分班任务数', value: total, color: '#409EFF', status: 'total'},
+    {title: '未分班任务数', value: unassigned, color: '#E6A23C', status: 'unassigned'},
+    {title: '已分班任务数', value: assigned, color: '#67C23A', status: 'assigned'},
+    {title: '已分班学生总数', value: totalStudents, color: '#909399', status: 'totalStudents'},
   ];
 });
 
-// 近一周分班趋势折线图
 const lineData = computed(() => {
   const trend = chartData.value.recentWeekAssignTrend || [];
   return {
     xAxis: trend.map(item => item.date),
-    series: [{ name: '分班学生数', data: trend.map(item => item.count) }],
+    series: [{name: '分班学生数', data: trend.map(item => item.count)}],
   };
 });
 
-// 班级人数饼图数据（兼容后端返回的 value 字段和模拟数据的 studentCount 字段）
 const classPieData = computed(() => {
   const data = distributionData.value.classStudentCount || [];
   return data.map(item => ({
     name: item.className,
-    value: item.value ?? item.studentCount,  // 优先使用 value，兼容 studentCount
+    value: item.value ?? item.studentCount,
   }));
 });
 
-// 专业分班占比饼图数据（后端直接使用 value 字段）
 const majorPieData = computed(() => {
   const data = distributionData.value.majorAssignRate || [];
-  return data.map(item => ({ name: item.name, value: item.value }));
+  return data.map(item => ({name: item.name, value: item.value}));
 });
 
-// 饼图切换选项
 const pieOptions = computed(() => [
-  { type: 'class', title: '各班级人数分布', data: classPieData.value },
-  { type: 'major', title: '专业分班占比', data: majorPieData.value },
+  {type: 'class', title: '各班级人数分布', data: classPieData.value},
+  {type: 'major', title: '专业分班占比', data: majorPieData.value},
 ]);
 
 const activePieIndex = ref(0);
@@ -103,21 +92,46 @@ const handlePieChange = (index) => {
   activePieIndex.value = index;
 };
 
-const emit = defineEmits(['cardSelect', 'pieSelect', 'lineSelect']);
-
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'unassigned':
+      filterType = 'status';
+      filterValue = '未分班';
+      break;
+    case 'assigned':
+      filterType = 'status';
+      filterValue = '已分班';
+      break;
+    case 'total':
+    case 'totalStudents':
+    default:
+      return;
+  }
+  window.dispatchEvent(new CustomEvent('classassign-chart-filter', {
+    detail: {type: filterType, value: filterValue}
+  }));
 };
 
 const handlePieClick = (params) => {
-  emit('pieSelect', {
-    name: params.name,
-    type: currentPie.value.type,
-  });
+  const currentType = currentPie.value.type;
+  if (currentType === 'class') {
+    window.dispatchEvent(new CustomEvent('classassign-chart-filter', {
+      detail: {type: 'className', value: params.name}
+    }));
+  }
+  // major 类型不筛选（列表中没有直接的专业字段）
 };
 
 const handleLineClick = (params) => {
-  emit('lineSelect', { field: 'date', value: params.xValue });
+  const date = params.xValue || params.name;
+  if (date) {
+    window.dispatchEvent(new CustomEvent('classassign-chart-filter', {
+      detail: {type: 'createTime', value: [date, date]}
+    }));
+  }
 };
 
 const loadData = async () => {
@@ -125,46 +139,44 @@ const loadData = async () => {
   try {
     const timeRangeParam = getTimeRangeParam();
     const [chartRes, distRes] = await Promise.allSettled([
-      getClassAssignChart({ timeRange: timeRangeParam }),
-      getClassAssignDistribution({ timeRange: timeRangeParam }),
+      getClassAssignChart({timeRange: timeRangeParam}),
+      getClassAssignDistribution({timeRange: timeRangeParam}),
     ]);
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
-    } else {
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else {
       chartData.value = {
         totalAssignTaskCount: 12,
         unassignedCount: 3,
         assignedCount: 9,
         totalAssignedStudentCount: 586,
         recentWeekAssignTrend: [
-          { date: '2025-03-25', count: 68 },
-          { date: '2025-03-26', count: 85 },
-          { date: '2025-03-27', count: 135 },
-          { date: '2025-03-28', count: 72 },
-          { date: '2025-03-29', count: 42 },
-          { date: '2025-03-30', count: 12 },
-          { date: '2025-03-31', count: 12 },
+          {date: '2025-03-25', count: 68},
+          {date: '2025-03-26', count: 85},
+          {date: '2025-03-27', count: 135},
+          {date: '2025-03-28', count: 72},
+          {date: '2025-03-29', count: 42},
+          {date: '2025-03-30', count: 12},
+          {date: '2025-03-31', count: 12},
         ],
       };
     }
-    if (distRes.status === 'fulfilled') {
-      distributionData.value = distRes.value;
-    } else {
+    if (distRes.status === 'fulfilled') distributionData.value = distRes.value;
+    else {
       distributionData.value = {
         classStudentCount: [
-          { className: '2025级计算机1班', studentCount: 48 },
-          { className: '2025级计算机2班', studentCount: 47 },
-          { className: '2025级电商1班', studentCount: 45 },
-          { className: '2025级机电1班', studentCount: 48 },
-          { className: '2025级会计1班', studentCount: 43 },
-          { className: '2025级学前1班', studentCount: 41 },
+          {className: '2025级计算机1班', studentCount: 48},
+          {className: '2025级计算机2班', studentCount: 47},
+          {className: '2025级电商1班', studentCount: 45},
+          {className: '2025级机电1班', studentCount: 48},
+          {className: '2025级会计1班', studentCount: 43},
+          {className: '2025级学前1班', studentCount: 41},
         ],
         majorAssignRate: [
-          { name: '计算机应用技术', value: 0.28 },
-          { name: '电子商务', value: 0.20 },
-          { name: '机电一体化', value: 0.19 },
-          { name: '会计电算化', value: 0.17 },
-          { name: '学前教育', value: 0.16 },
+          {name: '计算机应用技术', value: 0.28},
+          {name: '电子商务', value: 0.20},
+          {name: '机电一体化', value: 0.19},
+          {name: '会计电算化', value: 0.17},
+          {name: '学前教育', value: 0.16},
         ],
       };
     }
@@ -193,9 +205,7 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 折线图区域（含日期选择器） -->
     <div class="line-chart-container" style="flex: 1.5 !important; position: relative;">
-      <!-- 日期范围选择器（紧凑样式，位于右上角） -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="timeRange"
@@ -226,7 +236,7 @@ onMounted(() => {
     <div class="chart-area">
       <div class="chart-select-wrapper">
         <el-select v-model="activePieIndex" size="small" @change="handlePieChange">
-          <el-option v-for="(opt, idx) in pieOptions" :key="idx" :label="opt.title" :value="idx" />
+          <el-option v-for="(opt, idx) in pieOptions" :key="idx" :label="opt.title" :value="idx"/>
         </el-select>
       </div>
       <Pie
@@ -273,7 +283,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 折线图容器特殊样式，用于绝对定位日期选择器 */
   .line-chart-container {
     position: relative;
     flex: 1.5;
@@ -288,7 +297,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的时间选择器样式 */
   :deep(.el-date-editor) {
     --el-date-editor-width: 240px;
 

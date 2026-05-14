@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
+import {ref, computed, onMounted} from 'vue';
+import {ElSelect, ElOption, ElDatePicker} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import {
@@ -9,13 +9,11 @@ import {
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/homeSchool/communicateMgmt/data.js';
 
 const loading = ref(true);
-const chartData = ref({});          // 卡片数据
-const interactData = ref({});       // 柱状图数据
+const chartData = ref({});
+const interactData = ref({});
 
-// 时间范围选择器绑定的值（数组格式 [startDate, endDate]）
 const timeRange = ref([]);
 
-// 获取默认时间范围（最近30天，结束时间为当天）
 const getDefaultTimeRange = () => {
   const end = new Date();
   const start = new Date();
@@ -23,8 +21,6 @@ const getDefaultTimeRange = () => {
   return [start, end];
 };
 
-// 格式化单个日期时间为后端要求的格式（带 T 分隔，如 "2023-01-01T00:00:00"）
-// isEnd: 是否为结束时间（结束时间用 23:59:59，起始用 00:00:00）
 const formatDateTime = (date, isEnd = false) => {
   if (!date) return '';
   const d = new Date(date);
@@ -35,7 +31,6 @@ const formatDateTime = (date, isEnd = false) => {
   return `${year}-${month}-${day}T${time}`;
 };
 
-// 生成 timeRange 字符串（格式："起始时间,结束时间"）
 const getTimeRangeParam = () => {
   if (timeRange.value && timeRange.value.length === 2) {
     const startStr = formatDateTime(timeRange.value[0], false);
@@ -46,18 +41,13 @@ const getTimeRangeParam = () => {
   return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
 };
 
-// 日期范围变化时重新加载数据
 const handleDateRangeChange = () => {
   loadData();
 };
 
-// ========== 卡片数据 ==========
 const cardList = computed(() => {
   const totalMsg = chartData.value.totalMsgCount || 0;
-  const published = chartData.value.publishedMsgCount || 0;
-  const unpublished = chartData.value.unpublishedMsgCount || 0;
   const totalReply = chartData.value.totalReplyCount || 0;
-  // 后端返回的 avgInteractRate 已经是百分比数值（如 76.75），直接显示并添加 % 后缀
   const avgRate = chartData.value.avgInteractRate || 0;
   return [
     {title: '信息推送次数', value: totalMsg, color: '#409EFF', status: 'total'},
@@ -66,7 +56,6 @@ const cardList = computed(() => {
   ];
 });
 
-// ========== 柱状图配置（支持切换：消息类型分布 / 各班级互动率 / 反馈时间分布） ==========
 const barOptions = computed(() => [
   {
     title: '消息类型统计',
@@ -85,7 +74,6 @@ const barOptions = computed(() => [
     type: 'classRate',
     getData: () => {
       const data = interactData.value.classInteractRate || [];
-      // 互动率后端可能返回小数（如 0.95）或百分比数（95），统一转换为百分比展示
       return {
         xData: data.map(item => item.name),
         seriesData: [{
@@ -124,24 +112,28 @@ const handleBarChange = (index) => {
   activeBarIndex.value = index;
 };
 
-// ========== 事件发射 ==========
-const emit = defineEmits(['cardSelect', 'barSelect']);
-
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
+  // 卡片点击不筛选（信息推送次数、家长反馈次数、互动率都不触发列表筛选）
+  // 保持原行为，不派发事件
+  return;
 };
 
 const handleBarClick = (name) => {
   const currentType = barOptions.value[activeBarIndex.value]?.type;
   if (currentType === 'msgType') {
-    emit('barSelect', {field: 'msgType', value: name});
+    window.dispatchEvent(new CustomEvent('communicate-chart-filter', {
+      detail: {type: 'msgType', value: name}
+    }));
   } else if (currentType === 'classRate') {
-    emit('barSelect', {field: 'className', value: name});
+    window.dispatchEvent(new CustomEvent('communicate-chart-filter', {
+      detail: {type: 'className', value: name}
+    }));
   }
   // 反馈时间分布不做钻取
 };
 
-// ========== 加载数据 ==========
+// 加载数据（保持不变）
 const loadData = async () => {
   loading.value = true;
   try {
@@ -150,9 +142,8 @@ const loadData = async () => {
       getCommunicateMgmtChart({timeRange: timeRangeParam}),
       getCommunicateMgmtInteractIndex({timeRange: timeRangeParam}),
     ]);
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
-    } else {
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else {
       console.warn('看板接口失败，使用模拟数据', chartRes.reason);
       chartData.value = {
         totalMsgCount: 42,
@@ -171,9 +162,8 @@ const loadData = async () => {
         ],
       };
     }
-    if (interactRes.status === 'fulfilled') {
-      interactData.value = interactRes.value;
-    } else {
+    if (interactRes.status === 'fulfilled') interactData.value = interactRes.value;
+    else {
       console.warn('核心指标接口失败，使用模拟数据', interactRes.reason);
       interactData.value = {
         msgTypeCount: [
@@ -224,14 +214,12 @@ onMounted(() => {
     </div>
 
     <div class="chart-area bar-chart-container">
-      <!-- 柱状图切换下拉框 -->
       <div class="chart-select-wrapper">
         <el-select v-model="activeBarIndex" size="small" @change="handleBarChange">
           <el-option v-for="(opt, idx) in barOptions" :key="idx" :label="opt.title" :value="idx"/>
         </el-select>
       </div>
 
-      <!-- 时间范围选择器（紧凑样式，位于右上角） -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="timeRange"
@@ -294,7 +282,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 柱状图容器特殊样式，用于绝对定位日期选择器 */
   .bar-chart-container {
     position: relative;
   }
@@ -306,7 +293,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的时间选择器样式 */
   :deep(.el-date-editor) {
     --el-date-editor-width: 240px;
 

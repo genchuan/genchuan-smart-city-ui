@@ -1,5 +1,5 @@
 <script setup>
-import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {computed, reactive, ref, watch, nextTick, onMounted, onUnmounted} from 'vue';
 import {confirm, useVbenDrawer} from '@vben/common-ui';
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
@@ -24,16 +24,10 @@ import {
   useMaintainFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/employMgmt/coopEnterprise/form.js';
 
-// 辅助函数：状态标签类型
 const getStatusType = (status) => {
-  const map = {
-    '合作中': 'success',
-    '已结束': 'info',
-  };
+  const map = {'合作中': 'success', '已结束': 'info'};
   return map[status] || 'info';
 };
-
-// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -46,8 +40,6 @@ const formatTimestamp = (timestamp) => {
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
-
-// 提取日期部分（用于筛选）
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(parseInt(timestamp));
@@ -66,69 +58,59 @@ const deptOptions = ref([]);
 const loadDeptOptions = async () => {
   const res = await getDeptOptions();
   deptOptions.value = res;
-  // 数据加载完成后，更新查询表单和创建表单中 deptId 字段的 options
   updateDeptOptionsInForms();
 };
 loadDeptOptions();
 
-// 根据 deptId 获取系部名称
 const getDeptNameById = (deptId) => {
   if (!deptId) return '-';
   const found = deptOptions.value.find(opt => opt.value === deptId);
   return found ? found.label : String(deptId);
 };
 
-// 统一更新表单中的 deptId options
 const updateDeptOptionsInForms = () => {
   const options = deptOptions.value;
-  // 更新查询表单
   if (queryFormApi) {
-    queryFormApi.updateSchema([
-      {
-        fieldName: 'deptId',
-        componentProps: {options},
-      },
-    ]);
+    queryFormApi.updateSchema([{fieldName: 'deptId', componentProps: {options}}]);
   }
-  // 更新创建/编辑表单
   if (createFormApi) {
-    createFormApi.updateSchema([
-      {
-        fieldName: 'deptId',
-        componentProps: {options},
-      },
-    ]);
+    createFormApi.updateSchema([{fieldName: 'deptId', componentProps: {options}}]);
   }
 };
 
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -145,23 +127,20 @@ function getFieldLabel(field) {
 
 function getTagDisplayText(field, value) {
   if (Array.isArray(value)) return value.join('、');
-  if (field === 'deptId') {
-    return getDeptNameById(value);
-  }
+  if (field === 'deptId') return getDeptNameById(value);
   return value || '-';
 }
 
-// ---------- 抽屉组件 ----------
+// ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
-
 const [MaintainDrawer, maintainDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => maintainDrawerApi.close(),
+  onCancel: () => maintainDrawerApi.close()
 });
 
 const dataObj = reactive({
@@ -186,33 +165,31 @@ function handleRowCheckboxChange({records}) {
 const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
-const maintainIds = ref([]);      // 待维护的ID列表
+const maintainIds = ref([]);
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
-    // 1️⃣ 合并搜索参数 + 标签筛选参数
     const params = {
       ...searchParams.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      // 将 tagFilters 中的字段映射到后端接口参数
       enterpriseType: tagFilters.value.enterpriseType,
       deptId: tagFilters.value.deptId,
       status: tagFilters.value.status,
       creator: tagFilters.value.creator,
       enterpriseName: tagFilters.value.enterpriseName,
-      // 注意：createTime 需要特殊处理（见下方说明）
     };
-    // 2️⃣ 删除无效参数
+    // 处理 createTime 日期范围
+    if (tagFilters.value.createTime && Array.isArray(tagFilters.value.createTime) && tagFilters.value.createTime.length === 2) {
+      params.createTimeStart = tagFilters.value.createTime[0];
+      params.createTimeEnd = tagFilters.value.createTime[1];
+    }
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) {
-        delete params[key];
-      }
+      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
     });
     const res = await getCoopEnterprisePage(params);
-    // 3️⃣ 直接使用后端返回的数据
-    dataObj.total = res.total || 0;   // ✅ 正确的总记录数
+    dataObj.total = res.total || 0;
     dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
@@ -227,66 +204,52 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportCoopEnterprise(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportCoopEnterprise(searchParams.value);
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
-// 批量维护
 async function handleBatchMaintain() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个合作企业');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个合作企业');
   const cooperatingRows = checkedRows.value.filter(row => row.status === '合作中');
-  if (cooperatingRows.length === 0) {
-    ElMessage.warning('请选择状态为【合作中】的企业进行维护');
-    return;
-  }
+  if (cooperatingRows.length === 0) return ElMessage.warning('请选择状态为【合作中】的企业进行维护');
   maintainIds.value = cooperatingRows.map(row => row.id);
   maintainFormApi.resetForm();
   maintainDrawerApi.open();
 }
 
-// 建档
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  createDrawerApi.open();
 }
 
 function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  createDrawerApi.open();
 }
 
-// 单行维护
 async function handleMaintain(row) {
-  if (row.status !== '合作中') {
-    ElMessage.warning('只有合作中的企业可以维护');
-    return;
-  }
+  if (row.status !== '合作中') return ElMessage.warning('只有合作中的企业可以维护');
   maintainIds.value = [row.id];
   maintainFormApi.resetForm();
   maintainDrawerApi.open();
@@ -300,14 +263,8 @@ const [CreateForm, createFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '保存中...' : '建档中...'});
     try {
       let res;
-      if (isEditMode.value) {
-        // 编辑时传递 status（表单中已包含）
-        res = await updateCoopEnterprise({...values, id: currentEditId.value});
-      } else {
-        // 新增时确保 status 字段存在（表单中已有，但以防万一）
-        const submitData = {...values, status: values.status || '合作中'};
-        res = await createCoopEnterprise(submitData);
-      }
+      if (isEditMode.value) res = await updateCoopEnterprise({...values, id: currentEditId.value});
+      else res = await createCoopEnterprise({...values, status: values.status || '合作中'});
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '编辑成功' : '建档成功');
         createDrawerApi.close();
@@ -325,16 +282,13 @@ const [CreateForm, createFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 修复的核心：在抽屉打开时重置表单并加载编辑数据
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => createDrawerApi.close(),
   async onOpenChange(isOpen) {
     if (isOpen) {
-      // 每次打开前先重置表单（清空值 + 清除校验错误）
       await createFormApi.resetForm();
-      // 如果是编辑模式，则填充数据
       if (isEditMode.value && currentEditId.value) {
         try {
           const detail = await getCoopEnterpriseDetail({id: currentEditId.value});
@@ -351,10 +305,9 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
         } catch (error) {
           console.error('加载详情失败', error);
           ElMessage.error('加载详情失败，请检查网络或联系管理员');
-          createDrawerApi.close(); // 加载失败则关闭抽屉
+          createDrawerApi.close();
         }
       } else {
-        // 新增模式：设置默认状态为“合作中”
         await createFormApi.setValues({status: '合作中'});
       }
     }
@@ -386,7 +339,6 @@ const [MaintainForm, maintainFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 详情抽屉
 const enterpriseDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -394,14 +346,13 @@ function handleOpenDetail(row) {
   enterpriseDetailDrawerRef.value.open();
 }
 
-// 查询表单 - 获取 API 以便后续动态更新 options
 const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -429,13 +380,32 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 const showChart = ref(true);
 const toggleChart = () => {
   showChart.value = !showChart.value;
 };
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件（为后续图表钻取做准备） ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'enterpriseType') {
+    handleFilterTagClick('enterpriseType', value);
+  } else if (type === 'deptId') {
+    handleFilterTagClick('deptId', value);
+  } else if (type === 'status') {
+    handleFilterTagClick('status', value);
+  } else if (type === 'createTime') {
+    handleFilterTagClick('createTime', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('coop-enterprise-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('coop-enterprise-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -481,7 +451,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         </div>
       </template>
 
-      <!-- 钻取列 -->
       <template #enterpriseName="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
           {{ row.enterpriseName }}
@@ -489,14 +458,12 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #enterpriseType="{ row }">
         <el-text @click="handleFilterTagClick('enterpriseType', row.enterpriseType)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.enterpriseType }}
+                 style="cursor: pointer;">{{ row.enterpriseType }}
         </el-text>
       </template>
       <template #deptId="{ row }">
         <el-text @click="handleFilterTagClick('deptId', row.deptId)" type="primary"
-                 style="cursor: pointer;">
-          {{ getDeptNameById(row.deptId) }}
+                 style="cursor: pointer;">{{ getDeptNameById(row.deptId) }}
         </el-text>
       </template>
       <template #status="{ row }">
@@ -507,18 +474,14 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.creator || '-' }}
+                 style="cursor: pointer;">{{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">
-          {{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
-
-      <!-- 时间格式化 -->
       <template #coopStartTime="{ row }">
         <el-text>{{ formatTimestamp(row.coopStartTime) }}</el-text>
       </template>
@@ -529,7 +492,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
