@@ -11,11 +11,11 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getCouponMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import {
   exportReceiveRecord,
   getReceiveRecordPage,
 } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/receiveRecord';
-import { getCouponMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
@@ -24,7 +24,6 @@ import CheckRecordDrawer from '#/views/genchuan/industry/chargePark/marketOp/cou
 import {
   dataList,
   detailFields,
-  dynamicCouponSearchOptions,
   fetchCouponSearchOptions,
   getCurrentCouponSearchOptions,
   getReceiveRecordStatusLabel,
@@ -306,7 +305,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
     componentProps: {
       class: 'w-full',
     },
-  formItemClass: 'col-span-2',
+    formItemClass: 'col-span-2',
     labelWidth: 100,
   },
   handleSubmit: onSubmit,

@@ -274,11 +274,9 @@ const getTableData = async (pageObj) => {
     // 字典字段
     status: filterStatus.value || dataObj.searchParams.status,
     syncStatus: filterSyncStatus.value || dataObj.searchParams.syncStatus,
-    // RangePicker 返回数组格式 [start, end]，后端会接收为两个同名参数
-    lotteryTime:
-      filterLotteryDate.value || !dataObj.searchParams.lotteryTime
-        ? undefined
-        : dataObj.searchParams.lotteryTime,
+    // 统计折线图钻取筛选 - 将选中的日期透传到 lotteryTime 参数中
+    lotteryTime: filterLotteryDate.value || undefined,
+    // RangePicker 返回数组格式 [start, end]，后端会接收为两个同名参数（当未使用统计钻取时）
     sendTime: dataObj.searchParams.sendTime
       ? dataObj.searchParams.sendTime
       : undefined,

@@ -1,11 +1,11 @@
-import { DICT_TYPE } from '@vben/constants';
-import { getDictObj, getDictOptions } from '@vben/hooks';
 import { ref } from 'vue';
 
-import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getCouponSimpleList } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 /** 获取券包类型Tag类型 - 使用封装的字典颜色工具 */
 export const getPackageConfigTypeTagType = (type) => {
@@ -60,7 +60,7 @@ export const couponOptions = [
 ];
 
 /** 动态优惠券选项（从接口获取） */
-export let dynamicCouponOptions = ref([]);
+export const dynamicCouponOptions = ref([]);
 
 /** 获取当前可用的优惠券选项（优先使用动态数据） */
 export function getCurrentCouponOptions() {

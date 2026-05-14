@@ -1,12 +1,12 @@
-import { DICT_TYPE } from '@vben/constants';
-import { getDictObj, getDictOptions } from '@vben/hooks';
 import { ref } from 'vue';
 
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getCardConfigList } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardConfig';
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
-
-import { getCardConfigList } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardConfig';
 
 /** 获取支付状态Tag类型 - 使用封装的字典颜色工具 */
 export const getCardOrderPayStatusTagType = (payStatus) => {
@@ -31,7 +31,10 @@ export const getCardOrderPayStatusLabel = (payStatus) => {
 
 /** 获取开票状态标签 */
 export const getCardOrderInvoiceStatusLabel = (invoiceStatus) => {
-  const dict = getDictObj(DICT_TYPE.CARD_ORDER_INVOICE_STATUS, String(invoiceStatus));
+  const dict = getDictObj(
+    DICT_TYPE.CARD_ORDER_INVOICE_STATUS,
+    String(invoiceStatus),
+  );
   return dict ? dict.label : invoiceStatus;
 };
 
@@ -47,7 +50,7 @@ export const cardConfigSearchOptions = [
 ];
 
 /** 动态卡种搜索选项（从接口获取） */
-export let dynamicCardConfigSearchOptions = ref([]);
+export const dynamicCardConfigSearchOptions = ref([]);
 
 /** 获取当前可用的卡种搜索选项（优先使用动态数据） */
 export function getCurrentCardConfigSearchOptions() {

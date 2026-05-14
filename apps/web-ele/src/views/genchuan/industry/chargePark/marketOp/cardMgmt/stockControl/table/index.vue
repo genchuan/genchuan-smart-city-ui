@@ -20,10 +20,8 @@ import AllocateDrawer from '../components/AllocateDrawer.vue';
 import ReplenishDialog from '../components/ReplenishDialog.vue';
 import WarnConfirmDialog from '../components/WarnConfirmDialog.vue';
 import {
-  cardConfigSearchOptions,
   dataList,
   detailFields,
-  dynamicCardConfigSearchOptions,
   fetchCardConfigSearchOptions,
   getCurrentCardConfigSearchOptions,
   getStockControlStatusLabel,
@@ -598,10 +596,13 @@ onMounted(async () => {
       </template>
       <template #createTime="{ row }">
         <span>{{
-            row.createTime
-              ? formatDate(new Date(Number(row.createTime)), 'YYYY-MM-DD HH:mm:ss')
-              : '-'
-          }}</span>
+          row.createTime
+            ? formatDate(
+                new Date(Number(row.createTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : '-'
+        }}</span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

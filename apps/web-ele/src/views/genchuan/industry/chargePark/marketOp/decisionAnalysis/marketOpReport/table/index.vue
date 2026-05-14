@@ -333,7 +333,7 @@ const getTableData = async (pageObj) => {
       if (value !== undefined && value !== null && value !== '') {
         // 使用 parseFloat 和 toFixed 确保保留两位小数精度
         // 例如：8 → 8.00, 7.5 → 7.50, 8.00 → 8.00
-        params[field] = parseFloat(Number(value).toFixed(2));
+        params[field] = Number.parseFloat(Number(value).toFixed(2));
       }
     });
 

@@ -623,7 +623,12 @@ export const detailFields = [
   { key: 'exchangeCount', label: '兑换量' },
   { key: 'totalStock', label: '总库存' },
   { key: 'warnStockCount', label: '预警库存数' },
-  { key: 'generateStatus', label: '生成状态', type: 'tag', tagType: getGenerateStatusTagType },
+  {
+    key: 'generateStatus',
+    label: '生成状态',
+    type: 'tag',
+    tagType: getGenerateStatusTagType,
+  },
   { key: 'generateTime', label: '生成时间' },
   { key: 'operator', label: '操作人' },
   { key: 'generateCost', label: '生成耗时(ms)' },

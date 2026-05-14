@@ -11,25 +11,23 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getCouponMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import {
   createPackageConfig,
   getPackageConfigPage,
   updatePackageConfig,
 } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/packageConfig';
-import { getCouponMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 import StatusConfirmDialog from '#/views/genchuan/industry/chargePark/marketOp/couponActivity/packageConfig/components/StatusConfirmDialog.vue';
 
 import {
-  couponOptions,
   dataList,
   detailFields,
   dynamicCouponOptions,
   fetchCouponOptions,
   getCurrentCouponOptions,
-  getCouponNamesByIds,
   getPackageConfigScopeLabel,
   getPackageConfigScopeTagType,
   getPackageConfigStatusLabel,

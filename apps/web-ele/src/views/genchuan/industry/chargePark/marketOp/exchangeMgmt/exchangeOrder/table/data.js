@@ -1,10 +1,10 @@
-import { DICT_TYPE } from '@vben/constants';
-import { getDictOptions } from '@vben/hooks';
 import { ref } from 'vue';
 
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { DICT_TYPE } from '@vben/constants';
+import { getDictOptions } from '@vben/hooks';
 
 import { getExchangeCategoryList } from '#/api/genchuan/industry/chargePark/marketOp/exchangeMgmt/exchangeCategory';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 /** 兑换订单状态标签类型 */
 export const getExchangeOrderPayStatusTagType = (status) => {
@@ -59,7 +59,7 @@ export const categorySearchOptions = [
 ];
 
 /** 动态商品类目搜索选项（从接口获取） */
-export let dynamicCategorySearchOptions = ref([]);
+export const dynamicCategorySearchOptions = ref([]);
 
 /** 获取当前可用的商品类目搜索选项（优先使用动态数据） */
 export function getCurrentCategorySearchOptions() {
