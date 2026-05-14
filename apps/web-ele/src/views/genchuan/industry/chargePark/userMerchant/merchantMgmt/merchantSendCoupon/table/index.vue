@@ -59,7 +59,6 @@ import {
   formatRedemptions,
   getStatusTagType,
   maskPhone,
-  merchantOptions,
   detailFields as merchantSendCouponDetailFields,
   textObj,
   useCreateSchema,
@@ -92,8 +91,8 @@ const detailDrawerRef = ref<null | { open: () => void }>(null);
 const detailObj = ref<MerchantSendCouponRow>();
 const merchantDetailCache = new Map<number, MerchantInfoDetailVO>();
 const merchantDialogVisible = ref(false);
-const merchantProfileLookup = ref(buildMerchantProfileLookup(merchantOptions));
-const merchantSelectOptions = ref<MerchantSelectOption[]>(merchantOptions);
+const merchantProfileLookup = ref(buildMerchantProfileLookup([]));
+const merchantSelectOptions = ref<MerchantSelectOption[]>([]);
 const queryExtraValues = ref<Record<string, any>>({});
 const redemptionDialogVisible = ref(false);
 const couponSelectOptions = ref(buildCouponSelectOptions());
