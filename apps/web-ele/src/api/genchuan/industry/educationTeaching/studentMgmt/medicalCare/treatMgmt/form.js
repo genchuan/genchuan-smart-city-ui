@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择就诊类型',
+        clearable: true,
         options: [
           { label: '门诊', value: '门诊' },
           { label: '急诊', value: '急诊' },
@@ -28,6 +29,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '待审核', value: '待审核' },
           { label: '已就诊', value: '已就诊' },

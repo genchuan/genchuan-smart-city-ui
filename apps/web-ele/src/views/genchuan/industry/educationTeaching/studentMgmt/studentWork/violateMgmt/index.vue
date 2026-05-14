@@ -138,16 +138,14 @@ const getTableData = async ({ page }) => {
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      className: tagFilters.value.className,
-      violateType: tagFilters.value.violateType,
-      punishType: tagFilters.value.punishType,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
     };
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getViolateMgmtPage(params);
     dataObj.total = res.total || 0;

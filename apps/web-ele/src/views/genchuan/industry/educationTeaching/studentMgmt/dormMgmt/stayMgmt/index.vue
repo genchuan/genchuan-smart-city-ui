@@ -155,21 +155,22 @@ const currentEditId = ref(null);
 const confirmIds = ref([]);
 const auditIds = ref([]);
 
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
-      studentId: tagFilters.value.studentId,
-      className: tagFilters.value.className,
-      stayDate: tagFilters.value.stayDate,
     };
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getStayMgmtPage(params);
     dataObj.total = res.total || 0;

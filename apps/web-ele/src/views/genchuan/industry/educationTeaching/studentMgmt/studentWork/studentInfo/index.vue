@@ -133,20 +133,16 @@ const currentEditId = ref(null);
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      major: tagFilters.value.major,
-      className: tagFilters.value.className,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
-      grade: tagFilters.value.grade,
-      createTime: tagFilters.value.createTime,
     };
-    // 处理 createTime 日期范围
     if (params.createTime && typeof params.createTime === 'string') {
-      // 如果是单日期字符串，作为精确日期筛选
       params.createTimeStart = params.createTime;
       params.createTimeEnd = params.createTime;
       delete params.createTime;
@@ -156,7 +152,9 @@ const getTableData = async ({ page }) => {
       delete params.createTime;
     }
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getStudentInfoPage(params);
     dataObj.total = res.total || 0;

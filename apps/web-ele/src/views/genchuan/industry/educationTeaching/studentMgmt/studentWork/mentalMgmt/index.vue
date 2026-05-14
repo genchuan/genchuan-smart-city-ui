@@ -150,24 +150,28 @@ const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
 
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      studentId: tagFilters.value.studentId,
-      mentalStatus: tagFilters.value.mentalStatus,
-      riskLevel: tagFilters.value.riskLevel,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
-      createTimeStart: Array.isArray(tagFilters.value.createTime) ? tagFilters.value.createTime[0] : null,
-      createTimeEnd: Array.isArray(tagFilters.value.createTime) ? tagFilters.value.createTime[1] : null,
     };
-    // 删除无效参数
+    // 日期范围转换
+    if (params.createTime && Array.isArray(params.createTime) && params.createTime.length === 2) {
+      params.createTimeStart = params.createTime[0];
+      params.createTimeEnd = params.createTime[1];
+      delete params.createTime;
+    }
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getMentalMgmtPage(params);
     dataObj.total = res.total || 0;

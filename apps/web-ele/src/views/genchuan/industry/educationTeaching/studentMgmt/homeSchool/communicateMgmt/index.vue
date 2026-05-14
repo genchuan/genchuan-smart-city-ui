@@ -143,21 +143,19 @@ const currentEditId = ref(null);
 const publishIds = ref([]);
 const replyId = ref(null);
 
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
-      title: tagFilters.value.title,
-      msgType: tagFilters.value.msgType,
-      className: tagFilters.value.className,
     };
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getCommunicateMgmtPage(params);
     dataObj.total = res.total || 0;

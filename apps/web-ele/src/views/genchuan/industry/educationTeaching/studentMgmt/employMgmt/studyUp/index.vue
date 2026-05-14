@@ -139,24 +139,28 @@ const getStatusType = (status) => {
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      schoolType: tagFilters.value.schoolType,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
-      studentId: tagFilters.value.studentId,
-      intention: tagFilters.value.intention,
-      schoolName: tagFilters.value.schoolName,
     };
-    // 处理 createTime 日期范围
-    if (tagFilters.value.createTime && Array.isArray(tagFilters.value.createTime) && tagFilters.value.createTime.length === 2) {
-      params.createTimeStart = tagFilters.value.createTime[0];
-      params.createTimeEnd = tagFilters.value.createTime[1];
+    if (params.createTime && Array.isArray(params.createTime) && params.createTime.length === 2) {
+      params.createTimeStart = params.createTime[0];
+      params.createTimeEnd = params.createTime[1];
+      delete params.createTime;
+    } else if (params.createTime && typeof params.createTime === 'string') {
+      params.createTimeStart = params.createTime;
+      params.createTimeEnd = params.createTime;
+      delete params.createTime;
     }
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getStudyUpPage(params);
     dataObj.total = res.total || 0;

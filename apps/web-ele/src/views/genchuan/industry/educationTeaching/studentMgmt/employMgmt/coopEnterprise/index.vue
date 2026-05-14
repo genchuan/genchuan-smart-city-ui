@@ -14,7 +14,6 @@ import {
   updateCoopEnterprise,
   exportCoopEnterprise,
   getCoopEnterpriseDetail,
-  getDeptOptions,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/employMgmt/coopEnterprise/data.js';
 import {
   textObj,
@@ -53,29 +52,18 @@ const getDateFromTimestamp = (timestamp) => {
 const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
-// 加载系部选项
-const deptOptions = ref([]);
-const loadDeptOptions = async () => {
-  const res = await getDeptOptions();
-  deptOptions.value = res;
-  updateDeptOptionsInForms();
-};
-loadDeptOptions();
+// 前端写死的系部选项
+const deptOptions = ref([
+  {value: 2001, label: '计算机系'},
+  {value: 2002, label: '机电系'},
+  {value: 2003, label: '经贸系'},
+  {value: 2004, label: '其他'},
+]);
 
 const getDeptNameById = (deptId) => {
   if (!deptId) return '-';
   const found = deptOptions.value.find(opt => opt.value === deptId);
   return found ? found.label : String(deptId);
-};
-
-const updateDeptOptionsInForms = () => {
-  const options = deptOptions.value;
-  if (queryFormApi) {
-    queryFormApi.updateSchema([{fieldName: 'deptId', componentProps: {options}}]);
-  }
-  if (createFormApi) {
-    createFormApi.updateSchema([{fieldName: 'deptId', componentProps: {options}}]);
-  }
 };
 
 // ---------- 标签筛选 ----------
@@ -167,26 +155,31 @@ const isEditMode = ref(false);
 const currentEditId = ref(null);
 const maintainIds = ref([]);
 
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      enterpriseType: tagFilters.value.enterpriseType,
-      deptId: tagFilters.value.deptId,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
-      enterpriseName: tagFilters.value.enterpriseName,
     };
-    // 处理 createTime 日期范围
-    if (tagFilters.value.createTime && Array.isArray(tagFilters.value.createTime) && tagFilters.value.createTime.length === 2) {
-      params.createTimeStart = tagFilters.value.createTime[0];
-      params.createTimeEnd = tagFilters.value.createTime[1];
+    if (params.createTime && Array.isArray(params.createTime) && params.createTime.length === 2) {
+      params.createTimeStart = params.createTime[0];
+      params.createTimeEnd = params.createTime[1];
+      delete params.createTime;
+    } else if (params.createTime && typeof params.createTime === 'string') {
+      params.createTimeStart = params.createTime;
+      params.createTimeEnd = params.createTime;
+      delete params.createTime;
     }
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getCoopEnterprisePage(params);
     dataObj.total = res.total || 0;

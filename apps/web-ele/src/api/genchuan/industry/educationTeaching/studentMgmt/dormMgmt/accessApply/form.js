@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择申请类型',
+        clearable: true,
         options: [
           { label: '应急出入', value: '应急出入' },
           { label: '其他', value: '其他' },
@@ -27,6 +28,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '待审核', value: '待审核' },
           { label: '已通过', value: '已通过' },

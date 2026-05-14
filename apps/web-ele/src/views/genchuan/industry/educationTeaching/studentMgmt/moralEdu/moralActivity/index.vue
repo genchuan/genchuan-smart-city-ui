@@ -16,7 +16,6 @@ import {
   recordMoralActivity,
   exportMoralActivity,
   getMoralActivityDetail,
-  getDeptOptions,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/moralEdu/moralActivity/data.js';
 import {
   textObj,
@@ -61,7 +60,6 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
-// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
   if (!field) return;
   if (value === '' || value === null || value === undefined) {
@@ -80,7 +78,7 @@ function handleFilterTagClick(field, value) {
       tagFilters.value[field] = value;
     }
   }
-  gridApi.query(); // 改为 query()
+  gridApi.query();
 }
 
 function clearFilters() {
@@ -109,6 +107,13 @@ function getTagDisplayText(field, value) {
   if (Array.isArray(value)) return value.join('、');
   return value || '-';
 }
+
+// ---------- 前端写死的部门选项 ----------
+const deptOptions = ref([
+  {label: '学生工作部', value: '学生工作部'},
+  {label: '团委', value: '团委'},
+  {label: '教务处', value: '教务处'},
+]);
 
 // ---------- 抽屉与模态框 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -140,36 +145,31 @@ const currentEditId = ref(null);
 const joinActivityId = ref(null);
 const recordActivityId = ref(null);
 
-const deptOptions = ref([]);
-const loadDeptOptions = async () => {
-  const res = await getDeptOptions();
-  deptOptions.value = res;
-};
-loadDeptOptions();
-
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      activityType: tagFilters.value.activityType,
-      hostDept: tagFilters.value.hostDept,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
-      activityName: tagFilters.value.activityName,
     };
-    // 处理 createTime 日期范围
-    if (tagFilters.value.createTime && Array.isArray(tagFilters.value.createTime) && tagFilters.value.createTime.length === 2) {
-      params.createTimeStart = tagFilters.value.createTime[0];
-      params.createTimeEnd = tagFilters.value.createTime[1];
-    } else if (tagFilters.value.createTime && typeof tagFilters.value.createTime === 'string') {
-      params.createTimeStart = tagFilters.value.createTime;
-      params.createTimeEnd = tagFilters.value.createTime;
+    if (params.createTime && Array.isArray(params.createTime) && params.createTime.length === 2) {
+      params.createTimeStart = params.createTime[0];
+      params.createTimeEnd = params.createTime[1];
+      delete params.createTime;
+    } else if (params.createTime && typeof params.createTime === 'string') {
+      params.createTimeStart = params.createTime;
+      params.createTimeEnd = params.createTime;
+      delete params.createTime;
     }
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getMoralActivityPage(params);
     dataObj.total = res.total || 0;
@@ -391,6 +391,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   },
 });
 
+// 为 createForm 的 hostDept 字段注入写死的选项
 watch(createFormApi, (api) => {
   if (api && deptOptions.value.length) {
     const schema = api.getSchema();
@@ -431,6 +432,7 @@ function handleOpenDetail(row) {
   moralActivityDetailDrawerRef.value.open();
 }
 
+// 查询表单：注入写死的部门选项
 const [QueryForm] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
@@ -442,7 +444,9 @@ const [QueryForm] = useVbenForm({
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
     delete v.rules;
-    if (v.fieldName === 'hostDept') v.componentProps.options = deptOptions.value;
+    if (v.fieldName === 'hostDept') {
+      v.componentProps.options = deptOptions.value;
+    }
     return v;
   }),
   showCollapseButton: true,

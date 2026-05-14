@@ -166,19 +166,22 @@ async function submitBatchScore() {
   }
 }
 
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      dormNum: tagFilters.value.dormNum,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
     };
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getDormComparePage(params);
     dataObj.total = res.total || 0;

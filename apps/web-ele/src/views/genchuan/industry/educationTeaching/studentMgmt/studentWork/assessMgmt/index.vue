@@ -128,16 +128,14 @@ const getTableData = async ({ page }) => {
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      className: tagFilters.value.className,
-      assessType: tagFilters.value.assessType,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
-      cycle: tagFilters.value.cycle, // 新增周期筛选
     };
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getAssessMgmtPage(params);
     dataObj.total = res.total || 0;

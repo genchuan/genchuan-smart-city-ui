@@ -145,16 +145,10 @@ const getTableData = async ({ page }) => {
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      className: tagFilters.value.className,
-      leaveType: tagFilters.value.leaveType,
-      status: tagFilters.value.status,
-      attendanceSync: tagFilters.value.attendanceSync,
-      creator: tagFilters.value.creator,
-      createTime: tagFilters.value.createTime,
     };
-    // 删除无效参数
     Object.keys(params).forEach(key => {
       if (params[key] === '' || params[key] === null || params[key] === undefined) {
         delete params[key];

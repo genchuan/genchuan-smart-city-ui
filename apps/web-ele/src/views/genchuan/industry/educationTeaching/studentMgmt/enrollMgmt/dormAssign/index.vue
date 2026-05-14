@@ -151,20 +151,19 @@ const getStatusType = (status) => {
   return map[status] || 'info';
 };
 
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      dormNum: tagFilters.value.dormNum,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
-      studentId: tagFilters.value.studentId,
     };
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getDormAssignPage(params);
     dataObj.total = res.total || 0;

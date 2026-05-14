@@ -145,15 +145,14 @@ const getTableData = async ({ page }) => {
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      grade: tagFilters.value.grade,
-      fundType: tagFilters.value.fundType,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
     };
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getFundSystemPage(params);
     dataObj.total = res.total || 0;

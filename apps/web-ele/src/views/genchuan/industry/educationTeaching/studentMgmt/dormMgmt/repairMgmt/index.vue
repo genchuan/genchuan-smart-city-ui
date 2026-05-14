@@ -144,18 +144,19 @@ const currentAssignIds = ref([]);
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      dormNum: tagFilters.value.dormNum,
-      repairType: tagFilters.value.repairType,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
-      checkStatus: tagFilters.value.checkStatus,
     };
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getRepairMgmtPage(params);
     dataObj.total = res.total || 0;

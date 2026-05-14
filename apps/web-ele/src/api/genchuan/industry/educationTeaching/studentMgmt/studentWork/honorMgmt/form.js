@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择荣誉类型',
+        clearable: true,
         options: [
           { label: '优秀学生', value: '优秀学生' },
           { label: '奖学金', value: '奖学金' },
@@ -29,6 +30,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '待审核', value: '待审核' },
           { label: '已通过', value: '已通过' },

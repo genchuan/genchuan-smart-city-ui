@@ -192,17 +192,14 @@ function handleRowCheckboxChange({records}) {
 
 const searchParams = ref({});
 
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      dutyUser: tagFilters.value.dutyUser,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
-      dutyDate: tagFilters.value.dutyDate, // 新增：按日期筛选
     };
     if (params.dutyDate && Array.isArray(params.dutyDate) && params.dutyDate.length === 2) {
       params.dutyDateStart = params.dutyDate[0];
@@ -210,7 +207,9 @@ const getTableData = async ({page}) => {
       delete params.dutyDate;
     }
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getDutyMgmtPage(params);
     dataObj.total = res.total || 0;
@@ -744,7 +743,7 @@ onUnmounted(() => {
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
+          <IconButton v-if="row.status !== '已完成'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '待打卡'" content="打卡" icon-name="Check"
                       @click="handleCheckin(row)"/>
           <IconButton v-if="row.status === '待调班审批'" content="调班审批" icon-name="Checked"

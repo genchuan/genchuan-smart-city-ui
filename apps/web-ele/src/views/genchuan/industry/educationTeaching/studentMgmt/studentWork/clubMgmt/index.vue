@@ -162,15 +162,14 @@ const getTableData = async ({ page }) => {
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      clubName: tagFilters.value.clubName,
-      clubType: tagFilters.value.clubType,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
     };
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getClubMgmtPage(params);
     dataObj.total = res.total || 0;

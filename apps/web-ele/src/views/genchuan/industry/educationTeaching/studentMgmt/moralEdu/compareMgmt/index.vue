@@ -144,19 +144,19 @@ const currentEditId = ref(null);
 const scoreIds = ref([]);
 const awardIds = ref([]);
 
-const getTableData = async ({page}) => {
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
-      className: tagFilters.value.className,
-      status: tagFilters.value.status,
-      creator: tagFilters.value.creator,
     };
     Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
     const res = await getCompareMgmtPage(params);
     dataObj.total = res.total || 0;
