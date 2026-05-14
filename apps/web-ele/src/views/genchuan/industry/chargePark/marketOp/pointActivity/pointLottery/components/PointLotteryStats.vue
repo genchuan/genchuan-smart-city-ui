@@ -170,10 +170,6 @@ const handleResize = () => {
   }
 };
 
-const handleCardClick = (card) => {
-  emit('cardClick', card.type, card.value);
-};
-
 watch(
   () => props.data,
   () => {
@@ -204,7 +200,6 @@ onUnmounted(() => {
         :key="`card-${index}`"
         class="stat-card"
         :style="{ borderLeftColor: card.color || '#4A90E2' }"
-        @click="handleCardClick(card)"
       >
         <div class="card-header">
           <h3 class="card-title">{{ card.title }}</h3>
@@ -255,21 +250,14 @@ onUnmounted(() => {
   flex: 1;
   padding: 16px;
   margin-bottom: 12px;
-  cursor: pointer;
   background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
-  transition: all 0.3s ease;
 }
 
 .stat-card:last-child {
   margin-bottom: 0;
-}
-
-.stat-card:hover {
-  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
-  transform: translateY(-2px);
 }
 
 .card-header {

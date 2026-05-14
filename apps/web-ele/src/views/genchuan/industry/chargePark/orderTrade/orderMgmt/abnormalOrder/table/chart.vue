@@ -1,46 +1,12 @@
 <script setup>
-import { onMounted, reactive, ref, computed } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 import * as echarts from 'echarts';
-import { useVbenDrawer } from '@vben/common-ui';
-import { ElMessage, ElTag } from 'element-plus';
-import { getAbnormalOrderChart, getAbnormalOrderPage } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
+import { ElMessage } from 'element-plus';
+import { getAbnormalOrderChart } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { formatTimestamp } from '#/utils';
-import { useGridColumns } from './data';
-import ParkDetailDrawer from './detail.vue';
 
-// 处置状态映射
-const typeMap = {
-  unhandled: { label: '未处理', type: 'danger' },
-  handling: { label: '处理中', type: 'warning' },
-  closed: { label: '已关闭', type: 'info' },
-};
-
-// 获取状态标签
-const getTypeLabel = (typeValue) => {
-  return typeMap[typeValue]?.label || typeValue || '未知';
-};
-
-// 获取状态类型
-const getStatusType = (typeValue) => {
-  return typeMap[typeValue]?.type || 'default';
-};
-
-// 订单类型映射
-const orderTypeMap = {
-  temp_park: { label: '临时停车' },
-  offtime_park: { label: '错时停车' },
-  car_charge: { label: '汽车充电' },
-  bike_charge: { label: '两轮充电' },
-  share_charge: { label: '共享充电' },
-};
-
-// 获取订单类型标签
-const getOrderTypeLabel = (orderType) => {
-  return orderTypeMap[orderType]?.label || orderType || '-';
-};
+const emit = defineEmits(['filter-change']);
 
 // 异常类型映射
 const abnormalTypeMap = {
@@ -54,25 +20,6 @@ const getAbnormalTypeLabel = (abnormalType) => {
   return abnormalTypeMap[abnormalType]?.label || abnormalType || '-';
 };
 
-// 格式化时间
-const formatTime = (time) => {
-  if (!time) return '-';
-  return time;
-};
-
-// 打开详情
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  parkDetailDrawerRef.value?.open();
-};
-
-// 抽屉详情ref
-const parkDetailDrawerRef = ref(null);
-// 抽屉详情数据
-const dataObj = reactive({
-  detailObj: {},
-});
-
 const state = reactive({
   cardList: [
     { title: '待处理数量', value: 0, color: '#13ce66' },
@@ -85,196 +32,50 @@ const state = reactive({
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 选中的日期和异常类型
-const selectedDate = ref(null);
-const selectedAbnormalType = ref(null);
-const selectedStatus = ref(null);
-const useDateFilter = ref(true);
-
-// 获取今日时间范围
-const getTodayTimeRange = () => {
-  const today = new Date();
-  const start = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')} 00:00:00`;
-  const end = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')} 23:59:59`;
-  return { start, end };
-};
-
-// 抽屉配置
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  width: '75%',
-  title: computed(() => {
-    if (selectedDate.value && selectedAbnormalType.value) {
-      return `${selectedDate.value} ${getAbnormalTypeLabel(selectedAbnormalType.value)}订单`;
-    }
-    else if (selectedDate.value) {
-      return `${selectedDate.value}订单`;
-    }
-    else if (selectedAbnormalType.value) {
-      return `${getAbnormalTypeLabel(selectedAbnormalType.value)}订单`;
-    }
-    return '订单列表';
-  }),
-  class: 'genchuan-detail-drawer',
-  onCancel() {
-    drawerApi.close();
-  },
-});
-
-// 抽屉表格数据
-const drawerDataObj = reactive({
-  total: 0,
-  list: [],
-  loading: false,
-});
-const drawerSearchObj = reactive({});
-
-// 获取抽屉表格数据
-const getDrawerTableData = async (pageObj) => {
-  const page = pageObj.page;
-  const params = {
-    pageNo: page.currentPage,
-    pageSize: page.pageSize,
-  };
-  // 如果使用日期筛选，添加日期参数
-  if (useDateFilter.value) {
-    let start, end;
-    // 如果 drawerSearchObj 已有时间范围（柱状图点击设置的），直接使用
-    if (drawerSearchObj.identifyTimeStart && drawerSearchObj.identifyTimeEnd) {
-      start = drawerSearchObj.identifyTimeStart;
-      end = drawerSearchObj.identifyTimeEnd;
-    } else if (selectedDate.value) {
-      start = selectedDate.value + ' 00:00:00';
-      end = selectedDate.value + ' 23:59:59';
-    }
-    else {
-      ({ start, end } = getTodayTimeRange());
-    }
-    params.identifyTimeStart = start;
-    params.identifyTimeEnd = end;
-  }
-  // 如果选中了异常类型，传递异常类型参数
-  if (selectedAbnormalType.value) {
-    params.abnormalType = selectedAbnormalType.value;
-  }
-  // 如果选中了状态（卡片点击时），传递状态参数
-  if (selectedStatus.value) {
-    params.status = selectedStatus.value;
-  }
-  Object.assign(params, drawerSearchObj);
-  try {
-    drawerDataObj.loading = true;
-    const res = await getAbnormalOrderPage(params);
-    drawerDataObj.total = res.total;
-    drawerDataObj.list = res.list.map((v) => {
-      return {
-        ...v,
-        identifyTime: formatTimestamp(v.identifyTime),
-        createTime: formatTimestamp(v.createTime),
-        updateTime: formatTimestamp(v.updateTime),
-        processTime: formatTimestamp(v.processTime),
-      };
-    });
-    return drawerDataObj;
-  }
-  catch (error) {
-    console.error('获取订单列表失败:', error);
-    ElMessage.error('获取订单列表失败');
-    return drawerDataObj;
-  }
-  finally {
-    drawerDataObj.loading = false;
-  }
-};
-
-// 抽屉表格
-const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: useGridColumns().slice(0, -1),
-    keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getDrawerTableData({ page }),
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: drawerDataObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-    },
-    showOverflow: true,
-  },
-  showSearchForm: false,
-});
-
-// 点击卡片事件
+// 点击卡片事件 - 查询今日数据
 const handleCardClick = (index) => {
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const params = {
+    identifyTimeStart: todayStr + ' 00:00:00',
+    identifyTimeEnd: todayStr + ' 23:59:59',
+    abnormalType: null,
+    status: null,
+  };
   if (index === 0) {
-    // 待处理数量 → 显示 unhandled
-    selectedAbnormalType.value = null;
-    selectedStatus.value = 'unhandled';
+    params.status = 'unhandled';
+  } else if (index === 1) {
+    params.status = 'closed';
   }
-  else if (index === 1) {
-    // 处理完成率 → 显示 closed
-    selectedAbnormalType.value = null;
-    selectedStatus.value = 'closed';
-  }
-  selectedDate.value = null;
-  useDateFilter.value = false;
-  // 清除近30天的时间范围
-  delete drawerSearchObj.identifyTimeStart;
-  delete drawerSearchObj.identifyTimeEnd;
-  drawerGridApi.query();
-  drawerApi.open();
+  emit('filter-change', params);
 };
 
 // 折线图点击事件处理
 const handleLineChartClick = (params) => {
   if (params && params.name) {
-    selectedDate.value = params.name;
-    selectedStatus.value = null;
-    selectedAbnormalType.value = null;
-    useDateFilter.value = true;
-    // 清除近30天的时间范围
-    delete drawerSearchObj.identifyTimeStart;
-    delete drawerSearchObj.identifyTimeEnd;
-    drawerGridApi.query();
-    drawerApi.open();
+    emit('filter-change', {
+      identifyTimeStart: params.name + ' 00:00:00',
+      identifyTimeEnd: params.name + ' 23:59:59',
+      abnormalType: null,
+      status: null,
+    });
   }
 };
 
 // 柱状图点击事件处理
 const handleBarChartClick = (params) => {
   if (params && params.name) {
-    // 根据中文异常类型名称找到对应的英文类型值
     const abnormalTypeKey = Object.keys(abnormalTypeMap).find(key => abnormalTypeMap[key].label === params.name);
-    if (abnormalTypeKey) {
-      selectedAbnormalType.value = abnormalTypeKey;
-    }
-    else {
-      selectedAbnormalType.value = params.name;
-    }
-    // 重置状态筛选
-    selectedStatus.value = null;
-    // 计算近30天的时间范围
     const today = new Date();
     const thirtyDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
     const start = thirtyDaysAgo.toISOString().split('T')[0] + ' 00:00:00';
     const end = today.toISOString().split('T')[0] + ' 23:59:59';
-    selectedDate.value = `${start.split(' ')[0]} 至 ${end.split(' ')[0]}`;
-    // 使用日期筛选（近30天）
-    useDateFilter.value = true;
-    // 存储近30天的时间范围用于参数传递
-    drawerSearchObj.identifyTimeStart = start;
-    drawerSearchObj.identifyTimeEnd = end;
-    drawerGridApi.query();
-    drawerApi.open();
+    emit('filter-change', {
+      identifyTimeStart: start,
+      identifyTimeEnd: end,
+      abnormalType: abnormalTypeKey || params.name,
+      status: null,
+    });
   }
 };
 
@@ -282,36 +83,26 @@ const handleBarChartClick = (params) => {
 const fetchOrderChartData = async () => {
   try {
     const res = await getAbnormalOrderChart();
-    // 从 cardData 获取卡片数据
     if (res.cardData) {
       state.cardList[0].value = res.cardData.waitProcessCount || 0;
       state.cardList[1].value = res.cardData.processCompleteRate || 0;
     }
-    // 如果trendData为空，使用假数据
-    state.trendData =
-      res.trendData && res.trendData.length > 0
-        ? res.trendData
-        : [
-            { date: '2025-04-01', count: 5 },
-            { date: '2025-04-02', count: 8 },
-            { date: '2025-04-03', count: 3 },
-            { date: '2025-04-04', count: 10 },
-            { date: '2025-04-05', count: 6 },
-          ];
-    // 如果typeData为空，使用假数据
-    state.typeData =
-      res.typeData && Array.isArray(res.typeData) && res.typeData.length > 0
-        ? res.typeData
-        : [
-            { count: 5, type: 'payment_error' },
-            { count: 3, type: 'billing_error' },
-            { count: 12, type: 'status_error' },
-          ];
-    // 更新折线图
+    state.trendData = res.trendData && res.trendData.length > 0 ? res.trendData : [
+      { date: '2025-04-01', count: 5 },
+      { date: '2025-04-02', count: 8 },
+      { date: '2025-04-03', count: 3 },
+      { date: '2025-04-04', count: 10 },
+      { date: '2025-04-05', count: 6 },
+    ];
+    state.typeData = res.typeData && Array.isArray(res.typeData) && res.typeData.length > 0 ? res.typeData : [
+      { count: 5, type: 'payment_error' },
+      { count: 3, type: 'billing_error' },
+      { count: 12, type: 'status_error' },
+    ];
     updateLineChart();
   } catch (error) {
     console.error('获取异常订单图表数据失败:', error);
-    // 接口调用失败时使用假数据
+    ElMessage.error('获取异常订单图表数据失败');
     state.cardList[0].value = 15;
     state.cardList[1].value = 85;
     state.trendData = [
@@ -326,7 +117,6 @@ const fetchOrderChartData = async () => {
       { count: 3, type: 'billing_error' },
       { count: 12, type: 'status_error' },
     ];
-    // 更新折线图
     updateLineChart();
   }
 };
@@ -395,7 +185,6 @@ const initLineChart = () => {
 
   lineChartInstance.setOption(option);
 
-  // 添加折线图点击事件监听（通过Zr层捕获点击）
   lineChartInstance.getZr().on('click', (e) => {
     const pointInPixel = [e.offsetX, e.offsetY];
     const pointInGrid = lineChartInstance.convertFromPixel({ seriesIndex: 0 }, pointInPixel);
@@ -436,9 +225,9 @@ onMounted(() => {
 
 <template>
   <div class="park-chart-box">
-    <div class="chart-box-left chart-box-left-two ">
+    <div class="chart-box-left chart-box-left-two">
       <Card
-        class="left-card cursor-pointer "
+        class="left-card cursor-pointer"
         v-for="(item, index) in state.cardList"
         :key="item.title"
         v-bind="item"
@@ -456,59 +245,10 @@ onMounted(() => {
       @bar-click="handleBarChartClick"
     />
   </div>
-
-  <Drawer>
-    <DrawerGrid>
-      <template #id="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.id }}
-        </el-text>
-      </template>
-      <template #orderType="{ row }">
-        <el-tag type="primary">{{ getOrderTypeLabel(row.orderType) }}</el-tag>
-      </template>
-      <template #abnormalType="{ row }">
-        <el-tag type="danger">{{ getAbnormalTypeLabel(row.abnormalType) }}</el-tag>
-      </template>
-      <template #status="{ row }">
-        <ElTag :type="getStatusType(row.status)">
-          {{ getTypeLabel(row.status) }}
-        </ElTag>
-      </template>
-      <template #identifyTime="{ row }">
-        {{ formatTime(row.identifyTime) }}
-      </template>
-      <template #createTime="{ row }">
-        {{ formatTime(row.createTime) }}
-      </template>
-      <template #updateTime="{ row }">
-        {{ formatTime(row.updateTime) }}
-      </template>
-      <template #processTime="{ row }">
-        {{ formatTime(row.processTime) }}
-      </template>
-      <template #payMethod="{ row }">
-        <span v-if="row.payMethod === 'wechat'">微信</span>
-        <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
-        <span v-else-if="row.payMethod === 'bank'">银行卡</span>
-        <span v-else-if="row.payMethod === 'cash'">现金</span>
-        <span v-else>{{ row.payMethod || '-' }}</span>
-      </template>
-    </DrawerGrid>
-  </Drawer>
-
-  <ParkDetailDrawer
-    ref="parkDetailDrawerRef"
-    :detail-obj="dataObj.detailObj"
-  />
 </template>
 
-<style scoped> 
-.chart-box-left-two{
-  justify-content: center !important; 
+<style scoped>
+.chart-box-left-two {
+  justify-content: center !important;
 }
 </style>

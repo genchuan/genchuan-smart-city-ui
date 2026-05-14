@@ -11,7 +11,10 @@ const drillInfo = reactive({
   chartType: '',
   field: '',
   label: '',
+  metricValue: '',
   pageTitle: '',
+  rowCount: '',
+  rows: [],
   title: '',
   value: '',
 });
@@ -59,9 +62,63 @@ function getGridColumns() {
   ];
 }
 
+function getRowCount() {
+  if (Array.isArray(drillInfo.rows) && drillInfo.rows.length > 0) {
+    return drillInfo.rows.length;
+  }
+
+  const directValue = Number(drillInfo.rowCount);
+  if (Number.isFinite(directValue) && directValue > 0) {
+    return Math.min(Math.floor(directValue), 500);
+  }
+
+  const metricValue = Number(
+    String(drillInfo.metricValue || '').replace('%', ''),
+  );
+  if (
+    Number.isFinite(metricValue) &&
+    metricValue > 0 &&
+    !String(drillInfo.metricValue).includes('%')
+  ) {
+    return Math.min(Math.floor(metricValue), 500);
+  }
+
+  return 1;
+}
+
 function createRows() {
   const baseName = drillInfo.value || drillInfo.label || '图表数据';
-  return Array.from({ length: 18 }, (_, index) => {
+  if (Array.isArray(drillInfo.rows) && drillInfo.rows.length > 0) {
+    return drillInfo.rows.map((row, index) => {
+      const no = index + 1;
+      return {
+        ...row,
+        category:
+          drillInfo.title || drillInfo.label || row.category || '统计维度',
+        id: row.id || `${drillInfo.chartType}-${drillInfo.field}-${no}`,
+        name:
+          row.name ||
+          row.stationName ||
+          row.areaName ||
+          row.date ||
+          `${baseName}明细${String(no).padStart(2, '0')}`,
+        remark:
+          row.remark || `${drillInfo.pageTitle || '场站资源'}图表钻取数据`,
+        statTime:
+          row.statTime || row.date || row.createTime || row.updateTime || '--',
+        status: row.status || row.statusName || '正常',
+        value:
+          row.value ??
+          row.count ??
+          row.total ??
+          row[drillInfo.field] ??
+          drillInfo.metricValue ??
+          no,
+      };
+    });
+  }
+
+  return Array.from({ length: getRowCount() }, (_, index) => {
     const no = index + 1;
     return {
       id: `${drillInfo.chartType}-${drillInfo.field}-${no}`,
@@ -119,7 +176,10 @@ async function open(info = {}) {
     chartType: info.chartType || '',
     field: info.field || '',
     label: info.label || '',
+    metricValue: info.metricValue ?? '',
     pageTitle: info.pageTitle || '',
+    rowCount: info.rowCount ?? info.count ?? '',
+    rows: Array.isArray(info.rows) ? info.rows : [],
     title: info.title || '',
     value: info.value || '',
   });

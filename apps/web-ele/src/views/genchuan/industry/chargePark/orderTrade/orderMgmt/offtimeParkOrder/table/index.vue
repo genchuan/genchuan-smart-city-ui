@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 
@@ -34,6 +34,14 @@ const props = defineProps({
   arrowState: {
     type: Boolean,
     default: false,
+  },
+  filterParams: {
+    type: Object,
+    default: () => ({
+      createOrderTimeStart: null,
+      createOrderTimeEnd: null,
+      stationName: null,
+    }),
   },
 });
 const emit = defineEmits(['arrow-change']);
@@ -188,6 +196,7 @@ const getTableData = async (pageObj) => {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchObj,
+    ...props.filterParams,
   };
 
   try {
@@ -308,6 +317,14 @@ const createLabel = (item) => {
 const handleClick = () => {
   gridApi.query();
 };
+watch(
+  () => props.filterParams,
+  () => {
+    dataObj.currentPage = 1;
+    gridApi.query();
+  },
+  { deep: true }
+);
 const handleSerachShow = () => {
   drawerApi.open();
 };

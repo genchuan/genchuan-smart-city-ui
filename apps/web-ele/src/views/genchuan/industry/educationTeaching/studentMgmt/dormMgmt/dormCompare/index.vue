@@ -1,11 +1,11 @@
 <script setup>
-import {reactive, ref} from 'vue';
-import {useVbenDrawer} from '@vben/common-ui';
-import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
+import { reactive, ref, onMounted, onUnmounted } from 'vue';
+import { useVbenDrawer } from '@vben/common-ui';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
-import {useVbenForm} from '#/adapter/form';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
-import {downloadFileFromBlobPart} from '@vben/utils';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import DormCompareDetailDrawer from './components/dormCompareDetail.vue';
 import {
   getDormComparePage,
@@ -26,7 +26,7 @@ import {
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/dormMgmt/dormCompare/form.js';
 
 const getStatusType = (status) => {
-  const map = {'打分中': 'warning', '已汇总': 'success'};
+  const map = { '打分中': 'warning', '已汇总': 'success' };
   return map[status] || 'info';
 };
 
@@ -56,33 +56,39 @@ const getDateFromTimestamp = (timestamp) => {
 const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
+// ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -95,6 +101,7 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
+// ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
@@ -139,15 +146,10 @@ async function handleBatchScore() {
 }
 
 async function submitBatchScore() {
-  if (batchScoreValue.value === null || batchScoreValue.value === '') {
-    return ElMessage.warning('请输入得分');
-  }
+  if (batchScoreValue.value === null || batchScoreValue.value === '') return ElMessage.warning('请输入得分');
   const loading = ElLoading.service({text: '打分中...'});
   try {
-    const scoreData = scoreIds.value.map(id => ({
-      id: id,
-      score: batchScoreValue.value
-    }));
+    const scoreData = scoreIds.value.map(id => ({id: id, score: batchScoreValue.value}));
     const res = await scoreDormCompare(scoreData);
     if (res && res !== false) {
       ElMessage.success('打分成功');
@@ -167,58 +169,28 @@ async function submitBatchScore() {
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-
-    const res = await getDormComparePage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'dormNum':
-            itemValue = item.dormNum;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getDormComparePage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取宿舍评比列表失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -227,13 +199,13 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
@@ -254,16 +226,16 @@ async function handleBatchSummary() {
   if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个评比记录');
   const scoringRows = checkedRows.value.filter(row => row.status === '打分中');
   if (scoringRows.length === 0) return ElMessage.warning('请选择状态为【打分中】的记录进行汇总');
-
   await ElMessageBox.confirm(`确认汇总选中的 ${scoringRows.length} 个宿舍评比？汇总后将自动计算排名。`, '批量汇总确认', {
-    confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning',
+    confirmButtonText: '确认',
+    cancelButtonText: '取消',
+    type: 'warning'
   });
-
-  const loading = ElLoading.service({ text: '汇总中...' });
+  const loading = ElLoading.service({text: '汇总中...'});
   try {
     const ids = scoringRows.map(row => row.id);
     const sumTime = Date.now();
-    const res = await summaryDormCompare({ ids, sumTime: String(sumTime) });
+    const res = await summaryDormCompare({ids, sumTime: String(sumTime)});
     if (res && res !== false) {
       ElMessage.success('批量汇总成功');
       handleRefresh();
@@ -282,16 +254,16 @@ async function handleBatchPush() {
   if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个评比记录');
   const summarizedRows = checkedRows.value.filter(row => row.status === '已汇总');
   if (summarizedRows.length === 0) return ElMessage.warning('请选择状态为【已汇总】的记录进行推送');
-
   await ElMessageBox.confirm(`确认推送选中的 ${summarizedRows.length} 个宿舍评比结果？推送后学生家长可见。`, '批量推送确认', {
-    confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning',
+    confirmButtonText: '确认',
+    cancelButtonText: '取消',
+    type: 'warning'
   });
-
-  const loading = ElLoading.service({ text: '推送中...' });
+  const loading = ElLoading.service({text: '推送中...'});
   try {
     const ids = summarizedRows.map(row => row.id);
     const pushTime = Date.now();
-    const res = await pushDormCompare({ ids, pushTime: String(pushTime) });
+    const res = await pushDormCompare({ids, pushTime: String(pushTime)});
     if (res && res !== false) {
       ElMessage.success('批量推送成功');
       handleRefresh();
@@ -325,12 +297,14 @@ async function handleEdit(row) {
 async function handlePush(row) {
   if (row.status !== '已汇总') return ElMessage.warning('只有已汇总的记录可以推送');
   await ElMessageBox.confirm(`确认推送宿舍 ${row.dormNum} 的评比结果？`, '推送确认', {
-    confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning',
+    confirmButtonText: '确认',
+    cancelButtonText: '取消',
+    type: 'warning'
   });
-  const loading = ElLoading.service({ text: '推送中...' });
+  const loading = ElLoading.service({text: '推送中...'});
   try {
     const pushTime = Date.now();
-    const res = await pushDormCompare({ ids: [row.id], pushTime: String(pushTime) });
+    const res = await pushDormCompare({ids: [row.id], pushTime: String(pushTime)});
     if (res && res !== false) {
       ElMessage.success('推送成功');
       handleRefresh();
@@ -342,7 +316,6 @@ async function handlePush(row) {
   }
 }
 
-// 新增记录 - 修复点：安全重置表单
 async function handleAdd() {
   if (addFormApi) {
     if (typeof addFormApi.resetForm === 'function') addFormApi.resetForm();
@@ -362,7 +335,9 @@ const [EditForm, editFormApi] = useVbenForm({
         ElMessage.success('更新成功');
         editDrawerApi.close();
         handleRefresh();
-      } else ElMessage.error('更新失败');
+      } else {
+        ElMessage.error('更新失败');
+      }
     } finally {
       loading.close();
     }
@@ -384,7 +359,9 @@ const [AddForm, addFormApi] = useVbenForm({
         ElMessage.success('新增成功');
         addDrawerApi.close();
         handleRefresh();
-      } else ElMessage.error('新增失败');
+      } else {
+        ElMessage.error('新增失败');
+      }
     } catch (error) {
       console.error('新增失败:', error);
       ElMessage.error(error?.message || '新增失败');
@@ -411,7 +388,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -443,8 +420,22 @@ const showChart = ref(true);
 const toggleChart = () => {
   showChart.value = !showChart.value;
 };
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'dormNum') {
+    handleFilterTagClick('dormNum', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('dorm-compare-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('dorm-compare-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -493,15 +484,14 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
       <template #dormNum="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor:pointer">
-          {{ row.dormNum }}
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor:pointer">{{
+            row.dormNum
+          }}
         </el-text>
       </template>
       <template #status="{ row }">

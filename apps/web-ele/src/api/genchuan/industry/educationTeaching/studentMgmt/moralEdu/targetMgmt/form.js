@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择评价人类型',
+        clearable: true,
         options: [
           { label: '教职工', value: '教职工' },
           { label: '家长', value: '家长' },
@@ -28,6 +29,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '未启用', value: '未启用' },
           { label: '已启用', value: '已启用' },

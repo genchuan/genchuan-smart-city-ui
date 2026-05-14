@@ -21,6 +21,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '未分配', value: '未分配' },
           { label: '已分配', value: '已分配' },

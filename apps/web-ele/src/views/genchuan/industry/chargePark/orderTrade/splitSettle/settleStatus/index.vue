@@ -1,10 +1,31 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive, computed } from 'vue';
 
 import Chart from './table/chart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
+
+const statusMap = {
+  normal: { label: '正常', type: 'success' },
+  abnormal: { label: '异常', type: 'danger' },
+};
+
+const filterParams = reactive({
+  status: null,
+});
+
+const hasActiveFilters = computed(() => {
+  return filterParams.status;
+});
+
+const handleFilterChange = (params) => {
+  filterParams.status = params.status || null;
+};
+
+const clearFilter = () => {
+  filterParams.status = null;
+};
 
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
@@ -27,12 +48,23 @@ const tabArray = ref([
     arrowState: false,
   },
 ]);
-const activeName = ref('结算状态'); 
+const activeName = ref('结算状态');
 const secondShow = ref(false);
 </script>
+
 <template>
   <div class="common-index">
-    <Chart />
+    <Chart @filter-change="handleFilterChange" />
+    <div v-if="hasActiveFilters" class="filter-tags">
+      <el-tag
+        v-if="filterParams.status"
+        closable
+        @close="clearFilter"
+        type="warning"
+      >
+        状态: {{ statusMap[filterParams.status]?.label || filterParams.status }}
+      </el-tag>
+    </div>
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -70,9 +102,19 @@ const secondShow = ref(false);
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
+          :filter-params="filterParams"
           @arrow-change="arrowChange"
         />
       </el-tab-pane>
     </el-tabs>
   </div>
 </template>
+
+<style scoped lang="scss">
+.filter-tags {
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+  height: auto;
+}
+</style>

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
@@ -17,14 +17,18 @@ import {
   getPrizeMgmtPage,
   updatePrizeMgmt,
 } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/prizeMgmt';
+import { getPointActivityDetail } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
 import ImportExcelDialog from '../components/ImportExcelDialog.vue';
 import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
 import {
-  dataList,
+  activityDetailFields,
   detailFields,
+  dynamicActivityOptions,
+  fetchActivityOptions,
+  getCurrentActivityOptions,
   getPrizeStatusTagType,
   getPrizeTypeTagType,
   textObj,
@@ -64,9 +68,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const detailDrawerRef = ref(null);
+const activityDetailDrawerRef = ref(null);
 const importExcelDialogRef = ref(null);
 const statusConfirmDialogRef = ref(null);
 const formData = ref();
+const activityDetailData = ref({});
+const activityDetailTitle = ref('活动详情');
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -116,8 +123,32 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
+
+      // 确保活动数据已加载（如果还未加载或加载失败）
+      if (dynamicActivityOptions.value.length === 0) {
+        await fetchActivityOptions();
+      }
+
+      // 动态更新活动选项到表单组件
+      const currentActivityOptions = getCurrentActivityOptions();
+      await formApi.updateSchema([
+        {
+          fieldName: 'activityId',
+          componentProps: {
+            options: currentActivityOptions,
+          },
+        },
+      ]);
+
       if (formData.value?.id) {
-        await formApi.setValues(formData.value);
+        // 编辑模式：确保 activityId 是字符串类型以匹配选项的 value
+        const editData = { ...formData.value };
+        if (editData.activityId) {
+          editData.activityId = String(editData.activityId);
+        }
+        // 使用 nextTick 确保选项更新完成后再设置值
+        await nextTick();
+        await formApi.setValues(editData);
       } else {
         formApi.resetForm();
       }
@@ -207,9 +238,6 @@ const dataObj = reactive({
   pageSize: 10,
   list: [],
   searchParams: {},
-  // 静态数据备份
-  staticData: dataList(),
-  useStaticData: false,
 });
 
 const changeTotalShow = () => {
@@ -223,60 +251,48 @@ const getTableData = async (pageObj) => {
   dataObj.currentPage = page.currentPage;
   dataObj.pageSize = page.pageSize;
 
-  try {
-    // 构建查询参数
-    const queryParams = {
-      pageNo: page.currentPage,
-      pageSize: page.pageSize,
-      name: dataObj.searchParams.name,
-      type: filterType.value || dataObj.searchParams.type,
-      stock: dataObj.searchParams.stock,
-      status: filterStatus.value || dataObj.searchParams.status,
-      activityId: dataObj.searchParams.activityId,
-      sendCount: dataObj.searchParams.sendCount,
-      warnThreshold: dataObj.searchParams.warnThreshold,
-    };
+  // 构建查询参数
+  const queryParams = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+    name: dataObj.searchParams.name,
+    type: filterType.value || dataObj.searchParams.type,
+    stock: dataObj.searchParams.stock,
+    status: filterStatus.value || dataObj.searchParams.status,
+    activityId: dataObj.searchParams.activityId,
+    sendCount: dataObj.searchParams.sendCount,
+    warnThreshold: dataObj.searchParams.warnThreshold,
+  };
 
-    // 处理创建时间范围
-    if (
-      dataObj.searchParams.createTime &&
-      dataObj.searchParams.createTime.length === 2
-    ) {
-      queryParams.createTimeStart = dataObj.searchParams.createTime[0];
-      queryParams.createTimeEnd = dataObj.searchParams.createTime[1];
-    }
+  // 处理创建时间范围
+  if (
+    dataObj.searchParams.createTime &&
+    dataObj.searchParams.createTime.length === 2
+  ) {
+    queryParams.createTimeStart = dataObj.searchParams.createTime[0];
+    queryParams.createTimeEnd = dataObj.searchParams.createTime[1];
+  }
 
-    const response = await getPrizeMgmtPage(queryParams);
-    if (response && response.list && response.list.length > 0) {
-      dataObj.useStaticData = false;
-      dataObj.total = response.total;
-      dataObj.list = response.list.map((item) => ({
-        ...item,
-        id: String(item.id),
-        createTimeStr: formatDate(item.createTime),
-        updateTimeStr: formatDate(item.updateTime),
-        syncTimeStr: formatDate(item.syncTime),
-      }));
-    } else {
-      // 接口返回为空，使用静态数据
-      throw new Error('接口返回数据为空');
-    }
-  } catch (error) {
-    console.error('获取奖品数据失败，使用静态数据:', error);
-    dataObj.useStaticData = true;
-    // 使用静态数据
-    const staticData = dataObj.staticData;
-    dataObj.total = staticData.length;
-    dataObj.list = staticData.slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+  const response = await getPrizeMgmtPage(queryParams);
+  if (response && response.list) {
+    dataObj.total = response.total;
+    dataObj.list = response.list.map((item) => ({
+      ...item,
+      id: String(item.id),
+      createTimeStr: formatDate(item.createTime),
+      updateTimeStr: formatDate(item.updateTime),
+      syncTimeStr: formatDate(item.syncTime),
+    }));
+  } else {
+    // 接口返回为空或无数据，清空列表
+    dataObj.total = 0;
+    dataObj.list = [];
   }
 
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, searchFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -338,6 +354,56 @@ const handleOpenDetail = (row) => {
     detailDrawerRef.value.open();
   }
 };
+
+// 处理绑定活动点击 - 打开活动详情弹窗
+async function handleActivityClick(row) {
+  if (!row.activityId) {
+    ElMessage.warning('该奖品未绑定活动');
+    return;
+  }
+
+  try {
+    const loadingInstance = ElLoading.service({
+      text: '正在加载活动详情...',
+    });
+
+    // 调用接口获取活动详情
+    const activityDetail = await getPointActivityDetail(Number(row.activityId));
+
+    loadingInstance.close();
+
+    if (!activityDetail || !activityDetail.id) {
+      ElMessage.error('未能获取到活动详情');
+      return;
+    }
+
+    // 格式化时间字段，与 pointActivity 列表页保持一致
+    const formattedDetail = {
+      ...activityDetail,
+      startTimeStr: formatDate(activityDetail.startTime),
+      endTimeStr: formatDate(activityDetail.endTime),
+      createTimeStr: formatDate(activityDetail.createTime),
+      updateTimeStr: formatDate(activityDetail.updateTime),
+      auditTimeStr: formatDate(activityDetail.auditTime),
+    };
+
+    // 设置数据并更新标题
+    activityDetailData.value = formattedDetail;
+    activityDetailTitle.value = `活动详情 - ${activityDetail.name || '未知'}`;
+
+    // 使用nextTick确保DOM更新后再打开抽屉
+    await nextTick();
+    if (activityDetailDrawerRef.value) {
+      activityDetailDrawerRef.value.open();
+    } else {
+      console.error('活动详情抽屉组件未找到');
+      ElMessage.error('打开详情失败，请重试');
+    }
+  } catch (error) {
+    console.error('获取活动详情失败:', error);
+    ElMessage.error('获取活动详情失败');
+  }
+}
 
 const handleSerachShow = () => {
   drawerApi.open();
@@ -408,6 +474,23 @@ function handleStatsFilter(filterSource, filterValue) {
 defineExpose({
   handleStatsFilter,
 });
+
+// 页面加载时获取活动列表
+onMounted(async () => {
+  await fetchActivityOptions();
+  // 更新搜索表单的活动选项
+  const currentActivityOptions = getCurrentActivityOptions();
+  if (searchFormApi) {
+    await searchFormApi.updateSchema([
+      {
+        fieldName: 'activityId',
+        componentProps: {
+          options: currentActivityOptions,
+        },
+      },
+    ]);
+  }
+});
 </script>
 
 <template>
@@ -421,6 +504,13 @@ defineExpose({
       :title="`${dataObj.detailObj.name || '奖品'}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
+    />
+    <!--   活动详情抽屉 - 展示绑定活动的详细信息 -->
+    <DetailDrawer
+      ref="activityDetailDrawerRef"
+      :title="activityDetailTitle"
+      :data="activityDetailData"
+      :fields="activityDetailFields"
     />
     <!-- 导入弹窗 -->
     <ImportExcelDialog ref="importExcelDialogRef" @success="handleRefresh" />
@@ -519,11 +609,11 @@ defineExpose({
           {{ getStatusLabel(row.status) }}
         </ElTag>
       </template>
-      <!-- 绑定活动插槽 - 点击跳转关联活动详情弹窗 -->
+      <!-- 绑定活动插槽 - 点击打开关联活动详情弹窗 -->
       <template #activityName="{ row }">
         <el-text
           v-if="row.activityName"
-          @click="ElMessage.info(`打开关联活动详情弹窗: ${row.activityName}`)"
+          @click="handleActivityClick(row)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -531,17 +621,6 @@ defineExpose({
           {{ row.activityName }}
         </el-text>
         <span v-else>-</span>
-      </template>
-      <!-- 发放量插槽 - 点击跳转奖品发放明细弹窗 -->
-      <template #sendCount="{ row }">
-        <el-text
-          @click="ElMessage.info(`打开奖品发放明细弹窗: ${row.sendCount}次`)"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-        >
-          {{ row.sendCount }}
-        </el-text>
       </template>
       <!-- 行操作按钮 -->
       <template #actions="{ row }">

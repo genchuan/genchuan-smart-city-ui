@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择考勤状态',
+        clearable: true,
         options: [
           { label: '正常', value: '正常' },
           { label: '迟到', value: '迟到' },
@@ -28,6 +29,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择异常类型',
+        clearable: true,
         options: [
           { label: '无', value: '无' },
           { label: '晚归', value: '晚归' },
@@ -42,6 +44,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '正常', value: '正常' },
           { label: '异常', value: '异常' },

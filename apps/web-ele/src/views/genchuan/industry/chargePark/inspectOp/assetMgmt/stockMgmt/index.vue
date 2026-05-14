@@ -43,10 +43,10 @@ function handleTrendFilter(time) {
   };
 }
 
-function handleAssetFilter(assetName) {
+function handleAssetFilter(assetInfo) {
   chartFilter.value = {
     type: 'assetName',
-    value: assetName,
+    value: assetInfo,
     filterKey: Date.now(),
   };
 }

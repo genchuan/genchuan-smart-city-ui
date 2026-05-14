@@ -6,56 +6,61 @@ import * as echarts from 'echarts';
 import { getReconcileBillChart } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
 import Card from '#/components/stats/card.vue';
 
+const emit = defineEmits(['filter-change']);
+
 const state = reactive({
   cardList: [
-    { title: '待对账数', value: 0, color: '#FF6B6B' },
-    { title: '异常数', value: 0, color: '#E74C3C' },
-    { title: '已确认数', value: 0, color: '#13ce66' },
-    { title: '确认率', value: 0, color: '#4A90E2', suffix: '%' },
+    { title: '待对账数', value: 0, color: '#FF6B6B', status: 'pending' },
+    { title: '异常数', value: 0, color: '#E74C3C', status: 'abnormal' },
+    { title: '已确认数', value: 0, color: '#13ce66', status: 'reconciled' },
+    { title: '确认率', value: 0, color: '#4A90E2', suffix: '%', status: null },
   ],
   trendData: [],
 });
 
+const handleCardClick = (status) => {
+  emit('filter-change', { status: status || null });
+};
+
+const handleLineChartClick = (params) => {
+  if (params && params.name) {
+    emit('filter-change', {
+      billDateStart: params.name + ' 00:00:00',
+      billDateEnd: params.name + ' 23:59:59',
+    });
+  }
+};
+
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取对账单图表数据
 const fetchReconcileBillChartData = async () => {
   try {
     const res = await getReconcileBillChart();
-    state.cardList[0].value = res.pendingCount || 0;
-    state.cardList[1].value = res.disputedCount || 0;
-    state.cardList[2].value = res.confirmedCount || 0;
-    state.cardList[3].value = res.confirmRate || 0;
-    // 如果trendData为空，使用假数据
+    state.cardList[0].value = res.cardData?.pendingCount || res.pendingCount || 0;
+    state.cardList[1].value = res.cardData?.disputedCount || res.disputedCount || 0;
+    state.cardList[2].value = res.cardData?.confirmedCount || res.confirmedCount || 0;
+    state.cardList[3].value = res.cardData?.confirmRate || res.confirmRate || 0;
     state.trendData =
       res.trendData && res.trendData.length > 0
         ? res.trendData
         : [
-            { date: '2026-04-01', count: 2 },
-            { date: '2026-04-08', count: 1 },
-            { date: '2026-04-10', count: 1 },
+            { date: '2026-04-27', count: 10 },
           ];
-    // 更新折线图
     updateChart();
   } catch (error) {
     console.error('获取对账单图表数据失败:', error);
-    // 接口调用失败时使用假数据
-    state.cardList[0].value = 0;
+    state.cardList[0].value = 1;
     state.cardList[1].value = 0;
     state.cardList[2].value = 0;
     state.cardList[3].value = 0;
     state.trendData = [
-      { date: '2026-04-01', count: 2 },
-      { date: '2026-04-08', count: 1 },
-      { date: '2026-04-10', count: 1 },
+      { date: '2026-04-27', count: 10 },
     ];
-    // 更新折线图
     updateChart();
   }
 };
 
-// 初始化折线图
 const initChart = () => {
   if (!lineChartRef.value) return;
 
@@ -116,9 +121,12 @@ const initChart = () => {
   };
 
   lineChartInstance.setOption(option);
+
+  lineChartInstance.on('click', (params) => {
+    handleLineChartClick(params);
+  });
 };
 
-// 更新折线图
 const updateChart = () => {
   if (!lineChartInstance) return;
 
@@ -149,10 +157,11 @@ onMounted(() => {
   <div class="park-chart-box">
     <div class="chart-box-left">
       <Card
-        class="left-card"
+        class="left-card cursor-pointer"
         v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
+        @click="handleCardClick(item.status)"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>

@@ -59,12 +59,6 @@ defineExpose({
 <template>
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
-      <!-- 监控画面 -->
-      <div class="detail-section">🎥 实时监控画面</div>
-      <div class="detail-card-row" style="justify-content: center;">
-        <img :src="detailObj.imgUrl" style="width: 100%; max-height: 300px; object-fit: contain; border-radius: 8px;" alt="监控画面" />
-      </div>
-
       <!-- 监控基础信息 -->
       <div class="detail-section">📹 监控基础信息</div>
       <div class="detail-card-row"><div class="detail-row-left">摄像头名称：</div><div class="detail-row-right">{{ detailObj.cameraName || '-' }}</div></div>

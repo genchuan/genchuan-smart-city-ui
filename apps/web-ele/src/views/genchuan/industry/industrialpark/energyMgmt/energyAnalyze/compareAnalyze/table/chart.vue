@@ -8,10 +8,10 @@ import { ElMessage } from 'element-plus';
 const emit = defineEmits(['refresh']);
 
 const state = reactive({
-  yoyDiffBar: [],     // 同比差值柱状图数据 [{ month, value }]
-  momDiffBar: [],     // 环比差值柱状图数据
-  yoyTrendLine: [],   // 同比趋势 [{ month, lastYear, thisYear }]
-  momTrendLine: [],   // 环比趋势 [{ month, lastMonth, thisMonth }]
+  yoyDiffBar: [],
+  momDiffBar: [],
+  yoyTrendLine: [],
+  momTrendLine: [],
 });
 
 const yoyDiffChartRef = ref(null);
@@ -23,7 +23,6 @@ let momDiffChart = null;
 let yoyTrendChart = null;
 let momTrendChart = null;
 
-// 获取图表数据
 const fetchChartData = async () => {
   try {
     const data = await getCompareChart({ timeRange: '近6个月' });
@@ -40,7 +39,6 @@ const fetchChartData = async () => {
   }
 };
 
-// 同比差值柱状图配置
 const getYoyDiffOption = () => ({
   backgroundColor: 'transparent',
   title: { text: '同比能耗差值', left: 'center', top: 10, textStyle: { color: '#6E7E91', fontSize: 14 } },
@@ -53,7 +51,6 @@ const getYoyDiffOption = () => ({
   }]
 });
 
-// 环比差值柱状图配置
 const getMomDiffOption = () => ({
   backgroundColor: 'transparent',
   title: { text: '环比能耗差值', left: 'center', top: 10, textStyle: { color: '#6E7E91', fontSize: 14 } },
@@ -66,7 +63,6 @@ const getMomDiffOption = () => ({
   }]
 });
 
-// 同比趋势折线图配置
 const getYoyTrendOption = () => ({
   backgroundColor: 'transparent',
   title: { text: '能耗同比趋势', left: 'center', top: 10, textStyle: { color: '#6E7E91', fontSize: 14 } },
@@ -80,7 +76,6 @@ const getYoyTrendOption = () => ({
   ]
 });
 
-// 环比趋势折线图配置
 const getMomTrendOption = () => ({
   backgroundColor: 'transparent',
   title: { text: '能耗环比趋势', left: 'center', top: 10, textStyle: { color: '#6E7E91', fontSize: 14 } },
@@ -94,7 +89,6 @@ const getMomTrendOption = () => ({
   ]
 });
 
-// 柱状图钻取
 const handleBarClick = (chartType, params) => {
   if (params.componentType === 'series') {
     const month = params.name;
@@ -102,7 +96,6 @@ const handleBarClick = (chartType, params) => {
   }
 };
 
-// 折线图钻取
 const handleLineClick = (chartType, params) => {
   if (params.componentType === 'series') {
     const month = params.name;
@@ -165,7 +158,6 @@ onUnmounted(() => {
 
 <template>
   <div class="stats-four-visualization">
-    <!-- 一行四列固定高度布局，仿分区能耗分布态势高度 -->
     <div class="charts-row">
       <div class="chart-card">
         <div ref="yoyDiffChartRef" class="chart-container"></div>
@@ -186,13 +178,13 @@ onUnmounted(() => {
 <style scoped>
 .stats-four-visualization {
   width: 100%;
-  min-height: 320px; /* 与分区能耗分布态势高度一致 */
+  min-height: 320px;
 }
 .charts-row {
   display: flex;
   gap: 16px;
   width: 100%;
-  height: 320px; /* 固定高度，与 min-height 匹配 */
+  height: 320px;
 }
 .chart-card {
   flex: 1;
@@ -202,7 +194,7 @@ onUnmounted(() => {
   padding: 8px;
   display: flex;
   flex-direction: column;
-  min-width: 0; /* 防止内容溢出 */
+  min-width: 0;
 }
 .chart-container {
   width: 100%;

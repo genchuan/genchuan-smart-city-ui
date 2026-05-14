@@ -1,6 +1,7 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -261,26 +262,23 @@ export function useSearchFormSchema() {
     {
       fieldName: 'createTime',
       label: '创建时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择创建时间',
-        type: 'datetimerange',
-        valueFormat: 'x',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
-    {
-      fieldName: 'auditorId',
-      label: '审核人',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择审核人',
-        options: [],
-        clearable: true,
-        filterable: true,
-        remote: true,
-      },
-    },
+    // {
+    //   fieldName: 'auditorId',
+    //   label: '审核人',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择审核人',
+    //     options: [],
+    //     clearable: true,
+    //     filterable: true,
+    //     remote: true,
+    //   },
+    // },
     {
       fieldName: 'matchCount',
       label: '匹配次数',
@@ -294,14 +292,11 @@ export function useSearchFormSchema() {
     {
       fieldName: 'effectTime',
       label: '生效时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择生效时间',
-        type: 'datetimerange',
-        valueFormat: 'x',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
-    },
+  },
   ];
 }
 
@@ -328,7 +323,6 @@ export function useGridColumns() {
       title: '赠送比例',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'giftRatio' },
     },
     {
       field: 'status',
@@ -356,7 +350,6 @@ export function useGridColumns() {
       title: '审核人',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'auditorName' },
     },
     {
       field: 'auditTime',
@@ -370,7 +363,6 @@ export function useGridColumns() {
       title: '匹配次数',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'matchCount' },
     },
     {
       field: 'effectTime',

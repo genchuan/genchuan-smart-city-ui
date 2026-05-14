@@ -224,7 +224,7 @@ const getTableData = async (pageObj) => {
   const page = pageObj.page;
 
   try {
-    // 构建API请求参数
+    // 构建API请求参数 - 参照pointActivity的传参处理逻辑
     const params = {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
@@ -235,7 +235,12 @@ const getTableData = async (pageObj) => {
       couponName: dataObj.searchParams.couponName,
       status: filterStatus.value || dataObj.searchParams.status,
       syncStatus: filterSyncStatus.value || dataObj.searchParams.syncStatus,
-      receiveDate: filterReceiveDate.value,
+      date: filterReceiveDate.value || undefined, // 统计折线图钻取筛选（参数名改为date）
+      // RangePicker 返回数组格式 [start, end]，后端会接收为两个同名参数
+      receiveTime:
+        filterReceiveDate.value || !dataObj.searchParams.receiveTime
+          ? undefined
+          : dataObj.searchParams.receiveTime,
     };
 
     const response = await getReceiveRecordPage(params);

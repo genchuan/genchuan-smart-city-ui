@@ -66,6 +66,11 @@ function normalizeChartData(data) {
     : [];
 }
 
+const stockNodeData = computed(() => state.stockData.map((item) => ({
+  ...item,
+  name: item.assetName,
+})));
+
 async function fetchChartData() {
   try {
     const response = await getAssetStockChart();
@@ -86,8 +91,9 @@ function handleTrendClick(payload) {
   }
 }
 
-function handleStockClick(assetName) {
-  emit('assetFilter', assetName);
+function handleStockClick(assetInfo) {
+  console.log('assetInfo', assetInfo);
+  emit('assetFilter', assetInfo);
 }
 
 onMounted(() => {
@@ -125,6 +131,8 @@ onMounted(() => {
       :series-data="stockSeriesData"
       :x-data="stockXData"
       y-name="库存数"
+      :node-data="stockNodeData"
+      :is-emit-node-data="true"
       @bar-click="handleStockClick"
     />
   </div>

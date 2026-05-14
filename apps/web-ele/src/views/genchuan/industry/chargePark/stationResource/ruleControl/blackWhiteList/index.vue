@@ -14,7 +14,6 @@ import * as stationInfoApi from '#/api/genchuan/industry/chargePark/stationResou
 import CommonDetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import IconButton from '#/genchuan-components/IconButton.vue';
 
-import ChartDrillDrawer from '../../components/ChartDrillDrawer.vue';
 import DetailDrawer from './detail.vue';
 import gateChart from './gateChart.vue';
 import {
@@ -52,8 +51,34 @@ const importLoading = ref(false);
 const importResult = ref(null);
 const importUpdateSupport = ref(false);
 const chartData = ref({});
-const chartDrillDrawerRef = ref(null);
 const selectOptionsMap = ref({});
+
+function padTime(value) {
+  return String(value).padStart(2, '0');
+}
+
+function formatDateTime(value) {
+  if (value === undefined || value === null || value === '') return '--';
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${value.getFullYear()}-${padTime(value.getMonth() + 1)}-${padTime(value.getDate())} ${padTime(value.getHours())}:${padTime(value.getMinutes())}:${padTime(value.getSeconds())}`;
+  }
+  if (typeof value === 'number' || /^\d+$/.test(String(value))) {
+    const text = String(value);
+    const timestamp = Number(text.length === 10 ? `${text}000` : text);
+    const date = new Date(timestamp);
+    if (!Number.isNaN(date.getTime())) return formatDateTime(date);
+  }
+  const normalized = String(value)
+    .replace('T', ' ')
+    .replace(/\.\d+Z?$/, '');
+  const parsed = new Date(String(value).replaceAll('-', '/'));
+  if (!Number.isNaN(parsed.getTime())) return formatDateTime(parsed);
+  return normalized.length >= 19 ? normalized.slice(0, 19) : normalized;
+}
+
+const columnFormatters = {
+  formatDateTime: ({ cellValue }) => formatDateTime(cellValue),
+};
 
 function normalizeOptions(options = []) {
   return options.map((item) => {
@@ -141,6 +166,15 @@ function sanitizeParams(source = {}) {
       return value !== undefined && value !== null && value !== '';
     }),
   );
+}
+
+function getDateTimestamp(value) {
+  if (value === undefined || value === null || value === '') return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.getTime();
+  }
+  const parsed = new Date(String(value).replaceAll('-', '/'));
+  return Number.isNaN(parsed.getTime()) ? null : parsed.getTime();
 }
 
 function getPlaceholder(field) {
@@ -408,9 +442,17 @@ function buildDialogFields(column, row) {
     ...fallbackDialogFields,
   ];
 
-  return dedupeFields(dialogFields).filter(
-    (field) => !isEmpty(row?.[field.key]),
-  );
+  return dedupeFields(dialogFields)
+    .filter((field) => !isEmpty(row?.[field.key]))
+    .map((field) => {
+      if (field.formatter || !/(?:Time|Date)$/.test(field.key)) {
+        return field;
+      }
+      return {
+        ...field,
+        formatter: 'formatDateTime',
+      };
+    });
 }
 
 async function handleOpenDrillDialog(column, row) {
@@ -490,6 +532,16 @@ async function handleFormConfirm() {
     ElMessage.warning(`请填写${requiredField.label}`);
     return;
   }
+  const startTimestamp = getDateTimestamp(values.startTime);
+  const endTimestamp = getDateTimestamp(values.endTime);
+  if (
+    startTimestamp !== null &&
+    endTimestamp !== null &&
+    startTimestamp > endTimestamp
+  ) {
+    ElMessage.warning('生效时间不能晚于失效时间');
+    return;
+  }
 
   if (formMode.value === 'edit' && values.id) {
     await pageApi[`update${apiName}`](values);
@@ -500,7 +552,7 @@ async function handleFormConfirm() {
   }
 
   formDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -534,7 +586,10 @@ function buildGridColumns() {
         sortable: true,
       };
       if (column.formatter) {
-        columnConfig.formatter = column.formatter;
+        columnConfig.formatter =
+          typeof column.formatter === 'string'
+            ? columnFormatters[column.formatter]
+            : column.formatter;
       }
       const slotName = getCellSlotName(column);
       if (slotName) {
@@ -560,11 +615,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     proxyConfig: {
       ajax: {
-        query: async ({ page }) => {
+        query: async ({ page }, formValues = {}) => {
+          const query = sanitizeParams({
+            ...appliedQuery.value,
+            ...formValues,
+          });
           return await pageApi[`get${apiName}Page`]({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
-            ...appliedQuery.value,
+            ...query,
           });
         },
       },
@@ -598,16 +657,17 @@ function handleCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
-function handleRefresh() {
+function handleRefresh(query = appliedQuery.value) {
+  const nextQuery = sanitizeParams(query);
   if (gridApi.query) {
-    gridApi.query();
+    gridApi.query(nextQuery);
   } else {
-    gridApi.reload?.();
+    gridApi.reload?.(nextQuery);
   }
-  loadChart();
+  loadChart(nextQuery);
 }
 
-async function loadChart() {
+async function loadChart(query = appliedQuery.value) {
   if (
     !pageConfig.chart ||
     typeof pageApi[`get${apiName}Chart`] !== 'function'
@@ -617,7 +677,7 @@ async function loadChart() {
   chartLoading.value = true;
   try {
     chartData.value =
-      (await pageApi[`get${apiName}Chart`](appliedQuery.value)) || {};
+      (await pageApi[`get${apiName}Chart`](sanitizeParams(query))) || {};
   } finally {
     chartLoading.value = false;
   }
@@ -626,14 +686,14 @@ async function loadChart() {
 async function handleQuerySubmit() {
   appliedQuery.value = sanitizeParams(queryFormApi.form.values || {});
   searchDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleResetSearch() {
   appliedQuery.value = {};
   await queryFormApi.resetForm();
   searchDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 function handleCreate() {
@@ -648,8 +708,12 @@ function handleEdit(row) {
 
 async function handleOpenDetail(row) {
   const detailApi = pageApi[`get${apiName}Detail`];
-  detailObj.value =
+  const detail =
     typeof detailApi === 'function' ? (await detailApi(row.id)) || row : row;
+  detailObj.value = normalizeListStatusTime({
+    ...row,
+    ...detail,
+  });
   await nextTick();
   detailDrawerRef.value?.open();
 }
@@ -668,6 +732,8 @@ async function handleStatusChange(action, row) {
       `确认${label}当前${pageConfig.title}吗？`,
       '操作提示',
       {
+        cancelButtonText: '取消',
+        confirmButtonText: '确定',
         type: 'warning',
       },
     );
@@ -698,7 +764,7 @@ async function handleBind(row) {
     id: row.id,
   });
   ElMessage.success('绑定成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleSave() {
@@ -708,7 +774,7 @@ async function handleSave() {
   }
   await pageApi[`save${apiName}`]({ ids: checkedIds.value });
   ElMessage.success('保存成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleResetConfig() {
@@ -722,7 +788,7 @@ async function handleResetConfig() {
   );
   await pageApi[`reset${apiName}`]({ stationId: Number(value) });
   ElMessage.success('重置成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleBatchSync() {
@@ -732,7 +798,7 @@ async function handleBatchSync() {
   }
   await pageApi[`batchSync${apiName}`]({ ids: checkedIds.value });
   ElMessage.success('批量同步成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleExport(extraParams = {}) {
@@ -766,7 +832,29 @@ function handleRemoveImportFile() {
 
 function normalizeImportResult(result) {
   const data = result?.data || result || {};
-  const failureList = data.failureList || data.failures || [];
+  const rawFailureList =
+    data.failureList ||
+    data.failures ||
+    data.errorList ||
+    data.errors ||
+    data.failMsgs ||
+    [];
+  const failureList = rawFailureList.map((item, index) => {
+    if (typeof item === 'string') {
+      return { msg: item, row: index + 1 };
+    }
+    return {
+      ...item,
+      msg:
+        item.msg ||
+        item.message ||
+        item.errorMsg ||
+        item.reason ||
+        item.failReason ||
+        item.error ||
+        '导入失败',
+    };
+  });
   return {
     failureCount: data.failureCount ?? failureList.length ?? 0,
     failureList,
@@ -868,22 +956,26 @@ function handleRowAction(action, row) {
     return ElMessage.warning(`已触发告警：${row[primaryField] || row.id}`);
 }
 
-async function applySearchPatch(patch) {
+async function syncQueryForm(values = {}) {
+  const nextValues = sanitizeParams(values);
+  try {
+    await queryFormApi.resetForm();
+    if (!isEmpty(nextValues)) {
+      await queryFormApi.setValues(nextValues);
+    }
+  } catch (error) {
+    console.warn('Failed to set form values', error);
+  }
+}
+function applySearchPatch(patch) {
   const nextQuery = sanitizeParams({
     ...appliedQuery.value,
     ...patch,
   });
   appliedQuery.value = nextQuery;
-  handleRefresh();
+  handleRefresh(nextQuery);
   nextTick(() => {
-    try {
-      const result = queryFormApi.setValues(nextQuery);
-      Promise.resolve(result).catch((error) => {
-        console.warn('Failed to set form values', error);
-      });
-    } catch (error) {
-      console.warn('Failed to set form values', error);
-    }
+    syncQueryForm(nextQuery);
   });
 }
 
@@ -903,47 +995,51 @@ function getTagDisplayText(field, value) {
   return value;
 }
 
-function removeFilterTag(field) {
-  const nextQuery = { ...appliedQuery.value };
-  delete nextQuery[field];
-  appliedQuery.value = nextQuery;
-  try {
-    queryFormApi.setValues(nextQuery);
-  } catch (error) {
-    console.warn('Failed to set form values', error);
+function normalizeListStatusTime(row = {}) {
+  const nextRow = { ...row };
+  if (isEmpty(nextRow.startTime) && nextRow.status === '已生效') {
+    nextRow.startTime =
+      nextRow.auditTime || nextRow.updateTime || nextRow.lastEditedDate;
   }
-  nextTick(() => {
-    handleRefresh();
-  });
+  if (isEmpty(nextRow.endTime) && nextRow.status === '已禁用') {
+    nextRow.endTime =
+      nextRow.auditTime || nextRow.updateTime || nextRow.lastEditedDate;
+  }
+  return nextRow;
 }
 
-function clearFilters() {
+async function removeFilterTag(field) {
+  const nextQuery = { ...appliedQuery.value };
+  delete nextQuery[field];
+  appliedQuery.value = sanitizeParams(nextQuery);
+  await syncQueryForm(appliedQuery.value);
+  handleRefresh(appliedQuery.value);
+}
+
+async function clearFilters() {
   appliedQuery.value = {};
-  queryFormApi.resetForm();
-  handleRefresh();
+  await syncQueryForm({});
+  handleRefresh(appliedQuery.value);
 }
 
 function getCellDisplayText(column, row) {
-  const value = row?.[column.field];
+  const normalizedRow = normalizeListStatusTime(row);
+  const value = normalizedRow?.[column.field];
   if (!isEmpty(value)) {
-    return Array.isArray(value) ? value.join('、') : value;
+    const nextValue = Array.isArray(value) ? value.join('、') : value;
+    const formatted =
+      column.formatter === 'formatDateTime'
+        ? formatDateTime(nextValue)
+        : nextValue;
+    return column.suffix && formatted !== '--'
+      ? `${formatted}${column.suffix}`
+      : formatted;
   }
   if (column.field === primaryField) {
-    return row?.[pageConfig.nameField] || row?.id || '--';
+    return normalizedRow?.[pageConfig.nameField] || normalizedRow?.id || '--';
   }
   return '--';
 }
-function openChartDrill(chartType, value, field, title) {
-  chartDrillDrawerRef.value?.open({
-    chartType,
-    field,
-    label: getFieldLabel(field),
-    pageTitle: pageConfig.title,
-    title,
-    value,
-  });
-}
-
 function handleCardClick(item) {
   if (!item.status) return;
   applySearchPatch({ status: item.status });
@@ -951,22 +1047,17 @@ function handleCardClick(item) {
 
 function handleBarClick(name) {
   const field = pageConfig.chart?.bar?.[4] || pageConfig.chart?.bar?.[1];
-  openChartDrill('bar', name, field, `${pageConfig.title}分布`);
+  applySearchPatch({ [field]: name });
 }
 
 function handleLineClick(payload) {
   const field = pageConfig.chart?.line?.[4] || pageConfig.chart?.line?.[1];
-  openChartDrill(
-    'line',
-    payload?.categoryName || payload?.name,
-    field,
-    `${pageConfig.title}趋势`,
-  );
+  applySearchPatch({ [field]: payload?.categoryName || payload?.name });
 }
 
 function handlePieClick(payload) {
   const field = pageConfig.chart?.pie?.[3] || pageConfig.chart?.pie?.[1];
-  openChartDrill('pie', payload?.name, field, `${pageConfig.title}占比`);
+  applySearchPatch({ [field]: payload?.name });
 }
 
 function getDrillValue(column, row) {
@@ -1006,6 +1097,10 @@ function getDrillFilterPatch(column, row) {
 }
 
 async function handleCellDrill(column, row) {
+  if (column.field === 'certInfo') return;
+  if (column.field === 'plateNo') {
+    return handleOpenDetail(row);
+  }
   const drillType =
     column.drillType || (column.field === primaryField ? 'detail' : '');
   const rawValue = getDrillValue(column, row);
@@ -1035,8 +1130,11 @@ function handleToggleOverview() {
   showOverview.value = !showOverview.value;
 }
 
-function handleOpenSearch() {
+async function handleOpenSearch() {
+  await syncQueryForm(appliedQuery.value);
   searchDrawerApi.open();
+  await nextTick();
+  await syncQueryForm(appliedQuery.value);
 }
 
 function handleFullScreen() {
@@ -1094,8 +1192,6 @@ defineExpose({
         :fields="drillDetailFields"
         width="38%"
       />
-
-      <ChartDrillDrawer ref="chartDrillDrawerRef" />
 
       <SearchDrawer title="筛选">
         <QueryForm class="query-form" @reset="handleResetSearch" />

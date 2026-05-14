@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择请假类型',
+        clearable: true,
         options: [
           { label: '事假', value: '事假' },
           { label: '病假', value: '病假' },
@@ -28,6 +29,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '待审批', value: '待审批' },
           { label: '已通过', value: '已通过' },

@@ -45,6 +45,8 @@ export const searchFields = [
     options: statusOptions,
     required: false,
   },
+  { field: 'creator', label: '创建人', type: 'input', required: false },
+  { field: 'updater', label: '更新人', type: 'input', required: false },
 ];
 
 export const formFields = [

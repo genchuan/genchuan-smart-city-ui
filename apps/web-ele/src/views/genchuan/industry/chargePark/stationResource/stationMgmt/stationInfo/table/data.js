@@ -57,7 +57,7 @@ export const searchFields = [
     options: operateTypeOptions,
     required: false,
   },
-  { field: 'userId', label: '负责人', type: 'number', required: false },
+  { field: 'userId', label: '负责人', type: 'input', required: false },
   {
     field: 'status',
     label: '状态',
@@ -65,6 +65,7 @@ export const searchFields = [
     options: statusOptions,
     required: false,
   },
+  { field: 'bindUserId', label: '绑定人', type: 'input', required: false },
 ];
 
 export const formFields = [
@@ -79,7 +80,7 @@ export const formFields = [
   },
   { field: 'address', label: '场站地址', type: 'input', required: true },
   { field: 'spaceTotal', label: '泊位总数', type: 'number', required: true },
-  { field: 'userId', label: '负责人', type: 'number', required: true },
+  { field: 'userId', label: '负责人', type: 'input', required: true },
   {
     field: 'feeStandard',
     label: '场站收费标准',

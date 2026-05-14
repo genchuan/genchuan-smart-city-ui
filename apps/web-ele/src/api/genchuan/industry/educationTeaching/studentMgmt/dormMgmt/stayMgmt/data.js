@@ -163,7 +163,7 @@ export function getStayMgmtChart(params) {
 
 export function getStayMgmtCount(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.get('/studentmgmt/stay-mgmt/chart/stayCount', { params: convertedParams }).catch(err => {
+  return requestClient.get('/studentmgmt/stay-mgmt/stayCount', { params: convertedParams }).catch(err => {
     console.warn('班级统计接口失败，使用模拟数据', err);
     return Promise.resolve({
       classStatistics: [

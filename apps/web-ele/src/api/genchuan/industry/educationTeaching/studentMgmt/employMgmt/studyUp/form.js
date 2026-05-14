@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择院校类型',
+        clearable: true,
         options: [
           { label: '公办', value: '公办' },
           { label: '民办', value: '民办' },
@@ -27,6 +28,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '待规划', value: '待规划' },
           { label: '已规划', value: '已规划' },

@@ -4,16 +4,38 @@ import { requestClient } from '#/api/request';
 // ==================== 模拟数据开关 ====================
 const USE_MOCK = true;  // 上线前改为 false 即可切换到真实接口
 
-// 模拟数据生成工具
+// ==================== 模拟数据生成工具 ====================
+/**
+ * 生成分页格式的模拟返回数据
+ * @param {Array} list 数据列表
+ * @param {number} total 总记录数
+ * @returns {Object} 分页结果对象
+ */
 function mockPageResult(list, total) {
   return { list, total };
 }
+
+/**
+ * 模拟成功响应（布尔值）
+ * @returns {boolean} true
+ */
 function mockSuccessResult() {
   return true;
 }
+
+/**
+ * 模拟获取详情成功响应
+ * @param {Object} detail 详情对象
+ * @returns {Object} 原样返回详情
+ */
 function mockGetDetailResult(detail) {
   return detail;
 }
+
+/**
+ * 模拟图表数据（分区能耗分布态势）
+ * @returns {Object} 包含地图数据、柱状图数据、统计卡片数据的模拟结果
+ */
 function mockChartResult() {
   return {
     areaMapData: [
@@ -41,11 +63,17 @@ function mockChartResult() {
   };
 }
 
-// 生成模拟分区数据
+// ==================== 模拟数据池（分区基础数据） ====================
 const mockAreaNames = ['一号楼办公区', '二号楼研发区', '三号楼生产区', '四号楼宿舍区', '五号楼食堂', '六号楼仓库'];
 const mockEnergyStatuses = ['正常能耗', '能耗异常'];
 const mockUsers = ['admin', 'energy_operator', 'maintainer'];
 
+/**
+ * 生成单页模拟分区列表（用于分页请求）
+ * @param {number} pageNo 页码，默认1
+ * @param {number} pageSize 每页条数，默认10
+ * @returns {Array} 模拟分区数据数组
+ */
 function generateMockAreaList(pageNo = 1, pageSize = 10) {
   const start = (pageNo - 1) * pageSize;
   const list = [];
@@ -72,6 +100,10 @@ function generateMockAreaList(pageNo = 1, pageSize = 10) {
 }
 
 let allMockData = null;
+/**
+ * 获取全量模拟分区数据（用于筛选和分页）
+ * @returns {Array} 全量模拟数据（懒加载，仅生成一次）
+ */
 function getAllMockData() {
   if (!allMockData) {
     allMockData = [];
@@ -97,7 +129,13 @@ function getAllMockData() {
   return allMockData;
 }
 
-// ==================== 模拟接口实现 ====================
+// ==================== 模拟接口实现（供开发调试用） ====================
+
+/**
+ * 模拟分页查询分区能耗监测列表
+ * @param {Object} params 查询参数（areaName, energyStatus, pageNo, pageSize）
+ * @returns {Promise<Object>} 分页结果
+ */
 async function mockGetAreaMonitorPage(params) {
   console.log('[Mock] 分页请求参数:', params);
   let data = [...getAllMockData()];
@@ -115,31 +153,61 @@ async function mockGetAreaMonitorPage(params) {
   return mockPageResult(list, total);
 }
 
+/**
+ * 模拟创建/划分能耗监测区域
+ * @param {Object} data { areaName, areaSize }
+ * @returns {Promise<boolean>}
+ */
 async function mockCreateAreaMonitor(data) {
   console.log('[Mock] 划分区域', data);
   return mockSuccessResult();
 }
 
+/**
+ * 模拟统计区域能耗
+ * @param {Object} data { ids: 区域ID数组 }
+ * @returns {Promise<boolean>}
+ */
 async function mockStatAreaMonitor(data) {
   console.log('[Mock] 统计区域能耗', data);
   return mockSuccessResult();
 }
 
+/**
+ * 模拟分析区域能耗（同比环比）
+ * @param {Object} data { ids: 区域ID数组 }
+ * @returns {Promise<boolean>}
+ */
 async function mockAnalyzeAreaMonitor(data) {
   console.log('[Mock] 分析区域能耗', data);
   return mockSuccessResult();
 }
 
+/**
+ * 模拟预警区域能耗
+ * @param {Object} data { ids: 区域ID数组 }
+ * @returns {Promise<boolean>}
+ */
 async function mockAlarmAreaMonitor(data) {
   console.log('[Mock] 预警区域能耗', data);
   return mockSuccessResult();
 }
 
+/**
+ * 模拟导出分区能耗数据（Excel）
+ * @param {Object} params 导出筛选参数
+ * @returns {Promise<Blob>}
+ */
 async function mockExportAreaMonitorExcel(params) {
   console.log('[Mock] 导出数据', params);
   return new Blob(['模拟 Excel 内容'], { type: 'application/vnd.ms-excel' });
 }
 
+/**
+ * 模拟获取分区能耗详情
+ * @param {Object} params { id: 区域ID }
+ * @returns {Promise<Object>} 区域详情
+ */
 async function mockGetAreaMonitorDetail(params) {
   console.log('[Mock] 获取详情', params);
   const id = params.id;
@@ -147,6 +215,11 @@ async function mockGetAreaMonitorDetail(params) {
   return mockGetDetailResult(detail || getAllMockData()[0]);
 }
 
+/**
+ * 模拟对比区域能耗（同比、环比）
+ * @param {Object} data { id: 区域ID }
+ * @returns {Promise<Object>} 同比环比数据
+ */
 async function mockCompareAreaMonitor(data) {
   console.log('[Mock] 对比区域能耗', data);
   return {
@@ -155,21 +228,41 @@ async function mockCompareAreaMonitor(data) {
   };
 }
 
+/**
+ * 模拟排查异常能耗区域
+ * @param {number} id 区域ID
+ * @returns {Promise<boolean>}
+ */
 async function mockCheckAreaMonitor(id) {
   console.log('[Mock] 排查区域', id);
   return mockSuccessResult();
 }
 
+/**
+ * 模拟提交能耗优化方案
+ * @param {Object} data { id: 区域ID, optimizePlan: 优化方案 }
+ * @returns {Promise<boolean>}
+ */
 async function mockOptimizeAreaMonitor(data) {
   console.log('[Mock] 优化区域', data);
   return mockSuccessResult();
 }
 
+/**
+ * 模拟获取分区能耗分布态势图表数据
+ * @param {Object} params 时间范围等
+ * @returns {Promise<Object>} 图表数据
+ */
 async function mockGetAreaMonitorChart(params) {
   console.log('[Mock] 图表请求', params);
   return mockChartResult();
 }
 
+/**
+ * 模拟获取用户详情
+ * @param {string} userId 用户账号
+ * @returns {Promise<Object>} 用户信息
+ */
 async function mockGetUserDetail(userId) {
   console.log('[Mock] 获取用户详情', userId);
   return {
@@ -180,6 +273,11 @@ async function mockGetUserDetail(userId) {
   };
 }
 
+/**
+ * 模拟根据区域ID获取关联设备列表
+ * @param {number} areaId 区域ID
+ * @returns {Promise<Object>} 设备列表
+ */
 async function mockGetDeviceListByArea(areaId) {
   console.log('[Mock] 获取区域设备列表', areaId);
   return {
@@ -190,7 +288,13 @@ async function mockGetDeviceListByArea(areaId) {
   };
 }
 
-// ==================== 真实接口 ====================
+// ==================== 真实接口（上线时关闭 USE_MOCK 即可切换） ====================
+
+/**
+ * 分页查询分区能耗监测列表
+ * @param {Object} params 查询参数（areaName, energyStatus, pageNo, pageSize）
+ * @returns {Promise} 分页结果
+ */
 export function getAreaMonitorPage(params) {
   if (USE_MOCK) {
     return mockGetAreaMonitorPage(params);
@@ -198,6 +302,11 @@ export function getAreaMonitorPage(params) {
   return requestClient.get('/energymgmt/area-monitor/page', { params });
 }
 
+/**
+ * 创建/划分能耗监测区域
+ * @param {Object} data { areaName, areaSize }
+ * @returns {Promise} 操作结果
+ */
 export function createAreaMonitor(data) {
   if (USE_MOCK) {
     return mockCreateAreaMonitor(data);
@@ -205,6 +314,11 @@ export function createAreaMonitor(data) {
   return requestClient.post('/energymgmt/area-monitor/create', data);
 }
 
+/**
+ * 统计区域能耗（批量）
+ * @param {Object} data { ids: 区域ID数组 }
+ * @returns {Promise} 操作结果
+ */
 export function statAreaMonitor(data) {
   if (USE_MOCK) {
     return mockStatAreaMonitor(data);
@@ -212,6 +326,11 @@ export function statAreaMonitor(data) {
   return requestClient.post('/energymgmt/area-monitor/stat', data);
 }
 
+/**
+ * 分析区域能耗（同比环比）
+ * @param {Object} data { ids: 区域ID数组 }
+ * @returns {Promise} 操作结果
+ */
 export function analyzeAreaMonitor(data) {
   if (USE_MOCK) {
     return mockAnalyzeAreaMonitor(data);
@@ -219,6 +338,11 @@ export function analyzeAreaMonitor(data) {
   return requestClient.post('/energymgmt/area-monitor/analyze', data);
 }
 
+/**
+ * 预警区域能耗（开启高能耗监控）
+ * @param {Object} data { ids: 区域ID数组 }
+ * @returns {Promise} 操作结果
+ */
 export function alarmAreaMonitor(data) {
   if (USE_MOCK) {
     return mockAlarmAreaMonitor(data);
@@ -226,6 +350,11 @@ export function alarmAreaMonitor(data) {
   return requestClient.post('/energymgmt/area-monitor/alarm', data);
 }
 
+/**
+ * 导出分区能耗数据为Excel文件
+ * @param {Object} params 导出筛选条件
+ * @returns {Promise<Blob>} Excel文件数据
+ */
 export function exportAreaMonitorExcel(params) {
   if (USE_MOCK) {
     return mockExportAreaMonitorExcel(params);
@@ -233,6 +362,11 @@ export function exportAreaMonitorExcel(params) {
   return requestClient.download('/energymgmt/area-monitor/export', params);
 }
 
+/**
+ * 获取分区能耗详情
+ * @param {Object} params { id: 区域ID }
+ * @returns {Promise} 区域详情
+ */
 export function getAreaMonitorDetail(params) {
   if (USE_MOCK) {
     return mockGetAreaMonitorDetail(params);
@@ -240,6 +374,11 @@ export function getAreaMonitorDetail(params) {
   return requestClient.get('/energymgmt/area-monitor/get', { params });
 }
 
+/**
+ * 对比分析单个区域能耗（同比、环比）
+ * @param {Object} data { id: 区域ID }
+ * @returns {Promise} 对比数据 { yoyData, momData }
+ */
 export function compareAreaMonitor(data) {
   if (USE_MOCK) {
     return mockCompareAreaMonitor(data);
@@ -247,6 +386,11 @@ export function compareAreaMonitor(data) {
   return requestClient.post('/energymgmt/area-monitor/compare', data);
 }
 
+/**
+ * 排查异常能耗区域
+ * @param {number} id 区域ID
+ * @returns {Promise} 操作结果
+ */
 export function checkAreaMonitor(id) {
   if (USE_MOCK) {
     return mockCheckAreaMonitor(id);
@@ -254,6 +398,11 @@ export function checkAreaMonitor(id) {
   return requestClient.put('/energymgmt/area-monitor/check', { id });
 }
 
+/**
+ * 提交能耗优化方案
+ * @param {Object} data { id: 区域ID, optimizePlan: 优化方案文本 }
+ * @returns {Promise} 操作结果
+ */
 export function optimizeAreaMonitor(data) {
   if (USE_MOCK) {
     return mockOptimizeAreaMonitor(data);
@@ -261,6 +410,11 @@ export function optimizeAreaMonitor(data) {
   return requestClient.put('/energymgmt/area-monitor/optimize', data);
 }
 
+/**
+ * 获取分区能耗分布态势图表数据（包含地图、柱状图、统计卡片）
+ * @param {Object} params 时间范围等筛选条件
+ * @returns {Promise} 图表数据
+ */
 export function getAreaMonitorChart(params) {
   if (USE_MOCK) {
     return mockGetAreaMonitorChart(params);
@@ -268,6 +422,11 @@ export function getAreaMonitorChart(params) {
   return requestClient.get('/energymgmt/area-monitor/chart', { params });
 }
 
+/**
+ * 获取用户详情（用于展示操作人信息）
+ * @param {string} userId 用户ID/账号
+ * @returns {Promise} 用户信息
+ */
 export function getUserDetail(userId) {
   if (USE_MOCK) {
     return mockGetUserDetail(userId);
@@ -275,6 +434,11 @@ export function getUserDetail(userId) {
   return requestClient.get('/system/user/get', { params: { id: userId } });
 }
 
+/**
+ * 根据区域ID获取关联的设备列表（用于钻取设备明细）
+ * @param {number} areaId 区域ID
+ * @returns {Promise} 设备列表
+ */
 export function getDeviceListByArea(areaId) {
   if (USE_MOCK) {
     return mockGetDeviceListByArea(areaId);

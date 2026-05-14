@@ -1,4 +1,4 @@
-<!-- problemDetail.vue - 问题详情弹窗（需在内部index.vue同目录创建） -->
+<!-- problemDetail.vue - 问题详情弹窗 -->
 <script setup>
 import { toRefs } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';

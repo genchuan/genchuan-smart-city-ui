@@ -34,7 +34,6 @@ const arrowChange = () => {
 };
 
 const handleChartRefresh = (filters) => {
-  // 统一使用 compare-chart-refresh 事件
   window.dispatchEvent(new CustomEvent('compare-chart-refresh', { detail: filters }));
 };
 </script>

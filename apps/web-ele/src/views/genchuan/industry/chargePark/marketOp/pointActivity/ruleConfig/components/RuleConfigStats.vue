@@ -273,8 +273,12 @@ const handleResize = () => {
   }
 };
 
+// 处理卡片点击 - 只有"生效配置数"卡片才触发筛选
 const handleCardClick = (card) => {
-  emit('cardClick', card.type, card.value);
+  // 只对"生效配置数"卡片（type === 'active'）触发交互
+  if (card.type === 'active') {
+    emit('cardClick', card.type, card.value);
+  }
 };
 
 watch(
@@ -309,6 +313,7 @@ onUnmounted(() => {
         v-for="(card, index) in data.cards"
         :key="`card-${index}`"
         class="stat-card"
+        :class="{ 'stat-card-clickable': card.type === 'active' }"
         :style="{ borderLeftColor: card.color || '#4A90E2' }"
         @click="handleCardClick(card)"
       >
@@ -360,21 +365,25 @@ onUnmounted(() => {
   flex: 1;
   padding: 16px;
   margin-bottom: 12px;
-  cursor: pointer;
   background-color: var(--el-bg-color, #fff);
   border-left: 4px solid;
   border-radius: 4px;
   box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+}
+
+/* 可点击的卡片样式 - 仅用于"生效配置数"卡片 */
+.stat-card-clickable {
+  cursor: pointer;
   transition: all 0.3s ease;
+}
+
+.stat-card-clickable:hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+  transform: translateY(-2px);
 }
 
 .stat-card:last-child {
   margin-bottom: 0;
-}
-
-.stat-card:hover {
-  box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
-  transform: translateY(-2px);
 }
 
 .card-header {

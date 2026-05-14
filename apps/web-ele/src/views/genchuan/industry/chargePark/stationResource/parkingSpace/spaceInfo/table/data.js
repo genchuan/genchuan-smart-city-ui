@@ -67,6 +67,8 @@ export const searchFields = [
     options: realStatusOptions,
     required: false,
   },
+  { field: 'creator', label: '创建者', type: 'input', required: false },
+  { field: 'updater', label: '更新者', type: 'input', required: false },
 ];
 
 export const formFields = [
@@ -131,6 +133,8 @@ export const tableColumns = [
     field: 'qrcode',
     label: '车位二维码',
     minWidth: 140,
+    fallbackFields: ['qrCodeUrl', 'qrcodeUrl', 'qrCode'],
+    displayField: 'qrCodeUrl',
     type: 'image',
     drillLabel: '车位二维码',
   },

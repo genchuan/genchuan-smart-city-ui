@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
-import { ElSelect, ElOption } from 'element-plus';
+import {ref, computed, onMounted, watch} from 'vue';
+import {ElSelect, ElOption} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
@@ -10,26 +10,23 @@ import {
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/enrollMgmt/promoteMgmt/data.js';
 
 const loading = ref(true);
-const chartData = ref({});      // 折线图 + 卡片数据
-const siteData = ref({});       // 站点柱状图数据
+const chartData = ref({});
+const siteData = ref({});
 
-// 年份选择器相关
-const currentYear = ref(new Date().getFullYear()); // 默认当前年份
+const currentYear = ref(new Date().getFullYear());
 const yearOptions = () => {
   const current = new Date().getFullYear();
   const years = [];
   for (let i = current - 5; i <= current + 2; i++) {
-    years.push({ label: `${i}年`, value: i });
+    years.push({label: `${i}年`, value: i});
   }
   return years;
 };
 
-// 监听年份变化，重新加载数据
 watch(currentYear, () => {
   loadData();
 });
 
-// 卡片数据（未执行任务数、已执行任务数、总任务数、总宣传人数、总意向学生数、意向转化率）
 const cardList = computed(() => {
   const wait = chartData.value.waitExecuteCount || 0;
   const finished = chartData.value.finishedCount || 0;
@@ -47,7 +44,6 @@ const cardList = computed(() => {
   ];
 });
 
-// 折线图数据（招生宣传进度统计）
 const lineData = computed(() => {
   const dateList = chartData.value.dateList || [];
   const dailyPromoteList = chartData.value.dailyPromoteList || [];
@@ -61,7 +57,6 @@ const lineData = computed(() => {
   };
 });
 
-// 柱状图数据（各站点宣传人数、意向学生数）
 const barData = computed(() => {
   const siteList = siteData.value.siteList || [];
   const promoteNumList = siteData.value.promoteNumList || [];
@@ -75,18 +70,44 @@ const barData = computed(() => {
   };
 });
 
-const emit = defineEmits(['cardSelect', 'barSelect', 'lineSelect']);
-
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'wait':
+      filterType = 'status';
+      filterValue = '未执行';
+      break;
+    case 'finished':
+      filterType = 'status';
+      filterValue = '已执行';
+      break;
+    case 'total':
+    case 'promote':
+    case 'intent':
+    case 'rate':
+    default:
+      return;
+  }
+  window.dispatchEvent(new CustomEvent('promote-chart-filter', {
+    detail: {type: filterType, value: filterValue}
+  }));
 };
 
 const handleBarClick = (siteName) => {
-  emit('barSelect', {field: 'site', value: siteName});
+  window.dispatchEvent(new CustomEvent('promote-chart-filter', {
+    detail: {type: 'site', value: siteName}
+  }));
 };
 
 const handleLineClick = (params) => {
-  emit('lineSelect', {field: 'date', value: params.xValue});
+  const date = params.xValue || params.name;
+  if (date) {
+    window.dispatchEvent(new CustomEvent('promote-chart-filter', {
+      detail: {type: 'createTime', value: [date, date]}
+    }));
+  }
 };
 
 const loadData = async () => {
@@ -96,9 +117,8 @@ const loadData = async () => {
       getPromoteMgmtChart({year: currentYear.value}),
       getPromoteMgmtSiteCount({year: currentYear.value}),
     ]);
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
-    } else {
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else {
       chartData.value = {
         waitExecuteCount: 5,
         finishedCount: 20,
@@ -111,9 +131,8 @@ const loadData = async () => {
         dailyIntentList: [80, 120, 150, 160, 140],
       };
     }
-    if (siteRes.status === 'fulfilled') {
-      siteData.value = siteRes.value;
-    } else {
+    if (siteRes.status === 'fulfilled') siteData.value = siteRes.value;
+    else {
       siteData.value = {
         siteList: ['泉州一中', '泉州五中', '厦门双十', '福州一中'],
         promoteNumList: [500, 600, 700, 700],
@@ -139,17 +158,11 @@ onMounted(() => {
                  @click="handleCardClick"/>
     </div>
 
-    <!-- 折线图区域（含年份选择器） -->
     <div class="line-chart-container" style="flex: 1 !important; position: relative;">
-      <!-- 年份选择器（紧凑样式，位于右上角） -->
       <div class="year-select-wrapper">
         <el-select v-model="currentYear" size="small">
-          <el-option
-            v-for="opt in yearOptions()"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
+          <el-option v-for="opt in yearOptions()" :key="opt.value" :label="opt.label"
+                     :value="opt.value"/>
         </el-select>
       </div>
       <lineChart
@@ -193,7 +206,6 @@ onMounted(() => {
     }
   }
 
-  /* 折线图容器特殊样式，用于绝对定位年份选择器 */
   .line-chart-container {
     position: relative;
     flex: 1;
@@ -208,7 +220,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的年份选择器样式 */
   :deep(.el-select) {
     width: 100px;
   }

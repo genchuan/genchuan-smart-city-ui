@@ -26,6 +26,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '待打卡', value: '待打卡' },
           { label: '待调班审批', value: '待调班审批' },
@@ -45,6 +46,7 @@ export function getColumnsByStatus(status) {
   const columns = [
     { field: 'dutyDate', title: '值班日期', minWidth: 120, sortable: true, },
     { field: 'dutyUser', title: '值班人', minWidth: 100, sortable: true, slots: { default: 'dutyUser' } },
+    { field: 'status', title: '状态', minWidth: 120, sortable: true, slots: { default: 'status' } },
     { field: 'checkInStatus', title: '打卡状态', minWidth: 100, sortable: true, },
     { field: 'transferReason', title: '调班原因', minWidth: 150, sortable: true, },
     { field: 'transferUser', title: '调班替代人', minWidth: 120, sortable: true, },
@@ -54,7 +56,6 @@ export function getColumnsByStatus(status) {
     { field: 'carStatus', title: '出车状态', minWidth: 100, sortable: true, },
     { field: 'recordContent', title: '值班记录', minWidth: 200, sortable: true, },
     { field: 'recordUploadTime', title: '记录上传时间', minWidth: 180, sortable: true, slots: { default: 'recordUploadTime' } },
-    { field: 'status', title: '状态', minWidth: 120, sortable: true, slots: { default: 'status' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
     { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];

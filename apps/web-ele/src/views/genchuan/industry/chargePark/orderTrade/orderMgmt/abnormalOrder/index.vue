@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 
 import Chart from './table/chart.vue';
 import Table from './table/index.vue';
@@ -17,6 +17,63 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
+
+const filterParams = reactive({
+  identifyTimeStart: null,
+  identifyTimeEnd: null,
+  abnormalType: null,
+  status: null,
+});
+
+const handleFilterChange = (params) => {
+  filterParams.identifyTimeStart = null;
+  filterParams.identifyTimeEnd = null;
+  filterParams.abnormalType = null;
+  filterParams.status = null;
+  Object.assign(filterParams, params);
+};
+
+// 异常类型映射
+const abnormalTypeMap = {
+  payment_error: '支付异常',
+  billing_error: '计费异常',
+  status_error: '状态异常',
+};
+
+// 获取异常类型标签
+const getAbnormalTypeLabel = (abnormalType) => {
+  return abnormalTypeMap[abnormalType] || abnormalType || '-';
+};
+
+// 是否有激活的过滤器
+const hasActiveFilters = () => {
+  return filterParams.identifyTimeStart || filterParams.abnormalType || filterParams.status;
+};
+
+// 清除日期筛选
+const clearDateFilter = () => {
+  filterParams.identifyTimeStart = null;
+  filterParams.identifyTimeEnd = null;
+  filterParams.abnormalType = null;
+  filterParams.status = null;
+};
+
+// 清除异常类型筛选
+const clearAbnormalTypeFilter = () => {
+  filterParams.identifyTimeStart = null;
+  filterParams.identifyTimeEnd = null;
+  filterParams.abnormalType = null;
+  filterParams.status = null;
+};
+
+// 清除状态筛选
+const clearStatusFilter = () => {
+  filterParams.identifyTimeStart = null;
+  filterParams.identifyTimeEnd = null;
+  filterParams.abnormalType = null;
+  filterParams.status = null;
+};
+
 const tabArray = ref([
   {
     label: '异常订单',
@@ -25,6 +82,7 @@ const tabArray = ref([
     secondShow: false,
     arrowShow: true,
     arrowState: false,
+    filterParams,
   },
 ]);
 const activeName = ref('异常订单');
@@ -32,7 +90,37 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <Chart />
+    <Chart @filter-change="handleFilterChange" />
+    <div v-if="hasActiveFilters" class="filter-tags">
+      <el-tag
+        v-if="filterParams.abnormalType"
+        closable
+        @close="clearAbnormalTypeFilter"
+      >
+        异常类型: {{ getAbnormalTypeLabel(filterParams.abnormalType) }}
+      </el-tag>
+      <el-tag
+        v-else-if="filterParams.status === 'unhandled'"
+        closable
+        @close="clearStatusFilter"
+      >
+        状态: 未处理
+      </el-tag>
+      <el-tag
+        v-else-if="filterParams.status === 'closed'"
+        closable
+        @close="clearStatusFilter"
+      >
+        状态: 已关闭
+      </el-tag>
+      <el-tag
+        v-else-if="filterParams.identifyTimeStart"
+        closable
+        @close="clearDateFilter"
+      >
+        日期: {{ filterParams.identifyTimeStart.split(' ')[0] }}
+      </el-tag>
+    </div>
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -70,9 +158,31 @@ const secondShow = ref(false);
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
+          :filter-params="item.filterParams"
           @arrow-change="arrowChange"
         />
       </el-tab-pane>
     </el-tabs>
   </div>
 </template>
+
+<style scoped lang="scss">
+.filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+  height: auto;
+
+  .el-tag {
+    margin: 12px 8px 12px 16px;
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
+</style>

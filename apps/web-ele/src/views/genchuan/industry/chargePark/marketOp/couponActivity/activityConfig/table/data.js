@@ -478,7 +478,7 @@ export function useGridColumns() {
       title: '审核人',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'auditorName' },
+      // slots: { default: 'auditorName' },
     },
     {
       field: 'auditTime',
@@ -492,7 +492,7 @@ export function useGridColumns() {
       title: '参与人数',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'joinCount' },
+      // slots: { default: 'joinCount' },
     },
     {
       field: 'effectTime',

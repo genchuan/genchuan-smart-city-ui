@@ -6,53 +6,70 @@ import * as echarts from 'echarts';
 import { getSplitRateStatusChart } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
 import Card from '#/components/stats/card.vue';
 
+const emit = defineEmits(['filter-change']);
+
+const statusMap = {
+  normal: { label: '正常', type: 'success' },
+  abnormal: { label: '异常', type: 'danger' },
+};
+
 const state = reactive({
   cardList: [
-    { title: '完成率', value: 0, color: '#4ECDC4', suffix: '%' },
-    { title: '异常率', value: 0, color: '#FF6B6B', suffix: '%' },
-    { title: '正常数量', value: 0, color: '#13ce66' },
+    { title: '完成率', value: 0, color: '#4ECDC4', suffix: '%', status: null },
+    { title: '异常率', value: 0, color: '#FF6B6B', suffix: '%', status: 'abnormal' },
+    { title: '正常数量', value: 0, color: '#13ce66', status: 'normal' },
   ],
   statusData: [],
 });
 
+// 点击卡片事件
+const handleCardClick = (status) => {
+  emit('filter-change', {
+    status: status || null,
+  });
+};
+
+// 柱状图点击事件处理
+const handleBarChartClick = (params) => {
+  if (params && params.name) {
+    const statusKey = params.name === '正常' ? 'normal' : 'abnormal';
+    emit('filter-change', {
+      status: statusKey,
+    });
+  }
+};
+
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取结算状态图表数据
 const fetchSettleStatusChartData = async () => {
   try {
     const res = await getSplitRateStatusChart();
-    state.cardList[0].value = res.completeRate || 0;
-    state.cardList[1].value = res.abnormalRate || 0;
-    // 获取正常状态数量
+    state.cardList[0].value = res.cardData?.completeRate || res.completeRate || 0;
+    state.cardList[1].value = res.cardData?.abnormalRate || res.abnormalRate || 0;
     const normalData = res.statusData?.find(item => item.status === 'normal');
     state.cardList[2].value = normalData?.count || 0;
-    // 如果statusData为空，使用假数据
     state.statusData =
       res.statusData && res.statusData.length > 0
         ? res.statusData
         : [
-            { status: 'normal', count: 4 },
+            { status: 'normal', count: 9 },
             { status: 'abnormal', count: 1 },
           ];
-    // 更新图表
     updateLineChart();
   } catch (error) {
     console.error('获取结算状态图表数据失败:', error);
-    // 接口调用失败时使用假数据
-    state.cardList[0].value = 80;
-    state.cardList[1].value = 20;
-    state.cardList[2].value = 4;
+    state.cardList[0].value = 90;
+    state.cardList[1].value = 10;
+    state.cardList[2].value = 9;
     state.statusData = [
-      { status: 'normal', count: 4 },
+      { status: 'normal', count: 9 },
       { status: 'abnormal', count: 1 },
     ];
-    // 更新图表
     updateLineChart();
   }
 };
 
-// 初始化柱状图
 const initLineChart = () => {
   if (!lineChartRef.value) return;
 
@@ -133,9 +150,12 @@ const initLineChart = () => {
   };
 
   lineChartInstance.setOption(option);
+
+  lineChartInstance.on('click', (params) => {
+    handleBarChartClick(params);
+  });
 };
 
-// 更新柱状图
 const updateLineChart = () => {
   if (!lineChartInstance) return;
 
@@ -179,10 +199,11 @@ onMounted(() => {
   <div class="park-chart-box">
     <div class="chart-box-left">
       <Card
-        class="left-card"
+        class="left-card cursor-pointer"
         v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
+        @click="handleCardClick(item.status)"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>

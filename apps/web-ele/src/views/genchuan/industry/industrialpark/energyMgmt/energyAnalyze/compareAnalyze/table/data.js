@@ -1,5 +1,4 @@
 // data.js - 搜索表单与表格列配置（能耗对比分析）
-/** 能耗对比分析搜索表单配置 */
 export function useFormSchema() {
   return [
     { fieldName: 'compareName', label: '对比名称', component: 'Input', componentProps: { placeholder: '请输入对比名称' }, isSearch: true },
@@ -8,7 +7,6 @@ export function useFormSchema() {
   ];
 }
 
-/** 能耗对比分析表格列配置 */
 export function useGridColumns({ getUserName, showCompareDetail, showProblemDetail, showUserDetail, filterByDim }) {
   return [
     { type: 'checkbox', width: 40 },
@@ -22,6 +20,6 @@ export function useGridColumns({ getUserName, showCompareDetail, showProblemDeta
     { field: 'problem', title: '问题定位', minWidth: 150, showOverflow: true, slots: { default: 'problem' } },
     { field: 'plan', title: '优化方案', minWidth: 150, showOverflow: true },
     { field: 'handleUser', title: '操作人', minWidth: 100, sortable: true, slots: { default: 'handle_user' }, formatter: ({ handleUser }) => getUserName(handleUser) },
-    { title: '操作', width: 300, fixed: 'right', slots: { default: 'actions' } },
+    { title: '操作', width: 200, fixed: 'right', slots: { default: 'actions' } },
   ];
 }
