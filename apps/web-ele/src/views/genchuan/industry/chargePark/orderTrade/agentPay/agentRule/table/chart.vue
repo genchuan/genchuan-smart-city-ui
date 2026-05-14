@@ -1,28 +1,12 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
-import { ElTag } from 'element-plus';
 
-import { getAgentPayRuleChart, getAgentPayRulePage } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
-import { useVbenDrawer } from '@vben/common-ui';
+import { getAgentPayRuleChart } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import Card from '#/components/stats/card.vue';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { formatTimestamp } from '#/utils';
 
-const statusMap = {
-  enabled: { label: '已生效', type: 'success' },
-  disabled: { label: '已禁用', type: 'info' },
-  pending: { label: '待生效', type: 'warning' },
-};
-
-const getStatusLabel = (status) => {
-  return statusMap[status]?.label || status;
-};
-
-const getStatusType = (status) => {
-  return statusMap[status]?.type || 'default';
-};
+const emit = defineEmits(['filter-change']);
 
 const agentTypeMap = {
   merchant: '商户代付',
@@ -34,146 +18,32 @@ const getAgentTypeLabel = (agentType) => {
   return agentTypeMap[agentType] || agentType;
 };
 
-const getAgentTypeType = (agentType) => {
-  const typeMap = {
-    merchant: 'primary',
-    enterprise: 'success',
-    public: 'warning',
-  };
-  return typeMap[agentType] || 'default';
-};
-
 const state = reactive({
   cardList: [
-    { title: '已生效数量', value: 0, color: '#FF6B6B', status: 'enabled' },
-    { title: '今日订单数', value: 0, color: '#4ECDC4', status: null },
+    { title: '已生效数量', value: 0, color: '#FF6B6B' },
+    { title: '今日订单数', value: 0, color: '#4ECDC4' },
   ],
   useDistData: [],
 });
 
-const selectedAgentType = ref(null);
-const selectedStatus = ref(null);
-
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  width: '75%',
-  title: computed(() => {
-    let title = '代付规则列表';
-    if (selectedAgentType.value) {
-      title = `${getAgentTypeLabel(selectedAgentType.value)} ${title}`;
-    }
-    if (selectedStatus.value) {
-      title = `${statusMap[selectedStatus.value]?.label || selectedStatus.value} ${title}`;
-    }
-    return title;
-  }),
-  class: 'genchuan-detail-drawer',
-  onCancel() {
-    drawerApi.close();
-  },
-});
-
-const drawerDataObj = reactive({
-  total: 0,
-  list: [],
-  loading: false,
-});
-
-const getDrawerTableData = async (pageObj) => {
-  const page = pageObj.page;
-  const params = {
-    pageNo: page.currentPage,
-    pageSize: page.pageSize,
-  };
-
-  if (selectedAgentType.value) {
-    params.agentType = selectedAgentType.value;
-  }
-
-  if (selectedStatus.value) {
-    params.status = selectedStatus.value;
-  }
-
-  try {
-    drawerDataObj.loading = true;
-    const res = await getAgentPayRulePage(params);
-    drawerDataObj.total = res.total;
-    drawerDataObj.list = res.list.map((v) => {
-      return {
-        ...v,
-        createTime: formatTimestamp(v.createTime),
-        updateTime: formatTimestamp(v.updateTime),
-      };
-    });
-    return drawerDataObj;
-  } catch (error) {
-    console.error('获取代付规则列表失败:', error);
-    return drawerDataObj;
-  } finally {
-    drawerDataObj.loading = false;
-  }
+// 点击卡片事件
+const handleCardClick = () => {
+  emit('filter-change', {
+    agentType: null,
+    status: null,
+  });
 };
 
-const handleCardClick = (status) => {
-  selectedStatus.value = status;
-  selectedAgentType.value = null;
-  drawerGridApi.query();
-  drawerApi.open();
-};
-
+// 柱状图点击事件处理
 const handleBarChartClick = (params) => {
-  console.log('柱状图点击事件触发:', params);
   if (params && params.name) {
     const agentTypeKey = Object.keys(agentTypeMap).find(key => agentTypeMap[key] === params.name);
-    if (agentTypeKey) {
-      selectedAgentType.value = agentTypeKey;
-    }
-    selectedStatus.value = null;
-    drawerGridApi.query();
-    drawerApi.open();
+    emit('filter-change', {
+      agentType: agentTypeKey || null,
+      status: null,
+    });
   }
 };
-
-const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: [
-      { type: 'seq', width: 60 },
-      { field: 'name', title: '规则名称', width: 180 },
-      { field: 'merchantName', title: '商户名称', width: 150 },
-      { field: 'agentType', title: '代付类型', width: 120,
-        slots: { default: 'agentType' }
-      },
-      { field: 'singleLimit', title: '单次限额', width: 120 },
-      { field: 'dayLimit', title: '日累计限额', width: 120 },
-      { field: 'scene', title: '适用场景', width: 100 },
-      { field: 'status', title: '状态', width: 100,
-        slots: { default: 'status' }
-      },
-      { field: 'useCount', title: '使用次数', width: 100 },
-      { field: 'creator', title: '创建者', width: 100 },
-      { field: 'createTime', title: '创建时间', width: 180 },
-    ],
-    keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getDrawerTableData({ page }),
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: drawerDataObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-    },
-    showOverflow: true,
-  },
-  showSearchForm: false,
-});
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
@@ -303,32 +173,17 @@ onMounted(() => {
         v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
-        @click="handleCardClick(item.status)"
+        @click="handleCardClick"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
-
-  <Drawer>
-    <DrawerGrid>
-      <template #agentType="{ row }">
-        <el-tag :type="getAgentTypeType(row.agentType)">
-          {{ getAgentTypeLabel(row.agentType) }}
-        </el-tag>
-      </template>
-      <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
-          {{ getStatusLabel(row.status) }}
-        </el-tag>
-      </template>
-    </DrawerGrid>
-  </Drawer>
 </template>
-<style scoped lang="scss"> 
- 
+
+<style scoped lang="scss">
 .left-card {
   flex:1;
-  width: 330px; 
+  width: 330px;
 
   :deep(.stat-card) {
     flex:1;
