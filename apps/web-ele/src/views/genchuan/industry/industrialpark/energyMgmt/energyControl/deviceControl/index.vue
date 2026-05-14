@@ -1,9 +1,9 @@
 <!-- ==================== 外部 index.vue ==================== -->
 <script setup>
 import { ref } from 'vue';
-import EnergyAlarmTable from './table/index.vue';
+import DeviceControlTable from './table/index.vue';
 import '#/components/page/index.scss';
-import EnergyAlarmChart from './table/chart.vue';
+import DeviceControlChart from './table/chart.vue';
 
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
@@ -14,15 +14,15 @@ const changeArrowStatus = () => {
 
 const tabArray = ref([
   {
-    label: '异常预警',
-    components: EnergyAlarmTable,
+    label: '设备管控',
+    components: DeviceControlTable,
     showSecondary: true,
     secondShow: false,
     arrowShow: true,
   },
 ]);
 
-const activeName = ref('异常预警');
+const activeName = ref('设备管控');
 const secondShow = ref(false);
 
 const tabChange = () => {};
@@ -34,13 +34,13 @@ const arrowChange = () => {
 };
 
 const handleChartRefresh = (filters) => {
-  window.dispatchEvent(new CustomEvent('alarm-chart-refresh', { detail: filters }));
+  window.dispatchEvent(new CustomEvent('device-control-chart-refresh', { detail: filters }));
 };
 </script>
 
 <template>
   <div class="common-index">
-    <EnergyAlarmChart v-if="tabArray[0].arrowShow" @refresh="handleChartRefresh" />
+    <DeviceControlChart v-if="tabArray[0].arrowShow" @refresh="handleChartRefresh" />
     <div class="icon-change">
       <el-icon class="tabel-tab-icon" v-if="secondShow" @click="changeArrowStatus"><ArrowDown /></el-icon>
       <el-icon class="tabel-tab-icon" v-if="!secondShow" @click="changeArrowStatus"><ArrowUp /></el-icon>
@@ -65,7 +65,7 @@ const handleChartRefresh = (filters) => {
 <style scoped lang="scss">
 .common-index {
   :deep(.stats-four-visualization) {
-    margin-bottom: 8px;
+    margin-bottom: 14px;
   }
   .icon-change {
     margin: 8px 0 16px 0;
