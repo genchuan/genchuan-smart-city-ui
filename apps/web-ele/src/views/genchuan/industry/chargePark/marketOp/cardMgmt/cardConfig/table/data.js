@@ -399,7 +399,7 @@ export function useGridColumns() {
       title: '审核人',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'auditorName' },
+      // slots: { default: 'auditorName' },
     },
     {
       field: 'auditTime',
@@ -413,7 +413,7 @@ export function useGridColumns() {
       title: '销量',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'saleCount' },
+      // slots: { default: 'saleCount' },
     },
     {
       field: 'effectTime',

@@ -1,6 +1,10 @@
+import { ref } from 'vue';
+
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getCardConfigList } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardConfig';
+import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -33,6 +37,44 @@ export const getCardOrderInvoiceStatusLabel = (invoiceStatus) => {
   );
   return dict ? dict.label : invoiceStatus;
 };
+
+/** 卡种搜索选项 - 静态数据作为默认值 */
+export const cardConfigSearchOptions = [
+  { label: '充电月卡-经济版', value: 1 },
+  { label: '节假日停车周卡', value: 2 },
+  { label: '充电月卡-旗舰版', value: 3 },
+  { label: '企业充电月卡', value: 4 },
+  { label: '停车年卡-基础版', value: 5 },
+  { label: '充电月卡-标准版', value: 6 },
+  { label: '充电周卡-经济版', value: 7 },
+];
+
+/** 动态卡种搜索选项（从接口获取） */
+export const dynamicCardConfigSearchOptions = ref([]);
+
+/** 获取当前可用的卡种搜索选项（优先使用动态数据） */
+export function getCurrentCardConfigSearchOptions() {
+  return dynamicCardConfigSearchOptions.value.length > 0
+    ? dynamicCardConfigSearchOptions.value
+    : cardConfigSearchOptions;
+}
+
+/** 获取卡种精简列表用于搜索 */
+export async function fetchCardConfigSearchOptions() {
+  try {
+    const res = await getCardConfigList();
+    if (res && Array.isArray(res)) {
+      dynamicCardConfigSearchOptions.value = res.map((item) => ({
+        label: item.name,
+        value: item.id,
+      }));
+      return dynamicCardConfigSearchOptions.value;
+    }
+  } catch (error) {
+    console.error('获取卡种列表失败:', error);
+  }
+  return cardConfigSearchOptions;
+}
 
 /** 卡种订单表格初始数据 - 按接口文档格式生成，字典值与系统字典一致 */
 export const dataList = () => {
@@ -309,10 +351,9 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择卡种',
-        options: [],
+        options: cardConfigSearchOptions,
         clearable: true,
         filterable: true,
-        remote: true,
       },
     },
     {
@@ -337,14 +378,10 @@ export function useSearchFormSchema() {
     },
     {
       fieldName: 'createTime',
-      label: '订单时间',
-      component: 'DatePicker',
+      label: '订单生成时间',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择订单时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
   ];

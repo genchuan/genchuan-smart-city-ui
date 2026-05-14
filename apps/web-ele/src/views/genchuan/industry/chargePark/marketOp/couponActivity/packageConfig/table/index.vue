@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
@@ -11,12 +11,12 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getCouponMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import {
   createPackageConfig,
   getPackageConfigPage,
   updatePackageConfig,
 } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/packageConfig';
-import { getCouponMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
@@ -25,6 +25,9 @@ import StatusConfirmDialog from '#/views/genchuan/industry/chargePark/marketOp/c
 import {
   dataList,
   detailFields,
+  dynamicCouponOptions,
+  fetchCouponOptions,
+  getCurrentCouponOptions,
   getPackageConfigScopeLabel,
   getPackageConfigScopeTagType,
   getPackageConfigStatusLabel,
@@ -155,17 +158,32 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       return;
     }
     const obj = await formApi.getValues();
+
+    // 处理优惠券数据
+    let submitCouponIds = obj.couponIds;
+
+    // 将couponIds数组转换为逗号分隔的字符串
+    if (Array.isArray(submitCouponIds)) {
+      submitCouponIds = submitCouponIds.join(',');
+    }
+
+    // 处理提交数据
+    const submitData = {
+      ...obj,
+      couponIds: submitCouponIds,
+    };
+
     const loadingInstance = ElLoading.service({
       text: '保存中...',
     });
     try {
       if (formData.value?.id) {
         // 编辑
-        await updatePackageConfig({ ...obj, id: formData.value.id });
+        await updatePackageConfig({ ...submitData, id: formData.value.id });
         ElMessage.success('编辑成功');
       } else {
         // 新增
-        await createPackageConfig(obj);
+        await createPackageConfig(submitData);
         ElMessage.success('新增成功');
       }
       handleRefresh();
@@ -180,8 +198,30 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = formDrawerApi.getData();
+
+      // 确保优惠券数据已加载（如果还未加载或加载失败）
+      if (dynamicCouponOptions.value.length === 0) {
+        await fetchCouponOptions();
+      }
+
+      // 动态更新优惠券选项到表单组件
+      const currentCouponOptions = getCurrentCouponOptions();
+      await formApi.updateSchema([
+        {
+          fieldName: 'couponIds',
+          componentProps: {
+            options: currentCouponOptions,
+          },
+        },
+      ]);
+
       if (formData.value?.id) {
-        await formApi.setValues(formData.value);
+        // 编辑模式：将couponIds字符串转换为数组以支持多选回显
+        const editData = { ...formData.value };
+        if (editData.couponIds && typeof editData.couponIds === 'string') {
+          editData.couponIds = editData.couponIds.split(',');
+        }
+        await formApi.setValues(editData);
       } else {
         formApi.resetForm();
       }
@@ -632,6 +672,11 @@ function handleStatsFilter(filterSource, filterValue) {
 // 暴露方法给父组件
 defineExpose({
   handleStatsFilter,
+});
+
+// 页面加载时获取优惠券列表
+onMounted(async () => {
+  await fetchCouponOptions();
 });
 </script>
 

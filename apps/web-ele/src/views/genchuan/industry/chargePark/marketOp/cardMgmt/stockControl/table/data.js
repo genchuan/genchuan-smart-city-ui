@@ -1,6 +1,9 @@
+import { ref } from 'vue';
+
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getCardConfigList } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/cardConfig';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -33,6 +36,45 @@ export const getStockControlWarnStatusLabel = (warnStatus) => {
   );
   return dict ? dict.label : warnStatus;
 };
+
+/** 卡种搜索选项 - 静态数据作为默认值 */
+export const cardConfigSearchOptions = [
+  { label: '日卡 - 停车专用', value: 1 },
+  { label: '周卡 - 充电优惠', value: 2 },
+  { label: '月卡 - 充电通用', value: 3 },
+  { label: '季卡 - 充停通用', value: 4 },
+  { label: '年卡 - 充停通用', value: 5 },
+  { label: '日卡 - 充停通用', value: 6 },
+  { label: '周卡 - 停车专用', value: 7 },
+  { label: '月卡 - 停车专用', value: 8 },
+];
+
+/** 动态卡种搜索选项（从接口获取） */
+export const dynamicCardConfigSearchOptions = ref([]);
+
+/** 获取当前可用的卡种搜索选项（优先使用动态数据） */
+export function getCurrentCardConfigSearchOptions() {
+  return dynamicCardConfigSearchOptions.value.length > 0
+    ? dynamicCardConfigSearchOptions.value
+    : cardConfigSearchOptions;
+}
+
+/** 获取卡种精简列表用于搜索 */
+export async function fetchCardConfigSearchOptions() {
+  try {
+    const res = await getCardConfigList();
+    if (res && Array.isArray(res)) {
+      dynamicCardConfigSearchOptions.value = res.map((item) => ({
+        label: item.name,
+        value: item.id,
+      }));
+      return dynamicCardConfigSearchOptions.value;
+    }
+  } catch (error) {
+    console.error('获取卡种列表失败:', error);
+  }
+  return cardConfigSearchOptions;
+}
 
 /** 库存管控表格初始数据 - 按接口文档格式生成，字典值与系统字典一致 */
 export const dataList = () => {
@@ -254,10 +296,9 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择卡种',
-        options: [],
+        options: cardConfigSearchOptions,
         clearable: true,
         filterable: true,
-        remote: true,
       },
     },
     {
@@ -323,14 +364,14 @@ export function useGridColumns() {
     {
       field: 'allocateCount',
       title: '调配记录',
-      minWidth: 120,
+      minWidth: 80,
       sortable: true,
       slots: { default: 'allocateCount' },
     },
     {
       field: 'replenishCount',
       title: '补货记录',
-      minWidth: 120,
+      minWidth: 80,
       sortable: true,
       slots: { default: 'replenishCount' },
     },
@@ -341,6 +382,14 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'warnStatusName' },
     },
+    {
+      field: 'createTime',
+      title: '生成时间',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'createTime' },
+    },
+
     {
       field: 'syncTime',
       title: '同步时间',

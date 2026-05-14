@@ -1,11 +1,12 @@
-import { DICT_TYPE } from '@vben/constants';
-import { getDictObj, getDictOptions } from '@vben/hooks';
 import { ref } from 'vue';
 
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getPointActivitySimpleList } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
-import { getPointActivitySimpleList } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
 import {
   getPointActivityStatusTagType,
   getPointActivityTypeTagType,
@@ -36,7 +37,7 @@ export function getPrizeStatusLabel(status) {
 }
 
 /** 动态活动选项（从接口获取） */
-export let dynamicActivityOptions = ref([]);
+export const dynamicActivityOptions = ref([]);
 
 /** 获取当前可用的活动选项 */
 export function getCurrentActivityOptions() {

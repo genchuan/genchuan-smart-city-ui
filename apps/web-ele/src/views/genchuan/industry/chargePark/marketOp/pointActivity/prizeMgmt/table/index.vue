@@ -11,13 +11,13 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getPointActivityDetail } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
 import {
   createPrizeMgmt,
   exportPrizeMgmt,
   getPrizeMgmtPage,
   updatePrizeMgmt,
 } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/prizeMgmt';
-import { getPointActivityDetail } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -631,6 +631,7 @@ onMounted(async () => {
             @click="handleOpenDetail(row)"
           />
           <IconButton
+            v-if="row.status === '0'"
             content="编辑"
             icon-name="edit"
             @click="handleEdit(row)"

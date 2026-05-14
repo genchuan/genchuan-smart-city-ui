@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
@@ -22,6 +22,8 @@ import WarnConfirmDialog from '../components/WarnConfirmDialog.vue';
 import {
   dataList,
   detailFields,
+  fetchCardConfigSearchOptions,
+  getCurrentCardConfigSearchOptions,
   getStockControlStatusLabel,
   getStockControlStatusTagType,
   getStockControlWarnStatusLabel,
@@ -236,7 +238,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -409,6 +411,21 @@ const handleStatsFilter = (type, value) => {
 defineExpose({
   handleStatsFilter,
 });
+
+// 页面加载时获取卡种列表
+onMounted(async () => {
+  await fetchCardConfigSearchOptions();
+  // 动态更新搜索表单的卡种选项
+  const currentCardOptions = getCurrentCardConfigSearchOptions();
+  await queryFormApi.updateSchema([
+    {
+      fieldName: 'cardId',
+      componentProps: {
+        options: currentCardOptions,
+      },
+    },
+  ]);
+});
 </script>
 
 <template>
@@ -569,11 +586,21 @@ defineExpose({
           {{ row.warnStatusName }}
         </ElTag>
       </template>
-      <!-- 同步时间 - 格式化显�?-->
+      <!-- 同步时间 - 格式化显示-->
       <template #syncTime="{ row }">
         <span>{{
           row.syncTime
             ? formatDate(new Date(Number(row.syncTime)), 'YYYY-MM-DD HH:mm:ss')
+            : '-'
+        }}</span>
+      </template>
+      <template #createTime="{ row }">
+        <span>{{
+          row.createTime
+            ? formatDate(
+                new Date(Number(row.createTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
             : '-'
         }}</span>
       </template>
