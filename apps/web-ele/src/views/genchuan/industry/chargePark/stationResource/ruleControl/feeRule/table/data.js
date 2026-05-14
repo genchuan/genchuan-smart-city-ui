@@ -15,7 +15,7 @@ export const pageConfig = {
       ['enableRuleCount', '生效规则数', '已生效'],
       ['totalMatchRate', '订单匹配率(%)'],
     ],
-    bar: ['stationBarList', 'name', 'value', '各场站规则分布'],
+    bar: ['stationBarList', 'name', 'value', '各场站规则分布', 'stationId'],
   },
 };
 
@@ -129,7 +129,20 @@ export const tableColumns = [
   { field: 'maxPrice', label: '最高费用', minWidth: 120 },
   { field: 'peakValleyConfig', label: '峰谷配置', minWidth: 160 },
   { field: 'memberConfig', label: '会员配置', minWidth: 160 },
-  { field: 'matchRate', label: '匹配率', minWidth: 120, suffix: '%' },
+  {
+    field: 'rateRuleDistribution',
+    label: '费率规则分布',
+    minWidth: 150,
+    displayField: 'rateRuleDistribution',
+    formatter: 'formatRateRuleDistribution',
+  },
+  {
+    field: 'matchRate',
+    label: '匹配率',
+    minWidth: 120,
+    formatter: 'formatMatchRate',
+    suffix: '%',
+  },
   { field: 'status', label: '状态', minWidth: 120, drillType: 'filter' },
   {
     field: 'auditTime',
@@ -171,6 +184,7 @@ export const detailFields = [
   { key: 'maxPrice', label: '最高费用', section: '费率内容' },
   { key: 'peakValleyConfig', label: '峰谷配置', section: '费率内容' },
   { key: 'memberConfig', label: '会员配置', section: '费率内容' },
+  { key: 'rateRuleDistribution', label: '费率规则分布', section: '运营信息' },
   { key: 'matchRate', label: '匹配率', section: '运营信息', suffix: '%' },
   { key: 'remark', label: '备注', section: '费率内容' },
   {

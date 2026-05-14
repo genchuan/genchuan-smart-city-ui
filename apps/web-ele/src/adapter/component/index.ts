@@ -309,7 +309,7 @@ async function initComponentAdapter() {
       );
     },
     Select: (props, { attrs, slots }) => {
-      return h(ElSelectV2, { ...props, attrs }, slots);
+      return h(ElSelectV2, { ...props, ...attrs }, slots);
     },
     Space: ElSpace,
     Switch: ElSwitch,

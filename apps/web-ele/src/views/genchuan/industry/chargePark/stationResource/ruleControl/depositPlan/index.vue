@@ -1296,8 +1296,8 @@ defineExpose({
   .station-overview {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding-bottom: 12px;
+    gap: 8px;
+    padding-bottom: 8px;
   }
 
   .station-map-wrap {
