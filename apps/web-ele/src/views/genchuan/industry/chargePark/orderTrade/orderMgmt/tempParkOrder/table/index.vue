@@ -433,6 +433,7 @@ const handleRefundSubmit = async () => {
 const invoiceDialogVisible = ref(false);
 const invoiceForm = reactive({
   id: '',
+  orderNo: '',
   invoiceTitle: '',
   invoiceTaxNo: '',
   invoiceEmail: '',
@@ -446,6 +447,7 @@ const currentPlateNo = ref('');
 // 打开开票弹窗
 const handleInvoice = (row) => {
   invoiceForm.id = row.id;
+  invoiceForm.orderNo = row.orderNo;
   invoiceForm.remark = '';
   invoiceDialogVisible.value = true;
 };
@@ -606,6 +608,9 @@ const alarmColumns = [
       <el-form :model="invoiceForm" label-width="80px">
         <el-form-item label="订单ID">
           <el-input v-model="invoiceForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="订单编号">
+          <el-input v-model="invoiceForm.orderNo" disabled />
         </el-form-item>
         <el-form-item label="发票抬头">
           <el-input v-model="invoiceForm.invoiceTitle" placeholder="请输入发票抬头" />
