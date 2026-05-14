@@ -117,8 +117,8 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">所属场站ID:</div>
-        <div class="detail-row-right">{{ detailObj.stationId || '-' }}</div>
+        <div class="detail-row-left">所属场站:</div>
+        <div class="detail-row-right">{{ detailObj.stationName || detailObj.stationId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -141,12 +141,7 @@ defineExpose({
         <div class="detail-row-left">归档时间:</div>
         <div class="detail-row-right">{{ detailObj.archiveTime || '-' }}</div>
       </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">操作人ID:</div>
-        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
-      </div>
-
+ 
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
