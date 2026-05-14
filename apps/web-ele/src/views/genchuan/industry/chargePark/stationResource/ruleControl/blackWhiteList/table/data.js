@@ -95,6 +95,7 @@ export const tableColumns = [
     field: 'certInfo',
     label: '证明材料',
     minWidth: 160,
+    drillType: 'filter',
   },
   {
     field: 'interceptCount',

@@ -240,6 +240,7 @@ function createSchema(fields, isSearch = false) {
     if (field.type === 'select') {
       Object.assign(componentProps, {
         allowClear: true,
+        clearable: true,
         filterOption: true,
         options: getSelectFieldOptions(field),
         showSearch: true,
@@ -631,10 +632,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues = {}) => {
-          const query = sanitizeParams({
-            ...appliedQuery.value,
-            ...formValues,
-          });
+          const explicitValues = sanitizeParams(formValues);
+          const query =
+            Object.keys(explicitValues).length > 0
+              ? explicitValues
+              : sanitizeParams(appliedQuery.value);
           return await pageApi[`get${apiName}Page`]({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
@@ -1004,15 +1006,16 @@ function getTagDisplayText(field, value) {
 async function removeFilterTag(field) {
   const nextQuery = { ...appliedQuery.value };
   delete nextQuery[field];
-  appliedQuery.value = sanitizeParams(nextQuery);
-  await syncQueryForm(appliedQuery.value);
-  handleRefresh(appliedQuery.value);
+  const sanitizedQuery = sanitizeParams(nextQuery);
+  appliedQuery.value = sanitizedQuery;
+  handleRefresh(sanitizedQuery);
+  await syncQueryForm(sanitizedQuery);
 }
 
 async function clearFilters() {
   appliedQuery.value = {};
-  await syncQueryForm({});
   handleRefresh(appliedQuery.value);
+  await syncQueryForm({});
 }
 
 function getCellDisplayText(column, row) {
@@ -1119,7 +1122,6 @@ function handleToggleOverview() {
 }
 
 async function handleOpenSearch() {
-  await syncQueryForm(appliedQuery.value);
   searchDrawerApi.open();
   await nextTick();
   await syncQueryForm(appliedQuery.value);
@@ -1375,8 +1377,8 @@ defineExpose({
   .station-overview {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding-bottom: 12px;
+    gap: 8px;
+    padding-bottom: 8px;
   }
 
   .station-map-wrap {
