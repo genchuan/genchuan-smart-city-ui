@@ -187,13 +187,7 @@ export function useGridColumns() {
       title: '支付时间',
       minWidth: 200,
       sortable: true,
-    },
-    {
-      field: 'remark',
-      title: '备注',
-      minWidth: 200,
-      sortable: false,
-    },
+    }, 
     {
       field: 'creator',
       title: '创建者',

@@ -103,15 +103,7 @@ defineExpose({
         <div class="detail-row-right">
           {{ detailObj.payTime || '-' }}
         </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备注:</div>
-        <div class="detail-row-right">
-          {{ detailObj.remark || '-' }}
-        </div>
-      </div>
-
+      </div> 
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">
