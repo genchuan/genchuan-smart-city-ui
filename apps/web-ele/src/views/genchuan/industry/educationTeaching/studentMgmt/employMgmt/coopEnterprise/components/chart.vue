@@ -18,27 +18,21 @@ const indexData = ref({
   vehicleRateList: []
 });
 
-// 获取默认时间范围（开始时间 2024-01-01，结束时间 2026-12-31）
 const getDefaultTimeRange = () => {
   return [new Date('2024-01-01'), new Date('2026-12-31')];
 };
-
-// 时间范围选择器绑定值（默认使用上述范围）
 const dateRange = ref(getDefaultTimeRange());
 
-// 格式化日期为后端需要的 ISO 8601 格式 (LocalDateTime)
 const formatLocalDateTime = (date, isEnd = false) => {
   if (!date) return '';
   const d = new Date(date);
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
-  // 如果是结束时间，固定为 23:59:59；起始时间固定为 00:00:00
   const time = isEnd ? '23:59:59' : '00:00:00';
   return `${year}-${month}-${day}T${time}`;
 };
 
-// 生成 timeRange 参数（字符串 "起始时间,结束时间"）
 const getTimeRangeParam = () => {
   if (dateRange.value && dateRange.value.length === 2) {
     const startStr = formatLocalDateTime(dateRange.value[0], false);
@@ -49,7 +43,6 @@ const getTimeRangeParam = () => {
   return `${formatLocalDateTime(defaultStart, false)},${formatLocalDateTime(defaultEnd, true)}`;
 };
 
-// 卡片列表（不支持点击筛选）
 const cardList = computed(() => {
   const total = chartData.value.totalDutyCount || 0;
   const today = chartData.value.todayDutyCount || 0;
@@ -65,7 +58,6 @@ const cardList = computed(() => {
   ];
 });
 
-// 折线图数据
 const lineXData = computed(() => indexData.value.monthList || []);
 const lineSeriesData = computed(() => [
   {name: '值班次数', data: indexData.value.dutyCountList || []},
@@ -74,13 +66,14 @@ const lineSeriesData = computed(() => [
   {name: '出车率(%)', data: indexData.value.vehicleRateList || []},
 ]);
 
-const emit = defineEmits(['lineClick']);
-
+// ========== 核心修改：折线图点击改为派发自定义事件 ==========
 const handleLineClick = (monthName) => {
-  emit('lineClick', {month: monthName});
+  window.dispatchEvent(new CustomEvent('duty-chart-filter', {
+    detail: {month: monthName}
+  }));
 };
 
-// 加载看板数据（带时间范围参数）
+// 加载数据（保持不变，但使用统一的参数传递）
 const loadChartData = async (timeRangeParam) => {
   try {
     const params = {};
@@ -103,7 +96,6 @@ const loadChartData = async (timeRangeParam) => {
   }
 };
 
-// 加载核心指标数据（带时间范围参数）
 const loadIndexData = async (timeRangeParam) => {
   try {
     const params = {};
@@ -125,7 +117,6 @@ const loadIndexData = async (timeRangeParam) => {
   }
 };
 
-// 时间范围变化处理
 const handleDateRangeChange = async () => {
   if (dateRange.value && dateRange.value.length === 2) {
     loading.value = true;
@@ -141,7 +132,6 @@ const handleDateRangeChange = async () => {
   }
 };
 
-// 初始加载数据（使用默认时间范围）
 const loadData = async () => {
   loading.value = true;
   try {
@@ -173,7 +163,6 @@ onMounted(() => {
       />
     </div>
     <div class="line-chart-container">
-      <!-- 时间范围选择器（紧凑样式，位于折线图右上角） -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="dateRange"
@@ -237,7 +226,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的时间选择器样式 */
   :deep(.el-date-editor) {
     --el-date-editor-width: 240px;
 

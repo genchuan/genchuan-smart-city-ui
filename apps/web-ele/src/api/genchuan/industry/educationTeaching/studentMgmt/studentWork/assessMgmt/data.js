@@ -32,7 +32,6 @@ const statusMap = {
 const statusReverseMap = {
   'un_publish': '未发布',
   'published': '已发布',
-  '1': '已发布'
 };
 
 // 通用转换函数：将对象中的英文字段值转为中文（用于响应数据）

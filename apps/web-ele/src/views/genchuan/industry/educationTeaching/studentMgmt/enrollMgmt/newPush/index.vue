@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, onMounted, onUnmounted } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
@@ -22,37 +22,42 @@ import {
   useConfigFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/enrollMgmt/newPush/form.js';
 
-const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
+const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
 const emit = defineEmits(['arrow-change']);
 
-// 标签筛选
+// ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -70,11 +75,11 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// 抽屉组件
+// ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
 
 const dataObj = reactive({
@@ -124,10 +129,7 @@ const getDateFromTimestamp = (timestamp) => {
 };
 
 const getStatusType = (status) => {
-  const map = {
-    '未推送': 'warning',
-    '已推送': 'success',
-  };
+  const map = {'未推送': 'warning', '已推送': 'success'};
   return map[status] || 'info';
 };
 
@@ -139,58 +141,37 @@ const getFinishRateType = (rate) => {
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-
-    const res = await getNewPushPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          case 'taskName':
-            itemValue = item.taskName;
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    if (params.createTime && Array.isArray(params.createTime) && params.createTime.length === 2) {
+      params.createTimeStart = params.createTime[0];
+      params.createTimeEnd = params.createTime[1];
+      delete params.createTime;
+    } else if (params.createTime && typeof params.createTime === 'string') {
+      params.createTimeStart = params.createTime;
+      params.createTimeEnd = params.createTime;
+      delete params.createTime;
+    }
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getNewPushPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取推送任务列表失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -199,47 +180,38 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportNewPush(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportNewPush(searchParams.value);
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
-// 批量推送
 async function handleBatchPush() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个推送任务');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个推送任务');
   const unPushedRows = checkedRows.value.filter(row => row.status === '未推送');
-  if (unPushedRows.length === 0) {
-    ElMessage.warning('请选择状态为【未推送】的任务进行推送');
-    return;
-  }
+  if (unPushedRows.length === 0) return ElMessage.warning('请选择状态为【未推送】的任务进行推送');
   try {
     await ElMessageBox.confirm(`确认推送选中的 ${unPushedRows.length} 个任务？推送后状态将变为“已推送”。`, '批量推送确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '推送中...'});
     try {
@@ -258,34 +230,26 @@ async function handleBatchPush() {
   }
 }
 
-// 配置（新增）
 function handleConfig() {
   isEditMode.value = false;
   currentEditId.value = null;
-  configDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  configDrawerApi.open();
 }
 
 function handleEdit(row) {
-  if (row.status !== '未推送') {
-    ElMessage.warning('只有未推送状态的任务可以编辑');
-    return;
-  }
+  if (row.status !== '未推送') return ElMessage.warning('只有未推送状态的任务可以编辑');
   isEditMode.value = true;
   currentEditId.value = row.id;
-  configDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  configDrawerApi.open();
 }
 
-// 单行推送
 async function handlePush(row) {
-  if (row.status !== '未推送') {
-    ElMessage.warning('只有未推送状态的任务可以推送');
-    return;
-  }
+  if (row.status !== '未推送') return ElMessage.warning('只有未推送状态的任务可以推送');
   try {
     await ElMessageBox.confirm(`确认推送任务"${row.taskName}"？`, '推送确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '推送中...'});
     try {
@@ -311,11 +275,8 @@ const [ConfigForm, configFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '保存中...' : '配置中...'});
     try {
       let res;
-      if (isEditMode.value) {
-        res = await updateNewPush({...values, id: currentEditId.value});
-      } else {
-        res = await createNewPushConfig({...values, status: '未推送'});
-      }
+      if (isEditMode.value) res = await updateNewPush({...values, id: currentEditId.value});
+      else res = await createNewPushConfig({...values, status: '未推送'});
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '编辑成功' : '配置成功');
         configDrawerApi.close();
@@ -333,16 +294,13 @@ const [ConfigForm, configFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 修复的核心：在抽屉打开时重置表单并加载编辑数据
 const [ConfigDrawer, configDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => configDrawerApi.close(),
   async onOpenChange(isOpen) {
     if (isOpen) {
-      // 每次打开前先重置表单（清空值 + 清除校验错误）
       await configFormApi.resetForm();
-      // 如果是编辑模式，则填充数据
       if (isEditMode.value && currentEditId.value) {
         try {
           const detail = await getNewPushDetail({id: currentEditId.value});
@@ -354,14 +312,13 @@ const [ConfigDrawer, configDrawerApi] = useVbenDrawer({
         } catch (error) {
           console.error('加载详情失败', error);
           ElMessage.error('加载详情失败，请检查网络或联系管理员');
-          configDrawerApi.close(); // 加载失败则关闭抽屉
+          configDrawerApi.close();
         }
       }
     }
   },
 });
 
-// 详情抽屉
 const newPushDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -375,7 +332,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -403,8 +360,24 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'status') {
+    handleFilterTagClick('status', value);
+  } else if (type === 'createTime') {
+    handleFilterTagClick('createTime', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('newpush-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('newpush-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -439,11 +412,10 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
-      <!-- 钻取列 -->
       <template #taskName="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
           {{ row.taskName }}
@@ -466,18 +438,14 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer">
-          {{ row.creator || '-' }}
+                 style="cursor: pointer">{{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer">
-          {{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
-
-      <!-- 时间格式化 -->
       <template #pushTime="{ row }">
         <el-text>{{ formatTimestamp(row.pushTime) }}</el-text>
       </template>
@@ -485,7 +453,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>

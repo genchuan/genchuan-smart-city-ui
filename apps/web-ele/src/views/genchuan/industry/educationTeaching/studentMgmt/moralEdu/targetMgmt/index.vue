@@ -1,5 +1,5 @@
 <script setup>
-import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {computed, reactive, ref, watch, nextTick, onMounted, onUnmounted} from 'vue';
 import {confirm, useVbenDrawer} from '@vben/common-ui';
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
@@ -25,16 +25,11 @@ import {
   useConfigFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/moralEdu/targetMgmt/form.js';
 
-// 辅助函数：状态标签类型
 const getStatusType = (status) => {
-  const map = {
-    '未启用': 'warning',
-    '已启用': 'success',
-  };
+  const map = {'未启用': 'warning', '已启用': 'success'};
   return map[status] || 'info';
 };
 
-// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -48,7 +43,6 @@ const formatTimestamp = (timestamp) => {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
 
-// 提取日期部分（用于筛选）
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(parseInt(timestamp));
@@ -65,31 +59,36 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -109,17 +108,16 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// ---------- 原有变量 ----------
+// ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
-
 const [ConfigDrawer, configDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => configDrawerApi.close(),
+  onCancel: () => configDrawerApi.close()
 });
 
 const dataObj = reactive({
@@ -152,62 +150,23 @@ const getTableData = async ({ page }) => {
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-
-    const res = await getTargetMgmtPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'evaluatorType':
-            itemValue = item.evaluatorType;
-            break;
-          case 'scoreType':
-            itemValue = item.scoreType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          case 'targetName':
-            itemValue = item.targetName;
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getTargetMgmtPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取指标列表失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -216,37 +175,31 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportTargetMgmt(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportTargetMgmt(searchParams.value);
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
-// 批量配置
 async function handleBatchConfig() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个指标');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个指标');
   isConfigMode.value = true;
   configIds.value = [...checkedIds.value];
   configFormApi.resetForm();
@@ -256,26 +209,22 @@ async function handleBatchConfig() {
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  createDrawerApi.open();
 }
 
 function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  createDrawerApi.open();
 }
 
-// 启用
 async function handleEnable(row) {
-  if (row.status !== '未启用') {
-    ElMessage.warning('只有未启用状态的指标可以启用');
-    return;
-  }
+  if (row.status !== '未启用') return ElMessage.warning('只有未启用状态的指标可以启用');
   try {
     await ElMessageBox.confirm(`确认启用指标"${row.targetName}"？启用后指标将生效。`, '启用确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '启用中...'});
     try {
@@ -293,17 +242,13 @@ async function handleEnable(row) {
   }
 }
 
-// 停用
 async function handleDisable(row) {
-  if (row.status !== '已启用') {
-    ElMessage.warning('只有已启用状态的指标可以停用');
-    return;
-  }
+  if (row.status !== '已启用') return ElMessage.warning('只有已启用状态的指标可以停用');
   try {
     await ElMessageBox.confirm(`确认停用指标"${row.targetName}"？停用后指标将不再使用。`, '停用确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '停用中...'});
     try {
@@ -329,14 +274,8 @@ const [CreateForm, createFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '保存中...'});
     try {
       let res;
-      if (isEditMode.value) {
-        // 编辑时传递 status（表单中已包含）
-        res = await updateTargetMgmt({...values, id: currentEditId.value});
-      } else {
-        // 新增时确保 status 字段存在（默认未启用）
-        const submitData = {...values, status: values.status || '未启用'};
-        res = await createTargetMgmt(submitData);
-      }
+      if (isEditMode.value) res = await updateTargetMgmt({...values, id: currentEditId.value});
+      else res = await createTargetMgmt({...values, status: values.status || '未启用'});
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '新增成功');
         createDrawerApi.close();
@@ -354,16 +293,13 @@ const [CreateForm, createFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 修复的核心：在抽屉打开时重置表单并加载编辑数据
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => createDrawerApi.close(),
   async onOpenChange(isOpen) {
     if (isOpen) {
-      // 每次打开前先重置表单（清空值 + 清除校验错误）
       await createFormApi.resetForm();
-      // 如果是编辑模式，则填充数据
       if (isEditMode.value && currentEditId.value) {
         try {
           const detail = await getTargetMgmtDetail({id: currentEditId.value});
@@ -379,10 +315,9 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
         } catch (error) {
           console.error('加载详情失败', error);
           ElMessage.error('加载详情失败，请检查网络或联系管理员');
-          createDrawerApi.close(); // 加载失败则关闭抽屉
+          createDrawerApi.close();
         }
       } else {
-        // 新增模式：设置默认状态为“未启用”
         await createFormApi.setValues({status: '未启用'});
       }
     }
@@ -414,7 +349,6 @@ const [ConfigForm, configFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 查看详情
 const targetDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -428,7 +362,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -456,13 +390,36 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 const showChart = ref(true);
 const toggleChart = () => {
   showChart.value = !showChart.value;
 };
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'evaluatorType') {
+    // 需要将后端值（teacher/parent/leader）转换为列表可识别的中文
+    let label = '';
+    if (value === 'teacher') label = '教职工';
+    else if (value === 'parent') label = '家长';
+    else if (value === 'leader') label = '领导';
+    else label = value;
+    handleFilterTagClick('evaluatorType', label);
+  } else if (type === 'scoreType') {
+    handleFilterTagClick('scoreType', value);
+  } else if (type === 'status') {
+    handleFilterTagClick('status', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('target-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('target-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -500,13 +457,10 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
-      <!-- 钻取列 -->
       <template #targetName="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
           {{ row.targetName }}
@@ -538,8 +492,6 @@ defineExpose({handleFilterTagClick, clearFilters});
                  type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
-
-      <!-- 时间格式化 -->
       <template #enableTime="{ row }">
         <el-text>{{ formatTimestamp(row.enableTime) }}</el-text>
       </template>
@@ -550,7 +502,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>

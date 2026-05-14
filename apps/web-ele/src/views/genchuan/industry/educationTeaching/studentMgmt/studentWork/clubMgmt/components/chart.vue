@@ -16,19 +16,14 @@ const clubTypeMap = {
   '4': '其他'
 };
 
-// 时间范围选择器绑定的值（数组格式 [startDate, endDate]）
+// 时间范围选择器
 const timeRange = ref([]);
-
-// 获取默认时间范围（最近30天，结束时间为当天）
 const getDefaultTimeRange = () => {
   const end = new Date();
   const start = new Date();
   start.setDate(end.getDate() - 30);
   return [start, end];
 };
-
-// 格式化单个日期时间为后端要求的格式（带 T 分隔，如 "2023-01-01T00:00:00"）
-// isEnd: 是否为结束时间（结束时间用 23:59:59，起始用 00:00:00）
 const formatDateTime = (date, isEnd = false) => {
   if (!date) return '';
   const d = new Date(date);
@@ -38,8 +33,6 @@ const formatDateTime = (date, isEnd = false) => {
   const time = isEnd ? '23:59:59' : '00:00:00';
   return `${year}-${month}-${day}T${time}`;
 };
-
-// 生成 timeRange 字符串（格式："起始时间,结束时间"）
 const getTimeRangeParam = () => {
   if (timeRange.value && timeRange.value.length === 2) {
     const startStr = formatDateTime(timeRange.value[0], false);
@@ -49,16 +42,14 @@ const getTimeRangeParam = () => {
   const [defaultStart, defaultEnd] = getDefaultTimeRange();
   return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
 };
-
-// 日期范围变化时重新加载数据
 const handleDateRangeChange = () => {
   loadData();
 };
 
 const loading = ref(true);
-const overviewData = ref({});        // 看板数据（卡片 + 饼图）
-const clubData = ref([]);            // 各社团人数数据 { clubName, memberCount }
-const typeData = ref([]);            // 各类型成员分布数据 { name, count }
+const overviewData = ref({});
+const clubData = ref([]);
+const typeData = ref([]);
 
 // 卡片列表
 const cardList = computed(() => {
@@ -74,14 +65,13 @@ const cardList = computed(() => {
   ];
 });
 
-// 各社团人数占比饼图数据（来自 distribution 接口）
+// 各社团人数占比饼图数据
 const clubPieData = computed(() => clubData.value.map(item => ({
   name: item.clubName,
   value: item.memberCount,
 })));
 
-// 社团类型成员分布饼图数据（来自 distribution 接口）
-// 后端返回 { name, count }，需要转换为 { name, value }
+// 社团类型成员分布饼图数据
 const typePieData = computed(() => {
   return (typeData.value || []).map(item => ({
     name: item.name || '未知类型',
@@ -89,8 +79,7 @@ const typePieData = computed(() => {
   }));
 });
 
-// 社团类型数量分布饼图数据（来自 overview 接口的 clubTypeDistribution）
-// 将后端返回的 { count, name, type } 转换为 { name: 中文, value: count }
+// 社团类型数量分布饼图数据
 const clubTypeDistributionPieData = computed(() => {
   const distribution = overviewData.value.clubTypeDistribution || [];
   return distribution.map(item => ({
@@ -101,21 +90,9 @@ const clubTypeDistributionPieData = computed(() => {
 
 // 饼图切换选项
 const pieOptions = computed(() => [
-  {
-    title: '各社团人数占比',
-    data: clubPieData.value,
-    pieType: 'club',
-  },
-  {
-    title: '社团类型成员分布',
-    data: typePieData.value,
-    pieType: 'type',
-  },
-  {
-    title: '社团类型数量分布',
-    data: clubTypeDistributionPieData.value,
-    pieType: 'clubTypeCount',
-  },
+  { title: '各社团人数占比', data: clubPieData.value, pieType: 'club' },
+  { title: '社团类型成员分布', data: typePieData.value, pieType: 'type' },
+  { title: '社团类型数量分布', data: clubTypeDistributionPieData.value, pieType: 'clubTypeCount' },
 ]);
 
 const activePieIndex = ref(0);
@@ -125,22 +102,47 @@ const handlePieChange = (index) => {
   activePieIndex.value = index;
 };
 
-const emit = defineEmits(['pieClick', 'cardSelect']);
-
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
+// 卡片点击：映射筛选条件
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
-};
-
-const handlePieClickWrapper = (item) => {
-  const currentType = currentPieData.value.pieType;
-  if (currentType === 'club') {
-    emit('pieClick', { type: 'clubName', value: item.name });
-  } else if (currentType === 'type' || currentType === 'clubTypeCount') {
-    emit('pieClick', { type: 'clubType', value: item.name });
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'pendingAudit':   // 待审核入团 → 筛选状态为“待审核”
+      filterType = 'status';
+      filterValue = '待审核';
+      break;
+    case 'totalClub':
+    case 'totalMember':
+    case 'venueApply':
+    default:
+      // 其他卡片不触发筛选（可根据需求调整，这里都不筛选）
+      return;
+  }
+  if (filterType) {
+    window.dispatchEvent(new CustomEvent('club-chart-filter', {
+      detail: { type: filterType, value: filterValue }
+    }));
   }
 };
 
-// 加载数据
+// 饼图点击（根据当前饼图类型派发不同筛选）
+const handlePieClickWrapper = (item) => {
+  const currentType = currentPieData.value.pieType;
+  if (currentType === 'club') {
+    // 点击具体社团 → 筛选社团名称
+    window.dispatchEvent(new CustomEvent('club-chart-filter', {
+      detail: { type: 'clubName', value: item.name }
+    }));
+  } else if (currentType === 'type' || currentType === 'clubTypeCount') {
+    // 点击社团类型 → 筛选社团类型
+    window.dispatchEvent(new CustomEvent('club-chart-filter', {
+      detail: { type: 'clubType', value: item.name }
+    }));
+  }
+};
+
+// 加载数据（保持不变）
 const loadData = async () => {
   loading.value = true;
   try {
@@ -209,9 +211,8 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 饼图切换区域（含日期选择器） -->
+    <!-- 饼图切换区域 -->
     <div class="pie-chart-area">
-      <!-- 将日期选择器放在饼图区域上方 -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="timeRange"
@@ -231,17 +232,8 @@ onMounted(() => {
         />
       </div>
       <div class="pie-select-wrapper">
-        <el-select
-          v-model="activePieIndex"
-          size="small"
-          @change="handlePieChange"
-        >
-          <el-option
-            v-for="(opt, idx) in pieOptions"
-            :key="idx"
-            :label="opt.title"
-            :value="idx"
-          />
+        <el-select v-model="activePieIndex" size="small" @change="handlePieChange">
+          <el-option v-for="(opt, idx) in pieOptions" :key="idx" :label="opt.title" :value="idx" />
         </el-select>
       </div>
       <Pie
@@ -269,13 +261,9 @@ onMounted(() => {
     min-width: 280px;
     max-width: 320px;
     margin-top: 10px !important;
-
-    .left-card {
-      height: 150px !important;
-    }
+    .left-card { height: 150px !important; }
   }
 }
-
 .pie-chart-area {
   position: relative;
   flex: 1;
@@ -283,34 +271,22 @@ onMounted(() => {
   height: 100%;
   margin-left: 12px;
 }
-
 .pie-select-wrapper {
   position: absolute;
   top: 8px;
   right: 10px;
   z-index: 10;
 }
-
 .date-range-wrapper {
   position: absolute;
   top: 8px;
   left: 10px;
   z-index: 10;
 }
-
 :deep(.el-date-editor) {
   --el-date-editor-width: 240px;
-
-  .el-range__icon {
-    margin-right: 2px;
-  }
-
-  .el-range-separator {
-    padding: 0 4px;
-  }
-
-  .el-range__close-icon {
-    margin-left: 2px;
-  }
+  .el-range__icon { margin-right: 2px; }
+  .el-range-separator { padding: 0 4px; }
+  .el-range__close-icon { margin-left: 2px; }
 }
 </style>

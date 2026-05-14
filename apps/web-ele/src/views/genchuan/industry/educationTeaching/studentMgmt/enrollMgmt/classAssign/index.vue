@@ -1,11 +1,11 @@
 <script setup>
-import { reactive, ref, nextTick } from 'vue';
-import { useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {reactive, ref, nextTick, onMounted, onUnmounted} from 'vue';
+import {useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import ClassAssignDetailDrawer from './components/classAssignDetail.vue';
 import {
   getClassAssignPage,
@@ -23,37 +23,42 @@ import {
   useConfigFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/enrollMgmt/classAssign/form.js';
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
-// 标签筛选
+// ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -72,11 +77,11 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// 抽屉组件
+// ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
 
 const dataObj = reactive({
@@ -126,68 +131,44 @@ const getDateFromTimestamp = (timestamp) => {
 };
 
 const getStatusType = (status) => {
-  const map = {
-    '未分班': 'warning',
-    '已分班': 'success',
-  };
+  const map = {'未分班': 'warning', '已分班': 'success'};
   return map[status] || 'info';
 };
 
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-
-    const res = await getClassAssignPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'className':
-            itemValue = item.className;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    if (params.createTime && Array.isArray(params.createTime) && params.createTime.length === 2) {
+      params.createTimeStart = params.createTime[0];
+      params.createTimeEnd = params.createTime[1];
+      delete params.createTime;
+    } else if (params.createTime && typeof params.createTime === 'string') {
+      params.createTimeStart = params.createTime;
+      params.createTimeEnd = params.createTime;
+      delete params.createTime;
+    }
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getClassAssignPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取分班任务列表失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -196,47 +177,38 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportClassAssign(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportClassAssign(searchParams.value);
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
-// 批量分班
 async function handleBatchAssign() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个分班任务');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个分班任务');
   const unassignedRows = checkedRows.value.filter(row => row.status === '未分班');
-  if (unassignedRows.length === 0) {
-    ElMessage.warning('请选择状态为【未分班】的任务进行分班');
-    return;
-  }
+  if (unassignedRows.length === 0) return ElMessage.warning('请选择状态为【未分班】的任务进行分班');
   try {
     await ElMessageBox.confirm(`确认对选中的 ${unassignedRows.length} 个任务执行智能分班？`, '批量分班确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '分班中...'});
     try {
@@ -255,22 +227,15 @@ async function handleBatchAssign() {
   }
 }
 
-// 批量确认
 async function handleBatchConfirm() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个分班任务');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个分班任务');
   const assignedRows = checkedRows.value.filter(row => row.status === '已分班');
-  if (assignedRows.length === 0) {
-    ElMessage.warning('请选择状态为【已分班】的任务进行确认');
-    return;
-  }
+  if (assignedRows.length === 0) return ElMessage.warning('请选择状态为【已分班】的任务进行确认');
   try {
     await ElMessageBox.confirm(`确认选中的 ${assignedRows.length} 个分班任务？确认后将记录确认信息。`, '批量确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '确认中...'});
     try {
@@ -289,34 +254,26 @@ async function handleBatchConfirm() {
   }
 }
 
-// 配置（新增）
 function handleConfig() {
   isEditMode.value = false;
   currentEditId.value = null;
-  configDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  configDrawerApi.open();
 }
 
 function handleEdit(row) {
-  if (row.status !== '未分班') {
-    ElMessage.warning('只有未分班状态的任务可以编辑');
-    return;
-  }
+  if (row.status !== '未分班') return ElMessage.warning('只有未分班状态的任务可以编辑');
   isEditMode.value = true;
   currentEditId.value = row.id;
-  configDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  configDrawerApi.open();
 }
 
-// 单行分班
 async function handleAssign(row) {
-  if (row.status !== '未分班') {
-    ElMessage.warning('只有未分班状态的任务可以分班');
-    return;
-  }
+  if (row.status !== '未分班') return ElMessage.warning('只有未分班状态的任务可以分班');
   try {
     await ElMessageBox.confirm(`确认对任务"${row.ruleContent.substring(0, 20)}..."执行智能分班？`, '分班确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '分班中...'});
     try {
@@ -334,17 +291,13 @@ async function handleAssign(row) {
   }
 }
 
-// 单行确认
 async function handleConfirm(row) {
-  if (row.status !== '已分班') {
-    ElMessage.warning('只有已分班状态的任务可以确认');
-    return;
-  }
+  if (row.status !== '已分班') return ElMessage.warning('只有已分班状态的任务可以确认');
   try {
     await ElMessageBox.confirm(`确认分班任务"${row.ruleContent.substring(0, 20)}..."？确认后将生成班级学生信息。`, '确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '确认中...'});
     try {
@@ -374,11 +327,12 @@ const [ConfigForm, configFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '保存中...' : '配置中...'});
     try {
       let res;
-      if (isEditMode.value) {
-        res = await updateClassAssign({...values, id: currentEditId.value, status: '未分班'});
-      } else {
-        res = await createClassAssignConfig({...values, status: '未分班'});
-      }
+      if (isEditMode.value) res = await updateClassAssign({
+        ...values,
+        id: currentEditId.value,
+        status: '未分班'
+      });
+      else res = await createClassAssignConfig({...values, status: '未分班'});
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '编辑成功' : '配置成功');
         configDrawerApi.close();
@@ -396,16 +350,13 @@ const [ConfigForm, configFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 修复的核心：在抽屉打开时重置表单并加载编辑数据
 const [ConfigDrawer, configDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => configDrawerApi.close(),
   async onOpenChange(isOpen) {
     if (isOpen) {
-      // 每次打开前先重置表单（清空值 + 清除校验错误）
       await configFormApi.resetForm();
-      // 如果是编辑模式，则填充数据
       if (isEditMode.value && currentEditId.value) {
         try {
           const detail = await getClassAssignDetail({id: currentEditId.value});
@@ -417,14 +368,13 @@ const [ConfigDrawer, configDrawerApi] = useVbenDrawer({
         } catch (error) {
           console.error('加载详情失败', error);
           ElMessage.error('加载详情失败，请检查网络或联系管理员');
-          configDrawerApi.close(); // 加载失败则关闭抽屉
+          configDrawerApi.close();
         }
       }
     }
   },
 });
 
-// 详情抽屉
 const classAssignDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -438,7 +388,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -466,8 +416,26 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'status') {
+    handleFilterTagClick('status', value);
+  } else if (type === 'className') {
+    handleFilterTagClick('className', value);
+  } else if (type === 'createTime') {
+    handleFilterTagClick('createTime', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('classassign-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('classassign-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -504,11 +472,10 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
-      <!-- 钻取列 -->
       <template #className="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer">
           {{ row.className || '-' }}
@@ -525,18 +492,14 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer">
-          {{ row.creator || '-' }}
+                 style="cursor: pointer">{{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer">
-          {{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
-
-      <!-- 时间格式化 -->
       <template #assignTime="{ row }">
         <el-text>{{ formatTimestamp(row.assignTime) }}</el-text>
       </template>
@@ -547,7 +510,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>

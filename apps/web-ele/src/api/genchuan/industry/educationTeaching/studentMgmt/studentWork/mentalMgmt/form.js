@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择心理状态',
+        clearable: true,
         options: [
           { label: '正常', value: '正常' },
           { label: '关注', value: '关注' },
@@ -28,6 +29,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择风险等级',
+        clearable: true,
         options: [
           { label: '低', value: '低' },
           { label: '中', value: '中' },
@@ -42,6 +44,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '待评估', value: '待评估' },
           { label: '咨询中', value: '咨询中' },

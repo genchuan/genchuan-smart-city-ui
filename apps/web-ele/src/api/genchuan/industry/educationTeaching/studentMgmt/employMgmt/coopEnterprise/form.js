@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择企业类型',
+        clearable: true,
         options: [
           { label: '国企', value: '国企' },
           { label: '民企', value: '民企' },
@@ -28,8 +29,13 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择负责系部',
-        filterable: true,
-        options: [], // 动态加载
+        clearable: true,
+        options: [
+          { value: 2001, label: '计算机系' },
+          { value: 2002, label: '机电系' },
+          { value: 2003, label: '经贸系' },
+          { value: 2004, label: '其他' },
+        ],
       },
       labelWidth: '100',
     },
@@ -39,6 +45,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '合作中', value: '合作中' },
           { label: '已结束', value: '已结束' },
@@ -109,7 +116,12 @@ export function useCreateFormSchema(isEdit = false) {
       componentProps: {
         placeholder: '请选择负责系部',
         filterable: true,
-        options: [], // 动态加载
+        options: [
+          { value: 2001, label: '计算机系' },
+          { value: 2002, label: '机电系' },
+          { value: 2003, label: '经贸系' },
+          { value: 2004, label: '其他' },
+        ],
       },
       rules: 'required',
       labelWidth: '100',

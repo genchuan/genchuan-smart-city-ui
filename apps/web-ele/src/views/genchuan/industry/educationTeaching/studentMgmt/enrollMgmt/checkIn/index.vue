@@ -1,11 +1,11 @@
 <script setup>
-import {reactive, ref} from 'vue';
-import {useVbenDrawer} from '@vben/common-ui';
-import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
+import { reactive, ref, onMounted, onUnmounted } from 'vue';
+import { useVbenDrawer } from '@vben/common-ui';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
-import {useVbenForm} from '#/adapter/form';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
-import {downloadFileFromBlobPart} from '@vben/utils';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import CheckInDetailDrawer from './components/checkInDetail.vue';
 import {
   getCheckInPage,
@@ -22,37 +22,42 @@ import {
   useSupplyFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/enrollMgmt/checkIn/form.js';
 
-const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
+const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
 const emit = defineEmits(['arrow-change']);
 
-// 标签筛选
+// ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -70,17 +75,16 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// 抽屉组件
+// ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
-
 const [SupplyDrawer, supplyDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => supplyDrawerApi.close(),
+  onCancel: () => supplyDrawerApi.close()
 });
 
 const dataObj = reactive({
@@ -104,7 +108,7 @@ function handleRowCheckboxChange({records}) {
 
 const searchParams = ref({});
 const currentEditId = ref(null);
-const currentStudentId = ref(null); // 存储当前补充的学生ID
+const currentStudentId = ref(null);
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
@@ -130,77 +134,49 @@ const getDateFromTimestamp = (timestamp) => {
 };
 
 const getStatusType = (status) => {
-  const map = {
-    '待确认': 'warning',
-    '待审核': 'info',
-    '已报到': 'success',
-  };
+  const map = {'待确认': 'warning', '待审核': 'info', '已报到': 'success'};
   return map[status] || 'info';
 };
 
 const getAccountStatusType = (accountStatus) => {
-  const map = {
-    '未创建': 'danger',
-    '已创建': 'success',
-  };
+  const map = {'未创建': 'danger', '已创建': 'success'};
   return map[accountStatus] || 'info';
 };
 
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-
-    const res = await getCheckInPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          case 'studentId':
-            itemValue = item.studentId;
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    if (params.createTime && Array.isArray(params.createTime) && params.createTime.length === 2) {
+      params.createTimeStart = params.createTime[0];
+      params.createTimeEnd = params.createTime[1];
+      delete params.createTime;
+    } else if (params.createTime && typeof params.createTime === 'string') {
+      params.createTimeStart = params.createTime;
+      params.createTimeEnd = params.createTime;
+      delete params.createTime;
+    }
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getCheckInPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取报到记录失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -209,47 +185,38 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportCheckIn(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportCheckIn(searchParams.value);
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
-// 批量确认
 async function handleBatchConfirm() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个报到记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个报到记录');
   const confirmRows = checkedRows.value.filter(row => row.status === '待确认');
-  if (confirmRows.length === 0) {
-    ElMessage.warning('请选择状态为【待确认】的记录进行确认');
-    return;
-  }
+  if (confirmRows.length === 0) return ElMessage.warning('请选择状态为【待确认】的记录进行确认');
   try {
     await ElMessageBox.confirm(`确认对选中的 ${confirmRows.length} 条记录执行报到确认？确认后状态将变为“待审核”。`, '批量确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '确认中...'});
     try {
@@ -268,22 +235,15 @@ async function handleBatchConfirm() {
   }
 }
 
-// 批量审核
 async function handleBatchAudit() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个报到记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个报到记录');
   const auditRows = checkedRows.value.filter(row => row.status === '待审核');
-  if (auditRows.length === 0) {
-    ElMessage.warning('请选择状态为【待审核】的记录进行审核');
-    return;
-  }
+  if (auditRows.length === 0) return ElMessage.warning('请选择状态为【待审核】的记录进行审核');
   try {
     await ElMessageBox.confirm(`确认对选中的 ${auditRows.length} 条记录执行审核？审核后将自动创建系统账号，状态变为“已报到”。`, '批量审核', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
@@ -302,20 +262,13 @@ async function handleBatchAudit() {
   }
 }
 
-// 补充（编辑）
 async function handleSupply(row) {
-  if (row.status !== '待确认') {
-    ElMessage.warning('只有待确认状态的记录可以补充信息');
-    return;
-  }
+  if (row.status !== '待确认') return ElMessage.warning('只有待确认状态的记录可以补充信息');
   currentEditId.value = row.id;
-  currentStudentId.value = row.studentId;   // 保存 studentId
+  currentStudentId.value = row.studentId;
   try {
     const detail = await getCheckInDetail({id: row.id});
-    supplyFormApi.setValues({
-      examScore: detail.examScore,
-      supplyInfo: detail.supplyInfo,
-    });
+    supplyFormApi.setValues({examScore: detail.examScore, supplyInfo: detail.supplyInfo});
     supplyDrawerApi.open();
   } catch (error) {
     console.error('加载详情失败', error);
@@ -323,17 +276,13 @@ async function handleSupply(row) {
   }
 }
 
-// 单行确认
 async function handleConfirm(row) {
-  if (row.status !== '待确认') {
-    ElMessage.warning('只有待确认状态的记录可以确认');
-    return;
-  }
+  if (row.status !== '待确认') return ElMessage.warning('只有待确认状态的记录可以确认');
   try {
     await ElMessageBox.confirm(`确认学号"${row.studentId}"的报到信息？确认后状态将变为“待审核”。`, '确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '确认中...'});
     try {
@@ -351,17 +300,13 @@ async function handleConfirm(row) {
   }
 }
 
-// 单行审核
 async function handleAudit(row) {
-  if (row.status !== '待审核') {
-    ElMessage.warning('只有待审核状态的记录可以审核');
-    return;
-  }
+  if (row.status !== '待审核') return ElMessage.warning('只有待审核状态的记录可以审核');
   try {
     await ElMessageBox.confirm(`审核学号"${row.studentId}"的报到信息？审核后将自动创建系统账号，状态变为“已报到”。`, '审核', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
@@ -379,25 +324,21 @@ async function handleAudit(row) {
   }
 }
 
-// 补充表单 - 适配后端接口参数
+// 补充表单
 const [SupplyForm, supplyFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
     const loading = ElLoading.service({text: '保存中...'});
     try {
-      // 构造后端要求的参数结构
       const requestData = {
-        ids: [currentEditId.value],               // 必填，数组
-        studentId: currentStudentId.value,        // 必填，整数
+        ids: [currentEditId.value],
+        studentId: currentStudentId.value,
         examScore: values.examScore,
         supplyInfo: values.supplyInfo,
       };
-      // 清理值为 undefined 或 null 的字段（可选）
       Object.keys(requestData).forEach(key => {
-        if (requestData[key] === undefined || requestData[key] === null) {
-          delete requestData[key];
-        }
+        if (requestData[key] === undefined || requestData[key] === null) delete requestData[key];
       });
       const res = await supplyCheckIn(requestData);
       if (res && res !== false) {
@@ -417,7 +358,6 @@ const [SupplyForm, supplyFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 详情抽屉
 const checkInDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -431,7 +371,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -459,8 +399,24 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'status') {
+    handleFilterTagClick('status', value);
+  } else if (type === 'createTime') {
+    handleFilterTagClick('createTime', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('checkin-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('checkin-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -496,11 +452,10 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
-      <!-- 钻取列 -->
       <template #studentId="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
           {{ row.studentId }}
@@ -516,24 +471,21 @@ defineExpose({handleFilterTagClick, clearFilters});
         </el-tag>
       </template>
       <template #accountStatus="{ row }">
-        <el-tag :type="getAccountStatusType(row.accountStatus)">
-          {{ row.accountStatus || '-' }}
+        <el-tag :type="getAccountStatusType(row.accountStatus)">{{
+            row.accountStatus || '-'
+          }}
         </el-tag>
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer">
-          {{ row.creator || '-' }}
+                 style="cursor: pointer">{{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer">
-          {{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
-
-      <!-- 时间格式化 -->
       <template #confirmTime="{ row }">
         <el-text>{{ formatTimestamp(row.confirmTime) }}</el-text>
       </template>
@@ -547,7 +499,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>

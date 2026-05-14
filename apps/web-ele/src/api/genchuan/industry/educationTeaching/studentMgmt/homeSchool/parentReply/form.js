@@ -21,6 +21,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择阅读状态',
+        clearable: true,
         options: [
           { label: '未读', value: '未读' },
           { label: '已读', value: '已读' },

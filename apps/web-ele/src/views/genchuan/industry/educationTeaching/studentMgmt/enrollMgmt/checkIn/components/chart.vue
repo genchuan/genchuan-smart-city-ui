@@ -1,6 +1,6 @@
 <script setup>
-import {ref, computed, onMounted, watch} from 'vue';
-import {ElSelect, ElOption} from 'element-plus';
+import { ref, computed, onMounted, watch } from 'vue';
+import { ElSelect, ElOption } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
 import {
@@ -9,29 +9,25 @@ import {
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/enrollMgmt/checkIn/data.js';
 
 const loading = ref(true);
-const chartData = ref({});      // 折线图数据 + 卡片进度
-const indexData = ref({});      // 核心指标数据
+const chartData = ref({});
+const indexData = ref({});
 
-// 年份选择器相关
-const currentYear = ref(new Date().getFullYear()); // 默认当前年份
+const currentYear = ref(new Date().getFullYear());
 const yearOptions = () => {
   const current = new Date().getFullYear();
   const years = [];
   for (let i = current - 5; i <= current + 2; i++) {
-    years.push({label: `${i}年`, value: i});
+    years.push({ label: `${i}年`, value: i });
   }
   return years;
 };
 
-// 监听年份变化，重新加载数据
 watch(currentYear, () => {
   loadData();
 });
 
-// 卡片数据（报到总人数、报到完成率、待报到人数）
 const cardList = computed(() => {
   const total = indexData.value.totalRegisterCount || 0;
-  const completed = indexData.value.totalConfirmCount || 0;
   const rate = indexData.value.checkinRate || 0;
   const wait = chartData.value.waitConfirmCount || 0;
   return [
@@ -41,7 +37,6 @@ const cardList = computed(() => {
   ];
 });
 
-// 折线图数据（新生报到进度统计）
 const lineData = computed(() => {
   const dateList = chartData.value.dateList || [];
   const dailyConfirmList = chartData.value.dailyConfirmList || [];
@@ -55,14 +50,34 @@ const lineData = computed(() => {
   };
 });
 
-const emit = defineEmits(['cardSelect', 'lineSelect']);
-
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'wait':   // 待报到人数 → 筛选状态为“待确认”
+      filterType = 'status';
+      filterValue = '待确认';
+      break;
+    case 'total':
+    case 'rate':
+    default:
+      // 报到总人数和报到完成率不触发筛选
+      return;
+  }
+  window.dispatchEvent(new CustomEvent('checkin-chart-filter', {
+    detail: {type: filterType, value: filterValue}
+  }));
 };
 
 const handleLineClick = (params) => {
-  emit('lineSelect', {field: 'date', value: params.xValue});
+  const date = params.xValue || params.name;
+  if (date) {
+    // 折线图点击日期，按该日期筛选报到记录（创建时间）
+    window.dispatchEvent(new CustomEvent('checkin-chart-filter', {
+      detail: {type: 'createTime', value: [date, date]}
+    }));
+  }
 };
 
 const loadData = async () => {
@@ -72,9 +87,8 @@ const loadData = async () => {
       getCheckInChart({year: currentYear.value}),
       getCheckInIndex({year: currentYear.value}),
     ]);
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
-    } else {
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else {
       chartData.value = {
         waitConfirmCount: 50,
         waitAuditCount: 30,
@@ -86,9 +100,8 @@ const loadData = async () => {
         dailyAuditList: [15, 30, 40, 55, 60],
       };
     }
-    if (indexRes.status === 'fulfilled') {
-      indexData.value = indexRes.value;
-    } else {
+    if (indexRes.status === 'fulfilled') indexData.value = indexRes.value;
+    else {
       indexData.value = {
         totalRegisterCount: 320,
         totalConfirmCount: 270,
@@ -116,17 +129,11 @@ onMounted(() => {
                  @click="handleCardClick"/>
     </div>
 
-    <!-- 折线图区域（含年份选择器） -->
     <div class="line-chart-container" style="flex: 2 !important; position: relative;">
-      <!-- 年份选择器（紧凑样式，位于右上角） -->
       <div class="year-select-wrapper">
         <el-select v-model="currentYear" size="small">
-          <el-option
-            v-for="opt in yearOptions()"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
+          <el-option v-for="opt in yearOptions()" :key="opt.value" :label="opt.label"
+                     :value="opt.value"/>
         </el-select>
       </div>
       <lineChart
@@ -158,7 +165,6 @@ onMounted(() => {
     margin: 0;
   }
 
-  /* 折线图容器特殊样式，用于绝对定位年份选择器 */
   .line-chart-container {
     position: relative;
     flex: 2;
@@ -173,7 +179,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的年份选择器样式 */
   :deep(.el-select) {
     width: 100px;
   }
