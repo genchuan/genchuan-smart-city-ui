@@ -1,10 +1,11 @@
 import { ref } from 'vue';
 
 import { DICT_TYPE } from '@vben/constants';
-import { getDictOptions } from '@vben/hooks';
+import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getExchangeCategoryList } from '#/api/genchuan/industry/chargePark/marketOp/exchangeMgmt/exchangeCategory';
 import { formatDate } from '#/utils/genchuan/formatTime';
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 
 /** 兑换订单状态标签类型 */
 export const getExchangeOrderPayStatusTagType = (status) => {
@@ -201,6 +202,47 @@ export function useFormSchema() {
   ];
 }
 
+/** 商品详情字段配置 - 完全参照奖品管理列表详情页的 detailFields 配置 */
+export const goodsDetailFields = [
+  { key: 'name', label: '商品名称' },
+  {
+    key: 'type',
+    label: '商品类型',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_TYPE, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => {
+      const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_TYPE, String(value));
+      return getDictTagTypeFromDict(dict, 'primary');
+    },
+  },
+  { key: 'stock', label: '当前库存' },
+  {
+    key: 'status',
+    label: '商品状态',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_STATUS, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => {
+      const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_STATUS, String(value));
+      return getDictTagTypeFromDict(dict, 'info');
+    },
+  },
+  { key: 'activityName', label: '绑定活动' },
+  { key: 'sendCount', label: '发放量' },
+  { key: 'warnThreshold', label: '预警阈值' },
+  { key: 'description', label: '商品描述' },
+  { key: 'createTimeStr', label: '创建时间' },
+  { key: 'syncTimeStr', label: '同步时间' },
+  { key: 'creator', label: '创建者' },
+  { key: 'updater', label: '更新者' },
+  { key: 'updateTimeStr', label: '更新时间' },
+];
+
 /** 兑换订单搜索表单配置 - 仅包含接口支持的参数 */
 export function useSearchFormSchema() {
   return [
@@ -322,7 +364,7 @@ export function useGridColumns() {
       title: '物流信息',
       minWidth: 200,
       sortable: true,
-      slots: { default: 'logisticsInfo' },
+      // slots: { default: 'logisticsInfo' },
     },
     {
       field: 'archiveTime',

@@ -287,7 +287,7 @@ export function useGridColumns() {
       title: '审核人',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'auditorName' },
+      // slots: { default: 'auditorName' },
     },
     {
       field: 'auditTime',

@@ -14,6 +14,7 @@ import {
   exportExchangeOrder,
   getExchangeOrderPage,
 } from '#/api/genchuan/industry/chargePark/marketOp/exchangeMgmt/exchangeOrder';
+import { getPrizeMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/prizeMgmt';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
@@ -25,10 +26,12 @@ import ShipDialog from '../components/ShipDialog.vue';
 import {
   dataList,
   detailFields,
+  dynamicCategorySearchOptions,
   fetchCategorySearchOptions,
   getCurrentCategorySearchOptions,
   getExchangeOrderPayStatusLabel,
   getExchangeOrderPayStatusTagType,
+  goodsDetailFields,
   textObj,
   useFormSchema,
   useGridColumns,
@@ -64,12 +67,19 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-
 const detailDrawerRef = ref(null);
+const goodsDetailDrawerRef = ref(null);
 const payConfirmDialogRef = ref(null);
 const shipDialogRef = ref(null);
-const cancelConfirmDialogRef = ref(null);
 const formData = ref();
+const goodsDetailData = ref({});
+
+// 商品详情标题计算属性
+const goodsDetailTitle = computed(() => {
+  return goodsDetailData.value?.name
+    ? `${goodsDetailData.value.name}详情`
+    : '商品详情';
+});
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -526,10 +536,44 @@ const handleOpenUserDetail = (row) => {
   // TODO: 实现用户详情弹窗
 };
 
-/** 打开商品详情弹窗 */
-const handleOpenGoodsDetail = (row) => {
-  ElMessage.info(`查看商品详情: ${row.goodsName}`);
-  // TODO: 实现商品详情弹窗
+/** 打开商品详情弹窗 - 使用 getPrizeMgmtDetail 接口获取商品详情 */
+const handleOpenGoodsDetail = async (row) => {
+  if (!row.goodsId) {
+    ElMessage.warning('商品ID不存在');
+    return;
+  }
+  try {
+    const goodsDetail = await getPrizeMgmtDetail(Number(row.goodsId));
+    if (goodsDetail && goodsDetail.id) {
+      // 格式化时间字段为字符串（处理null值），参照 prizeMgmt 的 detailFields 配置使用带Str后缀的字段名
+      const formattedDetail = {
+        ...goodsDetail,
+        createTimeStr: goodsDetail.createTime
+          ? formatDate(new Date(Number(goodsDetail.createTime)), 'YYYY-MM-DD HH:mm:ss')
+          : '',
+        syncTimeStr: goodsDetail.syncTime
+          ? formatDate(new Date(Number(goodsDetail.syncTime)), 'YYYY-MM-DD HH:mm:ss')
+          : '',
+        updateTimeStr: goodsDetail.updateTime
+          ? formatDate(new Date(Number(goodsDetail.updateTime)), 'YYYY-MM-DD HH:mm:ss')
+          : '',
+      };
+      goodsDetailData.value = formattedDetail;
+      // 使用nextTick确保DOM更新后再打开抽屉
+      await nextTick();
+      if (goodsDetailDrawerRef.value) {
+        goodsDetailDrawerRef.value.open();
+      } else {
+        console.error('商品详情抽屉组件未找到');
+        ElMessage.error('打开详情失败，请重试');
+      }
+    } else {
+      ElMessage.error('获取商品详情失败');
+    }
+  } catch (error) {
+    console.error('获取商品详情失败:', error);
+    ElMessage.error('获取商品详情失败');
+  }
 };
 
 /** 打开物流跟踪弹窗 */
@@ -561,6 +605,13 @@ const handleFullShow = () => {
       :title="`${dataObj.detailObj.no || '兑换订单'}详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
+    />
+    <!--   商品详情抽屉-->
+    <DetailDrawer
+      ref="goodsDetailDrawerRef"
+      :title="goodsDetailTitle"
+      :data="goodsDetailData"
+      :fields="goodsDetailFields"
     />
     <!--   支付确认弹窗-->
     <PayConfirmDialog ref="payConfirmDialogRef" @success="handleRefresh" />
