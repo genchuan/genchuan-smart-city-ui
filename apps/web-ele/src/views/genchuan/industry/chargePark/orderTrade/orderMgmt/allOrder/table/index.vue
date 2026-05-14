@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 
@@ -41,6 +41,14 @@ const props = defineProps({
   arrowState: {
     type: Boolean,
     default: false,
+  },
+  filterParams: {
+    type: Object,
+    default: () => ({
+      createOrderTimeStart: null,
+      createOrderTimeEnd: null,
+      orderType: null,
+    }),
   },
 });
 const emit = defineEmits(['arrow-change']);
@@ -109,6 +117,16 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 function handleRefresh() {
   gridApi.query();
 }
+
+// 监听筛选参数变化
+watch(
+  () => props.filterParams,
+  () => {
+    dataObj.currentPage = 1;
+    gridApi.query();
+  },
+  { deep: true }
+);
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
@@ -196,6 +214,16 @@ const getTableData = async (pageObj) => {
     pageSize: page.pageSize,
     ...dataObj.searchObj,
   };
+
+  if (props.filterParams.createOrderTimeStart) {
+    params.createOrderTimeStart = props.filterParams.createOrderTimeStart;
+  }
+  if (props.filterParams.createOrderTimeEnd) {
+    params.createOrderTimeEnd = props.filterParams.createOrderTimeEnd;
+  }
+  if (props.filterParams.orderType) {
+    params.orderType = props.filterParams.orderType;
+  }
 
   try {
     dataObj.loading = true;

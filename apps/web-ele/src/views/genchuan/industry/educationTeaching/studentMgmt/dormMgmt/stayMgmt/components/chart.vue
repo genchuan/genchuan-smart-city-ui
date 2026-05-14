@@ -11,13 +11,11 @@ import {
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/dormMgmt/stayMgmt/data.js';
 
 const loading = ref(true);
-const chartData = ref({});      // 卡片 + 折线图 + 状态分布
-const classStats = ref({});     // 班级统计
+const chartData = ref({});
+const classStats = ref({});
 
-// ========== 时间范围选择器 ==========
 const timeRange = ref([]);
 
-// 获取默认时间范围（最近30天，结束时间为当天）
 const getDefaultTimeRange = () => {
   const end = new Date();
   const start = new Date();
@@ -25,7 +23,6 @@ const getDefaultTimeRange = () => {
   return [start, end];
 };
 
-// 格式化单个日期时间为后端要求的格式（带 T 分隔）
 const formatDateTime = (date, isEnd = false) => {
   if (!date) return '';
   const d = new Date(date);
@@ -36,7 +33,6 @@ const formatDateTime = (date, isEnd = false) => {
   return `${year}-${month}-${day}T${time}`;
 };
 
-// 生成 timeRange 字符串（格式："起始时间,结束时间"）
 const getTimeRangeParam = () => {
   if (timeRange.value && timeRange.value.length === 2) {
     const startStr = formatDateTime(timeRange.value[0], false);
@@ -47,53 +43,47 @@ const getTimeRangeParam = () => {
   return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
 };
 
-// 日期范围变化时重新加载数据
 const handleDateRangeChange = () => {
   loadData();
 };
 
-// ========== 卡片数据 ==========
 const cardList = computed(() => {
   const total = chartData.value.totalStayCount || 0;
   const pendingConfirm = chartData.value.pendingConfirmCount || 0;
   const pendingAudit = chartData.value.pendingAuditCount || 0;
   const passed = chartData.value.passedCount || 0;
   return [
-    { title: '总留宿申请数', value: total, color: '#409EFF', status: 'total' },
-    { title: '待确认留宿数', value: pendingConfirm, color: '#E6A23C', status: 'pendingConfirm' },
-    { title: '待审核留宿数', value: pendingAudit, color: '#F56C6C', status: 'pendingAudit' },
-    { title: '已通过留宿数', value: passed, color: '#67C23A', status: 'passed' },
+    {title: '总留宿申请数', value: total, color: '#409EFF', status: 'total'},
+    {title: '待确认留宿数', value: pendingConfirm, color: '#E6A23C', status: 'pendingConfirm'},
+    {title: '待审核留宿数', value: pendingAudit, color: '#F56C6C', status: 'pendingAudit'},
+    {title: '已通过留宿数', value: passed, color: '#67C23A', status: 'passed'},
   ];
 });
 
-// ========== 折线图数据（周末留宿趋势） ==========
 const lineData = computed(() => {
   const trend = chartData.value.weekendTrend || [];
   return {
     xAxis: trend.map(item => item.date),
-    series: [{ name: '留宿人数', data: trend.map(item => item.count) }],
+    series: [{name: '留宿人数', data: trend.map(item => item.count)}],
   };
 });
 
-// ========== 饼图数据（留宿申请状态分布） ==========
 const pieData = computed(() => {
   const distribution = chartData.value.statusDistribution || [];
-  return distribution.map(item => ({ name: item.status, value: item.count }));
+  return distribution.map(item => ({name: item.status, value: item.count}));
 });
 
-// ========== 柱状图数据（各班级留宿统计） ==========
 const barData = computed(() => {
   const stats = classStats.value.classStatistics || [];
   return {
     xData: stats.map(item => item.className),
-    seriesData: [{ name: '留宿人数', data: stats.map(item => item.stayCount) }],
+    seriesData: [{name: '留宿人数', data: stats.map(item => item.stayCount)}],
   };
 });
 
-// ========== 图表切换（参考代码风格） ==========
 const chartOptions = [
-  { title: '周末留宿趋势', type: 'line' },
-  { title: '各班级留宿统计', type: 'bar' },
+  {title: '周末留宿趋势', type: 'line'},
+  {title: '各班级留宿统计', type: 'bar'},
 ];
 const activeChartIndex = ref(0);
 const currentChartTitle = computed(() => chartOptions[activeChartIndex.value].title);
@@ -103,65 +93,91 @@ const handleChartChange = (index) => {
   activeChartIndex.value = index;
 };
 
-// ========== 事件发射 ==========
-const emit = defineEmits(['cardSelect', 'pieSelect', 'barSelect', 'lineSelect']);
-
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'pendingConfirm':
+      filterType = 'status';
+      filterValue = '待确认';
+      break;
+    case 'pendingAudit':
+      filterType = 'status';
+      filterValue = '待审核';
+      break;
+    case 'passed':
+      filterType = 'status';
+      filterValue = '已通过';
+      break;
+    case 'total':
+    default:
+      return;
+  }
+  window.dispatchEvent(new CustomEvent('stay-chart-filter', {
+    detail: {type: filterType, value: filterValue}
+  }));
 };
 
 const handlePieClick = (item) => {
-  emit('pieSelect', { field: 'status', value: item.name });
+  window.dispatchEvent(new CustomEvent('stay-chart-filter', {
+    detail: {type: 'status', value: item.name}
+  }));
 };
 
 const handleBarClick = (className) => {
-  emit('barSelect', { field: 'className', value: className });
+  window.dispatchEvent(new CustomEvent('stay-chart-filter', {
+    detail: {type: 'className', value: className}
+  }));
 };
 
 const handleLineClick = (params) => {
-  emit('lineSelect', { field: 'date', value: params.xValue });
+  // params.xValue 为日期，例如 "2025-03-02"
+  const date = params.xValue || params.name;
+  if (date) {
+    window.dispatchEvent(new CustomEvent('stay-chart-filter', {
+      detail: {type: 'stayDate', value: date}
+    }));
+  }
 };
 
-// ========== 加载数据 ==========
+// 加载数据（保持不变）
 const loadData = async () => {
   loading.value = true;
   try {
     const timeRangeParam = getTimeRangeParam();
     const [chartRes, classRes] = await Promise.allSettled([
-      getStayMgmtChart({ timeRange: timeRangeParam }),
-      getStayMgmtCount({ timeRange: timeRangeParam }),
+      getStayMgmtChart({timeRange: timeRangeParam}),
+      getStayMgmtCount({timeRange: timeRangeParam}),
     ]);
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
-    } else {
-      // 模拟数据
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else {
       chartData.value = {
         totalStayCount: 156,
         pendingConfirmCount: 15,
         pendingAuditCount: 8,
         passedCount: 133,
         weekendTrend: [
-          { date: '2025-03-02', count: 22 },
-          { date: '2025-03-09', count: 18 },
-          { date: '2025-03-16', count: 25 },
-          { date: '2025-03-23', count: 20 },
-          { date: '2025-03-30', count: 28 },
+          {date: '2025-03-02', count: 22},
+          {date: '2025-03-09', count: 18},
+          {date: '2025-03-16', count: 25},
+          {date: '2025-03-23', count: 20},
+          {date: '2025-03-30', count: 28},
         ],
         statusDistribution: [
-          { status: '待确认', count: 15 },
-          { status: '待审核', count: 8 },
-          { status: '已通过', count: 133 },
+          {status: '待确认', count: 15},
+          {status: '待审核', count: 8},
+          {status: '已通过', count: 133},
         ],
       };
     }
-    if (classRes.status === 'fulfilled') {
-      classStats.value = classRes.value;
-    } else {
+    if (classRes.status === 'fulfilled') classStats.value = classRes.value;
+    else {
       classStats.value = {
         classStatistics: [
-          { className: '高一1班', stayCount: 18, ratio: 0.25 },
-          { className: '高一2班', stayCount: 15, ratio: 0.21 },
-          { className: '高一3班', stayCount: 22, ratio: 0.30 },
+          {className: '高一1班', stayCount: 18, ratio: 0.25},
+          {className: '高一2班', stayCount: 15, ratio: 0.21},
+          {className: '高一3班', stayCount: 22, ratio: 0.30},
         ],
       };
     }
@@ -180,7 +196,6 @@ onMounted(() => {
 
 <template>
   <div v-loading="loading" class="chart-box">
-    <!-- 卡片区 -->
     <div class="box-left">
       <Indicator
         class="left-card"
@@ -191,20 +206,12 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 可切换图表区域（折线图 / 柱状图） -->
     <div class="chart-switch-container" style="flex: 1.5 !important; position: relative">
-      <!-- 左上角：下拉切换标题 -->
       <div class="chart-select-wrapper">
         <el-select v-model="activeChartIndex" size="small" @change="handleChartChange">
-          <el-option
-            v-for="(opt, idx) in chartOptions"
-            :key="idx"
-            :label="opt.title"
-            :value="idx"
-          />
+          <el-option v-for="(opt, idx) in chartOptions" :key="idx" :label="opt.title" :value="idx"/>
         </el-select>
       </div>
-      <!-- 右上角：日期范围选择器 -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="timeRange"
@@ -224,7 +231,6 @@ onMounted(() => {
         />
       </div>
 
-      <!-- 折线图 -->
       <lineChart
         v-if="currentChartType === 'line'"
         :title="currentChartTitle"
@@ -233,7 +239,6 @@ onMounted(() => {
         y-name="留宿人数"
         @line-click="handleLineClick"
       />
-      <!-- 柱状图 -->
       <Bar
         v-else
         :title="currentChartTitle"
@@ -244,7 +249,6 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 饼图（保持不变） -->
     <Pie
       style="flex: 1 !important;"
       title-text="留宿申请状态分布"
@@ -276,7 +280,6 @@ onMounted(() => {
     }
   }
 
-  /* 可切换图表区域的样式 */
   .chart-switch-container {
     position: relative;
     min-width: 280px;
@@ -297,7 +300,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的时间选择器样式 */
   :deep(.el-date-editor) {
     --el-date-editor-width: 240px;
 

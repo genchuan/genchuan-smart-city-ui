@@ -11,9 +11,8 @@ import {
 const loading = ref(true);
 const chartData = ref({});
 const classStats = ref({});
-const selectedDate = ref(new Date()); // 默认当前日期
+const selectedDate = ref(new Date());
 
-// 卡片列表
 const cardList = computed(() => {
   const total = chartData.value.totalCheck || 0;
   const normal = chartData.value.normalCount || 0;
@@ -29,7 +28,6 @@ const cardList = computed(() => {
   ];
 });
 
-// 柱状图配置
 const barOptions = computed(() => [
   {
     title: '各班级异常人数',
@@ -63,26 +61,45 @@ const handleBarChange = (index) => {
   activeBarIndex.value = index;
 };
 
-const emit = defineEmits(['cardSelect', 'barSelect']);
-
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'normal':
+      filterType = 'checkStatus';
+      filterValue = '正常';
+      break;
+    case 'abnormal':
+      filterType = 'checkStatus';
+      filterValue = '异常';
+      break;
+    case 'total':
+    case 'inRate':
+    case 'warning':
+    default:
+      return;
+  }
+  window.dispatchEvent(new CustomEvent('dorm-check-chart-filter', {
+    detail: {type: filterType, value: filterValue}
+  }));
 };
 
 const handleBarClick = (className) => {
-  emit('barSelect', {field: 'className', value: className});
+  window.dispatchEvent(new CustomEvent('dorm-check-chart-filter', {
+    detail: {type: 'className', value: className}
+  }));
 };
 
-// 日期变化时重新加载数据
+// 日期变化时重新加载数据（原逻辑，不影响筛选）
 const handleDateChange = () => {
   loadData();
 };
 
-// 加载数据
+// 加载数据（保持不变）
 const loadData = async () => {
   loading.value = true;
   try {
-    // 格式化日期为 YYYY-MM-DD
     const formattedDate = selectedDate.value
       ? new Date(selectedDate.value).toISOString().slice(0, 10)
       : new Date().toISOString().slice(0, 10);
@@ -90,9 +107,8 @@ const loadData = async () => {
       getDormCheckChart({checkTime: formattedDate}),
       getDormCheckCount({}),
     ]);
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
-    } else {
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else {
       console.warn('考勤看板接口失败，使用模拟数据', chartRes.reason);
       chartData.value = {
         totalCheck: 1200,
@@ -107,9 +123,8 @@ const loadData = async () => {
         ],
       };
     }
-    if (classRes.status === 'fulfilled') {
-      classStats.value = classRes.value;
-    } else {
+    if (classRes.status === 'fulfilled') classStats.value = classRes.value;
+    else {
       console.warn('班级统计接口失败，使用模拟数据', classRes.reason);
       classStats.value = {
         labels: ['高一1班', '高一2班', '高一3班', '高二1班'],
@@ -142,14 +157,12 @@ onMounted(() => {
     </div>
 
     <div class="chart-area bar-chart-container">
-      <!-- 柱状图切换下拉框 -->
       <div class="chart-select-wrapper">
         <el-select v-model="activeBarIndex" size="small" @change="handleBarChange">
           <el-option v-for="(opt, idx) in barOptions" :key="idx" :label="opt.title" :value="idx"/>
         </el-select>
       </div>
 
-      <!-- 日期选择器（紧凑样式，位于右上角） -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="selectedDate"
@@ -209,7 +222,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 柱状图容器特殊样式，用于绝对定位日期选择器 */
   .bar-chart-container {
     position: relative;
   }
@@ -221,9 +233,8 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的日期选择器样式 */
   :deep(.el-date-editor) {
-    --el-date-editor-width: 130px;  // 单日期选择器宽度较小
+    --el-date-editor-width: 130px;
 
     .el-input__wrapper {
       padding: 0 8px;

@@ -12,27 +12,21 @@ import {
 
 const loading = ref(true);
 
-// ========== 周期筛选（前端中文值，单选框）==========
+// 周期筛选
 const cycleFilter = ref('月');
 const cycleOptions = [
   {label: '周', value: '周'},
   {label: '月', value: '月'},
   {label: '学期', value: '学期'},
 ];
+const cycleMap = {'周': 'week', '月': 'month', '学期': 'semester'};
 
-// 周期中文 -> 英文映射
-const cycleMap = {
-  '周': 'week',
-  '月': 'month',
-  '学期': 'semester',
-};
-
-// ========== 数据状态 ==========
+// 数据
 const overviewData = ref({});
 const dimensionData = ref([]);
 const trendData = ref([]);
 
-// ========== 雷达图指标 ==========
+// 雷达图指标
 const radarIndicator = [
   {name: '教室卫生', max: 100},
   {name: '早操', max: 100},
@@ -40,7 +34,7 @@ const radarIndicator = [
   {name: '黑板报', max: 100},
 ];
 
-// ========== 卡片列表 ==========
+// 卡片列表
 const cardList = computed(() => {
   const total = overviewData.value.totalCount || 0;
   const avgScore = overviewData.value.avgScore || 0;
@@ -54,7 +48,7 @@ const cardList = computed(() => {
   ];
 });
 
-// ========== 雷达图数据 ==========
+// 雷达图数据
 const radarSeries = computed(() => {
   return dimensionData.value.map(item => ({
     name: item.className,
@@ -67,9 +61,8 @@ const radarSeries = computed(() => {
   }));
 });
 
-// ========== 折线图数据（完全保持原逻辑）==========
+// 折线图数据
 const dateRange = ref([new Date('2024-01-01'), new Date('2026-12-31')]);
-
 const formatLocalDateTime = (date) => {
   if (!date) return '';
   const year = date.getFullYear();
@@ -80,29 +73,53 @@ const formatLocalDateTime = (date) => {
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 };
-
 const lineXData = computed(() => trendData.value.map(item => item.cycleName));
 const lineSeriesData = computed(() => [
   {name: '平均得分', data: trendData.value.map(item => item.avgScore)},
   {name: '班级排名', data: trendData.value.map(item => item.rankNo)},
 ]);
 
-// ========== 事件 ==========
-const emit = defineEmits(['radarClick', 'lineClick', 'cardSelect']);
-
+// ========== 核心修改：所有点击事件改为派发自定义事件 ==========
+// 卡片点击
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'published': // 已发布数 → 筛选状态为“已发布”
+      filterType = 'status';
+      filterValue = '已发布';
+      break;
+    case 'total':     // 本期考评总数 → 不筛选（清除状态筛选）
+    case 'avgScore':
+    case 'topRank':
+    default:
+      // 不进行筛选，可派发清除事件
+      filterType = 'status';
+      filterValue = '';
+      break;
+  }
+  if (filterType) {
+    window.dispatchEvent(new CustomEvent('assess-chart-filter', {
+      detail: {type: filterType, value: filterValue}
+    }));
+  }
 };
 
+// 雷达图点击：筛选班级
 const handleRadarClick = (params) => {
-  emit('radarClick', {className: params.name});
+  window.dispatchEvent(new CustomEvent('assess-chart-filter', {
+    detail: {type: 'className', value: params.name}
+  }));
 };
 
+// 折线图点击：筛选周期名称（后端可能支持 cycle 字段）
 const handleLineClick = (params) => {
-  emit('lineClick', {cycleName: params.name});
+  window.dispatchEvent(new CustomEvent('assess-chart-filter', {
+    detail: {type: 'cycle', value: params.cycleName}
+  }));
 };
 
-// ========== 概览数据转换 ==========
+// 数据加载函数（保持不变）
 const transformOverviewData = (data) => {
   if (!data) return {};
   let assessTypeCountObj = {};
@@ -134,7 +151,6 @@ const transformOverviewData = (data) => {
   };
 };
 
-// ========== 加载概览数据（随周期变化） ==========
 const loadOverviewData = async () => {
   try {
     const cycleEnum = cycleMap[cycleFilter.value];
@@ -146,21 +162,12 @@ const loadOverviewData = async () => {
       totalCount: 12,
       avgScore: 89.50,
       topRankClass: '高一(1)班',
-      assessTypeCount: {
-        class_clean: 4,
-        morning_exercise: 3,
-        civil_class: 3,
-        blackboard: 2,
-      },
-      statusCount: {
-        un_publish: 2,
-        published: 10,
-      },
+      assessTypeCount: {class_clean: 4, morning_exercise: 3, civil_class: 3, blackboard: 2},
+      statusCount: {un_publish: 2, published: 10},
     };
   }
 };
 
-// ========== 加载多维度得分数据（随周期变化） ==========
 const loadDimensionData = async () => {
   try {
     const cycleEnum = cycleMap[cycleFilter.value];
@@ -175,7 +182,7 @@ const loadDimensionData = async () => {
         morningExerciseScore: 92,
         civilClassScore: 98,
         blackboardScore: 90,
-        totalScore: 93.75,
+        totalScore: 93.75
       },
       {
         className: '高一(2)班',
@@ -183,7 +190,7 @@ const loadDimensionData = async () => {
         morningExerciseScore: 85,
         civilClassScore: 90,
         blackboardScore: 87,
-        totalScore: 87.5,
+        totalScore: 87.5
       },
       {
         className: '高二(1)班',
@@ -191,20 +198,18 @@ const loadDimensionData = async () => {
         morningExerciseScore: 94,
         civilClassScore: 91,
         blackboardScore: 93,
-        totalScore: 92.5,
+        totalScore: 92.5
       },
     ];
   }
 };
 
-// ========== 周期变化（同时刷新概览和多维度） ==========
 const onCycleChange = async () => {
   loading.value = true;
   await Promise.all([loadOverviewData(), loadDimensionData()]);
   loading.value = false;
 };
 
-// ========== 趋势接口（完全保持原逻辑） ==========
 const loadTrendData = async () => {
   try {
     const params = {};
@@ -237,7 +242,6 @@ const handleDateRangeChange = async () => {
   }
 };
 
-// ========== 初始化加载 ==========
 const initData = async () => {
   loading.value = true;
   await Promise.all([loadOverviewData(), loadDimensionData(), loadTrendData()]);
@@ -262,17 +266,12 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 雷达图：班级多维度考评得分（周期单选框放在此容器右上角） -->
+    <!-- 雷达图 -->
     <div class="chart-wrapper" style="flex: 1 !important; position: relative;">
-      <!-- 周期单选框 - 置于雷达图右上角（参考代码样式） -->
       <div class="cycle-radio">
         <el-radio-group v-model="cycleFilter" @change="onCycleChange">
-          <el-radio-button
-            v-for="opt in cycleOptions"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
+          <el-radio-button v-for="opt in cycleOptions" :key="opt.value" :label="opt.label"
+                           :value="opt.value"/>
         </el-radio-group>
       </div>
       <Radar
@@ -283,7 +282,7 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 折线图：班级考评周期趋势（完全保持原逻辑） -->
+    <!-- 折线图 -->
     <div class="chart-wrapper line-chart-container"
          style="flex: 1.5 !important; position: relative;">
       <div class="date-range-wrapper">
@@ -343,7 +342,6 @@ onMounted(() => {
     margin-left: 12px;
     position: relative;
 
-    // 周期单选框：放在雷达图容器右上角
     .cycle-radio {
       position: absolute;
       top: 8px;
@@ -352,7 +350,6 @@ onMounted(() => {
     }
   }
 
-  /* 折线图容器中的时间选择器 */
   .line-chart-container {
     position: relative;
   }
@@ -364,7 +361,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的时间选择器样式 */
   :deep(.el-date-editor) {
     --el-date-editor-width: 240px;
 

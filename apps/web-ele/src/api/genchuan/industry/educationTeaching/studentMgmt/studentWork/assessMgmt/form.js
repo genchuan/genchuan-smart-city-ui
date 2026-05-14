@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择考评类型',
+        clearable: true,
         options: [
           { label: '教室卫生', value: '教室卫生' },
           { label: '早操', value: '早操' },
@@ -29,6 +30,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '未发布', value: '未发布' },
           { label: '已发布', value: '已发布' },

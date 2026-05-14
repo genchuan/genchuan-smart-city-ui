@@ -1,5 +1,5 @@
 <script setup>
-import {computed, reactive, ref, watch, nextTick} from 'vue';
+import {computed, reactive, ref, watch, nextTick, onMounted, onUnmounted} from 'vue';
 import {confirm, useVbenDrawer} from '@vben/common-ui';
 import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
@@ -25,16 +25,10 @@ import {
   useReplyFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/homeSchool/communicateMgmt/form.js';
 
-// 辅助函数：状态标签类型
 const getStatusType = (status) => {
-  const map = {
-    '未发布': 'warning',
-    '已发布': 'success',
-  };
+  const map = {'未发布': 'warning', '已发布': 'success'};
   return map[status] || 'info';
 };
-
-// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -47,8 +41,6 @@ const formatTimestamp = (timestamp) => {
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
-
-// 提取日期部分（用于筛选）
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(parseInt(timestamp));
@@ -65,31 +57,36 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -98,6 +95,8 @@ function getFieldLabel(field) {
     creator: '创建人',
     createTime: '创建时间',
     title: '消息标题',
+    msgType: '消息类型',
+    className: '班级',
   };
   return map[field] || field;
 }
@@ -107,17 +106,16 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// ---------- 抽屉组件 ----------
+// ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
-
 const [ReplyDrawer, replyDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => replyDrawerApi.close(),
+  onCancel: () => replyDrawerApi.close()
 });
 
 const dataObj = reactive({
@@ -142,64 +140,31 @@ function handleRowCheckboxChange({records}) {
 const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
-const publishIds = ref([]);      // 待发布的ID列表
-const replyId = ref(null);       // 待回复的ID
+const publishIds = ref([]);
+const replyId = ref(null);
 
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-
-    const res = await getCommunicateMgmtPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          case 'title':
-            itemValue = item.title;
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getCommunicateMgmtPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取消息列表失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -208,47 +173,38 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportCommunicateMgmt(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportCommunicateMgmt(searchParams.value);
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
-// 批量发布
 async function handleBatchPublish() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个消息');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个消息');
   const unpublishedRows = checkedRows.value.filter(row => row.status === '未发布');
-  if (unpublishedRows.length === 0) {
-    ElMessage.warning('请选择状态为【未发布】的消息进行发布');
-    return;
-  }
+  if (unpublishedRows.length === 0) return ElMessage.warning('请选择状态为【未发布】的消息进行发布');
   try {
     await ElMessageBox.confirm(`确认发布选中的 ${unpublishedRows.length} 条消息？发布后状态将变为“已发布”。`, '批量发布确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '发布中...'});
     try {
@@ -267,24 +223,17 @@ async function handleBatchPublish() {
   }
 }
 
-// 批量反馈（家长反馈，实际业务中可能需要单独界面，这里简化）
 async function handleBatchFeedback() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个消息');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个消息');
   const publishedRows = checkedRows.value.filter(row => row.status === '已发布');
-  if (publishedRows.length === 0) {
-    ElMessage.warning('请选择状态为【已发布】的消息进行反馈');
-    return;
-  }
-  // 模拟家长反馈内容（实际应弹窗收集）
+  if (publishedRows.length === 0) return ElMessage.warning('请选择状态为【已发布】的消息进行反馈');
   try {
-    await ElMessageBox.prompt('请输入家长反馈内容', '家长反馈', {
+    const {value} = await ElMessageBox.prompt('请输入家长反馈内容', '家长反馈', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       inputType: 'textarea',
-    }).then(async ({value}) => {
+    });
+    if (value !== null) {
       const loading = ElLoading.service({text: '提交反馈...'});
       try {
         const ids = publishedRows.map(row => row.id);
@@ -302,37 +251,30 @@ async function handleBatchFeedback() {
       } finally {
         loading.close();
       }
-    }).catch(() => {
-    });
+    }
   } catch {
   }
 }
 
-// 新增消息
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
-  publishDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  publishDrawerApi.open();
 }
 
-// 编辑消息
 function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  publishDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  publishDrawerApi.open();
 }
 
-// 单行发布（仅改变状态）
 async function handlePublish(row) {
-  if (row.status !== '未发布') {
-    ElMessage.warning('只有未发布的消息可以发布');
-    return;
-  }
+  if (row.status !== '未发布') return ElMessage.warning('只有未发布的消息可以发布');
   try {
     await ElMessageBox.confirm(`确认发布消息"${row.title}"？发布后状态将变为“已发布”。`, '发布确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '发布中...'});
     try {
@@ -350,18 +292,14 @@ async function handlePublish(row) {
   }
 }
 
-// 单行回复（老师回复）
 async function handleReply(row) {
-  if (row.status !== '已发布') {
-    ElMessage.warning('只有已发布的消息可以回复');
-    return;
-  }
+  if (row.status !== '已发布') return ElMessage.warning('只有已发布的消息可以回复');
   replyId.value = row.id;
   replyFormApi.resetForm();
   replyDrawerApi.open();
 }
 
-// 新增/编辑表单（共用）
+// 新增/编辑表单
 const [PublishForm, publishFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
@@ -369,11 +307,8 @@ const [PublishForm, publishFormApi] = useVbenForm({
     const loading = ElLoading.service({text: isEditMode.value ? '保存中...' : '新增中...'});
     try {
       let res;
-      if (isEditMode.value) {
-        res = await updateCommunicateMgmt({...values, id: currentEditId.value});
-      } else {
-        res = await createCommunicateMgmt(values);
-      }
+      if (isEditMode.value) res = await updateCommunicateMgmt({...values, id: currentEditId.value});
+      else res = await createCommunicateMgmt(values);
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '编辑成功' : '新增成功');
         publishDrawerApi.close();
@@ -391,16 +326,13 @@ const [PublishForm, publishFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 修复的核心：在抽屉打开时重置表单并加载编辑数据
 const [PublishDrawer, publishDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => publishDrawerApi.close(),
   async onOpenChange(isOpen) {
     if (isOpen) {
-      // 每次打开前先重置表单（清空值 + 清除校验错误）
       await publishFormApi.resetForm();
-      // 如果是编辑模式，则填充数据
       if (isEditMode.value && currentEditId.value) {
         try {
           const detail = await getCommunicateMgmtDetail({id: currentEditId.value});
@@ -413,10 +345,9 @@ const [PublishDrawer, publishDrawerApi] = useVbenDrawer({
         } catch (error) {
           console.error('加载详情失败', error);
           ElMessage.error('加载详情失败，请检查网络或联系管理员');
-          publishDrawerApi.close(); // 加载失败则关闭抽屉
+          publishDrawerApi.close();
         }
       } else {
-        // 新增模式：设置默认状态为“未发布”
         await publishFormApi.setValues({status: '未发布'});
       }
     }
@@ -452,7 +383,6 @@ const [ReplyForm, replyFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 详情抽屉
 const communicateDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -466,7 +396,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -494,13 +424,28 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 const showChart = ref(true);
 const toggleChart = () => {
   showChart.value = !showChart.value;
 };
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'msgType') {
+    handleFilterTagClick('msgType', value);
+  } else if (type === 'className') {
+    handleFilterTagClick('className', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('communicate-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('communicate-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -539,16 +484,14 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
-      <!-- 钻取列 -->
       <template #title="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
-          {{ row.title }}
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{
+            row.title
+          }}
         </el-text>
       </template>
       <template #status="{ row }">
@@ -559,18 +502,14 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.creator || '-' }}
+                 style="cursor: pointer;">{{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">
-          {{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
-
-      <!-- 时间格式化 -->
       <template #sendTime="{ row }">
         <el-text>{{ formatTimestamp(row.sendTime) }}</el-text>
       </template>
@@ -581,7 +520,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>

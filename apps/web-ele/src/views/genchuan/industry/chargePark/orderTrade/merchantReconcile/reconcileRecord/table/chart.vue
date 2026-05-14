@@ -1,28 +1,12 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
-import { ElTag } from 'element-plus';
 
-import { getReconcileRecordChart, getReconcileRecordListPage } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
-import { useVbenDrawer } from '@vben/common-ui';
+import { getReconcileRecordChart } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
 import Card from '#/components/stats/card.vue';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { formatTimestamp } from '#/utils';
 
-const matchResultMap = {
-  matched: { label: '已匹配', type: 'success' },
-  unmatched: { label: '未匹配', type: 'danger' },
-  partial: { label: '部分匹配', type: 'warning' },
-};
-
-const getMatchResultLabel = (matchResult) => {
-  return matchResultMap[matchResult]?.label || matchResult;
-};
-
-const getMatchResultType = (matchResult) => {
-  return matchResultMap[matchResult]?.type || 'default';
-};
+const emit = defineEmits(['filter-change']);
 
 const state = reactive({
   cardList: [
@@ -32,113 +16,18 @@ const state = reactive({
   trendData: [],
 });
 
-const selectedMatchResult = ref(null);
-
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  width: '75%',
-  title: computed(() => {
-    let title = '对账记录列表';
-    if (selectedMatchResult.value) {
-      title = `${getMatchResultLabel(selectedMatchResult.value)} ${title}`;
-    }
-    return title;
-  }),
-  class: 'genchuan-detail-drawer',
-  onCancel() {
-    drawerApi.close();
-  },
-});
-
-const drawerDataObj = reactive({
-  total: 0,
-  list: [],
-  loading: false,
-});
-
-const getDrawerTableData = async (pageObj) => {
-  const page = pageObj.page;
-  const params = {
-    pageNo: page.currentPage,
-    pageSize: page.pageSize,
-  };
-
-  if (selectedMatchResult.value) {
-    params.matchResult = selectedMatchResult.value;
-  }
-
-  try {
-    drawerDataObj.loading = true;
-    const res = await getReconcileRecordListPage(params);
-    drawerDataObj.total = res.total;
-    drawerDataObj.list = res.list.map((v) => {
-      return {
-        ...v,
-        handleTime: formatTimestamp(v.handleTime),
-        createTime: formatTimestamp(v.createTime),
-      };
-    });
-    return drawerDataObj;
-  } catch (error) {
-    console.error('获取对账记录列表失败:', error);
-    return drawerDataObj;
-  } finally {
-    drawerDataObj.loading = false;
-  }
-};
-
 const handleCardClick = (matchResult) => {
-  selectedMatchResult.value = matchResult;
-  drawerGridApi.query();
-  drawerApi.open();
+  emit('filter-change', { matchResult: matchResult || null });
 };
 
 const handleLineChartClick = (params) => {
-  console.log('折线图点击事件触发:', params);
   if (params && params.name) {
-    selectedMatchResult.value = null;
-    drawerGridApi.query();
-    drawerApi.open();
+    emit('filter-change', {
+      createTimeStart: params.name + ' 00:00:00',
+      createTimeEnd: params.name + ' 23:59:59',
+    });
   }
 };
-
-const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: [
-      { type: 'seq', width: 60 },
-      { field: 'billNo', title: '对账单号', width: 180 },
-      { field: 'orderNo', title: '订单编号', width: 180 },
-      { field: 'sysAmount', title: '系统金额', width: 120 },
-      { field: 'merchantAmount', title: '商户上报金额', width: 140 },
-      { field: 'diffAmount', title: '差异金额', width: 120 },
-      { field: 'matchResult', title: '对账结果', width: 120,
-        slots: { default: 'matchResult' }
-      },
-      { field: 'diffReason', title: '异常原因', width: 200 },
-      { field: 'handleTime', title: '处理时间', width: 180 },
-      { field: 'createTime', title: '创建时间', width: 180 },
-    ],
-    keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getDrawerTableData({ page }),
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: drawerDataObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-    },
-    showOverflow: true,
-  },
-  showSearchForm: false,
-});
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
@@ -271,16 +160,6 @@ onMounted(() => {
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
-
-  <Drawer>
-    <DrawerGrid>
-      <template #matchResult="{ row }">
-        <el-tag :type="getMatchResultType(row.matchResult)">
-          {{ getMatchResultLabel(row.matchResult) }}
-        </el-tag>
-      </template>
-    </DrawerGrid>
-  </Drawer>
 </template>
 
 <style scoped lang="scss"> 

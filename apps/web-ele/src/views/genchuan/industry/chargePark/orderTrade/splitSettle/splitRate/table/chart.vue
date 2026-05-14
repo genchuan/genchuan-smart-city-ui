@@ -1,14 +1,12 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
-import { ElTag } from 'element-plus';
 
-import { getSplitRateChart, getSplitRatePage } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
-import { useVbenDrawer } from '@vben/common-ui';
+import { getSplitRateChart } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
 import Card from '#/components/stats/card.vue';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { formatTimestamp } from '#/utils';
+
+const emit = defineEmits(['filter-change']);
 
 const statusMap = {
   pending: { label: '未生效', type: 'warning' },
@@ -16,25 +14,9 @@ const statusMap = {
   disabled: { label: '已禁用', type: 'danger' },
 };
 
-const getStatusLabel = (status) => {
-  return statusMap[status]?.label || status;
-};
-
-const getStatusType = (status) => {
-  return statusMap[status]?.type || 'default';
-};
-
 const splitModeMap = {
   fixed: { label: '固定比例', type: 'primary' },
   ladder: { label: '阶梯比例', type: 'success' },
-};
-
-const getSplitModeLabel = (splitMode) => {
-  return splitModeMap[splitMode]?.label || splitMode;
-};
-
-const getSplitModeType = (splitMode) => {
-  return splitModeMap[splitMode]?.type || 'default';
 };
 
 const state = reactive({
@@ -46,132 +28,36 @@ const state = reactive({
   splitModeData: [],
 });
 
-const selectedSplitMode = ref(null);
-const selectedStatus = ref(null);
-
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  width: '75%',
-  title: computed(() => {
-    let title = '分账规则列表';
-    if (selectedSplitMode.value) {
-      title = `${getSplitModeLabel(selectedSplitMode.value)} ${title}`;
-    }
-    if (selectedStatus.value) {
-      title = `${statusMap[selectedStatus.value]?.label || selectedStatus.value} ${title}`;
-    }
-    return title;
-  }),
-  class: 'genchuan-detail-drawer',
-  onCancel() {
-    drawerApi.close();
-  },
-});
-
-const drawerDataObj = reactive({
-  total: 0,
-  list: [],
-  loading: false,
-});
-
-const getDrawerTableData = async (pageObj) => {
-  const page = pageObj.page;
-  const params = {
-    pageNo: page.currentPage,
-    pageSize: page.pageSize,
-  };
-
-  if (selectedSplitMode.value) {
-    params.splitMode = selectedSplitMode.value;
-  }
-
-  if (selectedStatus.value) {
-    params.status = selectedStatus.value;
-  }
-
-  try {
-    drawerDataObj.loading = true;
-    const res = await getSplitRatePage(params);
-    drawerDataObj.total = res.total;
-    drawerDataObj.list = res.list.map((v) => {
-      return {
-        ...v,
-        auditTime: formatTimestamp(v.auditTime),
-        createTime: formatTimestamp(v.createTime),
-        updateTime: formatTimestamp(v.updateTime),
-      };
-    });
-    return drawerDataObj;
-  } catch (error) {
-    console.error('获取分账规则列表失败:', error);
-    return drawerDataObj;
-  } finally {
-    drawerDataObj.loading = false;
-  }
-};
-
+// 点击卡片事件
 const handleCardClick = (item) => {
   if (item.splitMode) {
-    selectedSplitMode.value = item.splitMode;
-    selectedStatus.value = null;
+    emit('filter-change', {
+      splitMode: item.splitMode,
+      status: null,
+    });
   } else if (item.status) {
-    selectedStatus.value = item.status;
-    selectedSplitMode.value = null;
+    emit('filter-change', {
+      status: item.status,
+      splitMode: null,
+    });
+  } else {
+    emit('filter-change', {
+      splitMode: null,
+      status: null,
+    });
   }
-  drawerGridApi.query();
-  drawerApi.open();
 };
 
+// 柱状图点击事件处理
 const handleBarChartClick = (params) => {
-  console.log('柱状图点击事件触发:', params);
   if (params && params.name) {
     const splitModeKey = params.name === '固定比例' ? 'fixed' : 'ladder';
-    selectedSplitMode.value = splitModeKey;
-    selectedStatus.value = null;
-    drawerGridApi.query();
-    drawerApi.open();
+    emit('filter-change', {
+      splitMode: splitModeKey,
+      status: null,
+    });
   }
 };
-
-const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: [
-      { type: 'seq', width: 60 },
-      { field: 'partnerId', title: '合作方ID', width: 120 },
-      { field: 'partnerName', title: '合作方名称', width: 160 },
-      { field: 'splitMode', title: '分账模式', width: 120,
-        slots: { default: 'splitMode' }
-      },
-      { field: 'rateValue', title: '比例值(%)', width: 100 },
-      { field: 'status', title: '状态', width: 100,
-        slots: { default: 'status' }
-      },
-      { field: 'auditorName', title: '审核人', width: 100 },
-      { field: 'auditTime', title: '审核时间', width: 180 },
-      { field: 'creator', title: '创建者', width: 100 },
-      { field: 'createTime', title: '创建时间', width: 180 },
-    ],
-    keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getDrawerTableData({ page }),
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: drawerDataObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-    },
-    showOverflow: true,
-  },
-  showSearchForm: false,
-});
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
@@ -343,19 +229,4 @@ onMounted(() => {
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
-
-  <Drawer>
-    <DrawerGrid>
-      <template #splitMode="{ row }">
-        <el-tag :type="getSplitModeType(row.splitMode)">
-          {{ getSplitModeLabel(row.splitMode) }}
-        </el-tag>
-      </template>
-      <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
-          {{ getStatusLabel(row.status) }}
-        </el-tag>
-      </template>
-    </DrawerGrid>
-  </Drawer>
 </template>

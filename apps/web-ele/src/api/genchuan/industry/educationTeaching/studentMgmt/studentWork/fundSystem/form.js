@@ -14,12 +14,17 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择年级',
+        clearable: true,
         options: [
+          { label: '2020级', value: '2020级' },
+          { label: '2021级', value: '2021级' },
           { label: '2022级', value: '2022级' },
           { label: '2023级', value: '2023级' },
           { label: '2024级', value: '2024级' },
           { label: '2025级', value: '2025级' },
           { label: '2026级', value: '2026级' },
+          { label: '2027级', value: '2027级' },
+          { label: '2028级', value: '2028级' },
         ],
       },
       labelWidth: '100',
@@ -30,6 +35,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择资助类型',
+        clearable: true,
         options: [
           { label: '助学金', value: '助学金' },
           { label: '勤工俭学', value: '勤工俭学' },
@@ -44,6 +50,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '待审核', value: '待审核' },
           { label: '已汇总', value: '已汇总' },

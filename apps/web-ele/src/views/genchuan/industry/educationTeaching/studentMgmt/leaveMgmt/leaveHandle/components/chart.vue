@@ -1,6 +1,6 @@
 <script setup>
-import {ref, computed, onMounted} from 'vue';
-import {ElSelect, ElOption, ElDatePicker} from 'element-plus';
+import { ref, computed, onMounted } from 'vue';
+import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
 import {
@@ -9,13 +9,11 @@ import {
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/leaveMgmt/leaveHandle/data.js';
 
 const loading = ref(true);
-const chartData = ref({});          // 卡片数据
-const indexData = ref({});          // 折线图数据
+const chartData = ref({});
+const indexData = ref({});
 
-// ========== 时间范围选择器 ==========
 const timeRange = ref([]);
 
-// 获取默认时间范围（最近30天，结束时间为当天）
 const getDefaultTimeRange = () => {
   const end = new Date();
   const start = new Date();
@@ -23,8 +21,6 @@ const getDefaultTimeRange = () => {
   return [start, end];
 };
 
-// 格式化单个日期时间为后端要求的格式（带 T 分隔，如 "2023-01-01T00:00:00"）
-// isEnd: 是否为结束时间（结束时间用 23:59:59，起始用 00:00:00）
 const formatDateTime = (date, isEnd = false) => {
   if (!date) return '';
   const d = new Date(date);
@@ -35,7 +31,6 @@ const formatDateTime = (date, isEnd = false) => {
   return `${year}-${month}-${day}T${time}`;
 };
 
-// 生成 timeRange 字符串（格式："起始时间,结束时间"）
 const getTimeRangeParam = () => {
   if (timeRange.value && timeRange.value.length === 2) {
     const startStr = formatDateTime(timeRange.value[0], false);
@@ -46,12 +41,10 @@ const getTimeRangeParam = () => {
   return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
 };
 
-// 日期范围变化时重新加载数据
 const handleDateRangeChange = () => {
   loadData();
 };
 
-// ========== 卡片数据 ==========
 const cardList = computed(() => {
   const total = chartData.value.totalGraduate || 0;
   const waitHandle = chartData.value.waitHandle || 0;
@@ -63,7 +56,6 @@ const cardList = computed(() => {
   ];
 });
 
-// ========== 折线图数据（每日离校人数趋势） ==========
 const lineData = computed(() => {
   const trend = indexData.value.dailyLeaveCount || [];
   return {
@@ -72,18 +64,34 @@ const lineData = computed(() => {
   };
 });
 
-// ========== 事件发射 ==========
-const emit = defineEmits(['cardSelect', 'lineSelect']);
-
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'waitHandle':
+      filterType = 'status';
+      filterValue = '待办理';
+      break;
+    case 'total':
+    case 'rate':
+    default:
+      return;
+  }
+  window.dispatchEvent(new CustomEvent('leave-chart-filter', {
+    detail: {type: filterType, value: filterValue}
+  }));
 };
 
 const handleLineClick = (params) => {
-  emit('lineSelect', {field: 'date', value: params.xValue});
+  const date = params.xValue || params.name;
+  if (date) {
+    window.dispatchEvent(new CustomEvent('leave-chart-filter', {
+      detail: {type: 'createTime', value: [date, date]}
+    }));
+  }
 };
 
-// ========== 加载数据 ==========
 const loadData = async () => {
   loading.value = true;
   try {
@@ -92,9 +100,8 @@ const loadData = async () => {
       getLeaveHandleChart({timeRange: timeRangeParam}),
       getLeaveHandleIndex({timeRange: timeRangeParam}),
     ]);
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
-    } else {
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else {
       chartData.value = {
         totalGraduate: 256,
         waitConfirm: 12,
@@ -103,9 +110,8 @@ const loadData = async () => {
         finishRate: 85.94,
       };
     }
-    if (indexRes.status === 'fulfilled') {
-      indexData.value = indexRes.value;
-    } else {
+    if (indexRes.status === 'fulfilled') indexData.value = indexRes.value;
+    else {
       indexData.value = {
         checkoutRate: 92.58,
         parentConfirmRate: 95.31,
@@ -146,9 +152,7 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 折线图容器（含日期选择器） -->
     <div class="line-chart-container" style="flex: 1 !important; position: relative;">
-      <!-- 日期范围选择器（紧凑样式，位于右上角） -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="timeRange"
@@ -196,7 +200,6 @@ onMounted(() => {
     margin: 0;
   }
 
-  /* 折线图容器特殊样式，用于绝对定位日期选择器 */
   .line-chart-container {
     position: relative;
     flex: 1;
@@ -211,7 +214,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的时间选择器样式 */
   :deep(.el-date-editor) {
     --el-date-editor-width: 240px;
 

@@ -1,9 +1,9 @@
-<!-- 外部 index.vue - 分区能耗监测页面入口 -->
+<!-- ==================== 外部 index.vue ==================== -->
 <script setup>
 import { ref } from 'vue';
-import ReserveTable from './table/index.vue';
+import EnergyAlarmTable from './table/index.vue';
 import '#/components/page/index.scss';
-import ReserveChart from './table/chart.vue';
+import EnergyAlarmChart from './table/chart.vue';
 
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
@@ -14,15 +14,15 @@ const changeArrowStatus = () => {
 
 const tabArray = ref([
   {
-    label: '分区能耗监测',
-    components: ReserveTable,
+    label: '异常预警',
+    components: EnergyAlarmTable,
     showSecondary: true,
     secondShow: false,
     arrowShow: true,
   },
 ]);
 
-const activeName = ref('分区能耗监测');
+const activeName = ref('异常预警');
 const secondShow = ref(false);
 
 const tabChange = () => {};
@@ -34,13 +34,13 @@ const arrowChange = () => {
 };
 
 const handleChartRefresh = (filters) => {
-  window.dispatchEvent(new CustomEvent('area-chart-refresh', { detail: filters }));
+  window.dispatchEvent(new CustomEvent('alarm-chart-refresh', { detail: filters }));
 };
 </script>
 
 <template>
   <div class="common-index">
-    <ReserveChart v-if="tabArray[0].arrowShow" @refresh="handleChartRefresh" />
+    <EnergyAlarmChart v-if="tabArray[0].arrowShow" @refresh="handleChartRefresh" />
     <div class="icon-change">
       <el-icon class="tabel-tab-icon" v-if="secondShow" @click="changeArrowStatus"><ArrowDown /></el-icon>
       <el-icon class="tabel-tab-icon" v-if="!secondShow" @click="changeArrowStatus"><ArrowUp /></el-icon>

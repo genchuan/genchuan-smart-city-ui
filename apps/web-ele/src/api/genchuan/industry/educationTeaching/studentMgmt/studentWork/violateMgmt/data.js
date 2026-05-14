@@ -16,20 +16,19 @@ const punishTypeMap = {
   '警告': 'warn',
   '记过': 'demerit',
   '留校察看': 'probation',
-  '开除': 'expel'
+  '开除': 'expulsion'
 };
 const punishTypeReverse = {
   'warn': '警告',
   'demerit': '记过',
   'probation': '留校察看',
-  'expel': '开除'
+  'expulsion': '开除'
 };
 
 const statusReverse = {
   'pending': '待审批',
   'executed': '已执行',
   'warned': '已预警',
-  'warn': '已预警'
 };
 const statusMap = {
   '待审批': 'pending',

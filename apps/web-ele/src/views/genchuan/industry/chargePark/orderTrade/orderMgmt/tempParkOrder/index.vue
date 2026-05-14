@@ -1,8 +1,8 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive } from 'vue';
 
 import Table from './table/index.vue';
-import Chart from './table/chart.vue'
+import Chart from './table/chart.vue';
 import '#/components/page/index.scss';
 
 const changeArrowStatus = () => {
@@ -16,6 +16,36 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
+
+const filterParams = reactive({
+  createOrderTimeStart: null,
+  createOrderTimeEnd: null,
+  stationName: null,
+});
+
+const handleFilterChange = (params) => {
+  filterParams.createOrderTimeStart = null;
+  filterParams.createOrderTimeEnd = null;
+  filterParams.stationName = null;
+  Object.assign(filterParams, params);
+};
+
+const hasActiveFilters = () => {
+  return filterParams.createOrderTimeStart || filterParams.stationName;
+};
+
+const clearDateFilter = () => {
+  filterParams.createOrderTimeStart = null;
+  filterParams.createOrderTimeEnd = null;
+  filterParams.stationName = null;
+};
+
+const clearStationFilter = () => {
+  filterParams.createOrderTimeStart = null;
+  filterParams.createOrderTimeEnd = null;
+  filterParams.stationName = null;
+};
+
 const tabArray = ref([
   {
     label: '临时停车订单',
@@ -24,6 +54,7 @@ const tabArray = ref([
     secondShow: false,
     arrowShow: true,
     arrowState: false,
+    filterParams,
   },
 ]);
 const activeName = ref('临时停车订单');
@@ -31,7 +62,23 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <Chart />
+    <Chart @filter-change="handleFilterChange" />
+    <div v-if="hasActiveFilters" class="filter-tags">
+      <el-tag
+        v-if="filterParams.stationName"
+        closable
+        @close="clearStationFilter"
+      >
+        场站: {{ filterParams.stationName }}
+      </el-tag>
+      <el-tag
+        v-else-if="filterParams.createOrderTimeStart"
+        closable
+        @close="clearDateFilter"
+      >
+        日期: {{ filterParams.createOrderTimeStart.split(' ')[0] }}
+      </el-tag>
+    </div>
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -69,6 +116,7 @@ const secondShow = ref(false);
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
+          :filter-params="item.filterParams"
           @arrow-change="arrowChange"
         />
       </el-tab-pane>

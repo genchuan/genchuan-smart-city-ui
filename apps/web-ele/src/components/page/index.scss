@@ -14,7 +14,7 @@
   }
   .icon-first {
     margin-right: 5px;
-  } 
+  }
   .table-first {
     display: flex;
     align-items: center;
@@ -422,5 +422,138 @@
         }
       }
     }
+  }
+}
+
+// 页面宽度不够时，工具栏换行，避免按钮重叠
+.tools-table-new {
+  height: 84vh;
+  overflow-y: auto;
+
+  .vxe-buttons--wrapper {
+    padding-top: 5px;
+
+    .el-tabs__header {
+      position: static;
+    }
+  }
+
+  .table-first {
+    display: flex;
+    align-items: center;
+
+    .tabel-tab-icon {
+      margin-right: 5px;
+      cursor: pointer;
+    }
+  }
+
+  .vxe-grid--toolbar-wrapper {
+    margin-top: 30px;
+
+    .vxe-tools--wrapper {
+      position: absolute;
+      top: -35px;
+      right: 77px;
+    }
+
+    .vxe-tools--operate {
+      position: absolute;
+      top: -33px;
+      right: 0;
+    }
+  }
+
+  .vxe-pager .vxe-pager--sizes {
+    margin-right: 10px;
+  }
+
+  .vxe-grid--bottom-wrapper {
+    top: 18px;
+    z-index: 1;
+    display: none;
+    width: 100%;
+    height: auto;
+    min-height: 40px;
+
+    .common-total {
+      position: relative;
+      display: inline;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .common-total-bottom {
+      margin-top: 10px;
+      margin-left: 18px;
+      font-size: 14px;
+    }
+
+    .bottom-title {
+      font-size: 14px;
+      cursor: pointer;
+    }
+  }
+
+  .vxe-pager--wrapper {
+    justify-content: center;
+  }
+
+  .vxe-grid--pager-wrapper {
+    .vxe-pager {
+      position: relative;
+      height: 65px;
+      margin-top: 0px;
+    }
+  }
+
+  .common-tool-bar-config {
+    position: relative;
+
+    .vxe-tools--operate {
+      .vxe-button:nth-child(2) {
+        display: none;
+      }
+    }
+  }
+
+  .vxe-grid--table-wrapper {
+    max-height: 71vh;
+    overflow: auto;
+  }
+}
+
+@media (max-width: 1640px) {
+  .tools-table-new {
+    .vxe-grid--toolbar-wrapper {
+      display: block !important;
+
+      .vxe-tools--wrapper,
+      .vxe-tools--operate {
+        position: static !important;
+        display: flex !important;        // 改为 flex，让子元素可以使用 margin-left: auto
+        width: 100% !important;
+        margin: 8px 0 0 0 !important;
+        // 移除 text-align，因为 flex 布局下无效
+      }
+
+      .common-toolbar-tools {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        gap: 8px;
+        overflow-x: auto;
+        margin-left: auto !important;    // 关键：将按钮组推到右侧
+        padding-bottom: 4px;
+        // 不需要 justify-content，用 margin-left 实现右对齐
+      }
+    }
+  }
+
+  .common-toolbar-tools::-webkit-scrollbar {
+    height: 4px;
+  }
+  .common-toolbar-tools::-webkit-scrollbar-thumb {
+    background: #dcdfe6;
+    border-radius: 2px;
   }
 }

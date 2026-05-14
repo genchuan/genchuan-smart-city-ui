@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch, onMounted } from 'vue';
+import { computed, reactive, ref, watch, onMounted, onUnmounted } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
@@ -31,7 +31,6 @@ import {
   useEditFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/studentWork/dutyMgmt/form.js';
 
-// 辅助函数：将日期范围字符串数组 ['start', 'end'] 展开为每一天的日期字符串数组
 function getDateRangeArray(dateRange) {
   if (!Array.isArray(dateRange) || dateRange.length !== 2) return [];
   const [start, end] = dateRange;
@@ -95,38 +94,49 @@ const getDateFromTimestamp = (timestamp) => {
 const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
-// 标签筛选
+// ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
-  const map = {dutyUser: '值班人', status: '状态', creator: '创建人', createTime: '创建时间'};
+  const map = {
+    dutyUser: '值班人',
+    status: '状态',
+    creator: '创建人',
+    createTime: '创建时间',
+    dutyDate: '值班日期'
+  };
   return map[field] || field;
 }
 
@@ -187,50 +197,28 @@ const getTableData = async ({ page }) => {
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-
     if (params.dutyDate && Array.isArray(params.dutyDate) && params.dutyDate.length === 2) {
       params.dutyDateStart = params.dutyDate[0];
       params.dutyDateEnd = params.dutyDate[1];
       delete params.dutyDate;
     }
-
-    const res = await getDutyMgmtPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        if (field === 'dutyUser') itemValue = item.dutyUser;
-        else if (field === 'status') itemValue = item.status;
-        else if (field === 'creator') itemValue = item.creator;
-        else if (field === 'createTime')
-          itemValue = item.createTime ? getDateFromTimestamp(item.createTime) : '';
-        else itemValue = item[field];
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getDutyMgmtPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取值班列表失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -239,31 +227,29 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportDutyMgmt(searchParams.value);
-      downloadFileFromBlobPart({fileName: '值班管理列表.xls', source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportDutyMgmt(searchParams.value);
+    downloadFileFromBlobPart({fileName: '值班管理列表.xls', source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
-// 排班表单（直接使用 schema，无需 options）
+// 排班表单
 const [ScheduleForm, scheduleFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
@@ -309,7 +295,7 @@ function handleSchedule() {
   scheduleDrawerApi.open();
 }
 
-// 编辑表单（直接使用 schema）
+// 编辑
 const currentEditRow = ref(null);
 const [EditForm, editFormApi] = useVbenForm({
   collapsed: false,
@@ -356,15 +342,9 @@ function handleEdit(row) {
 const currentShiftRows = ref([]);
 
 function handleBatchShiftApply() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一条值班记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一条值班记录');
   const selectedRows = checkedRows.value.filter(row => row.status === '待打卡');
-  if (selectedRows.length === 0) {
-    ElMessage.warning('请选择状态为【待打卡】的值班记录');
-    return;
-  }
+  if (selectedRows.length === 0) return ElMessage.warning('请选择状态为【待打卡】的值班记录');
   currentShiftRows.value = selectedRows;
   shiftApplyFormApi.resetForm();
   shiftApplyDrawerApi.open();
@@ -403,15 +383,9 @@ const [ShiftApplyForm, shiftApplyFormApi] = useVbenForm({
 const currentVehicleRows = ref([]);
 
 function handleBatchVehicleApply() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一条值班记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一条值班记录');
   const selectedRows = checkedRows.value.filter(row => row.status === '待打卡');
-  if (selectedRows.length === 0) {
-    ElMessage.warning('请选择状态为【待打卡】的值班记录');
-    return;
-  }
+  if (selectedRows.length === 0) return ElMessage.warning('请选择状态为【待打卡】的值班记录');
   currentVehicleRows.value = selectedRows;
   vehicleApplyFormApi.resetForm();
   vehicleApplyDrawerApi.open();
@@ -448,10 +422,7 @@ const [VehicleApplyForm, vehicleApplyFormApi] = useVbenForm({
 
 // 打卡
 async function handleCheckin(row) {
-  if (row.status !== '待打卡') {
-    ElMessage.warning('只有待打卡状态的记录可以打卡');
-    return;
-  }
+  if (row.status !== '待打卡') return ElMessage.warning('只有待打卡状态的记录可以打卡');
   try {
     await ElMessageBox.confirm(`确认打卡（值班人：${row.dutyUser}，日期：${row.dutyDate}）？`, '打卡确认', {
       confirmButtonText: '确认',
@@ -475,15 +446,9 @@ async function handleCheckin(row) {
 }
 
 async function handleBatchCheckin() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一条值班记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一条值班记录');
   const selectedRows = checkedRows.value.filter(row => row.status === '待打卡');
-  if (selectedRows.length === 0) {
-    ElMessage.warning('请选择状态为【待打卡】的值班记录');
-    return;
-  }
+  if (selectedRows.length === 0) return ElMessage.warning('请选择状态为【待打卡】的值班记录');
   try {
     await ElMessageBox.confirm(`确认打卡选中的 ${selectedRows.length} 条值班记录？`, '批量打卡确认', {
       confirmButtonText: '确认',
@@ -514,10 +479,7 @@ const shiftAuditResult = ref('');
 const shiftAuditRemark = ref('');
 
 function handleShiftAudit(row) {
-  if (row.status !== '待调班审批') {
-    ElMessage.warning('只有待调班审批状态的记录可以审批');
-    return;
-  }
+  if (row.status !== '待调班审批') return ElMessage.warning('只有待调班审批状态的记录可以审批');
   currentShiftAuditRow.value = row;
   shiftAuditResult.value = '';
   shiftAuditRemark.value = '';
@@ -525,10 +487,7 @@ function handleShiftAudit(row) {
 }
 
 async function confirmShiftAudit() {
-  if (!shiftAuditResult.value) {
-    ElMessage.warning('请选择审批结果');
-    return;
-  }
+  if (!shiftAuditResult.value) return ElMessage.warning('请选择审批结果');
   const loading = ElLoading.service({text: '审批中...'});
   try {
     const res = await shiftAuditDutyMgmt({
@@ -555,10 +514,7 @@ const vehicleAuditResult = ref('');
 const vehicleAuditRemark = ref('');
 
 function handleVehicleAudit(row) {
-  if (row.status !== '待出车审批') {
-    ElMessage.warning('只有待出车审批状态的记录可以审批');
-    return;
-  }
+  if (row.status !== '待出车审批') return ElMessage.warning('只有待出车审批状态的记录可以审批');
   currentVehicleAuditRow.value = row;
   vehicleAuditResult.value = '';
   vehicleAuditRemark.value = '';
@@ -566,10 +522,7 @@ function handleVehicleAudit(row) {
 }
 
 async function confirmVehicleAudit() {
-  if (!vehicleAuditResult.value) {
-    ElMessage.warning('请选择审批结果');
-    return;
-  }
+  if (!vehicleAuditResult.value) return ElMessage.warning('请选择审批结果');
   const loading = ElLoading.service({text: '审批中...'});
   try {
     const res = await vehicleAuditDutyMgmt({
@@ -639,7 +592,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -669,7 +622,7 @@ watch(activeName, (newVal) => {
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
   else gridApi.setGridOptions?.({columns: gridColumns.value});
-  gridApi.reload();
+  gridApi.query();
 });
 
 const handleSerachShow = () => drawerApi.open();
@@ -680,10 +633,32 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {month} = event.detail;
+  if (month) {
+    // 将月份（如 "2025-01"）转换为该月的日期范围，或者直接作为 dutyDate 前缀筛选
+    // 这里简化处理：将该月第一天到最后一天作为筛选条件
+    const [year, monthNum] = month.split('-');
+    const startDate = `${year}-${monthNum}-01`;
+    const lastDay = new Date(parseInt(year), parseInt(monthNum), 0).getDate();
+    const endDate = `${year}-${monthNum}-${lastDay}`;
+    // 将日期范围存入 tagFilters，注意后端可能需要 start/end 或直接传 date
+    handleFilterTagClick('dutyDate', [startDate, endDate]);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('duty-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('duty-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
-  <div class="park-lot-table-new">
+  <div class="tools-table-new">
     <DutyDetailDrawer ref="dutyDetailDrawerRef" :detail-obj="dataObj.detailObj"
                       @refresh="handleRefresh"/>
     <Drawer title="搜索">
@@ -724,9 +699,7 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
@@ -770,7 +743,7 @@ defineExpose({handleFilterTagClick, clearFilters});
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
+          <IconButton v-if="row.status !== '已完成'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '待打卡'" content="打卡" icon-name="Check"
                       @click="handleCheckin(row)"/>
           <IconButton v-if="row.status === '待调班审批'" content="调班审批" icon-name="Checked"

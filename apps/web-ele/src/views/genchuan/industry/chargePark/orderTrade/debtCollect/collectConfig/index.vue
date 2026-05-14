@@ -1,10 +1,38 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive, computed } from 'vue';
 
 import Chart from './table/chart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
+
+const filterParams = reactive({
+  createTimeStart: null,
+  createTimeEnd: null,
+  collectMethod: null,
+});
+
+const methodMap = {
+  sms: { label: '短信', type: 'primary' },
+  notify: { label: '站内信', type: 'info' },
+  phone: { label: '电话', type: 'warning' },
+};
+
+const hasActiveFilters = computed(() => {
+  return filterParams.createTimeStart || filterParams.collectMethod;
+});
+
+const handleFilterChange = (params) => {
+  filterParams.createTimeStart = params.createTimeStart || null;
+  filterParams.createTimeEnd = params.createTimeEnd || null;
+  filterParams.collectMethod = params.collectMethod || null;
+};
+
+const clearFilter = () => {
+  filterParams.createTimeStart = null;
+  filterParams.createTimeEnd = null;
+  filterParams.collectMethod = null;
+};
 
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
@@ -27,12 +55,31 @@ const tabArray = ref([
     arrowState: false,
   },
 ]);
-const activeName = ref('追缴配置'); 
+const activeName = ref('追缴配置');
 const secondShow = ref(false);
 </script>
+
 <template>
   <div class="common-index">
-    <Chart />
+    <Chart @filter-change="handleFilterChange" />
+    <div v-if="hasActiveFilters" class="filter-tags">
+      <el-tag
+        v-if="filterParams.collectMethod"
+        closable
+        @close="clearFilter"
+        type="primary"
+      >
+        追缴方式: {{ methodMap[filterParams.collectMethod]?.label || filterParams.collectMethod }}
+      </el-tag>
+      <el-tag
+        v-else-if="filterParams.createTimeStart"
+        closable
+        @close="clearFilter"
+        type="info"
+      >
+        日期: {{ filterParams.createTimeStart?.split(' ')[0] }}
+      </el-tag>
+    </div>
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -70,9 +117,19 @@ const secondShow = ref(false);
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
+          :filter-params="filterParams"
           @arrow-change="arrowChange"
         />
       </el-tab-pane>
     </el-tabs>
   </div>
 </template>
+
+<style scoped lang="scss">
+.filter-tags {
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+  height: auto;
+}
+</style>

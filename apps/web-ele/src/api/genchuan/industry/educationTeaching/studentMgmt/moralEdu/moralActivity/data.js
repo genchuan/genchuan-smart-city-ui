@@ -142,30 +142,6 @@ export function getMoralActivityDetail(params) {
     });
 }
 
-export function getStudentOptions(params) {
-  return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
-    console.warn('获取学生列表失败，使用模拟数据', err);
-    return Promise.resolve([
-      { value: 1, label: '张三' },
-      { value: 2, label: '李四' },
-      { value: 3, label: '王五' },
-      { value: 4, label: '赵六' },
-      { value: 5, label: '孙七' },
-    ]);
-  });
-}
-
-export function getDeptOptions(params) {
-  return requestClient.get('/studentmgmt/dept/options', { params }).catch(err => {
-    console.warn('获取部门列表失败，使用模拟数据', err);
-    return Promise.resolve([
-      { id: 1001, name: '学生工作部', value: '学生工作部', label: '学生工作部' },
-      { id: 1002, name: '团委', value: '团委', label: '团委' },
-      { id: 1003, name: '教务处', value: '教务处', label: '教务处' },
-    ]);
-  });
-}
-
 // ==================== 图表接口 ====================
 export function getMoralActivityChart(params) {
   return requestClient.get('/studentmgmt/moral-activity/chart', { params }).catch(err => {

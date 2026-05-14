@@ -11,11 +11,11 @@ const checkInStatusReverse = {
   'checked_in': '已打卡'
 };
 
-// 值班状态映射（补充 pending_car）
+// 值班状态映射
 const dutyStatusMap = {
   '待打卡': 'pending_checkin',
   '待调班审批': 'pending_transfer',
-  '待出车审批': 'pending_car',      // 修正：后端使用 pending_car
+  '待出车审批': 'pending_car',
   '已完成': 'completed'
 };
 const dutyStatusReverse = {
@@ -25,26 +25,28 @@ const dutyStatusReverse = {
   'completed': '已完成'
 };
 
-// 调班状态映射（新增）
+// 调班状态映射
 const transferStatusMap = {
-  '无': null,
+  '无': 'none',
   '待审批': 'pending',
   '已通过': 'approved',
   '已驳回': 'rejected'
 };
 const transferStatusReverse = {
+  'none': '无',
   'pending': '待审批',
   'approved': '已通过',
   'rejected': '已驳回'
 };
 
-// 出车状态映射（新增）
+// 出车状态映射
 const carStatusMap = {
-  '无': null,
+  '无': 'none',
   '待审批': 'pending',
   '已通过': 'approved'
 };
 const carStatusReverse = {
+  'none': '无',
   'pending': '待审批',
   'approved': '已通过'
 };
