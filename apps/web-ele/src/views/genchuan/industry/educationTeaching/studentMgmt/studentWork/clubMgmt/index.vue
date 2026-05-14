@@ -16,7 +16,6 @@ import {
   venueApplyClubMgmt,
   exportClubMgmt,
   getClubMgmtDetail,
-  getStudentOptions,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/studentWork/clubMgmt/data.js';
 import {
   textObj,
@@ -63,7 +62,6 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
-// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
   if (!field) return;
   if (value === '' || value === null || value === undefined) {
@@ -82,7 +80,7 @@ function handleFilterTagClick(field, value) {
       tagFilters.value[field] = value;
     }
   }
-  gridApi.query(); // 改为 query()
+  gridApi.query();
 }
 
 function clearFilters() {
@@ -139,23 +137,8 @@ const isEditMode = ref(false);
 const currentEditId = ref(null);
 const currentVenueRow = ref(null);
 
-const studentOptions = ref([]);
-const loadStudentOptions = async () => {
-  try {
-    const res = await getStudentOptions();
-    studentOptions.value = res;
-  } catch (error) {
-    console.error('加载学生选项失败', error);
-    ElMessage.error('加载学生选项失败，请刷新重试');
-  }
-};
-
-const createFormSchema = computed(() => {
-  const schema = useCreateFormSchema();
-  const studentField = schema.find(item => item.fieldName === 'studentId');
-  if (studentField) studentField.componentProps.options = studentOptions.value;
-  return schema;
-});
+// 静态表单 schema
+const createFormSchemaStatic = useCreateFormSchema();
 
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
@@ -297,7 +280,7 @@ const [CreateForm, createFormApi] = useVbenForm({
     } finally { loading.close(); }
   },
   layout: 'horizontal',
-  schema: createFormSchema,
+  schema: createFormSchemaStatic,
   showCollapseButton: false,
   submitButtonOptions: { content: computed(() => isEditMode.value ? '保存' : '申请') },
 });
@@ -315,7 +298,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
           await createFormApi.setValues({
             clubName: detail.clubName,
             clubType: detail.clubType,
-            studentId: detail.studentId,
+            studentId: Number(detail.studentId),
             applyTime: detail.applyTime,
             status: detail.status,
             remark: detail.remark,
@@ -427,7 +410,6 @@ const handleChartFilter = (event) => {
 };
 
 onMounted(() => {
-  loadStudentOptions();
   window.addEventListener('club-chart-filter', handleChartFilter);
 });
 onUnmounted(() => {

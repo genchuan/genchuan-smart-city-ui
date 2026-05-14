@@ -58,15 +58,15 @@ const getStatusType = (status) => {
   return map[status] || 'info';
 };
 const getCheckInStatusType = (status) => {
-  const map = {'未打卡': 'warning', '已打卡': 'success'};
+  const map = { '未打卡': 'warning', '已打卡': 'success' };
   return map[status] || 'info';
 };
 const getTransferStatusType = (status) => {
-  const map = {'无': 'info', '待审批': 'warning', '已通过': 'success', '已驳回': 'danger'};
+  const map = { '无': 'info', '待审批': 'warning', '已通过': 'success', '已驳回': 'danger' };
   return map[status] || 'info';
 };
 const getCarStatusType = (status) => {
-  const map = {'无': 'info', '待审批': 'warning', '已通过': 'success'};
+  const map = { '无': 'info', '待审批': 'warning', '已通过': 'success' };
   return map[status] || 'info';
 };
 const formatTimestamp = (timestamp) => {
@@ -91,13 +91,12 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 
-const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
+const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
-// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
   if (!field) return;
   if (value === '' || value === null || value === undefined) {
@@ -116,7 +115,7 @@ function handleFilterTagClick(field, value) {
       tagFilters.value[field] = value;
     }
   }
-  gridApi.query(); // 改为 query()
+  gridApi.query();
 }
 
 function clearFilters() {
@@ -135,7 +134,10 @@ function getFieldLabel(field) {
     status: '状态',
     creator: '创建人',
     createTime: '创建时间',
-    dutyDate: '值班日期'
+    dutyDate: '值班日期',
+    transferStatus: '调班状态',
+    carStatus: '出车状态',
+    checkInStatus: '打卡状态'
   };
   return map[field] || field;
 }
@@ -185,7 +187,7 @@ const gridColumns = ref(getColumnsByStatus(activeName.value));
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({records}) {
+function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -237,10 +239,10 @@ function handleReset() {
 }
 
 async function handleExport() {
-  const loading = ElLoading.service({text: '正在导出...'});
+  const loading = ElLoading.service({ text: '正在导出...' });
   try {
     const data = await exportDutyMgmt(searchParams.value);
-    downloadFileFromBlobPart({fileName: '值班管理列表.xls', source: data});
+    downloadFileFromBlobPart({ fileName: '值班管理列表.xls', source: data });
     ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
@@ -252,9 +254,9 @@ async function handleExport() {
 // 排班表单
 const [ScheduleForm, scheduleFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({text: '排班中...'});
+    const loading = ElLoading.service({ text: '排班中...' });
     try {
       let dateRange = values.dutyDateList;
       if (!dateRange || dateRange.length !== 2) {
@@ -287,7 +289,7 @@ const [ScheduleForm, scheduleFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useScheduleFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: {content: '提交排班'},
+  submitButtonOptions: { content: '提交排班' },
 });
 
 function handleSchedule() {
@@ -299,9 +301,9 @@ function handleSchedule() {
 const currentEditRow = ref(null);
 const [EditForm, editFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({text: '保存中...'});
+    const loading = ElLoading.service({ text: '保存中...' });
     try {
       const res = await updateDutyMgmt({
         id: currentEditRow.value.id,
@@ -324,7 +326,7 @@ const [EditForm, editFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useEditFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: {content: '保存修改'},
+  submitButtonOptions: { content: '保存修改' },
 });
 
 function handleEdit(row) {
@@ -352,9 +354,9 @@ function handleBatchShiftApply() {
 
 const [ShiftApplyForm, shiftApplyFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({text: '提交调班申请中...'});
+    const loading = ElLoading.service({ text: '提交调班申请中...' });
     try {
       const ids = currentShiftRows.value.map(row => row.id);
       const res = await shiftApplyDutyMgmt({
@@ -376,7 +378,7 @@ const [ShiftApplyForm, shiftApplyFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useShiftApplyFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: {content: '提交申请'},
+  submitButtonOptions: { content: '提交申请' },
 });
 
 // 批量出车申请
@@ -393,9 +395,9 @@ function handleBatchVehicleApply() {
 
 const [VehicleApplyForm, vehicleApplyFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({text: '提交出车申请中...'});
+    const loading = ElLoading.service({ text: '提交出车申请中...' });
     try {
       const ids = currentVehicleRows.value.map(row => row.id);
       const res = await vehicleApplyDutyMgmt({
@@ -417,7 +419,7 @@ const [VehicleApplyForm, vehicleApplyFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useVehicleApplyFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: {content: '提交申请'},
+  submitButtonOptions: { content: '提交申请' },
 });
 
 // 打卡
@@ -429,9 +431,9 @@ async function handleCheckin(row) {
       cancelButtonText: '取消',
       type: 'warning'
     });
-    const loading = ElLoading.service({text: '打卡中...'});
+    const loading = ElLoading.service({ text: '打卡中...' });
     try {
-      const res = await checkinDutyMgmt({ids: [row.id]});
+      const res = await checkinDutyMgmt({ ids: [row.id] });
       if (res && res !== false) {
         ElMessage.success('打卡成功');
         handleRefresh();
@@ -455,10 +457,10 @@ async function handleBatchCheckin() {
       cancelButtonText: '取消',
       type: 'warning'
     });
-    const loading = ElLoading.service({text: '打卡中...'});
+    const loading = ElLoading.service({ text: '打卡中...' });
     try {
       const ids = selectedRows.map(row => row.id);
-      const res = await checkinDutyMgmt({ids});
+      const res = await checkinDutyMgmt({ ids });
       if (res && res !== false) {
         ElMessage.success('批量打卡成功');
         handleRefresh();
@@ -488,7 +490,7 @@ function handleShiftAudit(row) {
 
 async function confirmShiftAudit() {
   if (!shiftAuditResult.value) return ElMessage.warning('请选择审批结果');
-  const loading = ElLoading.service({text: '审批中...'});
+  const loading = ElLoading.service({ text: '审批中...' });
   try {
     const res = await shiftAuditDutyMgmt({
       id: currentShiftAuditRow.value.id,
@@ -523,7 +525,7 @@ function handleVehicleAudit(row) {
 
 async function confirmVehicleAudit() {
   if (!vehicleAuditResult.value) return ElMessage.warning('请选择审批结果');
-  const loading = ElLoading.service({text: '审批中...'});
+  const loading = ElLoading.service({ text: '审批中...' });
   try {
     const res = await vehicleAuditDutyMgmt({
       id: currentVehicleAuditRow.value.id,
@@ -546,9 +548,9 @@ async function confirmVehicleAudit() {
 const currentUploadRow = ref(null);
 const [UploadRecordForm, uploadRecordFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({text: '上传记录中...'});
+    const loading = ElLoading.service({ text: '上传记录中...' });
     try {
       const res = await uploadRecordDutyMgmt({
         id: currentUploadRow.value.id,
@@ -568,7 +570,7 @@ const [UploadRecordForm, uploadRecordFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useUploadRecordFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: {content: '提交记录'},
+  submitButtonOptions: { content: '提交记录' },
 });
 
 function handleUploadRecord(row) {
@@ -634,18 +636,27 @@ const toggleChart = () => {
 };
 defineExpose({handleFilterTagClick, clearFilters});
 
-// ========== 监听图表自定义事件 ==========
+// ========== 监听图表自定义事件（核心修改） ==========
 const handleChartFilter = (event) => {
-  const {month} = event.detail;
+  const {month, type, value} = event.detail;
+
+  // 处理折线图点击（月份筛选）
   if (month) {
-    // 将月份（如 "2025-01"）转换为该月的日期范围，或者直接作为 dutyDate 前缀筛选
-    // 这里简化处理：将该月第一天到最后一天作为筛选条件
     const [year, monthNum] = month.split('-');
     const startDate = `${year}-${monthNum}-01`;
     const lastDay = new Date(parseInt(year), parseInt(monthNum), 0).getDate();
     const endDate = `${year}-${monthNum}-${lastDay}`;
-    // 将日期范围存入 tagFilters，注意后端可能需要 start/end 或直接传 date
     handleFilterTagClick('dutyDate', [startDate, endDate]);
+  }
+
+  // 处理卡片点击（根据 type 和 value 筛选）
+  if (type && value !== undefined) {
+    let field = type;
+    let filterValue = value;
+    // 字段映射
+    if (type === 'transferStatus') field = 'transferStatus';
+    if (type === 'carStatus') field = 'carStatus';
+    handleFilterTagClick(field, filterValue);
   }
 };
 
@@ -743,7 +754,8 @@ onUnmounted(() => {
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status !== '已完成'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
+          <IconButton v-if="row.status !== '已完成'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '待打卡'" content="打卡" icon-name="Check"
                       @click="handleCheckin(row)"/>
           <IconButton v-if="row.status === '待调班审批'" content="调班审批" icon-name="Checked"
@@ -797,3 +809,7 @@ onUnmounted(() => {
     </el-dialog>
   </div>
 </template>
+
+<style scoped lang="scss">
+/* 原有样式保持不变 */
+</style>

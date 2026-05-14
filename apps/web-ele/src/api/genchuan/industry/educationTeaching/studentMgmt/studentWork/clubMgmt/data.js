@@ -146,20 +146,6 @@ export function getClubMgmtDetail(params) {
     });
 }
 
-export function getStudentOptions(params) {
-  return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
-    console.warn('获取学生选项失败，使用模拟数据', err);
-    return Promise.resolve([
-      { label: '张三', value: 1 },
-      { label: '李四', value: 2 },
-      { label: '王五', value: 3 },
-      { label: '赵六', value: 4 },
-      { label: '孙七', value: 5 },
-      { label: '周八', value: 6 },
-    ]);
-  });
-}
-
 // ==================== 图表接口 ====================
 export function getClubMgmtChart(params) {
   return requestClient.get('/studentmgmt/club-mgmt/chart', { params }).catch(err => {

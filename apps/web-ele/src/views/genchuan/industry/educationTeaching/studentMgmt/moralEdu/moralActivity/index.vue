@@ -282,7 +282,7 @@ const [JoinForm, joinFormApi] = useVbenForm({
     try {
       const studentIdNum = Number(values.studentId);
       if (isNaN(studentIdNum) || studentIdNum <= 0) {
-        ElMessage.error('请输入有效的学生ID');
+        ElMessage.error('请输入有效的学号');
         loading.close();
         return;
       }
@@ -337,6 +337,15 @@ const [CreateForm, createFormApi] = useVbenForm({
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
     const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '发布中...'});
+
+    // ========== 新增开始时间与结束时间的校验 ==========
+    if (values.startTime && values.endTime && values.endTime <= values.startTime) {
+      ElMessage.error('结束时间必须晚于开始时间');
+      loading.close();
+      return;
+    }
+    // ================================================
+
     try {
       let res;
       if (isEditMode.value) res = await updateMoralActivity({...values, id: currentEditId.value});
