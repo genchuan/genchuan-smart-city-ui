@@ -314,8 +314,7 @@ export function useGridColumns() {
       field: 'discountAmount',
       title: '优惠抵扣金额',
       minWidth: 160,
-      sortable: true,
-      customRender: ({ text }) => text ? `¥${text.toFixed(2)}` : '¥0.00',
+      sortable: true, 
     },
     {
       field: 'archiveTime',
