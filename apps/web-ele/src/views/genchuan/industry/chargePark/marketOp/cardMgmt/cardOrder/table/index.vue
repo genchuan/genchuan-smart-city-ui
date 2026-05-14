@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
@@ -27,8 +27,12 @@ import CancelConfirmDialog from '../components/CancelConfirmDialog.vue';
 import InvoiceDialog from '../components/InvoiceDialog.vue';
 import PayConfirmDialog from '../components/PayConfirmDialog.vue';
 import {
+  cardConfigSearchOptions,
   dataList,
   detailFields,
+  dynamicCardConfigSearchOptions,
+  fetchCardConfigSearchOptions,
+  getCurrentCardConfigSearchOptions,
   getCardOrderInvoiceStatusLabel,
   getCardOrderInvoiceStatusTagType,
   getCardOrderPayStatusLabel,
@@ -308,7 +312,7 @@ const getTableData = async (pageObj) => {
   const page = pageObj.page;
 
   try {
-    // 构建API请求参数
+    // 构建API请求参数 - 参照pointActivity的传参处理逻辑
     // 将type映射为cardId
     const cardId = filterCardType.value
       ? typeToCardIdMap[filterCardType.value] || filterCardType.value
@@ -326,7 +330,12 @@ const getTableData = async (pageObj) => {
       payStatus: filterPayStatus.value || dataObj.searchParams.payStatus,
       invoiceStatus:
         filterInvoiceStatus.value || dataObj.searchParams.invoiceStatus,
-      orderDate: filterOrderDate.value,
+      date: filterOrderDate.value || undefined, // 统计折线图钻取筛选（参数名改为date）
+      // RangePicker 返回数组格式 [start, end]，后端会接收为两个同名参数
+      createTime:
+        filterOrderDate.value || !dataObj.searchParams.createTime
+          ? undefined
+          : dataObj.searchParams.createTime,
     };
 
     const response = await getCardOrderPage(params);
@@ -392,7 +401,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -533,6 +542,21 @@ const handleCancelOrderDateFilter = () => {
 
 defineExpose({
   handleStatsFilter,
+});
+
+// 页面加载时获取卡种列表
+onMounted(async () => {
+  await fetchCardConfigSearchOptions();
+  // 动态更新搜索表单的卡种选项
+  const currentCardOptions = getCurrentCardConfigSearchOptions();
+  await queryFormApi.updateSchema([
+    {
+      fieldName: 'cardId',
+      componentProps: {
+        options: currentCardOptions,
+      },
+    },
+  ]);
 });
 
 // ==================== 详情弹窗处理 ====================

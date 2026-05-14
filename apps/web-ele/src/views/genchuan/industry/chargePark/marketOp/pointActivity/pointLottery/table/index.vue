@@ -279,8 +279,9 @@ const getTableData = async (pageObj) => {
       filterLotteryDate.value || !dataObj.searchParams.lotteryTime
         ? undefined
         : dataObj.searchParams.lotteryTime,
-    sendTime:
-      !dataObj.searchParams.sendTime ? undefined : dataObj.searchParams.sendTime,
+    sendTime: dataObj.searchParams.sendTime
+      ? dataObj.searchParams.sendTime
+      : undefined,
     // 数值范围字段
     costPointMin: dataObj.searchParams.costPointMin,
     costPointMax: dataObj.searchParams.costPointMax,
