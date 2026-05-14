@@ -1,28 +1,12 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
-import { ElTag } from 'element-plus';
 
-import { getReconcileBillChart, getReconcileBillListPage } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
-import { useVbenDrawer } from '@vben/common-ui';
+import { getReconcileBillChart } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
 import Card from '#/components/stats/card.vue';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { formatTimestamp } from '#/utils';
 
-const statusMap = {
-  pending: { label: '待对账', type: 'warning' },
-  reconciled: { label: '已对账', type: 'success' },
-  abnormal: { label: '异常', type: 'danger' },
-};
-
-const getStatusLabel = (status) => {
-  return statusMap[status]?.label || status;
-};
-
-const getStatusType = (status) => {
-  return statusMap[status]?.type || 'default';
-};
+const emit = defineEmits(['filter-change']);
 
 const state = reactive({
   cardList: [
@@ -34,114 +18,18 @@ const state = reactive({
   trendData: [],
 });
 
-const selectedStatus = ref(null);
-
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  width: '75%',
-  title: computed(() => {
-    let title = '对账单列表';
-    if (selectedStatus.value) {
-      title = `${statusMap[selectedStatus.value]?.label || selectedStatus.value} ${title}`;
-    }
-    return title;
-  }),
-  class: 'genchuan-detail-drawer',
-  onCancel() {
-    drawerApi.close();
-  },
-});
-
-const drawerDataObj = reactive({
-  total: 0,
-  list: [],
-  loading: false,
-});
-
-const getDrawerTableData = async (pageObj) => {
-  const page = pageObj.page;
-  const params = {
-    pageNo: page.currentPage,
-    pageSize: page.pageSize,
-  };
-
-  if (selectedStatus.value) {
-    params.status = selectedStatus.value;
-  }
-
-  try {
-    drawerDataObj.loading = true;
-    const res = await getReconcileBillListPage(params);
-    drawerDataObj.total = res.total;
-    drawerDataObj.list = res.list.map((v) => {
-      return {
-        ...v,
-        confirmTime: formatTimestamp(v.confirmTime),
-        createTime: formatTimestamp(v.createTime),
-      };
-    });
-    return drawerDataObj;
-  } catch (error) {
-    console.error('获取对账单列表失败:', error);
-    return drawerDataObj;
-  } finally {
-    drawerDataObj.loading = false;
-  }
-};
-
 const handleCardClick = (status) => {
-  selectedStatus.value = status;
-  drawerGridApi.query();
-  drawerApi.open();
+  emit('filter-change', { status: status || null });
 };
 
 const handleLineChartClick = (params) => {
-  console.log('折线图点击事件触发:', params);
   if (params && params.name) {
-    selectedStatus.value = null;
-    drawerGridApi.query();
-    drawerApi.open();
+    emit('filter-change', {
+      billDateStart: params.name + ' 00:00:00',
+      billDateEnd: params.name + ' 23:59:59',
+    });
   }
 };
-
-const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: [
-      { type: 'seq', width: 60 },
-      { field: 'billNo', title: '对账单号', width: 180 },
-      { field: 'merchantName', title: '商户名称', width: 160 },
-      { field: 'billDate', title: '对账日期', width: 120 },
-      { field: 'sysAmount', title: '系统订单总金额', width: 140 },
-      { field: 'merchantAmount', title: '商户上报总金额', width: 140 },
-      { field: 'diffAmount', title: '差异金额', width: 120 },
-      { field: 'status', title: '对账状态', width: 120,
-        slots: { default: 'status' }
-      },
-      { field: 'remark', title: '备注', width: 200 },
-      { field: 'confirmTime', title: '确认时间', width: 180 },
-      { field: 'createTime', title: '创建时间', width: 180 },
-    ],
-    keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getDrawerTableData({ page }),
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: drawerDataObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-    },
-    showOverflow: true,
-  },
-  showSearchForm: false,
-});
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
@@ -278,16 +166,6 @@ onMounted(() => {
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
-
-  <Drawer>
-    <DrawerGrid>
-      <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
-          {{ getStatusLabel(row.status) }}
-        </el-tag>
-      </template>
-    </DrawerGrid>
-  </Drawer>
 </template>
 
 <style scoped lang="scss">

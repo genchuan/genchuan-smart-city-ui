@@ -1,26 +1,16 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
-import { ElTag } from 'element-plus';
 
-import { getSplitRateStatusChart, getSplitRateStatusPage } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
-import { useVbenDrawer } from '@vben/common-ui';
+import { getSplitRateStatusChart } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
 import Card from '#/components/stats/card.vue';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { formatTimestamp } from '#/utils';
+
+const emit = defineEmits(['filter-change']);
 
 const statusMap = {
   normal: { label: '正常', type: 'success' },
   abnormal: { label: '异常', type: 'danger' },
-};
-
-const getStatusLabel = (status) => {
-  return statusMap[status]?.label || status;
-};
-
-const getStatusType = (status) => {
-  return statusMap[status]?.type || 'default';
 };
 
 const state = reactive({
@@ -32,114 +22,22 @@ const state = reactive({
   statusData: [],
 });
 
-const selectedStatus = ref(null);
-
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  width: '75%',
-  title: computed(() => {
-    let title = '分账结算核查记录列表';
-    if (selectedStatus.value) {
-      title = `${statusMap[selectedStatus.value]?.label || selectedStatus.value} ${title}`;
-    }
-    return title;
-  }),
-  class: 'genchuan-detail-drawer',
-  onCancel() {
-    drawerApi.close();
-  },
-});
-
-const drawerDataObj = reactive({
-  total: 0,
-  list: [],
-  loading: false,
-});
-
-const getDrawerTableData = async (pageObj) => {
-  const page = pageObj.page;
-  const params = {
-    pageNo: page.currentPage,
-    pageSize: page.pageSize,
-  };
-
-  if (selectedStatus.value) {
-    params.status = selectedStatus.value;
-  }
-
-  try {
-    drawerDataObj.loading = true;
-    const res = await getSplitRateStatusPage(params);
-    drawerDataObj.total = res.total;
-    drawerDataObj.list = res.list.map((v) => {
-      return {
-        ...v,
-        checkTime: formatTimestamp(v.checkTime),
-        createTime: formatTimestamp(v.createTime),
-        updateTime: formatTimestamp(v.updateTime),
-      };
-    });
-    return drawerDataObj;
-  } catch (error) {
-    console.error('获取分账结算核查记录列表失败:', error);
-    return drawerDataObj;
-  } finally {
-    drawerDataObj.loading = false;
-  }
-};
-
+// 点击卡片事件
 const handleCardClick = (status) => {
-  selectedStatus.value = status;
-  drawerGridApi.query();
-  drawerApi.open();
+  emit('filter-change', {
+    status: status || null,
+  });
 };
 
+// 柱状图点击事件处理
 const handleBarChartClick = (params) => {
-  console.log('柱状图点击事件触发:', params);
   if (params && params.name) {
     const statusKey = params.name === '正常' ? 'normal' : 'abnormal';
-    selectedStatus.value = statusKey;
-    drawerGridApi.query();
-    drawerApi.open();
+    emit('filter-change', {
+      status: statusKey,
+    });
   }
 };
-
-const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: [
-      { type: 'seq', width: 60 },
-      { field: 'id', title: '主键ID', width: 120 },
-      { field: 'billId', title: '关联结算单据ID', width: 160 },
-      { field: 'status', title: '状态', width: 120,
-        slots: { default: 'status' }
-      },
-      { field: 'errorReason', title: '异常原因', width: 200 },
-      { field: 'checkerId', title: '核查人ID', width: 120 },
-      { field: 'checkTime', title: '核查时间', width: 180 },
-      { field: 'creator', title: '创建者', width: 100 },
-      { field: 'createTime', title: '创建时间', width: 180 },
-    ],
-    keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getDrawerTableData({ page }),
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: drawerDataObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-    },
-    showOverflow: true,
-  },
-  showSearchForm: false,
-});
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
@@ -310,14 +208,4 @@ onMounted(() => {
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
-
-  <Drawer>
-    <DrawerGrid>
-      <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
-          {{ getStatusLabel(row.status) }}
-        </el-tag>
-      </template>
-    </DrawerGrid>
-  </Drawer>
 </template>

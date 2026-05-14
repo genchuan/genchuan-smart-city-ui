@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref } from 'vue';
+import { reactive, ref, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
 import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption } from 'element-plus';
@@ -30,6 +30,14 @@ const props = defineProps({
   arrowState: {
     type: Boolean,
     default: false,
+  },
+  filterParams: {
+    type: Object,
+    default: () => ({
+      status: null,
+      billDateStart: null,
+      billDateEnd: null,
+    }),
   },
 });
 
@@ -232,6 +240,7 @@ const getTableData = async (pageObj) => {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchObj,
+    ...props.filterParams,
   };
   try {
     dataObj.loading = true;
@@ -302,6 +311,15 @@ const parkDetailDrawerRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
+
+watch(
+  () => props.filterParams,
+  () => {
+    dataObj.currentPage = 1;
+    gridApi.query();
+  },
+  { deep: true }
+);
 </script>
 
 <template>
