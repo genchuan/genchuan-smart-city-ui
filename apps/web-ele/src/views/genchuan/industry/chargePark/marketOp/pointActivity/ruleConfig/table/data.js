@@ -267,18 +267,18 @@ export function useSearchFormSchema() {
         ...getRangePickerDefaultProps(),
       },
     },
-    // {
-    //   fieldName: 'auditorId',
-    //   label: '审核人',
-    //   component: 'Select',
-    //   componentProps: {
-    //     placeholder: '请选择审核人',
-    //     options: [],
-    //     clearable: true,
-    //     filterable: true,
-    //     remote: true,
-    //   },
-    // },
+    {
+      fieldName: 'auditorName',
+      label: '审核人',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请输入审核人名称',
+        options: [],
+        clearable: true,
+        filterable: true,
+        remote: true,
+      },
+    },
     {
       fieldName: 'matchCount',
       label: '匹配次数',
@@ -296,7 +296,7 @@ export function useSearchFormSchema() {
       componentProps: {
         ...getRangePickerDefaultProps(),
       },
-  },
+    },
   ];
 }
 

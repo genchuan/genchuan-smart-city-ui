@@ -239,6 +239,7 @@ function createSchema(fields, isSearch = false) {
     if (field.type === 'select') {
       Object.assign(componentProps, {
         allowClear: true,
+        clearable: true,
         filterOption: true,
         options: getSelectFieldOptions(field),
         showSearch: true,
@@ -1093,17 +1094,18 @@ function getTagDisplayText(field, value) {
 async function removeFilterTag(field) {
   const nextQuery = { ...appliedQuery.value };
   delete nextQuery[field];
-  appliedQuery.value = sanitizeParams(nextQuery);
+  const sanitizedQuery = sanitizeParams(nextQuery);
+  appliedQuery.value = sanitizedQuery;
   clearTableFilter(field);
-  await syncQueryForm(appliedQuery.value);
-  handleRefresh(appliedQuery.value);
+  handleRefresh(sanitizedQuery);
+  await syncQueryForm(sanitizedQuery);
 }
 
 async function clearFilters() {
   appliedQuery.value = {};
   clearTableFilter();
-  await syncQueryForm({});
   handleRefresh(appliedQuery.value);
+  await syncQueryForm({});
 }
 
 function getCellDisplayText(column, row) {
@@ -1264,7 +1266,6 @@ function handleToggleOverview() {
 }
 
 async function handleOpenSearch() {
-  await syncQueryForm(appliedQuery.value);
   searchDrawerApi.open();
   await nextTick();
   await syncQueryForm(appliedQuery.value);

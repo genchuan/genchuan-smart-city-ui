@@ -108,7 +108,9 @@ const formatValue = (field, value) => {
     nextValue !== '' &&
     nextValue !== '--'
   ) {
-    return `${nextValue}${field.suffix}`;
+    return String(nextValue).endsWith(field.suffix)
+      ? nextValue
+      : `${nextValue}${field.suffix}`;
   }
   return nextValue ?? '--';
 };

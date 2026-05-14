@@ -113,3 +113,7 @@ export function updateCouponMgmt(data) {
 export function getCouponMgmtChart() {
   return requestClient.get('/marketop/coupon-mgmt/chart');
 }
+/** 获取优惠券 精简列表（用于下拉选择） */
+export function getCouponSimpleList() {
+  return requestClient.get('/marketop/coupon-mgmt/simple-list');
+}

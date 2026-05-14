@@ -528,25 +528,25 @@ const handleFullShow = () => {
           <!-- 配置状态筛选标签 -->
           <ElTag
             v-if="filterStatus"
-            type="warning"
+            type="primary"
             closable
             @close="handleCancelStatusFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
           >
             配置状态：{{ getCardConfigStatusLabel(filterStatus) }}
           </ElTag>
-          <!-- 统计组件-类型筛选标签 -->
-          <ElTag
-            v-if="filterStatsType"
-            type="info"
-            closable
-            @close="handleCancelStatsTypeFilter"
-            style="height: 32px; margin: 4px 0; line-height: 32px"
-          >
-            统计筛选：{{
-              filterStatsType === 'effective' ? '生效配置' : '销量统计'
-            }}
-          </ElTag>
+          <!-- 统计组件-类型筛选标签 不显示 -->
+          <!--          <ElTag-->
+          <!--            v-if="filterStatsType"-->
+          <!--            type="info"-->
+          <!--            closable-->
+          <!--            @close="handleCancelStatsTypeFilter"-->
+          <!--            style="height: 32px; margin: 4px 0; line-height: 32px"-->
+          <!--          >-->
+          <!--            统计筛选：{{-->
+          <!--              filterStatsType === 'effective' ? '生效配置' : '销量统计'-->
+          <!--            }}-->
+          <!--          </ElTag>-->
         </div>
       </template>
       <template #toolbar-tools>

@@ -191,6 +191,7 @@ function createSchema(fields, isSearch = false) {
 
       Object.assign(componentProps, {
         allowClear: true,
+        clearable: true,
         filterOption: true,
         options,
         showSearch: true,
@@ -584,10 +585,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
       filter: false,
       ajax: {
         query: async ({ page }, formValues = {}) => {
-          const query = sanitizeParams({
-            ...appliedQuery.value,
-            ...formValues,
-          });
+          const explicitValues = sanitizeParams(formValues);
+          const query =
+            Object.keys(explicitValues).length > 0
+              ? explicitValues
+              : sanitizeParams(appliedQuery.value);
           return await pageApi[`get${apiName}Page`]({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
@@ -983,6 +985,25 @@ function applySearchPatch(patch) {
   });
 }
 
+function findChartSourceItem(config = [], value) {
+  const [dataKey, nameField] = config;
+  return (chartData.value?.[dataKey] || []).find(
+    (item) => String(item?.[nameField]) === String(value),
+  );
+}
+
+function getChartSearchPatch(config = [], value) {
+  const field = config[4] || config[3] || config[1];
+  if (!field || isEmpty(value)) return {};
+  const sourceRow = findChartSourceItem(config, value);
+  const searchableFields = searchFields.map((item) => item.field);
+  if (searchableFields.includes(field)) {
+    return { [field]: sourceRow?.[field] ?? value };
+  }
+  const nameField = pageConfig.nameField || 'name';
+  return { [nameField]: sourceRow?.[nameField] ?? sourceRow?.name ?? value };
+}
+
 function getFieldLabel(field) {
   const column =
     tableColumns.find((c) => c.field === field) ||
@@ -1017,17 +1038,18 @@ function getTagDisplayText(field, value) {
 async function removeFilterTag(field) {
   const nextQuery = { ...appliedQuery.value };
   delete nextQuery[field];
-  appliedQuery.value = sanitizeParams(nextQuery);
+  const sanitizedQuery = sanitizeParams(nextQuery);
+  appliedQuery.value = sanitizedQuery;
   clearTableFilter(field);
-  await syncQueryForm(appliedQuery.value);
-  handleRefresh(appliedQuery.value);
+  handleRefresh(sanitizedQuery);
+  await syncQueryForm(sanitizedQuery);
 }
 
 async function clearFilters() {
   appliedQuery.value = {};
   clearTableFilter();
-  await syncQueryForm({});
   handleRefresh(appliedQuery.value);
+  await syncQueryForm({});
 }
 
 function getCellDisplayText(column, row) {
@@ -1069,35 +1091,23 @@ async function handleCardClick(item) {
   applySearchPatch({ status: item.status });
 }
 
-function openChartDrill(chartType, value, field, title) {
-  chartDrillDrawerRef.value?.open({
-    chartType,
-    field,
-    label: getFieldLabel(field),
-    pageTitle: pageConfig.title,
-    title,
-    value,
-  });
-}
-
 function handleBarClick(name) {
-  const field = pageConfig.chart?.bar?.[4] || pageConfig.chart?.bar?.[1];
-  openChartDrill('bar', name, field, `${pageConfig.title}分布`);
+  applySearchPatch(getChartSearchPatch(pageConfig.chart?.bar || [], name));
 }
 
 function handleLineClick(payload) {
-  const field = pageConfig.chart?.line?.[4] || pageConfig.chart?.line?.[1];
-  openChartDrill(
-    'line',
-    payload?.categoryName || payload?.name,
-    field,
-    `${pageConfig.title}趋势`,
+  applySearchPatch(
+    getChartSearchPatch(
+      pageConfig.chart?.line || [],
+      payload?.categoryName || payload?.name,
+    ),
   );
 }
 
 function handlePieClick(payload) {
-  const field = pageConfig.chart?.pie?.[3] || pageConfig.chart?.pie?.[1];
-  openChartDrill('pie', payload?.name, field, `${pageConfig.title}占比`);
+  applySearchPatch(
+    getChartSearchPatch(pageConfig.chart?.pie || [], payload?.name),
+  );
 }
 
 function getDrillValue(column, row) {
@@ -1233,7 +1243,6 @@ function handleToggleOverview() {
 }
 
 async function handleOpenSearch() {
-  await syncQueryForm(appliedQuery.value);
   searchDrawerApi.open();
   await nextTick();
   await syncQueryForm(appliedQuery.value);
