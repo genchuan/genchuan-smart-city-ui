@@ -1,10 +1,39 @@
 <script setup>
-import { ref } from 'vue';
+import { reactive, ref, computed } from 'vue';
 
 import Chart from './table/chart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
+
+const matchResultMap = {
+  matched: { label: '已匹配', type: 'success' },
+  unmatched: { label: '未匹配', type: 'danger' },
+  partial: { label: '部分匹配', type: 'warning' },
+};
+
+const filterParams = reactive({
+  matchResult: null,
+  createTimeStart: null,
+  createTimeEnd: null,
+});
+
+const hasActiveFilters = computed(() => {
+  return filterParams.matchResult !== null || filterParams.createTimeStart !== null;
+});
+
+const handleFilterChange = (params) => {
+  filterParams.matchResult = null;
+  filterParams.createTimeStart = null;
+  filterParams.createTimeEnd = null;
+  Object.assign(filterParams, params);
+};
+
+const clearFilter = () => {
+  filterParams.matchResult = null;
+  filterParams.createTimeStart = null;
+  filterParams.createTimeEnd = null;
+};
 
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
@@ -32,7 +61,15 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <Chart />
+    <Chart @filter-change="handleFilterChange" />
+    <div v-if="hasActiveFilters" class="filter-tags">
+      <el-tag v-if="filterParams.matchResult" closable @close="clearFilter" type="warning">
+        对账结果: {{ matchResultMap[filterParams.matchResult]?.label || filterParams.matchResult }}
+      </el-tag>
+      <el-tag v-else-if="filterParams.createTimeStart" closable @close="clearFilter" type="primary">
+        创建日期: {{ filterParams.createTimeStart.split(' ')[0] }}
+      </el-tag>
+    </div>
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -70,6 +107,7 @@ const secondShow = ref(false);
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
+          :filter-params="filterParams"
           @arrow-change="arrowChange"
         />
       </el-tab-pane>

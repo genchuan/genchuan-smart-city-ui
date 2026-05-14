@@ -1,41 +1,12 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
-import { ElTag } from 'element-plus';
 
-import { getAgentPayRecordChart, getAgentPayRecordPage } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
-import { useVbenDrawer } from '@vben/common-ui';
+import { getAgentPayRecordChart } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import Card from '#/components/stats/card.vue';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { formatTimestamp } from '#/utils';
 
-const statusMap = {
-  normal: { label: '正常记录', type: 'success' },
-  abnormal: { label: '异常记录', type: 'danger' },
-};
-
-const getStatusLabel = (status) => {
-  return statusMap[status]?.label || status;
-};
-
-const getStatusType = (status) => {
-  return statusMap[status]?.type || 'default';
-};
-
-const checkResultMap = {
-  pending: { label: '待核查', type: 'warning' },
-  passed: { label: '核查通过', type: 'success' },
-  rejected: { label: '核查驳回', type: 'danger' },
-};
-
-const getCheckResultLabel = (checkResult) => {
-  return checkResultMap[checkResult]?.label || checkResult;
-};
-
-const getCheckResultType = (checkResult) => {
-  return checkResultMap[checkResult]?.type || 'default';
-};
+const emit = defineEmits(['filter-change']);
 
 const state = reactive({
   cardList: [
@@ -45,119 +16,25 @@ const state = reactive({
   trendData: [],
 });
 
-const selectedDate = ref(null);
-
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  width: '75%',
-  title: computed(() => {
-    let title = '资金变动记录列表';
-    if (selectedDate.value) {
-      title = `${selectedDate.value} ${title}`;
-    }
-    return title;
-  }),
-  class: 'genchuan-detail-drawer',
-  onCancel() {
-    drawerApi.close();
-  },
-});
-
-const drawerDataObj = reactive({
-  total: 0,
-  list: [],
-  loading: false,
-});
-
-const getDrawerTableData = async (pageObj) => {
-  const page = pageObj.page;
-  const params = {
-    pageNo: page.currentPage,
-    pageSize: page.pageSize,
-  };
-
-  if (selectedDate.value) {
-    params.tradeTimeStart = selectedDate.value + ' 00:00:00';
-    params.tradeTimeEnd = selectedDate.value + ' 23:59:59';
-  }
-
-  try {
-    drawerDataObj.loading = true;
-    const res = await getAgentPayRecordPage(params);
-    drawerDataObj.total = res.total;
-    drawerDataObj.list = res.list.map((v) => {
-      return {
-        ...v,
-        tradeTime: formatTimestamp(v.tradeTime),
-        checkTime: formatTimestamp(v.checkTime),
-        createTime: formatTimestamp(v.createTime),
-        updateTime: formatTimestamp(v.updateTime),
-      };
-    });
-    return drawerDataObj;
-  } catch (error) {
-    console.error('获取资金变动记录列表失败:', error);
-    return drawerDataObj;
-  } finally {
-    drawerDataObj.loading = false;
-  }
-};
-
+// 点击卡片事件 - 查询今日数据
 const handleCardClick = () => {
-  drawerGridApi.query();
-  drawerApi.open();
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  emit('filter-change', {
+    tradeTimeStart: todayStr + ' 00:00:00',
+    tradeTimeEnd: todayStr + ' 23:59:59',
+  });
 };
 
+// 折线图点击事件处理
 const handleLineChartClick = (params) => {
-  console.log('折线图点击事件触发:', params);
   if (params && params.name) {
-    selectedDate.value = params.name;
-    drawerGridApi.query();
-    drawerApi.open();
+    emit('filter-change', {
+      tradeTimeStart: params.name + ' 00:00:00',
+      tradeTimeEnd: params.name + ' 23:59:59',
+    });
   }
 };
-
-const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: [
-      { type: 'seq', width: 60 },
-      { field: 'recordNo', title: '记录编号', width: 180 },
-      { field: 'orderNo', title: '关联订单编号', width: 180 },
-      { field: 'merchantName', title: '商户名称', width: 150 },
-      { field: 'amount', title: '变动金额', width: 120 },
-      { field: 'tradeTime', title: '交易时间', width: 180 },
-      { field: 'status', title: '状态', width: 100,
-        slots: { default: 'status' }
-      },
-      { field: 'checkerName', title: '核查人名称', width: 120 },
-      { field: 'checkTime', title: '核查时间', width: 180 },
-      { field: 'checkResult', title: '核查结果', width: 100,
-        slots: { default: 'checkResult' }
-      },
-      { field: 'creator', title: '创建者', width: 100 },
-      { field: 'createTime', title: '创建时间', width: 180 },
-    ],
-    keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getDrawerTableData({ page }),
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: drawerDataObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-    },
-    showOverflow: true,
-  },
-  showSearchForm: false,
-});
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
@@ -292,27 +169,12 @@ onMounted(() => {
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
-
-  <Drawer>
-    <DrawerGrid>
-      <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
-          {{ getStatusLabel(row.status) }}
-        </el-tag>
-      </template>
-      <template #checkResult="{ row }">
-        <el-tag :type="getCheckResultType(row.checkResult)">
-          {{ getCheckResultLabel(row.checkResult) }}
-        </el-tag>
-      </template>
-    </DrawerGrid>
-  </Drawer>
 </template>
-<style scoped lang="scss"> 
- 
+
+<style scoped lang="scss">
 .left-card {
   flex:1;
-  width: 330px; 
+  width: 330px;
 
   :deep(.stat-card) {
     flex:1;

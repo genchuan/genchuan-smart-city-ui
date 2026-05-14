@@ -1,32 +1,20 @@
 <script setup>
-import { onMounted, reactive, ref, computed } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
-import { getDebtIdentifyChart, getDebtIdentifyPage } from '#/api/genchuan/industry/chargePark/orderTrade/debtCollect/index.js';
+import { getDebtIdentifyChart } from '#/api/genchuan/industry/chargePark/orderTrade/debtCollect/index.js';
 import Card from '#/components/stats/card.vue';
 import Columnar from '#/components/stats/columnar.vue';
-import { useVbenDrawer } from '@vben/common-ui';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { ElMessage } from 'element-plus';
-import { formatTimestamp } from '#/utils';
-import { useGridColumns } from './data';
+
+const emit = defineEmits(['filter-change']);
 
 // 逃费识别状态映射
 const statusMap = {
   pending: { label: '待识别', type: 'warning' },
   identified: { label: '已识别', type: 'success' },
   marked: { label: '已标记（非逃费）', type: 'info' },
-};
-
-// 获取状态标签
-const getStatusLabel = (status) => {
-  return statusMap[status]?.label || status;
-};
-
-// 获取状态类型
-const getStatusType = (status) => {
-  return statusMap[status]?.type || 'default';
 };
 
 const state = reactive({
@@ -38,185 +26,55 @@ const state = reactive({
   typeData: [],
 });
 
-// 当前选中的日期（用于折线图点击后筛选）
-const selectedDate = ref(null);
-
-// 当前选中的状态（用于柱状图点击后筛选）
-const selectedStatus = ref(null);
-
-// 是否使用日期筛选（点击卡片或折线图时为true，点击柱状图时为false）
-const useDateFilter = ref(true);
-
-// 抽屉配置
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  width: '75%',
-  title: computed(() => {
-    let title = '';
-    if (selectedDate.value) {
-      title = `${selectedDate.value} `;
-    } else {
-      title = '今日 ';
-    }
-    if (selectedStatus.value) {
-      title += `${statusMap[selectedStatus.value]?.label || selectedStatus.value} `;
-    }
-    title += '逃费识别列表';
-    return title;
-  }),
-  class: 'genchuan-detail-drawer',
-  onCancel() {
-    drawerApi.close();
-  },
-});
-
-// 抽屉表格数据对象
-const drawerDataObj = reactive({
-  total: 0,
-  list: [],
-  loading: false,
-});
-
-// 获取今天的开始和结束时间
-const getTodayTimeRange = () => {
-  const today = new Date();
-  const start = today.toISOString().split('T')[0] + ' 00:00:00';
-  const end = today.toISOString().split('T')[0] + ' 23:59:59';
-  return { start, end };
-};
-
-// 抽屉搜索条件
-const drawerSearchObj = reactive({});
-
-// 抽屉表格数据获取
-const getDrawerTableData = async (pageObj) => {
-  const page = pageObj.page;
-  const params = {
-    pageNo: page.currentPage,
-    pageSize: page.pageSize,
-  };
-
-  // 如果使用日期筛选，添加日期参数
-  if (useDateFilter.value) {
-    let start, end;
-    if (selectedDate.value) {
-      start = selectedDate.value + ' 00:00:00';
-      end = selectedDate.value + ' 23:59:59';
-    } else {
-      ({ start, end } = getTodayTimeRange());
-    }
-    params.identifyTimeStart = start;
-    params.identifyTimeEnd = end;
-  }
-
-  // 如果选中了状态，传递状态参数
-  if (selectedStatus.value) {
-    params.status = selectedStatus.value;
-  }
-
-  Object.assign(params, drawerSearchObj);
-
-  try {
-    drawerDataObj.loading = true;
-    const res = await getDebtIdentifyPage(params);
-    drawerDataObj.total = res.total;
-    drawerDataObj.list = res.list.map((v) => {
-      return {
-        ...v,
-        identifyTime: formatTimestamp(v.identifyTime),
-        markTime: formatTimestamp(v.markTime),
-        createTime: formatTimestamp(v.createTime),
-        updateTime: formatTimestamp(v.updateTime),
-      };
-    });
-    return drawerDataObj;
-  } catch (error) {
-    console.error('获取逃费识别列表失败:', error);
-    ElMessage.error('获取逃费识别列表失败');
-    return drawerDataObj;
-  } finally {
-    drawerDataObj.loading = false;
-  }
-};
-
 // 点击卡片事件
 const handleCardClick = (index) => {
   if (index === 0) {
-    // 待识别数量 → pending，不加时间参数
-    selectedStatus.value = 'pending';
-    selectedDate.value = null;
-    useDateFilter.value = false;
-  } else if (index === 1) {
-    // 识别成功率 → 不筛选状态，显示全部
-    selectedStatus.value = null;
-    selectedDate.value = null;
-    useDateFilter.value = false;
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    emit('filter-change', {
+      identifyTimeStart: todayStr + ' 00:00:00',
+      identifyTimeEnd: todayStr + ' 23:59:59',
+      status: 'pending',
+    });
+  } else {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
+    const start = thirtyDaysAgo.toISOString().split('T')[0] + ' 00:00:00';
+    const end = today.toISOString().split('T')[0] + ' 23:59:59';
+    emit('filter-change', {
+      identifyTimeStart: start,
+      identifyTimeEnd: end,
+      status: null,
+    });
   }
-  drawerGridApi.query();
-  drawerApi.open();
 };
 
 // 折线图点击事件处理
 const handleLineChartClick = (params) => {
-  console.log('折线图点击事件触发:', params);
   if (params && params.name) {
-    selectedDate.value = params.name;
-    // 重置状态筛选
-    selectedStatus.value = null;
-    // 使用日期筛选
-    useDateFilter.value = true;
-    drawerGridApi.query();
-    drawerApi.open();
+    emit('filter-change', {
+      identifyTimeStart: params.name + ' 00:00:00',
+      identifyTimeEnd: params.name + ' 23:59:59',
+      status: null,
+    });
   }
 };
 
 // 柱状图点击事件处理
 const handleBarChartClick = (params) => {
-  console.log('柱状图点击事件触发:', params);
   if (params && params.name) {
-    // 根据中文状态名称找到对应的英文状态值
     const statusKey = Object.keys(statusMap).find(key => statusMap[key].label === params.name);
-    if (statusKey) {
-      selectedStatus.value = statusKey;
-      console.log('选中状态:', selectedStatus.value);
-    } else {
-      selectedStatus.value = params.name;
-      console.log('选中状态(未映射):', selectedStatus.value);
-    }
-    // 重置日期筛选
-    selectedDate.value = null;
-    // 不使用日期筛选（只传状态参数）
-    useDateFilter.value = false;
-    drawerGridApi.query();
-    drawerApi.open();
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
+    const start = thirtyDaysAgo.toISOString().split('T')[0] + ' 00:00:00';
+    const end = today.toISOString().split('T')[0] + ' 23:59:59';
+    emit('filter-change', {
+      identifyTimeStart: start,
+      identifyTimeEnd: end,
+      status: statusKey || params.name,
+    });
   }
 };
-
-// 抽屉表格配置 - 删除最后一个操作列
-const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: useGridColumns().slice(0, -1),
-    keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getDrawerTableData({ page }),
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: drawerDataObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-    },
-    showOverflow: true,
-  },
-  showSearchForm: false,
-});
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
@@ -225,7 +83,6 @@ let lineChartInstance = null;
 const fetchOrderChartData = async () => {
   try {
     const res = await getDebtIdentifyChart();
-    // 从 cardData 获取卡片数据
     if (res.cardData) {
       state.cardList[0].value = res.cardData.waitIdentifyCount || 0;
       state.cardList[1].value = res.cardData.identifySuccessRate || 0;
@@ -233,7 +90,6 @@ const fetchOrderChartData = async () => {
       state.cardList[0].value = res.waitIdentifyCount || 0;
       state.cardList[1].value = res.identifySuccessRate || 0;
     }
-    // 如果trendData为空，使用假数据
     state.trendData =
       res.trendData && res.trendData.length > 0
         ? res.trendData
@@ -244,7 +100,6 @@ const fetchOrderChartData = async () => {
             { date: '2025-04-04', count: 10 },
             { date: '2025-04-05', count: 6 },
           ];
-    // 如果stationData为空，使用假数据
     state.typeData =
       res.stationData && Array.isArray(res.stationData) && res.stationData.length > 0
         ? res.stationData
@@ -253,11 +108,9 @@ const fetchOrderChartData = async () => {
             { count: 12, status: 'identified' },
             { count: 3, status: 'marked' },
           ];
-    // 更新折线图
     updateLineChart();
   } catch (error) {
     console.error('获取逃费识别图表数据失败:', error);
-    // 接口调用失败时使用假数据
     state.cardList[0].value = 10;
     state.cardList[1].value = 90;
     state.trendData = [
@@ -272,7 +125,6 @@ const fetchOrderChartData = async () => {
       { count: 12, status: 'identified' },
       { count: 3, status: 'marked' },
     ];
-    // 更新折线图
     updateLineChart();
   }
 };
@@ -341,7 +193,6 @@ const initLineChart = () => {
 
   lineChartInstance.setOption(option);
 
-  // 添加点击事件监听
   lineChartInstance.on('click', (params) => {
     handleLineChartClick(params);
   });
@@ -396,36 +247,12 @@ onMounted(() => {
       @bar-click="handleBarChartClick"
     />
   </div>
-
-  <Drawer>
-    <DrawerGrid>
-      <template #status="{ row }">
-        <ElTag :type="getStatusType(row.status)">
-          {{ getStatusLabel(row.status) }}
-        </ElTag>
-      </template>
-      <template #identifyNo="{ row }">
-        {{ row.identifyNo }}
-      </template>
-      <template #plateNo="{ row }">
-        {{ row.plateNo }}
-      </template>
-      <template #payMethod="{ row }">
-        <span v-if="row.payMethod === 'wechat'">微信</span>
-        <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
-        <span v-else-if="row.payMethod === 'bank'">银行卡</span>
-        <span v-else-if="row.payMethod === 'cash'">现金</span>
-        <span v-else>{{ row.payMethod || '-' }}</span>
-      </template>
-    </DrawerGrid>
-  </Drawer>
 </template>
 
-<style scoped lang="scss"> 
- 
+<style scoped lang="scss">
 .left-card {
   flex:1;
-  width: 330px; 
+  width: 330px;
 
   :deep(.stat-card) {
     flex:1;

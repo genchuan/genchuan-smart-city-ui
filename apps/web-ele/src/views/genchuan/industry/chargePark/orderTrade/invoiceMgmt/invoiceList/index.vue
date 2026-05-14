@@ -1,10 +1,29 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, reactive, computed } from 'vue';
 
 import Chart from './table/chart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
+
+const filterParams = reactive({
+  createTimeStart: null,
+  createTimeEnd: null,
+});
+
+const hasActiveFilters = computed(() => {
+  return filterParams.createTimeStart;
+});
+
+const handleFilterChange = (params) => {
+  filterParams.createTimeStart = params.createTimeStart || null;
+  filterParams.createTimeEnd = params.createTimeEnd || null;
+};
+
+const clearFilter = () => {
+  filterParams.createTimeStart = null;
+  filterParams.createTimeEnd = null;
+};
 
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
@@ -30,9 +49,20 @@ const tabArray = ref([
 const activeName = ref('发票列表');
 const secondShow = ref(false);
 </script>
+
 <template>
   <div class="common-index">
-    <Chart />
+    <Chart @filter-change="handleFilterChange" />
+    <div v-if="hasActiveFilters" class="filter-tags">
+      <el-tag
+        v-if="filterParams.createTimeStart"
+        closable
+        @close="clearFilter"
+        type="info"
+      >
+        日期: {{ filterParams.createTimeStart?.split(' ')[0] }}
+      </el-tag>
+    </div>
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -70,9 +100,19 @@ const secondShow = ref(false);
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
+          :filter-params="filterParams"
           @arrow-change="arrowChange"
         />
       </el-tab-pane>
     </el-tabs>
   </div>
 </template>
+
+<style scoped lang="scss">
+.filter-tags {
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+  height: auto;
+}
+</style>

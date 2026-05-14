@@ -1,28 +1,12 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue';
+import { onMounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
-import { ElTag } from 'element-plus';
 
-import { getInvoiceAuditChart, getInvoiceAuditPage } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
-import { useVbenDrawer } from '@vben/common-ui';
+import { getInvoiceAuditChart } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
 import Card from '#/components/stats/card.vue';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { formatTimestamp } from '#/utils';
 
-const statusMap = {
-  pending: { label: '待审核', type: 'warning' },
-  approved: { label: '已通过', type: 'success' },
-  rejected: { label: '已驳回', type: 'danger' },
-};
-
-const getStatusLabel = (status) => {
-  return statusMap[status]?.label || status;
-};
-
-const getStatusType = (status) => {
-  return statusMap[status]?.type || 'default';
-};
+const emit = defineEmits(['filter-change']);
 
 const state = reactive({
   cardList: [
@@ -32,115 +16,22 @@ const state = reactive({
   trendData: [],
 });
 
-const selectedStatus = ref(null);
-
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  footer: false,
-  width: '75%',
-  title: computed(() => {
-    let title = '发票审核列表';
-    if (selectedStatus.value) {
-      title = `${statusMap[selectedStatus.value]?.label || selectedStatus.value} ${title}`;
-    }
-    return title;
-  }),
-  class: 'genchuan-detail-drawer',
-  onCancel() {
-    drawerApi.close();
-  },
-});
-
-const drawerDataObj = reactive({
-  total: 0,
-  list: [],
-  loading: false,
-});
-
-const getDrawerTableData = async (pageObj) => {
-  const page = pageObj.page;
-  const params = {
-    pageNo: page.currentPage,
-    pageSize: page.pageSize,
-  };
-
-  if (selectedStatus.value) {
-    params.status = selectedStatus.value;
-  }
-
-  try {
-    drawerDataObj.loading = true;
-    const res = await getInvoiceAuditPage(params);
-    drawerDataObj.total = res.total;
-    drawerDataObj.list = res.list.map((v) => {
-      return {
-        ...v,
-        applyTime: formatTimestamp(v.applyTime),
-        auditTime: formatTimestamp(v.auditTime),
-        createTime: formatTimestamp(v.createTime),
-        updateTime: formatTimestamp(v.updateTime),
-      };
-    });
-    return drawerDataObj;
-  } catch (error) {
-    console.error('获取发票审核列表失败:', error);
-    return drawerDataObj;
-  } finally {
-    drawerDataObj.loading = false;
-  }
-};
-
+// 点击卡片事件
 const handleCardClick = (status) => {
-  selectedStatus.value = status;
-  drawerGridApi.query();
-  drawerApi.open();
+  emit('filter-change', {
+    status: status || null,
+  });
 };
 
+// 折线图点击事件处理
 const handleLineChartClick = (params) => {
-  console.log('折线图点击事件触发:', params);
   if (params && params.name) {
-    selectedStatus.value = null;
-    drawerGridApi.query();
-    drawerApi.open();
+    emit('filter-change', {
+      createTimeStart: params.name + ' 00:00:00',
+      createTimeEnd: params.name + ' 23:59:59',
+    });
   }
 };
-
-const [DrawerGrid, drawerGridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: [
-      { type: 'seq', width: 60 },
-      { field: 'invoiceNo', title: '关联发票编号', width: 180 },
-      { field: 'applicantName', title: '申请人名称', width: 140 },
-      { field: 'status', title: '状态', width: 120,
-        slots: { default: 'status' }
-      },
-      { field: 'auditorName', title: '审核人名称', width: 120 },
-      { field: 'auditResult', title: '审核结果', width: 200 },
-      { field: 'applyTime', title: '申请时间', width: 180 },
-      { field: 'auditTime', title: '审核时间', width: 180 },
-      { field: 'creator', title: '创建者', width: 100 },
-      { field: 'createTime', title: '创建时间', width: 180 },
-    ],
-    keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getDrawerTableData({ page }),
-      },
-    },
-    rowConfig: {
-      keyField: 'id',
-      isHover: true,
-    },
-    pagerConfig: drawerDataObj,
-    toolbarConfig: {
-      'class-name': 'common-tool-bar-config',
-      refresh: true,
-    },
-    showOverflow: true,
-  },
-  showSearchForm: false,
-});
 
 const lineChartRef = ref(null);
 let lineChartInstance = null;
@@ -275,22 +166,12 @@ onMounted(() => {
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
-
-  <Drawer>
-    <DrawerGrid>
-      <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
-          {{ getStatusLabel(row.status) }}
-        </el-tag>
-      </template>
-    </DrawerGrid>
-  </Drawer>
 </template>
-<style scoped lang="scss"> 
- 
+
+<style scoped lang="scss">
 .left-card {
   flex:1;
-  width: 330px; 
+  width: 330px;
 
   :deep(.stat-card) {
     flex:1;

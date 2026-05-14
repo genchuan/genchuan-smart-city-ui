@@ -1,10 +1,39 @@
 <script setup>
-import { ref } from 'vue';
+import { reactive, ref, computed } from 'vue';
 
 import Chart from './table/chart.vue';
 import Table from './table/index.vue';
 
 import '#/components/page/index.scss';
+
+const statusMap = {
+  pending: { label: '待对账', type: 'warning' },
+  reconciled: { label: '已对账', type: 'success' },
+  abnormal: { label: '异常', type: 'danger' },
+};
+
+const filterParams = reactive({
+  status: null,
+  billDateStart: null,
+  billDateEnd: null,
+});
+
+const hasActiveFilters = computed(() => {
+  return filterParams.status !== null || filterParams.billDateStart !== null;
+});
+
+const handleFilterChange = (params) => {
+  filterParams.status = null;
+  filterParams.billDateStart = null;
+  filterParams.billDateEnd = null;
+  Object.assign(filterParams, params);
+};
+
+const clearFilter = () => {
+  filterParams.status = null;
+  filterParams.billDateStart = null;
+  filterParams.billDateEnd = null;
+};
 
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
@@ -32,7 +61,15 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <Chart />
+    <Chart @filter-change="handleFilterChange" />
+    <div v-if="hasActiveFilters" class="filter-tags">
+      <el-tag v-if="filterParams.status" closable @close="clearFilter" type="warning">
+        状态: {{ statusMap[filterParams.status]?.label || filterParams.status }}
+      </el-tag>
+      <el-tag v-else-if="filterParams.billDateStart" closable @close="clearFilter" type="primary">
+        对账日期: {{ filterParams.billDateStart.split(' ')[0] }}
+      </el-tag>
+    </div>
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -70,6 +107,7 @@ const secondShow = ref(false);
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
+          :filter-params="filterParams"
           @arrow-change="arrowChange"
         />
       </el-tab-pane>

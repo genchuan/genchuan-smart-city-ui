@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
@@ -38,6 +38,15 @@ const props = defineProps({
   arrowState: {
     type: Boolean,
     default: false,
+  },
+  filterParams: {
+    type: Object,
+    default: () => ({
+      identifyTimeStart: null,
+      identifyTimeEnd: null,
+      abnormalType: null,
+      status: null,
+    }),
   },
 });
 const emit = defineEmits(['arrow-change']);
@@ -106,6 +115,16 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 function handleRefresh() {
   gridApi.query();
 }
+
+// 监听筛选参数变化
+watch(
+  () => props.filterParams,
+  () => {
+    dataObj.currentPage = 1;
+    gridApi.query();
+  },
+  { deep: true }
+);
 
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
@@ -193,6 +212,19 @@ const getTableData = async (pageObj) => {
     pageSize: page.pageSize,
     ...dataObj.searchObj,
   };
+
+  if (props.filterParams.identifyTimeStart) {
+    params.identifyTimeStart = props.filterParams.identifyTimeStart;
+  }
+  if (props.filterParams.identifyTimeEnd) {
+    params.identifyTimeEnd = props.filterParams.identifyTimeEnd;
+  }
+  if (props.filterParams.abnormalType) {
+    params.abnormalType = props.filterParams.abnormalType;
+  }
+  if (props.filterParams.status) {
+    params.status = props.filterParams.status;
+  }
 
   try {
     dataObj.loading = true;
