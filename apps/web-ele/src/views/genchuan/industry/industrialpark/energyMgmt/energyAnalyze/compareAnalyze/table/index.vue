@@ -30,14 +30,13 @@ const props = defineProps({
 });
 const emit = defineEmits(['arrow-change']);
 
-const arrowChange = () => {
-  emit('arrow-change');
-};
+const arrowChange = () => emit('arrow-change');
 
 const checkedIds = ref([]);
 const handleRowCheckboxChange = ({ records }) => {
   checkedIds.value = records.map((item) => item.id);
 };
+
 const dataObj = reactive({
   detailObj: {},
   problemObj: {},
@@ -48,7 +47,6 @@ const dataObj = reactive({
   pageSize: 10,
 });
 
-// 用户映射
 const userMap = ref(new Map());
 async function fetchUserMappings() {
   try {
@@ -60,13 +58,16 @@ async function fetchUserMappings() {
 }
 function getUserName(id) { return userMap.value.get(id) || id; }
 
-// 获取表格数据
 const getTableData = async (pageObj) => {
   const params = {
     pageNo: pageObj.page.currentPage,
     pageSize: pageObj.page.pageSize,
     ...dataObj.searchObj,
   };
+  // 将日期数组转为逗号分隔字符串
+  if (params.compareTime && Array.isArray(params.compareTime)) {
+    params.compareTime = params.compareTime.join(',');
+  }
   const res = await getCompareAnalyzePage(params);
   let list = res.list || [];
   dataObj.total = res.total;
@@ -78,7 +79,6 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-// 搜索表单
 const [QueryForm, QueryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
@@ -139,11 +139,13 @@ const activeFilters = computed(() => {
   const obj = dataObj.searchObj;
   if (obj.compareName) filters.push({ label: `对比名称：${obj.compareName}`, field: 'compareName' });
   if (obj.compareDim) filters.push({ label: `对比维度：${obj.compareDim}`, field: 'compareDim' });
-  if (obj.compareTime && obj.compareTime.length) filters.push({ label: `对比时间：${obj.compareTime[0]} 至 ${obj.compareTime[1]}`, field: 'compareTime' });
+  if (obj.compareTime && obj.compareTime.length) {
+    let timeStr = Array.isArray(obj.compareTime) ? obj.compareTime.join(' 至 ') : obj.compareTime;
+    filters.push({ label: `对比时间：${timeStr}`, field: 'compareTime' });
+  }
   return filters;
 });
 
-// 表格组件
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns({ getUserName, showCompareDetail, showProblemDetail, showUserDetail, filterByDim: (dim) => { dataObj.searchObj.compareDim = dim; gridApi.query(); } }),
@@ -170,7 +172,6 @@ function handleRefresh() {
   window.dispatchEvent(new CustomEvent('compare-stats-refresh'));
 }
 
-// 选择对比（右侧抽屉）
 const selectDrawerRef = ref(null);
 const selectForm = reactive({ dim: '', timeRange: '', targets: [] });
 const openSelectDrawer = () => {
@@ -190,7 +191,6 @@ const saveSelectConfig = async () => {
   handleRefresh();
 };
 
-// 批量对比、研判、定位
 async function handleBatchCompare() {
   if (isEmpty(checkedIds.value)) return ElMessage.warning('请至少选择一个对比任务');
   await compareAnalyze({ ids: checkedIds.value });
@@ -216,27 +216,26 @@ async function handleExportSelected() {
   ElMessage.success('导出成功');
 }
 
-// 详情抽屉
 const detailDrawerRef = ref(null);
 async function showCompareDetail(id) {
   const res = await getCompareAnalyzeDetail(id);
   dataObj.detailObj = res;
   detailDrawerRef.value.open();
 }
-// 问题定位详情抽屉
+
 const problemDrawerRef = ref(null);
 function showProblemDetail(problemInfo) {
   dataObj.problemObj = { problem: problemInfo };
   problemDrawerRef.value.open();
 }
-// 用户详情
+
 const userDetailDrawerRef = ref(null);
 async function showUserDetail(userId) {
   if (!userId) return ElMessage.warning('用户ID不存在');
   const userDetail = await getUserDetail(userId);
   userDetailDrawerRef.value?.open(userDetail);
 }
-// 优化抽屉
+
 const optimizeForm = reactive({ optimizePlan: '' });
 let currentOptimizeId = null;
 const [OptimizeDrawer, optimizeDrawerApi] = useVbenDrawer({
@@ -255,7 +254,6 @@ const openOptimize = (row) => {
   optimizeDrawerApi.open();
 };
 
-// 行操作包装
 const handleRowCompare = (row) => compareAnalyze({ ids: [row.id] }).then(() => handleRefresh());
 const handleRowJudge = (row) => judgeCompareAnalyze({ ids: [row.id] }).then(() => handleRefresh());
 const handleRowLocate = (row) => locateCompareAnalyze({ ids: [row.id] }).then(() => handleRefresh());
@@ -265,7 +263,6 @@ const handleRowExport = async (row) => {
   downloadFileFromBlobPart({ fileName: `对比_${row.id}.xls`, source: data });
 };
 
-// 图表钻取事件
 const handleChartRefresh = (event) => {
   const filters = event.detail;
   if (!filters) {
@@ -281,7 +278,6 @@ const handleChartRefresh = (event) => {
   }
 };
 
-// 筛选维度点击
 const filterByDim = (dim) => {
   dataObj.searchObj.compareDim = dim;
   dataObj.currentPage = 1;
@@ -303,7 +299,6 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
   modal: false, appendToMain: true, footer: false, width: 500,
 });
 
-// 选择对比抽屉组件
 const [SelectDrawer, selectDrawerApi] = useVbenDrawer({
   modal: false, appendToMain: true, width: 500, title: '选择对比配置',
   onConfirm: saveSelectConfig,
@@ -338,7 +333,6 @@ const [SelectDrawer, selectDrawerApi] = useVbenDrawer({
         </div>
       </template>
 
-      <!-- 自定义列模板 -->
       <template #id="{ row }">
         <el-text @click="showCompareDetail(row.id)" type="primary">{{ row.id }}</el-text>
       </template>
@@ -360,16 +354,23 @@ const [SelectDrawer, selectDrawerApi] = useVbenDrawer({
         <span v-else>-</span>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="选择" icon-name="Setting" @click="openSelectDrawer" />
-          <IconButton content="对比" icon-name="DataAnalysis" @click="handleRowCompare(row)" />
-          <IconButton content="研判" icon-name="TrendCharts" @click="handleRowJudge(row)" />
-          <IconButton content="定位" icon-name="Location" @click="handleRowLocate(row)" />
-          <IconButton content="导出" icon-name="download" @click="handleRowExport(row)" />
-          <IconButton content="查看" icon-name="View" @click="showCompareDetail(row.id)" />
-          <IconButton content="优化" icon-name="Edit" @click="openOptimize(row)" />
+          <!-- 同比/环比只显示查看、导出、优化 -->
+          <template v-if="row.compareDim === '同比' || row.compareDim === '环比'">
+            <IconButton content="查看" icon-name="View" @click="showCompareDetail(row.id)" />
+            <IconButton content="导出" icon-name="download" @click="handleRowExport(row)" />
+            <IconButton content="优化" icon-name="Edit" @click="openOptimize(row)" />
+          </template>
+          <template v-else>
+            <IconButton content="选择" icon-name="Setting" @click="openSelectDrawer" />
+            <IconButton content="对比" icon-name="DataAnalysis" @click="handleRowCompare(row)" />
+            <IconButton content="研判" icon-name="TrendCharts" @click="handleRowJudge(row)" />
+            <IconButton content="定位" icon-name="Location" @click="handleRowLocate(row)" />
+            <IconButton content="导出" icon-name="download" @click="handleRowExport(row)" />
+            <IconButton content="查看" icon-name="View" @click="showCompareDetail(row.id)" />
+            <IconButton content="优化" icon-name="Edit" @click="openOptimize(row)" />
+          </template>
         </div>
       </template>
     </Grid>

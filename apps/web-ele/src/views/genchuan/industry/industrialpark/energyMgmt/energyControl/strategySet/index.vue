@@ -1,9 +1,10 @@
-<!-- ==================== 外部 index.vue ==================== -->
+<!-- 外部 index.vue -->
+<!-- 路径: src/views/genchuan/industry/industrialPark/energyMgmt/energyControl/strategySet/index.vue -->
 <script setup>
 import { ref } from 'vue';
-import EnergyAlarmTable from './table/index.vue';
+import StrategySetTable from './table/index.vue';
 import '#/components/page/index.scss';
-import EnergyAlarmChart from './table/chart.vue';
+import StrategySetChart from './table/chart.vue';
 
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
@@ -14,15 +15,15 @@ const changeArrowStatus = () => {
 
 const tabArray = ref([
   {
-    label: '异常预警',
-    components: EnergyAlarmTable,
+    label: '策略配置',
+    components: StrategySetTable,
     showSecondary: true,
     secondShow: false,
     arrowShow: true,
   },
 ]);
 
-const activeName = ref('异常预警');
+const activeName = ref('策略配置');
 const secondShow = ref(false);
 
 const tabChange = () => {};
@@ -34,13 +35,13 @@ const arrowChange = () => {
 };
 
 const handleChartRefresh = (filters) => {
-  window.dispatchEvent(new CustomEvent('alarm-chart-refresh', { detail: filters }));
+  window.dispatchEvent(new CustomEvent('strategy-chart-refresh', { detail: filters }));
 };
 </script>
 
 <template>
   <div class="common-index">
-    <EnergyAlarmChart v-if="tabArray[0].arrowShow" @refresh="handleChartRefresh" />
+    <StrategySetChart v-if="tabArray[0].arrowShow" @refresh="handleChartRefresh" />
     <div class="icon-change">
       <el-icon class="tabel-tab-icon" v-if="secondShow" @click="changeArrowStatus"><ArrowDown /></el-icon>
       <el-icon class="tabel-tab-icon" v-if="!secondShow" @click="changeArrowStatus"><ArrowUp /></el-icon>

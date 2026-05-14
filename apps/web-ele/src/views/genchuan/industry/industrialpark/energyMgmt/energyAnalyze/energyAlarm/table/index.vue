@@ -1,28 +1,27 @@
-<!-- 内部 index.vue - 分区能耗监测表格及交互 -->
+<!-- ==================== 内部 index.vue（核心修改） ==================== -->
 <script setup>
-import { reactive, ref, onMounted, onUnmounted, onActivated, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { reactive, ref, onMounted, onUnmounted, computed } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { isEmpty } from '@vben/utils';
 import { ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { formatTimestamp } from '#/utils';
 import {
-  getAreaMonitorPage,
-  createAreaMonitor,
-  statAreaMonitor,
-  analyzeAreaMonitor,
-  alarmAreaMonitor,
-  exportAreaMonitorExcel,
-  getAreaMonitorDetail,
-  compareAreaMonitor,
-  checkAreaMonitor,
-  optimizeAreaMonitor,
+  getEnergyAlarmPage,
+  createEnergyAlarm,
+  monitorEnergyAlarm,
+  triggerEnergyAlarm,
+  handleEnergyAlarm,
+  rectifyEnergyAlarm,
+  updateEnergyAlarm,
+  ignoreEnergyAlarm,
+  getEnergyAlarmDetail,
+  getAreaDetailById,
+  getHandleResultDetail,
   getUserDetail,
-  getDeviceListByArea,
-} from '#/api/genchuan/industry/industrialpark/energyMgmt/energyMonitor/areaMonitor/index.js';
+} from '#/api/genchuan/industry/industrialpark/energyMgmt/energyAnalyze/energyAlarm/index.js';
 import { useFormSchema, useGridColumns } from './data';
 import AreaDetailDrawer from './detail.vue';
 import UserDetailDrawer from '#/views/genchuan/industry/chargePark/carService/carGuide/nearStation/table/userDetail.vue';
@@ -32,15 +31,11 @@ const props = defineProps({
   arrowShow: { type: Boolean, default: false },
 });
 const emit = defineEmits(['arrow-change']);
-
-const arrowChange = () => {
-  emit('arrow-change');
-};
+const arrowChange = () => emit('arrow-change');
 
 const checkedIds = ref([]);
-const handleRowCheckboxChange = ({ records }) => {
-  checkedIds.value = records.map((item) => item.id);
-};
+const handleRowCheckboxChange = ({ records }) => { checkedIds.value = records.map(item => item.id); };
+
 const dataObj = reactive({
   detailObj: {},
   total: 0,
@@ -52,17 +47,12 @@ const dataObj = reactive({
 
 // 用户映射
 const userMap = ref(new Map());
-
 async function fetchUserMappings() {
   try {
-    // 实际项目中可能需要批量获取用户列表，这里简化处理
     const users = [{ userId: 'admin', userName: '管理员' }, { userId: 'energy_operator', userName: '能耗操作员' }, { userId: 'maintainer', userName: '维护工程师' }];
     users.forEach(user => userMap.value.set(user.userId, user.userName));
-  } catch (error) {
-    console.error('获取用户数据失败', error);
-  }
+  } catch (error) { console.error('获取用户数据失败', error); }
 }
-
 function getUserName(id) { return userMap.value.get(id) || id; }
 
 // 获取表格数据
@@ -72,11 +62,11 @@ const getTableData = async (pageObj) => {
     pageSize: pageObj.page.pageSize,
     ...dataObj.searchObj,
   };
-  const res = await getAreaMonitorPage(params);
-  let list = res.list || [];
+  const res = await getEnergyAlarmPage(params);
   dataObj.total = res.total;
-  dataObj.list = list.map(v => ({
+  dataObj.list = (res.list || []).map(v => ({
     ...v,
+    triggerTime: formatTimestamp(v.triggerTime),
     createTime: formatTimestamp(v.createTime),
     updateTime: formatTimestamp(v.updateTime),
   }));
@@ -86,28 +76,13 @@ const getTableData = async (pageObj) => {
 // 搜索表单
 const [QueryForm, QueryFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {
-    componentProps: { class: 'w-full' },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useFormSchema()
-    .filter(v => v.isSearch)
-    .map(v => {
-      delete v.rules;
-      return v;
-    }),
+  schema: useFormSchema().filter(v => v.isSearch).map(v => { delete v.rules; return v; }),
   showCollapseButton: true,
   submitButtonOptions: { content: '查询' },
-  resetButtonOptions: {
-    content: '重置',
-    onClick: () => {
-      QueryFormApi.resetForm();
-      QueryFormApi.submitForm();
-    }
-  },
+  resetButtonOptions: { content: '重置', onClick: () => { QueryFormApi.resetForm(); QueryFormApi.submitForm(); } },
 });
 
 const resetAllFilters = async () => {
@@ -118,9 +93,8 @@ const resetAllFilters = async () => {
 };
 
 async function onSubmit(values, isReset = false) {
-  if (isReset) {
-    await resetAllFilters();
-  } else {
+  if (isReset) await resetAllFilters();
+  else {
     dataObj.searchObj = { ...values };
     dataObj.currentPage = 1;
     gridApi.query();
@@ -132,9 +106,11 @@ const handleClearField = async (fieldName) => {
   const newSearchObj = { ...dataObj.searchObj };
   delete newSearchObj[fieldName];
   dataObj.searchObj = newSearchObj;
-  const currentFormValues = await QueryFormApi.getValues();
-  delete currentFormValues[fieldName];
-  await QueryFormApi.setValues(currentFormValues, false);
+  if (fieldName === 'alarmName' || fieldName === 'alarmType' || fieldName === 'alarmStatus' || fieldName === 'handleResult') {
+    const currentFormValues = await QueryFormApi.getValues();
+    delete currentFormValues[fieldName];
+    await QueryFormApi.setValues(currentFormValues, false);
+  }
   dataObj.currentPage = 1;
   gridApi.query();
 };
@@ -142,229 +118,195 @@ const handleClearField = async (fieldName) => {
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchObj;
-  if (obj.areaName) filters.push({ label: `区域名称：${obj.areaName}`, field: 'areaName' });
-  if (obj.energyStatus) filters.push({ label: `能耗状态：${obj.energyStatus}`, field: 'energyStatus' });
+  if (obj.alarmName) filters.push({ label: `预警名称：${obj.alarmName}`, field: 'alarmName' });
+  if (obj.alarmType) filters.push({ label: `预警类型：${obj.alarmType}`, field: 'alarmType' });
+  if (obj.alarmStatus) filters.push({ label: `预警状态：${obj.alarmStatus}`, field: 'alarmStatus' });
+  if (obj.handleResult) filters.push({ label: `处置结果：${obj.handleResult}`, field: 'handleResult' });
   return filters;
 });
 
 // 表格组件
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
-    columns: useGridColumns({ getUserName, showAreaDetail, showDeviceList, showUserDetail }),
+    columns: useGridColumns({ getUserName, showAlarmDetail, showAreaDetail, showHandleResultDetail, showUserDetail }),
     keepSource: true,
-    proxyConfig: {
-      ajax: {
-        query: async ({ page }) => getTableData({ page }),
-      },
-    },
+    proxyConfig: { ajax: { query: async ({ page }) => getTableData({ page }) } },
     rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
     toolbarConfig: { refresh: true, search: true },
     showOverflow: true,
   },
-  gridEvents: {
-    checkboxAll: handleRowCheckboxChange,
-    checkboxChange: handleRowCheckboxChange,
-  },
+  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
   showSearchForm: false,
 });
 
 function handleRefresh() {
   gridApi.query();
-  window.dispatchEvent(new CustomEvent('area-stats-refresh'));
+  window.dispatchEvent(new CustomEvent('alarm-stats-refresh'));
 }
 
-async function handleExport() {
-  await confirm('确认导出选中区域数据吗？');
-  const data = await exportAreaMonitorExcel(dataObj.searchObj);
-  downloadFileFromBlobPart({ fileName: '分区能耗监测数据.xls', source: data });
+// 预警详情抽屉（使用 api 控制）
+const currentAlarmDetail = ref({});
+const [AlarmDetailDrawer, alarmDetailDrawerApi] = useVbenDrawer({
+  modal: false, appendToMain: true, footer: false, width: 650,
+  title: '预警详情',
+  onCancel: () => alarmDetailDrawerApi.close(),
+});
+async function showAlarmDetail(id) {
+  const res = await getEnergyAlarmDetail({ id });
+  currentAlarmDetail.value = res;
+  alarmDetailDrawerApi.open();
 }
 
-// 详情抽屉
-const detailDrawerRef = ref(null);
+// 关联区域详情（使用 ref 组件）
+const areaDetailDrawerRef = ref(null);
 async function showAreaDetail(areaId) {
-  const res = await getAreaMonitorDetail({ id: areaId });
-  dataObj.detailObj = res;
-  detailDrawerRef.value.open();
+  const res = await getAreaDetailById(areaId);
+  areaDetailDrawerRef.value.open(res);
 }
 
-// 设备列表抽屉
-const deviceListDrawerRef = ref(null);
-const deviceListData = ref([]);
-async function showDeviceList(areaId, areaName) {
-  const res = await getDeviceListByArea(areaId);
-  deviceListData.value = res.list || [];
-  deviceListDrawerRef.value?.open();
+// 处置详情抽屉（使用 api 控制）
+const handleResultDetail = ref({});
+const [HandleResultDrawer, handleResultDrawerApi] = useVbenDrawer({
+  modal: false, appendToMain: true, footer: false, width: 550,
+  title: '处置详情',
+  onCancel: () => handleResultDrawerApi.close(),
+});
+async function showHandleResultDetail(alarmId) {
+  const res = await getHandleResultDetail(alarmId);
+  handleResultDetail.value = res;
+  handleResultDrawerApi.open();
 }
 
-// 用户详情抽屉
+// 用户详情（使用 ref 组件）
 const userDetailDrawerRef = ref(null);
 async function showUserDetail(userId) {
   if (!userId) return ElMessage.warning('用户ID不存在');
   try {
     const userDetail = await getUserDetail(userId);
     userDetailDrawerRef.value?.open(userDetail);
-  } catch (error) {
-    console.error('获取用户详情失败', error);
-    ElMessage.error('获取用户详情失败');
-  }
+  } catch (error) { ElMessage.error('获取用户详情失败'); }
 }
 
 // 批量操作
-async function handleBatchStat() {
-  if (isEmpty(checkedIds.value)) return ElMessage.warning('请至少选择一个区域');
-  await statAreaMonitor({ ids: checkedIds.value });
-  ElMessage.success('能耗统计已触发');
+async function handleBatchMonitor() {
+  if (isEmpty(checkedIds.value)) return ElMessage.warning('请至少选择一个预警规则');
+  await monitorEnergyAlarm({ ids: checkedIds.value });
+  ElMessage.success('监测已开启');
+  handleRefresh();
+}
+async function handleBatchTrigger() {
+  if (isEmpty(checkedIds.value)) return ElMessage.warning('请至少选择一个预警规则');
+  await triggerEnergyAlarm({ ids: checkedIds.value });
+  ElMessage.success('预警已触发');
+  handleRefresh();
+}
+async function handleBatchHandle() {
+  if (isEmpty(checkedIds.value)) return ElMessage.warning('请至少选择一个预警记录');
+  await handleEnergyAlarm({ ids: checkedIds.value });
+  ElMessage.success('处置完成');
   handleRefresh();
 }
 
-async function handleBatchAnalyze() {
-  if (isEmpty(checkedIds.value)) return ElMessage.warning('请至少选择一个区域');
-  await analyzeAreaMonitor({ ids: checkedIds.value });
-  ElMessage.success('对比分析已触发');
-  handleRefresh();
-}
-
-async function handleBatchAlarm() {
-  if (isEmpty(checkedIds.value)) return ElMessage.warning('请至少选择一个区域');
-  await alarmAreaMonitor({ ids: checkedIds.value });
-  ElMessage.success('能耗预警已开启');
-  handleRefresh();
-}
-
-// 新增区域划分抽屉
-const createForm = reactive({ areaName: '', areaSize: null });
-const createFormRef = ref(null);
-const createRules = {
-  areaName: [{ required: true, message: '请输入区域名称', trigger: 'blur' }],
-  areaSize: [{ required: true, message: '请输入区域面积', trigger: 'blur' }],
-};
-
-const [CreateDrawer, createDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  width: 500,
-  title: '划分能耗监测区域',
-  onCancel: () => createDrawerApi.close(),
+const rectifyForm = reactive({ rectifyPlan: '' });
+let currentRectifyIds = [];
+const [RectifyDrawer, rectifyDrawerApi] = useVbenDrawer({
+  modal: false, appendToMain: true, width: 500, title: '整改方案',
+  onCancel: () => rectifyDrawerApi.close(),
   onConfirm: async () => {
-    let valid = false;
-    try {
-      valid = await createFormRef.value?.validate();
-    } catch {
-      ElMessage.warning('请填写所有必填字段');
-      return;
-    }
-    if (valid === false) {
-      ElMessage.warning('请填写所有必填字段');
-      return;
-    }
-    try {
-      await createAreaMonitor({ areaName: createForm.areaName, areaSize: createForm.areaSize });
-      ElMessage.success('区域划分成功');
-      createDrawerApi.close();
-      handleRefresh();
-    } catch (err) {
-      console.error('划分失败', err);
-      ElMessage.error('划分失败：' + (err?.msg || err?.message));
-    }
-  },
-});
-
-const openCreate = () => {
-  createForm.areaName = '';
-  createForm.areaSize = null;
-  createDrawerApi.open();
-};
-
-// 对比弹窗
-const compareData = ref({});
-const compareDialogVisible = ref(false);
-async function handleCompare(row) {
-  const res = await compareAreaMonitor({ id: row.id });
-  compareData.value = res;
-  compareDialogVisible.value = true;
-}
-
-// 排查
-async function handleCheck(row) {
-  await confirm('确认排查该区域能耗异常吗？');
-  await checkAreaMonitor(row.id);
-  ElMessage.success('排查任务已启动');
-  handleRefresh();
-}
-
-// 优化抽屉
-const optimizeForm = reactive({ optimizePlan: '' });
-let currentOptimizeRow = null;
-const [OptimizeDrawer, optimizeDrawerApi] = useVbenDrawer({
-  modal: false,
-  appendToMain: true,
-  width: 500,
-  title: '能耗优化方案',
-  onCancel: () => optimizeDrawerApi.close(),
-  onConfirm: async () => {
-    if (!optimizeForm.optimizePlan) return ElMessage.warning('请填写优化方案');
-    await optimizeAreaMonitor({ id: currentOptimizeRow.id, optimizePlan: optimizeForm.optimizePlan });
-    ElMessage.success('优化方案已提交');
-    optimizeDrawerApi.close();
+    if (!rectifyForm.rectifyPlan) return ElMessage.warning('请填写整改方案');
+    await rectifyEnergyAlarm({ ids: currentRectifyIds, rectifyPlan: rectifyForm.rectifyPlan });
+    ElMessage.success('整改流程已发起');
+    rectifyDrawerApi.close();
     handleRefresh();
   },
 });
+async function handleBatchRectify() {
+  if (isEmpty(checkedIds.value)) return ElMessage.warning('请至少选择一个预警记录');
+  currentRectifyIds = checkedIds.value;
+  rectifyForm.rectifyPlan = '';
+  rectifyDrawerApi.open();
+}
 
-const openOptimize = (row) => {
-  currentOptimizeRow = row;
-  optimizeForm.optimizePlan = '';
-  optimizeDrawerApi.open();
+// 配置预警阈值
+const configForm = reactive({ alarmName: '', alarmType: '', areaId: null, alarmThreshold: null });
+const configFormRef = ref(null);
+const configRules = {
+  alarmName: [{ required: true, message: '请输入预警名称', trigger: 'blur' }],
+  alarmType: [{ required: true, message: '请选择预警类型', trigger: 'change' }],
+  areaId: [{ required: true, message: '请输入关联区域ID', trigger: 'blur' }],
+  alarmThreshold: [{ required: true, message: '请输入预警阈值', trigger: 'blur' }],
+};
+const [ConfigDrawer, configDrawerApi] = useVbenDrawer({
+  modal: false, appendToMain: true, width: 500, title: '配置预警阈值',
+  onCancel: () => configDrawerApi.close(),
+  onConfirm: async () => {
+    let valid = false;
+    try { valid = await configFormRef.value?.validate(); } catch { ElMessage.warning('请填写所有必填字段'); return; }
+    if (valid === false) { ElMessage.warning('请填写所有必填字段'); return; }
+    await createEnergyAlarm(configForm);
+    ElMessage.success('预警配置保存成功');
+    configDrawerApi.close();
+    handleRefresh();
+  },
+});
+const openConfig = () => {
+  configForm.alarmName = '';
+  configForm.alarmType = '';
+  configForm.areaId = null;
+  configForm.alarmThreshold = null;
+  configDrawerApi.open();
 };
 
-// 图表刷新事件（处理图表区域的钻取交互）
+// 调整阈值
+let currentAdjustRow = null;
+const adjustForm = reactive({ alarmName: '', alarmThreshold: null });
+const [AdjustDrawer, adjustDrawerApi] = useVbenDrawer({
+  modal: false, appendToMain: true, width: 500, title: '调整预警配置',
+  onCancel: () => adjustDrawerApi.close(),
+  onConfirm: async () => {
+    if (!adjustForm.alarmName || adjustForm.alarmThreshold === null) return ElMessage.warning('请填写完整');
+    await updateEnergyAlarm({ id: currentAdjustRow.id, alarmName: adjustForm.alarmName, alarmThreshold: adjustForm.alarmThreshold });
+    ElMessage.success('调整成功');
+    adjustDrawerApi.close();
+    handleRefresh();
+  },
+});
+const openAdjust = (row) => {
+  currentAdjustRow = row;
+  adjustForm.alarmName = row.alarmName;
+  adjustForm.alarmThreshold = row.alarmThreshold;
+  adjustDrawerApi.open();
+};
+
+// 忽略预警
+async function handleIgnore(row) {
+  await confirm('确认忽略该预警吗？忽略后将标记为无需处理。');
+  await ignoreEnergyAlarm({ id: row.id });
+  ElMessage.success('已忽略');
+  handleRefresh();
+}
+
+// 图表钻取事件
 const handleChartRefresh = (event) => {
   const filters = event.detail;
-  if (!filters) {
-    // 清空所有筛选
+  if (!filters || Object.keys(filters).length === 0) {
     dataObj.searchObj = {};
     dataObj.currentPage = 1;
     gridApi.query();
     return;
   }
-
-  // 处理地图标记点击：打开区域详情抽屉
-  if (filters.areaId) {
-    showAreaDetail(filters.areaId);
-    return;
-  }
-
-  // 处理柱状图点击：按区域名称筛选
-  if (filters.areaName) {
-    dataObj.searchObj = { areaName: filters.areaName };
-    dataObj.currentPage = 1;
-    gridApi.query();
-    return;
-  }
-
-  // 处理卡片点击：按能耗状态筛选
-  if (filters.energyStatus) {
-    dataObj.searchObj = { energyStatus: filters.energyStatus };
-    dataObj.currentPage = 1;
-    gridApi.query();
-    return;
-  }
-
-  // 其他情况清空筛选
-  dataObj.searchObj = {};
+  dataObj.searchObj = { ...dataObj.searchObj, ...filters };
   dataObj.currentPage = 1;
   gridApi.query();
 };
 
-const route = useRoute();
 onMounted(() => {
   fetchUserMappings();
-  window.addEventListener('area-chart-refresh', handleChartRefresh);
+  window.addEventListener('alarm-chart-refresh', handleChartRefresh);
 });
-
-onActivated(() => {});
 onUnmounted(() => {
-  window.removeEventListener('area-chart-refresh', handleChartRefresh);
+  window.removeEventListener('alarm-chart-refresh', handleChartRefresh);
 });
 
 const handleSerachShow = () => searchDrawerApi.open();
@@ -373,13 +315,6 @@ const handleFullShow = () => screenfull.toggle();
 const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
   modal: false, appendToMain: true, footer: false, width: 500,
   onCancel: () => searchDrawerApi.close(),
-});
-
-// 设备列表抽屉组件
-const [DeviceListDrawer, deviceListDrawerApi] = useVbenDrawer({
-  modal: false, appendToMain: true, footer: false, width: 600,
-  title: '关联设备列表',
-  onCancel: () => deviceListDrawerApi.close(),
 });
 </script>
 
@@ -393,122 +328,103 @@ const [DeviceListDrawer, deviceListDrawerApi] = useVbenDrawer({
           </el-tag>
         </div>
       </template>
-
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="划分" icon-name="Plus" @click="openCreate" />
-          <IconButton content="统计" icon-name="DataAnalysis" :disabled="isEmpty(checkedIds)" @click="handleBatchStat" />
-          <IconButton content="分析" icon-name="PieChart" :disabled="isEmpty(checkedIds)" @click="handleBatchAnalyze" />
-          <IconButton content="预警" icon-name="Warning" :disabled="isEmpty(checkedIds)" @click="handleBatchAlarm" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
-          <IconButton
-            :content="props.arrowShow ? '展开' : '收缩'"
-            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
-            @click="arrowChange"
-          />
+          <IconButton content="配置" icon-name="Plus" @click="openConfig" />
+          <IconButton content="监测" icon-name="DataAnalysis" :disabled="isEmpty(checkedIds)" @click="handleBatchMonitor" />
+          <IconButton content="触发" icon-name="Warning" :disabled="isEmpty(checkedIds)" @click="handleBatchTrigger" />
+          <IconButton content="处置" icon-name="Edit" :disabled="isEmpty(checkedIds)" @click="handleBatchHandle" />
+          <IconButton content="整改" icon-name="Refresh" :disabled="isEmpty(checkedIds)" @click="handleBatchRectify" />
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
+          <IconButton content="刷新" icon-name="refresh" @click="handleRefresh" />
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
 
       <!-- 自定义列模板 -->
-      <template #id="{ row }">
-        <el-text @click="showAreaDetail(row.id)" type="primary">{{ row.id }}</el-text>
-      </template>
-      <template #area_name="{ row }">
-        <el-text @click="showAreaDetail(row.id)" type="primary" style="cursor: pointer">{{ row.areaName }}</el-text>
-      </template>
-      <template #energy_status="{ row }">
-        <el-tag :type="{ '正常能耗': 'success', '能耗异常': 'danger' }[row.energyStatus]" @click="handleClearField('energyStatus')" style="cursor: pointer">
-          {{ row.energyStatus }}
+      <template #id="{ row }"><el-text @click="showAlarmDetail(row.id)" type="primary">{{ row.id }}</el-text></template>
+      <template #alarm_name="{ row }"><el-text @click="showAlarmDetail(row.id)" type="primary" style="cursor: pointer">{{ row.alarmName }}</el-text></template>
+      <template #alarm_type="{ row }"><el-tag @click="handleClearField('alarmType'); dataObj.searchObj.alarmType = row.alarmType; gridApi.query()" style="cursor: pointer">{{ row.alarmType }}</el-tag></template>
+      <template #area_name="{ row }"><el-text @click="showAreaDetail(row.areaId)" type="primary" style="cursor: pointer">{{ row.areaName || '-' }}</el-text></template>
+      <template #alarm_status="{ row }"><el-tag :type="row.alarmStatus === '异常预警' ? 'danger' : 'success'" @click="handleClearField('alarmStatus'); dataObj.searchObj.alarmStatus = row.alarmStatus; gridApi.query()" style="cursor: pointer">{{ row.alarmStatus }}</el-tag></template>
+      <template #handle_result="{ row }">
+        <el-tag
+          v-if="row.handleResult"
+          :type="row.handleResult === '已处置' ? 'success' : (row.handleResult === '未处置' ? 'warning' : 'info')"
+          @click="showHandleResultDetail(row.id)"
+          style="cursor: pointer"
+        >
+          {{ row.handleResult }}
         </el-tag>
-      </template>
-      <template #device_count="{ row }">
-        <el-text @click="showDeviceList(row.id, row.areaName)" type="primary" style="cursor: pointer">{{ row.deviceCount }}</el-text>
-      </template>
-      <template #yoy_change="{ row }">
-        <span :style="{ color: row.yoyChange >= 0 ? '#F56C6C' : '#67C23A' }">{{ row.yoyChange >= 0 ? '+' : '' }}{{ row.yoyChange }}%</span>
-      </template>
-      <template #mom_change="{ row }">
-        <span :style="{ color: row.momChange >= 0 ? '#F56C6C' : '#67C23A' }">{{ row.momChange >= 0 ? '+' : '' }}{{ row.momChange }}%</span>
-      </template>
-      <template #handle_user="{ row }">
-        <el-text v-if="row.handleUser" @click="showUserDetail(row.handleUser)" type="primary" style="cursor: pointer">
-          {{ getUserName(row.handleUser) }}
-        </el-text>
         <span v-else>-</span>
       </template>
+      <template #handle_user="{ row }"><el-text v-if="row.handleUser" @click="showUserDetail(row.handleUser)" type="primary" style="cursor: pointer">{{ getUserName(row.handleUser) }}</el-text><span v-else>-</span></template>
 
-      <!-- 操作按钮：根据能耗状态显示不同按钮 -->
+      <!-- 行内操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <template v-if="row.energyStatus === '正常能耗'">
-            <IconButton content="查看" icon-name="View" @click="showAreaDetail(row.id)" />
-            <IconButton content="对比" icon-name="DataLine" @click="handleCompare(row)" />
-            <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <template v-if="row.alarmStatus === '正常监测'">
+            <IconButton content="调整" icon-name="Edit" @click="openAdjust(row)" />
+            <IconButton content="查看" icon-name="View" @click="showAlarmDetail(row.id)" />
           </template>
           <template v-else>
-            <IconButton content="预警" icon-name="Warning" @click="handleBatchAlarm" />
-            <IconButton content="排查" icon-name="Search" @click="handleCheck(row)" />
-            <IconButton content="优化" icon-name="Edit" @click="openOptimize(row)" />
+            <IconButton content="处置" icon-name="Setting" @click="async () => { await handleEnergyAlarm({ ids: [row.id] }); handleRefresh(); }" />
+            <IconButton content="整改" icon-name="Refresh" @click="async () => { currentRectifyIds = [row.id]; rectifyForm.rectifyPlan = ''; rectifyDrawerApi.open(); }" />
+            <IconButton content="忽略" icon-name="Close" @click="handleIgnore(row)" />
           </template>
         </div>
       </template>
     </Grid>
 
-    <SearchDrawer title="搜索">
-      <QueryForm class="query-form" />
-    </SearchDrawer>
-
-    <AreaDetailDrawer ref="detailDrawerRef" :detail-obj="dataObj.detailObj" title="区域详情" />
+    <SearchDrawer title="搜索"><QueryForm class="query-form" /></SearchDrawer>
+    <AreaDetailDrawer ref="areaDetailDrawerRef" :detail-obj="{}" title="区域详情" />
     <UserDetailDrawer ref="userDetailDrawerRef" />
 
-    <!-- 新增区域划分抽屉 -->
-    <CreateDrawer>
-      <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-width="100px">
-        <el-form-item label="区域名称" prop="areaName">
-          <el-input v-model="createForm.areaName" placeholder="请输入区域名称" />
-        </el-form-item>
-        <el-form-item label="区域面积(㎡)" prop="areaSize">
-          <el-input-number v-model="createForm.areaSize" :min="1" :precision="0" style="width: 100%" />
-        </el-form-item>
+    <ConfigDrawer>
+      <el-form ref="configFormRef" :model="configForm" :rules="configRules" label-width="100px">
+        <el-form-item label="预警名称" prop="alarmName"><el-input v-model="configForm.alarmName" placeholder="请输入预警名称" /></el-form-item>
+        <el-form-item label="预警类型" prop="alarmType"><el-select v-model="configForm.alarmType" placeholder="请选择"><el-option label="过载" value="过载" /><el-option label="超阈值" value="超阈值" /></el-select></el-form-item>
+        <el-form-item label="关联区域ID" prop="areaId"><el-input-number v-model="configForm.areaId" :min="1" style="width:100%" /></el-form-item>
+        <el-form-item label="预警阈值(kWh)" prop="alarmThreshold"><el-input-number v-model="configForm.alarmThreshold" :min="0" :precision="2" style="width:100%" /></el-form-item>
       </el-form>
-    </CreateDrawer>
+    </ConfigDrawer>
 
-    <!-- 优化方案抽屉 -->
-    <OptimizeDrawer>
-      <el-form :model="optimizeForm" label-width="100px">
-        <el-form-item label="优化方案" required>
-          <el-input v-model="optimizeForm.optimizePlan" type="textarea" rows="4" placeholder="请输入能耗优化方案，如：调整空调温度、关闭非工作时段照明等" />
-        </el-form-item>
+    <AdjustDrawer>
+      <el-form :model="adjustForm" label-width="100px">
+        <el-form-item label="预警名称"><el-input v-model="adjustForm.alarmName" /></el-form-item>
+        <el-form-item label="预警阈值(kWh)"><el-input-number v-model="adjustForm.alarmThreshold" :min="0" :precision="2" style="width:100%" /></el-form-item>
       </el-form>
-    </OptimizeDrawer>
+    </AdjustDrawer>
 
-    <!-- 设备列表抽屉 -->
-    <DeviceListDrawer>
-      <el-table :data="deviceListData" border style="width: 100%">
-        <el-table-column prop="id" label="设备ID" width="80" />
-        <el-table-column prop="deviceName" label="设备名称" />
-        <el-table-column prop="deviceType" label="设备类型" />
-        <el-table-column prop="energyValue" label="当前能耗(kWh)" />
-        <el-table-column prop="status" label="状态" />
-      </el-table>
-    </DeviceListDrawer>
+    <RectifyDrawer>
+      <el-form :model="rectifyForm" label-width="100px">
+        <el-form-item label="整改方案" required><el-input v-model="rectifyForm.rectifyPlan" type="textarea" rows="4" placeholder="请输入整改方案" /></el-form-item>
+      </el-form>
+    </RectifyDrawer>
 
-    <!-- 对比结果弹窗 -->
-    <el-dialog v-model="compareDialogVisible" title="能耗对比分析" width="500px">
-      <div v-if="compareData.yoyData">
-        <h4>同比分析</h4>
-        <div>去年同期：{{ compareData.yoyData.lastYear }} kWh</div>
-        <div>今年同期：{{ compareData.yoyData.thisYear }} kWh</div>
-        <div>差值：{{ compareData.yoyData.diff }} kWh</div>
+    <AlarmDetailDrawer>
+      <div class="detail-card">
+        <div class="detail-card-row"><div class="detail-row-left">预警ID：</div><div class="detail-row-right">{{ currentAlarmDetail.id || '-' }}</div></div>
+        <div class="detail-card-row"><div class="detail-row-left">预警名称：</div><div class="detail-row-right">{{ currentAlarmDetail.alarmName || '-' }}</div></div>
+        <div class="detail-card-row"><div class="detail-row-left">预警类型：</div><div class="detail-row-right">{{ currentAlarmDetail.alarmType || '-' }}</div></div>
+        <div class="detail-card-row"><div class="detail-row-left">关联区域ID：</div><div class="detail-row-right">{{ currentAlarmDetail.areaId || '-' }}</div></div>
+        <div class="detail-card-row"><div class="detail-row-left">预警阈值：</div><div class="detail-row-right">{{ currentAlarmDetail.alarmThreshold || '-' }} kWh</div></div>
+        <div class="detail-card-row"><div class="detail-row-left">预警状态：</div><div class="detail-row-right">{{ currentAlarmDetail.alarmStatus || '-' }}</div></div>
+        <div class="detail-card-row"><div class="detail-row-left">触发时间：</div><div class="detail-row-right">{{ currentAlarmDetail.triggerTime || '-' }}</div></div>
+        <div class="detail-card-row"><div class="detail-row-left">处置结果：</div><div class="detail-row-right">{{ currentAlarmDetail.handleResult || '-' }}</div></div>
+        <div class="detail-card-row"><div class="detail-row-left">能耗节约量：</div><div class="detail-row-right">{{ currentAlarmDetail.saveEnergy || '-' }} kWh</div></div>
+        <div class="detail-card-row"><div class="detail-row-left">操作人：</div><div class="detail-row-right">{{ getUserName(currentAlarmDetail.handleUser) }}</div></div>
       </div>
-      <div v-if="compareData.momData" style="margin-top: 20px">
-        <h4>环比分析</h4>
-        <div>上月同期：{{ compareData.momData.lastMonth }} kWh</div>
-        <div>本月同期：{{ compareData.momData.thisMonth }} kWh</div>
-        <div>差值：{{ compareData.momData.diff }} kWh</div>
+    </AlarmDetailDrawer>
+
+    <HandleResultDrawer>
+      <div class="detail-card">
+        <div class="detail-card-row"><div class="detail-row-left">处置结果：</div><div class="detail-row-right">{{ handleResultDetail.handleResult || '-' }}</div></div>
+        <div class="detail-card-row"><div class="detail-row-left">整改方案：</div><div class="detail-row-right">{{ handleResultDetail.rectifyPlan || '-' }}</div></div>
+        <div class="detail-card-row"><div class="detail-row-left">操作人：</div><div class="detail-row-right">{{ getUserName(handleResultDetail.handleUser) }}</div></div>
+        <div class="detail-card-row"><div class="detail-row-left">处置时间：</div><div class="detail-row-right">{{ handleResultDetail.updateTime || '-' }}</div></div>
       </div>
-    </el-dialog>
+    </HandleResultDrawer>
   </div>
 </template>
