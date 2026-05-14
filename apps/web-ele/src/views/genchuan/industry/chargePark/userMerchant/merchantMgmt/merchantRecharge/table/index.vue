@@ -5,7 +5,10 @@ import type {
   MerchantSelectOption,
 } from '../data';
 
-import type { MerchantInfoDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
+import type {
+  MerchantInfoDetailVO,
+  MerchantInfoVO,
+} from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import type {
   MerchantRechargeDetailVO,
   MerchantRechargePageReqVO,
@@ -81,6 +84,7 @@ const filterAmount = ref('');
 const filterPayChannel = ref('');
 const filterStatus = ref('');
 const searchParams = ref<Record<string, any>>({});
+const MERCHANT_OPTIONS_PAGE_SIZE = 200;
 
 function getMerchantOptionLabel(value: any) {
   const merchantId = Number(value);
@@ -221,11 +225,25 @@ function getStatusTagType(status: MerchantRechargeRow['status']) {
 /** 加载商户下拉 */
 async function loadMerchantOptions() {
   try {
-    const result = await MerchantInfoApi.getMerchantInfoPage({
-      pageNo: 1,
-      pageSize: 9999,
-    });
-    const list = Array.isArray(result?.list) ? result.list : [];
+    const list: MerchantInfoVO[] = [];
+    let pageNo = 1;
+    let total = 0;
+
+    do {
+      const result = await MerchantInfoApi.getMerchantInfoPage({
+        pageNo,
+        pageSize: MERCHANT_OPTIONS_PAGE_SIZE,
+      });
+      const currentList = Array.isArray(result?.list) ? result.list : [];
+
+      list.push(...currentList);
+      total = Number(result?.total || 0);
+      pageNo += 1;
+
+      if (currentList.length === 0) {
+        break;
+      }
+    } while (list.length < total);
 
     merchantSelectOptions.value = buildMerchantOptionsFromApi(list);
     merchantProfileLookup.value = buildMerchantProfileLookup(
