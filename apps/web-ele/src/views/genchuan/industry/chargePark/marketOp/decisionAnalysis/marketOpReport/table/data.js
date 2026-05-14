@@ -1,6 +1,8 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj } from '@vben/hooks';
 
+import { getRangePickerDefaultProps } from '#/utils';
+
 /** 获取报表周期Tag类型 */
 export const getReportCycleTagType = (cycle) => {
   // 根据报表周期返回对应的tag类型
@@ -306,15 +308,19 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'statTimeRange',
-      label: '统计时段',
-      component: 'DatePicker',
+      fieldName: 'statStartTime',
+      label: '统计开始时间',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择统计时段',
-        type: 'datetimerange',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
+      },
+    },
+    {
+      fieldName: 'statEndTime',
+      label: '统计结束时间',
+      component: 'RangePicker',
+      componentProps: {
+        ...getRangePickerDefaultProps(),
       },
     },
     {
@@ -432,15 +438,11 @@ export function useSearchFormSchema() {
     //   },
     // },
     {
-      fieldName: 'generateTimeRange',
+      fieldName: 'generateTime',
       label: '生成时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择生成时间范围',
-        type: 'datetimerange',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     {
@@ -568,7 +570,7 @@ export function useGridColumns() {
       title: '操作人',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'operator' },
+      // slots: { default: 'operator' },
     },
     {
       field: 'generateCost',

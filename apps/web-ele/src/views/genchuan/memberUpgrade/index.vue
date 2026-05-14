@@ -515,10 +515,19 @@ const faqList = ref([
       </p>
 
       <div class="cta-buttons">
-        <el-button type="primary" size="large" class="cta-primary-btn" @click="showPremiumPaymentModal">
+        <el-button
+          type="primary"
+          size="large"
+          class="cta-primary-btn"
+          @click="showPremiumPaymentModal"
+        >
           立即升级高级会员 →
         </el-button>
-        <el-button size="large" class="cta-secondary-btn" @click="showContactQrModal">
+        <el-button
+          size="large"
+          class="cta-secondary-btn"
+          @click="showContactQrModal"
+        >
           💬 联系我们定制旗舰方案
         </el-button>
       </div>
@@ -528,10 +537,10 @@ const faqList = ref([
           <ShieldIcon class="cta-tag-icon" />
           <span>数据安全保障</span>
         </div>
-<!--        <div class="feature-tag">-->
-<!--          <RefreshIcon :size="16" />-->
-<!--          <span>随时可能降级</span>-->
-<!--        </div>-->
+        <!--        <div class="feature-tag">-->
+        <!--          <RefreshIcon :size="16" />-->
+        <!--          <span>随时可能降级</span>-->
+        <!--        </div>-->
         <div class="feature-tag">
           <HeadsetIcon :size="16" />
           <span>7×24专属支持</span>
@@ -666,7 +675,11 @@ const faqList = ref([
     </div>
 
     <!-- 联系方式二维码弹窗 -->
-    <div v-if="showContactQr" class="payment-modal-overlay" @click="closeContactQr">
+    <div
+      v-if="showContactQr"
+      class="payment-modal-overlay"
+      @click="closeContactQr"
+    >
       <div class="payment-modal contact-modal" @click.stop>
         <button class="modal-close-btn" @click="closeContactQr">✕</button>
         <h3 class="modal-title">联系我们 - 专属定制服务</h3>
@@ -678,20 +691,20 @@ const faqList = ref([
             class="contact-qr-image"
           />
         </div>
-<!--        <div class="contact-info">-->
-<!--          <div class="info-item">-->
-<!--            <span class="info-label">📞 服务热线</span>-->
-<!--            <span class="info-value">400-XXX-XXXX</span>-->
-<!--          </div>-->
-<!--          <div class="info-item">-->
-<!--            <span class="info-label">📧 商务邮箱</span>-->
-<!--            <span class="info-value">business@yichuan.com</span>-->
-<!--          </div>-->
-<!--          <div class="info-item">-->
-<!--            <span class="info-label">⏰ 服务时间</span>-->
-<!--            <span class="info-value">周一至周五 9:00-18:00</span>-->
-<!--          </div>-->
-<!--        </div>-->
+        <!--        <div class="contact-info">-->
+        <!--          <div class="info-item">-->
+        <!--            <span class="info-label">📞 服务热线</span>-->
+        <!--            <span class="info-value">400-XXX-XXXX</span>-->
+        <!--          </div>-->
+        <!--          <div class="info-item">-->
+        <!--            <span class="info-label">📧 商务邮箱</span>-->
+        <!--            <span class="info-value">business@yichuan.com</span>-->
+        <!--          </div>-->
+        <!--          <div class="info-item">-->
+        <!--            <span class="info-label">⏰ 服务时间</span>-->
+        <!--            <span class="info-value">周一至周五 9:00-18:00</span>-->
+        <!--          </div>-->
+        <!--        </div>-->
         <p class="payment-notice contact-notice">
           💼 专业顾问将在24小时内与您联系，为您提供一对一的定制化解决方案
         </p>
@@ -1932,9 +1945,9 @@ const faqList = ref([
       border-radius: 8px;
 
       &.contact-notice {
+        color: #475569;
         background: #eff6ff;
         border-left-color: #3b82f6;
-        color: #475569;
       }
     }
 
@@ -1945,26 +1958,26 @@ const faqList = ref([
         height: 240px;
         object-fit: cover;
         border-radius: 16px;
-        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+        box-shadow: 0 8px 24px rgb(59 130 246 / 15%);
         transition: all 0.3s ease;
 
         &:hover {
+          box-shadow: 0 12px 32px rgb(59 130 246 / 25%);
           transform: scale(1.05);
-          box-shadow: 0 12px 32px rgba(59, 130, 246, 0.25);
         }
       }
 
       .contact-info {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        border-radius: 12px;
         padding: 20px;
         margin-bottom: 20px;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
         border: 1px solid #bae6fd;
+        border-radius: 12px;
 
         .info-item {
           display: flex;
-          justify-content: space-between;
           align-items: center;
+          justify-content: space-between;
           padding: 10px 0;
           border-bottom: 1px solid #bae6fd;
 
@@ -1974,14 +1987,14 @@ const faqList = ref([
 
           .info-label {
             font-size: 14px;
-            color: #0369a1;
             font-weight: 600;
+            color: #0369a1;
           }
 
           .info-value {
             font-size: 15px;
-            color: #0c4a6e;
             font-weight: 600;
+            color: #0c4a6e;
           }
         }
       }

@@ -1,7 +1,10 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
+import { ref } from 'vue';
 
 import { formatDate } from '#/utils/genchuan/formatTime';
+
+import { getExchangeCategoryList } from '#/api/genchuan/industry/chargePark/marketOp/exchangeMgmt/exchangeCategory';
 
 /** 兑换订单状态标签类型 */
 export const getExchangeOrderPayStatusTagType = (status) => {
@@ -42,6 +45,45 @@ export const getExchangeOrderShipStatusLabel = (status) => {
   };
   return labelMap[status] || status;
 };
+
+/** 商品类目搜索选项 - 静态数据作为默认值 */
+export const categorySearchOptions = [
+  { label: '美妆个护', value: 1 },
+  { label: '办公文具', value: 2 },
+  { label: '虚拟卡券', value: 3 },
+  { label: '数码配件', value: 4 },
+  { label: '车载用品', value: 5 },
+  { label: '图书音像', value: 6 },
+  { label: '生活用品', value: 7 },
+  { label: '美食零食', value: 8 },
+];
+
+/** 动态商品类目搜索选项（从接口获取） */
+export let dynamicCategorySearchOptions = ref([]);
+
+/** 获取当前可用的商品类目搜索选项（优先使用动态数据） */
+export function getCurrentCategorySearchOptions() {
+  return dynamicCategorySearchOptions.value.length > 0
+    ? dynamicCategorySearchOptions.value
+    : categorySearchOptions;
+}
+
+/** 获取商品类目精简列表用于搜索 */
+export async function fetchCategorySearchOptions() {
+  try {
+    const res = await getExchangeCategoryList();
+    if (res && Array.isArray(res)) {
+      dynamicCategorySearchOptions.value = res.map((item) => ({
+        label: item.name,
+        value: item.id,
+      }));
+      return dynamicCategorySearchOptions.value;
+    }
+  } catch (error) {
+    console.error('获取商品类目列表失败:', error);
+  }
+  return categorySearchOptions;
+}
 
 /** 兑换订单详情字段配置 - 使用formatter格式化时间和状态字段 */
 export const detailFields = [
@@ -186,10 +228,9 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择商品类目',
-        options: [],
+        options: categorySearchOptions,
         clearable: true,
         filterable: true,
-        remote: true,
       },
     },
     {

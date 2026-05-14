@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
@@ -24,6 +24,9 @@ import CheckRecordDrawer from '#/views/genchuan/industry/chargePark/marketOp/cou
 import {
   dataList,
   detailFields,
+  dynamicCouponSearchOptions,
+  fetchCouponSearchOptions,
+  getCurrentCouponSearchOptions,
   getReceiveRecordStatusLabel,
   getReceiveRecordStatusTagType,
   getReceiveRecordSyncStatusLabel,
@@ -297,13 +300,13 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
       class: 'w-full',
     },
-    formItemClass: 'col-span-2',
+  formItemClass: 'col-span-2',
     labelWidth: 100,
   },
   handleSubmit: onSubmit,
@@ -406,6 +409,21 @@ const handleStatsFilter = (type, subType, value) => {
 
 defineExpose({
   handleStatsFilter,
+});
+
+// 页面加载时获取优惠券列表
+onMounted(async () => {
+  await fetchCouponSearchOptions();
+  // 动态更新搜索表单的优惠券选项
+  const currentCouponOptions = getCurrentCouponSearchOptions();
+  await queryFormApi.updateSchema([
+    {
+      fieldName: 'couponId',
+      componentProps: {
+        options: currentCouponOptions,
+      },
+    },
+  ]);
 });
 
 // ==================== 详情弹窗处理 ====================

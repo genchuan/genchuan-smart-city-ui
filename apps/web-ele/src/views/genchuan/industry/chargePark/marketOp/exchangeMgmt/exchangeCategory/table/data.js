@@ -259,7 +259,7 @@ export function useGridColumns() {
       title: '商品数量',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'goodsCount' },
+      // slots: { default: 'goodsCount' },
     },
     {
       field: 'scopeName',

@@ -30,6 +30,9 @@ import ShipDialog from '../components/ShipDialog.vue';
 import {
   dataList,
   detailFields,
+  dynamicCategorySearchOptions,
+  fetchCategorySearchOptions,
+  getCurrentCategorySearchOptions,
   getExchangeOrderPayStatusLabel,
   getExchangeOrderPayStatusTagType,
   textObj,
@@ -337,7 +340,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -476,6 +479,21 @@ const handleStatsFilter = (type, value) => {
 // 暴露方法给父组件
 defineExpose({
   handleStatsFilter,
+});
+
+// 页面加载时获取商品类目列表
+onMounted(async () => {
+  await fetchCategorySearchOptions();
+  // 动态更新搜索表单的商品类目选项
+  const currentCategoryOptions = getCurrentCategorySearchOptions();
+  await queryFormApi.updateSchema([
+    {
+      fieldName: 'categoryId',
+      componentProps: {
+        options: currentCategoryOptions,
+      },
+    },
+  ]);
 });
 
 // ==================== 详情弹窗处理 ====================

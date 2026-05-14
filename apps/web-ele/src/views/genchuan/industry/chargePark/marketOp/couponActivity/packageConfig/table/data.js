@@ -1,8 +1,11 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
+import { ref } from 'vue';
 
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
+
+import { getCouponSimpleList } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 
 /** 获取券包类型Tag类型 - 使用封装的字典颜色工具 */
 export const getPackageConfigTypeTagType = (type) => {
@@ -39,6 +42,60 @@ export const getPackageConfigScopeLabel = (scope) => {
   const dict = getDictObj(DICT_TYPE.PACKAGE_CONFIG_SCOPE, String(scope));
   return dict ? dict.label : scope;
 };
+
+/** 优惠券选项配置 - 静态数据作为默认值 */
+export const couponOptions = [
+  { label: '5元充电券', value: '1' },
+  { label: '10元充电券', value: '2' },
+  { label: '20元充电券', value: '3' },
+  { label: '30元充电券', value: '4' },
+  { label: '50元充电券', value: '5' },
+  { label: '充电8.5折券', value: '6' },
+  { label: '充电7.5折券', value: '7' },
+  { label: '充电9折券', value: '8' },
+  { label: '3元充电券', value: '9' },
+  { label: '5元充电券(新)', value: '10' },
+  { label: '8元充电券', value: '11' },
+  { label: '12元充电券', value: '12' },
+];
+
+/** 动态优惠券选项（从接口获取） */
+export let dynamicCouponOptions = ref([]);
+
+/** 获取当前可用的优惠券选项（优先使用动态数据） */
+export function getCurrentCouponOptions() {
+  return dynamicCouponOptions.value.length > 0
+    ? dynamicCouponOptions.value
+    : couponOptions;
+}
+
+/** 获取优惠券精简列表 */
+export async function fetchCouponOptions() {
+  try {
+    const res = await getCouponSimpleList();
+    if (res && Array.isArray(res)) {
+      dynamicCouponOptions.value = res.map((item) => ({
+        label: item.name,
+        value: String(item.id),
+      }));
+      return dynamicCouponOptions.value;
+    }
+  } catch (error) {
+    console.error('获取优惠券列表失败:', error);
+  }
+  return couponOptions;
+}
+
+/** 根据优惠券ID获取优惠券名称 */
+export function getCouponNamesByIds(couponIds) {
+  if (!couponIds) return '';
+  const ids = couponIds.split(',');
+  const names = ids.map((id) => {
+    const coupon = couponOptions.find((c) => c.value === id);
+    return coupon ? coupon.label : id;
+  });
+  return names.join(',');
+}
 
 /** 券包配置表格初始数据 - 按接口文档格式生成，字典值与系统字典一致 */
 export const dataList = () => {
@@ -255,9 +312,12 @@ export function useFormSchema() {
     {
       fieldName: 'couponIds',
       label: '包含优惠券',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入优惠券ID，逗号分隔',
+        placeholder: '请选择包含优惠券',
+        multiple: true,
+        options: couponOptions,
+        filterable: true,
       },
       rules: 'required',
     },
