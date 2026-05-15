@@ -696,14 +696,16 @@ const alarmColumns = [
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="标记"
-            icon-name="edit"
-            @click="handleMark(row)"
-          />
-          <IconButton
+            v-if="row.status === 'pending'"
             content="识别"
             icon-name="Search"
             @click="handleIdentify(row)"
+          />
+          <IconButton
+            v-if="row.status === 'identified' || row.status === 'marked'"
+            content="标记"
+            icon-name="edit"
+            @click="handleMark(row)"
           />
         </div>
       </template>

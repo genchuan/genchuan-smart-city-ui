@@ -37,12 +37,9 @@ const hasActiveFilters = () => {
 const clearDateFilter = () => {
   filterParams.createOrderTimeStart = null;
   filterParams.createOrderTimeEnd = null;
-  filterParams.stationName = null;
 };
 
 const clearStationFilter = () => {
-  filterParams.createOrderTimeStart = null;
-  filterParams.createOrderTimeEnd = null;
   filterParams.stationName = null;
 };
 
@@ -62,21 +59,21 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <Chart @filter-change="handleFilterChange" />
+    <Chart @filter-change="handleFilterChange" v-if="tabArray[0].arrowShow"/>
     <div v-if="hasActiveFilters" class="filter-tags">
       <el-tag
-        v-if="filterParams.stationName"
-        closable
-        @close="clearStationFilter"
-      >
-        场站: {{ filterParams.stationName }}
-      </el-tag>
-      <el-tag
-        v-else-if="filterParams.createOrderTimeStart"
+        v-if="filterParams.createOrderTimeStart"
         closable
         @close="clearDateFilter"
       >
         日期: {{ filterParams.createOrderTimeStart.split(' ')[0] }}
+      </el-tag>
+      <el-tag
+        v-else-if="filterParams.stationName"
+        closable
+        @close="clearStationFilter"
+      >
+        场站: {{ filterParams.stationName }}
       </el-tag>
     </div>
     <div class="icon-change">

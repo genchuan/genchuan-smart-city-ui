@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref } from 'vue';
 
 import Chart from './table/chart.vue';
 import Table from './table/index.vue';
@@ -17,36 +17,6 @@ const arrowChange = () => {
     v.arrowShow = !v.arrowShow;
   });
 };
-
-const filterParams = reactive({
-  createOrderTimeStart: null,
-  createOrderTimeEnd: null,
-  stationName: null,
-});
-
-const handleFilterChange = (params) => {
-  filterParams.createOrderTimeStart = null;
-  filterParams.createOrderTimeEnd = null;
-  filterParams.stationName = null;
-  Object.assign(filterParams, params);
-};
-
-const hasActiveFilters = () => {
-  return filterParams.createOrderTimeStart || filterParams.stationName;
-};
-
-const clearDateFilter = () => {
-  filterParams.createOrderTimeStart = null;
-  filterParams.createOrderTimeEnd = null;
-  filterParams.stationName = null;
-};
-
-const clearStationFilter = () => {
-  filterParams.createOrderTimeStart = null;
-  filterParams.createOrderTimeEnd = null;
-  filterParams.stationName = null;
-};
-
 const tabArray = ref([
   {
     label: '两轮充电订单',
@@ -55,7 +25,6 @@ const tabArray = ref([
     secondShow: false,
     arrowShow: true,
     arrowState: false,
-    filterParams,
   },
 ]);
 const activeName = ref('两轮充电订单');
@@ -63,23 +32,7 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <Chart @filter-change="handleFilterChange" />
-    <div v-if="hasActiveFilters" class="filter-tags">
-      <el-tag
-        v-if="filterParams.stationName"
-        closable
-        @close="clearStationFilter"
-      >
-        场站: {{ filterParams.stationName }}
-      </el-tag>
-      <el-tag
-        v-else-if="filterParams.createOrderTimeStart"
-        closable
-        @close="clearDateFilter"
-      >
-        日期: {{ filterParams.createOrderTimeStart.split(' ')[0] }}
-      </el-tag>
-    </div>
+    <Chart v-if="tabArray[0].arrowShow"/>
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
@@ -117,31 +70,9 @@ const secondShow = ref(false);
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
-          :filter-params="item.filterParams"
           @arrow-change="arrowChange"
         />
       </el-tab-pane>
     </el-tabs>
   </div>
 </template>
-
-<style scoped lang="scss">
-.filter-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 0;
-  margin: 0;
-  min-height: 0;
-  height: auto;
-
-  .el-tag {
-    margin: 12px 8px 12px 16px;
-    cursor: pointer;
-
-    &:hover {
-      opacity: 0.8;
-    }
-  }
-}
-</style>
