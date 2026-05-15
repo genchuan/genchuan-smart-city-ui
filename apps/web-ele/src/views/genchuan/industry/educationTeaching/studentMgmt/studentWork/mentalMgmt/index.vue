@@ -235,10 +235,10 @@ async function handleConsult(row) {
       inputPlaceholder: '请选择时间',
     });
     if (consultTime) {
-      const timestamp = new Date(consultTime).getTime();
-      const loading = ElLoading.service({text: '预约中...'});
+      const formattedTime = consultTime.replace('T', ' ') + ':00';
+      const loading = ElLoading.service({ text: '预约中...' });
       try {
-        const res = await consultMentalMgmt({id: row.id, consultTime: timestamp});
+        const res = await consultMentalMgmt({ id: row.id, consultTime: formattedTime });
         if (res && res !== false) {
           ElMessage.success('预约成功');
           handleRefresh();

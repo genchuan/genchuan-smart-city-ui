@@ -88,32 +88,47 @@ export function useAssignFormSchema() {
   ];
 }
 
-// 调整表单 schema（批量调整）
-export function useAdjustFormSchema() {
+// ==================== 调整表单（单行） ====================
+export function useSingleAdjustFormSchema() {
   return [
     {
-      fieldName: 'newDormNum',
-      label: '新宿舍号',
-      component: 'Input',
-      componentProps: { placeholder: '请输入新宿舍号，例如：2号楼202' },
+      fieldName: 'newDormId',
+      label: '新宿舍ID',
+      component: 'InputNumber',
+      componentProps: { placeholder: '请输入新宿舍ID（数字）', min: 1, step: 1, style: 'width: 100%' },
       rules: 'required',
       labelWidth: '100',
     },
     {
-      fieldName: 'newBedStartNum',
-      label: '新起始床位号',
+      fieldName: 'newBedId',
+      label: '新床位ID',
       component: 'InputNumber',
-      componentProps: { placeholder: '新起始床位号（数字）', min: 1, step: 1, style: 'width: 100%' },
+      componentProps: { placeholder: '请输入新床位ID（数字）', min: 1, step: 1, style: 'width: 100%' },
       rules: 'required',
       labelWidth: '100',
     },
-    // {
-    //   fieldName: 'remark',
-    //   label: '调整原因',
-    //   component: 'Input',
-    //   componentProps: { placeholder: '请输入调整原因', type: 'textarea', rows: 2 },
-    //   labelWidth: '100',
-    // },
+  ];
+}
+
+// ==================== 调整表单（批量） ====================
+export function useBatchAdjustFormSchema() {
+  return [
+    {
+      fieldName: 'newDormId',
+      label: '新宿舍ID',
+      component: 'InputNumber',
+      componentProps: { placeholder: '请输入新宿舍ID（数字）', min: 1, step: 1, style: 'width: 100%' },
+      rules: 'required',
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'newBedIdsInput',
+      label: '新床位ID列表',
+      component: 'Input',
+      componentProps: { placeholder: '请输入床位ID，多个用英文逗号分隔' },
+      rules: 'required',
+      labelWidth: '100',
+    },
   ];
 }
 
@@ -125,6 +140,7 @@ export function useEditFormSchema() {
       label: '学号',
       component: 'Input',
       componentProps: { placeholder: '请输入学号' },
+      rules: 'required',
       labelWidth: '100',
     },
     {

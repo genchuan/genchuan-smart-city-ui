@@ -112,7 +112,6 @@ export function consultMentalMgmt(data) {
   // 预约接口只传 id 和 consultTime，无需转换
   return requestClient.put('/studentmgmt/mental-mgmt/consult', data).catch(err => {
     console.warn('预约接口失败，模拟成功', err);
-    return Promise.resolve(true);
   });
 }
 

@@ -66,10 +66,9 @@ const getDeptNameById = (deptId) => {
   return found ? found.label : String(deptId);
 };
 
-// ---------- 标签筛选 ----------
+// 标签筛选
 const tagFilters = ref({});
 
-// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
   if (!field) return;
   if (value === '' || value === null || value === undefined) {
@@ -88,7 +87,7 @@ function handleFilterTagClick(field, value) {
       tagFilters.value[field] = value;
     }
   }
-  gridApi.query(); // 改为 query()
+  gridApi.query();
 }
 
 function clearFilters() {
@@ -119,7 +118,7 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// ---------- 抽屉 ----------
+// 抽屉
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
@@ -153,9 +152,9 @@ function handleRowCheckboxChange({records}) {
 const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
-const maintainIds = ref([]);
+const maintainId = ref(null); // 仅存储单个ID，不再需要 maintainRow
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const merged = {
@@ -220,11 +219,22 @@ async function handleExport() {
   }
 }
 
+// 批量维护（仅支持单选）
 async function handleBatchMaintain() {
-  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个合作企业');
-  const cooperatingRows = checkedRows.value.filter(row => row.status === '合作中');
-  if (cooperatingRows.length === 0) return ElMessage.warning('请选择状态为【合作中】的企业进行维护');
-  maintainIds.value = cooperatingRows.map(row => row.id);
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一个合作企业');
+    return;
+  }
+  if (checkedIds.value.length > 1) {
+    ElMessage.warning('维护操作仅支持选择一个企业，请取消多选后重试');
+    return;
+  }
+  const selectedRow = checkedRows.value[0];
+  if (selectedRow.status !== '合作中') {
+    ElMessage.warning('只有合作中的企业可以维护');
+    return;
+  }
+  maintainId.value = selectedRow.id;
   maintainFormApi.resetForm();
   maintainDrawerApi.open();
 }
@@ -241,9 +251,13 @@ function handleEdit(row) {
   createDrawerApi.open();
 }
 
+// 行内维护
 async function handleMaintain(row) {
-  if (row.status !== '合作中') return ElMessage.warning('只有合作中的企业可以维护');
-  maintainIds.value = [row.id];
+  if (row.status !== '合作中') {
+    ElMessage.warning('只有合作中的企业可以维护');
+    return;
+  }
+  maintainId.value = row.id;
   maintainFormApi.resetForm();
   maintainDrawerApi.open();
 }
@@ -307,14 +321,20 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   },
 });
 
-// 维护表单
+// 维护表单 - 直接使用 timeRange 和 remark，与后端字段完全一致
 const [MaintainForm, maintainFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
     const loading = ElLoading.service({text: '维护中...'});
     try {
-      const res = await maintainCoopEnterprise({ids: maintainIds.value, ...values});
+      // values 中直接包含 timeRange（数组，例如 ["2023-01-01 00:00:00", "2027-01-31 23:59:59"]）和 remark
+      const params = {
+        id: maintainId.value,
+        timeRange: values.timeRange,
+        remark: values.remark || '',
+      };
+      const res = await maintainCoopEnterprise(params);
       if (res && res !== false) {
         ElMessage.success('维护成功');
         maintainDrawerApi.close();
@@ -322,6 +342,9 @@ const [MaintainForm, maintainFormApi] = useVbenForm({
       } else {
         ElMessage.error('维护失败');
       }
+    } catch (error) {
+      console.error('维护失败', error);
+      ElMessage.error('维护失败');
     } finally {
       loading.close();
     }
@@ -379,7 +402,7 @@ const toggleChart = () => {
 };
 defineExpose({handleFilterTagClick, clearFilters});
 
-// ========== 监听图表自定义事件（为后续图表钻取做准备） ==========
+// 监听图表自定义事件
 const handleChartFilter = (event) => {
   const {type, value} = event.detail;
   if (type === 'enterpriseType') {

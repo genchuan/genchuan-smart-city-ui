@@ -1,6 +1,6 @@
 <script setup>
-import {reactive, onMounted, ref, computed} from 'vue';
-import {ElMessage, ElDatePicker} from 'element-plus';
+import { reactive, onMounted, ref, computed } from 'vue';
+import { ElMessage, ElDatePicker } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
 import {
@@ -32,7 +32,7 @@ const formatLocalDateTime = (date) => {
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 };
 
-// 卡片列表（不支持点击筛选，保持原样）
+// 卡片列表（添加 status 字段用于点击识别）
 const cardList = computed(() => {
   const total = chartData.value.totalDutyCount || 0;
   const today = chartData.value.todayDutyCount || 0;
@@ -40,11 +40,11 @@ const cardList = computed(() => {
   const shiftCount = chartData.value.shiftApplyCount || 0;
   const vehicleCount = chartData.value.vehicleApplyCount || 0;
   return [
-    {title: '总值班次数', value: total, color: '#409EFF'},
-    {title: '今日值班人数', value: today, color: '#67C23A'},
-    {title: '打卡率(%)', value: checkInRate, color: '#E6A23C'},
-    {title: '调班次数', value: shiftCount, color: '#F56C6C'},
-    {title: '出车次数', value: vehicleCount, color: '#909399'},
+    {title: '总值班次数', value: total, color: '#409EFF', status: 'totalDutyCount'},
+    {title: '今日值班人数', value: today, color: '#67C23A', status: 'todayDutyCount'},
+    {title: '打卡率(%)', value: checkInRate, color: '#E6A23C', status: 'checkInRate'},
+    {title: '调班次数', value: shiftCount, color: '#F56C6C', status: 'shiftApplyCount'},
+    {title: '出车次数', value: vehicleCount, color: '#909399', status: 'vehicleApplyCount'},
   ];
 });
 
@@ -57,15 +57,44 @@ const lineSeriesData = computed(() => [
   {name: '出车率(%)', data: indexData.value.vehicleRateList || []},
 ]);
 
-// ========== 核心修改：折线图点击改为派发自定义事件 ==========
+// 折线图点击：派发月份筛选事件
 const handleLineClick = (monthName) => {
-  // monthName 格式例如 "2025-01"
   window.dispatchEvent(new CustomEvent('duty-chart-filter', {
     detail: {month: monthName}
   }));
 };
 
-// 加载数据函数保持不变
+// 卡片点击：根据卡片 status 派发筛选事件
+const handleCardClick = (cardInfo) => {
+  const {status} = cardInfo;
+  let filterType = null;
+  let filterValue = null;
+
+  switch (status) {
+    case 'shiftApplyCount':
+      filterType = 'transferStatus';
+      filterValue = '待审批';
+      break;
+    case 'vehicleApplyCount':
+      filterType = 'carStatus';
+      filterValue = '待审批';
+      break;
+    case 'checkInRate':
+      filterType = 'checkInStatus';
+      filterValue = '已打卡';
+      break;
+    default:
+      return;
+  }
+
+  if (filterType) {
+    window.dispatchEvent(new CustomEvent('duty-chart-filter', {
+      detail: {type: filterType, value: filterValue}
+    }));
+  }
+};
+
+// 加载图表数据
 const loadChartData = async () => {
   try {
     const params = {};
@@ -171,7 +200,8 @@ onMounted(() => {
 <template>
   <div v-loading="loading" class="chart-box">
     <div class="box-left-m">
-      <Indicator class="left-card" v-for="item in cardList" :key="item.title" v-bind="item"/>
+      <Indicator class="left-card" v-for="item in cardList" :key="item.title" v-bind="item"
+                 @click="handleCardClick"/>
     </div>
     <div class="line-chart-container">
       <div class="date-range-wrapper">

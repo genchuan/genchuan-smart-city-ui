@@ -188,15 +188,14 @@ export function useCreateFormSchema(isEdit = false) {
   ];
 }
 
-// 报名表单 schema（使用 InputNumber 直接输入学生ID）
 export function useJoinFormSchema() {
   return [
     {
       fieldName: 'studentId',
-      label: '学生ID',
+      label: '学号',
       component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入学生ID',
+        placeholder: '请输入学号',
         controls: false,
         style: 'width: 100%',
         min: 1,

@@ -94,6 +94,7 @@ export function useCreateFormSchema(isEdit = false) {
       label: '学号',
       component: 'Input',
       componentProps: { placeholder: '请输入学号' },
+      rules: 'required',
       labelWidth: '100',
     },
     {

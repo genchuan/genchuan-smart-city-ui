@@ -20,7 +20,8 @@ import {
   useFormSchema,
   getColumns,
   useAssignFormSchema,
-  useAdjustFormSchema,
+  useSingleAdjustFormSchema,
+  useBatchAdjustFormSchema,
   useEditFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/enrollMgmt/dormAssign/form.js';
 
@@ -30,7 +31,6 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
-// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
   if (!field) return;
   if (value === '' || value === null || value === undefined) {
@@ -49,7 +49,7 @@ function handleFilterTagClick(field, value) {
       tagFilters.value[field] = value;
     }
   }
-  gridApi.query(); // 改为 query()
+  gridApi.query();
 }
 
 function clearFilters() {
@@ -89,10 +89,15 @@ const [AssignDrawer, assignDrawerApi] = useVbenDrawer({
   footer: false,
   onCancel: () => assignDrawerApi.close()
 });
-const [AdjustDrawer, adjustDrawerApi] = useVbenDrawer({
+const [SingleAdjustDrawer, singleAdjustDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => adjustDrawerApi.close()
+  onCancel: () => singleAdjustDrawerApi.close()
+});
+const [BatchAdjustDrawer, batchAdjustDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => batchAdjustDrawerApi.close()
 });
 const [EditDrawer, editDrawerApi] = useVbenDrawer({
   modal: false,
@@ -121,7 +126,8 @@ function handleRowCheckboxChange({records}) {
 
 const searchParams = ref({});
 const currentEditId = ref(null);
-const batchIds = ref([]);
+const batchIds = ref([]);        // 用于分配和调整（批量时存储多个ID）
+const singleAdjustId = ref(null); // 单行调整时存储单条ID
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
@@ -220,8 +226,8 @@ function handleBatchAdjust() {
   const assignedRows = checkedRows.value.filter(row => row.status === '已分配');
   if (assignedRows.length === 0) return ElMessage.warning('请选择状态为【已分配】的记录进行调整');
   batchIds.value = assignedRows.map(row => row.id);
-  adjustFormApi.resetForm();
-  adjustDrawerApi.open();
+  batchAdjustFormApi.resetForm();
+  batchAdjustDrawerApi.open();
 }
 
 // 单行分配
@@ -235,9 +241,9 @@ async function handleAssign(row) {
 // 单行调整
 async function handleAdjust(row) {
   if (row.status !== '已分配') return ElMessage.warning('只有已分配状态的记录可以调整');
-  batchIds.value = [row.id];
-  adjustFormApi.resetForm();
-  adjustDrawerApi.open();
+  singleAdjustId.value = row.id;
+  singleAdjustFormApi.resetForm();
+  singleAdjustDrawerApi.open();
 }
 
 // 分配表单
@@ -274,26 +280,27 @@ const [AssignForm, assignFormApi] = useVbenForm({
   submitButtonOptions: {content: '确认分配'},
 });
 
-// 调整表单
-const [AdjustForm, adjustFormApi] = useVbenForm({
+// 单行调整表单
+const [SingleAdjustForm, singleAdjustFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
     const loading = ElLoading.service({text: '调整中...'});
     try {
-      const bedStartNum = values.newBedStartNum;
-      const newBedIds = batchIds.value.map((_, idx) => bedStartNum + idx);
-      const newDormId = values.newDormNum;
+      const newDormId = parseInt(values.newDormId, 10);
+      const newBedId = parseInt(values.newBedId, 10);
+      if (isNaN(newDormId) || isNaN(newBedId)) {
+        ElMessage.error('宿舍ID和床位ID必须为有效数字');
+        return;
+      }
       const res = await adjustDormAssign({
-        ids: batchIds.value,
+        ids: [singleAdjustId.value],
         newDormId: newDormId,
-        newBedIds: newBedIds,
-        adjustTime: Date.now(),
-        remark: values.remark,
+        newBedIds: [newBedId],
       });
       if (res && res !== false) {
         ElMessage.success('调整成功');
-        adjustDrawerApi.close();
+        singleAdjustDrawerApi.close();
         handleRefresh();
       } else {
         ElMessage.error('调整失败');
@@ -303,7 +310,65 @@ const [AdjustForm, adjustFormApi] = useVbenForm({
     }
   },
   layout: 'horizontal',
-  schema: useAdjustFormSchema(),
+  schema: useSingleAdjustFormSchema(),
+  showCollapseButton: false,
+  submitButtonOptions: {content: '确认调整'},
+});
+
+// 批量调整表单
+const [BatchAdjustForm, batchAdjustFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  handleSubmit: async (values) => {
+    const loading = ElLoading.service({text: '批量调整中...'});
+    try {
+      const newDormId = parseInt(values.newDormId, 10);
+      if (isNaN(newDormId)) {
+        ElMessage.error('新宿舍ID必须为数字');
+        return;
+      }
+      let bedIdsArray = [];
+      const inputStr = (values.newBedIdsInput || '').trim();
+      if (inputStr === '') {
+        ElMessage.error('请输入床位ID');
+        return;
+      }
+      const parts = inputStr.split(',');
+      for (const part of parts) {
+        const trimmed = part.trim();
+        if (trimmed === '') continue;
+        const num = parseInt(trimmed, 10);
+        if (isNaN(num)) {
+          ElMessage.error(`床位ID "${trimmed}" 不是有效数字`);
+          return;
+        }
+        bedIdsArray.push(num);
+      }
+      if (bedIdsArray.length === 0) {
+        ElMessage.error('请至少填写一个有效的床位ID');
+        return;
+      }
+      if (bedIdsArray.length !== batchIds.value.length) {
+        ElMessage.warning(`您填写了 ${bedIdsArray.length} 个床位ID，但选中了 ${batchIds.value.length} 条记录，请确保数量一致`);
+      }
+      const res = await adjustDormAssign({
+        ids: batchIds.value,
+        newDormId: newDormId,
+        newBedIds: bedIdsArray,
+      });
+      if (res && res !== false) {
+        ElMessage.success('批量调整成功');
+        batchAdjustDrawerApi.close();
+        handleRefresh();
+      } else {
+        ElMessage.error('批量调整失败');
+      }
+    } finally {
+      loading.close();
+    }
+  },
+  layout: 'horizontal',
+  schema: useBatchAdjustFormSchema(),
   showCollapseButton: false,
   submitButtonOptions: {content: '确认调整'},
 });
@@ -423,9 +488,14 @@ onUnmounted(() => {
     <AssignDrawer title="分配宿舍床位">
       <AssignForm/>
     </AssignDrawer>
-    <AdjustDrawer title="调整宿舍床位">
-      <AdjustForm/>
-    </AdjustDrawer>
+    <!-- 单行调整抽屉 -->
+    <SingleAdjustDrawer title="调整宿舍床位">
+      <SingleAdjustForm/>
+    </SingleAdjustDrawer>
+    <!-- 批量调整抽屉 -->
+    <BatchAdjustDrawer title="批量调整宿舍床位">
+      <BatchAdjustForm/>
+    </BatchAdjustDrawer>
     <EditDrawer title="编辑分配信息">
       <EditForm/>
     </EditDrawer>
