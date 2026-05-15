@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, shallowRef, watch } from 'vue';
+import { computed, onMounted, reactive, shallowRef, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
@@ -26,6 +26,7 @@ import {
   getStatusTagType,
   getUserName,
   isStatusLabel,
+  loadScheduleUserOptions,
   normalizeShiftApplyRow,
   textObj,
   useBatchAuditFormSchema,
@@ -386,6 +387,10 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(() => {
+  loadScheduleUserOptions();
+});
 </script>
 
 <template>
@@ -505,21 +510,21 @@ watch(
         </el-text>
       </template>
       <template #oldDateStr="{ row }">
-        <el-text
-          class="common-align"
+        <!--  class="common-align"
           style="cursor: pointer"
           type="primary"
-          @click="handleOldDateClick(row.oldDate)"
+          @click="handleOldDateClick(row.oldDate)" -->
+        <el-text
         >
           {{ row.oldDateStr }}
         </el-text>
       </template>
       <template #newDateStr="{ row }">
-        <el-text
-          class="common-align"
+        <!--  class="common-align"
           style="cursor: pointer"
           type="primary"
-          @click="handleNewDateClick(row.newDate)"
+          @click="handleNewDateClick(row.newDate)" -->
+        <el-text
         >
           {{ row.newDateStr }}
         </el-text>

@@ -1,6 +1,6 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
-
+import { computed, onMounted, reactive, ref, watch } from 'vue';
+import dayjs from 'dayjs';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
@@ -26,6 +26,7 @@ import {
   getStatusTagType,
   getUserName,
   isStatusLabel,
+  loadScheduleUserOptions,
   normalizeHandoverLogRow,
   textObj,
   useFormSchema,
@@ -118,6 +119,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     try {
       await createHandoverLog({
         ...values,
+        handoverDate: dayjs(values.handoverDate).valueOf(),
         status: '待确认',
       });
       ElMessage.success($t('ui.actionMessage.addSuccess'));
@@ -359,6 +361,10 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(() => {
+  loadScheduleUserOptions();
+});
 </script>
 
 <template>

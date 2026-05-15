@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
@@ -28,6 +28,7 @@ import {
   getShiftTypeTagType,
   isApplyStatusLabel,
   isScheduleStatusLabel,
+  loadScheduleUserOptions,
   normalizeScheduleViewRow,
   textObj,
   useGridColumns,
@@ -387,6 +388,10 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(() => {
+  loadScheduleUserOptions();
+});
 </script>
 
 <template>
@@ -513,11 +518,11 @@ watch(
       </template>
 
       <template #positionName="{ row }">
-        <el-text
-          class="common-align"
+        <!--  class="common-align"
           style="cursor: pointer"
           type="primary"
-          @click="handlePositionClick(row.positionName)"
+          @click="handlePositionClick(row.positionName)" -->
+        <el-text
         >
           {{ row.positionName }}
         </el-text>

@@ -1,5 +1,7 @@
 import { requestClient } from '#/api/request.js';
 
+export { loadScheduleUserOptions, userOptions } from '../userOptions.js';
+
 /** 分页查询交接日志列表 */
 export function getHandoverLogPage(params) {
   return requestClient.get('/inspectop/handover-log/page', { params });
