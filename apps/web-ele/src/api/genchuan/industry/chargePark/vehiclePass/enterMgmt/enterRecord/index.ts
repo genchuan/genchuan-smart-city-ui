@@ -123,7 +123,7 @@ export function updateEnterRecord(data: EnterRecordApi.UpdateReqVO) {
 
 /** 导出入场记录 */
 export function exportEnterRecord(params?: EnterRecordApi.PageReqVO) {
-  return requestClient.download('/vehiclepass/enter-record/export', { params });
+  return requestClient.download('/vehiclepass/enter-record/export', { params: { ...params } });
 }
 
 /** 修正入场记录 */

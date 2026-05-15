@@ -42,7 +42,7 @@ let barChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationId: props.parkId,
+      stationName: props.parkId,
     };
 
     const res = await getAbnormalLeaveChart(params);
@@ -110,6 +110,16 @@ function initPieChart() {
     ],
   };
   pieChartInstance.setOption(option);
+
+  // 添加点击事件 - 点击折线数据点筛选对应日期的异常离场记录
+  pieChartInstance.on('click', (params) => {
+    const clickedDate = params.name;
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:abnormalLeave', {
+        detail: { createTimeRange: [clickedDate, clickedDate] },
+      }),
+    );
+  });
 }
 
 function initBarChart() {
@@ -140,6 +150,16 @@ function initBarChart() {
     ],
   };
   barChartInstance.setOption(option);
+
+  // 添加点击事件 - 点击柱形筛选对应场站的异常离场记录
+  barChartInstance.on('click', (params) => {
+    const stationName = params.name;
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:abnormalLeave', {
+        detail: { stationName },
+      }),
+    );
+  });
 }
 
 function initCharts() {

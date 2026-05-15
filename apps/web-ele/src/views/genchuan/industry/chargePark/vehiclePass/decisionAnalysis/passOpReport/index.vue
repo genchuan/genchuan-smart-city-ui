@@ -111,7 +111,7 @@ const fetchStatsData = async () => {
           data: (data.barData || []).map((item) => ({
             name: item.stationName || item.name,
             value: item.passCount || item.value,
-            stationId: item.stationId,
+            stationName: item.stationName,
           })),
         },
         {
@@ -217,9 +217,9 @@ const useMockData = () => {
       label: '场站通行量分布',
       value: 'stationDistribution',
       data: [
-        { name: '泉州丰泽充停场站', value: 342, stationId: 1 },
-        { name: '龙文区碧湖公园停车场', value: 256, stationId: 2 },
-        { name: '龙海区石码镇停车场', value: 189, stationId: 3 },
+        { name: '泉州丰泽充停场站', value: 342, stationName: '泉州丰泽充停场站' },
+        { name: '龙文区碧湖公园停车场', value: 256, stationName: '龙文区碧湖公园停车场' },
+        { name: '龙海区石码镇停车场', value: 189, stationName: '龙海区石码镇停车场' },
       ],
     },
     {

@@ -225,6 +225,8 @@ defineExpose({
                   :preview-src-list="[getFullImageUrl(item[field.key])]"
                   style="width: 100px; height: 100px; cursor: pointer"
                   fit="cover"
+                  crossorigin="anonymous"
+                  referrerPolicy="no-referrer"
                 >
                   <template #error>
                     <div class="image-error">
@@ -273,28 +275,34 @@ defineExpose({
 .detail-content {
   display: flex;
   flex-direction: column;
+  gap: 0;
 }
 
 .detail-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 140px 1fr;
   gap: 12px;
-  align-items: center;
-  padding: 4px 0;
+  align-items: flex-start;
+  padding: 8px 0;
+  min-height: 32px;
 }
 
 .detail-label {
-  width: 120px;
   font-size: 14px;
   font-weight: 500;
   color: var(--el-text-color-regular, #606266);
   text-align: right;
+  word-break: break-word;
 }
 
 .detail-value {
-  flex: 1;
   font-size: 14px;
   color: var(--el-text-color-primary, #303133);
   text-align: left;
+  word-break: break-word;
+  min-height: 22px;
+  display: flex;
+  align-items: center;
 }
 
 .detail-separator {

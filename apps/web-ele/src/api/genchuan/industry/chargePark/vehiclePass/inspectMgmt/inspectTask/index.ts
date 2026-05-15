@@ -109,7 +109,7 @@ export function getInspectTask(id: number | string) {
 
 /** 导出稽查任务 */
 export function exportInspectTask(params?: InspectTaskApi.PageReqVO) {
-  return requestClient.download('/vehiclepass/inspect-task/export', { params });
+  return requestClient.download('/vehiclepass/inspect-task/export', { params: { ...params } });
 }
 
 /** 派发稽查任务 */

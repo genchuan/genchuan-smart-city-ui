@@ -9,6 +9,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   getSpaceQueryPage,
   getSpaceQueryLocation,
@@ -175,6 +176,40 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+let isSearching = false;
+
+const activeFilters = computed(() => {
+  const filters = [];
+  const obj = dataObj.searchParams;
+
+  if (obj.spaceNo) {
+    filters.push({ label: `泊位编号：${obj.spaceNo}`, field: 'spaceNo' });
+  }
+  if (obj.areaId) {
+    filters.push({ label: `片区：${obj.areaId}`, field: 'areaId' });
+  }
+  if (obj.queryUserId) {
+    filters.push({ label: `查询人：${obj.queryUserId}`, field: 'queryUserId' });
+  }
+  if (obj.querySuccess !== undefined && obj.querySuccess !== null) {
+    filters.push({
+      label: `查询状态：${obj.querySuccess ? '成功' : '失败'}`,
+      field: 'querySuccess',
+    });
+  }
+
+  return filters;
+});
+
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchParams };
+  delete next[fieldName];
+  dataObj.searchParams = next;
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -186,10 +221,17 @@ const getTableData = async (pageObj) => {
   if (USE_REAL_API) {
     try {
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
         ...dataObj.searchParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getSpaceQueryPage(params);
       dataObj.total = res.total || 0;
@@ -226,7 +268,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [SearchForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -246,7 +288,8 @@ const [QueryForm] = useVbenForm({
 
 function onSubmit(values) {
   dataObj.searchParams = values;
-  handleRefresh();
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
 }
 
@@ -444,8 +487,8 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('filterByChart:spaceQuery', () => {});
-  window.removeEventListener('filterBySpace', () => {});
+  window.removeEventListener('filterByChart:spaceQuery', handleFilterByStatus);
+  window.removeEventListener('filterBySpace', handleFilterBySpace);
 });
 </script>
 
@@ -470,11 +513,22 @@ onUnmounted(() => {
     />
     <SpaceDetailDialog ref="spaceDetailRef" />
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <SearchForm class="query-form" />
     </Drawer>
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
+          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+            <el-tag
+              v-for="filter in activeFilters"
+              :key="filter.field"
+              type="primary"
+              closable
+              @close="handleClearField(filter.field)"
+            >
+              {{ filter.label }}
+            </el-tag>
+          </div>
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -553,6 +607,16 @@ onUnmounted(() => {
         <el-tag :type="row.spaceStatus === '空闲' ? 'success' : 'warning'">
           {{ row.spaceStatus }}
         </el-tag>
+      </template>
+      <template #updater="{ row }">
+        <span>{{ row.updater || '-' }}</span>
+      </template>
+      <template #updateTime="{ row }">
+        <span>{{ formatTime(row.updateTime) }}</span>
+      </template>
+      <template #correctionMark="{ row }">
+        <el-tag v-if="row.isCorrected" type="success">已修正</el-tag>
+        <el-tag v-else type="info">未修正</el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

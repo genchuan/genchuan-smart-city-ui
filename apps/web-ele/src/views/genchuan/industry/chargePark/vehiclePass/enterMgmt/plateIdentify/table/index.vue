@@ -8,6 +8,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getStationInfoPage } from '#/api/genchuan/industry/chargePark/stationResource/stationMgmt/stationInfo';
 import {
   confirmPlateIdentify,
   correctPlateIdentify,
@@ -18,10 +19,12 @@ import {
 } from '#/api/genchuan/industry/chargePark/vehiclePass/enterMgmt/plateIdentify';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
 import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
+import { formatTime } from '../../../utils/timeFormatter';
 import ImagePreviewDialog from '../../plateIdentify/components/ImagePreviewDialog.vue';
 import {
   dataList,
@@ -44,6 +47,20 @@ const props = defineProps({
 
 // 是否使用真实API（默认false使用模拟数据）
 const USE_REAL_API = true;
+
+const stationOptions = ref([]);
+
+async function loadStationOptions() {
+  try {
+    const res = await getStationInfoPage({ pageNo: 1, pageSize: 10 });
+    stationOptions.value = (res.list || []).map((station) => ({
+      label: station.stationName,
+      value: station.stationName,
+    }));
+  } catch (error) {
+    console.error('Failed to load station options:', error);
+  }
+}
 
 const getTitle = computed(() => {
   return formData.value?.id ? '修正车牌识别' : textObj.addText;
@@ -94,7 +111,14 @@ const [CreateForm, createFormApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useCreateFormSchema(),
+  schema: computed(() => {
+    const schema = useCreateFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationName');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -108,7 +132,14 @@ const [CorrectForm, correctFormApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useCorrectFormSchema(),
+  schema: computed(() => {
+    const schema = useCorrectFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationName');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -156,16 +187,21 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  if (USE_REAL_API) {
-    try {
-      await exportPlateIdentify(dataObj.searchParams);
-      ElMessage.success('导出成功');
-    } catch (error) {
-      ElMessage.error('导出失败');
-      console.error(error);
+  const loadingInstance = ElLoading.service({
+    text: '导出中...',
+  });
+  try {
+    if (USE_REAL_API) {
+      const res = await exportPlateIdentify(dataObj.searchParams);
+      downloadFileFromBlobPart({ fileName: '车牌识别.xlsx', source: res });
+    } else {
+      exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
     }
-  } else {
-    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  } catch (error) {
+    ElMessage.error('导出失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
   }
 }
 
@@ -307,6 +343,8 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+let isSearching = false;
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -318,10 +356,17 @@ const getTableData = async (pageObj) => {
   if (USE_REAL_API) {
     try {
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
         ...dataObj.searchParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getPlateIdentifyPage(params);
       dataObj.total = res.total || 0;
@@ -370,27 +415,10 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
-  collapsed: false,
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
-  handleSubmit: onSubmit,
-  layout: 'horizontal',
-  schema: useSearchFormSchema(),
-  showCollapseButton: true,
-  submitButtonOptions: {
-    content: '查询',
-  },
-});
-
 function onSubmit(values) {
   dataObj.searchParams = values;
-  handleRefresh();
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
 }
 
@@ -501,14 +529,12 @@ const handlePlateColorClick = (row) => {
     plateColor: row.plateColor,
   };
   handleRefresh();
-  ElMessage.success(`已筛选车牌颜色: ${row.plateColor}`);
 };
 
 // 状态点击 - 筛选同状态记录
 const handleStatusClick = (row) => {
   dataObj.searchParams = { ...dataObj.searchParams, status: row.status };
   handleRefresh();
-  ElMessage.success(`已筛选状态: ${row.status}`);
 };
 
 // 场站点击 - 筛选同场站记录
@@ -518,7 +544,25 @@ const handleStationClick = (row) => {
     stationName: row.stationName,
   };
   handleRefresh();
-  ElMessage.success(`已筛选场站: ${row.stationName}`);
+};
+
+// 修正标记点击 - 筛选同修正状态记录
+const handleCorrectedClick = (row) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    isCorrected: row.isCorrected,
+  };
+  handleRefresh();
+};
+
+// 清除单个筛选条件
+const handleClearFilter = (key) => {
+  if (key === 'createTimeRange') {
+    delete dataObj.searchParams.createTimeRange;
+  } else {
+    delete dataObj.searchParams[key];
+  }
+  handleRefresh();
 };
 
 // 图片预览
@@ -552,17 +596,23 @@ const getConfidenceColor = (confidence) => {
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
+  // 叠加筛选条件，保留现有筛选
   dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+  isSearching = true;
   handleRefresh();
   ElMessage.success('已应用图表筛选');
 };
 
 onMounted(() => {
+  loadStationOptions();
   window.addEventListener('filterByChart:plateIdentify', handleFilterByChart);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('filterByChart:plateIdentify', handleFilterByChart);
+  window.removeEventListener(
+    'filterByChart:plateIdentify',
+    handleFilterByChart,
+  );
 });
 </script>
 
@@ -583,11 +633,14 @@ onUnmounted(() => {
     <ImagePreviewDialog ref="imagePreviewRef" />
     <VehicleDetailDialog ref="vehicleDetailRef" />
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <SearchForm class="query-form" />
     </Drawer>
     <Grid>
       <template #table-title>
-        <div class="tabel-tabs">
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center"
+        >
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -602,6 +655,62 @@ onUnmounted(() => {
               />
             </el-tabs>
           </div>
+
+          <!-- 筛选条件标签 -->
+          <el-tag
+            v-if="dataObj.searchParams.plateNo"
+            type="primary"
+            closable
+            @close="handleClearFilter('plateNo')"
+          >
+            车牌号：{{ dataObj.searchParams.plateNo }}
+          </el-tag>
+          <el-tag
+            v-if="dataObj.searchParams.plateColor"
+            type="primary"
+            closable
+            @close="handleClearFilter('plateColor')"
+          >
+            车牌颜色：{{ dataObj.searchParams.plateColor }}
+          </el-tag>
+          <el-tag
+            v-if="dataObj.searchParams.status"
+            type="primary"
+            closable
+            @close="handleClearFilter('status')"
+          >
+            识别状态：{{ dataObj.searchParams.status }}
+          </el-tag>
+          <el-tag
+            v-if="dataObj.searchParams.stationName"
+            type="primary"
+            closable
+            @close="handleClearFilter('stationName')"
+          >
+            场站：{{ dataObj.searchParams.stationName }}
+          </el-tag>
+          <el-tag
+            v-if="dataObj.searchParams.isCorrected !== undefined"
+            type="primary"
+            closable
+            @close="handleClearFilter('isCorrected')"
+          >
+            修正标记：{{
+              dataObj.searchParams.isCorrected ? '已修正' : '未修正'
+            }}
+          </el-tag>
+          <el-tag
+            v-if="
+              dataObj.searchParams.createTimeRange &&
+              dataObj.searchParams.createTimeRange.length === 2
+            "
+            type="info"
+            closable
+            @close="handleClearFilter('createTimeRange')"
+          >
+            时间范围：{{ dataObj.searchParams.createTimeRange[0] }} 至
+            {{ dataObj.searchParams.createTimeRange[1] }}
+          </el-tag>
         </div>
       </template>
       <template #toolbar-tools>
@@ -697,6 +806,23 @@ onUnmounted(() => {
         </el-text>
       </template>
       <template #isCorrected="{ row }">
+        <el-tag
+          :type="row.isCorrected ? 'success' : 'info'"
+          @click="handleCorrectedClick(row)"
+          style="cursor: pointer"
+        >
+          {{ row.isCorrected ? '已修正' : '未修正' }}
+        </el-tag>
+      </template>
+      <template #updater="{ row }">
+        <el-text>{{ row.updater || '-' }}</el-text>
+      </template>
+      <template #updateTime="{ row }">
+        <el-text>
+          {{ row.updateTime ? formatTime(row.updateTime) : '-' }}
+        </el-text>
+      </template>
+      <template #correctionMark="{ row }">
         <el-tag :type="row.isCorrected ? 'success' : 'info'">
           {{ row.isCorrected ? '已修正' : '未修正' }}
         </el-tag>

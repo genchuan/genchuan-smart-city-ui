@@ -89,7 +89,7 @@ async function loadChartData() {
     // 使用真实API
     const params = {
       reportCycle: '日报',
-      stationId: props.parkId,
+      stationName: props.parkId,
       statTime: new Date().toISOString().split('T')[0],
       tenantId: 1, // TODO: 从用户信息获取
     };

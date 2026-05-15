@@ -42,7 +42,7 @@ let barChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationId: props.parkId,
+      stationName: props.parkId,
     };
 
     const res = await getGateOpenChart(params);
@@ -109,6 +109,16 @@ function initPieChart() {
     ],
   };
   pieChartInstance.setOption(option);
+
+  // 添加点击事件 - 点击折线数据点筛选对应日期的开闸申请记录
+  pieChartInstance.on('click', (params) => {
+    const clickedDate = params.name;
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:gateOpen', {
+        detail: { createTimeRange: [clickedDate, clickedDate] },
+      }),
+    );
+  });
 }
 
 function initBarChart() {
@@ -139,6 +149,16 @@ function initBarChart() {
     ],
   };
   barChartInstance.setOption(option);
+
+  // 添加点击事件 - 点击柱形筛选对应场站的开闸申请记录
+  barChartInstance.on('click', (params) => {
+    const stationName = params.name;
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:gateOpen', {
+        detail: { stationName },
+      }),
+    );
+  });
 }
 
 function initCharts() {

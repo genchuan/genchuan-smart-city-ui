@@ -8,6 +8,8 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { downloadFileFromBlobPart } from '@vben/utils';
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   createCycleReport,
   exportCycleReport,
@@ -162,19 +164,17 @@ function handleRefresh() {
 
 async function handleExport() {
   if (USE_REAL_API) {
+    const loadingInstance = ElLoading.service({
+      text: '正在导出报表...',
+    });
     try {
-      const loadingInstance = ElLoading.service({
-        text: '正在导出报表...',
-      });
-      try {
-        await exportCycleReport(dataObj.searchParams);
-        ElMessage.success('导出成功');
-      } finally {
-        loadingInstance.close();
-      }
+      const res = await exportCycleReport(dataObj.searchParams);
+      downloadFileFromBlobPart({ fileName: '周期报表.xlsx', source: res });
     } catch (error) {
       ElMessage.error('导出失败');
       console.error(error);
+    } finally {
+      loadingInstance.close();
     }
   } else {
     exportToExcel(dataObj.list, textObj.excelName, textObj.excelAllName);
@@ -214,6 +214,8 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+let isSearching = false;
+
 // 当前激活的筛选标签
 const activeFilterTags = reactive({
   reportStatus: '',
@@ -239,10 +241,17 @@ const getTableData = async (pageObj) => {
   if (USE_REAL_API) {
     try {
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
         ...dataObj.searchParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getCycleReportPage(params);
       dataObj.total = res.total || 0;
@@ -290,7 +299,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [SearchForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -310,7 +319,8 @@ const [QueryForm] = useVbenForm({
 
 function onSubmit(values) {
   dataObj.searchParams = values;
-  handleRefresh();
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
 }
 
@@ -415,7 +425,7 @@ const handleReportCycleClick = (row) => {
 const handleStationClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
-    stationId: row.stationId,
+    stationName: row.stationName,
   };
   handleRefresh();
 };
@@ -429,7 +439,7 @@ const handleEnterCountClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -443,7 +453,7 @@ const handleLeaveCountClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -457,7 +467,7 @@ const handleParkingCountClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -471,7 +481,7 @@ const handleIdentifySuccessRateClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -485,7 +495,7 @@ const handleCheckSuccessRateClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -499,7 +509,7 @@ const handleAbnormalHandleRateClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -513,7 +523,7 @@ const handleEtcPassSuccessRateClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -545,11 +555,9 @@ const handleExportRow = async (row) => {
   try {
     if (USE_REAL_API) {
       await exportCycleReportById(row.id);
-      ElMessage.success(`${row.reportCycle}导出成功`);
     } else {
       // 模拟导出
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      ElMessage.success(`${row.reportCycle}导出成功`);
     }
   } catch (error) {
     ElMessage.error('导出失败');
@@ -671,7 +679,7 @@ defineExpose({
     />
     <DrillDownDetailDialog ref="drillDownDialogRef" />
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <SearchForm class="query-form" />
     </Drawer>
 
     <Grid>
@@ -849,6 +857,11 @@ defineExpose({
         >
           {{ row.creator }}
         </el-text>
+      </template>
+      <template #correctionMark="{ row }">
+        <el-tag :type="row.isCorrected ? 'success' : 'info'">
+          {{ row.isCorrected ? '已修正' : '未修正' }}
+        </el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

@@ -139,7 +139,7 @@ export function getCycleReport(id: number | string) {
  */
 export function exportCycleReport(params?: CycleReportApi.PageReqVO) {
   return requestClient.download('/vehiclepass/cycle-report/export', {
-    params,
+    params: { ...params },
   });
 }
 

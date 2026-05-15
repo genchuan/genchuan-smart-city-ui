@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
@@ -19,6 +19,7 @@ import {
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import { exportToExcel } from '#/utils/excel.js';
 
 import SpaceDetailDialog from '../../../components/SpaceDetailDialog.vue';
@@ -36,6 +37,7 @@ import {
   useSearchFormSchema,
   useUpdateFormSchema,
 } from './data';
+import { formatTime } from '../../../utils/timeFormatter';
 
 const props = defineProps({
   secondShow: {
@@ -161,7 +163,13 @@ const [UpdateFormDrawer, updateFormDrawerApi] = useVbenDrawer({
     if (isOpen) {
       formData.value = updateFormDrawerApi.getData();
       if (formData.value?.id) {
-        await updateFormApi.setValues(formData.value);
+        const formValues = { ...formData.value };
+        // 格式化时间戳为日期字符串
+        if (formValues.enterTime && typeof formValues.enterTime === 'number') {
+          formValues.enterTime = formatTime(formValues.enterTime);
+        }
+        console.log('编辑表单数据:', formValues);
+        await updateFormApi.setValues(formValues);
       }
     }
   },
@@ -182,7 +190,12 @@ const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
     if (isOpen) {
       formData.value = correctFormDrawerApi.getData();
       if (formData.value?.id) {
-        await correctFormApi.setValues(formData.value);
+        const formValues = { ...formData.value };
+        // 格式化时间戳为日期字符串
+        if (formValues.enterTime && typeof formValues.enterTime === 'number') {
+          formValues.enterTime = formatTime(formValues.enterTime);
+        }
+        await correctFormApi.setValues(formValues);
       }
     }
   },
@@ -193,16 +206,21 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  if (USE_REAL_API) {
-    try {
-      await exportEnterRecord(dataObj.searchParams);
-      ElMessage.success('导出成功');
-    } catch (error) {
-      ElMessage.error('导出失败');
-      console.error(error);
+  const loadingInstance = ElLoading.service({
+    text: '导出中...',
+  });
+  try {
+    if (USE_REAL_API) {
+      const res = await exportEnterRecord(dataObj.searchParams);
+      downloadFileFromBlobPart({ fileName: textObj.excelAllName + '.xlsx', source: res });
+    } else {
+      exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
     }
-  } else {
-    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  } catch (error) {
+    ElMessage.error('导出失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
   }
 }
 
@@ -362,6 +380,55 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+let isSearching = false;
+
+const activeFilters = computed(() => {
+  const filters = [];
+  const obj = dataObj.searchParams;
+
+  if (obj.plateNo) {
+    filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
+  }
+  if (obj.plateColor) {
+    filters.push({ label: `车牌颜色：${obj.plateColor}`, field: 'plateColor' });
+  }
+  if (obj.spaceNo) {
+    filters.push({ label: `车位编号：${obj.spaceNo}`, field: 'spaceNo' });
+  }
+  if (obj.recordType) {
+    filters.push({ label: `记录类型：${obj.recordType}`, field: 'recordType' });
+  }
+  if (obj.status) {
+    filters.push({ label: `记录状态：${obj.status}`, field: 'status' });
+  }
+  if (obj.stationName) {
+    filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+  }
+  if (obj.isCorrected !== undefined && obj.isCorrected !== null) {
+    filters.push({
+      label: `修正状态：${obj.isCorrected ? '已修正' : '未修正'}`,
+      field: 'isCorrected',
+    });
+  }
+  if (obj.enterTime && Array.isArray(obj.enterTime) && obj.enterTime.length === 2) {
+    filters.push({
+      label: `入场时间：${obj.enterTime[0]} 至 ${obj.enterTime[1]}`,
+      field: 'enterTime',
+    });
+  }
+
+  return filters;
+});
+
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchParams };
+  delete next[fieldName];
+  dataObj.searchParams = next;
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -373,10 +440,17 @@ const getTableData = async (pageObj) => {
   if (USE_REAL_API) {
     try {
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
         ...dataObj.searchParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getEnterRecordPage(params);
       dataObj.total = res.total || 0;
@@ -425,27 +499,10 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
-  collapsed: false,
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
-  handleSubmit: onSubmit,
-  layout: 'horizontal',
-  schema: useSearchFormSchema(),
-  showCollapseButton: true,
-  submitButtonOptions: {
-    content: '查询',
-  },
-});
-
 function onSubmit(values) {
   dataObj.searchParams = values;
-  handleRefresh();
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
 }
 
@@ -486,7 +543,12 @@ const handleOpenDetail = async (row) => {
     });
     try {
       const res = await getEnterRecord(row.id);
-      dataObj.detailObj = res || row;
+      // 如果API返回的数据中没有stationName，从行数据中补充
+      dataObj.detailObj = {
+        ...row,
+        ...res,
+        stationName: res?.stationName || row?.stationName,
+      };
       detailDrawerRef.value?.open();
     } catch (error) {
       ElMessage.error('获取详情失败');
@@ -630,11 +692,22 @@ onUnmounted(() => {
     <VehicleDetailDialog ref="vehicleDetailRef" />
     <SpaceDetailDialog ref="spaceDetailRef" />
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <SearchForm class="query-form" />
     </Drawer>
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
+          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+            <el-tag
+              v-for="filter in activeFilters"
+              :key="filter.field"
+              type="primary"
+              closable
+              @close="handleClearField(filter.field)"
+            >
+              {{ filter.label }}
+            </el-tag>
+          </div>
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -735,6 +808,17 @@ onUnmounted(() => {
         </el-text>
       </template>
       <template #isCorrected="{ row }">
+        <el-tag :type="row.isCorrected ? 'success' : 'info'">
+          {{ row.isCorrected ? '已修正' : '未修正' }}
+        </el-tag>
+      </template>
+      <template #updater="{ row }">
+        <el-text>{{ row.updater || '-' }}</el-text>
+      </template>
+      <template #updateTime="{ row }">
+        <el-text>{{ row.updateTime ? formatTime(row.updateTime) : '-' }}</el-text>
+      </template>
+      <template #correctionMark="{ row }">
         <el-tag :type="row.isCorrected ? 'success' : 'info'">
           {{ row.isCorrected ? '已修正' : '未修正' }}
         </el-tag>

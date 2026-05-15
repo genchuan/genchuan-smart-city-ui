@@ -42,7 +42,7 @@ let mapChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationId: props.parkId,
+      stationName: props.parkId,
     };
 
     const res = await getInParkStatusChart(params);

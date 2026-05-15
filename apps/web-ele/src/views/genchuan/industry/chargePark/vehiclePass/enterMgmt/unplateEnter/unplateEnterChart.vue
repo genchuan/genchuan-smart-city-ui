@@ -24,13 +24,6 @@ const cards = reactive([
     color: '#50E3C2',
     key: 'passRate',
   },
-  {
-    title: '待审核数',
-    value: 0,
-    desc: '等待审核',
-    color: '#FF6B8B',
-    key: 'pending',
-  },
 ]);
 
 const state = reactive({
@@ -46,7 +39,7 @@ let barChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationId: props.parkId,
+      stationName: props.parkId,
     };
 
     const res = await unplateEnterApi.getChart(params);
@@ -57,7 +50,6 @@ async function loadChartData() {
       cards[1].value = res.cardData.auditPassRate
         ? `${res.cardData.auditPassRate}%`
         : '0%';
-      cards[2].value = res.cardData.pendingAuditCount || 0;
     }
 
     // 使用模拟数据测试

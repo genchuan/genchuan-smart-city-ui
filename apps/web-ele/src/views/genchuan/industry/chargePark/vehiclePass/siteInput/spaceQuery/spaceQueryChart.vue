@@ -145,12 +145,12 @@ function initPieChart() {
   };
   pieChartInstance.setOption(option);
 
-  // 添加点击事件，支持钻取
+  // 添加点击事件，支持钻取 - 点击散点筛选对应车位的查询记录
   pieChartInstance.on('click', (params) => {
     if (params.componentType === 'series') {
       const spaceData = state.chartData.spaceLocationList[params.dataIndex];
       window.dispatchEvent(
-        new CustomEvent('filterBySpace', {
+        new CustomEvent('filterByChart:spaceQuery', {
           detail: { spaceNo: spaceData.spaceNo },
         }),
       );

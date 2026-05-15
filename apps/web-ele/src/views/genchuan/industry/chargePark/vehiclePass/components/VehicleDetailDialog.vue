@@ -43,7 +43,7 @@ const open = async (plateNo) => {
   } catch (error) {
     // 只显示消息提示，不打开对话框
     const errorMsg = error?.message || error?.msg || '获取车辆详情失败';
-    ElMessage.warning(errorMsg);
+    // ElMessage.warning(errorMsg);
     console.error('获取车辆详情失败:', error);
   } finally {
     loading.value = false;
@@ -69,48 +69,68 @@ defineExpose({
     append-to-body
   >
     <el-skeleton :loading="loading" :rows="8" animated>
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="车牌号">
-          <el-tag type="primary" size="large">{{ vehicleInfo.plateNo }}</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="车牌颜色">
-          <el-tag>{{ vehicleInfo.plateColor }}</el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="车辆类型">
-          {{ vehicleInfo.carType }}
-        </el-descriptions-item>
-        <el-descriptions-item label="绑定状态">
-          <el-tag
-            :type="
-              vehicleInfo.status === '已绑定'
-                ? 'success'
-                : vehicleInfo.status === '待审核'
-                  ? 'warning'
-                  : 'info'
-            "
-          >
-            {{ vehicleInfo.status }}
-          </el-tag>
-        </el-descriptions-item>
-        <el-descriptions-item label="绑定时间" :span="2">
-          {{ vehicleInfo.bindTime }}
-        </el-descriptions-item>
-        <el-descriptions-item label="审核时间" :span="2">
-          {{ vehicleInfo.auditTime }}
-        </el-descriptions-item>
-        <el-descriptions-item label="审核备注" :span="2">
-          {{ vehicleInfo.auditRemark }}
-        </el-descriptions-item>
-        <el-descriptions-item label="备注" :span="2">
-          {{ vehicleInfo.remark }}
-        </el-descriptions-item>
-        <el-descriptions-item label="创建时间" :span="2">
-          {{ vehicleInfo.createTime }}
-        </el-descriptions-item>
-        <el-descriptions-item label="更新时间" :span="2">
-          {{ vehicleInfo.updateTime }}
-        </el-descriptions-item>
-      </el-descriptions>
+      <div class="detail-form">
+        <div class="detail-row">
+          <div class="detail-item">
+            <span class="detail-label">车牌号：</span>
+            <el-tag type="primary" size="large">{{ vehicleInfo.plateNo }}</el-tag>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">车牌颜色：</span>
+            <el-tag>{{ vehicleInfo.plateColor }}</el-tag>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-item">
+            <span class="detail-label">车辆类型：</span>
+            <span class="detail-value">{{ vehicleInfo.carType }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">绑定状态：</span>
+            <el-tag
+              :type="
+                vehicleInfo.status === '已绑定'
+                  ? 'success'
+                  : vehicleInfo.status === '待审核'
+                    ? 'warning'
+                    : 'info'
+              "
+            >
+              {{ vehicleInfo.status }}
+            </el-tag>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-item">
+            <span class="detail-label">绑定时间：</span>
+            <span class="detail-value">{{ vehicleInfo.bindTime }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">审核时间：</span>
+            <span class="detail-value">{{ vehicleInfo.auditTime }}</span>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-item">
+            <span class="detail-label">审核备注：</span>
+            <span class="detail-value">{{ vehicleInfo.auditRemark }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">备注：</span>
+            <span class="detail-value">{{ vehicleInfo.remark }}</span>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="detail-item">
+            <span class="detail-label">创建时间：</span>
+            <span class="detail-value">{{ vehicleInfo.createTime }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">更新时间：</span>
+            <span class="detail-value">{{ vehicleInfo.updateTime }}</span>
+          </div>
+        </div>
+      </div>
     </el-skeleton>
 
     <template #footer>
@@ -120,7 +140,44 @@ defineExpose({
 </template>
 
 <style scoped>
-:deep(.el-descriptions__label) {
-  width: 120px;
+.detail-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.detail-label {
+  font-weight: 500;
+  color: #606266;
+  font-size: 14px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.detail-value {
+  color: #303133;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

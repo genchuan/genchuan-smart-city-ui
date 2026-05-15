@@ -96,7 +96,7 @@ export function getFakePlateControl(id: number | string) {
 /** 导出套牌管控 */
 export function exportFakePlateControl(params?: FakePlateControlApi.PageReqVO) {
   return requestClient.download('/vehiclepass/fake-plate-control/export', {
-    params,
+    params: { ...params },
   });
 }
 

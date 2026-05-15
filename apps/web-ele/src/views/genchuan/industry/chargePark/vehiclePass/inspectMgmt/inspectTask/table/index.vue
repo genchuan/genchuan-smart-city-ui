@@ -23,7 +23,9 @@ import {
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import { exportToExcel } from '#/utils/excel.js';
+import { formatTime } from '../../../utils/timeFormatter';
 
 import {
   dataList,
@@ -115,16 +117,21 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  if (USE_REAL_API) {
-    try {
-      await exportInspectTask(dataObj.searchParams);
-      ElMessage.success('导出成功');
-    } catch (error) {
-      ElMessage.error('导出失败');
-      console.error(error);
+  const loadingInstance = ElLoading.service({
+    text: '导出中...',
+  });
+  try {
+    if (USE_REAL_API) {
+      const res = await exportInspectTask(dataObj.searchParams);
+      downloadFileFromBlobPart({ fileName: '稽查任务.xlsx', source: res });
+    } else {
+      exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
     }
-  } else {
-    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  } catch (error) {
+    ElMessage.error('导出失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
   }
 }
 
@@ -191,6 +198,8 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+let isSearching = false;
+
 // 监听下钻筛选参数变化
 const { drillDownFilter } = props;
 if (drillDownFilter) {
@@ -208,6 +217,38 @@ if (drillDownFilter) {
   }
 }
 
+const activeFilters = computed(() => {
+  const filters = [];
+  const obj = dataObj.searchParams;
+
+  if (obj.plateNo) {
+    filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
+  }
+  if (obj.taskType) {
+    filters.push({ label: `任务类型：${obj.taskType}`, field: 'taskType' });
+  }
+  if (obj.status) {
+    filters.push({ label: `任务状态：${obj.status}`, field: 'status' });
+  }
+  if (obj.dispatchTime && Array.isArray(obj.dispatchTime) && obj.dispatchTime.length === 2) {
+    filters.push({
+      label: `派发时间：${obj.dispatchTime[0]} 至 ${obj.dispatchTime[1]}`,
+      field: 'dispatchTime',
+    });
+  }
+
+  return filters;
+});
+
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchParams };
+  delete next[fieldName];
+  dataObj.searchParams = next;
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -219,10 +260,17 @@ const getTableData = async (pageObj) => {
   if (USE_REAL_API) {
     try {
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
         ...dataObj.searchParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getInspectTaskPage(params);
       dataObj.total = res.total || 0;
@@ -279,7 +327,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [SearchForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -304,7 +352,8 @@ const [QueryForm] = useVbenForm({
 
 function onSubmit(values) {
   dataObj.searchParams = values;
-  handleRefresh();
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
 }
 
@@ -742,11 +791,22 @@ const getActionButtons = (row) => {
       :fields="detailFields"
     />
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <SearchForm class="query-form" />
     </Drawer>
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
+          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+            <el-tag
+              v-for="filter in activeFilters"
+              :key="filter.field"
+              type="primary"
+              closable
+              @close="handleClearField(filter.field)"
+            >
+              {{ filter.label }}
+            </el-tag>
+          </div>
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -828,6 +888,16 @@ const getActionButtons = (row) => {
         <el-text class="common-align" type="primary">
           {{ row.executeUserName || '-' }}
         </el-text>
+      </template>
+      <template #updater="{ row }">
+        <span>{{ row.updater || '-' }}</span>
+      </template>
+      <template #updateTime="{ row }">
+        <span>{{ formatTime(row.updateTime) }}</span>
+      </template>
+      <template #correctionMark="{ row }">
+        <el-tag v-if="row.isCorrected" type="success">已修正</el-tag>
+        <el-tag v-else type="info">未修正</el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

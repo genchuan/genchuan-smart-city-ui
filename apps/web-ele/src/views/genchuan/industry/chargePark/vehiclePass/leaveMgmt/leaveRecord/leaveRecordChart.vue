@@ -42,7 +42,7 @@ let barChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationId: props.parkId,
+      stationName: props.parkId,
     };
 
     const res = await leaveRecordApi.getChart(params);

@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 
@@ -20,7 +20,9 @@ import {
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import { exportToExcel } from '#/utils/excel.js';
+import { formatTime } from '../../../utils/timeFormatter';
 
 import {
   dataList,
@@ -216,12 +218,17 @@ function handleRefresh() {
 
 async function handleExport() {
   if (USE_REAL_API) {
+    const loadingInstance = ElLoading.service({
+      text: '正在导出...',
+    });
     try {
-      await exportUnplateEnter(dataObj.searchParams);
-      ElMessage.success('导出成功');
+      const res = await exportUnplateEnter(dataObj.searchParams);
+      downloadFileFromBlobPart({ fileName: textObj.excelAllName + '.xlsx', source: res });
     } catch (error) {
       ElMessage.error('导出失败');
       console.error(error);
+    } finally {
+      loadingInstance.close();
     }
   } else {
     exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
@@ -322,6 +329,40 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+let isSearching = false;
+
+const activeFilters = computed(() => {
+  const filters = [];
+  const obj = dataObj.searchParams;
+
+  if (obj.plateNo) {
+    filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
+  }
+  if (obj.status) {
+    filters.push({ label: `状态：${obj.status}`, field: 'status' });
+  }
+  if (obj.stationName) {
+    filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+  }
+  if (obj.isCorrected !== undefined && obj.isCorrected !== null) {
+    filters.push({
+      label: `修正状态：${obj.isCorrected ? '已修正' : '未修正'}`,
+      field: 'isCorrected',
+    });
+  }
+
+  return filters;
+});
+
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchParams };
+  delete next[fieldName];
+  dataObj.searchParams = next;
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -333,10 +374,17 @@ const getTableData = async (pageObj) => {
   if (USE_REAL_API) {
     try {
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
         ...dataObj.searchParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getUnplateEnterPage(params);
       dataObj.total = res.total || 0;
@@ -385,32 +433,10 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
-  collapsed: false,
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
-  handleSubmit: onSubmit,
-  layout: 'horizontal',
-  schema: useSearchFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
-  }),
-  showCollapseButton: true,
-  submitButtonOptions: {
-    content: '查询',
-  },
-});
-
 function onSubmit(values) {
   dataObj.searchParams = values;
-  handleRefresh();
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
 }
 
@@ -536,11 +562,22 @@ onUnmounted(() => {
       :fields="detailFields"
     />
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <SearchForm class="query-form" />
     </Drawer>
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
+          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+            <el-tag
+              v-for="filter in activeFilters"
+              :key="filter.field"
+              type="primary"
+              closable
+              @close="handleClearField(filter.field)"
+            >
+              {{ filter.label }}
+            </el-tag>
+          </div>
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -585,6 +622,17 @@ onUnmounted(() => {
         >
           {{ row.id }}
         </el-text>
+      </template>
+      <template #updater="{ row }">
+        <el-text>{{ row.updater || '-' }}</el-text>
+      </template>
+      <template #updateTime="{ row }">
+        <el-text>{{ row.updateTime ? formatTime(row.updateTime) : '-' }}</el-text>
+      </template>
+      <template #correctionMark="{ row }">
+        <el-tag :type="row.isCorrected ? 'success' : 'info'">
+          {{ row.isCorrected ? '已修正' : '未修正' }}
+        </el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

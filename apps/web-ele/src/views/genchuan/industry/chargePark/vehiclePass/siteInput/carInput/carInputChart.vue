@@ -112,12 +112,14 @@ function initPieChart() {
   };
   pieChartInstance.setOption(option);
 
-  // 添加点击事件，支持钻取
+  // 添加点击事件，支持钻取 - 点击折线数据点筛选对应日期的录入记录
   pieChartInstance.on('click', (params) => {
     if (params.componentType === 'series') {
-      const date = params.name;
+      const clickedDate = params.name;
       window.dispatchEvent(
-        new CustomEvent('filterByDate', { detail: { date } }),
+        new CustomEvent('filterByChart:carInput', {
+          detail: { createTimeRange: [clickedDate, clickedDate] }
+        }),
       );
     }
   });

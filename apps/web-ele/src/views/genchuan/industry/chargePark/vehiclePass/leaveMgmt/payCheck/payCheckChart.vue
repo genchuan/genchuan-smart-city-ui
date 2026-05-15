@@ -39,7 +39,7 @@ let pieChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationId: props.parkId,
+      stationName: props.parkId,
     };
 
     const res = await getPayCheckChart(params);
@@ -105,28 +105,26 @@ function initPieChart() {
     ],
   };
   pieChartInstance.setOption(option);
-}
 
-function initBarChart() {
-  // 暂时不需要柱状图
-}
-
-function initCharts() {
-  initPieChart();
+  // 添加点击事件 - 点击折线数据点筛选对应日期的核验记录
+  pieChartInstance.on('click', (params) => {
+    const clickedDate = params.name;
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:payCheck', {
+        detail: { createTimeRange: [clickedDate, clickedDate] },
+      }),
+    );
+  });
 }
 
 function handleCardClick(key) {
-  const today = new Date();
-  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
-
   const filterMap = {
-    checkSuccessRate: { startTime: todayStart, endTime: todayEnd },
-    avgCheckDuration: { startTime: todayStart, endTime: todayEnd },
+    checkSuccessRate: { status: '核验成功' },
+    avgCheckDuration: {},
   };
 
   const filterParams = filterMap[key];
-  if (filterParams) {
+  if (filterParams !== undefined) {
     window.dispatchEvent(
       new CustomEvent('filterByChart:payCheck', { detail: filterParams }),
     );

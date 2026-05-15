@@ -63,7 +63,7 @@ function setChartRef(index) {
 async function loadChartData() {
   try {
     const params = {
-      stationId: props.parkId,
+      stationName: props.parkId,
     };
 
     const res = await getPlateIdentifyChart(params);
@@ -141,11 +141,12 @@ function initLineChart() {
   console.log('[plateIdentifyChart] Line chart option:', option);
   lineChartInstance.setOption(option);
 
-  // 添加点击事件
+  // 添加点击事件 - 点击折线数据点筛选对应日期的识别记录
   lineChartInstance.on('click', (params) => {
+    const clickedDate = params.name; // 日期格式如 "2026-04-14"
     window.dispatchEvent(
       new CustomEvent('filterByChart:plateIdentify', {
-        detail: { identifyTime: params.name },
+        detail: { createTimeRange: [clickedDate, clickedDate] },
       }),
     );
   });
@@ -164,28 +165,25 @@ function initBarChart() {
   console.log('[plateIdentifyChart] Bar chart option:', option);
   barChartInstance.setOption(option);
 
-  // 添加点击事件
+  // 添加点击事件 - 点击柱形筛选对应场站的识别记录
   barChartInstance.on('click', (params) => {
+    const stationName = params.name; // 场站名称
     window.dispatchEvent(
       new CustomEvent('filterByChart:plateIdentify', {
-        detail: { stationName: params.name },
+        detail: { stationName },
       }),
     );
   });
 }
 
 function handleCardClick(key) {
-  const today = new Date();
-  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
-
   const filterMap = {
-    successRate: { startTime: todayStart, endTime: todayEnd },
-    avgDuration: { startTime: todayStart, endTime: todayEnd },
+    successRate: { status: '识别成功' }, // 识别成功率卡片 - 筛选识别成功状态
+    avgDuration: {}, // 平均识别时长卡片 - 显示所有识别记录（时长明细）
   };
 
   const filterParams = filterMap[key];
-  if (filterParams) {
+  if (filterParams !== undefined) {
     window.dispatchEvent(
       new CustomEvent('filterByChart:plateIdentify', { detail: filterParams }),
     );

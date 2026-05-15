@@ -120,7 +120,7 @@ export function correctLeaveRecord(data: LeaveRecordApi.CorrectReqVO) {
 
 /** 导出离场记录 */
 export function exportLeaveRecord(params?: LeaveRecordApi.PageReqVO) {
-  return requestClient.download('/vehiclepass/leave-record/export', { params });
+  return requestClient.download('/vehiclepass/leave-record/export', { params: { ...params } });
 }
 
 /** 查询离场记录图表 */

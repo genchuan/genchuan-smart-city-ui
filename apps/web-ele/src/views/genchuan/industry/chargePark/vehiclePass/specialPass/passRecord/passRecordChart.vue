@@ -39,7 +39,7 @@ let trendChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationId: props.parkId,
+      stationName: props.parkId,
     };
 
     const res = await getPassRecordChart(params);
