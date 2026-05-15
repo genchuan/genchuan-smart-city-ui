@@ -51,7 +51,6 @@ import {
   useEditSchema,
   useGridColumns,
   detailFields as userCarDetailFields,
-  userOptions,
   useSearchSchema,
 } from '../data';
 
@@ -83,7 +82,7 @@ const rejectDialogVisible = ref(false);
 const rejectReason = ref('');
 const rejectRow = ref<UserCarRow>();
 const userDialogVisible = ref(false);
-const userSelectOptions = ref<UserSelectOption[]>(userOptions);
+const userSelectOptions = ref<UserSelectOption[]>([]);
 
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
@@ -135,7 +134,7 @@ const searchFilterConfigs = {
     label: '绑定状态',
     type: 'warning',
   },
-  userId: {
+  nickname: {
     label: '所属用户',
     type: 'info',
   },
@@ -343,7 +342,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   },
   handleSubmit: onQuerySubmit,
   layout: 'horizontal',
-  schema: useSearchSchema(userSelectOptions.value).map((item) => ({
+  schema: useSearchSchema().map((item) => ({
     ...item,
     rules: undefined,
   })),
@@ -385,6 +384,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 /** 加载所属用户下拉 */
 async function loadUserOptions() {
+  if (userSelectOptions.value.length > 0) {
+    return;
+  }
+
   try {
     const result = await UserInfoApi.getUserInfoPage({
       pageNo: 1,
@@ -412,14 +415,6 @@ async function loadUserOptions() {
     },
   ]);
 
-  await queryFormApi.updateSchema([
-    {
-      fieldName: 'userId',
-      componentProps: {
-        options: userSelectOptions.value,
-      },
-    },
-  ]);
 }
 
 /** 刷新表格 */
@@ -471,7 +466,7 @@ defineExpose({
 
 onMounted(async () => {
   await nextTick();
-  await loadUserOptions();
+  await handleRefresh();
 });
 
 /** 导出当前列表 */
@@ -501,10 +496,11 @@ async function handleExport() {
 }
 
 /** 打开新增抽屉 */
-function handleCreate() {
+async function handleCreate() {
   formMode.value = 'create';
   formData.value = undefined;
   formSource.value = undefined;
+  await loadUserOptions();
   formApi.setState(() => ({
     schema: useCreateSchema(userSelectOptions.value),
   }));

@@ -22,7 +22,7 @@ export type UserCarVO = {
   status: string;
   updateTime?: string;
   userId: number;
-  userName?: string;
+  nickname?: string;
 };
 
 export type UserCarCreateReqVO = {
@@ -55,6 +55,7 @@ export type UserCarPageReqVO = PageParam & {
   remark?: string;
   status?: string;
   userId?: number;
+  nickname?: string;
 };
 
 export type UserCarAuditReqVO = {
