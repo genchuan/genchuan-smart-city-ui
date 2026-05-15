@@ -404,14 +404,7 @@ export function useInFormSchema() {
       componentProps: {
         placeholder: '请选择关联备件',
         options: spareOptions,
-        onChange: (value) => {
-          const spare = spareOptions.find((item) => item.value === value);
-          if (spare) {
-            actionFormApi.setValues({
-              spareName: spare.label,
-            });
-          }
-        },
+        clearable: true,
       },
       rules: 'required',
     },
@@ -524,7 +517,7 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'spareName' },
     },
-    { field: 'spareType', title: '备件类型', minWidth: 110, sortable: true },
+    // { field: 'spareType', title: '备件类型', minWidth: 110, sortable: true },
     {
       field: 'inTimeStr',
       title: '入库时间',
@@ -545,13 +538,13 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'status' },
     },
-    {
-      field: 'warehouseName',
-      title: '所属仓库',
-      minWidth: 170,
-      sortable: true,
-      slots: { default: 'warehouseName' },
-    },
+    // {
+    //   field: 'warehouseName',
+    //   title: '所属仓库',
+    //   minWidth: 170,
+    //   sortable: true,
+    //   slots: { default: 'warehouseName' },
+    // },
     {
       field: 'outRecord',
       title: '出库记录',
@@ -584,7 +577,7 @@ export function useGridColumns() {
 export const detailFields = [
   { key: 'id', label: '仓储ID' },
   { key: 'spareName', label: '备件名称' },
-  { key: 'spareType', label: '备件类型' },
+  // { key: 'spareType', label: '备件类型' },
   { key: 'currentStock', label: '当前库存' },
   {
     key: 'status',
@@ -598,8 +591,8 @@ export const detailFields = [
   { key: 'outTimeStr', label: '出库时间' },
   { key: 'inRecord', label: '入库记录' },
   { key: 'outRecord', label: '出库记录' },
-  { key: 'supplier', label: '供应商' },
-  { key: 'receiver', label: '领用人员' },
+  // { key: 'supplier', label: '供应商' },
+  // { key: 'receiver', label: '领用人员' },
   { key: 'lastUpdateTimeStr', label: '最后更新时间' },
   { key: 'creator', label: '创建者' },
   { key: 'updater', label: '更新者' },

@@ -412,7 +412,7 @@ export function useGridColumns() {
       slots: { default: 'monitor_status' },
     },
     {
-      field: 'monitorTimeStr',
+      field: 'updateTimeStr',
       title: '更新时间',
       minWidth: 180,
       sortable: true,
