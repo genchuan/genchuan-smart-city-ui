@@ -245,7 +245,7 @@ async function submitBatchAudit(values) {
   try {
     await batchAuditShiftApply({
       ids: checkedIds.value,
-      auditResult: values.auditResult,
+      auditResult: values.auditResult === '通过' ? '2' : '3',
       auditRemark: values.auditRemark,
     });
     ElMessage.success('批量审核成功');

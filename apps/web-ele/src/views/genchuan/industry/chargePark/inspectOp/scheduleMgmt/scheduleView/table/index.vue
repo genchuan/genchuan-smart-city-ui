@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
+import dayjs from 'dayjs';
 
 import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -428,7 +429,7 @@ onMounted(() => {
             type="primary"
             @close="cancelFilter('date')"
           >
-            排班日期：{{ filterScheduleDate }}
+            排班日期：{{ dayjs(filterScheduleDate).format('YYYY-MM-DD') }}
           </ElTag>
           <ElTag
             v-if="filterShiftType"
@@ -503,7 +504,8 @@ onMounted(() => {
           type="primary"
           @click="handleDateClick(row.scheduleDate)"
         >
-          {{ row.scheduleDateStr }}
+          <!-- {{ row.scheduleDateStr }} -->
+          {{ dayjs(row.scheduleDate).format('YYYY-MM-DD') }}
         </el-text>
       </template>
 

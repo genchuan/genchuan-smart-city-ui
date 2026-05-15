@@ -122,7 +122,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
         handoverDate: dayjs(values.handoverDate).valueOf(),
         status: '待确认',
       });
-      ElMessage.success($t('ui.actionMessage.addSuccess'));
+      ElMessage.success('新增交接日志成功');
       formDrawerApi.close();
       handleRefresh();
     } catch (error) {
@@ -401,7 +401,7 @@ onMounted(() => {
             type="primary"
             @close="cancelFilter('date')"
           >
-            交接日期：{{ filterHandoverDate }}
+            交接日期：{{ dayjs(filterHandoverDate).format('YYYY-MM-DD') }}
           </ElTag>
           <ElTag
             v-if="filterStatus"
@@ -469,7 +469,7 @@ onMounted(() => {
           type="primary"
           @click="handleDateClick(row.handoverDate)"
         >
-          {{ row.handoverDateStr }}
+          {{ dayjs(row.handoverDate).format('YYYY-MM-DD') }}
         </el-text>
       </template>
 
