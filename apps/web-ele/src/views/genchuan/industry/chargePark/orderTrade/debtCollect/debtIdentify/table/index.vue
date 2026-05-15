@@ -591,7 +591,7 @@ const alarmColumns = [
       width="500px"
       append-to-body
     >
-      <el-form :model="batchIdentifyForm" label-width="80px">
+      <el-form :model="batchIdentifyForm" label-width="120px">
         <el-form-item label="识别ID列表">
           <el-input :value="batchIdentifyForm.ids.join(',')" disabled />
         </el-form-item>
