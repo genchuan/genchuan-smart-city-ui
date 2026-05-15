@@ -314,8 +314,7 @@ export function useGridColumns() {
       field: 'discountAmount',
       title: '优惠抵扣金额',
       minWidth: 160,
-      sortable: true,
-      customRender: ({ text }) => text ? `¥${text.toFixed(2)}` : '¥0.00',
+      sortable: true, 
     },
     {
       field: 'archiveTime',
@@ -323,25 +322,7 @@ export function useGridColumns() {
       minWidth: 220,
       sortable: true,
       customRender: ({ text }) => text || '-',
-    },
-    {
-      field: 'operatorId',
-      title: '操作人ID',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'reserve1',
-      title: '备用字段1',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'reserve2',
-      title: '备用字段2',
-      minWidth: 120,
-      sortable: true,
-    },
+    }, 
     {
       field: 'creator',
       title: '创建者',
