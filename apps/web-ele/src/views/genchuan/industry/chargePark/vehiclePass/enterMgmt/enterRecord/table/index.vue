@@ -1,7 +1,8 @@
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -19,11 +20,11 @@ import {
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
-import { downloadFileFromBlobPart } from '@vben/utils';
 import { exportToExcel } from '#/utils/excel.js';
 
 import SpaceDetailDialog from '../../../components/SpaceDetailDialog.vue';
 import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
@@ -37,7 +38,6 @@ import {
   useSearchFormSchema,
   useUpdateFormSchema,
 } from './data';
-import { formatTime } from '../../../utils/timeFormatter';
 
 const props = defineProps({
   secondShow: {
@@ -212,7 +212,10 @@ async function handleExport() {
   try {
     if (USE_REAL_API) {
       const res = await exportEnterRecord(dataObj.searchParams);
-      downloadFileFromBlobPart({ fileName: textObj.excelAllName + '.xlsx', source: res });
+      downloadFileFromBlobPart({
+        fileName: `${textObj.excelAllName}.xlsx`,
+        source: res,
+      });
     } else {
       exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
     }
@@ -410,7 +413,11 @@ const activeFilters = computed(() => {
       field: 'isCorrected',
     });
   }
-  if (obj.enterTime && Array.isArray(obj.enterTime) && obj.enterTime.length === 2) {
+  if (
+    obj.enterTime &&
+    Array.isArray(obj.enterTime) &&
+    obj.enterTime.length === 2
+  ) {
     filters.push({
       label: `入场时间：${obj.enterTime[0]} 至 ${obj.enterTime[1]}`,
       field: 'enterTime',
@@ -427,7 +434,6 @@ const handleClearField = (fieldName) => {
   dataObj.currentPage = 1;
   gridApi.query();
 };
-
 
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -697,7 +703,16 @@ onUnmounted(() => {
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
-          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+          <div
+            v-if="activeFilters.length > 0"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+              margin-bottom: 12px;
+            "
+          >
             <el-tag
               v-for="filter in activeFilters"
               :key="filter.field"
@@ -816,7 +831,9 @@ onUnmounted(() => {
         <el-text>{{ row.updater || '-' }}</el-text>
       </template>
       <template #updateTime="{ row }">
-        <el-text>{{ row.updateTime ? formatTime(row.updateTime) : '-' }}</el-text>
+        <el-text>
+          {{ row.updateTime ? formatTime(row.updateTime) : '-' }}
+        </el-text>
       </template>
       <template #correctionMark="{ row }">
         <el-tag :type="row.isCorrected ? 'success' : 'info'">

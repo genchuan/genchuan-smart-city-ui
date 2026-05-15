@@ -1,7 +1,8 @@
 <script setup>
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -20,10 +21,9 @@ import {
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
-import { downloadFileFromBlobPart } from '@vben/utils';
 import { exportToExcel } from '#/utils/excel.js';
-import { formatTime } from '../../../utils/timeFormatter';
 
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
@@ -223,7 +223,10 @@ async function handleExport() {
     });
     try {
       const res = await exportUnplateEnter(dataObj.searchParams);
-      downloadFileFromBlobPart({ fileName: textObj.excelAllName + '.xlsx', source: res });
+      downloadFileFromBlobPart({
+        fileName: `${textObj.excelAllName}.xlsx`,
+        source: res,
+      });
     } catch (error) {
       ElMessage.error('导出失败');
       console.error(error);
@@ -361,7 +364,6 @@ const handleClearField = (fieldName) => {
   dataObj.currentPage = 1;
   gridApi.query();
 };
-
 
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -567,7 +569,16 @@ onUnmounted(() => {
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
-          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+          <div
+            v-if="activeFilters.length > 0"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+              margin-bottom: 12px;
+            "
+          >
             <el-tag
               v-for="filter in activeFilters"
               :key="filter.field"
@@ -627,7 +638,9 @@ onUnmounted(() => {
         <el-text>{{ row.updater || '-' }}</el-text>
       </template>
       <template #updateTime="{ row }">
-        <el-text>{{ row.updateTime ? formatTime(row.updateTime) : '-' }}</el-text>
+        <el-text>
+          {{ row.updateTime ? formatTime(row.updateTime) : '-' }}
+        </el-text>
       </template>
       <template #correctionMark="{ row }">
         <el-tag :type="row.isCorrected ? 'success' : 'info'">

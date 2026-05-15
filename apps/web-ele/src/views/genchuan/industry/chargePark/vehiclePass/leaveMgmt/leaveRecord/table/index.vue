@@ -358,7 +358,11 @@ const activeFilters = computed(() => {
       field: 'isCorrected',
     });
   }
-  if (obj.leaveTime && Array.isArray(obj.leaveTime) && obj.leaveTime.length === 2) {
+  if (
+    obj.leaveTime &&
+    Array.isArray(obj.leaveTime) &&
+    obj.leaveTime.length === 2
+  ) {
     filters.push({
       label: `离场时间：${obj.leaveTime[0]} 至 ${obj.leaveTime[1]}`,
       field: 'leaveTime',
@@ -375,7 +379,6 @@ const handleClearField = (fieldName) => {
   dataObj.currentPage = 1;
   gridApi.query();
 };
-
 
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -629,7 +632,16 @@ const formatDuration = (minutes) => {
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
-          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+          <div
+            v-if="activeFilters.length"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+              margin-bottom: 12px;
+            "
+          >
             <el-tag
               v-for="filter in activeFilters"
               :key="filter.field"
@@ -713,7 +725,9 @@ const formatDuration = (minutes) => {
         <el-text>{{ row.updater || '-' }}</el-text>
       </template>
       <template #updateTime="{ row }">
-        <el-text>{{ row.updateTime ? formatTime(row.updateTime) : '-' }}</el-text>
+        <el-text>{{
+          row.updateTime ? formatTime(row.updateTime) : '-'
+        }}</el-text>
       </template>
       <template #correctionMark="{ row }">
         <el-tag :type="row.isCorrected ? 'success' : 'info'">

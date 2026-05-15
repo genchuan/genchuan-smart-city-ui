@@ -58,7 +58,12 @@ async function loadChartData() {
     const hasTrendData = res?.inParkCountTrend?.length > 0;
     const hasLocationData = res?.carLocationList?.length > 0;
 
-    console.log('[inParkStatusChart] hasTrendData:', hasTrendData, 'hasLocationData:', hasLocationData);
+    console.log(
+      '[inParkStatusChart] hasTrendData:',
+      hasTrendData,
+      'hasLocationData:',
+      hasLocationData,
+    );
     console.log('[inParkStatusChart] trend data:', res?.inParkCountTrend);
     console.log('[inParkStatusChart] location data:', res?.carLocationList);
 
@@ -81,7 +86,12 @@ async function loadChartData() {
 }
 
 function initTrendChart() {
-  console.log('[inParkStatusChart] initTrendChart called, ref:', trendChartRef.value, 'data length:', state.chartData.trend.length);
+  console.log(
+    '[inParkStatusChart] initTrendChart called, ref:',
+    trendChartRef.value,
+    'data length:',
+    state.chartData.trend.length,
+  );
   if (!trendChartRef.value || state.chartData.trend.length === 0) return;
   if (trendChartInstance) trendChartInstance.dispose();
   trendChartInstance = echarts.init(trendChartRef.value);
@@ -126,7 +136,12 @@ function initTrendChart() {
 }
 
 function initMapChart() {
-  console.log('[inParkStatusChart] initMapChart called, ref:', mapChartRef.value, 'data length:', state.chartData.locationList.length);
+  console.log(
+    '[inParkStatusChart] initMapChart called, ref:',
+    mapChartRef.value,
+    'data length:',
+    state.chartData.locationList.length,
+  );
   if (!mapChartRef.value || state.chartData.locationList.length === 0) return;
   if (mapChartInstance) mapChartInstance.dispose();
   mapChartInstance = echarts.init(mapChartRef.value);
@@ -284,8 +299,8 @@ onUnmounted(() => {
 .chart-box {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
   gap: 15px;
+  align-items: flex-end;
   width: 100% !important;
   padding-right: 15px;
   padding-bottom: 0.5rem;
@@ -304,7 +319,6 @@ onUnmounted(() => {
       display: flex;
       flex: 1;
       flex-direction: column;
-      flex: 1;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;

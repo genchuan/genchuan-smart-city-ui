@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -23,10 +23,9 @@ import {
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
-import { downloadFileFromBlobPart } from '@vben/utils';
 import { exportToExcel } from '#/utils/excel.js';
-import { formatTime } from '../../../utils/timeFormatter';
 
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
@@ -230,7 +229,11 @@ const activeFilters = computed(() => {
   if (obj.status) {
     filters.push({ label: `任务状态：${obj.status}`, field: 'status' });
   }
-  if (obj.dispatchTime && Array.isArray(obj.dispatchTime) && obj.dispatchTime.length === 2) {
+  if (
+    obj.dispatchTime &&
+    Array.isArray(obj.dispatchTime) &&
+    obj.dispatchTime.length === 2
+  ) {
     filters.push({
       label: `派发时间：${obj.dispatchTime[0]} 至 ${obj.dispatchTime[1]}`,
       field: 'dispatchTime',
@@ -247,7 +250,6 @@ const handleClearField = (fieldName) => {
   dataObj.currentPage = 1;
   gridApi.query();
 };
-
 
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -796,7 +798,16 @@ const getActionButtons = (row) => {
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
-          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+          <div
+            v-if="activeFilters.length > 0"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+              margin-bottom: 12px;
+            "
+          >
             <el-tag
               v-for="filter in activeFilters"
               :key="filter.field"

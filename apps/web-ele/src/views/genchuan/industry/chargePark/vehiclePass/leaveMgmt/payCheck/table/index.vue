@@ -177,7 +177,6 @@ const handleClearField = (fieldName) => {
   gridApi.query();
 };
 
-
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -413,7 +412,16 @@ const handleFieldFilter = (field, value) => {
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
-          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+          <div
+            v-if="activeFilters.length"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+              margin-bottom: 12px;
+            "
+          >
             <el-tag
               v-for="filter in activeFilters"
               :key="filter.field"
@@ -502,7 +510,9 @@ const handleFieldFilter = (field, value) => {
         <el-text>{{ row.updater || '-' }}</el-text>
       </template>
       <template #updateTime="{ row }">
-        <el-text>{{ row.updateTime ? formatTime(row.updateTime) : '-' }}</el-text>
+        <el-text>{{
+          row.updateTime ? formatTime(row.updateTime) : '-'
+        }}</el-text>
       </template>
       <template #correctionMark="{ row }">
         <el-tag :type="row.isCorrected ? 'success' : 'info'">

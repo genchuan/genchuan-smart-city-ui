@@ -371,7 +371,10 @@ const activeFilters = computed(() => {
     filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
   }
   if (obj.abnormalType) {
-    filters.push({ label: `异常类型：${obj.abnormalType}`, field: 'abnormalType' });
+    filters.push({
+      label: `异常类型：${obj.abnormalType}`,
+      field: 'abnormalType',
+    });
   }
   if (obj.status) {
     filters.push({ label: `状态：${obj.status}`, field: 'status' });
@@ -390,7 +393,6 @@ const handleClearField = (fieldName) => {
   dataObj.currentPage = 1;
   gridApi.query();
 };
-
 
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -602,7 +604,10 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('filterByChart:abnormalLeave', handleFilterByChart);
+  window.removeEventListener(
+    'filterByChart:abnormalLeave',
+    handleFilterByChart,
+  );
 });
 
 // 车辆详情弹窗
@@ -645,7 +650,16 @@ const handleFieldFilter = (field, value) => {
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
-          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+          <div
+            v-if="activeFilters.length"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+              margin-bottom: 12px;
+            "
+          >
             <el-tag
               v-for="filter in activeFilters"
               :key="filter.field"
@@ -751,7 +765,9 @@ const handleFieldFilter = (field, value) => {
         <el-text>{{ row.updater || '-' }}</el-text>
       </template>
       <template #updateTime="{ row }">
-        <el-text>{{ row.updateTime ? formatTime(row.updateTime) : '-' }}</el-text>
+        <el-text>{{
+          row.updateTime ? formatTime(row.updateTime) : '-'
+        }}</el-text>
       </template>
       <template #correctionMark="{ row }">
         <el-tag :type="row.isCorrected ? 'success' : 'info'">

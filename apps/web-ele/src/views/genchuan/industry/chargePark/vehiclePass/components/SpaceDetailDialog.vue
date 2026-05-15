@@ -80,7 +80,6 @@ defineExpose({
     width="700px"
     append-to-body
   >
-
     <div class="detail-form">
       <div class="detail-row">
         <div class="detail-item">
@@ -172,24 +171,24 @@ defineExpose({
 
 .detail-item {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
   min-width: 0;
 }
 
 .detail-label {
+  flex-shrink: 0;
+  font-size: 14px;
   font-weight: 500;
   color: #606266;
-  font-size: 14px;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .detail-value {
-  color: #303133;
-  font-size: 14px;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 14px;
+  color: #303133;
+  white-space: nowrap;
 }
 </style>

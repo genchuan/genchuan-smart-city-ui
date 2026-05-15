@@ -109,7 +109,9 @@ export function getInspectTask(id: number | string) {
 
 /** 导出稽查任务 */
 export function exportInspectTask(params?: InspectTaskApi.PageReqVO) {
-  return requestClient.download('/vehiclepass/inspect-task/export', { params: { ...params } });
+  return requestClient.download('/vehiclepass/inspect-task/export', {
+    params: { ...params },
+  });
 }
 
 /** 派发稽查任务 */
@@ -118,7 +120,9 @@ export function dispatchInspectTask(data: InspectTaskApi.DispatchReqVO) {
 }
 
 /** 批量派发稽查任务 */
-export function batchDispatchInspectTask(data: InspectTaskApi.BatchDispatchReqVO) {
+export function batchDispatchInspectTask(
+  data: InspectTaskApi.BatchDispatchReqVO,
+) {
   return requestClient.post<boolean>(
     '/vehiclepass/inspect-task/batch-dispatch',
     data,
@@ -131,8 +135,13 @@ export function claimInspectTask(data: InspectTaskApi.ClaimReqVO) {
 }
 
 /** 更新稽查任务进度 */
-export function updateInspectTaskProgress(data: InspectTaskApi.UpdateProgressReqVO) {
-  return requestClient.put<boolean>('/vehiclepass/inspect-task/update-progress', data);
+export function updateInspectTaskProgress(
+  data: InspectTaskApi.UpdateProgressReqVO,
+) {
+  return requestClient.put<boolean>(
+    '/vehiclepass/inspect-task/update-progress',
+    data,
+  );
 }
 
 /** 转派稽查任务 */

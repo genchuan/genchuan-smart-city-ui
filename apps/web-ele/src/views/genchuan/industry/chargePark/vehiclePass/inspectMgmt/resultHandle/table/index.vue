@@ -1,10 +1,12 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+// 监听下钻筛选参数变化
+import { watch } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -20,11 +22,9 @@ import {
 } from '#/api/genchuan/industry/chargePark/vehiclePass/inspectMgmt/resultHandle';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
-import { downloadFileFromBlobPart } from '@vben/utils';
 import { exportToExcel } from '#/utils/excel.js';
-import { formatTime } from '../../../utils/timeFormatter';
 
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
@@ -43,27 +43,33 @@ const props = defineProps({
     default: null,
   },
 });
-
-// 监听下钻筛选参数变化
-import { watch } from 'vue';
 watch(
   () => props.drillDownFilter,
   (newFilter) => {
     if (newFilter?.filterKey) {
       // 根据下钻参数设置筛选条件
-      if (
-        newFilter.filterKey === '已完成' ||
-        newFilter.filterKey === '待处置' ||
-        newFilter.filterKey === '待审核'
-      ) {
-        activeName.value = newFilter.filterKey;
-        dataObj.searchParams = { status: newFilter.filterKey };
-      } else if (newFilter.filterKey === 'handleCompleteRate') {
-        activeName.value = '已完成';
-        dataObj.searchParams = { status: '已完成' };
-      } else if (newFilter.filterKey === 'violationRectifyRate') {
-        activeName.value = '已完成';
-        dataObj.searchParams = { status: '已完成', rectifyStatus: '已整改' };
+      switch (newFilter.filterKey) {
+        case 'handleCompleteRate': {
+          activeName.value = '已完成';
+          dataObj.searchParams = { status: '已完成' };
+
+          break;
+        }
+        case 'violationRectifyRate': {
+          activeName.value = '已完成';
+          dataObj.searchParams = { status: '已完成', rectifyStatus: '已整改' };
+
+          break;
+        }
+        case '已完成':
+        case '待处置':
+        case '待审核': {
+          activeName.value = newFilter.filterKey;
+          dataObj.searchParams = { status: newFilter.filterKey };
+
+          break;
+        }
+        // No default
       }
       handleRefresh();
     }
@@ -310,7 +316,10 @@ const activeFilters = computed(() => {
     filters.push({ label: `处置状态：${obj.status}`, field: 'status' });
   }
   if (obj.rectifyStatus) {
-    filters.push({ label: `整改状态：${obj.rectifyStatus}`, field: 'rectifyStatus' });
+    filters.push({
+      label: `整改状态：${obj.rectifyStatus}`,
+      field: 'rectifyStatus',
+    });
   }
 
   return filters;
@@ -323,7 +332,6 @@ const handleClearField = (fieldName) => {
   dataObj.currentPage = 1;
   gridApi.query();
 };
-
 
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -362,16 +370,16 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '待审核': {
-        statusMatch = v.status === '待审核';
+      case '已完成': {
+        statusMatch = v.status === '已完成';
         break;
       }
       case '待处置': {
         statusMatch = v.status === '待处置';
         break;
       }
-      case '已完成': {
-        statusMatch = v.status === '已完成';
+      case '待审核': {
+        statusMatch = v.status === '待审核';
         break;
       }
     }
@@ -483,16 +491,16 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '待审核': {
-      count = dataObj.apilist.filter((v) => v.status === '待审核').length;
+    case '已完成': {
+      count = dataObj.apilist.filter((v) => v.status === '已完成').length;
       break;
     }
     case '待处置': {
       count = dataObj.apilist.filter((v) => v.status === '待处置').length;
       break;
     }
-    case '已完成': {
-      count = dataObj.apilist.filter((v) => v.status === '已完成').length;
+    case '待审核': {
+      count = dataObj.apilist.filter((v) => v.status === '待审核').length;
       break;
     }
   }
@@ -533,32 +541,36 @@ const getActionButtons = (row) => {
   const buttons = [];
 
   switch (row.status) {
-    case '待审核':
+    case '已完成': {
+      buttons.push({
+        label: '查看',
+        handler: handleOpenDetail,
+        color: '#409EFF',
+      });
+      break;
+    }
+    case '待处置': {
+      buttons.push(
+        { label: '执行', handler: handleExecute, color: '#409EFF' },
+        { label: '查看', handler: handleOpenDetail, color: '#409EFF' },
+      );
+      break;
+    }
+    case '待审核': {
       buttons.push(
         { label: '通过', handler: handleApprove, color: '#67C23A' },
         { label: '驳回', handler: handleReject, color: '#F56C6C' },
         { label: '查看', handler: handleOpenDetail, color: '#409EFF' },
       );
       break;
-    case '待处置':
-      buttons.push(
-        { label: '执行', handler: handleExecute, color: '#409EFF' },
-        { label: '查看', handler: handleOpenDetail, color: '#409EFF' },
-      );
-      break;
-    case '已完成':
+    }
+    default: {
       buttons.push({
         label: '查看',
         handler: handleOpenDetail,
         color: '#409EFF',
       });
-      break;
-    default:
-      buttons.push({
-        label: '查看',
-        handler: handleOpenDetail,
-        color: '#409EFF',
-      });
+    }
   }
 
   return buttons;
@@ -569,7 +581,7 @@ const getActionButtons = (row) => {
   <div class="park-lot-table-new">
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`处置详情`"
+      title="处置详情"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
@@ -603,7 +615,16 @@ const getActionButtons = (row) => {
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
-          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+          <div
+            v-if="activeFilters.length > 0"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+              margin-bottom: 12px;
+            "
+          >
             <el-tag
               v-for="filter in activeFilters"
               :key="filter.field"

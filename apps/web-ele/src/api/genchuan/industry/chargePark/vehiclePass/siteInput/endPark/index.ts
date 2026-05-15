@@ -86,7 +86,9 @@ export function getEndPark(id: number | string) {
 
 /** 导出结束停车 */
 export function exportEndPark(params?: EndParkApi.PageReqVO) {
-  return requestClient.download('/vehiclepass/end-park/export', { params: { ...params } });
+  return requestClient.download('/vehiclepass/end-park/export', {
+    params: { ...params },
+  });
 }
 
 /** 缴费结束停车 */

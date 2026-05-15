@@ -283,8 +283,8 @@ defineExpose({
   grid-template-columns: 140px 1fr;
   gap: 12px;
   align-items: flex-start;
-  padding: 8px 0;
   min-height: 32px;
+  padding: 8px 0;
 }
 
 .detail-label {
@@ -296,13 +296,13 @@ defineExpose({
 }
 
 .detail-value {
+  display: flex;
+  align-items: center;
+  min-height: 22px;
   font-size: 14px;
   color: var(--el-text-color-primary, #303133);
   text-align: left;
   word-break: break-word;
-  min-height: 22px;
-  display: flex;
-  align-items: center;
 }
 
 .detail-separator {

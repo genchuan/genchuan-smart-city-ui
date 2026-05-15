@@ -79,7 +79,9 @@ export function getPayCheck(id: number | string) {
 
 /** 导出缴费核查 */
 export function exportPayCheck(params?: PayCheckApi.PageReqVO) {
-  return requestClient.download('/vehiclepass/pay-check/export', { params: { ...params } });
+  return requestClient.download('/vehiclepass/pay-check/export', {
+    params: { ...params },
+  });
 }
 
 /** 放行缴费核查 */

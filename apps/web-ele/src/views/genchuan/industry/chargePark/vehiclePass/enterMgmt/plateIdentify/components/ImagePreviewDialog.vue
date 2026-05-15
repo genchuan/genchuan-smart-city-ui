@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+
 import { ElImageViewer } from 'element-plus';
 
 const dialogVisible = ref(false);
@@ -65,7 +66,7 @@ defineExpose({
       </div>
     </div>
     <teleport to="body">
-      <el-image-viewer
+      <ElImageViewer
         v-if="showViewer"
         :url-list="[imageUrl]"
         :initial-index="0"

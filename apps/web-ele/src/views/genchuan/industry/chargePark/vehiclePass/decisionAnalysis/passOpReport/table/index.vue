@@ -2,14 +2,13 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
-import { formatTime } from '../../../utils/timeFormatter';
 import {
   createCycleReport,
   exportCycleReport,
@@ -25,7 +24,6 @@ import DrillDownDetailDialog from '../components/DrillDownDetailDialog.vue';
 import {
   dataList,
   detailFields,
-  getGenerateStatusTagType,
   getReportCycleTagType,
   textObj,
   useCreateFormSchema,
@@ -390,11 +388,10 @@ const tabsData = ref([
 const createLabel = (item) => {
   let count = 0;
 
-  if (item.label === '全部') {
-    count = dataObj.apilist.length;
-  } else {
-    count = dataObj.apilist.filter((v) => v.reportCycle === item.label).length;
-  }
+  count =
+    item.label === '全部'
+      ? dataObj.apilist.length
+      : dataObj.apilist.filter((v) => v.reportCycle === item.label).length;
 
   return `${item.label}(${count})`;
 };
@@ -573,8 +570,12 @@ onMounted(() => {
     const { key } = e.detail;
     const today = new Date();
     // 使用 ISO 8601 格式：YYYY-MM-DDTHH:mm:ss
-    const todayStart = new Date(today.setHours(0, 0, 0, 0)).toISOString().slice(0, 19);
-    const todayEnd = new Date(today.setHours(23, 59, 59, 999)).toISOString().slice(0, 19);
+    const todayStart = new Date(today.setHours(0, 0, 0, 0))
+      .toISOString()
+      .slice(0, 19);
+    const todayEnd = new Date(today.setHours(23, 59, 59, 999))
+      .toISOString()
+      .slice(0, 19);
 
     // 根据卡片类型筛选报表列表，并传递点击类型参数
     const filterParams = {
@@ -617,13 +618,13 @@ const handleStatsFilter = (type, value) => {
   switch (type) {
     case 'card': {
       switch (value) {
-        case 'enterCount':
-        case 'leaveCount':
-        case 'parkingCount':
-        case 'identifySuccessRate':
-        case 'checkSuccessRate':
         case 'abnormalHandleRate':
-        case 'etcPassSuccessRate': {
+        case 'checkSuccessRate':
+        case 'enterCount':
+        case 'etcPassSuccessRate':
+        case 'identifySuccessRate':
+        case 'leaveCount':
+        case 'parkingCount': {
           console.log('钻取：卡片', value);
           break;
         }

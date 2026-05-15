@@ -73,7 +73,9 @@ defineExpose({
         <div class="detail-row">
           <div class="detail-item">
             <span class="detail-label">车牌号：</span>
-            <el-tag type="primary" size="large">{{ vehicleInfo.plateNo }}</el-tag>
+            <el-tag type="primary" size="large">
+              {{ vehicleInfo.plateNo }}
+            </el-tag>
           </div>
           <div class="detail-item">
             <span class="detail-label">车牌颜色：</span>
@@ -160,24 +162,24 @@ defineExpose({
 
 .detail-item {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
   min-width: 0;
 }
 
 .detail-label {
+  flex-shrink: 0;
+  font-size: 14px;
   font-weight: 500;
   color: #606266;
-  font-size: 14px;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .detail-value {
-  color: #303133;
-  font-size: 14px;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 14px;
+  color: #303133;
+  white-space: nowrap;
 }
 </style>

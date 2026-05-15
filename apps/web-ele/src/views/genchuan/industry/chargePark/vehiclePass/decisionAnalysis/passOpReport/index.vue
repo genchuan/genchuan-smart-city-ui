@@ -39,7 +39,7 @@ const fetchStatsData = async () => {
 
     const response = await getCycleReportChart({
       reportCycle: '日报',
-      statTime: statTime,
+      statTime,
       tenantId: 1,
     });
     const data = response?.data || response;
@@ -217,9 +217,21 @@ const useMockData = () => {
       label: '场站通行量分布',
       value: 'stationDistribution',
       data: [
-        { name: '泉州丰泽充停场站', value: 342, stationName: '泉州丰泽充停场站' },
-        { name: '龙文区碧湖公园停车场', value: 256, stationName: '龙文区碧湖公园停车场' },
-        { name: '龙海区石码镇停车场', value: 189, stationName: '龙海区石码镇停车场' },
+        {
+          name: '泉州丰泽充停场站',
+          value: 342,
+          stationName: '泉州丰泽充停场站',
+        },
+        {
+          name: '龙文区碧湖公园停车场',
+          value: 256,
+          stationName: '龙文区碧湖公园停车场',
+        },
+        {
+          name: '龙海区石码镇停车场',
+          value: 189,
+          stationName: '龙海区石码镇停车场',
+        },
       ],
     },
     {

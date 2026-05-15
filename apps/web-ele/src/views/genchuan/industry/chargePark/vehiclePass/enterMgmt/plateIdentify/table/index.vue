@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -19,7 +20,6 @@ import {
 } from '#/api/genchuan/industry/chargePark/vehiclePass/enterMgmt/plateIdentify';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { downloadFileFromBlobPart } from '@vben/utils';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 

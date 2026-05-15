@@ -1,7 +1,8 @@
 <script setup>
-import { nextTick, onMounted, onUnmounted, reactive, ref, computed } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -19,11 +20,10 @@ import {
 } from '#/api/genchuan/industry/chargePark/vehiclePass/inParkMgmt/fakePlateControl';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { downloadFileFromBlobPart } from '@vben/utils';
 import { exportToExcel } from '#/utils/excel.js';
-import { formatTime } from '../../../utils/timeFormatter';
 
 import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
@@ -173,7 +173,10 @@ async function handleExport() {
   try {
     if (USE_REAL_API) {
       const res = await exportFakePlateControl(dataObj.searchParams);
-      await downloadFileFromBlobPart({ fileName: '套牌控制.xlsx', source: res });
+      await downloadFileFromBlobPart({
+        fileName: '套牌控制.xlsx',
+        source: res,
+      });
     } else {
       exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
     }
@@ -295,7 +298,10 @@ const activeFilters = computed(() => {
     filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
   }
   if (obj.handleUserId) {
-    filters.push({ label: `处置人ID：${obj.handleUserId}`, field: 'handleUserId' });
+    filters.push({
+      label: `处置人ID：${obj.handleUserId}`,
+      field: 'handleUserId',
+    });
   }
 
   return filters;
@@ -308,7 +314,6 @@ const handleClearField = (fieldName) => {
   dataObj.currentPage = 1;
   gridApi.query();
 };
-
 
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -553,11 +558,17 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
-  window.addEventListener('filterByChart:fakePlateControl', handleFilterByChart);
+  window.addEventListener(
+    'filterByChart:fakePlateControl',
+    handleFilterByChart,
+  );
 });
 
 onUnmounted(() => {
-  window.removeEventListener('filterByChart:fakePlateControl', handleFilterByChart);
+  window.removeEventListener(
+    'filterByChart:fakePlateControl',
+    handleFilterByChart,
+  );
 });
 </script>
 
@@ -582,7 +593,16 @@ onUnmounted(() => {
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
-          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+          <div
+            v-if="activeFilters.length > 0"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+              margin-bottom: 12px;
+            "
+          >
             <el-tag
               v-for="filter in activeFilters"
               :key="filter.field"

@@ -247,8 +247,8 @@ onUnmounted(() => {
 .chart-box {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
   gap: 15px;
+  align-items: flex-end;
   width: 100% !important;
   padding-right: 15px;
   padding-bottom: 0.5rem;
@@ -265,9 +265,8 @@ onUnmounted(() => {
 
     .left-card {
       display: flex;
+      flex: 1;
       flex-direction: column;
-      flex: 1;
-      flex: 1;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;

@@ -111,8 +111,12 @@ function initPieChart() {
   // 添加点击事件
   pieChartInstance.on('click', (params) => {
     const clickDate = new Date(params.name);
-    const startTime = new Date(clickDate.setHours(0, 0, 0, 0)).getTime().toString();
-    const endTime = new Date(clickDate.setHours(23, 59, 59, 999)).getTime().toString();
+    const startTime = new Date(clickDate.setHours(0, 0, 0, 0))
+      .getTime()
+      .toString();
+    const endTime = new Date(clickDate.setHours(23, 59, 59, 999))
+      .getTime()
+      .toString();
     window.dispatchEvent(
       new CustomEvent('filterByChart:leaveRecord', {
         detail: { startTime, endTime },
@@ -153,8 +157,12 @@ function initBarChart() {
   // 添加点击事件
   barChartInstance.on('click', (params) => {
     const today = new Date();
-    const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
-    const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
+    const todayStart = new Date(today.setHours(0, 0, 0, 0))
+      .getTime()
+      .toString();
+    const todayEnd = new Date(today.setHours(23, 59, 59, 999))
+      .getTime()
+      .toString();
     window.dispatchEvent(
       new CustomEvent('filterByChart:leaveRecord', {
         detail: {
@@ -175,7 +183,9 @@ function initCharts() {
 function handleCardClick(key) {
   const today = new Date();
   const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999))
+    .getTime()
+    .toString();
 
   const filterMap = {
     todayLeaveCount: { startTime: todayStart, endTime: todayEnd },
@@ -258,8 +268,8 @@ onUnmounted(() => {
 .chart-box {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
   gap: 15px;
+  align-items: flex-end;
   width: 100% !important;
   padding-right: 15px;
   padding-bottom: 0.5rem;
@@ -276,9 +286,8 @@ onUnmounted(() => {
 
     .left-card {
       display: flex;
+      flex: 1;
       flex-direction: column;
-      flex: 1;
-      flex: 1;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;

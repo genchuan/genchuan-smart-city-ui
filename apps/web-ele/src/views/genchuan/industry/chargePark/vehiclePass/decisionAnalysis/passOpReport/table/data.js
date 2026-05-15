@@ -28,7 +28,7 @@ export const getGenerateStatusTagType = (status) => {
 export const dataList = () => {
   return [
     // 日报数据
-    
+
     {
       id: 9,
       reportCycle: '日报',
@@ -435,7 +435,11 @@ export const detailFields = [
   { key: 'createCost', label: '报表生成耗时(秒)' },
   { key: 'updateTime', label: '数据更新时间', formatter: formatTime },
   { key: 'creator', label: '操作人' },
-  { key: 'isCorrected', label: '修正记录标记', formatter: (val) => (val ? '已修正' : '未修正') },
+  {
+    key: 'isCorrected',
+    label: '修正记录标记',
+    formatter: (val) => (val ? '已修正' : '未修正'),
+  },
   { key: 'remark', label: '备注' },
 ];
 
