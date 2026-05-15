@@ -1,5 +1,5 @@
 import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
-// import { getRangePickerDefaultProps } from '#/utils';
+import { getRangePickerDefaultProps } from '#/utils/rangePickerProps';
 
 export const reportCycleOptions = [
   { label: '日报', value: '日报' },
@@ -449,10 +449,7 @@ export function useSearchFormSchema() {
       label: '统计时段',
       component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择统计时段',
-        type: 'datetimerange',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+        ...getRangePickerDefaultProps(),
       },
     },
   ];

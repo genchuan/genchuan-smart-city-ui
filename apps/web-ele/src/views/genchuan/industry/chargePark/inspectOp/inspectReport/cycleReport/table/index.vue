@@ -182,15 +182,18 @@ function applyLocalTrendFilter(list) {
 }
 
 function buildQueryParams(page) {
+  console.log('dataObj.searchParams', dataObj.searchParams);
   return {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    ...dataObj.searchParams,
+    // ...dataObj.searchParams,
     generateStatus:
       filterGenerateStatus.value || dataObj.searchParams.generateStatus,
     reportCycle: filterReportCycle.value || dataObj.searchParams.reportCycle,
     stationId: filterStationId.value || dataObj.searchParams.stationId,
-    trendTime: filterTrendTime.value,
+    statTimeStart: dataObj.searchParams?.statTimeStart,
+    statTimeEnd: dataObj.searchParams?.statTimeEnd,
+    // trendTime: filterTrendTime.value,
   };
 }
 
