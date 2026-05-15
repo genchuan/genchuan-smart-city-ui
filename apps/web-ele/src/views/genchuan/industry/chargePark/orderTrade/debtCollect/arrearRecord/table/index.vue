@@ -45,7 +45,7 @@ const props = defineProps({
     }),
   },
 });
-const emit = defineEmits(['arrow-change']);
+const emit = defineEmits(['arrow-change', 'clear-filters']);
 
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
@@ -57,6 +57,8 @@ watch(
   () => props.filterParams,
   () => {
     dataObj.currentPage = 1;
+    dataObj.searchObj = {};
+    dataObj.filterParams = props.filterParams;
     gridApi.query();
   },
   { deep: true }
@@ -197,6 +199,7 @@ const dataObj = reactive({
   list: [],
   loading: false,
   searchObj: {},
+  filterParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -208,7 +211,7 @@ const getTableData = async (pageObj) => {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchObj,
-    ...props.filterParams,
+    ...dataObj.filterParams,
   };
 
   try {
@@ -245,6 +248,8 @@ const [QueryForm, queryFormApi] = useVbenForm({
     const values = await queryFormApi.getValues();
     dataObj.searchObj = values;
     dataObj.currentPage = 1;
+    dataObj.filterParams = {};
+    emit('clear-filters');
     gridApi.query();
     drawerApi.close();
   },
@@ -311,7 +316,7 @@ const createLabel = (item) => {
 const handleClick = () => {
   gridApi.query();
 };
-const handleSerachShow = () => {
+const handleSearchShow = () => {
   drawerApi.open();
 };
 const handleFullShow = () => {
@@ -516,7 +521,7 @@ const alarmColumns = [
           <IconButton
             content="搜索"
             icon-name="search"
-            @click="handleSerachShow"
+            @click="handleSearchShow"
           />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"

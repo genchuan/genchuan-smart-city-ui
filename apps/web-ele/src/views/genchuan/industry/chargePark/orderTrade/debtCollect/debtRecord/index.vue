@@ -22,6 +22,12 @@ const handleFilterChange = (params) => {
   filterParams.status = params.status || null;
 };
 
+const handleClearFilters = () => {
+  filterParams.createOrderTimeStart = null;
+  filterParams.createOrderTimeEnd = null;
+  filterParams.status = null;
+};
+
 const clearFilter = () => {
   filterParams.createOrderTimeStart = null;
   filterParams.createOrderTimeEnd = null;
@@ -47,6 +53,7 @@ const tabArray = ref([
     secondShow: false,
     arrowShow: true,
     arrowState: false,
+    filterParams,
   },
 ]);
 const activeName = ref('共享充电车订单');
@@ -103,8 +110,9 @@ const secondShow = ref(false);
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
-          :filter-params="filterParams"
+          :filter-params="item.filterParams"
           @arrow-change="arrowChange"
+          @clear-filters="handleClearFilters"
         />
       </el-tab-pane>
     </el-tabs>

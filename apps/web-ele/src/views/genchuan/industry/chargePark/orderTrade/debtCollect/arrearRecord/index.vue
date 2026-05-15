@@ -29,6 +29,11 @@ const handleFilterChange = (params) => {
   Object.assign(filterParams, params);
 };
 
+const handleClearFilters = () => {
+  filterParams.createTimeStart = null;
+  filterParams.createTimeEnd = null;
+};
+
 const hasActiveFilters = () => {
   return filterParams.createTimeStart;
 };
@@ -103,6 +108,7 @@ const secondShow = ref(false);
           :arrow-show="item.arrowShow"
           :filter-params="item.filterParams"
           @arrow-change="arrowChange"
+          @clear-filters="handleClearFilters"
         />
       </el-tab-pane>
     </el-tabs>
