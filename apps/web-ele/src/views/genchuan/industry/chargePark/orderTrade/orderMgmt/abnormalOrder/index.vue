@@ -33,6 +33,13 @@ const handleFilterChange = (params) => {
   Object.assign(filterParams, params);
 };
 
+const handleClearFilters = () => {
+  filterParams.identifyTimeStart = null;
+  filterParams.identifyTimeEnd = null;
+  filterParams.abnormalType = null;
+  filterParams.status = null;
+};
+
 // 异常类型映射
 const abnormalTypeMap = {
   payment_error: '支付异常',
@@ -152,6 +159,7 @@ const secondShow = ref(false);
           :arrow-show="item.arrowShow"
           :filter-params="item.filterParams"
           @arrow-change="arrowChange"
+          @clear-filters="handleClearFilters"
         />
       </el-tab-pane>
     </el-tabs>

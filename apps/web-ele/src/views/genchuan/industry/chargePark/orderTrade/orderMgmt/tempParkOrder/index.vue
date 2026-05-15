@@ -30,6 +30,12 @@ const handleFilterChange = (params) => {
   Object.assign(filterParams, params);
 };
 
+const handleClearFilters = () => {
+  filterParams.createOrderTimeStart = null;
+  filterParams.createOrderTimeEnd = null;
+  filterParams.stationName = null;
+};
+
 const hasActiveFilters = () => {
   return filterParams.createOrderTimeStart || filterParams.stationName;
 };
@@ -115,6 +121,7 @@ const secondShow = ref(false);
           :arrow-show="item.arrowShow"
           :filter-params="item.filterParams"
           @arrow-change="arrowChange"
+          @clear-filters="handleClearFilters"
         />
       </el-tab-pane>
     </el-tabs>

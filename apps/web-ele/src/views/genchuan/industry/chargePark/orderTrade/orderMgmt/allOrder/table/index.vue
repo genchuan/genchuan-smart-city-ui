@@ -213,8 +213,7 @@ const getTableData = async (pageObj) => {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchObj,
-  };
-
+  }; 
   if (props.filterParams.createOrderTimeStart) {
     params.createOrderTimeStart = props.filterParams.createOrderTimeStart;
   }
@@ -256,7 +255,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
     labelWidth: 100,
   },
   handleSubmit: async () => {
-    const values = await queryFormApi.getValues();
+    const values = await queryFormApi.getValues(); 
     dataObj.searchObj = values;
     dataObj.currentPage = 1;
     gridApi.query();

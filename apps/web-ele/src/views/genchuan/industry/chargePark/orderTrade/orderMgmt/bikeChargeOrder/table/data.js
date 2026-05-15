@@ -1,236 +1,58 @@
 /** 充电订单搜索表单配置 */
 export function useFormSchema() {
   return [
-    {
-      fieldName: 'id',
-      label: '主键ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入主键ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-      isSearch: true,
-    },
-    {
-      fieldName: 'orderNo',
-      label: '订单编号',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入订单编号',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-      isSearch: true,
-    },
-    {
-      fieldName: 'userId',
-      label: '用户ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入用户ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-      isSearch: true,
-    },
-    {
-      fieldName: 'userNickname',
-      label: '用户昵称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入用户昵称',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-      isSearch: true,
-    },
-    {
-      fieldName: 'chargeDuration',
-      label: '充电时长（分钟）',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入充电时长',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'chargeQuantity',
-      label: '充电量（度）',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入充电量',
-        precision: 2,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'amount',
-      label: '订单金额',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入订单金额',
-        precision: 2,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
+     {
       fieldName: 'status',
       label: '订单状态',
       component: 'Select',
       componentProps: {
         placeholder: '请选择订单状态',
         options: [
+          { label: '充电中', value: 'charging' },
+          { label: '待支付', value: 'pending_pay' },
+          { label: '已支付', value: 'paid' },
           { label: '已完成', value: 'completed' },
-          { label: '未支付', value: 'unpaid' },
           { label: '已取消', value: 'cancelled' },
+          { label: '退款中', value: 'refunding' },
         ],
       },
       labelWidth: 120,
       isSearch: true,
     },
     {
-      fieldName: 'createOrderTime',
+      fieldName: 'createOrderTimeStart',
       label: '订单生成时间',
-      component: 'DateTimePicker',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择订单生成时间',
+        type: 'datetime',
         format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
+      isSearch: true,
     },
     {
-      fieldName: 'stationId',
-      label: '所属场站ID',
-      component: 'InputNumber',
+      fieldName: 'createOrderTimeEnd',
+      label: '订单结束时间',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: '请输入所属场站ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'payTime',
-      label: '支付时间',
-      component: 'DateTimePicker',
-      componentProps: {
-        placeholder: '请选择支付时间',
+        type: 'datetime',
         format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
+      isSearch: true,
     },
     {
-      fieldName: 'payMethod',
-      label: '支付方式',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择支付方式',
-        options: [
-          { label: '支付宝', value: 'alipay' },
-          { label: '微信支付', value: 'wechat' },
-          { label: '现金', value: 'cash' },
-        ],
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'discountAmount',
-      label: '优惠抵扣金额',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入优惠抵扣金额',
-        precision: 2,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'archiveTime',
-      label: '归档时间',
-      component: 'DateTimePicker',
-      componentProps: {
-        placeholder: '请选择归档时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'operatorId',
-      label: '操作人ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入操作人ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'reserve1',
-      label: '备用字段1',
+      fieldName: 'stationName',
+      label: '所属场站',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入备用字段1',
-        maxLength: 100,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'reserve2',
-      label: '备用字段2',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入备用字段2',
-        maxLength: 100,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'creator',
-      label: '创建者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入创建者',
+        placeholder: '请输入所属场站',
         maxLength: 50,
       },
       labelWidth: 120,
-    },
-    {
-      fieldName: 'updater',
-      label: '更新者',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入更新者',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'createTime',
-      label: '创建时间',
-      component: 'DateTimePicker',
-      componentProps: {
-        placeholder: '请选择创建时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'updateTime',
-      label: '更新时间',
-      component: 'DateTimePicker',
-      componentProps: {
-        placeholder: '请选择更新时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-      },
-      labelWidth: 120,
+      isSearch: true,
     },
   ];
 }
