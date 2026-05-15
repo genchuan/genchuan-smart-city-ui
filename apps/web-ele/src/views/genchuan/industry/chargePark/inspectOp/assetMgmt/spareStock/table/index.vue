@@ -35,6 +35,7 @@ import {
   useOutFormSchema,
   useReplenishFormSchema,
   useSearchFormSchema,
+  spareOptions,
 } from './data';
 
 const props = defineProps({
@@ -134,6 +135,10 @@ const [ActionDrawer, actionDrawerApi] = useVbenDrawer({
     const values = await actionFormApi.getValues();
     try {
       if (actionType.value === 'in') {
+        const spare = spareOptions.find((item) => item.value === values.spareId);
+        if (spare) {
+          values.spareName = spare.label ?? ''
+        }
         await inSpareStock({
           spareId: values.spareId,
           spareName: values.spareName,
