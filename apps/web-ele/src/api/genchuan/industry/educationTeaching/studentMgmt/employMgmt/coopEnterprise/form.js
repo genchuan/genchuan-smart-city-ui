@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择企业类型',
+        clearable: true,
         options: [
           { label: '国企', value: '国企' },
           { label: '民企', value: '民企' },
@@ -28,8 +29,13 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择负责系部',
-        filterable: true,
-        options: [], // 动态加载
+        clearable: true,
+        options: [
+          { value: 2001, label: '计算机系' },
+          { value: 2002, label: '机电系' },
+          { value: 2003, label: '经贸系' },
+          { value: 2004, label: '其他' },
+        ],
       },
       labelWidth: '100',
     },
@@ -39,6 +45,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '合作中', value: '合作中' },
           { label: '已结束', value: '已结束' },
@@ -49,7 +56,7 @@ export function useFormSchema() {
   ];
 }
 
-// 表格列定义 - 将 deptName 改为 deptId
+// 表格列定义
 export function getColumns() {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
@@ -76,7 +83,7 @@ export function getColumns() {
   return allColumns;
 }
 
-// 建档/编辑表单 schema（添加 status 字段）
+// 建档/编辑表单 schema
 export function useCreateFormSchema(isEdit = false) {
   return [
     {
@@ -109,7 +116,12 @@ export function useCreateFormSchema(isEdit = false) {
       componentProps: {
         placeholder: '请选择负责系部',
         filterable: true,
-        options: [], // 动态加载
+        options: [
+          { value: 2001, label: '计算机系' },
+          { value: 2002, label: '机电系' },
+          { value: 2003, label: '经贸系' },
+          { value: 2004, label: '其他' },
+        ],
       },
       rules: 'required',
       labelWidth: '100',
@@ -166,32 +178,22 @@ export function useCreateFormSchema(isEdit = false) {
   ];
 }
 
-// 维护表单 schema（更新合作结束时间和状态）
+// 维护表单 schema - 改为 timeRange 和 remark，与后端接口完全一致
 export function useMaintainFormSchema() {
   return [
     {
-      fieldName: 'coopEndTime',
-      label: '合作结束时间',
+      fieldName: 'timeRange',
+      label: '合作时间范围',
       component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择合作结束时间',
-        type: 'datetime',
+        type: 'datetimerange',
+        rangeSeparator: '至',
+        startPlaceholder: '开始时间',
+        endPlaceholder: '结束时间',
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'x',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
-      labelWidth: '100',
-    },
-    {
-      fieldName: 'status',
-      label: '状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择状态',
-        options: [
-          { label: '合作中', value: '合作中' },
-          { label: '已结束', value: '已结束' },
-        ],
-      },
+      rules: 'required',
       labelWidth: '100',
     },
     {
@@ -204,7 +206,6 @@ export function useMaintainFormSchema() {
   ];
 }
 
-// 文本常量
 export const textObj = {
   createText: '建档',
   maintainText: '维护',

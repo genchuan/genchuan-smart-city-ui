@@ -47,12 +47,12 @@ export type GroupInfoUpdateReqVO = GroupInfoCreateReqVO & {
 export type GroupInfoPageReqVO = PageParam & {
   address?: string;
   auditorId?: number;
-  auditTime?: string;
+  auditTime?: string[];
   contact?: string;
   groupType?: string;
   name?: string;
   phone?: string;
-  registerTime?: string;
+  registerTime?: string[];
   remark?: string;
   status?: string;
   walletBalance?: number;
@@ -167,6 +167,10 @@ export const GroupInfoApi = {
     return await requestClient.upload('/usermerchant/group-info/import', {
       file,
     });
+  },
+
+  importGroupInfoTemplate: async () => {
+    return await requestClient.download('/usermerchant/group-info/template');
   },
 
   exportGroupInfo: async (params: GroupInfoPageReqVO) => {

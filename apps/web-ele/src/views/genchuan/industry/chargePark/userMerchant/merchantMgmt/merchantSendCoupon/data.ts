@@ -18,6 +18,8 @@ import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
+const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+
 export type MerchantSendCouponStatus = '已取消' | '已执行' | '待执行';
 
 export interface RedemptionLog {
@@ -76,6 +78,18 @@ export interface CouponProfileInfo {
   status: string;
   type: string;
   validPeriod: string;
+}
+
+export interface CouponMgmtApiVO {
+  description?: string;
+  id?: number;
+  name?: string;
+  status?: string;
+  statusName?: string;
+  type?: string;
+  typeName?: string;
+  useCondition?: string;
+  validTime?: null | number | string;
 }
 
 export interface MerchantSendCouponRow {
@@ -396,6 +410,23 @@ export function buildCouponSelectOptions(
 }
 
 /**
+ * 将优惠券管理接口数据转下拉项
+ */
+export function buildCouponOptionsFromApi(list: CouponMgmtApiVO[] = []) {
+  return buildCouponSelectOptions(
+    list.map((item) => ({
+      label: item.name || '',
+      remark: item.description || '',
+      rule: item.useCondition || '-',
+      status: item.statusName || item.status || '-',
+      type: item.typeName || item.type || '-',
+      validPeriod: formatApiTime(item.validTime),
+      value: Number(item.id ?? 0),
+    })),
+  );
+}
+
+/**
  * 构建优惠券信息索引
  */
 export function buildCouponProfileLookup(
@@ -576,12 +607,15 @@ export function buildMerchantSendCouponRowFromApi(
   merchantLookup: Record<number, Partial<MerchantProfileInfo>> = {},
   couponLookup: Record<number, CouponProfileInfo> = buildCouponProfileLookup(),
 ): MerchantSendCouponRow {
+  const merchantId = Number(
+    data.merchantId ?? data.merchantInfo?.id ?? fallback.merchantId ?? 0,
+  );
   const merchantProfile = buildMerchantProfile(
     data.merchantInfo
       ? {
           address: data.merchantInfo.address,
           contact: data.merchantInfo.contact,
-          id: data.merchantInfo.id || data.merchantId,
+          id: data.merchantInfo.id || merchantId,
           merchantType: data.merchantInfo.merchantType,
           name: data.merchantInfo.name,
           phone: data.merchantInfo.phone,
@@ -590,7 +624,10 @@ export function buildMerchantSendCouponRowFromApi(
           status: data.merchantInfo.status,
         }
       : undefined,
-    fallback,
+    {
+      ...fallback,
+      merchantId,
+    },
     merchantLookup,
   );
   const couponProfile = buildCouponProfile(
@@ -628,7 +665,7 @@ export function buildMerchantSendCouponRowFromApi(
       : fallback.logs || [],
     merchantAddress: merchantProfile.address,
     merchantContact: merchantProfile.contact,
-    merchantId: Number(data.merchantId ?? fallback.merchantId ?? 0),
+    merchantId,
     merchantName: merchantProfile.name,
     merchantPhone: merchantProfile.phone,
     merchantRegisterTime: merchantProfile.registerTime,
@@ -765,7 +802,10 @@ function buildRangeParam(value: any) {
     return undefined;
   }
 
-  return `${dayjs(value[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(value[1]).format('YYYY-MM-DD HH:mm:ss')}`;
+  return [
+    dayjs(value[0]).format(QUERY_TIME_FORMAT),
+    dayjs(value[1]).format(QUERY_TIME_FORMAT),
+  ];
 }
 
 /**

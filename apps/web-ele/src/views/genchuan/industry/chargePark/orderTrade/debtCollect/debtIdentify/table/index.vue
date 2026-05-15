@@ -40,12 +40,31 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  filterParams: {
+    type: Object,
+    default: () => ({
+      identifyTimeStart: null,
+      identifyTimeEnd: null,
+      status: null,
+    }),
+  },
 });
 const emit = defineEmits(['arrow-change']);
 
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
 });
+
+import { watch } from 'vue';
+
+watch(
+  () => props.filterParams,
+  () => {
+    dataObj.currentPage = 1;
+    gridApi.query();
+  },
+  { deep: true }
+);
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -193,6 +212,7 @@ const getTableData = async (pageObj) => {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchObj,
+    ...props.filterParams,
   };
 
   try {

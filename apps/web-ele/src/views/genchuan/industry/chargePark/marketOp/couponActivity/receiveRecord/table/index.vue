@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
@@ -11,11 +11,11 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getCouponMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import {
   exportReceiveRecord,
   getReceiveRecordPage,
 } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/receiveRecord';
-import { getCouponMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
@@ -24,6 +24,8 @@ import CheckRecordDrawer from '#/views/genchuan/industry/chargePark/marketOp/cou
 import {
   dataList,
   detailFields,
+  fetchCouponSearchOptions,
+  getCurrentCouponSearchOptions,
   getReceiveRecordStatusLabel,
   getReceiveRecordStatusTagType,
   getReceiveRecordSyncStatusLabel,
@@ -224,7 +226,7 @@ const getTableData = async (pageObj) => {
   const page = pageObj.page;
 
   try {
-    // 构建API请求参数
+    // 构建API请求参数 - 参照pointActivity的传参处理逻辑
     const params = {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
@@ -235,7 +237,12 @@ const getTableData = async (pageObj) => {
       couponName: dataObj.searchParams.couponName,
       status: filterStatus.value || dataObj.searchParams.status,
       syncStatus: filterSyncStatus.value || dataObj.searchParams.syncStatus,
-      receiveDate: filterReceiveDate.value,
+      date: filterReceiveDate.value || undefined, // 统计折线图钻取筛选（参数名改为date）
+      // RangePicker 返回数组格式 [start, end]，后端会接收为两个同名参数
+      receiveTime:
+        filterReceiveDate.value || !dataObj.searchParams.receiveTime
+          ? undefined
+          : dataObj.searchParams.receiveTime,
     };
 
     const response = await getReceiveRecordPage(params);
@@ -292,7 +299,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -401,6 +408,21 @@ const handleStatsFilter = (type, subType, value) => {
 
 defineExpose({
   handleStatsFilter,
+});
+
+// 页面加载时获取优惠券列表
+onMounted(async () => {
+  await fetchCouponSearchOptions();
+  // 动态更新搜索表单的优惠券选项
+  const currentCouponOptions = getCurrentCouponSearchOptions();
+  await queryFormApi.updateSchema([
+    {
+      fieldName: 'couponId',
+      componentProps: {
+        options: currentCouponOptions,
+      },
+    },
+  ]);
 });
 
 // ==================== 详情弹窗处理 ====================

@@ -55,13 +55,13 @@ const detailDrawerRef = ref(null);
 const drillDownDrawerRef = ref(null);
 
 const reportPeriodMap = {
-  day: '\u65E5\u62A5',
-  week: '\u5468\u62A5',
-  montly: '\u6708\u62A5',
-  season: '\u5B63\u62A5',
-  half: '\u534A\u5E74\u62A5',
-  year: '\u5E74\u62A5',
-  customize: '\u81EA\u5B9A\u4E49\u62A5\u8868',
+  day: '日报',
+  week: '周报',
+  montly: '月报',
+  season: '季报',
+  half: '半年报',
+  year: '年报',
+  customize: '自定义报表',
 };
 
 function currentReportPeriod() {
@@ -120,13 +120,14 @@ function createSchema(fields, isSearch = false) {
     const componentProps = {
       placeholder:
         field.type === 'select' || isDateType
-          ? `\u8BF7\u9009\u62E9${field.label}`
-          : `\u8BF7\u8F93\u5165${field.label}`,
+          ? `请选择${field.label}`
+          : `请输入${field.label}`,
     };
 
     if (field.type === 'select') {
       Object.assign(componentProps, {
         allowClear: true,
+        clearable: true,
         filterOption: true,
         options: normalizeOptions(field.options || []),
         showSearch: true,
@@ -166,7 +167,7 @@ const generateButtonText = computed(() => {
 });
 
 const drawerTitle = computed(
-  () => generateButtonText.value || `\u751F\u6210${pageConfig.title}`,
+  () => generateButtonText.value || `生成${pageConfig.title}`,
 );
 
 function getCellSlotName(column) {
@@ -208,10 +209,10 @@ const [QueryForm, queryFormApi] = useVbenForm({
   schema: createSchema(searchFields, true),
   showCollapseButton: true,
   submitButtonOptions: {
-    content: '\u67E5\u8BE2',
+    content: '查询',
   },
   resetButtonOptions: {
-    content: '\u91CD\u7F6E',
+    content: '重置',
   },
 });
 
@@ -266,7 +267,7 @@ function buildGridColumns() {
     {
       fixed: 'right',
       slots: { default: 'actions' },
-      title: '\u64CD\u4F5C',
+      title: '操作',
       width: 180,
     },
   ];
@@ -320,18 +321,21 @@ function handleRefresh() {
 async function handleQuerySubmit() {
   appliedQuery.value = sanitizeParams(queryFormApi.form.values || {});
   searchDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleResetSearch() {
   appliedQuery.value = {};
   await queryFormApi.resetForm();
   searchDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
-function handleOpenSearch() {
+async function handleOpenSearch() {
+  await syncQueryForm(appliedQuery.value);
   searchDrawerApi.open();
+  await nextTick();
+  await syncQueryForm(appliedQuery.value);
 }
 
 function handleOpenGenerate() {
@@ -346,7 +350,22 @@ async function handleGenerate() {
     (field) => field.required && !values[field.field],
   );
   if (requiredField) {
-    ElMessage.warning(`\u8BF7\u586B\u5199${requiredField.label}`);
+    ElMessage.warning(`请填写${requiredField.label}`);
+    return;
+  }
+
+  const startTime = values.reportStartTime
+    ? new Date(String(values.reportStartTime).replaceAll('-', '/')).getTime()
+    : Number.NaN;
+  const endTime = values.reportEndTime
+    ? new Date(String(values.reportEndTime).replaceAll('-', '/')).getTime()
+    : Number.NaN;
+  if (
+    !Number.isNaN(startTime) &&
+    !Number.isNaN(endTime) &&
+    startTime > endTime
+  ) {
+    ElMessage.warning('报表开始时间不能晚于报表结束时间');
     return;
   }
 
@@ -358,8 +377,11 @@ async function handleGenerate() {
         values.reportCycle ||
         currentReportPeriod() ||
         reportPeriodMap[REPORT_TYPE],
+      statPeriod: [values.reportStartTime, values.reportEndTime]
+        .filter(Boolean)
+        .join(' - '),
     });
-    ElMessage.success('\u751F\u6210\u6210\u529F');
+    ElMessage.success('生成成功');
     formDrawerApi.close();
     handleRefresh();
   } finally {
@@ -370,11 +392,13 @@ async function handleGenerate() {
 async function handleExport(extraParams = {}, isRowExport = false) {
   try {
     await ElMessageBox.confirm(
-      isRowExport
-        ? '\u786E\u8BA4\u5BFC\u51FA\u5F53\u524D\u8BB0\u5F55\uFF1F'
-        : '\u786E\u8BA4\u5BFC\u51FA\u5F53\u524D\u5217\u8868\uFF1F',
-      '\u5BFC\u51FA\u786E\u8BA4',
-      { type: 'warning' },
+      isRowExport ? '确认导出当前记录？' : '确认导出当前列表？',
+      '导出确认',
+      {
+        cancelButtonText: '取消',
+        confirmButtonText: '确定',
+        type: 'warning',
+      },
     );
   } catch {
     return;
@@ -389,7 +413,7 @@ async function handleExport(extraParams = {}, isRowExport = false) {
     fileName: pageConfig.exportName,
     source: blob,
   });
-  ElMessage.success('\u5BFC\u51FA\u6210\u529F');
+  ElMessage.success('导出成功');
 }
 
 async function handleOpenDetail(row) {
@@ -413,8 +437,8 @@ function handleRowAction(action, row) {
 function actionLabel(action) {
   return (
     {
-      detail: '\u67E5\u770B',
-      exportRow: '\u5BFC\u51FA',
+      detail: '查看',
+      exportRow: '导出',
     }[action] || action
   );
 }
@@ -437,31 +461,25 @@ function getFieldLabel(field) {
 
 function getTagDisplayText(field, value) {
   if (field === 'status') {
-    if (value === 'enabled') return '\u542F\u7528';
-    if (value === 'disabled') return '\u505C\u7528';
-    if (value === 'wait') return '\u5F85\u5904\u7406';
+    if (value === 'enabled') return '启用';
+    if (value === 'disabled') return '停用';
+    if (value === 'wait') return '待处理';
   }
   return value;
 }
 
-function removeFilterTag(field) {
+async function removeFilterTag(field) {
   const nextQuery = { ...appliedQuery.value };
   delete nextQuery[field];
-  appliedQuery.value = nextQuery;
-  try {
-    queryFormApi.setValues(nextQuery);
-  } catch (error) {
-    console.warn('Failed to set form values', error);
-  }
-  nextTick(() => {
-    handleRefresh();
-  });
+  appliedQuery.value = sanitizeParams(nextQuery);
+  await syncQueryForm(appliedQuery.value);
+  handleRefresh(appliedQuery.value);
 }
 
-function clearFilters() {
+async function clearFilters() {
   appliedQuery.value = {};
-  queryFormApi.resetForm();
-  handleRefresh();
+  await syncQueryForm({});
+  handleRefresh(appliedQuery.value);
 }
 
 function getCellDisplayText(column, row) {
@@ -475,22 +493,26 @@ function getCellDisplayText(column, row) {
   return '--';
 }
 
-async function applySearchPatch(patch) {
+async function syncQueryForm(values = {}) {
+  const nextValues = sanitizeParams(values);
+  try {
+    await queryFormApi.resetForm();
+    if (!isEmpty(nextValues)) {
+      await queryFormApi.setValues(nextValues);
+    }
+  } catch (error) {
+    console.warn('Failed to set form values', error);
+  }
+}
+function applySearchPatch(patch) {
   const nextQuery = sanitizeParams({
     ...appliedQuery.value,
     ...patch,
   });
   appliedQuery.value = nextQuery;
-  handleRefresh();
+  handleRefresh(nextQuery);
   nextTick(() => {
-    try {
-      const result = queryFormApi.setValues(nextQuery);
-      Promise.resolve(result).catch((error) => {
-        console.warn('Failed to set form values', error);
-      });
-    } catch (error) {
-      console.warn('Failed to set form values', error);
-    }
+    syncQueryForm(nextQuery);
   });
 }
 
@@ -570,7 +592,7 @@ function handleStatsFilter(type, value) {
     delete nextQuery.reportCycle;
   }
   appliedQuery.value = nextQuery;
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 watch(
@@ -603,7 +625,7 @@ defineExpose({
     <DetailDrawer ref="detailDrawerRef" :detail-obj="detailObj" />
     <DrillDownDetailDrawer ref="drillDownDrawerRef" />
 
-    <SearchDrawer title="\u7b5b\u9009\u6761\u4ef6">
+    <SearchDrawer title="筛选条件">
       <QueryForm class="query-form" @reset="handleResetSearch" />
     </SearchDrawer>
 
@@ -635,12 +657,12 @@ defineExpose({
             @click="handleOpenGenerate"
           />
           <IconButton
-            content="\u67e5\u8be2"
+            content="查询"
             icon-name="search"
             @click="handleOpenSearch"
           />
           <IconButton
-            content="\u5bfc\u51fa"
+            content="导出"
             icon-name="download"
             @click="handleExport()"
           />
@@ -650,12 +672,12 @@ defineExpose({
             @click="props.toggleStats"
           />
           <IconButton
-            content="\u5237\u65b0"
+            content="刷新"
             icon-name="Refresh"
             @click="handleRefresh"
           />
           <IconButton
-            content="\u5168\u5c4f"
+            content="全屏"
             icon-name="FullScreen"
             @click="handleFullScreen"
           />

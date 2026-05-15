@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
-
 import { ElMessage } from 'element-plus';
 
 import { UserCreditApi } from '#/api/genchuan/industry/chargePark/userMerchant/creditMgmt/userCredit';
@@ -11,7 +9,7 @@ import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.v
 import { buildStatsDataFromApi } from './data';
 import Table from './table/index.vue';
 
-import '#/components/page/index.scss';
+import '#/genchuan-components/page/index.scss';
 
 type TableInstance = {
   recalculateLayout: () => Promise<void> | void;
@@ -20,7 +18,7 @@ type TableInstance = {
 };
 
 const tableRef = ref<null | TableInstance>(null);
-const showStats = ref(false);
+const showStats = ref(true);
 const statsDataSource = ref(buildStatsDataFromApi());
 
 /** 等待布局稳定后再重算表格 */
@@ -63,24 +61,7 @@ async function loadStats() {
   }
 }
 
-const statsData = computed(() => {
-  const data = statsDataSource.value;
-
-  return {
-    ...data,
-    cards: data.cards.map((item, index) => ({
-      ...item,
-      onClick: index === 0 ? handleFilterAllCredits : handleFilterLowCredits,
-    })),
-    charts: data.charts.map((item) => ({
-      ...item,
-      onClick:
-        item.type === 'pie'
-          ? (params: { name: string }) => handleFilterByLevel(params.name)
-          : undefined,
-    })),
-  };
-});
+const statsData = computed(() => statsDataSource.value);
 
 /** 钻取全部信用列表 */
 async function handleFilterAllCredits() {
@@ -107,58 +88,93 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page auto-content-height class="user-credit-page">
-    <div class="common-index user-credit-index">
-      <div v-show="showStats" class="user-credit-stats">
-        <StatsVisualization :data="statsData" />
-      </div>
-      <div class="user-credit-table-wrap">
-        <Table
-          ref="tableRef"
-          :reload-stats="loadStats"
-          :show-stats="showStats"
-          :toggle-stats="toggleStats"
-        />
-      </div>
-    </div>
-  </Page>
+  <div class="common-index">
+    <StatsVisualization
+      v-if="showStats"
+      :data="statsData"
+      @card-click="
+        ({ index }) =>
+          index === 0 ? handleFilterAllCredits() : handleFilterLowCredits()
+      "
+      @pie-click="({ name }) => handleFilterByLevel(name)"
+    />
+    <Table
+      ref="tableRef"
+      :reload-stats="loadStats"
+      :show-stats="showStats"
+      :toggle-stats="toggleStats"
+    />
+  </div>
 </template>
 
 <style scoped lang="scss">
-.user-credit-page {
-  height: 100%;
+:deep(.vxe-pager--wrapper) {
+  justify-content: center;
 }
 
-:deep(.user-credit-page .vben-page-content) {
-  height: 100%;
+:deep(.vxe-grid--pager-wrapper .vxe-pager) {
+  position: relative;
+  height: 65px;
+  margin-top: 0;
 }
 
-.user-credit-index {
+:deep(.user-merchant-table-grid .vxe-grid--toolbar-wrapper) {
+  margin-top: 0;
+}
+
+:deep(.user-merchant-table-grid .vxe-toolbar) {
   display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+  align-items: center;
 }
 
-.user-credit-stats {
-  flex-shrink: 0;
-  height: 280px;
-  overflow: hidden;
-}
-
-.user-credit-table-wrap {
+:deep(.user-merchant-table-grid .vxe-buttons--wrapper) {
   flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  min-width: 0;
+  padding-top: 0;
+}
+
+:deep(.user-merchant-table-grid .tabel-tabs) {
+  flex-wrap: nowrap !important;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 32px;
+  overflow: auto hidden;
+  white-space: nowrap;
+}
+
+:deep(.user-merchant-table-grid .tabel-tabs .el-tag) {
+  flex-shrink: 0;
+}
+
+:deep(.user-merchant-table-grid .vxe-tools--wrapper),
+:deep(.user-merchant-table-grid .vxe-tools--operate) {
+  position: static !important;
+  flex-shrink: 0;
 }
 
 :deep(.park-chart-box) {
-  min-height: 280px;
+  height: 300px;
 }
 
-:deep(.simple-bar-chart),
-:deep(.park-type-chart) {
-  height: 280px;
+:deep(.park-chart-box .chart-box-left) {
+  height: 100%;
+}
+
+:deep(.park-chart-box .stat-card) {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+:deep(.park-chart-box .map-wrapper),
+:deep(.park-chart-box .park-type-chart),
+:deep(.park-chart-box .simple-bar-chart) {
+  height: 100%;
+}
+
+:deep(.rule-chart-box),
+:deep(.rule-chart-box .chart-box-left),
+:deep(.rule-chart-box .charts-wrapper),
+:deep(.rule-chart-box .chart-area) {
+  height: 300px;
 }
 </style>

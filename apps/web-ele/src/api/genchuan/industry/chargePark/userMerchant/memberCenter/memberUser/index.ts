@@ -1,5 +1,6 @@
 import type { PageParam, PageResult } from '@vben/request';
 
+import { normalizeQueryDateTimeRanges } from '#/api/genchuan/industry/chargePark/userMerchant/utils/query';
 import { requestClient } from '#/api/request';
 
 export namespace MemberUserApi {
@@ -46,10 +47,10 @@ export namespace MemberUserApi {
   }
 
   export interface UserPageReqVO extends PageParam {
-    createTime?: string;
+    createTime?: string[];
     groupId?: number;
     levelId?: number;
-    loginDate?: string;
+    loginDate?: string[];
     mobile?: string;
     nickname?: string;
     status?: number;
@@ -79,7 +80,12 @@ export function getUserPage(params: MemberUserApi.UserPageReqVO) {
   return requestClient.get<PageResult<MemberUserApi.User>>(
     '/usermerchant/member-user/page',
     {
-      params,
+      params: normalizeQueryDateTimeRanges(params, [
+        'createTime',
+        'expireTime',
+        'loginDate',
+        'updateTime',
+      ]),
     },
   );
 }
@@ -114,7 +120,12 @@ export function importUser(file: File) {
 /** 导出会员用户 */
 export function exportUser(params: MemberUserApi.UserPageReqVO) {
   return requestClient.download('/usermerchant/member-user/export', {
-    params,
+    params: normalizeQueryDateTimeRanges(params, [
+      'createTime',
+      'expireTime',
+      'loginDate',
+      'updateTime',
+    ]),
   });
 }
 

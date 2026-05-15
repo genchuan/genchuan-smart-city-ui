@@ -9,7 +9,7 @@ import type { ActiveFilterTag } from '#/views/genchuan/industry/chargePark/userM
 import { computed, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import dayjs from 'dayjs';
 import {
@@ -27,13 +27,16 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { UserCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userCar';
 import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
+import { downloadFileIfValid } from '#/views/genchuan/industry/chargePark/userMerchant/utils/download';
 import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
+  buildCarInfo,
   buildUserInfoQueryParams,
   buildUserRowFromApi,
   formatAuditLogs,
@@ -213,11 +216,13 @@ const searchFilterConfigs = {
     type: 'primary',
   },
   registerTime: {
-    formatter: (value: any[]) =>
-      value
-        .filter(Boolean)
-        .map((item) => dayjs(item).format('YYYY-MM-DD HH:mm:ss'))
-        .join(' 至 '),
+    formatter: (value: any[]) => {
+      const range = value
+        .filter((item) => dayjs(item).isValid())
+        .map((item) => dayjs(item).format('YYYY-MM-DD HH:mm:ss'));
+
+      return range.length === 2 ? range.join(' 至 ') : '';
+    },
     label: '注册时间',
     type: 'danger',
   },
@@ -390,8 +395,8 @@ async function queryUserInfoPage(
   formValues: Record<string, any> = {},
 ) {
   const queryValues = {
-    ...searchParams.value,
     ...formValues,
+    ...searchParams.value,
   };
 
   if (filterStatus.value) {
@@ -455,7 +460,7 @@ async function setSearchValues(values: Record<string, any>) {
   filterStatus.value = '';
   filterUserType.value = '';
   filterPhone.value = '';
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   return gridApi.reload();
 }
 
@@ -490,7 +495,10 @@ async function handleExport() {
   }
 
   try {
-    await UserInfoApi.exportUserInfo(buildUserInfoQueryParams(exportValues));
+    const data = await UserInfoApi.exportUserInfo(
+      buildUserInfoQueryParams(exportValues),
+    );
+    downloadFileFromBlobPart({ fileName: '用户信息.xls', source: data });
     ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
@@ -602,14 +610,27 @@ async function handleOpenWallet(row: UserRow) {
 
 /** 打开车辆明细弹窗 */
 async function handleOpenCars(row: UserRow) {
-  const detail = await fetchUserDetail(row, '加载车辆明细失败');
+  const loadingInstance = ElLoading.service({
+    target: '.user-info-table',
+    text: '加载中...',
+  });
 
-  if (!detail) {
-    return;
+  try {
+    const result = await UserCarApi.getUserCarPage({
+      pageNo: 1,
+      pageSize: Math.max(row.carCount || 20, 20),
+      userId: row.id,
+    });
+    const list = Array.isArray(result?.list) ? result.list : [];
+
+    currentCars.value = list.map((item) => buildCarInfo(item));
+    vehicleDialogVisible.value = true;
+  } catch (error) {
+    ElMessage.error('加载车辆明细失败');
+    console.error('[userInfo] load cars failed:', error);
+  } finally {
+    loadingInstance.close();
   }
-
-  currentCars.value = detail.row.cars;
-  vehicleDialogVisible.value = true;
 }
 
 /** 批量禁用所选用户 */
@@ -645,19 +666,18 @@ function handleRowCheckboxChange({ records }: { records: UserRow[] }) {
 }
 
 /** 下载导入模板 */
-function handleDownloadTemplate() {
-  const blob = new Blob(
-    [
-      '用户昵称,绑定手机号,用户类型,备注\n示例用户,13812345678,个人用户,导入模板示例',
-    ],
-    { type: 'text/csv;charset=utf-8;' },
-  );
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = '用户信息导入模板.csv';
-  link.click();
-  URL.revokeObjectURL(url);
+async function handleDownloadTemplate() {
+  try {
+    const data = await UserInfoApi.importUserInfoTemplate();
+    downloadFileIfValid({
+      fileName: 'user-info-import-template.xls',
+      source: data,
+    });
+    ElMessage.success('模板下载成功');
+  } catch (error) {
+    ElMessage.error('模板下载失败');
+    console.error('[userInfo] download template failed:', error);
+  }
 }
 
 /** 导入用户数据 */
@@ -776,9 +796,7 @@ function handleCancelPhoneFilter() {
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns,
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
-    height: 'auto',
     proxyConfig: {
       ajax: {
         query: queryUserInfoPage,
@@ -789,6 +807,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
@@ -810,184 +829,177 @@ const handleOpenDetail = (row: UserRow) => {
 </script>
 
 <template>
-  <div class="user-info-table">
-    <div class="user-info-grid-wrap">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-              align-items: center;
-            "
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
-            >
-              {{ tag.label }}：{{ tag.value }}
-            </ElTag>
-          </div>
-        </template>
-
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-            <IconButton
-              content="导入"
-              icon-name="Upload"
-              @click="() => (importDialogVisible = true)"
-            />
-            <IconButton
-              content="导出"
-              icon-name="download"
-              @click="handleExport"
-            />
-            <IconButton
-              content="批量禁用"
-              icon-name="delete"
-              color="#F56C6C"
-              :disabled="isEmpty(checkedIds)"
-              @click="handleDisableBatch"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSerachShow"
-            />
-            <IconButton
-              :content="props.showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="props.toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
-
-        <template #nickname="{ row }">
-          <el-text
-            @click="handleOpenDetail(row)"
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-          >
-            {{ row.nickname }}
-          </el-text>
-        </template>
-
-        <template #phone="{ row }">
-          <el-text
-            @click="handleFilterPhone(row)"
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-          >
-            {{ maskPhone(row.phone) }}
-          </el-text>
-        </template>
-
-        <template #userType="{ row }">
+  <div class="park-lot-table-new user-merchant-table-grid">
+    <Grid>
+      <template #table-title>
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; align-items: center"
+        >
           <ElTag
-            @click="handleFilterUserType(row.userType)"
-            style="cursor: pointer"
+            v-for="tag in activeFilterTags"
+            :key="`${tag.source}-${tag.key}`"
+            :type="tag.type"
+            closable
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+            @close="handleRemoveFilterTag(tag)"
           >
-            {{ row.userType }}
+            {{ tag.label }}：{{ tag.value }}
           </ElTag>
-        </template>
+        </div>
+      </template>
 
-        <template #status="{ row }">
-          <ElTag
-            @click="handleFilterStatus(row.status)"
-            :type="row.status === '正常' ? 'success' : 'danger'"
-            style="cursor: pointer"
-          >
-            {{ row.status }}
-          </ElTag>
-        </template>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="导入"
+            icon-name="Upload"
+            @click="() => (importDialogVisible = true)"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="批量禁用"
+            icon-name="delete"
+            color="#F56C6C"
+            :disabled="isEmpty(checkedIds)"
+            @click="handleDisableBatch"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
+      </template>
 
-        <template #walletBalance="{ row }">
-          <el-text
-            @click="handleOpenWallet(row)"
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-          >
-            {{ row.walletBalance.toFixed(2) }}
-          </el-text>
-        </template>
+      <template #nickname="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.nickname }}
+        </el-text>
+      </template>
 
-        <template #carCount="{ row }">
-          <el-text
-            @click="handleOpenCars(row)"
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-          >
-            {{ row.carCount }}
-          </el-text>
-        </template>
+      <template #phone="{ row }">
+        <el-text
+          @click="handleFilterPhone(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ maskPhone(row.phone) }}
+        </el-text>
+      </template>
 
-        <template #creator="{ row }">
-          <el-text
-            @click="handleOpenOperator(row, 'creator')"
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-          >
-            {{ row.creator }}
-          </el-text>
-        </template>
+      <template #userType="{ row }">
+        <ElTag
+          @click="handleFilterUserType(row.userType)"
+          style="cursor: pointer"
+        >
+          {{ row.userType }}
+        </ElTag>
+      </template>
 
-        <template #updater="{ row }">
-          <el-text
-            @click="handleOpenOperator(row, 'updater')"
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-          >
-            {{ row.updater }}
-          </el-text>
-        </template>
+      <template #status="{ row }">
+        <ElTag
+          @click="handleFilterStatus(row.status)"
+          :type="row.status === '正常' ? 'success' : 'danger'"
+          style="cursor: pointer"
+        >
+          {{ row.status }}
+        </ElTag>
+      </template>
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="详情"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-            <IconButton
-              v-if="row.status === '正常'"
-              content="编辑"
-              icon-name="Edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              v-if="row.status === '正常'"
-              content="禁用"
-              icon-name="Close"
-              @click="handleToggleStatus(row, '禁用')"
-            />
-            <IconButton
-              v-else
-              content="启用"
-              icon-name="Check"
-              @click="handleToggleStatus(row, '正常')"
-            />
-          </div>
-        </template>
-      </Grid>
-    </div>
+      <template #walletBalance="{ row }">
+        <el-text
+          @click="handleOpenWallet(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.walletBalance.toFixed(2) }}
+        </el-text>
+      </template>
+
+      <template #carCount="{ row }">
+        <el-text
+          @click="handleOpenCars(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.carCount }}
+        </el-text>
+      </template>
+
+      <template #creator="{ row }">
+        <el-text
+          @click="handleOpenOperator(row, 'creator')"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.creator }}
+        </el-text>
+      </template>
+
+      <template #updater="{ row }">
+        <el-text
+          @click="handleOpenOperator(row, 'updater')"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.updater }}
+        </el-text>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleDetail(row)"
+          />
+          <IconButton
+            v-if="row.status === '正常'"
+            content="编辑"
+            icon-name="Edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            v-if="row.status === '正常'"
+            content="禁用"
+            icon-name="Close"
+            @click="handleToggleStatus(row, '禁用')"
+          />
+          <IconButton
+            v-else
+            content="启用"
+            icon-name="Check"
+            @click="handleToggleStatus(row, '正常')"
+          />
+        </div>
+      </template>
+    </Grid>
 
     <!-- 新增/编辑表单抽屉 -->
     <FormDrawer :title="getTitle">
@@ -1034,22 +1046,46 @@ const handleOpenDetail = (row: UserRow) => {
 
     <!-- 导入弹窗 -->
     <ElDialog v-model="importDialogVisible" title="导入用户" width="520px">
-      <div class="import-tip">下载模板后上传文件即可。</div>
-      <div class="import-actions">
-        <ElButton @click="handleDownloadTemplate">下载模板</ElButton>
+      <div class="import-container">
+        <div class="template-section">
+          <div class="section-title">1. 下载导入模板</div>
+          <div class="section-content">
+            <p class="tip-text">
+              请使用系统提供的模板格式导入数据，确保数据格式正确
+            </p>
+            <ElButton type="primary" @click="handleDownloadTemplate">
+              下载导入模板
+            </ElButton>
+          </div>
+        </div>
+
+        <div class="upload-section">
+          <div class="section-title">2. 上传数据文件</div>
+          <div class="section-content">
+            <el-upload
+              v-model:file-list="importFileList"
+              drag
+              :auto-upload="false"
+              :limit="1"
+              accept=".xls,.xlsx,.csv"
+            >
+              <div class="el-upload__text">
+                将文件拖到此处，或<em>点击上传</em>
+              </div>
+              <template #tip>
+                <div class="el-upload__tip">
+                  支持 .xls、.xlsx、.csv 格式文件
+                </div>
+              </template>
+            </el-upload>
+          </div>
+        </div>
       </div>
-      <el-upload
-        v-model:file-list="importFileList"
-        drag
-        :auto-upload="false"
-        :limit="1"
-        accept=".xls,.xlsx,.csv"
-      >
-        <div>点击或拖拽文件到此处上传</div>
-      </el-upload>
       <template #footer>
         <ElButton @click="importDialogVisible = false">取消</ElButton>
-        <ElButton type="primary" @click="handleImportUsers">开始导入</ElButton>
+        <ElButton type="primary" @click="handleImportUsers">
+          开始导入
+        </ElButton>
       </template>
     </ElDialog>
 
@@ -1076,30 +1112,37 @@ const handleOpenDetail = (row: UserRow) => {
 </template>
 
 <style scoped lang="scss">
-.user-info-table,
-.user-info-grid-wrap {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+.import-container {
+  padding: 20px;
 }
 
-.user-info-table {
-  display: flex;
-  flex-direction: column;
+.template-section,
+.upload-section {
+  margin-bottom: 24px;
 }
 
-.user-info-grid-wrap {
-  flex: 1;
+.section-title {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
 }
 
-:deep(.vxe-grid) {
-  height: 100% !important;
+.section-content {
+  padding-left: 16px;
 }
 
-:deep(.vxe-grid--layout-body-wrapper),
-:deep(.vxe-grid--layout-body-content-wrapper),
-:deep(.vxe-grid--table-container),
-:deep(.vxe-grid--table-wrapper) {
-  min-height: 0;
+.tip-text {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+:deep(.el-upload) {
+  width: 100%;
+}
+
+:deep(.el-upload-dragger) {
+  width: 100%;
 }
 </style>

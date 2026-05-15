@@ -12,6 +12,8 @@ import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
+const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+
 export const textObj = {
   addText: '新增车辆',
   editText: '编辑车辆',
@@ -104,7 +106,7 @@ export function buildUserSelectOptions(
     }))
     .filter((item) => item.label && item.value > 0);
 
-  return normalizedList.length > 0 ? normalizedList : userOptions;
+  return normalizedList;
 }
 
 export const detailFields = [
@@ -392,7 +394,7 @@ export function buildUserCarRowFromApi(
   const userId = Number(data.userId ?? fallback.userId ?? 0);
   const userProfile = getUserProfile(
     userId,
-    data.userName || fallback.userName,
+    data.nickname || fallback.userName,
     data.userInfo,
   );
   const creator = data.creator || fallback.creator || 'admin';
@@ -400,8 +402,8 @@ export function buildUserCarRowFromApi(
     data.auditorName ||
     data.auditorInfo?.name ||
     data.auditorInfo?.nickname ||
-    (data.auditorId ? operatorNameByIdMap[data.auditorId] : undefined) ||
     fallback.auditorName ||
+    (data.auditorId ? operatorNameByIdMap[data.auditorId] : undefined) ||
     '-';
   let auditorInfo: OperatorInfo | undefined;
 
@@ -437,7 +439,7 @@ export function buildUserCarRowFromApi(
     updateTime: formatApiTime(data.updateTime ?? fallback.updateTime),
     userId,
     userInfo: data.userInfo ? userProfile : fallback.userInfo || userProfile,
-    userName: data.userName || fallback.userName || userProfile.nickname,
+    userName: data.nickname || fallback.userName || userProfile.nickname,
   };
 
   if (row.bindingLogs.length === 0) {
@@ -713,9 +715,14 @@ export function buildStatsDataFromApi(data?: Partial<UserCarChartVO>) {
 export function buildUserCarQueryParams(formValues: Record<string, any>) {
   const params = {
     ...formValues,
+    nickname: formValues.nickname || formValues.userName,
+    userName: undefined,
     bindTime:
       Array.isArray(formValues.bindTime) && formValues.bindTime.length === 2
-        ? `${dayjs(formValues.bindTime[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(formValues.bindTime[1]).format('YYYY-MM-DD HH:mm:ss')}`
+        ? [
+            dayjs(formValues.bindTime[0]).format(QUERY_TIME_FORMAT),
+            dayjs(formValues.bindTime[1]).format(QUERY_TIME_FORMAT),
+          ]
         : undefined,
   };
 
@@ -764,16 +771,14 @@ export function getBindingLogsSummary(logs: BindingLog[]) {
  * 筛选表单
  */
 export function useSearchSchema(
-  currentUserOptions: UserSelectOption[] = userOptions,
 ): VbenFormSchema[] {
   return [
     {
-      fieldName: 'userId',
+      fieldName: 'nickname',
       label: '所属用户',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        options: currentUserOptions,
-        placeholder: '请选择所属用户',
+        placeholder: '请输入所属用户',
       },
     },
     {
@@ -990,6 +995,26 @@ export function useGridColumns(): VxeTableGridOptions<UserCarRow>['columns'] {
       field: 'auditRemark',
       title: '审核备注',
       minWidth: 180,
+    },
+    {
+      field: 'remark',
+      title: '备注',
+      minWidth: 180,
+    },
+    {
+      field: 'creator',
+      title: '创建者',
+      minWidth: 110,
+    },
+    {
+      field: 'createTime',
+      title: '创建时间',
+      minWidth: 170,
+    },
+    {
+      field: 'updateTime',
+      title: '更新时间',
+      minWidth: 170,
     },
     {
       title: '操作',

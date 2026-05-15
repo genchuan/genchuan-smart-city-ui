@@ -12,7 +12,7 @@ export function useFormSchema() {
       fieldName: 'studentId',
       label: '学号',
       component: 'Input',
-      componentProps: { placeholder: '请输入学生姓名' },
+      componentProps: { placeholder: '请输入学号' },
       labelWidth: '100',
     },
     {
@@ -21,6 +21,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '待审核', value: '待审核' },
           { label: '已通过', value: '已通过' },
@@ -60,7 +61,19 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 申请表单 schema（添加 status 字段）
+// 前端写死的社团列表
+const clubOptions = [
+  { label: '篮球社', value: '篮球社' },
+  { label: '文学社', value: '文学社' },
+  { label: '志愿者协会', value: '志愿者协会' },
+  { label: '动漫社', value: '动漫社' },
+  { label: '舞蹈社', value: '舞蹈社' },
+  { label: '书法社', value: '书法社' },
+  { label: '环保协会', value: '环保协会' },
+  { label: '摄影社', value: '摄影社' },
+];
+
+// 申请表单 schema（社团类型手动选择，不禁用）
 export function useCreateFormSchema() {
   return [
     {
@@ -70,12 +83,7 @@ export function useCreateFormSchema() {
       componentProps: {
         placeholder: '请选择社团',
         filterable: true,
-        options: [
-          { label: '篮球社', value: '篮球社' },
-          { label: '文学社', value: '文学社' },
-          { label: '志愿者协会', value: '志愿者协会' },
-          { label: '动漫社', value: '动漫社' },
-        ],
+        options: clubOptions,
       },
       rules: 'required',
       labelWidth: '100',
@@ -98,13 +106,13 @@ export function useCreateFormSchema() {
     },
     {
       fieldName: 'studentId',
-      label: '学生',
-      component: 'Select',
+      label: '学号',
+      component: 'InputNumber',
       componentProps: {
-        placeholder: '请选择学生',
-        filterable: true,
-        remote: true,
-        options: [], // 动态加载
+        placeholder: '请输入学号',
+        controls: false,
+        style: 'width: 100%',
+        min: 1,
       },
       rules: 'required',
       labelWidth: '100',

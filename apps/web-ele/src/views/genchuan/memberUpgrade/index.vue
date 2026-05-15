@@ -25,6 +25,9 @@ const ArrowDown = createIconifyIcon('carbon:chevron-down');
 const showPremiumPayment = ref(false);
 const showEnterprisePayment = ref(false);
 
+// 联系方式二维码弹窗状态
+const showContactQr = ref(false);
+
 // 滚动到三级会员区域
 function scrollToPricing() {
   const pricingSection = document.querySelector('#pricing-section');
@@ -50,6 +53,16 @@ function closePremiumPayment() {
 
 function closeEnterprisePayment() {
   showEnterprisePayment.value = false;
+}
+
+// 显示联系方式二维码弹窗
+function showContactQrModal() {
+  showContactQr.value = true;
+}
+
+// 关闭联系方式二维码弹窗
+function closeContactQr() {
+  showContactQr.value = false;
 }
 
 // FAQ 数据
@@ -502,10 +515,19 @@ const faqList = ref([
       </p>
 
       <div class="cta-buttons">
-        <el-button type="primary" size="large" class="cta-primary-btn">
+        <el-button
+          type="primary"
+          size="large"
+          class="cta-primary-btn"
+          @click="showPremiumPaymentModal"
+        >
           立即升级高级会员 →
         </el-button>
-        <el-button size="large" class="cta-secondary-btn">
+        <el-button
+          size="large"
+          class="cta-secondary-btn"
+          @click="showContactQrModal"
+        >
           💬 联系我们定制旗舰方案
         </el-button>
       </div>
@@ -515,10 +537,10 @@ const faqList = ref([
           <ShieldIcon class="cta-tag-icon" />
           <span>数据安全保障</span>
         </div>
-        <div class="feature-tag">
-          <RefreshIcon :size="16" />
-          <span>随时可能降级</span>
-        </div>
+        <!--        <div class="feature-tag">-->
+        <!--          <RefreshIcon :size="16" />-->
+        <!--          <span>随时可能降级</span>-->
+        <!--        </div>-->
         <div class="feature-tag">
           <HeadsetIcon :size="16" />
           <span>7×24专属支持</span>
@@ -651,950 +673,47 @@ const faqList = ref([
         </p>
       </div>
     </div>
+
+    <!-- 联系方式二维码弹窗 -->
+    <div
+      v-if="showContactQr"
+      class="payment-modal-overlay"
+      @click="closeContactQr"
+    >
+      <div class="payment-modal contact-modal" @click.stop>
+        <button class="modal-close-btn" @click="closeContactQr">✕</button>
+        <h3 class="modal-title">联系我们 - 专属定制服务</h3>
+        <p class="modal-subtitle">扫描二维码添加企业微信，获取专属定制方案</p>
+        <div class="qr-code-container">
+          <img
+            src="./img/contactInfoQW.jpg"
+            alt="企业微信联系方式"
+            class="contact-qr-image"
+          />
+        </div>
+        <!--        <div class="contact-info">-->
+        <!--          <div class="info-item">-->
+        <!--            <span class="info-label">📞 服务热线</span>-->
+        <!--            <span class="info-value">400-XXX-XXXX</span>-->
+        <!--          </div>-->
+        <!--          <div class="info-item">-->
+        <!--            <span class="info-label">📧 商务邮箱</span>-->
+        <!--            <span class="info-value">business@yichuan.com</span>-->
+        <!--          </div>-->
+        <!--          <div class="info-item">-->
+        <!--            <span class="info-label">⏰ 服务时间</span>-->
+        <!--            <span class="info-value">周一至周五 9:00-18:00</span>-->
+        <!--          </div>-->
+        <!--        </div>-->
+        <p class="payment-notice contact-notice">
+          💼 专业顾问将在24小时内与您联系，为您提供一对一的定制化解决方案
+        </p>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-.member-upgrade-page {
-  height: 100vh;
-  overflow-y: auto;
-  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-
-  // 自定义滚动条样式（Webkit浏览器）
-  &::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 4px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 4px;
-
-    &:hover {
-      background: linear-gradient(135deg, #5568d3 0%, #654091 100%);
-    }
-  }
-
-  // Firefox 滚动条样式
-  scrollbar-width: thin;
-  scrollbar-color: #667eea #f1f5f9;
-}
-
-// Hero 区域
-.hero-section {
-  text-align: center;
-  padding: 80px 20px 60px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 20px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-  font-size: 14px;
-  margin-bottom: 24px;
-
-  .badge-icon {
-    font-size: 18px;
-  }
-}
-
-.hero-title {
-  font-size: 56px;
-  font-weight: 800;
-  line-height: 1.2;
-  margin-bottom: 24px;
-
-  .gradient-text {
-    background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-}
-
-.hero-subtitle {
-  font-size: 18px;
-  line-height: 1.8;
-  opacity: 0.95;
-  max-width: 700px;
-  margin: 0 auto 40px;
-}
-
-.hero-buttons {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  margin-bottom: 60px;
-
-  .upgrade-btn {
-    padding: 14px 36px;
-    font-size: 16px;
-    font-weight: 600;
-    border-radius: 8px;
-    background: white !important;
-    color: #667eea !important;
-    border: none;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    }
-  }
-
-  .trial-btn {
-    padding: 14px 36px;
-    font-size: 16px;
-    font-weight: 600;
-    border-radius: 8px;
-    background: transparent !important;
-    color: white !important;
-    border: 2px solid white;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.1) !important;
-    }
-  }
-}
-
-.stats-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 48px;
-  max-width: 800px;
-  margin: 0 auto;
-
-  .stat-item {
-    flex: 1;
-
-    .stat-number {
-      font-size: 42px;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .stat-label {
-      font-size: 15px;
-      opacity: 0.85;
-    }
-  }
-
-  .stat-divider {
-    width: 1px;
-    height: 50px;
-    background: rgba(255, 255, 255, 0.3);
-  }
-}
-
-// 通用 section 样式
-.pricing-section,
-.comparison-section,
-.features-section,
-.cta-section {
-  padding: 80px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.section-badge {
-  display: inline-block;
-  padding: 8px 20px;
-  background: linear-gradient(135deg, #e0e7ff 0%, #fce7f3 100%);
-  color: #667eea;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 16px;
-}
-
-.section-header {
-  text-align: center;
-  margin-bottom: 50px;
-
-  .section-badge {
-    display: inline-block;
-    margin-bottom: 16px;
-  }
-
-  .section-title {
-    margin-bottom: 12px;
-  }
-
-  .section-subtitle {
-    margin-top: 8px;
-  }
-}
-
-.section-title {
-  font-size: 42px;
-  font-weight: 800;
-  text-align: center;
-  margin-bottom: 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.section-subtitle {
-  text-align: center;
-  font-size: 17px;
-  color: #64748b;
-  max-width: 700px;
-  margin: 0 auto 50px;
-  line-height: 1.7;
-}
-
-// ========= 修改后的定价卡片样式 =========
-.pricing-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 32px;
-  margin-top: 50px;
-}
-
-.pricing-card {
-  position: relative;
-  background: white;
-  border-radius: 24px;
-  padding: 32px 28px;
-  transition: all 0.3s ease;
-  box-shadow:
-    0 10px 25px -5px rgba(0, 0, 0, 0.05),
-    0 8px 10px -6px rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(102, 126, 234, 0.1);
-
-  &:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.15);
-    border-color: rgba(102, 126, 234, 0.3);
-  }
-}
-
-.free-plan {
-  background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
-
-  .plan-name {
-    color: #64748b;
-  }
-
-  .plan-price {
-    color: #093cf0; // 蓝色价格
-
-    .price-text {
-      font-size: 48px;
-      font-weight: 900;
-      color: #093cf0; // 蓝色
-    }
-  }
-
-  .plan-desc {
-    color: #475569;
-  }
-
-  // 功能列表 - 深色文字
-  .feature-list {
-    .feature-item {
-      color: #1e293b;
-
-      svg {
-        color: #1e293b;
-      }
-
-      &.disabled {
-        color: #64748b;
-        text-decoration: line-through;
-
-        svg {
-          color: #94a3b8;
-        }
-      }
-    }
-  }
-
-  // 分隔线
-  .plan-header {
-    border-bottom-color: rgba(0, 0, 0, 0.1);
-  }
-
-  .current-btn {
-    width: 100%;
-    padding: 12px;
-    background: #f1f5f9;
-    color: #64748b;
-    border: none;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 15px;
-    cursor: default;
-    transition: none;
-
-    &:hover {
-      background: #f1f5f9;
-      transform: none;
-    }
-  }
-}
-
-.premium-plan {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border: 2px solid transparent;
-  box-shadow: 0 20px 35px -12px rgba(0, 201, 255, 0.2);
-
-  .popular-tag {
-    position: absolute;
-    top: -12px;
-    right: 24px;
-    padding: 6px 16px;
-    background: linear-gradient(135deg, #00c9ff, #92fe9d);
-    color: #1a1a2e;
-    border-radius: 40px;
-    font-size: 13px;
-    font-weight: 700;
-    box-shadow: 0 4px 10px rgba(0, 201, 255, 0.3);
-  }
-
-  .plan-name {
-    color: white; // 白色标题
-  }
-
-  .plan-desc {
-    color: rgba(255, 255, 255, 0.8); // 半透明白色
-  }
-
-  .plan-price {
-    color: white; // 白色价格
-
-    .currency {
-      color: white;
-    }
-
-    .price-amount {
-      color: white;
-    }
-
-    .price-period {
-      color: rgba(255, 255, 255, 0.8);
-    }
-  }
-
-  // 功能列表 - 白色文字
-  .feature-list {
-    .feature-item {
-      color: rgba(255, 255, 255, 0.9);
-
-      &.included {
-        color: white;
-      }
-
-      svg {
-        color: #92fe9d; // 绿色图标
-      }
-    }
-  }
-
-  // 分隔线
-  .plan-header {
-    border-bottom-color: rgba(255, 255, 255, 0.15);
-  }
-
-  .upgrade-btn-premium {
-    width: 100%;
-    padding: 12px;
-    background: linear-gradient(135deg, #00c9ff, #92fe9d) !important;
-    color: #1a1a2e !important;
-    border: none;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 15px;
-    transition: all 0.2s ease;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0, 201, 255, 0.4);
-    }
-  }
-}
-
-.enterprise-plan {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-
-  .enterprise-flag {
-    position: absolute;
-    top: -12px;
-    right: 24px;
-    padding: 6px 16px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    border-radius: 40px;
-    font-size: 13px;
-    font-weight: 700;
-    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
-  }
-
-  .plan-name {
-    color: white; // 白色标题
-  }
-
-  .plan-desc {
-    color: rgba(255, 255, 255, 0.8); // 半透明白色
-  }
-
-  .plan-price {
-    color: white; // 白色价格
-
-    .currency {
-      color: white;
-    }
-
-    .price-amount {
-      color: white;
-    }
-
-    .price-period {
-      color: rgba(255, 255, 255, 0.8);
-    }
-  }
-
-  // 功能列表 - 白色文字
-  .feature-list {
-    .feature-item {
-      color: rgba(255, 255, 255, 0.9);
-
-      &.included {
-        color: white;
-      }
-
-      svg {
-        color: #fbbf24; // 金黄色图标
-      }
-    }
-  }
-
-  // 分隔线
-  .plan-header {
-    border-bottom-color: rgba(255, 255, 255, 0.15);
-  }
-
-  .upgrade-btn-enterprise {
-    width: 100%;
-    padding: 12px;
-    background: linear-gradient(135deg, #667eea, #764ba2) !important;
-    color: white !important;
-    border: none;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 15px;
-    transition: all 0.2s ease;
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-    }
-  }
-}
-
-.plan-header {
-  margin-bottom: 28px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.plan-name {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-
-.plan-price {
-  margin-bottom: 8px;
-
-  .currency {
-    font-size: 24px;
-    font-weight: 700;
-    vertical-align: super;
-  }
-
-  .price-amount {
-    font-size: 48px;
-    font-weight: 900;
-    line-height: 1;
-  }
-
-  .price-period {
-    font-size: 16px;
-    opacity: 0.8;
-    margin-left: 2px;
-  }
-
-  .price-text {
-    font-size: 48px;
-    font-weight: 900;
-  }
-}
-
-.plan-desc {
-  font-size: 14px;
-  color: #64748b;
-  margin-top: 8px;
-}
-
-.feature-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 32px 0;
-
-  .feature-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 0;
-    font-size: 14.5px;
-    color: #334155;
-
-    svg {
-      flex-shrink: 0;
-      width: 18px;
-      height: 18px;
-    }
-
-    &.disabled {
-      color: #94a3b8;
-      text-decoration: line-through;
-
-      svg {
-        color: #cbd5e1;
-      }
-    }
-  }
-}
-
-.plan-btn {
-  font-weight: 600;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 15px;
-}
-
-// 对比表格
-.comparison-table-wrapper {
-  overflow-x: auto;
-  margin-top: 40px;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-.comparison-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  font-size: 14px;
-
-  th,
-  td {
-    padding: 16px 18px;
-    text-align: left;
-    border-bottom: 1px solid #e2e8f0;
-  }
-
-  th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    font-weight: 700;
-    font-size: 14px;
-
-    &.th-feature {
-      width: 15%;
-    }
-
-    &.th-subfeature {
-      width: 22%;
-    }
-  }
-
-  tbody tr:hover {
-    background: #f8fafc;
-  }
-
-  .category-cell {
-    text-align: left;
-  }
-
-  .module-cell {
-    background: linear-gradient(90deg, #e0e7ff 0%, #f3e8ff 100%);
-    font-weight: 600;
-    color: #475569;
-    vertical-align: middle;
-  }
-
-  .sub-module {
-    color: #64748b;
-  }
-
-  .highlight {
-    color: #667eea;
-    font-weight: 600;
-    background: linear-gradient(
-      90deg,
-      rgba(102, 126, 234, 0.08) 0%,
-      rgba(118, 75, 162, 0.08) 100%
-    );
-  }
-}
-
-// 特性网格
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 28px;
-  margin-top: 50px;
-
-  .feature-card:nth-child(4),
-  .feature-card:nth-child(5),
-  .feature-card:nth-child(6) {
-    .feature-icon {
-      color: #764ba2;
-    }
-  }
-}
-
-.feature-card {
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-  padding: 32px 26px;
-  border-radius: 16px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 28px rgba(102, 126, 234, 0.15);
-  }
-
-  .feature-icon-wrapper {
-    width: 72px;
-    height: 72px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: white;
-    border-radius: 16px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
-
-    .feature-icon {
-      width: 36px !important;
-      height: 36px !important;
-      min-width: 36px;
-      min-height: 36px;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
-      color: #667eea;
-      flex-shrink: 0;
-
-      :deep(svg) {
-        width: 36px !important;
-        height: 36px !important;
-        min-width: 36px;
-        min-height: 36px;
-
-        display: block;
-        color: currentColor;
-        fill: currentColor;
-      }
-    }
-  }
-
-  .feature-title {
-    font-size: 19px;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 12px;
-  }
-
-  .feature-desc {
-    font-size: 14.5px;
-    line-height: 1.7;
-    color: #64748b;
-  }
-}
-
-// CTA 区域
-.cta-section {
-  text-align: center;
-  background: transparent;
-  color: #1e293b;
-  border-radius: 24px;
-  margin: 40px auto;
-  padding: 70px 20px;
-
-  .cta-title {
-    font-size: 38px;
-    font-weight: 800;
-    margin-bottom: 16px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .cta-subtitle {
-    font-size: 18px;
-    opacity: 0.85;
-    margin-bottom: 36px;
-    color: #64748b;
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-    line-height: 1.7;
-  }
-
-  .cta-buttons {
-    display: flex;
-    gap: 16px;
-    justify-content: center;
-    margin-bottom: 40px;
-
-    .cta-primary-btn {
-      padding: 14px 40px;
-      font-size: 16px;
-      font-weight: 700;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #00c9ff 0%, #92fe9d 100%) !important;
-      color: #1a1a2e !important;
-      border: none;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-        opacity: 0.95;
-      }
-    }
-
-    .cta-secondary-btn {
-      padding: 14px 40px;
-      font-size: 16px;
-      font-weight: 700;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-      color: white !important;
-      border: none;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-        opacity: 0.9;
-      }
-    }
-  }
-  .cta-tag-icon {
-    width: 16px !important;
-    height: 16px !important;
-    display: inline-flex;
-    color: currentColor;
-
-    svg {
-      width: 16px !important;
-      height: 16px !important;
-      display: block;
-      fill: currentColor;
-    }
-  }
-  .cta-features {
-    display: flex;
-    gap: 32px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 50px;
-
-    .feature-tag {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 14px;
-      color: #667eea;
-      font-weight: 500;
-    }
-  }
-
-  // 页脚
-  .page-footer {
-    margin-top: 60px;
-    padding-top: 50px;
-    border-top: 1px solid #e2e8f0;
-
-    .footer-content {
-      display: flex;
-      justify-content: space-between;
-      gap: 60px;
-      margin-bottom: 40px;
-    }
-
-    .footer-brand {
-      text-align: center;
-      max-width: 280px;
-
-      .footer-logo-img {
-        height: 56px;
-        margin: 0 auto 16px;
-        display: block;
-      }
-
-      .brand-name {
-        font-size: 22px;
-        font-weight: 800;
-        margin-bottom: 10px;
-        color: #093cf0;
-      }
-
-      .brand-desc {
-        font-size: 14px;
-        line-height: 1.7;
-        color: #64748b;
-      }
-    }
-
-    .footer-links {
-      display: flex;
-      gap: 80px;
-      flex: 1;
-      justify-content: flex-end;
-    }
-
-    .link-column {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-
-      .link-title {
-        font-size: 15px;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 4px;
-        text-decoration: none;
-        pointer-events: none;
-        cursor: not-allowed;
-
-        &:hover {
-          color: #1e293b;
-        }
-      }
-
-      .link-item {
-        font-size: 13.5px;
-        color: #64748b;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        pointer-events: none;
-        cursor: not-allowed;
-
-        &:hover {
-          color: #64748b;
-          transform: translateX(0);
-        }
-      }
-    }
-
-    .footer-bottom {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 20px;
-      border-top: 1px solid #e2e8f0;
-
-      .copyright {
-        font-size: 13px;
-        color: #94a3b8;
-      }
-
-      .legal-links {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        font-size: 13px;
-
-        a {
-          color: #64748b;
-          text-decoration: none;
-          transition: all 0.3s ease;
-          pointer-events: none;
-          cursor: not-allowed;
-
-          &:hover {
-            color: #64748b;
-          }
-        }
-
-        span {
-          color: #cbd5e1;
-        }
-      }
-    }
-  }
-}
-
-// FAQ 区域
-.faq-section {
-  padding: 80px 20px;
-  max-width: 900px;
-  margin: 0 auto;
-
-  .faq-list {
-    margin-top: 50px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .faq-item {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border-radius: 12px;
-    padding: 24px 28px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-
-    &:hover {
-      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.12);
-      transform: translateY(-2px);
-    }
-
-    .faq-question {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-
-      .question-text {
-        font-size: 17px;
-        font-weight: 600;
-        color: #1e293b;
-        margin: 0;
-        flex: 1;
-      }
-    }
-
-    .faq-answer {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid rgba(102, 126, 234, 0.15);
-      font-size: 14.5px;
-      line-height: 1.8;
-      color: #475569;
-    }
-  }
-}
-
 // 响应式设计
 @media (max-width: 768px) {
   .hero-title {
@@ -1684,8 +803,8 @@ const faqList = ref([
       }
 
       .footer-brand {
-        text-align: center;
         max-width: 100%;
+        text-align: center;
       }
 
       .footer-links {
@@ -1703,91 +822,1025 @@ const faqList = ref([
   }
 }
 
-// 支付弹窗样式
-.payment-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.6);
+.member-upgrade-page {
+  height: 100vh;
+  overflow-y: auto;
+  scrollbar-color: #667eea #f1f5f9;
+
+  // Firefox 滚动条样式
+  scrollbar-width: thin;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+
+  // 自定义滚动条样式（Webkit浏览器）
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+
+    &:hover {
+      background: linear-gradient(135deg, #5568d3 0%, #654091 100%);
+    }
+  }
+}
+
+// Hero 区域
+.hero-section {
+  padding: 80px 20px 60px;
+  color: white;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.hero-badge {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 20px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  background: rgb(255 255 255 / 20%);
+  border-radius: 20px;
+
+  .badge-icon {
+    font-size: 18px;
+  }
+}
+
+.hero-title {
+  margin-bottom: 24px;
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1.2;
+
+  .gradient-text {
+    background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.hero-subtitle {
+  max-width: 700px;
+  margin: 0 auto 40px;
+  font-size: 18px;
+  line-height: 1.8;
+  opacity: 0.95;
+}
+
+.hero-buttons {
   display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 60px;
+
+  .upgrade-btn {
+    padding: 14px 36px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #667eea !important;
+    background: white !important;
+    border: none;
+    border-radius: 8px;
+
+    &:hover {
+      box-shadow: 0 10px 25px rgb(0 0 0 / 20%);
+      transform: translateY(-2px);
+    }
+  }
+
+  .trial-btn {
+    padding: 14px 36px;
+    font-size: 16px;
+    font-weight: 600;
+    color: white !important;
+    background: transparent !important;
+    border: 2px solid white;
+    border-radius: 8px;
+
+    &:hover {
+      background: rgb(255 255 255 / 10%) !important;
+    }
+  }
+}
+
+.stats-container {
+  display: flex;
+  gap: 48px;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  animation: fadeIn 0.3s ease;
+  max-width: 800px;
+  margin: 0 auto;
 
+  .stat-item {
+    flex: 1;
+
+    .stat-number {
+      margin-bottom: 8px;
+      font-size: 42px;
+      font-weight: 800;
+    }
+
+    .stat-label {
+      font-size: 15px;
+      opacity: 0.85;
+    }
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 50px;
+    background: rgb(255 255 255 / 30%);
+  }
+}
+
+// 通用 section 样式
+.pricing-section,
+.comparison-section,
+.features-section,
+.cta-section {
+  max-width: 1200px;
+  padding: 80px 20px;
+  margin: 0 auto;
+}
+
+.section-badge {
+  display: inline-block;
+  padding: 8px 20px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #667eea;
+  background: linear-gradient(135deg, #e0e7ff 0%, #fce7f3 100%);
+  border-radius: 20px;
+}
+
+.section-header {
+  margin-bottom: 50px;
+  text-align: center;
+
+  .section-badge {
+    display: inline-block;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    margin-bottom: 12px;
+  }
+
+  .section-subtitle {
+    margin-top: 8px;
+  }
+}
+
+.section-title {
+  margin-bottom: 16px;
+  font-size: 42px;
+  font-weight: 800;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.section-subtitle {
+  max-width: 700px;
+  margin: 0 auto 50px;
+  font-size: 17px;
+  line-height: 1.7;
+  color: #64748b;
+  text-align: center;
+}
+
+// ========= 修改后的定价卡片样式 =========
+.pricing-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 32px;
+  margin-top: 50px;
+}
+
+.pricing-card {
+  position: relative;
+  padding: 32px 28px;
+  background: white;
+  border: 1px solid rgb(102 126 234 / 10%);
+  border-radius: 24px;
+  box-shadow:
+    0 10px 25px -5px rgb(0 0 0 / 5%),
+    0 8px 10px -6px rgb(0 0 0 / 2%);
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: rgb(102 126 234 / 30%);
+    box-shadow: 0 20px 35px -12px rgb(0 0 0 / 15%);
+    transform: translateY(-6px);
+  }
+}
+
+.free-plan {
+  background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+
+  .plan-name {
+    color: #64748b;
+  }
+
+  .plan-price {
+    color: #093cf0; // 蓝色价格
+
+    .price-text {
+      font-size: 48px;
+      font-weight: 900;
+      color: #093cf0; // 蓝色
+    }
+  }
+
+  .plan-desc {
+    color: #475569;
+  }
+
+  // 功能列表 - 深色文字
+  .feature-list {
+    .feature-item {
+      color: #1e293b;
+
+      svg {
+        color: #1e293b;
+      }
+
+      &.disabled {
+        color: #64748b;
+        text-decoration: line-through;
+
+        svg {
+          color: #94a3b8;
+        }
+      }
+    }
+  }
+
+  // 分隔线
+  .plan-header {
+    border-bottom-color: rgb(0 0 0 / 10%);
+  }
+
+  .current-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: default;
+    background: #f1f5f9;
+    border: none;
+    border-radius: 12px;
+    transition: none;
+
+    &:hover {
+      background: #f1f5f9;
+      transform: none;
+    }
+  }
+}
+
+.premium-plan {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 2px solid transparent;
+  box-shadow: 0 20px 35px -12px rgb(0 201 255 / 20%);
+
+  .popular-tag {
+    position: absolute;
+    top: -12px;
+    right: 24px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a1a2e;
+    background: linear-gradient(135deg, #00c9ff, #92fe9d);
+    border-radius: 40px;
+    box-shadow: 0 4px 10px rgb(0 201 255 / 30%);
+  }
+
+  .plan-name {
+    color: white; // 白色标题
+  }
+
+  .plan-desc {
+    color: rgb(255 255 255 / 80%); // 半透明白色
+  }
+
+  .plan-price {
+    color: white; // 白色价格
+
+    .currency {
+      color: white;
+    }
+
+    .price-amount {
+      color: white;
+    }
+
+    .price-period {
+      color: rgb(255 255 255 / 80%);
+    }
+  }
+
+  // 功能列表 - 白色文字
+  .feature-list {
+    .feature-item {
+      color: rgb(255 255 255 / 90%);
+
+      &.included {
+        color: white;
+      }
+
+      svg {
+        color: #92fe9d; // 绿色图标
+      }
+    }
+  }
+
+  // 分隔线
+  .plan-header {
+    border-bottom-color: rgb(255 255 255 / 15%);
+  }
+
+  .upgrade-btn-premium {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a2e !important;
+    background: linear-gradient(135deg, #00c9ff, #92fe9d) !important;
+    border: none;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 8px 20px rgb(0 201 255 / 40%);
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.enterprise-plan {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  .enterprise-flag {
+    position: absolute;
+    top: -12px;
+    right: 24px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 40px;
+    box-shadow: 0 4px 10px rgb(102 126 234 / 30%);
+  }
+
+  .plan-name {
+    color: white; // 白色标题
+  }
+
+  .plan-desc {
+    color: rgb(255 255 255 / 80%); // 半透明白色
+  }
+
+  .plan-price {
+    color: white; // 白色价格
+
+    .currency {
+      color: white;
+    }
+
+    .price-amount {
+      color: white;
+    }
+
+    .price-period {
+      color: rgb(255 255 255 / 80%);
+    }
+  }
+
+  // 功能列表 - 白色文字
+  .feature-list {
+    .feature-item {
+      color: rgb(255 255 255 / 90%);
+
+      &.included {
+        color: white;
+      }
+
+      svg {
+        color: #fbbf24; // 金黄色图标
+      }
+    }
+  }
+
+  // 分隔线
+  .plan-header {
+    border-bottom-color: rgb(255 255 255 / 15%);
+  }
+
+  .upgrade-btn-enterprise {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    color: white !important;
+    background: linear-gradient(135deg, #667eea, #764ba2) !important;
+    border: none;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 8px 20px rgb(102 126 234 / 40%);
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.plan-header {
+  padding-bottom: 20px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.plan-name {
+  margin-bottom: 16px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.plan-price {
+  margin-bottom: 8px;
+
+  .currency {
+    font-size: 24px;
+    font-weight: 700;
+    vertical-align: super;
+  }
+
+  .price-amount {
+    font-size: 48px;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .price-period {
+    margin-left: 2px;
+    font-size: 16px;
+    opacity: 0.8;
+  }
+
+  .price-text {
+    font-size: 48px;
+    font-weight: 900;
+  }
+}
+
+.plan-desc {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.feature-list {
+  padding: 0;
+  margin: 0 0 32px;
+  list-style: none;
+
+  .feature-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 0;
+    font-size: 14.5px;
+    color: #334155;
+
+    svg {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+    }
+
+    &.disabled {
+      color: #94a3b8;
+      text-decoration: line-through;
+
+      svg {
+        color: #cbd5e1;
+      }
+    }
+  }
+}
+
+.plan-btn {
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+// 对比表格
+.comparison-table-wrapper {
+  margin-top: 40px;
+  overflow-x: auto;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgb(0 0 0 / 8%);
+}
+
+.comparison-table {
+  width: 100%;
+  font-size: 14px;
+  border-collapse: collapse;
+  background: white;
+
+  th,
+  td {
+    padding: 16px 18px;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  th {
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+    &.th-feature {
+      width: 15%;
+    }
+
+    &.th-subfeature {
+      width: 22%;
+    }
+  }
+
+  tbody tr:hover {
+    background: #f8fafc;
+  }
+
+  .category-cell {
+    text-align: left;
+  }
+
+  .module-cell {
+    font-weight: 600;
+    vertical-align: middle;
+    color: #475569;
+    background: linear-gradient(90deg, #e0e7ff 0%, #f3e8ff 100%);
+  }
+
+  .sub-module {
+    color: #64748b;
+  }
+
+  .highlight {
+    font-weight: 600;
+    color: #667eea;
+    background: linear-gradient(
+      90deg,
+      rgb(102 126 234 / 8%) 0%,
+      rgb(118 75 162 / 8%) 100%
+    );
+  }
+}
+
+// 特性网格
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 28px;
+  margin-top: 50px;
+
+  .feature-card:nth-child(4),
+  .feature-card:nth-child(5),
+  .feature-card:nth-child(6) {
+    .feature-icon {
+      color: #764ba2;
+    }
+  }
+}
+
+.feature-card {
+  padding: 32px 26px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 12px 28px rgb(102 126 234 / 15%);
+    transform: translateY(-6px);
+  }
+
+  .feature-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgb(102 126 234 / 10%);
+
+    .feature-icon {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: center;
+      width: 36px !important;
+      min-width: 36px;
+      height: 36px !important;
+      min-height: 36px;
+      color: #667eea;
+
+      :deep(svg) {
+        display: block;
+        width: 36px !important;
+        min-width: 36px;
+        height: 36px !important;
+        min-height: 36px;
+        color: currentcolor;
+        fill: currentcolor;
+      }
+    }
+  }
+
+  .feature-title {
+    margin-bottom: 12px;
+    font-size: 19px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .feature-desc {
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: #64748b;
+  }
+}
+
+// CTA 区域
+.cta-section {
+  padding: 70px 20px;
+  margin: 40px auto;
+  color: #1e293b;
+  text-align: center;
+  background: transparent;
+  border-radius: 24px;
+
+  .cta-title {
+    margin-bottom: 16px;
+    font-size: 38px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .cta-subtitle {
+    max-width: 700px;
+    margin-right: auto;
+    margin-bottom: 36px;
+    margin-left: auto;
+    font-size: 18px;
+    line-height: 1.7;
+    color: #64748b;
+    opacity: 0.85;
+  }
+
+  .cta-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 40px;
+
+    .cta-primary-btn {
+      padding: 14px 40px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a1a2e !important;
+      background: linear-gradient(135deg, #00c9ff 0%, #92fe9d 100%) !important;
+      border: none;
+      border-radius: 8px;
+
+      &:hover {
+        box-shadow: 0 10px 25px rgb(102 126 234 / 30%);
+        opacity: 0.95;
+        transform: translateY(-2px);
+      }
+    }
+
+    .cta-secondary-btn {
+      padding: 14px 40px;
+      font-size: 16px;
+      font-weight: 700;
+      color: white !important;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      border: none;
+      border-radius: 8px;
+
+      &:hover {
+        box-shadow: 0 10px 25px rgb(102 126 234 / 30%);
+        opacity: 0.9;
+        transform: translateY(-2px);
+      }
+    }
+  }
+
+  .cta-tag-icon {
+    display: inline-flex;
+    width: 16px !important;
+    height: 16px !important;
+    color: currentcolor;
+
+    svg {
+      display: block;
+      width: 16px !important;
+      height: 16px !important;
+      fill: currentcolor;
+    }
+  }
+
+  .cta-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: center;
+    margin-bottom: 50px;
+
+    .feature-tag {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 500;
+      color: #667eea;
+    }
+  }
+
+  // 页脚
+  .page-footer {
+    padding-top: 50px;
+    margin-top: 60px;
+    border-top: 1px solid #e2e8f0;
+
+    .footer-content {
+      display: flex;
+      gap: 60px;
+      justify-content: space-between;
+      margin-bottom: 40px;
+    }
+
+    .footer-brand {
+      max-width: 280px;
+      text-align: center;
+
+      .footer-logo-img {
+        display: block;
+        height: 56px;
+        margin: 0 auto 16px;
+      }
+
+      .brand-name {
+        margin-bottom: 10px;
+        font-size: 22px;
+        font-weight: 800;
+        color: #093cf0;
+      }
+
+      .brand-desc {
+        font-size: 14px;
+        line-height: 1.7;
+        color: #64748b;
+      }
+    }
+
+    .footer-links {
+      display: flex;
+      flex: 1;
+      gap: 80px;
+      justify-content: flex-end;
+    }
+
+    .link-column {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .link-title {
+        margin-bottom: 4px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #1e293b;
+        text-decoration: none;
+        pointer-events: none;
+        cursor: not-allowed;
+
+        &:hover {
+          color: #1e293b;
+        }
+      }
+
+      .link-item {
+        font-size: 13.5px;
+        color: #64748b;
+        text-decoration: none;
+        pointer-events: none;
+        cursor: not-allowed;
+        transition: all 0.3s ease;
+
+        &:hover {
+          color: #64748b;
+          transform: translateX(0);
+        }
+      }
+    }
+
+    .footer-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 20px;
+      border-top: 1px solid #e2e8f0;
+
+      .copyright {
+        font-size: 13px;
+        color: #94a3b8;
+      }
+
+      .legal-links {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        font-size: 13px;
+
+        a {
+          color: #64748b;
+          text-decoration: none;
+          pointer-events: none;
+          cursor: not-allowed;
+          transition: all 0.3s ease;
+
+          &:hover {
+            color: #64748b;
+          }
+        }
+
+        span {
+          color: #cbd5e1;
+        }
+      }
+    }
+  }
+}
+
+// FAQ 区域
+.faq-section {
+  max-width: 900px;
+  padding: 80px 20px;
+  margin: 0 auto;
+
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 50px;
+  }
+
+  .faq-item {
+    padding: 24px 28px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 8px 24px rgb(102 126 234 / 12%);
+      transform: translateY(-2px);
+    }
+
+    .faq-question {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+
+      .question-text {
+        flex: 1;
+        margin: 0;
+        font-size: 17px;
+        font-weight: 600;
+        color: #1e293b;
+      }
+    }
+
+    .faq-answer {
+      padding-top: 16px;
+      margin-top: 16px;
+      font-size: 14.5px;
+      line-height: 1.8;
+      color: #475569;
+      border-top: 1px solid rgb(102 126 234 / 15%);
+    }
+  }
+}
+
+// 支付弹窗样式
+.payment-modal-overlay {
   @keyframes fadeIn {
     from {
       opacity: 0;
     }
+
     to {
       opacity: 1;
     }
   }
 
-  .payment-modal {
-    background: white;
-    border-radius: 20px;
-    padding: 40px;
-    max-width: 440px;
-    width: 90%;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    animation: slideUp 0.3s ease;
-    position: relative;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 60%);
+  animation: fadeIn 0.3s ease;
 
+  .payment-modal {
     @keyframes slideUp {
       from {
-        transform: translateY(30px);
         opacity: 0;
+        transform: translateY(30px);
       }
+
       to {
-        transform: translateY(0);
         opacity: 1;
+        transform: translateY(0);
       }
     }
+
+    position: relative;
+    width: 90%;
+    max-width: 440px;
+    padding: 40px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 25%);
+    animation: slideUp 0.3s ease;
 
     .modal-close-btn {
       position: absolute;
       top: 16px;
       right: 16px;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: none;
-      background: #f1f5f9;
-      color: #64748b;
-      font-size: 18px;
-      cursor: pointer;
-      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
+      width: 32px;
+      height: 32px;
+      font-size: 18px;
+      color: #64748b;
+      cursor: pointer;
+      background: #f1f5f9;
+      border: none;
+      border-radius: 50%;
+      transition: all 0.2s ease;
 
       &:hover {
-        background: #e2e8f0;
         color: #1e293b;
+        background: #e2e8f0;
         transform: rotate(90deg);
       }
     }
 
     .modal-title {
+      margin-bottom: 8px;
       font-size: 26px;
       font-weight: 800;
       color: #1e293b;
-      margin-bottom: 8px;
       text-align: center;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
       background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .modal-subtitle {
+      margin-bottom: 28px;
       font-size: 15px;
       color: #64748b;
       text-align: center;
-      margin-bottom: 28px;
     }
 
     .qr-code-container {
@@ -1796,16 +1849,16 @@ const faqList = ref([
       margin-bottom: 28px;
 
       .qr-code-placeholder {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+        justify-content: center;
         width: 220px;
         height: 220px;
         background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
         border: 3px dashed #cbd5e1;
         border-radius: 16px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
         transition: all 0.3s ease;
 
         &.enterprise {
@@ -1819,16 +1872,16 @@ const faqList = ref([
         }
 
         p {
-          font-size: 14px;
-          color: #64748b;
           margin: 0;
+          font-size: 14px;
           font-weight: 500;
+          color: #64748b;
         }
 
         .qr-hint {
           font-size: 12px !important;
-          color: #94a3b8;
           font-weight: 400 !important;
+          color: #94a3b8;
         }
 
         &:hover {
@@ -1843,15 +1896,15 @@ const faqList = ref([
     }
 
     .payment-info {
-      background: #f8fafc;
-      border-radius: 12px;
       padding: 20px;
       margin-bottom: 20px;
+      background: #f8fafc;
+      border-radius: 12px;
 
       .info-item {
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        justify-content: space-between;
         padding: 10px 0;
         border-bottom: 1px solid #e2e8f0;
 
@@ -1861,20 +1914,19 @@ const faqList = ref([
 
         .info-label {
           font-size: 14px;
-          color: #64748b;
           font-weight: 500;
+          color: #64748b;
         }
 
         .info-value {
           font-size: 15px;
-          color: #1e293b;
           font-weight: 600;
+          color: #1e293b;
 
           &.price-highlight {
             font-size: 22px;
             font-weight: 800;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
           }
@@ -1883,14 +1935,69 @@ const faqList = ref([
     }
 
     .payment-notice {
+      padding: 12px;
       font-size: 13px;
+      line-height: 1.6;
       color: #94a3b8;
       text-align: center;
-      line-height: 1.6;
-      padding: 12px;
       background: #fffbeb;
-      border-radius: 8px;
       border-left: 3px solid #fbbf24;
+      border-radius: 8px;
+
+      &.contact-notice {
+        color: #475569;
+        background: #eff6ff;
+        border-left-color: #3b82f6;
+      }
+    }
+
+    // 联系方式弹窗特有样式
+    &.contact-modal {
+      .contact-qr-image {
+        width: 240px;
+        height: 240px;
+        object-fit: cover;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgb(59 130 246 / 15%);
+        transition: all 0.3s ease;
+
+        &:hover {
+          box-shadow: 0 12px 32px rgb(59 130 246 / 25%);
+          transform: scale(1.05);
+        }
+      }
+
+      .contact-info {
+        padding: 20px;
+        margin-bottom: 20px;
+        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+        border: 1px solid #bae6fd;
+        border-radius: 12px;
+
+        .info-item {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 10px 0;
+          border-bottom: 1px solid #bae6fd;
+
+          &:last-child {
+            border-bottom: none;
+          }
+
+          .info-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0369a1;
+          }
+
+          .info-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: #0c4a6e;
+          }
+        }
+      }
     }
   }
 }

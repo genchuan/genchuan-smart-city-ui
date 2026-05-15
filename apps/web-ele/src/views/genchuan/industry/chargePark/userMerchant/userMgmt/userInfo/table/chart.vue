@@ -313,10 +313,9 @@ onUnmounted(() => {
 .park-chart-box {
   display: flex;
   flex-wrap: nowrap;
-  gap: 20px;
   width: 100%;
-  height: auto;
-  min-height: 280px;
+  height: 300px;
+  min-height: 300px;
   overflow: hidden;
 }
 
@@ -324,8 +323,14 @@ onUnmounted(() => {
   display: flex;
   flex-shrink: 0;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
   width: 200px;
+  height: 100%;
+}
+
+.stat-card {
+  flex: 1 1 0;
+  min-height: 0;
 }
 
 .park-chart-box .chart-box-left .user-info-clickable-card {
@@ -336,7 +341,6 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   flex: 1 1 0;
-  gap: 20px;
   min-width: 0;
 }
 
@@ -344,7 +348,7 @@ onUnmounted(() => {
 .park-type-chart {
   flex: 1;
   min-width: 0;
-  height: 280px;
+  height: 100%;
   cursor: pointer;
 }
 </style>

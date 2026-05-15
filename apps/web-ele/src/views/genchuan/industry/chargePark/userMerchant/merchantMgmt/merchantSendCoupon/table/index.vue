@@ -7,15 +7,20 @@ import type {
   RedemptionLog,
 } from '../data';
 
-import type { MerchantInfoDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
+import type {
+  MerchantInfoDetailVO,
+  MerchantInfoVO,
+} from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import type {
   MerchantSendCouponDetailVO,
   MerchantSendCouponPageReqVO,
 } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantSendCoupon';
+import type { ActiveFilterTag } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import {
   ElDescriptions,
@@ -31,16 +36,15 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { getCouponMgmtPage } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import { MerchantSendCouponApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantSendCoupon';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import {
-  buildActiveFilterTags,
-  type ActiveFilterTag,
-} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
+import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
+  buildCouponOptionsFromApi,
   buildCouponProfile,
   buildCouponProfileLookup,
   buildCouponSelectOptions,
@@ -55,7 +59,6 @@ import {
   formatRedemptions,
   getStatusTagType,
   maskPhone,
-  merchantOptions,
   detailFields as merchantSendCouponDetailFields,
   textObj,
   useCreateSchema,
@@ -88,12 +91,13 @@ const detailDrawerRef = ref<null | { open: () => void }>(null);
 const detailObj = ref<MerchantSendCouponRow>();
 const merchantDetailCache = new Map<number, MerchantInfoDetailVO>();
 const merchantDialogVisible = ref(false);
-const merchantProfileLookup = ref(buildMerchantProfileLookup(merchantOptions));
-const merchantSelectOptions = ref<MerchantSelectOption[]>(merchantOptions);
+const merchantProfileLookup = ref(buildMerchantProfileLookup([]));
+const merchantSelectOptions = ref<MerchantSelectOption[]>([]);
 const queryExtraValues = ref<Record<string, any>>({});
 const redemptionDialogVisible = ref(false);
-const couponSelectOptions = buildCouponSelectOptions();
+const couponSelectOptions = ref(buildCouponSelectOptions());
 const searchParams = ref<Record<string, any>>({});
+const MAX_PAGE_SIZE = 200;
 
 function getMerchantOptionLabel(value: any) {
   const merchantId = Number(value);
@@ -174,7 +178,10 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 96,
   },
   layout: 'horizontal',
-  schema: useCreateSchema(merchantSelectOptions.value, couponSelectOptions),
+  schema: useCreateSchema(
+    merchantSelectOptions.value,
+    couponSelectOptions.value,
+  ),
   showDefaultActions: false,
 });
 
@@ -219,11 +226,12 @@ async function onQuerySubmit(values: Record<string, any>) {
 /** 加载商户下拉 */
 async function loadMerchantOptions() {
   try {
-    const result = await MerchantInfoApi.getMerchantInfoPage({
-      pageNo: 1,
-      pageSize: 9999,
-    });
-    const list = Array.isArray(result?.list) ? result.list : [];
+    const list = await fetchAllPages<MerchantInfoVO>((pageNo) =>
+      MerchantInfoApi.getMerchantInfoPage({
+        pageNo,
+        pageSize: MAX_PAGE_SIZE,
+      }),
+    );
 
     merchantSelectOptions.value = buildMerchantOptionsFromApi(list);
     merchantProfileLookup.value = buildMerchantProfileLookup(
@@ -246,10 +254,66 @@ async function loadMerchantOptions() {
   ]);
 
   formApi.setState(() => ({
-    schema: useCreateSchema(merchantSelectOptions.value, couponSelectOptions),
+    schema: useCreateSchema(
+      merchantSelectOptions.value,
+      couponSelectOptions.value,
+    ),
   }));
 
   await handleRefresh();
+}
+
+/** 加载优惠券下拉 */
+async function loadCouponOptions() {
+  try {
+    const list = await fetchAllPages<Record<string, any>>((pageNo) =>
+      getCouponMgmtPage({
+        pageNo,
+        pageSize: MAX_PAGE_SIZE,
+      }),
+    );
+
+    couponSelectOptions.value = buildCouponOptionsFromApi(list);
+    couponProfileLookup.value = buildCouponProfileLookup(
+      couponSelectOptions.value,
+    );
+  } catch (error) {
+    console.error('[merchantSendCoupon] load coupon options failed:', error);
+    couponSelectOptions.value = buildCouponSelectOptions();
+    couponProfileLookup.value = buildCouponProfileLookup(
+      couponSelectOptions.value,
+    );
+  }
+
+  formApi.setState(() => ({
+    schema: useCreateSchema(
+      merchantSelectOptions.value,
+      couponSelectOptions.value,
+    ),
+  }));
+}
+
+async function fetchAllPages<T>(
+  request: (pageNo: number) => Promise<{ list?: T[]; total?: number }>,
+) {
+  const list: T[] = [];
+  let pageNo = 1;
+  let total = 0;
+
+  do {
+    const result = await request(pageNo);
+    const currentList = Array.isArray(result?.list) ? result.list : [];
+
+    list.push(...currentList);
+    total = Number(result?.total || 0);
+    pageNo += 1;
+
+    if (currentList.length === 0) {
+      break;
+    }
+  } while (list.length < total);
+
+  return list;
 }
 
 /** 获取商户详情 */
@@ -274,6 +338,66 @@ async function fetchMerchantProfile(
   }
 }
 
+/** 补齐商户信息索引 */
+async function ensureMerchantProfiles(merchantIds: number[]) {
+  const uniqueIds = [...new Set(merchantIds.filter((id) => id > 0))].filter(
+    (id) => !merchantProfileLookup.value[id],
+  );
+
+  if (uniqueIds.length === 0) {
+    return;
+  }
+
+  const details = await Promise.all(
+    uniqueIds.map((id) => fetchMerchantProfile(id, '加载商户信息失败')),
+  );
+  const patchedOptions = details
+    .filter((item): item is MerchantInfoDetailVO => Boolean(item?.id))
+    .map((item) => ({
+      address: item.address || '',
+      contact: item.contact || '',
+      label: item.name || '',
+      merchantType: item.merchantType || '',
+      phone: item.phone || '',
+      registerTime: formatApiTime(item.registerTime),
+      remark: item.remark || '',
+      status: item.status || '-',
+      value: Number(item.id ?? 0),
+    }));
+
+  if (patchedOptions.length === 0) {
+    return;
+  }
+
+  merchantSelectOptions.value = buildMerchantOptionsFromApi([
+    ...merchantSelectOptions.value.map((item) => ({
+      address: item.address || '',
+      contact: item.contact || '',
+      id: item.value,
+      merchantType: item.merchantType || '',
+      name: item.label,
+      phone: item.phone || '',
+      registerTime: item.registerTime || '',
+      remark: item.remark || '',
+      status: item.status || '-',
+    })),
+    ...patchedOptions.map((item) => ({
+      address: item.address || '',
+      contact: item.contact || '',
+      id: item.value,
+      merchantType: item.merchantType || '',
+      name: item.label,
+      phone: item.phone || '',
+      registerTime: item.registerTime || '',
+      remark: item.remark || '',
+      status: item.status || '-',
+    })),
+  ]);
+  merchantProfileLookup.value = buildMerchantProfileLookup(
+    merchantSelectOptions.value,
+  );
+}
+
 /** 获取发券详情 */
 async function fetchMerchantSendCouponDetail(
   row: MerchantSendCouponRow,
@@ -282,6 +406,9 @@ async function fetchMerchantSendCouponDetail(
   const cachedDetail = detailCache.get(row.id);
 
   if (cachedDetail) {
+    await ensureMerchantProfiles([
+      Number(cachedDetail.merchantId ?? row.merchantId ?? 0),
+    ]);
     return {
       row: buildMerchantSendCouponRowFromApi(
         cachedDetail,
@@ -301,6 +428,7 @@ async function fetchMerchantSendCouponDetail(
   try {
     const data = await MerchantSendCouponApi.getMerchantSendCoupon(row.id);
     detailCache.set(row.id, data);
+    await ensureMerchantProfiles([Number(data.merchantId ?? row.merchantId)]);
 
     return {
       row: buildMerchantSendCouponRowFromApi(
@@ -328,8 +456,8 @@ async function queryMerchantSendCouponPage(
   const params: MerchantSendCouponPageReqVO = {
     ...buildMerchantSendCouponQueryParams(
       {
-        ...searchParams.value,
         ...formValues,
+        ...searchParams.value,
       },
       queryExtraValues.value,
     ),
@@ -338,6 +466,7 @@ async function queryMerchantSendCouponPage(
   };
   const result = await MerchantSendCouponApi.getMerchantSendCouponPage(params);
   const list = Array.isArray(result?.list) ? result.list : [];
+  await ensureMerchantProfiles(list.map((item) => Number(item.merchantId)));
 
   return {
     list: list.map((item) =>
@@ -421,9 +550,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
-    height: 'auto',
     proxyConfig: {
       ajax: {
         query: queryMerchantSendCouponPage,
@@ -434,6 +561,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
@@ -484,7 +612,7 @@ async function setSearchValues(values: Record<string, any>) {
   };
   queryExtraValues.value = {};
   clearCheckedRows();
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   return gridApi.reload();
 }
 
@@ -512,6 +640,7 @@ defineExpose({
 
 onMounted(async () => {
   await nextTick();
+  await loadCouponOptions();
   await loadMerchantOptions();
 });
 
@@ -523,12 +652,13 @@ async function handleExport() {
   });
 
   try {
-    await MerchantSendCouponApi.exportMerchantSendCoupon(
+    const data = await MerchantSendCouponApi.exportMerchantSendCoupon(
       buildMerchantSendCouponQueryParams(
         searchParams.value,
         queryExtraValues.value,
       ),
     );
+    downloadFileFromBlobPart({ fileName: '商户发券.xls', source: data });
     ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
@@ -756,139 +886,132 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
 </script>
 
 <template>
-  <div class="merchant-send-coupon-table">
-    <div class="merchant-send-coupon-grid-wrap">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-              align-items: center;
-            "
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
-            >
-              {{ tag.label }}：{{ tag.value }}
-            </ElTag>
-          </div>
-        </template>
-
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton
-              content="导出"
-              icon-name="download"
-              @click="handleExport"
-            />
-            <IconButton
-              :content="checkedIds.length > 0 ? '执行选中任务' : '发券'"
-              icon-name="Check"
-              @click="handleSendAction"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSerachShow"
-            />
-            <IconButton
-              :content="props.showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="props.toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
-
-        <template #merchantName="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenMerchant(row)"
-          >
-            {{ row.merchantName }}
-          </el-text>
-        </template>
-
-        <template #couponName="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenCoupon(row)"
-          >
-            {{ row.couponName }}
-          </el-text>
-        </template>
-
-        <template #sendCount="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleFilterBySendCount(row.sendCount)"
-          >
-            {{ row.sendCount }}
-          </el-text>
-        </template>
-
-        <template #useCount="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenRedemption(row)"
-          >
-            {{ row.useCount }}
-          </el-text>
-        </template>
-
-        <template #status="{ row }">
+  <div class="park-lot-table-new user-merchant-table-grid">
+    <Grid>
+      <template #table-title>
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; align-items: center"
+        >
           <ElTag
-            :type="getStatusTagType(row.status)"
-            style="cursor: pointer"
-            @click="handleFilterStatus(row.status)"
+            v-for="tag in activeFilterTags"
+            :key="`${tag.source}-${tag.key}`"
+            :type="tag.type"
+            closable
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+            @close="handleRemoveFilterTag(tag)"
           >
-            {{ row.status }}
+            {{ tag.label }}：{{ tag.value }}
           </ElTag>
-        </template>
+        </div>
+      </template>
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              v-if="row.status === '待执行'"
-              content="执行"
-              icon-name="Check"
-              @click="handleExecute(row)"
-            />
-            <IconButton
-              content="详情"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-            <IconButton
-              v-if="row.status === '待执行'"
-              content="取消"
-              icon-name="Close"
-              @click="handleCancel(row)"
-            />
-          </div>
-        </template>
-      </Grid>
-    </div>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            :content="checkedIds.length > 0 ? '执行选中任务' : '发券'"
+            icon-name="Check"
+            @click="handleSendAction"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
+      </template>
+
+      <template #merchantName="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenMerchant(row)"
+        >
+          {{ row.merchantName }}
+        </el-text>
+      </template>
+
+      <template #couponName="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenCoupon(row)"
+        >
+          {{ row.couponName }}
+        </el-text>
+      </template>
+
+      <template #sendCount="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterBySendCount(row.sendCount)"
+        >
+          {{ row.sendCount }}
+        </el-text>
+      </template>
+
+      <template #useCount="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenRedemption(row)"
+        >
+          {{ row.useCount }}
+        </el-text>
+      </template>
+
+      <template #status="{ row }">
+        <ElTag
+          :type="getStatusTagType(row.status)"
+          style="cursor: pointer"
+          @click="handleFilterStatus(row.status)"
+        >
+          {{ row.status }}
+        </ElTag>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            v-if="row.status === '待执行'"
+            content="执行"
+            icon-name="Check"
+            @click="handleExecute(row)"
+          />
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleDetail(row)"
+          />
+          <IconButton
+            v-if="row.status === '待执行'"
+            content="取消"
+            icon-name="Close"
+            @click="handleCancel(row)"
+          />
+        </div>
+      </template>
+    </Grid>
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -970,31 +1093,4 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   </div>
 </template>
 
-<style scoped lang="scss">
-.merchant-send-coupon-table,
-.merchant-send-coupon-grid-wrap {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.merchant-send-coupon-table {
-  display: flex;
-  flex-direction: column;
-}
-
-.merchant-send-coupon-grid-wrap {
-  flex: 1;
-}
-
-:deep(.vxe-grid) {
-  height: 100% !important;
-}
-
-:deep(.vxe-grid--layout-body-wrapper),
-:deep(.vxe-grid--layout-body-content-wrapper),
-:deep(.vxe-grid--table-container),
-:deep(.vxe-grid--table-wrapper) {
-  min-height: 0;
-}
-</style>
+<style scoped lang="scss"></style>

@@ -1,6 +1,10 @@
+import { ref } from 'vue';
+
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getStationSimpleList } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
+import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -26,6 +30,60 @@ export function getCouponTypeLabel(type) {
 export function getCouponStatusLabel(status) {
   const dict = getDictObj(DICT_TYPE.COUPON_MGMT_STATUS, String(status));
   return dict ? dict.label : status;
+}
+
+/** 场站选项配置 - 静态数据作为默认值 */
+export const stationOptions = [
+  { label: '芗城区XX社区停车场', value: '1' },
+  { label: '龙文区碧湖公园停车场', value: '2' },
+  { label: '龙海区石码镇便民停车场', value: '3' },
+  { label: '龙海区闽齐社区停车场', value: '4' },
+  { label: '芗城区江滨路生态停车场', value: '5' },
+  { label: '龙文区万达商圈停车场', value: '6' },
+  { label: '长泰区武安镇公共停车场', value: '7' },
+  { label: '漳浦县绥安镇便民停车场', value: '8' },
+  { label: '芗城区巷口街道停车场', value: '9' },
+  { label: '龙文区蓝田街道停车场', value: '10' },
+  { label: '龙文区步文街道停车场', value: '11' },
+  { label: '芗城区东铺头街道停车场', value: '12' },
+];
+
+/** 动态场站选项（从接口获取） */
+export const dynamicStationOptions = ref([]);
+
+/** 获取当前可用的场站选项（优先使用动态数据） */
+export function getCurrentStationOptions() {
+  return dynamicStationOptions.value.length > 0
+    ? dynamicStationOptions.value
+    : stationOptions;
+}
+
+/** 获取场站精简列表 */
+export async function fetchStationOptions() {
+  try {
+    const res = await getStationSimpleList();
+    if (res && Array.isArray(res)) {
+      dynamicStationOptions.value = res.map((item) => ({
+        label: item.name,
+        value: String(item.id),
+      }));
+      return dynamicStationOptions.value;
+    }
+  } catch (error) {
+    console.error('获取场站列表失败:', error);
+  }
+  return stationOptions;
+}
+
+/** 根据场站ID获取场站名称 */
+export function getStationNamesByIds(stationIds) {
+  if (!stationIds) return '';
+  const ids = stationIds.split(',');
+  const names = ids.map((id) => {
+    const station = stationOptions.find((s) => s.value === id);
+    return station ? station.label : id;
+  });
+  return names.join(',');
 }
 
 /** 优惠券管理静态数据 - 参照接口返回格式 */
@@ -253,11 +311,9 @@ export function useSearchFormSchema() {
     {
       fieldName: 'amount',
       label: '面额',
-      component: 'InputNumber',
+      component: 'Input',
       componentProps: {
         placeholder: '请输入面额',
-        min: 0,
-        precision: 2,
         clearable: true,
       },
     },
@@ -283,63 +339,51 @@ export function useSearchFormSchema() {
     {
       fieldName: 'createTime',
       label: '创建时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择创建时间',
-        type: 'datetimerange',
-        valueFormat: 'x',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
-    {
-      fieldName: 'senderName',
-      label: '发放人',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入发放人',
-        clearable: true,
-      },
-    },
+    // {
+    //   fieldName: 'senderName',
+    //   label: '发放人',
+    //   component: 'Input',
+    //   componentProps: {
+    //     placeholder: '请输入发放人',
+    //     clearable: true,
+    //   },
+    // },
     {
       fieldName: 'sendTime',
       label: '发放时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择发放时间',
-        type: 'datetimerange',
-        valueFormat: 'x',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
-    {
-      fieldName: 'receiverName',
-      label: '领取人',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入领取人',
-        clearable: true,
-      },
-    },
+    // {
+    //   fieldName: 'receiverName',
+    //   label: '领取人',
+    //   component: 'Input',
+    //   componentProps: {
+    //     placeholder: '请输入领取人',
+    //     clearable: true,
+    //   },
+    // },
     {
       fieldName: 'verifyTime',
       label: '核销时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择核销时间',
-        type: 'datetimerange',
-        valueFormat: 'x',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     {
       fieldName: 'validTime',
       label: '有效期',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择有效期',
-        type: 'datetimerange',
-        valueFormat: 'x',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
   ];
@@ -404,7 +448,6 @@ export function useGridColumns() {
       title: '发放人',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'senderName' },
     },
     {
       field: 'sendTime',
@@ -418,7 +461,6 @@ export function useGridColumns() {
       title: '领取人',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'receiverName' },
     },
     {
       field: 'verifyTime',
@@ -435,6 +477,13 @@ export function useGridColumns() {
       formatter: ({ row }) => row.validTimeStr || '-',
     },
     {
+      field: 'stationNames',
+      title: '适用场站',
+      minWidth: 300,
+      sortable: true,
+      slots: { default: 'stationNames' },
+    },
+    {
       title: '操作',
       width: 100,
       fixed: 'right',
@@ -443,8 +492,86 @@ export function useGridColumns() {
   ];
 }
 
-/** 优惠券管理表单配置 */
+/** 优惠券管理表单配置 - 用于新增 */
 export function useFormSchema() {
+  return [
+    {
+      fieldName: 'name',
+      label: '券名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入券名称',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'type',
+      label: '券类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择券类型',
+        options: [
+          { label: '满减', value: '0' },
+          { label: '折扣', value: '1' },
+          { label: '时长', value: '2' },
+          { label: '立减', value: '3' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'amount',
+      label: '面额',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入面额',
+        min: 0,
+        precision: 2,
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'useCondition',
+      label: '使用条件',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入使用条件',
+      },
+    },
+    {
+      fieldName: 'validTime',
+      label: '有效期',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择有效期',
+        valueFormat: 'x',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'description',
+      label: '券描述',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入券描述',
+      },
+    },
+    {
+      fieldName: 'stationIds',
+      label: '适用场站',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择适用场站',
+        multiple: true,
+        options: stationOptions,
+        filterable: true,
+      },
+    },
+  ];
+}
+
+/** 优惠券管理编辑表单配置 - 核心字段不可编辑 */
+export function useEditFormSchema() {
   return [
     {
       fieldName: 'name',
@@ -515,9 +642,12 @@ export function useFormSchema() {
     {
       fieldName: 'stationIds',
       label: '适用场站',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入适用场站ID，逗号分隔',
+        placeholder: '请选择适用场站',
+        multiple: true,
+        options: stationOptions,
+        filterable: true,
       },
     },
   ];
@@ -572,4 +702,58 @@ export const detailFields = [
   { key: 'creator', label: '创建者' },
   { key: 'updater', label: '更新者' },
   { key: 'updateTimeStr', label: '更新时间' },
+];
+
+/** 场站详情字段配置 - 不包含xxid字段，正确处理时间字段 */
+export const stationDetailFields = [
+  { key: 'stationNo', label: '场站编号' },
+  { key: 'name', label: '场站名称' },
+  {
+    key: 'type',
+    label: '场站类型',
+    type: 'tag',
+    formatter: (value) => value || '-',
+    tagType: () => 'primary',
+  },
+  { key: 'address', label: '地址' },
+  { key: 'spaceTotal', label: '总车位数量' },
+  {
+    key: 'operateType',
+    label: '运营类型',
+    type: 'tag',
+    formatter: (value) => value || '-',
+    tagType: () => 'primary',
+  },
+  {
+    key: 'status',
+    label: '状态',
+    type: 'tag',
+    formatter: (value) => value || '-',
+    tagType: () => 'primary',
+  },
+  { key: 'feeStandard', label: '收费标准' },
+  { key: 'deviceCount', label: '设备数量' },
+  { key: 'spaceCount', label: '可用车位数' },
+  { key: 'leaderName', label: '负责人', formatter: (value) => value || '-' },
+  { key: 'remark', label: '备注', formatter: (value) => value || '-' },
+  {
+    key: 'bindTime',
+    label: '绑定时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
+  },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
+  { key: 'creator', label: '创建者' },
+  { key: 'updater', label: '更新者' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
 ];

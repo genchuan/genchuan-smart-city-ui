@@ -381,8 +381,7 @@ defineExpose({ handleFilterTagClick, clearFilters });
           <IconButton content="导出" icon-name="download" @click="handleExport" />
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
           <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart" @click="toggleChart" />
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 

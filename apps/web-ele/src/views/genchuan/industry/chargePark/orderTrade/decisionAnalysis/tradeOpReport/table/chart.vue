@@ -377,7 +377,7 @@ onUnmounted(() => {
       />
     </div>
     <div class="chart-box-right"> 
-      <div ref="pieChartRef" class="simple-bar-pie"></div>
+      <div ref="pieChartRef" class="simple-bar-pie simple-bar-chart"></div>
       <div ref="lineChartRef" class="simple-bar-pie simple-bar-chart"></div>
       <div ref="barChartRef" class="simple-bar-pie simple-bar-chart"></div> 
     </div>
@@ -404,13 +404,28 @@ onUnmounted(() => {
   overflow: auto;
   gap: 16px;
   flex-shrink: 0;
-  width: 60%; 
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding-bottom: 8px;
+  width: 60%;
+  padding-bottom: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
 
   &::-webkit-scrollbar {
-    display: none;
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+
+    &:hover {
+      background: #a8a8a8;
+    }
   }
 
   .left-card {
@@ -424,26 +439,46 @@ onUnmounted(() => {
 }
 
 .chart-box-right {
-  display: flex; 
+  display: flex;
   gap: 16px;
   flex: 1;
-  max-height: 320px;
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  max-height: 360px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
 
   &::-webkit-scrollbar {
-    display: none;
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+
+    &:hover {
+      background: #a8a8a8;
+    }
   }
 }
 
 .simple-bar-chart {
-  width: 100%; 
+  width: 100%;
+  height: 280px;
   background-color: #f9fafb;
   border-radius: 8px;
   padding: 16px;
+  box-sizing: border-box;
 }
 .simple-bar-pie {
   width: 300px!important;
+  flex-shrink: 0;
 }
 </style>

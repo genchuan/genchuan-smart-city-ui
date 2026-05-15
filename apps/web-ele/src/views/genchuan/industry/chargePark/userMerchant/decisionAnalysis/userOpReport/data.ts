@@ -9,6 +9,8 @@ import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
+const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+
 export type ReportType =
   | '半年报'
   | '周报'
@@ -99,11 +101,16 @@ export function formatApiTime(value?: null | number | string) {
 /** 构建核心指标 */
 function buildCoreIndex(
   data?: null | Partial<UserOpReportChartVO['coreIndex']>,
+  cardData?: null | UserOpReportChartVO['cardData'],
 ) {
   return {
-    avgCreditScore: Number(data?.avgCreditScore ?? 0),
-    totalMemberCount: Number(data?.totalMemberCount ?? 0),
-    totalUserCount: Number(data?.totalUserCount ?? 0),
+    avgCreditScore: Number(
+      data?.avgCreditScore ?? cardData?.avgCreditScore ?? 0,
+    ),
+    totalMemberCount: Number(
+      data?.totalMemberCount ?? cardData?.newMemberCount ?? 0,
+    ),
+    totalUserCount: Number(data?.totalUserCount ?? cardData?.newUserCount ?? 0),
     userGrowthRate: Number(data?.userGrowthRate ?? 0),
   };
 }
@@ -111,8 +118,15 @@ function buildCoreIndex(
 /** 构建趋势数据 */
 function buildUserOpTrend(
   list?: null | UserOpReportChartVO['userOpTrend'],
+  lineData?: null | UserOpReportChartVO['lineData'],
 ): UserOpTrendItem[] {
-  const sourceList = Array.isArray(list) ? list : [];
+  const sourceList = Array.isArray(list)
+    ? list
+    : (lineData?.userGrowth || []).map((item) => ({
+        date: item.date,
+        memberCount: 0,
+        userCount: item.count,
+      }));
 
   return sourceList.map((item) => ({
     date: item.date || '-',
@@ -124,8 +138,14 @@ function buildUserOpTrend(
 /** 构建用户类型分布 */
 function buildUserTypeDistribution(
   list?: null | UserOpReportChartVO['userTypeDistribution'],
+  barData?: null | UserOpReportChartVO['barData'],
 ): UserTypeDistributionItem[] {
-  const sourceList = Array.isArray(list) ? list : [];
+  const sourceList = Array.isArray(list)
+    ? list
+    : (barData?.userType || []).map((item) => ({
+        count: item.value,
+        type: item.name,
+      }));
 
   return sourceList.map((item) => ({
     count: Number(item.count ?? 0),
@@ -139,30 +159,54 @@ export function buildUserOpReportRowFromApi(
   fallback?: null | Partial<UserOpReportRow>,
   chartData?: null | Partial<UserOpReportChartVO>,
 ): UserOpReportRow {
+  const normalizedChartData = {
+    ...chartData,
+    barData: chartData?.barData || data?.barData,
+    cardData: chartData?.cardData,
+    coreIndex: chartData?.coreIndex || data?.coreIndex,
+    lineData: chartData?.lineData || data?.lineData,
+    userOpTrend: chartData?.userOpTrend || data?.userOpTrend,
+    userTypeDistribution:
+      chartData?.userTypeDistribution || data?.userTypeDistribution,
+  };
+
   return {
     compareSummary:
       data?.compareSummary || fallback?.compareSummary || '暂无同比环比分析',
-    coreIndex: chartData?.coreIndex
-      ? buildCoreIndex(chartData.coreIndex)
-      : fallback?.coreIndex || buildCoreIndex(),
+    coreIndex:
+      normalizedChartData.coreIndex || normalizedChartData.cardData
+        ? buildCoreIndex(
+            normalizedChartData.coreIndex,
+            normalizedChartData.cardData,
+          )
+        : fallback?.coreIndex || buildCoreIndex(),
     createTime: formatApiTime(data?.createTime ?? fallback?.createTime),
     creator: data?.creator || fallback?.creator || '-',
     filterCondition: data?.filterCondition || fallback?.filterCondition || '',
     id: Number(data?.id ?? fallback?.id ?? 0),
     remark: data?.remark || fallback?.remark || '',
-    reportType: (data?.reportType ||
+    reportType: (data?.reportCycle ||
+      data?.reportType ||
       fallback?.reportType ||
       '日报') as ReportType,
     statTime: data?.statTime || fallback?.statTime || '-',
-    status: data?.status || fallback?.status || '-',
+    status: data?.reportStatus || data?.status || fallback?.status || '-',
     summary: data?.summary || fallback?.summary || '暂无分析摘要',
     timeScale: (data?.timeScale || fallback?.timeScale || '日') as TimeScale,
-    userOpTrend: chartData?.userOpTrend
-      ? buildUserOpTrend(chartData.userOpTrend)
-      : fallback?.userOpTrend || [],
-    userTypeDistribution: chartData?.userTypeDistribution
-      ? buildUserTypeDistribution(chartData.userTypeDistribution)
-      : fallback?.userTypeDistribution || [],
+    userOpTrend:
+      normalizedChartData.userOpTrend || normalizedChartData.lineData
+        ? buildUserOpTrend(
+            normalizedChartData.userOpTrend,
+            normalizedChartData.lineData,
+          )
+        : fallback?.userOpTrend || [],
+    userTypeDistribution:
+      normalizedChartData.userTypeDistribution || normalizedChartData.barData
+        ? buildUserTypeDistribution(
+            normalizedChartData.userTypeDistribution,
+            normalizedChartData.barData,
+          )
+        : fallback?.userTypeDistribution || [],
   };
 }
 
@@ -247,19 +291,19 @@ export function buildStatsDataFromApi(data?: Partial<UserOpReportChartVO>) {
 
 /** 构建查询参数 */
 export function buildUserOpReportQueryParams(formValues: Record<string, any>) {
-  const statTime =
+  const statTimeRange =
     Array.isArray(formValues.statTime) && formValues.statTime.length === 2
-      ? `${dayjs(formValues.statTime[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(formValues.statTime[1]).format('YYYY-MM-DD HH:mm:ss')}`
-      : undefined;
-  const createTime =
-    Array.isArray(formValues.createTime) && formValues.createTime.length === 2
-      ? `${dayjs(formValues.createTime[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(formValues.createTime[1]).format('YYYY-MM-DD HH:mm:ss')}`
+      ? [
+          dayjs(formValues.statTime[0]).format(QUERY_TIME_FORMAT),
+          dayjs(formValues.statTime[1]).format(QUERY_TIME_FORMAT),
+        ]
       : undefined;
 
   return {
-    createTime,
-    reportType: formValues.reportType || undefined,
-    statTime,
+    reportCycle: formValues.reportType || formValues.reportCycle || undefined,
+    reportStatus: formValues.status || formValues.reportStatus || undefined,
+    statEndTime: statTimeRange,
+    statStartTime: statTimeRange,
     timeScale: formValues.timeScale || undefined,
   };
 }

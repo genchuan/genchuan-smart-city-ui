@@ -6,66 +6,75 @@ import * as echarts from 'echarts';
 import { getAgentPayRuleChart } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import Card from '#/components/stats/card.vue';
 
-const state = reactive({
-  cardList: [
-    { title: '已生效数量', value: 0, color: '#FF6B6B' },
-    { title: '今日订单数', value: 0, color: '#4ECDC4' },
-    { title: '规则总数', value: 0, color: '#13ce66' },
-  ],
-  useDistData: [],
-});
+const emit = defineEmits(['filter-change']);
 
-const lineChartRef = ref(null);
-let lineChartInstance = null;
-
-// 获取代付规则图表数据
-const fetchOrderChartData = async () => {
-  try {
-    const res = await getAgentPayRuleChart();
-    state.cardList[0].value = res.enabledCount || 0;
-    state.cardList[1].value = res.todayOrderCount || 0;
-    // 规则总数通过使用分布数据计算
-    state.cardList[2].value = res.useDistData?.reduce((sum, item) => sum + item.count, 0) || 0;
-    // 如果useDistData为空，使用假数据
-    state.useDistData =
-      res.useDistData && res.useDistData.length > 0
-        ? res.useDistData
-        : [
-            { agent_type: 'merchant', count: 4 },
-            { agent_type: 'enterprise', count: 1 },
-            { agent_type: 'public', count: 1 },
-          ];
-    // 更新图表
-    updateChart();
-  } catch (error) {
-    console.error('获取代付规则图表数据失败:', error);
-    // 接口调用失败时使用假数据
-    state.cardList[0].value = 3;
-    state.cardList[1].value = 1;
-    state.cardList[2].value = 6;
-    state.useDistData = [
-      { agent_type: 'merchant', count: 4 },
-      { agent_type: 'enterprise', count: 1 },
-      { agent_type: 'public', count: 1 },
-    ];
-    // 更新图表
-    updateChart();
-  }
-};
-
-// 代付类型映射
 const agentTypeMap = {
   merchant: '商户代付',
   enterprise: '企业代付',
   public: '公益代付',
 };
 
-// 获取代付类型标签
 const getAgentTypeLabel = (agentType) => {
   return agentTypeMap[agentType] || agentType;
 };
 
-// 初始化图表
+const state = reactive({
+  cardList: [
+    { title: '已生效数量', value: 0, color: '#FF6B6B' },
+    { title: '今日订单数', value: 0, color: '#4ECDC4' },
+  ],
+  useDistData: [],
+});
+
+// 点击卡片事件
+const handleCardClick = () => {
+  emit('filter-change', {
+    agentType: null,
+    status: null,
+  });
+};
+
+// 柱状图点击事件处理
+const handleBarChartClick = (params) => {
+  if (params && params.name) {
+    const agentTypeKey = Object.keys(agentTypeMap).find(key => agentTypeMap[key] === params.name);
+    emit('filter-change', {
+      agentType: agentTypeKey || null,
+      status: null,
+    });
+  }
+};
+
+const lineChartRef = ref(null);
+let lineChartInstance = null;
+
+const fetchOrderChartData = async () => {
+  try {
+    const res = await getAgentPayRuleChart();
+    state.cardList[0].value = res.cardData?.enabledCount || res.enabledCount || 0;
+    state.cardList[1].value = res.cardData?.todayOrderCount || res.todayOrderCount || 0;
+    state.useDistData =
+      res.useDistData && res.useDistData.length > 0
+        ? res.useDistData
+        : [
+            { agent_type: 'merchant', count: 5 },
+            { agent_type: 'public', count: 3 },
+            { agent_type: 'enterprise', count: 2 },
+          ];
+    updateChart();
+  } catch (error) {
+    console.error('获取代付规则图表数据失败:', error);
+    state.cardList[0].value = 7;
+    state.cardList[1].value = 0;
+    state.useDistData = [
+      { agent_type: 'merchant', count: 5 },
+      { agent_type: 'public', count: 3 },
+      { agent_type: 'enterprise', count: 2 },
+    ];
+    updateChart();
+  }
+};
+
 const initLineChart = () => {
   if (!lineChartRef.value) return;
 
@@ -124,9 +133,12 @@ const initLineChart = () => {
   };
 
   lineChartInstance.setOption(option);
+
+  lineChartInstance.on('click', (params) => {
+    handleBarChartClick(params);
+  });
 };
 
-// 更新图表
 const updateChart = () => {
   if (!lineChartInstance) return;
 
@@ -157,12 +169,24 @@ onMounted(() => {
   <div class="park-chart-box">
     <div class="chart-box-left">
       <Card
-        class="left-card"
+        class="left-card cursor-pointer"
         v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
+        @click="handleCardClick"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
 </template>
+
+<style scoped lang="scss">
+.left-card {
+  flex:1;
+  width: 330px;
+
+  :deep(.stat-card) {
+    flex:1;
+  }
+}
+</style>

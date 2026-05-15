@@ -10,13 +10,17 @@ import {
 
 const loading = ref(true);
 const chartData = ref({});
-const indexData = ref({ monthList: [], dutyCountList: [], checkInRateList: [], shiftRateList: [], vehicleRateList: [] });
+const indexData = ref({
+  monthList: [],
+  dutyCountList: [],
+  checkInRateList: [],
+  shiftRateList: [],
+  vehicleRateList: []
+});
 
-// 时间范围选择器相关（针对两个接口）
-// 默认值：开始时间 2024-01-01，结束时间 2026-12-31
+// 时间范围选择器
 const dateRange = ref([new Date('2024-01-01'), new Date('2026-12-31')]);
 
-// 格式化日期为后端需要的 ISO 8601 格式 (LocalDateTime)
 const formatLocalDateTime = (date) => {
   if (!date) return '';
   const year = date.getFullYear();
@@ -28,7 +32,7 @@ const formatLocalDateTime = (date) => {
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
 };
 
-// 卡片列表（不支持点击筛选）
+// 卡片列表（添加 status 字段用于点击识别）
 const cardList = computed(() => {
   const total = chartData.value.totalDutyCount || 0;
   const today = chartData.value.todayDutyCount || 0;
@@ -36,50 +40,74 @@ const cardList = computed(() => {
   const shiftCount = chartData.value.shiftApplyCount || 0;
   const vehicleCount = chartData.value.vehicleApplyCount || 0;
   return [
-    { title: '总值班次数', value: total, color: '#409EFF' },
-    { title: '今日值班人数', value: today, color: '#67C23A' },
-    { title: '打卡率(%)', value: checkInRate, color: '#E6A23C' },
-    { title: '调班次数', value: shiftCount, color: '#F56C6C' },
-    { title: '出车次数', value: vehicleCount, color: '#909399' },
+    {title: '总值班次数', value: total, color: '#409EFF', status: 'totalDutyCount'},
+    {title: '今日值班人数', value: today, color: '#67C23A', status: 'todayDutyCount'},
+    {title: '打卡率(%)', value: checkInRate, color: '#E6A23C', status: 'checkInRate'},
+    {title: '调班次数', value: shiftCount, color: '#F56C6C', status: 'shiftApplyCount'},
+    {title: '出车次数', value: vehicleCount, color: '#909399', status: 'vehicleApplyCount'},
   ];
 });
 
-// 折线图数据（使用 lineChart 组件）
+// 折线图数据
 const lineXData = computed(() => indexData.value.monthList || []);
 const lineSeriesData = computed(() => [
-  { name: '值班次数', data: indexData.value.dutyCountList || [] },
-  { name: '打卡率(%)', data: indexData.value.checkInRateList || [] },
-  { name: '调班率(%)', data: indexData.value.shiftRateList || [] },
-  { name: '出车率(%)', data: indexData.value.vehicleRateList || [] },
+  {name: '值班次数', data: indexData.value.dutyCountList || []},
+  {name: '打卡率(%)', data: indexData.value.checkInRateList || []},
+  {name: '调班率(%)', data: indexData.value.shiftRateList || []},
+  {name: '出车率(%)', data: indexData.value.vehicleRateList || []},
 ]);
 
-const emit = defineEmits(['lineClick']);
-
-// 折线图点击筛选（月份）
+// 折线图点击：派发月份筛选事件
 const handleLineClick = (monthName) => {
-  emit('lineClick', { month: monthName });
+  window.dispatchEvent(new CustomEvent('duty-chart-filter', {
+    detail: {month: monthName}
+  }));
 };
 
-// 加载看板数据（带时间范围参数）
+// 卡片点击：根据卡片 status 派发筛选事件
+const handleCardClick = (cardInfo) => {
+  const {status} = cardInfo;
+  let filterType = null;
+  let filterValue = null;
+
+  switch (status) {
+    case 'shiftApplyCount':
+      filterType = 'transferStatus';
+      filterValue = '待审批';
+      break;
+    case 'vehicleApplyCount':
+      filterType = 'carStatus';
+      filterValue = '待审批';
+      break;
+    case 'checkInRate':
+      filterType = 'checkInStatus';
+      filterValue = '已打卡';
+      break;
+    default:
+      return;
+  }
+
+  if (filterType) {
+    window.dispatchEvent(new CustomEvent('duty-chart-filter', {
+      detail: {type: filterType, value: filterValue}
+    }));
+  }
+};
+
+// 加载图表数据
 const loadChartData = async () => {
   try {
     const params = {};
-
-    // 只有当时间范围存在时才添加参数
     if (dateRange.value && dateRange.value.length === 2) {
       const startDate = dateRange.value[0];
       const endDate = dateRange.value[1];
-      if (startDate) {
-        params.startTime = formatLocalDateTime(startDate);
-      }
+      if (startDate) params.startTime = formatLocalDateTime(startDate);
       if (endDate) {
-        // 设置结束时间为当天的 23:59:59
         const endDateTime = new Date(endDate);
         endDateTime.setHours(23, 59, 59, 999);
         params.endTime = formatLocalDateTime(endDateTime);
       }
     }
-
     const res = await getDutyMgmtChart(params);
     chartData.value = res;
   } catch (error) {
@@ -90,31 +118,24 @@ const loadChartData = async () => {
       checkInRate: 96.77,
       shiftApplyCount: 8,
       vehicleApplyCount: 5,
-      statusCountMap: { '待打卡': 12, '待调班审批': 2, '待出车审批': 1, '已完成': 109 },
+      statusCountMap: {'待打卡': 12, '待调班审批': 2, '待出车审批': 1, '已完成': 109},
     };
   }
 };
 
-// 加载核心指标数据（带时间范围参数）
 const loadIndexData = async () => {
   try {
     const params = {};
-
-    // 只有当时间范围存在时才添加参数
     if (dateRange.value && dateRange.value.length === 2) {
       const startDate = dateRange.value[0];
       const endDate = dateRange.value[1];
-      if (startDate) {
-        params.startTime = formatLocalDateTime(startDate);
-      }
+      if (startDate) params.startTime = formatLocalDateTime(startDate);
       if (endDate) {
-        // 设置结束时间为当天的 23:59:59
         const endDateTime = new Date(endDate);
         endDateTime.setHours(23, 59, 59, 999);
         params.endTime = formatLocalDateTime(endDateTime);
       }
     }
-
     const res = await getDutyIndex(params);
     indexData.value = res;
   } catch (error) {
@@ -129,15 +150,11 @@ const loadIndexData = async () => {
   }
 };
 
-// 时间范围变化处理
 const handleDateRangeChange = async () => {
   if (dateRange.value && dateRange.value.length === 2) {
     loading.value = true;
     try {
-      await Promise.all([
-        loadChartData(),
-        loadIndexData(),
-      ]);
+      await Promise.all([loadChartData(), loadIndexData()]);
     } finally {
       loading.value = false;
     }
@@ -147,34 +164,27 @@ const handleDateRangeChange = async () => {
 const loadData = async () => {
   loading.value = true;
   try {
-    // 初始化时不传时间参数，让后端返回全部数据
     const [chartRes, indexRes] = await Promise.allSettled([
       getDutyMgmtChart({}),
       getDutyIndex({}),
     ]);
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
-    } else {
-      chartData.value = {
-        totalDutyCount: 124,
-        todayDutyCount: 4,
-        checkInRate: 96.77,
-        shiftApplyCount: 8,
-        vehicleApplyCount: 5,
-        statusCountMap: { '待打卡': 12, '待调班审批': 2, '待出车审批': 1, '已完成': 109 },
-      };
-    }
-    if (indexRes.status === 'fulfilled') {
-      indexData.value = indexRes.value;
-    } else {
-      indexData.value = {
-        monthList: ['2025-01', '2025-02', '2025-03'],
-        dutyCountList: [112, 98, 124],
-        checkInRateList: [95.54, 96.94, 96.77],
-        shiftRateList: [6.25, 7.14, 6.45],
-        vehicleRateList: [4.46, 3.06, 4.03],
-      };
-    }
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else chartData.value = {
+      totalDutyCount: 124,
+      todayDutyCount: 4,
+      checkInRate: 96.77,
+      shiftApplyCount: 8,
+      vehicleApplyCount: 5,
+      statusCountMap: {'待打卡': 12, '待调班审批': 2, '待出车审批': 1, '已完成': 109}
+    };
+    if (indexRes.status === 'fulfilled') indexData.value = indexRes.value;
+    else indexData.value = {
+      monthList: ['2025-01', '2025-02', '2025-03'],
+      dutyCountList: [112, 98, 124],
+      checkInRateList: [95.54, 96.94, 96.77],
+      shiftRateList: [6.25, 7.14, 6.45],
+      vehicleRateList: [4.46, 3.06, 4.03]
+    };
   } catch (error) {
     console.error('加载图表数据失败', error);
   } finally {
@@ -190,15 +200,10 @@ onMounted(() => {
 <template>
   <div v-loading="loading" class="chart-box">
     <div class="box-left-m">
-      <Indicator
-        class="left-card"
-        v-for="item in cardList"
-        :key="item.title"
-        v-bind="item"
-      />
+      <Indicator class="left-card" v-for="item in cardList" :key="item.title" v-bind="item"
+                 @click="handleCardClick"/>
     </div>
     <div class="line-chart-container">
-      <!-- 时间范围选择器（只针对两个接口） -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="dateRange"
@@ -262,7 +267,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的时间选择器样式 */
   :deep(.el-date-editor) {
     --el-date-editor-width: 240px;
 

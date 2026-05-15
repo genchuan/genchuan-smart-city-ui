@@ -11,6 +11,12 @@ import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
+const creditRuleNameMap: Record<string, string> = {
+  DEFAULT_RULE: '默认评分规则',
+};
+
+const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+
 export type CreditLevel = '中等' | '优秀' | '极差' | '良好' | '较差';
 export type CreditStatus = '低信用' | '正常信用';
 
@@ -249,6 +255,7 @@ export function buildUserCreditRowFromApi(
   const userId = Number(data?.userId ?? fallback?.userId ?? 0);
   const profile = userInfo || fallback?.userInfo;
   const creditScore = Number(data?.creditScore ?? fallback?.creditScore ?? 0);
+  const ruleCode = data?.ruleCode || fallback?.ruleCode || '-';
   let changeRecords: CreditChangeRecord[] = [];
   let auditLogs: AuditLog[] | undefined;
 
@@ -277,12 +284,12 @@ export function buildUserCreditRowFromApi(
     id: Number(data?.id ?? fallback?.id ?? 0),
     phone: data?.phone || profile?.phone || fallback?.phone || '-',
     remark: data?.remark || fallback?.remark || '',
-    ruleCode: data?.ruleCode || fallback?.ruleCode || '-',
+    ruleCode,
     ruleDesc:
       data?.ruleDesc ||
       fallback?.ruleDesc ||
-      data?.ruleCode ||
-      fallback?.ruleCode ||
+      creditRuleNameMap[ruleCode] ||
+      ruleCode ||
       '-',
     updateTime: formatApiTime(data?.updateTime ?? fallback?.updateTime),
     updater:
@@ -298,6 +305,7 @@ export function buildUserCreditRowFromApi(
             id: userId,
             nickname:
               data?.userName ||
+              data?.nickname ||
               profile?.nickname ||
               fallback?.userName ||
               `用户${userId}`,
@@ -308,6 +316,7 @@ export function buildUserCreditRowFromApi(
         : undefined,
     userName:
       data?.userName ||
+      data?.nickname ||
       profile?.nickname ||
       fallback?.userName ||
       (userId > 0 ? `用户${userId}` : '-'),
@@ -360,13 +369,17 @@ export function buildUserCreditQueryParams(
 ) {
   const updateTime =
     Array.isArray(formValues.updateTime) && formValues.updateTime.length === 2
-      ? `${dayjs(formValues.updateTime[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(formValues.updateTime[1]).format('YYYY-MM-DD HH:mm:ss')}`
+      ? [
+          dayjs(formValues.updateTime[0]).format(QUERY_TIME_FORMAT),
+          dayjs(formValues.updateTime[1]).format(QUERY_TIME_FORMAT),
+        ]
       : undefined;
   const userId = Number(formValues.userId || 0);
 
   return {
     creditLevel: formValues.creditLevel || undefined,
     creditScore: drillFilters?.creditScore || undefined,
+    nickname: formValues.nickname || undefined,
     remark: formValues.remark || undefined,
     ruleCode: formValues.ruleCode || undefined,
     updateTime,
@@ -374,19 +387,14 @@ export function buildUserCreditQueryParams(
   };
 }
 
-export function useSearchSchema(
-  currentUserOptions: UserSelectOption[] = [],
-): VbenFormSchema[] {
+export function useSearchSchema(): VbenFormSchema[] {
   return [
     {
-      fieldName: 'userId',
+      fieldName: 'nickname',
       label: '用户名称',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
-        clearable: true,
-        filterable: true,
-        options: currentUserOptions,
-        placeholder: '请选择用户名称',
+        placeholder: '请输入用户名称',
       },
     },
     {
@@ -438,7 +446,7 @@ export function useGridColumns(): VxeTableGridOptions<UserCreditRow>['columns'] 
       minWidth: 170,
     },
     {
-      field: 'ruleCode',
+      field: 'ruleDesc',
       title: '评分规则',
       minWidth: 130,
     },

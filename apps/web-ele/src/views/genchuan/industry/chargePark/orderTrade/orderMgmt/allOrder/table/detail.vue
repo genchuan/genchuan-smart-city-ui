@@ -14,6 +14,15 @@ const statusMap = {
   refunding: { label: '退款中', type: 'danger' },
 };
 
+// 订单类型映射
+const typeMap = {
+  temp_park: { label: '临时停车', type: 'warning' },
+  offtime_park: { label: '错时停车', type: 'info' },
+  car_charge: { label: '汽车充电', type: 'success' },
+  bike_charge: { label: '两轮充电', type: 'primary' },
+  share_charge: { label: '共享充电', type: 'danger' },
+};
+
 // 定义组件接收的属性（充电停车订单详情）
 const props = defineProps({
   // 详情数据对象
@@ -70,7 +79,12 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">订单类型:</div>
         <div class="detail-row-right">
-          {{ detailObj.type || '-' }}
+          <template v-if="detailObj.orderType">
+            <ElTag :type="typeMap[detailObj.orderType]?.type || 'default'">
+              {{ typeMap[detailObj.orderType]?.label || detailObj.orderType }}
+            </ElTag>
+          </template>
+          <template v-else> - </template>
         </div>
       </div>
 
@@ -103,15 +117,7 @@ defineExpose({
         <div class="detail-row-right">
           {{ detailObj.payTime || '-' }}
         </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备注:</div>
-        <div class="detail-row-right">
-          {{ detailObj.remark || '-' }}
-        </div>
-      </div>
-
+      </div> 
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">

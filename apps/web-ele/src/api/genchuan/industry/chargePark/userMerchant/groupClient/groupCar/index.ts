@@ -46,8 +46,8 @@ export type GroupCarUpdateReqVO = GroupCarCreateReqVO & {
 // 集团车辆分页请求
 export type GroupCarPageReqVO = PageParam & {
   auditorId?: number;
-  auditTime?: string;
-  bindTime?: string;
+  auditTime?: string[];
+  bindTime?: string[];
   carType?: string;
   groupId?: number;
   plateColor?: string;
@@ -152,6 +152,10 @@ export const GroupCarApi = {
     return await requestClient.upload('/usermerchant/group-car/import', {
       file,
     });
+  },
+
+  importGroupCarTemplate: async () => {
+    return await requestClient.download('/usermerchant/group-car/template');
   },
 
   exportGroupCar: async (params: GroupCarPageReqVO) => {

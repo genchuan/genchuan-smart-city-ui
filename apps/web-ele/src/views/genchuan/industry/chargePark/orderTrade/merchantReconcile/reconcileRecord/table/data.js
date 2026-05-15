@@ -13,13 +13,7 @@ export function useGridColumns() {
       title: '对账单号',
       minWidth: 160,
       sortable: true,
-    },
-    {
-      field: 'merchantId',
-      title: '商户ID',
-      minWidth: 120,
-      sortable: true,
-    },
+    }, 
     {
       field: 'orderNo',
       title: '订单编号',

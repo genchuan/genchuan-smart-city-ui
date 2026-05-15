@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
+import { computed, reactive, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
@@ -22,34 +22,18 @@ import {
   useCheckFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/dormMgmt/dormCheck/form.js';
 
-// 辅助函数：状态标签类型
 const getStatusType = (status) => {
-  const map = {
-    '正常': 'success',
-    '异常': 'danger',
-  };
+  const map = { '正常': 'success', '异常': 'danger' };
   return map[status] || 'info';
 };
-
 const getCheckStatusType = (checkStatus) => {
-  const map = {
-    '正常': 'success',
-    '迟到': 'warning',
-    '未到': 'danger',
-  };
+  const map = { '正常': 'success', '迟到': 'warning', '未到': 'danger' };
   return map[checkStatus] || 'info';
 };
-
 const getAbnormalTypeColor = (abnormalType) => {
-  const map = {
-    '无': 'success',
-    '晚归': 'warning',
-    '未归': 'danger',
-  };
+  const map = { '无': 'success', '晚归': 'warning', '未归': 'danger' };
   return map[abnormalType] || 'info';
 };
-
-// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -62,8 +46,6 @@ const formatTimestamp = (timestamp) => {
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
-
-// 提取日期部分（用于筛选）
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(parseInt(timestamp));
@@ -74,37 +56,42 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 
-const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
+const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
+// 核心修改：支持空值清除筛选，使用 gridApi.query()
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query(); // 改为 query()
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -119,24 +106,14 @@ function getFieldLabel(field) {
   };
   return map[field] || field;
 }
-
 function getTagDisplayText(field, value) {
   if (Array.isArray(value)) return value.join('、');
   return value || '-';
 }
 
-// ---------- 抽屉组件 ----------
-const [Drawer, drawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => drawerApi.close(),
-});
-
-const [CheckDrawer, checkDrawerApi] = useVbenDrawer({
-  modal: false,
-  footer: false,
-  onCancel: () => checkDrawerApi.close(),
-});
+// ---------- 抽屉 ----------
+const [Drawer, drawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => drawerApi.close() });
+const [CheckDrawer, checkDrawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => checkDrawerApi.close() });
 
 const dataObj = reactive({
   totalShow: false,
@@ -152,7 +129,7 @@ const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({records}) {
+function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -163,67 +140,37 @@ let currentCheckStudentIds = [];
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-
-    const res = await getDormCheckPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'checkStatus':
-            itemValue = item.checkStatus;
-            break;
-          case 'abnormalType':
-            itemValue = item.abnormalType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          case 'studentId':
-            itemValue = item.studentId;
-            break;
-          case 'className':
-            itemValue = item.className;
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    if (params.createTime && Array.isArray(params.createTime) && params.createTime.length === 2) {
+      params.createTimeStart = params.createTime[0];
+      params.createTimeEnd = params.createTime[1];
+      delete params.createTime;
+    } else if (params.createTime && typeof params.createTime === 'string') {
+      params.createTimeStart = params.createTime;
+      params.createTimeEnd = params.createTime;
+      delete params.createTime;
+    }
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getDormCheckPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取考勤记录失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -231,166 +178,91 @@ const getTableData = async ({ page }) => {
   }
 };
 
-function handleRefresh() {
-  gridApi.reload();
-}
-
-function handleReset() {
-  searchParams.value = {};
-  tagFilters.value = {};
-  gridApi.reload();
-}
+function handleRefresh() { gridApi.query(); }
+function handleReset() { searchParams.value = {}; tagFilters.value = {}; gridApi.query(); }
 
 async function handleExport() {
+  const loading = ElLoading.service({ text: '正在导出...' });
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportDormCheck(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
-  } catch (error) {
-    console.error('导出失败:', error);
-    ElMessage.error('导出失败');
-  }
+    const data = await exportDormCheck(searchParams.value);
+    downloadFileFromBlobPart({ fileName: `${textObj.excelName}.xls`, source: data });
+    ElMessage.success('导出成功');
+  } catch (error) { console.error('导出失败:', error); ElMessage.error('导出失败'); }
+  finally { loading.close(); }
 }
 
-// 批量补卡
 async function handleBatchRecheck() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个考勤记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个考勤记录');
   const abnormalRows = checkedRows.value.filter(row => row.status === '异常');
-  if (abnormalRows.length === 0) {
-    ElMessage.warning('请选择状态为【异常】的记录进行补卡');
-    return;
-  }
+  if (abnormalRows.length === 0) return ElMessage.warning('请选择状态为【异常】的记录进行补卡');
   try {
-    await ElMessageBox.confirm(`确认补卡选中的 ${abnormalRows.length} 条异常记录？补卡后状态将变为正常。`, '批量补卡确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
-    const loading = ElLoading.service({text: '补卡中...'});
+    await ElMessageBox.confirm(`确认补卡选中的 ${abnormalRows.length} 条异常记录？补卡后状态将变为正常。`, '批量补卡确认', { confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning' });
+    const loading = ElLoading.service({ text: '补卡中...' });
     try {
       const ids = abnormalRows.map(row => row.id);
-      const res = await recheckDormCheck({ids});
-      if (res && res !== false) {
-        ElMessage.success('批量补卡成功');
-        handleRefresh();
-      } else {
-        ElMessage.error('批量补卡失败');
-      }
-    } finally {
-      loading.close();
-    }
-  } catch {
-  }
+      const res = await recheckDormCheck({ ids });
+      if (res && res !== false) { ElMessage.success('批量补卡成功'); handleRefresh(); }
+      else { ElMessage.error('批量补卡失败'); }
+    } finally { loading.close(); }
+  } catch { }
 }
 
-// 批量推送
 async function handleBatchPush() {
   if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个考勤记录');
   const rows = checkedRows.value;
   if (rows.length === 0) return;
-  await ElMessageBox.confirm(`确认推送选中的 ${rows.length} 条考勤记录？推送后家长可见。`, '批量推送确认', {
-    confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning',
-  });
-  const loading = ElLoading.service({text: '推送中...'});
+  await ElMessageBox.confirm(`确认推送选中的 ${rows.length} 条考勤记录？推送后家长可见。`, '批量推送确认', { confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning' });
+  const loading = ElLoading.service({ text: '推送中...' });
   try {
     const ids = rows.map(row => row.id);
-    const pushTime = Date.now();  // 当前时间戳（毫秒）
-    const res = await pushDormCheck({ids, pushTime});  // 添加 pushTime
-    if (res && res !== false) {
-      ElMessage.success('批量推送成功');
-      handleRefresh();
-    } else {
-      ElMessage.error(res?.msg || '批量推送失败');
-    }
-  } catch (error) {
-    console.error('推送失败:', error);
-    ElMessage.error(error?.message || '批量推送失败');
-  } finally {
-    loading.close();
-  }
+    const pushTime = Date.now();
+    const res = await pushDormCheck({ ids, pushTime });
+    if (res && res !== false) { ElMessage.success('批量推送成功'); handleRefresh(); }
+    else { ElMessage.error(res?.msg || '批量推送失败'); }
+  } catch (error) { console.error('推送失败:', error); ElMessage.error(error?.message || '批量推送失败'); }
+  finally { loading.close(); }
 }
 
 function handleBatchCheck() {
-  if (checkedRows.value.length === 0) {
-    ElMessage.warning('请至少选择一个考勤记录（用于提取学号）');
-    return;
-  }
-  // 提取所有勾选记录中的 studentId，去重
+  if (checkedRows.value.length === 0) { ElMessage.warning('请至少选择一个考勤记录（用于提取学号）'); return; }
   const studentIds = [...new Set(checkedRows.value.map(row => row.studentId).filter(id => id))];
-  if (studentIds.length === 0) {
-    ElMessage.warning('勾选的记录中没有有效的学号');
-    return;
-  }
+  if (studentIds.length === 0) { ElMessage.warning('勾选的记录中没有有效的学号'); return; }
   currentCheckStudentIds = studentIds;
   checkFormApi.resetForm();
-  checkFormApi.setValues({checkTime: Date.now()});
+  checkFormApi.setValues({ checkTime: Date.now() });
   checkDrawerApi.open();
 }
 
-// 单行补卡
 async function handleRecheck(row) {
-  if (row.status !== '异常') {
-    ElMessage.warning('只有异常状态的记录可以补卡');
-    return;
-  }
+  if (row.status !== '异常') return ElMessage.warning('只有异常状态的记录可以补卡');
   try {
-    await ElMessageBox.confirm(`确认补卡学号 ${row.studentId} 的考勤记录？补卡后状态将变为正常。`, '补卡确认', {
-      confirmButtonText: '确认',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
-    const loading = ElLoading.service({text: '补卡中...'});
+    await ElMessageBox.confirm(`确认补卡学号 ${row.studentId} 的考勤记录？补卡后状态将变为正常。`, '补卡确认', { confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning' });
+    const loading = ElLoading.service({ text: '补卡中...' });
     try {
-      const res = await recheckDormCheck({ids: [row.id]});
-      if (res && res !== false) {
-        ElMessage.success('补卡成功');
-        handleRefresh();
-      } else {
-        ElMessage.error('补卡失败');
-      }
-    } finally {
-      loading.close();
-    }
-  } catch {
-  }
+      const res = await recheckDormCheck({ ids: [row.id] });
+      if (res && res !== false) { ElMessage.success('补卡成功'); handleRefresh(); }
+      else { ElMessage.error('补卡失败'); }
+    } finally { loading.close(); }
+  } catch { }
 }
 
-// 单行推送
 async function handlePush(row) {
-  await ElMessageBox.confirm(`确认推送学号 ${row.studentId} 的考勤记录？`, '推送确认', {
-    confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning',
-  });
-  const loading = ElLoading.service({text: '推送中...'});
+  await ElMessageBox.confirm(`确认推送学号 ${row.studentId} 的考勤记录？`, '推送确认', { confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning' });
+  const loading = ElLoading.service({ text: '推送中...' });
   try {
     const pushTime = Date.now();
-    const res = await pushDormCheck({ids: [row.id], pushTime});  // 添加 pushTime
-    if (res && res !== false) {
-      ElMessage.success('推送成功');
-      handleRefresh();
-    } else {
-      ElMessage.error('推送失败');
-    }
-  } catch (error) {
-    console.error('推送失败:', error);
-    ElMessage.error(error?.message || '推送失败');
-  } finally {
-    loading.close();
-  }
+    const res = await pushDormCheck({ ids: [row.id], pushTime });
+    if (res && res !== false) { ElMessage.success('推送成功'); handleRefresh(); }
+    else { ElMessage.error('推送失败'); }
+  } catch (error) { console.error('推送失败:', error); ElMessage.error(error?.message || '推送失败'); }
+  finally { loading.close(); }
 }
 
 const [CheckForm, checkFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({text: '打卡中...'});
+    const loading = ElLoading.service({ text: '打卡中...' });
     try {
       const res = await createDormCheck({
         studentIds: currentCheckStudentIds,
@@ -400,15 +272,9 @@ const [CheckForm, checkFormApi] = useVbenForm({
         ElMessage.success(`打卡成功，共 ${currentCheckStudentIds.length} 人`);
         checkDrawerApi.close();
         handleRefresh();
-      } else {
-        ElMessage.error(res?.msg || '打卡失败');
-      }
-    } catch (error) {
-      console.error('打卡失败:', error);
-      ElMessage.error(error?.message || '打卡失败');
-    } finally {
-      loading.close();
-    }
+      } else { ElMessage.error(res?.msg || '打卡失败'); }
+    } catch (error) { console.error('打卡失败:', error); ElMessage.error(error?.message || '打卡失败'); }
+    finally { loading.close(); }
   },
   layout: 'horizontal',
   schema: [
@@ -416,12 +282,7 @@ const [CheckForm, checkFormApi] = useVbenForm({
       fieldName: 'checkTime',
       label: '考勤时间',
       component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择考勤时间',
-        type: 'datetime',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'x',
-      },
+      componentProps: { placeholder: '请选择考勤时间', type: 'datetime', format: 'YYYY-MM-DD HH:mm:ss', valueFormat: 'x' },
       rules: 'required',
       labelWidth: '100',
     },
@@ -429,17 +290,15 @@ const [CheckForm, checkFormApi] = useVbenForm({
       fieldName: 'remark',
       label: '备注',
       component: 'Input',
-      componentProps: {placeholder: '请输入备注', type: 'textarea', rows: 3},
+      componentProps: { placeholder: '请输入备注', type: 'textarea', rows: 3 },
       labelWidth: '100',
     },
   ],
   showCollapseButton: false,
-  submitButtonOptions: {content: '保存'},
+  submitButtonOptions: { content: '保存' },
 });
 
-// 详情抽屉
 const dormCheckDetailDrawerRef = ref(null);
-
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   dormCheckDetailDrawerRef.value.open();
@@ -447,57 +306,63 @@ function handleOpenDetail(row) {
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: (values) => {
-    searchParams.value = {...values};
+    searchParams.value = { ...values };
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
-  schema: useFormSchema().map(v => {
-    delete v.rules;
-    return v;
-  }),
+  schema: useFormSchema().map(v => { delete v.rules; return v; }),
   showCollapseButton: true,
-  submitButtonOptions: {content: '查询'},
+  submitButtonOptions: { content: '查询' },
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: {ajax: {query: getTableData}},
-    rowConfig: {keyField: 'id', isHover: true},
+    proxyConfig: { ajax: { query: getTableData } },
+    rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
-    toolbarConfig: {refresh: true, search: true},
+    toolbarConfig: { refresh: true, search: true },
     showOverflow: true,
   },
-  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
+  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
   showSearchForm: false,
 });
 
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 const showChart = ref(true);
-const toggleChart = () => {
-  showChart.value = !showChart.value;
+const toggleChart = () => { showChart.value = !showChart.value; };
+defineExpose({ handleFilterTagClick, clearFilters });
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const { type, value } = event.detail;
+  if (type === 'checkStatus') {
+    handleFilterTagClick('checkStatus', value);
+  } else if (type === 'className') {
+    handleFilterTagClick('className', value);
+  }
+  // 其他类型如 status、abnormalType 可根据需要扩展
 };
 
-defineExpose({handleFilterTagClick, clearFilters});
+onMounted(() => {
+  window.addEventListener('dorm-check-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('dorm-check-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <DormCheckDetailDrawer ref="dormCheckDetailDrawerRef" :detail-obj="dataObj.detailObj"
-                           @refresh="handleRefresh"/>
-    <Drawer title="搜索">
-      <QueryForm/>
-    </Drawer>
-    <CheckDrawer :title="textObj.checkText">
-      <CheckForm/>
-    </CheckDrawer>
+    <DormCheckDetailDrawer ref="dormCheckDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh"/>
+    <Drawer title="搜索"><QueryForm/></Drawer>
+    <CheckDrawer :title="textObj.checkText"><CheckForm/></CheckDrawer>
 
     <Grid>
       <template #table-title>
@@ -520,73 +385,38 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="导出" icon-name="download" @click="handleExport"/>
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
-                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
-      <!-- 钻取列 -->
       <template #studentId="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
-          {{ row.studentId }}
-        </el-text>
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentId }}</el-text>
       </template>
       <template #checkStatus="{ row }">
-        <el-tag :type="getCheckStatusType(row.checkStatus)"
-                @click="handleFilterTagClick('checkStatus', row.checkStatus)"
-                style="cursor: pointer;">
-          {{ row.checkStatus }}
-        </el-tag>
+        <el-tag :type="getCheckStatusType(row.checkStatus)" @click="handleFilterTagClick('checkStatus', row.checkStatus)" style="cursor: pointer;">{{ row.checkStatus }}</el-tag>
       </template>
       <template #abnormalType="{ row }">
-        <el-tag :type="getAbnormalTypeColor(row.abnormalType)"
-                @click="handleFilterTagClick('abnormalType', row.abnormalType)"
-                style="cursor: pointer;">
-          {{ row.abnormalType }}
-        </el-tag>
+        <el-tag :type="getAbnormalTypeColor(row.abnormalType)" @click="handleFilterTagClick('abnormalType', row.abnormalType)" style="cursor: pointer;">{{ row.abnormalType }}</el-tag>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)"
-                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
-          {{ row.status }}
-        </el-tag>
+        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">{{ row.status }}</el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.creator || '-' }}
-        </el-text>
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">
-          {{ formatTimestamp(row.createTime) }}
-        </el-text>
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
       </template>
+      <template #checkTime="{ row }"><el-text>{{ formatTimestamp(row.checkTime) }}</el-text></template>
+      <template #repairTime="{ row }"><el-text>{{ formatTimestamp(row.repairTime) }}</el-text></template>
+      <template #pushTime="{ row }"><el-text>{{ formatTimestamp(row.pushTime) }}</el-text></template>
+      <template #updateTime="{ row }"><el-text>{{ formatTimestamp(row.updateTime) }}</el-text></template>
 
-      <!-- 时间格式化 -->
-      <template #checkTime="{ row }">
-        <el-text>{{ formatTimestamp(row.checkTime) }}</el-text>
-      </template>
-      <template #repairTime="{ row }">
-        <el-text>{{ formatTimestamp(row.repairTime) }}</el-text>
-      </template>
-      <template #pushTime="{ row }">
-        <el-text>{{ formatTimestamp(row.pushTime) }}</el-text>
-      </template>
-      <template #updateTime="{ row }">
-        <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
-      </template>
-
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '异常'" content="补卡" icon-name="EditPen"
-                      @click="handleRecheck(row)"/>
+          <IconButton v-if="row.status === '异常'" content="补卡" icon-name="EditPen" @click="handleRecheck(row)"/>
           <IconButton content="推送" icon-name="Promotion" @click="handlePush(row)"/>
         </div>
       </template>

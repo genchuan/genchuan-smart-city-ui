@@ -6,54 +6,91 @@ import * as echarts from 'echarts';
 import { getSplitRateChart } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
 import Card from '#/components/stats/card.vue';
 
+const emit = defineEmits(['filter-change']);
+
+const statusMap = {
+  pending: { label: '未生效', type: 'warning' },
+  enabled: { label: '已生效', type: 'success' },
+  disabled: { label: '已禁用', type: 'danger' },
+};
+
+const splitModeMap = {
+  fixed: { label: '固定比例', type: 'primary' },
+  ladder: { label: '阶梯比例', type: 'success' },
+};
+
 const state = reactive({
   cardList: [
-    { title: '已生效数量', value: 0, color: '#FF6B6B' },
-    { title: '固定比例数', value: 0, color: '#4ECDC4' },
-    { title: '阶梯比例数', value: 0, color: '#13ce66' },
+    { title: '已生效数量', value: 0, color: '#FF6B6B', status: 'enabled' },
+    { title: '固定比例数', value: 0, color: '#4ECDC4', splitMode: 'fixed' },
+    { title: '阶梯比例数', value: 0, color: '#13ce66', splitMode: 'ladder' },
   ],
   splitModeData: [],
 });
 
+// 点击卡片事件
+const handleCardClick = (item) => {
+  if (item.splitMode) {
+    emit('filter-change', {
+      splitMode: item.splitMode,
+      status: null,
+    });
+  } else if (item.status) {
+    emit('filter-change', {
+      status: item.status,
+      splitMode: null,
+    });
+  } else {
+    emit('filter-change', {
+      splitMode: null,
+      status: null,
+    });
+  }
+};
+
+// 柱状图点击事件处理
+const handleBarChartClick = (params) => {
+  if (params && params.name) {
+    const splitModeKey = params.name === '固定比例' ? 'fixed' : 'ladder';
+    emit('filter-change', {
+      splitMode: splitModeKey,
+      status: null,
+    });
+  }
+};
+
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取分账结算图表数据
 const fetchSplitRateChartData = async () => {
   try {
     const res = await getSplitRateChart();
-    state.cardList[0].value = res.enabledCount || 0;
-    // 从splitModeData中获取固定比例和阶梯比例的数量
+    state.cardList[0].value = res.cardData?.enabledCount || res.enabledCount || 0;
     const fixedData = res.splitModeData?.find(item => item.split_mode === 'fixed');
     const ladderData = res.splitModeData?.find(item => item.split_mode === 'ladder');
     state.cardList[1].value = fixedData?.count || 0;
     state.cardList[2].value = ladderData?.count || 0;
-    // 如果splitModeData为空，使用假数据
     state.splitModeData =
       res.splitModeData && res.splitModeData.length > 0
         ? res.splitModeData
         : [
-            { split_mode: 'fixed', count: 3 },
-            { split_mode: 'ladder', count: 2 },
+            { split_mode: 'fixed', count: 6 },
+            { split_mode: 'ladder', count: 4 },
           ];
-    // 更新图表
     updateLineChart();
   } catch (error) {
     console.error('获取分账结算图表数据失败:', error);
-    // 接口调用失败时使用假数据
-    state.cardList[0].value = 0;
-    state.cardList[1].value = 3;
-    state.cardList[2].value = 2;
+    state.cardList[0].value = 4;
+    state.cardList[1].value = 6;
+    state.cardList[2].value = 4;
     state.splitModeData = [
-      { split_mode: 'fixed', count: 3 },
-      { split_mode: 'ladder', count: 2 },
+      { split_mode: 'fixed', count: 6 },
+      { split_mode: 'ladder', count: 4 },
     ];
-    // 更新图表
     updateLineChart();
   }
 };
 
-// 初始化柱状图
 const initLineChart = () => {
   if (!lineChartRef.value) return;
 
@@ -134,9 +171,12 @@ const initLineChart = () => {
   };
 
   lineChartInstance.setOption(option);
+
+  lineChartInstance.on('click', (params) => {
+    handleBarChartClick(params);
+  });
 };
 
-// 更新柱状图
 const updateLineChart = () => {
   if (!lineChartInstance) return;
 
@@ -180,10 +220,11 @@ onMounted(() => {
   <div class="park-chart-box">
     <div class="chart-box-left">
       <Card
-        class="left-card"
+        class="left-card cursor-pointer"
         v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
+        @click="handleCardClick(item)"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>

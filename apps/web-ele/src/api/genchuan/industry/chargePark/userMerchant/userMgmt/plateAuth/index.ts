@@ -72,9 +72,9 @@ export type PlateAuthDetailVO = PlateAuthVO & {
 
 // 车牌认证分页请求
 export type PlateAuthPageReqVO = PageParam & {
-  applyTime?: string;
+  applyTime?: string[];
   auditorId?: number;
-  auditTime?: string;
+  auditTime?: string[];
   carId?: number;
   plateNo?: string;
   remark?: string;

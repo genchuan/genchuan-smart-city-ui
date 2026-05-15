@@ -89,11 +89,16 @@ export function disableCardConfig(data) {
   return requestClient.put('/marketop/card-config/disable', data);
 }
 
-// ==================== 数据可视化图表接口 ====================
+// ==================== 数据可视化图表接口  ====================
 
 /** 卡种配置统计（饼图 + 卡片）
  * @returns {Promise}
  */
 export function getCardConfigChart() {
   return requestClient.get('/marketop/card-config/chart');
+}
+
+/** 获取卡种 精简列表（用于下拉选择） */
+export function getCardConfigList() {
+  return requestClient.get('/marketop/card-config/simple-list');
 }

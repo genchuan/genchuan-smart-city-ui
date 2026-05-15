@@ -1,6 +1,10 @@
+import { ref } from 'vue';
+
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getCouponSimpleList } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
+import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
@@ -33,6 +37,45 @@ export const getReceiveRecordSyncStatusLabel = (syncStatus) => {
   );
   return dict ? dict.label : syncStatus;
 };
+
+/** 优惠券搜索选项 - 静态数据作为默认值 */
+export const couponSearchOptions = [
+  { label: '5元充电券', value: 1 },
+  { label: '10元充电券', value: 2 },
+  { label: '20元充电券', value: 3 },
+  { label: '30元充电券', value: 4 },
+  { label: '50元充电券', value: 5 },
+  { label: '充电8.5折券', value: 6 },
+  { label: '充电7.5折券', value: 7 },
+  { label: '充电9折券', value: 8 },
+];
+
+/** 动态优惠券搜索选项（从接口获取） */
+export const dynamicCouponSearchOptions = ref([]);
+
+/** 获取当前可用的优惠券搜索选项（优先使用动态数据） */
+export function getCurrentCouponSearchOptions() {
+  return dynamicCouponSearchOptions.value.length > 0
+    ? dynamicCouponSearchOptions.value
+    : couponSearchOptions;
+}
+
+/** 获取优惠券精简列表用于搜索 */
+export async function fetchCouponSearchOptions() {
+  try {
+    const res = await getCouponSimpleList();
+    if (res && Array.isArray(res)) {
+      dynamicCouponSearchOptions.value = res.map((item) => ({
+        label: item.name,
+        value: item.id,
+      }));
+      return dynamicCouponSearchOptions.value;
+    }
+  } catch (error) {
+    console.error('获取优惠券列表失败:', error);
+  }
+  return couponSearchOptions;
+}
 
 /** 领用记录表格初始数据 - 按接口文档格式生成，字典值与系统字典一致 */
 export const dataList = () => {
@@ -309,22 +352,17 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择优惠券',
-        options: [],
+        options: couponSearchOptions,
         clearable: true,
         filterable: true,
-        remote: true,
       },
     },
     {
       fieldName: 'receiveTime',
       label: '领用时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择领用时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
-        type: 'datetimerange',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     {
@@ -356,7 +394,7 @@ export function useGridColumns() {
       title: '用户名称',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'userName' },
+      // slots: { default: 'userName' },
     },
     {
       field: 'couponName',
@@ -391,7 +429,7 @@ export function useGridColumns() {
       title: '核查结果',
       minWidth: 200,
       sortable: true,
-      slots: { default: 'checkResult' },
+      // slots: { default: 'checkResult' },
     },
     {
       field: 'syncStatusName',

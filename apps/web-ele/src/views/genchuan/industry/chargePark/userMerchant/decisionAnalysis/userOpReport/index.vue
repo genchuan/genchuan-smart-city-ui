@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
-
 import { ElMessage } from 'element-plus';
 
 import { UserOpReportApi } from '#/api/genchuan/industry/chargePark/userMerchant/decisionAnalysis/userOpReport';
+import { buildDateRangeByChartName } from '#/views/genchuan/industry/chargePark/userMerchant/utils/chartDrill';
 
 import DrillDownDetailDialog from './components/DrillDownDetailDialog.vue';
 import UserOpReportStats from './components/UserOpReportStats.vue';
 import { buildStatsDataFromApi } from './data';
 import Table from './table/index.vue';
 
-import '#/components/page/index.scss';
+import '#/genchuan-components/page/index.scss';
 
 type TableInstance = {
   handleStatsFilter: (type: string, value?: string) => Promise<void> | void;
@@ -107,9 +106,15 @@ function handleStatsCardClick({
     drillType: drillTypes[index] || 'totalUserCount',
     drillValue: card.value,
   });
+
+  if (index === 3) {
+    void tableRef.value?.setSearchValues({ timeScale: '月' });
+  } else {
+    void tableRef.value?.resetSearch();
+  }
 }
 
-function handleStatsChartClick({
+async function handleStatsChartClick({
   chart,
   name,
   value,
@@ -123,6 +128,22 @@ function handleStatsChartClick({
     drillType: chart.type === 'line' ? 'userOpTrend' : 'userTypeDistribution',
     drillValue: value,
   });
+
+  if (chart.type === 'line') {
+    const range = buildDateRangeByChartName(name);
+
+    if (range) {
+      await tableRef.value?.setSearchValues({ statTime: range });
+    }
+
+    return;
+  }
+
+  if (chart.type === 'bar') {
+    await tableRef.value?.setSearchValues({
+      reportType: name.includes('会员') ? '月报' : '日报',
+    });
+  }
 }
 
 async function tabChange(tabName: string) {
@@ -138,85 +159,110 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page auto-content-height class="user-op-report-page">
-    <div class="common-index user-op-report-index">
-      <div v-show="showStats" class="user-op-report-stats">
-        <UserOpReportStats
-          :data="statsData"
-          @card-click="handleStatsCardClick"
-          @chart-click="handleStatsChartClick"
-        />
-      </div>
-      <DrillDownDetailDialog ref="drillDownDialogRef" />
-      <div class="user-op-report-table-wrap">
-        <el-tabs
-          v-model="activeName"
-          class="common-tabs user-op-report-tabs"
-          type="card"
-          @tab-change="tabChange"
-        >
-          <el-tab-pane
-            v-for="item in reportCycleTabs"
-            :key="item.label"
-            :name="item.label"
-          >
-            <template #label>
-              <div class="table-first">
-                <span>{{ item.label }}</span>
-              </div>
-            </template>
-          </el-tab-pane>
-        </el-tabs>
-        <div class="user-op-report-table-panel">
-          <Table
-            ref="tableRef"
-            :reload-stats="loadStats"
-            :show-stats="showStats"
-            :toggle-stats="toggleStats"
-          />
-        </div>
-      </div>
-    </div>
-  </Page>
+  <div class="common-index">
+    <UserOpReportStats
+      v-if="showStats"
+      :data="statsData"
+      @card-click="handleStatsCardClick"
+      @chart-click="handleStatsChartClick"
+    />
+    <DrillDownDetailDialog ref="drillDownDialogRef" />
+    <el-tabs
+      v-model="activeName"
+      class="common-tabs user-op-report-tabs"
+      type="card"
+      @tab-change="tabChange"
+    >
+      <el-tab-pane
+        v-for="item in reportCycleTabs"
+        :key="item.label"
+        :name="item.label"
+      >
+        <template #label>
+          <div class="table-first">
+            <span>{{ item.label }}</span>
+          </div>
+        </template>
+      </el-tab-pane>
+    </el-tabs>
+    <Table
+      ref="tableRef"
+      :reload-stats="loadStats"
+      :show-stats="showStats"
+      :toggle-stats="toggleStats"
+    />
+  </div>
 </template>
 
 <style scoped lang="scss">
-.user-op-report-page {
-  height: 100%;
+:deep(.vxe-pager--wrapper) {
+  justify-content: center;
 }
 
-:deep(.user-op-report-page .vben-page-content) {
-  height: 100%;
+:deep(.vxe-grid--pager-wrapper .vxe-pager) {
+  position: relative;
+  height: 65px;
+  margin-top: 0;
 }
 
-.user-op-report-index {
+:deep(.user-merchant-table-grid .vxe-grid--toolbar-wrapper) {
+  margin-top: 0;
+}
+
+:deep(.user-merchant-table-grid .vxe-toolbar) {
   display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+  align-items: center;
 }
 
-.user-op-report-stats {
+:deep(.user-merchant-table-grid .vxe-buttons--wrapper) {
+  flex: 1;
+  min-width: 0;
+  padding-top: 0;
+}
+
+:deep(.user-merchant-table-grid .tabel-tabs) {
+  flex-wrap: nowrap !important;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 32px;
+  overflow: auto hidden;
+  white-space: nowrap;
+}
+
+:deep(.user-merchant-table-grid .tabel-tabs .el-tag) {
   flex-shrink: 0;
 }
 
-.user-op-report-table-wrap {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.user-op-report-tabs {
+:deep(.user-merchant-table-grid .vxe-tools--wrapper),
+:deep(.user-merchant-table-grid .vxe-tools--operate) {
+  position: static !important;
   flex-shrink: 0;
 }
 
-.user-op-report-table-panel {
-  flex: 1;
+:deep(.park-chart-box) {
+  height: 300px;
+}
+
+:deep(.park-chart-box .chart-box-left) {
+  height: 100%;
+}
+
+:deep(.park-chart-box .stat-card) {
+  flex: 1 1 0;
   min-height: 0;
-  overflow: hidden;
+}
+
+:deep(.park-chart-box .map-wrapper),
+:deep(.park-chart-box .park-type-chart),
+:deep(.park-chart-box .simple-bar-chart) {
+  height: 100%;
+}
+
+:deep(.rule-chart-box),
+:deep(.rule-chart-box .chart-box-left),
+:deep(.rule-chart-box .charts-wrapper),
+:deep(.rule-chart-box .chart-area) {
+  height: 300px;
 }
 
 :deep(.user-op-report-tabs .el-tabs__content) {

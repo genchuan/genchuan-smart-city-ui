@@ -26,6 +26,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '待确认', value: '待确认' },
           { label: '待审核', value: '待审核' },

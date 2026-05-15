@@ -6,57 +6,62 @@ import * as echarts from 'echarts';
 import { getAgentPayCodeChart } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import Card from '#/components/stats/card.vue';
 
+const emit = defineEmits(['filter-change']);
+
 const state = reactive({
   cardList: [
     { title: '今日生成数', value: 0, color: '#FF6B6B' },
     { title: '使用率', value: 0, color: '#4ECDC4', suffix: '%' },
-    { title: '趋势数据', value: 0, color: '#13ce66' },
   ],
   trendData: [],
 });
 
+// 点击卡片事件 - 查询今日数据
+const handleCardClick = () => {
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  emit('filter-change', {
+    createTimeStart: todayStr + ' 00:00:00',
+    createTimeEnd: todayStr + ' 23:59:59',
+  });
+};
+
+// 折线图点击事件处理
+const handleLineChartClick = (params) => {
+  if (params && params.name) {
+    emit('filter-change', {
+      createTimeStart: params.name + ' 00:00:00',
+      createTimeEnd: params.name + ' 23:59:59',
+    });
+  }
+};
+
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取代付码图表数据
 const fetchOrderChartData = async () => {
   try {
     const res = await getAgentPayCodeChart();
-    state.cardList[0].value = res.todayGeneratedCount || 0;
-    state.cardList[1].value = res.useRate || 0;
-    state.cardList[2].value = res.trendData?.length || 0;
-    // 如果trendData为空，使用假数据
+    state.cardList[0].value = res.cardData?.todayGeneratedCount || res.todayGeneratedCount || 0;
+    state.cardList[1].value = res.cardData?.useRate || res.useRate || 0;
     state.trendData =
       res.trendData && res.trendData.length > 0
         ? res.trendData
         : [
-            { date: '2026-04-01', count: 1 },
-            { date: '2026-04-03', count: 1 },
-            { date: '2026-04-05', count: 1 },
-            { date: '2026-04-08', count: 1 },
-            { date: '2026-04-10', count: 1 },
+            { date: '2026-04-27', count: 10 },
           ];
-    // 更新折线图
     updateLineChart();
   } catch (error) {
     console.error('获取代付码图表数据失败:', error);
-    // 接口调用失败时使用假数据
     state.cardList[0].value = 0;
-    state.cardList[1].value = 20;
-    state.cardList[2].value = 5;
+    state.cardList[1].value = 30;
     state.trendData = [
-      { date: '2026-04-01', count: 1 },
-      { date: '2026-04-03', count: 1 },
-      { date: '2026-04-05', count: 1 },
-      { date: '2026-04-08', count: 1 },
-      { date: '2026-04-10', count: 1 },
+      { date: '2026-04-27', count: 10 },
     ];
-    // 更新折线图
     updateLineChart();
   }
 };
 
-// 初始化折线图
 const initLineChart = () => {
   if (!lineChartRef.value) return;
 
@@ -119,9 +124,12 @@ const initLineChart = () => {
   };
 
   lineChartInstance.setOption(option);
+
+  lineChartInstance.on('click', (params) => {
+    handleLineChartClick(params);
+  });
 };
 
-// 更新折线图
 const updateLineChart = () => {
   if (!lineChartInstance) return;
 
@@ -152,12 +160,24 @@ onMounted(() => {
   <div class="park-chart-box">
     <div class="chart-box-left">
       <Card
-        class="left-card"
+        class="left-card cursor-pointer"
         v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
+        @click="handleCardClick"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
 </template>
+
+<style scoped lang="scss">
+.left-card {
+  flex:1;
+  width: 330px;
+
+  :deep(.stat-card) {
+    flex:1;
+  }
+}
+</style>

@@ -14,7 +14,9 @@ import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
-export type MerchantRechargeStatus = '已取消' | '已支付' | '已生效' | '待支付';
+const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+
+export type MerchantRechargeStatus = '已取消' | '已支付' | '待支付';
 
 export interface RechargeLog {
   content: string;
@@ -73,7 +75,6 @@ export const payChannelOptions = ['微信', '支付宝', '银行转账', '平台
 export const rechargeStatusOptions: MerchantRechargeStatus[] = [
   '待支付',
   '已支付',
-  '已生效',
   '已取消',
 ];
 
@@ -164,9 +165,6 @@ export const detailFields = [
         case '已支付': {
           return 'primary';
         }
-        case '已生效': {
-          return 'success';
-        }
         case '待支付': {
           return 'warning';
         }
@@ -218,21 +216,11 @@ export function formatApiTime(value?: null | number | string) {
     : '-';
 }
 
-/**
- * 兼容确认后已生效状态
- */
-export function normalizeRechargeStatus(
-  status?: null | string,
-  confirmTime?: null | number | string,
-) {
+export function normalizeRechargeStatus(status: null | string = '待支付') {
   const currentStatus = status || '待支付';
-  const confirmTimeText = formatApiTime(confirmTime);
 
-  if (
-    (currentStatus === '已支付' || currentStatus === '已生效') &&
-    confirmTimeText !== '-'
-  ) {
-    return '已生效' as MerchantRechargeStatus;
+  if (currentStatus === '已生效') {
+    return '已支付' as MerchantRechargeStatus;
   }
 
   return currentStatus as MerchantRechargeStatus;
@@ -397,12 +385,15 @@ export function buildMerchantRechargeRowFromApi(
   fallback: Partial<MerchantRechargeRow> = {},
   merchantLookup: Record<number, Partial<MerchantProfileInfo>> = {},
 ): MerchantRechargeRow {
+  const merchantId = Number(
+    data.merchantId ?? data.merchantInfo?.id ?? fallback.merchantId ?? 0,
+  );
   const merchantProfile = buildMerchantProfile(
     data.merchantInfo
       ? {
           address: data.merchantInfo.address,
           contact: data.merchantInfo.contact,
-          id: data.merchantInfo.id || data.merchantId,
+          id: data.merchantInfo.id || merchantId,
           merchantType: data.merchantInfo.merchantType,
           name: data.merchantInfo.name,
           phone: data.merchantInfo.phone,
@@ -411,7 +402,10 @@ export function buildMerchantRechargeRowFromApi(
           status: data.merchantInfo.status,
         }
       : undefined,
-    fallback,
+    {
+      ...fallback,
+      merchantId,
+    },
     merchantLookup,
   );
 
@@ -426,7 +420,7 @@ export function buildMerchantRechargeRowFromApi(
       : fallback.logs || [],
     merchantAddress: merchantProfile.address,
     merchantContact: merchantProfile.contact,
-    merchantId: Number(data.merchantId ?? fallback.merchantId ?? 0),
+    merchantId,
     merchantName: merchantProfile.name,
     merchantPhone: merchantProfile.phone,
     merchantRegisterTime: merchantProfile.registerTime,
@@ -478,10 +472,10 @@ export function buildStatsData(recharges: MerchantRechargeRow[]) {
   });
 
   const totalAmount = recharges
-    .filter((item) => item.status === '已生效')
+    .filter((item) => item.status === '已支付')
     .reduce((total, item) => total + item.amount, 0);
   const successCount = recharges.filter(
-    (item) => item.status === '已生效',
+    (item) => item.status === '已支付',
   ).length;
   const successRate =
     recharges.length === 0
@@ -499,7 +493,7 @@ export function buildStatsData(recharges: MerchantRechargeRow[]) {
       {
         title: '充值成功率',
         value: successRate,
-        desc: '点击数字可查看已生效记录',
+        desc: '点击数字可查看已支付记录',
         color: '#27AE60',
       },
     ],
@@ -532,7 +526,7 @@ export function buildStatsDataFromApi(data?: Partial<MerchantRechargeChartVO>) {
       {
         title: '充值成功率',
         value: formatRateValue(Number(data?.rechargeSuccessRate ?? 0)),
-        desc: '点击数字可查看已生效记录',
+        desc: '点击数字可查看已支付记录',
         color: '#27AE60',
       },
     ],
@@ -557,7 +551,10 @@ function buildRangeParam(value: any) {
     return undefined;
   }
 
-  return `${dayjs(value[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(value[1]).format('YYYY-MM-DD HH:mm:ss')}`;
+  return [
+    dayjs(value[0]).format(QUERY_TIME_FORMAT),
+    dayjs(value[1]).format(QUERY_TIME_FORMAT),
+  ];
 }
 
 /**

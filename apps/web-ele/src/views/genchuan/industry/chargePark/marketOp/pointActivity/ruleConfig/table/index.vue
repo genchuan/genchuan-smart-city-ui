@@ -3,8 +3,8 @@ import { computed, reactive, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
-import { getDictObj, getDictOptions } from '@vben/hooks';
-import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
+import { getDictObj } from '@vben/hooks';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
@@ -16,18 +16,14 @@ import {
   createRuleConfig,
   disableRuleConfig,
   exportRuleConfig,
-  getRuleConfigDetail,
   getRuleConfigPage,
   updateRuleConfig,
 } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/ruleConfig';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
 import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
-
 import {
-  dataList,
   detailFields,
   getRuleConfigSceneTagType,
   getRuleConfigStatusTagType,
@@ -143,22 +139,37 @@ function handleRefresh() {
 
 /** 处理统计组件的钻取筛选 */
 const handleStatsFilter = (type, subType, value) => {
-  if (type === 'card') {
-    // 卡片点击 - 生效配置数或规则匹配率
-    filterStatsType.value = subType;
-    ElMessage.info(
-      `已筛选 ${subType === 'active' ? '生效配置' : '规则匹配率'}`,
-    );
-  } else if (type === 'type') {
-    // 饼图扇区点击 - 按类型筛选
-    // subType 是类型编码，value 是类型名称
-    filterType.value = subType || '';
-    ElMessage.info(`已筛选规则类型: ${value}`);
-  } else if (type === 'scene') {
-    // 柱状图柱形点击 - 按适用场景筛选
-    // subType 是场景编码，value 是场景名称
-    filterScene.value = subType || '';
-    ElMessage.info(`已筛选适用场景: ${value}`);
+  switch (type) {
+    case 'card': {
+      // 卡片点击 - 生效配置数或规则匹配率
+      if (subType === 'active') {
+        // 生效配置数卡片 - 筛选规则状态为"已生效"
+        filterStatus.value = '1'; // "已生效"的字典值
+        ElMessage.info('已筛选: 已生效');
+      } else {
+        // 规则匹配率卡片 - 不做筛选（已去掉交互）
+        return;
+      }
+
+      break;
+    }
+    case 'scene': {
+      // 柱状图柱形点击 - 按适用场景筛选
+      // subType 是场景编码，value 是场景名称
+      filterScene.value = subType || '';
+      ElMessage.info(`已筛选适用场景: ${value}`);
+
+      break;
+    }
+    case 'type': {
+      // 饼图扇区点击 - 按类型筛选
+      // subType 是类型编码，value 是类型名称
+      filterType.value = subType || '';
+      ElMessage.info(`已筛选规则类型: ${value}`);
+
+      break;
+    }
+    // No default
   }
   gridApi.query();
 };
@@ -268,9 +279,6 @@ const dataObj = reactive({
   pageSize: 10,
   list: [],
   searchParams: {},
-  // 静态数据备用
-  staticData: dataList(),
-  useStaticData: false,
 });
 
 const changeTotalShow = () => {
@@ -284,64 +292,41 @@ const getTableData = async (pageObj) => {
   dataObj.currentPage = page.currentPage;
   dataObj.pageSize = page.pageSize;
 
-  try {
-    // 构建查询参数
-    const queryParams = {
-      pageNo: page.currentPage,
-      pageSize: page.pageSize,
-      name: dataObj.searchParams.name,
-      type: filterType.value || dataObj.searchParams.type,
-      scene: filterScene.value || dataObj.searchParams.scene,
-      status: filterStatus.value || dataObj.searchParams.status,
-      auditorId: dataObj.searchParams.auditorId,
-      giftRatio: dataObj.searchParams.giftRatio,
-      matchCount: dataObj.searchParams.matchCount,
-    };
+  // 构建查询参数 - 直接使用 searchParams 中的值，RangePicker 返回的数组会自动转换为同名字段传给后端
+  const queryParams = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+    name: dataObj.searchParams.name,
+    type: filterType.value || dataObj.searchParams.type,
+    scene: filterScene.value || dataObj.searchParams.scene,
+    status: filterStatus.value || dataObj.searchParams.status,
+    auditorName: dataObj.searchParams.auditorName,
+    giftRatio: dataObj.searchParams.giftRatio,
+    matchCount: dataObj.searchParams.matchCount,
+    // RangePicker 返回数组格式 [start, end]，后端会接收为两个同名参数
+    createTime: dataObj.searchParams.createTime
+      ? dataObj.searchParams.createTime
+      : undefined,
+    effectTime: dataObj.searchParams.effectTime
+      ? dataObj.searchParams.effectTime
+      : undefined,
+  };
 
-    // 处理创建时间范围
-    if (
-      dataObj.searchParams.createTime &&
-      dataObj.searchParams.createTime.length === 2
-    ) {
-      queryParams.createTimeStart = dataObj.searchParams.createTime[0];
-      queryParams.createTimeEnd = dataObj.searchParams.createTime[1];
-    }
-
-    // 处理生效时间范围
-    if (
-      dataObj.searchParams.effectTime &&
-      dataObj.searchParams.effectTime.length === 2
-    ) {
-      queryParams.effectTimeStart = dataObj.searchParams.effectTime[0];
-      queryParams.effectTimeEnd = dataObj.searchParams.effectTime[1];
-    }
-
-    const response = await getRuleConfigPage(queryParams);
-    if (response && response.list && response.list.length > 0) {
-      dataObj.useStaticData = false;
-      dataObj.total = response.total;
-      dataObj.list = response.list.map((item) => ({
-        ...item,
-        id: String(item.id),
-        createTimeStr: formatDate(item.createTime),
-        updateTimeStr: formatDate(item.updateTime),
-        auditTimeStr: formatDate(item.auditTime),
-        effectTimeStr: formatDate(item.effectTime),
-      }));
-    } else {
-      // 接口返回为空，使用静态数据
-      throw new Error('接口返回数据为空');
-    }
-  } catch (error) {
-    console.error('获取规则配置数据失败，使用静态数据', error);
-    dataObj.useStaticData = true;
-    // 使用静态数据
-    const staticData = dataObj.staticData;
-    dataObj.total = staticData.length;
-    dataObj.list = staticData.slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+  const response = await getRuleConfigPage(queryParams);
+  if (response && response.list) {
+    dataObj.total = response.total;
+    dataObj.list = response.list.map((item) => ({
+      ...item,
+      id: String(item.id),
+      createTimeStr: formatDate(item.createTime),
+      updateTimeStr: formatDate(item.updateTime),
+      auditTimeStr: formatDate(item.auditTime),
+      effectTimeStr: formatDate(item.effectTime),
+    }));
+  } else {
+    // 接口返回为空或无数据，清空列表
+    dataObj.total = 0;
+    dataObj.list = [];
   }
 
   return dataObj;
@@ -370,7 +355,7 @@ const [QueryForm] = useVbenForm({
 
 // 搜索表单查询
 function onSubmit(values) {
-  dataObj.searchParams = values;
+  dataObj.searchParams = { ...values };
   handleRefresh();
   drawerApi.close();
 }
@@ -534,7 +519,7 @@ function getSceneLabel(scene) {
           <!-- 统计组件筛选标签-->
           <ElTag
             v-if="filterStatsType"
-            type="info"
+            type="primary"
             closable
             @close="handleCancelStatsTypeFilter"
             style="height: 32px; margin: 4px 0; line-height: 32px"
@@ -591,17 +576,6 @@ function getSceneLabel(scene) {
           {{ getTypeLabel(row.type) }}
         </ElTag>
       </template>
-      <!-- 赠送比例插槽- 点击筛选同比例规则配置 -->
-      <template #giftRatio="{ row }">
-        <el-text
-          @click="ElMessage.info(`筛选赠送比例 ${row.giftRatio}`)"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-        >
-          {{ row.giftRatio }}
-        </el-text>
-      </template>
       <!-- 规则状态插槽- 点击筛选同状态规则配插槽-->
       <template #status="{ row }">
         <ElTag
@@ -621,30 +595,6 @@ function getSceneLabel(scene) {
         >
           {{ getSceneLabel(row.scene) }}
         </ElTag>
-      </template>
-      <!-- 审核人插槽- 点击跳转操作人员详情弹窗 -->
-      <template #auditorName="{ row }">
-        <el-text
-          v-if="row.auditorName"
-          @click="ElMessage.info(`打开操作人员详情弹窗: ${row.auditorName}`)"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-        >
-          {{ row.auditorName }}
-        </el-text>
-        <span v-else>-</span>
-      </template>
-      <!-- 匹配次数插槽 - 点击跳转规则匹配明细弹窗 -->
-      <template #matchCount="{ row }">
-        <el-text
-          @click="ElMessage.info(`打开规则匹配明细弹窗: ${row.matchCount}次`)"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-        >
-          {{ row.matchCount }}
-        </el-text>
       </template>
       <!-- 行操作按状态-->
       <template #actions="{ row }">

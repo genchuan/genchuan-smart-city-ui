@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
-
 import dayjs from 'dayjs';
 import { ElMessage } from 'element-plus';
 
 import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
 // import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
+import { buildDateRangeByChartName } from '#/views/genchuan/industry/chargePark/userMerchant/utils/chartDrill';
 
 import { buildStatsDataFromApi } from './data';
 import UserInfoChart from './table/chart.vue';
 import Table from './table/index.vue';
 
-import '#/components/page/index.scss';
+import '#/genchuan-components/page/index.scss';
 
 type TableInstance = {
   recalculateLayout: () => Promise<void> | void;
@@ -22,7 +21,7 @@ type TableInstance = {
 };
 
 const tableRef = ref<null | TableInstance>(null);
-const showStats = ref(false);
+const showStats = ref(true);
 const statsDataSource = ref(buildStatsDataFromApi());
 
 /** 等待布局稳定后再重算表格 */
@@ -94,7 +93,7 @@ async function handleChartRefresh(payload: ChartRefreshPayload) {
   }
 
   if (payload.chartType === 'line') {
-    await handleFilterByMonth(payload.name);
+    await handleFilterByDate(payload.name);
     return;
   }
 
@@ -118,14 +117,15 @@ async function handleFilterRecentUsers() {
   });
 }
 
-/** 按月份钻取用户列表 */
-async function handleFilterByMonth(month: string) {
-  await tableRef.value?.setSearchValues({
-    registerTime: [
-      dayjs(`${month}-01`).startOf('month').format('YYYY-MM-DD HH:mm:ss'),
-      dayjs(`${month}-01`).endOf('month').format('YYYY-MM-DD HH:mm:ss'),
-    ],
-  });
+/** 按日期或月份钻取用户列表 */
+async function handleFilterByDate(dateText: string) {
+  const range = buildDateRangeByChartName(dateText);
+
+  if (!range) {
+    return;
+  }
+
+  await tableRef.value?.setSearchValues({ registerTime: range });
 }
 
 /** 按用户类型钻取列表 */
@@ -139,54 +139,89 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page auto-content-height class="user-info-page">
-    <div class="common-index user-info-index">
-      <div v-if="showStats" class="user-info-stats">
-        <!--
-          原公共统计组件留存：
-          <StatsVisualization :data="statsData" />
-          该组件暂未消费卡片/图表点击事件，所以本页改为参考 rescueInfo 使用局部图表组件。
-        -->
-        <UserInfoChart :data="statsData" @refresh="handleChartRefresh" />
-      </div>
-      <div class="user-info-table-wrap">
-        <Table
-          ref="tableRef"
-          :reload-stats="loadStats"
-          :show-stats="showStats"
-          :toggle-stats="toggleStats"
-        />
-      </div>
-    </div>
-  </Page>
+  <div class="common-index">
+    <UserInfoChart
+      v-if="showStats"
+      :data="statsData"
+      @refresh="handleChartRefresh"
+    />
+    <Table
+      ref="tableRef"
+      :reload-stats="loadStats"
+      :show-stats="showStats"
+      :toggle-stats="toggleStats"
+    />
+  </div>
 </template>
 
 <style scoped lang="scss">
-.user-info-page {
-  height: 100%;
+:deep(.vxe-pager--wrapper) {
+  justify-content: center;
 }
 
-:deep(.user-info-page .vben-page-content) {
-  height: 100%;
+:deep(.vxe-grid--pager-wrapper .vxe-pager) {
+  position: relative;
+  height: 65px;
+  margin-top: 0;
 }
 
-.user-info-index {
+:deep(.user-merchant-table-grid .vxe-grid--toolbar-wrapper) {
+  margin-top: 0;
+}
+
+:deep(.user-merchant-table-grid .vxe-toolbar) {
   display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+  align-items: center;
 }
 
-.user-info-stats {
-  flex-shrink: 0;
-  height: 280px;
-  overflow: hidden;
-}
-
-.user-info-table-wrap {
+:deep(.user-merchant-table-grid .vxe-buttons--wrapper) {
   flex: 1;
+  min-width: 0;
+  padding-top: 0;
+}
+
+:deep(.user-merchant-table-grid .tabel-tabs) {
+  flex-wrap: nowrap !important;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 32px;
+  overflow: auto hidden;
+  white-space: nowrap;
+}
+
+:deep(.user-merchant-table-grid .tabel-tabs .el-tag) {
+  flex-shrink: 0;
+}
+
+:deep(.user-merchant-table-grid .vxe-tools--wrapper),
+:deep(.user-merchant-table-grid .vxe-tools--operate) {
+  position: static !important;
+  flex-shrink: 0;
+}
+
+:deep(.park-chart-box) {
+  height: 300px;
+}
+
+:deep(.park-chart-box .chart-box-left) {
+  height: 100%;
+}
+
+:deep(.park-chart-box .stat-card) {
+  flex: 1 1 0;
   min-height: 0;
-  overflow: hidden;
+}
+
+:deep(.park-chart-box .map-wrapper),
+:deep(.park-chart-box .park-type-chart),
+:deep(.park-chart-box .simple-bar-chart) {
+  height: 100%;
+}
+
+:deep(.rule-chart-box),
+:deep(.rule-chart-box .chart-box-left),
+:deep(.rule-chart-box .charts-wrapper),
+:deep(.rule-chart-box .chart-area) {
+  height: 300px;
 }
 </style>

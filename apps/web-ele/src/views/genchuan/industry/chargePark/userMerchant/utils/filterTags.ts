@@ -38,7 +38,7 @@ export function formatFilterValue(value: any) {
   if (Array.isArray(value)) {
     return value
       .filter((item) => hasFilterValue(item))
-      .map((item) => String(item))
+      .map(String)
       .join(' 至 ');
   }
 
@@ -57,15 +57,21 @@ export function buildActiveFilterTags(groups: FilterTagGroup[]) {
         return;
       }
 
+      const formattedValue = config.formatter
+        ? config.formatter(value)
+        : formatFilterValue(value);
+
+      if (!hasFilterValue(formattedValue)) {
+        return;
+      }
+
       seenKeys.add(key);
       tags.push({
         key,
         label: config.label,
         source,
         type: config.type || 'info',
-        value: config.formatter
-          ? config.formatter(value)
-          : formatFilterValue(value),
+        value: formattedValue,
       });
     });
   });

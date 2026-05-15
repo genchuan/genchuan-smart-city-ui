@@ -22,7 +22,7 @@ export type UserCarVO = {
   status: string;
   updateTime?: string;
   userId: number;
-  userName?: string;
+  nickname?: string;
 };
 
 export type UserCarCreateReqVO = {
@@ -47,14 +47,15 @@ export type UserCarUpdateReqVO = UserCarCreateReqVO & {
 // 用户车辆分页请求
 export type UserCarPageReqVO = PageParam & {
   auditorId?: number;
-  auditTime?: string;
-  bindTime?: string;
+  auditTime?: string[];
+  bindTime?: string[];
   carType?: string;
   plateColor?: string;
   plateNo?: string;
   remark?: string;
   status?: string;
   userId?: number;
+  nickname?: string;
 };
 
 export type UserCarAuditReqVO = {
@@ -148,6 +149,10 @@ export const UserCarApi = {
     return await requestClient.upload('/usermerchant/user-car/import', {
       file,
     });
+  },
+
+  importUserCarTemplate: async () => {
+    return await requestClient.download('/usermerchant/user-car/template');
   },
 
   exportUserCar: async (params: UserCarPageReqVO) => {

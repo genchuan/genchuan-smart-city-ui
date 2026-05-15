@@ -1,40 +1,16 @@
-/** 代付订单表单配置 */
+/** 代付规则搜索表单配置 */
 export function useFormSchema() {
   return [
     {
-      fieldName: 'id',
-      label: '主键ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入主键ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-      isSearch: true,
-    },
-    {
-      fieldName: 'orderNo',
-      label: '订单编号',
+      fieldName: 'merchantName',
+      label: '所属商户',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入订单编号',
+        placeholder: '请输入商户名称',
         maxLength: 50,
       },
       labelWidth: 120,
       isSearch: true,
-    },
-    {
-      fieldName: 'merchantId',
-      label: '商户ID',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入商户ID',
-        precision: 0,
-        min: 0,
-      },
-      labelWidth: 120,
-      isRequired: true,
     },
     {
       fieldName: 'carNo',
@@ -42,39 +18,13 @@ export function useFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入车牌',
-        maxLength: 20,
+        maxLength: 50,
       },
       labelWidth: 120,
+      isSearch: true,
     },
     {
-      fieldName: 'amount',
-      label: '金额',
-      component: 'InputNumber',
-      componentProps: {
-        placeholder: '请输入金额',
-        precision: 2,
-        min: 0,
-      },
-      labelWidth: 120,
-      isRequired: true,
-    },
-    {
-      fieldName: 'payType',
-      label: '支付方式',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择支付方式',
-        options: [
-          { label: '微信支付', value: 'wechat' },
-          { label: '支付宝', value: 'alipay' },
-          { label: '银联', value: 'unionpay' },
-        ],
-      },
-      labelWidth: 120,
-      isRequired: true,
-    },
-    {
-      fieldName: 'status',
+      fieldName: 'agentType',
       label: '状态',
       component: 'Select',
       componentProps: {
@@ -90,35 +40,21 @@ export function useFormSchema() {
       isSearch: true,
     },
     {
-      fieldName: 'remark',
-      label: '备注',
-      component: 'Input',
+      fieldName: 'payType',
+      label: '支付方式',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入备注',
-        maxLength: 200,
+        placeholder: '请选择状态',
+        options: [
+          { label: '微信支付', value: 'wechat' },
+          { label: '支付宝支付', value: 'alipay' },
+          { label: '银行卡支付', value: 'bank' },
+        ],
       },
       labelWidth: 120,
+      isSearch: true,
     },
-    {
-      fieldName: 'reserve1',
-      label: '备用字段1',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入备用字段1',
-        maxLength: 100,
-      },
-      labelWidth: 120,
-    },
-    {
-      fieldName: 'reserve2',
-      label: '备用字段2',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入备用字段2',
-        maxLength: 100,
-      },
-      labelWidth: 120,
-    },
+
   ];
 }
 /** 代付订单表格列配置 */

@@ -73,7 +73,7 @@ function getFieldLabel(field) {
 
 function getTagDisplayText(field, value) {
   if (Array.isArray(value)) return value.join('、');
-  if (field === 'videoTime') return formatTimestamp(value);
+  if (field === 'videoTime') return value;
   return value || '-';
 }
 
@@ -89,9 +89,6 @@ const [SearchDrawer, searchDrawerApi] = useVbenDrawer({
   footer: false,
   onCancel: () => searchDrawerApi.close(),
 });
-
-// 播放器改为模态框，不再使用抽屉
-// const [PlayerDrawer, playerDrawerApi] = ...  // 已删除
 
 const dataObj = reactive({
   totalShow: false,
@@ -116,8 +113,20 @@ const searchParams = ref({});
 const currentPlayRow = ref(null);
 const currentPlayerUrl = ref('');
 const currentPlayerTitle = ref('');
-// 播放器模态框控制
 const playerDialogVisible = ref(false);
+const currentPlayingId = ref(null);
+const playerRef = ref(null);
+
+// 倍速选项
+const speedOptions = [
+  { label: '0.25x', value: 0.25 },
+  { label: '0.5x', value: 0.5 },
+  { label: '1x', value: 1 },
+  { label: '2x', value: 2 },
+  { label: '4x', value: 4 },
+  { label: '8x', value: 8 },
+];
+const currentSpeed = ref(1); // 当前倍速
 
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
@@ -261,59 +270,43 @@ async function handleExport() {
   } catch {}
 }
 
-// 检索
 function handleSearch() {
   searchFormApi.resetForm();
   searchDrawerApi.open();
 }
 
-// 快进/慢速需要的视频元素引用
-let currentVideoElement = null;
-
-function handleFastForward() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请先选择一个录像');
-    return;
+// 截图（由弹窗标题栏的截图按钮调用）
+function handleScreenshot() {
+  if (playerRef.value && typeof playerRef.value.takeScreenshot === 'function') {
+    playerRef.value.takeScreenshot();
+  } else {
+    ElMessage.warning('播放器未就绪');
   }
-  if (!currentVideoElement) {
-    ElMessage.warning('请先播放录像');
-    return;
-  }
-  let newRate = currentVideoElement.playbackRate * 2;
-  if (newRate > 8) newRate = 1;
-  currentVideoElement.playbackRate = newRate;
-  ElMessage.success(`播放速度已调整为 ${newRate} 倍`);
 }
 
-function handleSlowMotion() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请先选择一个录像');
+// 倍速切换
+function handleSpeedChange(speed) {
+  if (!playerRef.value) {
+    ElMessage.warning('播放器未就绪');
     return;
   }
-  if (!currentVideoElement) {
-    ElMessage.warning('请先播放录像');
-    return;
-  }
-  let newRate = currentVideoElement.playbackRate / 2;
-  if (newRate < 0.25) newRate = 1;
-  currentVideoElement.playbackRate = newRate;
-  ElMessage.success(`播放速度已调整为 ${newRate} 倍`);
+  playerRef.value.setPlaybackRate(speed);
+  currentSpeed.value = speed;
+  ElMessage.success(`播放速度 ${speed}x`);
 }
 
-// 截图（基于当前播放的视频）
-async function handleSnap() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请先选择一个录像');
-    return;
-  }
-  if (!currentVideoElement) {
-    ElMessage.warning('请先播放录像');
+// 播放器内部的截图事件处理（调用后端接口）
+async function onScreenshot(currentTime) {
+  if (!currentPlayingId.value) {
+    ElMessage.warning('未找到正在播放的录像');
     return;
   }
   const loading = ElLoading.service({ text: '截图中...' });
   try {
-    const currentTime = Math.floor(currentVideoElement.currentTime);
-    const res = await snapVideoPlayback({ id: checkedIds.value[0], snapTime: currentTime });
+    const res = await snapVideoPlayback({
+      id: currentPlayingId.value,
+      snapTime: Math.floor(currentTime),
+    });
     if (res && res.success) {
       const link = document.createElement('a');
       link.href = res.snapUrl;
@@ -331,7 +324,6 @@ async function handleSnap() {
   }
 }
 
-// 行内播放（改为打开模态框）
 async function handlePlay(row) {
   if (row.storeStatus !== '正常') {
     ElMessage.warning('该录像已过期，无法播放');
@@ -341,18 +333,12 @@ async function handlePlay(row) {
   try {
     const res = await playVideoPlayback({ id: row.id });
     if (res && res.playUrl) {
+      currentPlayingId.value = row.id;
       currentPlayerUrl.value = res.playUrl;
       currentPlayerTitle.value = `${row.cameraName} - ${formatTimestamp(row.videoTime)}`;
-      playerDialogVisible.value = true; // 打开模态框
-      // 等待模态框渲染完成后获取 video 元素
-      nextTick(() => {
-        const video = document.querySelector('#video-player-element');
-        if (video) {
-          currentVideoElement = video;
-          // 可选：自动播放
-          video.play();
-        }
-      });
+      playerDialogVisible.value = true;
+      // 重置倍速显示
+      currentSpeed.value = 1;
     } else {
       ElMessage.error('获取播放地址失败');
     }
@@ -364,33 +350,7 @@ async function handlePlay(row) {
   }
 }
 
-// 行内截图
-async function handleRowSnap(row) {
-  if (row.storeStatus !== '正常') {
-    ElMessage.warning('该录像已过期，无法截图');
-    return;
-  }
-  const loading = ElLoading.service({ text: '截图中...' });
-  try {
-    const res = await snapVideoPlayback({ id: row.id, snapTime: 0 });
-    if (res && res.success) {
-      const link = document.createElement('a');
-      link.href = res.snapUrl;
-      link.download = `snapshot_${row.id}.jpg`;
-      link.click();
-      ElMessage.success('截图成功');
-    } else {
-      ElMessage.error('截图失败');
-    }
-  } catch (error) {
-    console.error('截图失败', error);
-    ElMessage.error('截图失败');
-  } finally {
-    loading.close();
-  }
-}
-
-// 行内导出
+// 行内导出、删除、确认等不变
 async function handleRowExport(row) {
   try {
     await ElMessageBox.confirm(`确认导出录像"${row.cameraName}"文件吗？`, '导出确认', {
@@ -409,7 +369,6 @@ async function handleRowExport(row) {
   } catch {}
 }
 
-// 行内删除
 async function handleRowDelete(row) {
   if (row.storeStatus !== '已过期') {
     ElMessage.warning('只有已过期的录像可以删除');
@@ -436,7 +395,6 @@ async function handleRowDelete(row) {
   } catch {}
 }
 
-// 行内确认（已过期录像确认清理）
 async function handleRowConfirm(row) {
   if (row.storeStatus !== '已过期') {
     ElMessage.warning('只有已过期的录像需要确认');
@@ -477,7 +435,6 @@ async function handleOpenDetail(row) {
   }
 }
 
-// 点击操作人弹出用户详情
 async function handleViewUser(row) {
   if (!row.handleUser) {
     ElMessage.warning('无操作人信息');
@@ -574,27 +531,53 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <SearchForm />
     </SearchDrawer>
 
-    <!-- 播放器模态框（居中弹窗） -->
+    <!-- 播放器模态框 -->
     <el-dialog
       v-model="playerDialogVisible"
-      :title="currentPlayerTitle"
-      width="80%"
+      width="60%"
       destroy-on-close
       :modal="false"
+      class="video-playback-dialog"
     >
-      <video
-        id="video-player-element"
-        :src="currentPlayerUrl"
-        controls
-        autoplay
-        style="width: 100%; height: 500px; object-fit: contain;"
-      ></video>
+      <template #header>
+        <div class="dialog-header">
+          <span class="dialog-title">{{ currentPlayerTitle }}</span>
+          <div class="header-actions">
+            <!-- 倍速下拉框 -->
+            <el-select
+              v-model="currentSpeed"
+              size="small"
+              placeholder="倍速"
+              style="width: 100px"
+              @change="handleSpeedChange"
+            >
+              <el-option
+                v-for="item in speedOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+            <!-- 截图按钮 -->
+            <el-button size="small" type="success" @click="handleScreenshot">截图</el-button>
+          </div>
+        </div>
+      </template>
+      <!-- 给 VideoPlayer 一个固定高度的父容器 -->
+      <div style="height: 500px;">
+        <VideoPlayer
+          ref="playerRef"
+          :src="currentPlayerUrl"
+          @screenshot="onScreenshot"
+        />
+      </div>
       <template #footer>
         <el-button @click="playerDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
 
     <Grid>
+      <!-- 表格标题区域（筛选标签） -->
       <template #table-title>
         <ElTag
           v-for="(value, field) in tagFilters"
@@ -610,13 +593,11 @@ defineExpose({ handleFilterTagClick, clearFilters });
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton :content="textObj.searchText" icon-name="Search" @click="handleSearch" />
-          <IconButton :content="textObj.fastForwardText" icon-name="TopRight" @click="handleFastForward" />
-          <IconButton :content="textObj.slowMotionText" icon-name="BottomRight" @click="handleSlowMotion" />
-          <IconButton :content="textObj.snapText" icon-name="Camera" @click="handleSnap" />
           <IconButton :content="textObj.exportText" icon-name="download" @click="handleExport" />
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
           <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
@@ -628,17 +609,21 @@ defineExpose({ handleFilterTagClick, clearFilters });
         </el-text>
       </template>
       <template #videoTime="{ row }">
-        <el-text @click="handleFilterTagClick('videoTime', row.videoTime)" type="primary" style="cursor: pointer;">
+        <el-text @click="handleFilterTagClick('videoTime', row.videoTime)" type="primary"
+                 style="cursor: pointer;">
           {{ formatTimestamp(row.videoTime) }}
         </el-text>
       </template>
       <template #storeStatus="{ row }">
-        <el-tag :type="getStoreStatusType(row.storeStatus)" @click="handleFilterTagClick('storeStatus', row.storeStatus)" style="cursor: pointer">
+        <el-tag :type="getStoreStatusType(row.storeStatus)"
+                @click="handleFilterTagClick('storeStatus', row.storeStatus)"
+                style="cursor: pointer">
           {{ row.storeStatus }}
         </el-tag>
       </template>
       <template #handleUser="{ row }">
-        <el-text v-if="row.handleUser" @click="handleViewUser(row)" type="primary" style="cursor: pointer;">
+        <el-text v-if="row.handleUser" @click="handleViewUser(row)" type="primary"
+                 style="cursor: pointer;">
           {{ row.handleUser }}
         </el-text>
         <span v-else>-</span>
@@ -648,12 +633,14 @@ defineExpose({ handleFilterTagClick, clearFilters });
         <span v-else>-</span>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer;">
           {{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">
+        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
+                 type="primary" style="cursor: pointer;">
           {{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
@@ -666,13 +653,12 @@ defineExpose({ handleFilterTagClick, clearFilters });
         {{ formatTimestamp(row.updateTime) }}
       </template>
 
-      <!-- 操作按钮 -->
+      <!-- 操作按钮（已移除截图按钮） -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
           <template v-if="row.storeStatus === '正常'">
             <IconButton :content="textObj.playText" icon-name="VideoPlay" @click="handlePlay(row)" />
-            <IconButton :content="textObj.snapText" icon-name="Camera" @click="handleRowSnap(row)" />
             <IconButton :content="textObj.exportText" icon-name="download" @click="handleRowExport(row)" />
           </template>
           <template v-else>
@@ -684,3 +670,40 @@ defineExpose({ handleFilterTagClick, clearFilters });
     </Grid>
   </div>
 </template>
+
+<style scoped lang="scss">
+// 自定义弹窗标题栏样式
+.video-playback-dialog {
+  :deep(.el-dialog__header) {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e4e7ed;
+  }
+  :deep(.el-dialog__body) {
+    padding: 20px;
+    min-height: 500px;
+  }
+}
+
+.video-player-container .video-element {
+  max-height: 550px;
+}
+
+.dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+
+  .dialog-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #303133;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+}
+</style>

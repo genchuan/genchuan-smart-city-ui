@@ -22,7 +22,6 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 
 import CheckDrawer from '../components/CheckDrawer.vue';
 import {
-  dataList,
   detailFields,
   getPointLotteryStatusTagType,
   getPointLotterySyncStatusTagType,
@@ -249,9 +248,6 @@ const dataObj = reactive({
   pageSize: 10,
   list: [],
   searchParams: {},
-  // 静态数据备份
-  staticData: dataList(),
-  useStaticData: false,
 });
 
 const changeTotalShow = () => {
@@ -265,61 +261,49 @@ const getTableData = async (pageObj) => {
   dataObj.currentPage = page.currentPage;
   dataObj.pageSize = page.pageSize;
 
-  try {
-    // 构建查询参数 - 只包含表格显示的字段
-    const queryParams = {
-      pageNo: page.currentPage,
-      pageSize: page.pageSize,
-      // 基础字段
-      no: dataObj.searchParams.no,
-      // 关联字段 - 用户、奖品、发放人
-      userId: dataObj.searchParams.userId,
-      prizeId: dataObj.searchParams.prizeId,
-      senderId: dataObj.searchParams.senderId,
-      // 字典字段
-      status: filterStatus.value || dataObj.searchParams.status,
-      syncStatus: filterSyncStatus.value || dataObj.searchParams.syncStatus,
-      // 时间范围字段
-      lotteryStartTime: dataObj.searchParams.lotteryStartTime,
-      lotteryEndTime: dataObj.searchParams.lotteryEndTime,
-      sendStartTime: dataObj.searchParams.sendStartTime,
-      sendEndTime: dataObj.searchParams.sendEndTime,
-      // 数值范围字段
-      costPointMin: dataObj.searchParams.costPointMin,
-      costPointMax: dataObj.searchParams.costPointMax,
-      // 文本字段
-      checkResult: dataObj.searchParams.checkResult,
-      // 统计组件钻取筛选字段 - 折线图点击传入lotteryTime值
-      lotteryTime: filterLotteryDate.value || undefined,
-      statsType: filterStatsType.value || dataObj.searchParams.statsType,
-    };
+  // 构建查询参数 - 直接使用 searchParams 中的值，RangePicker 返回的数组会自动转换为同名字段传给后端
+  const queryParams = {
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
+    // 基础字段
+    no: dataObj.searchParams.no,
+    // 关联字段 - 用户、奖品、发放人
+    userId: dataObj.searchParams.userId,
+    prizeId: dataObj.searchParams.prizeId,
+    senderId: dataObj.searchParams.senderId,
+    // 字典字段
+    status: filterStatus.value || dataObj.searchParams.status,
+    syncStatus: filterSyncStatus.value || dataObj.searchParams.syncStatus,
+    // 统计折线图钻取筛选 - 将选中的日期透传到 lotteryTime 参数中
+    lotteryTime: filterLotteryDate.value || undefined,
+    // RangePicker 返回数组格式 [start, end]，后端会接收为两个同名参数（当未使用统计钻取时）
+    sendTime: dataObj.searchParams.sendTime
+      ? dataObj.searchParams.sendTime
+      : undefined,
+    // 数值范围字段
+    costPointMin: dataObj.searchParams.costPointMin,
+    costPointMax: dataObj.searchParams.costPointMax,
+    // 文本字段
+    checkResult: dataObj.searchParams.checkResult,
+    // 统计组件钻取筛选字段
+    statsType: filterStatsType.value || dataObj.searchParams.statsType,
+  };
 
-    const response = await getPointLotteryPage(queryParams);
-    if (response && response.list && response.list.length > 0) {
-      dataObj.useStaticData = false;
-      dataObj.total = response.total;
-      dataObj.list = response.list.map((item) => ({
-        ...item,
-        id: String(item.id),
-        lotteryTimeStr: formatDate(item.lotteryTime),
-        sendTimeStr: formatDate(item.sendTime),
-        createTimeStr: formatDate(item.createTime),
-        updateTimeStr: formatDate(item.updateTime),
-      }));
-    } else {
-      // 接口返回为空，使用静态数据
-      throw new Error('接口返回数据为空');
-    }
-  } catch (error) {
-    console.error('获取积分抽奖数据失败，使用静态数据:', error);
-    dataObj.useStaticData = true;
-    // 使用静态数据
-    const staticData = dataObj.staticData;
-    dataObj.total = staticData.length;
-    dataObj.list = staticData.slice(
-      (page.currentPage - 1) * page.pageSize,
-      page.currentPage * page.pageSize,
-    );
+  const response = await getPointLotteryPage(queryParams);
+  if (response && response.list) {
+    dataObj.total = response.total;
+    dataObj.list = response.list.map((item) => ({
+      ...item,
+      id: String(item.id),
+      lotteryTimeStr: formatDate(item.lotteryTime),
+      sendTimeStr: formatDate(item.sendTime),
+      createTimeStr: formatDate(item.createTime),
+      updateTimeStr: formatDate(item.updateTime),
+    }));
+  } else {
+    // 接口返回为空或无数据，清空列表
+    dataObj.total = 0;
+    dataObj.list = [];
   }
 
   return dataObj;
@@ -348,29 +332,7 @@ const [QueryForm] = useVbenForm({
 
 // 搜索表单查询
 function onSubmit(values) {
-  const searchParams = { ...values };
-
-  // 处理抽奖时间范围
-  if (
-    values.lotteryTimeRange &&
-    Array.isArray(values.lotteryTimeRange) &&
-    values.lotteryTimeRange.length === 2
-  ) {
-    searchParams.lotteryStartTime = values.lotteryTimeRange[0];
-    searchParams.lotteryEndTime = values.lotteryTimeRange[1];
-  }
-
-  // 处理发放时间范围
-  if (
-    values.sendTimeRange &&
-    Array.isArray(values.sendTimeRange) &&
-    values.sendTimeRange.length === 2
-  ) {
-    searchParams.sendStartTime = values.sendTimeRange[0];
-    searchParams.sendEndTime = values.sendTimeRange[1];
-  }
-
-  dataObj.searchParams = searchParams;
+  dataObj.searchParams = { ...values };
   handleRefresh();
   drawerApi.close();
 }
@@ -610,17 +572,6 @@ defineExpose({
           {{ row.no }}
         </el-text>
       </template>
-      <!-- 用户名称插槽 - 点击跳转用户详情弹窗 -->
-      <template #userName="{ row }">
-        <el-text
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-          @click="ElMessage.info(`打开用户详情弹窗: ${row.userName}`)"
-        >
-          {{ row.userName }}
-        </el-text>
-      </template>
       <!-- 奖品名称插槽 - 点击打开奖品详情抽屉 -->
       <template #prizeName="{ row }">
         <el-text
@@ -641,32 +592,6 @@ defineExpose({
         >
           {{ getStatusLabel(row.status) }}
         </ElTag>
-      </template>
-      <!-- 发放人插槽 - 点击跳转操作人员详情弹窗 -->
-      <template #senderName="{ row }">
-        <el-text
-          v-if="row.senderName"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-          @click="ElMessage.info(`打开操作人员详情弹窗: ${row.senderName}`)"
-        >
-          {{ row.senderName }}
-        </el-text>
-        <span v-else>-</span>
-      </template>
-      <!-- 核查结果插槽 - 点击查看核查明细弹窗 -->
-      <template #checkResult="{ row }">
-        <el-text
-          v-if="row.checkResult"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-          @click="ElMessage.info(`查看核查明细: ${row.checkResult}`)"
-        >
-          {{ row.checkResult }}
-        </el-text>
-        <span v-else>-</span>
       </template>
       <!-- 同步状态插槽 - 点击筛选同同步状态记录 -->
       <template #syncStatus="{ row }">

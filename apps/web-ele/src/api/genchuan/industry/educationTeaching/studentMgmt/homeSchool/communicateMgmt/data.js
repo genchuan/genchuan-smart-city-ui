@@ -133,7 +133,7 @@ export function getCommunicateMgmtChart(params) {
 }
 
 export function getCommunicateMgmtInteractIndex(params) {
-  return requestClient.get('/studentmgmt/communicate-mgmt/chart/interactIndex', { params }).catch(err => {
+  return requestClient.get('/studentmgmt/communicate-mgmt/interactIndex', { params }).catch(err => {
     console.warn('核心指标接口失败，使用模拟数据', err);
     return Promise.resolve({
       msgTypeCount: [

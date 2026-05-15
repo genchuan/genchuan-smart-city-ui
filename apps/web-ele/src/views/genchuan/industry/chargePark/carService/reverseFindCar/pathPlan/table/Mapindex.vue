@@ -1,6 +1,10 @@
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { loadTMap } from '#/utils/genchuan/useTMap.ts';
+import { loadTMap, fetchDrivingPath } from '#/utils/genchuan/useTMap.ts';
+import { ElMessage } from 'element-plus';
+
+// 限流:同一条提示 10 秒内只弹一次
+let lastQuotaWarnAt = 0;
 
 const props = defineProps({
   data: { type: Array, default: () => [] },
@@ -158,38 +162,65 @@ const clearStartEndMarkers = () => {
 };
 
 // 绘制单条路径（支持高亮红色），同时绘制起点终点标记
-const drawSinglePath = (pathData, highlight = false) => {
+// 优先调腾讯驾车路径规划拿真实路网点串,失败时降级为起点终点直线
+const drawSinglePath = async (pathData, highlight = false) => {
   if (!map || !TMapInstance) return;
   // 清除之前的路径和起点/终点标记
   if (polylineLayer) polylineLayer.destroy();
   clearStartEndMarkers();
   polylineLayer = null;
 
-  if (!pathData || !pathData.pathPoints || pathData.pathPoints.length < 2) return;
-  const pathPoints = pathData.pathPoints.map(point => new TMapInstance.LatLng(point[1], point[0]));
+  if (!pathData) return;
+
+  // 优先调腾讯驾车路径规划接口拿真实路网点串。
+  // 失败时不再降级为直线;只绘制起点终点 marker 并给页面提示。
+  let rawPoints = null;
+  if (pathData.startCoord && pathData.endCoord) {
+    try {
+      const realPath = await fetchDrivingPath(pathData.startCoord, pathData.endCoord);
+      if (realPath && realPath.length >= 2) rawPoints = realPath;
+    } catch (e) {
+      // 仅"额度用完"这一种情况给用户弹提示;其他错误(网络抖动/超时/数据异常)静默,只记 console
+      if (e?.status === 121) {
+        const now = Date.now();
+        if (now - lastQuotaWarnAt > 10000) {
+          lastQuotaWarnAt = now;
+          ElMessage.warning('腾讯地图路径规划今日免费额度已用完,暂无法显示路线');
+        }
+      } else {
+        console.warn('真实驾车路径获取失败', e);
+      }
+    }
+  }
+  // 拿到真实路径才绘制路径线;拿不到则跳过画线、只画起点终点
+  const pathPoints = rawPoints && rawPoints.length >= 2
+    ? rawPoints.map(point => new TMapInstance.LatLng(point[1], point[0]))
+    : null;
   const lineColor = highlight ? '#FF0000' : (props.pathOptions.color || '#4A90E2');
 
-  polylineLayer = new TMapInstance.MultiPolyline({
-    map,
-    styles: {
-      'path-style': new TMapInstance.PolylineStyle({
-        color: lineColor,
-        width: props.pathOptions.width || 4,
-        borderWidth: 0,
-        lineCap: 'round'
-      })
-    },
-    geometries: [{
-      id: pathData.id,
-      styleId: 'path-style',
-      paths: pathPoints,
-      properties: { id: pathData.id, pathLength: pathData.pathLength, expectDuration: pathData.expectDuration },
-    }],
-  });
-  polylineLayer.on('click', (evt) => {
-    const properties = evt.geometry?.properties;
-    if (properties && properties.id) emit('path-click', properties);
-  });
+  if (pathPoints) {
+    polylineLayer = new TMapInstance.MultiPolyline({
+      map,
+      styles: {
+        'path-style': new TMapInstance.PolylineStyle({
+          color: lineColor,
+          width: props.pathOptions.width || 4,
+          borderWidth: 0,
+          lineCap: 'round'
+        })
+      },
+      geometries: [{
+        id: pathData.id,
+        styleId: 'path-style',
+        paths: pathPoints,
+        properties: { id: pathData.id, pathLength: pathData.pathLength, expectDuration: pathData.expectDuration },
+      }],
+    });
+    polylineLayer.on('click', (evt) => {
+      const properties = evt.geometry?.properties;
+      if (properties && properties.id) emit('path-click', properties);
+    });
+  }
 
   // 添加起点/终点标记到专用图层
   const startEndGeometries = [];
@@ -213,7 +244,7 @@ const drawSinglePath = (pathData, highlight = false) => {
 
   // 调整视野
   const bounds = new TMapInstance.LatLngBounds();
-  pathPoints.forEach(p => bounds.extend(p));
+  if (pathPoints) pathPoints.forEach(p => bounds.extend(p));
   if (pathData.startCoord) bounds.extend(new TMapInstance.LatLng(pathData.startCoord.lat, pathData.startCoord.lng));
   if (pathData.endCoord) bounds.extend(new TMapInstance.LatLng(pathData.endCoord.lat, pathData.endCoord.lng));
   map.fitBounds(bounds, { padding: 50 });

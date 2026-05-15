@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
+import {ref, computed, onMounted} from 'vue';
+import {ElSelect, ElOption, ElDatePicker} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
@@ -11,9 +11,8 @@ import {
 
 const loading = ref(true);
 const chartData = ref({});
-const distributionData = ref({}); // 保持后端返回的原始结构
+const distributionData = ref({});
 
-// 时间范围选择器
 const timeRange = ref([]);
 
 const getDefaultTimeRange = () => {
@@ -47,7 +46,6 @@ const handleDateRangeChange = () => {
   loadData();
 };
 
-// 卡片数据
 const cardList = computed(() => {
   const total = chartData.value.totalTreatCount || 0;
   const pending = chartData.value.pendingAuditCount || 0;
@@ -56,46 +54,42 @@ const cardList = computed(() => {
   const emergency = chartData.value.emergencyCount || 0;
   const other = chartData.value.otherCount || 0;
   return [
-    { title: '总就诊次数', value: total, color: '#409EFF', status: 'total' },
-    { title: '待审核预约数', value: pending, color: '#E6A23C', status: 'pending' },
-    { title: '已完成就诊数', value: finished, color: '#67C23A', status: 'finished' },
-    { title: '门诊就诊数', value: outpatient, color: '#909399', status: 'outpatient' },
-    { title: '急诊就诊数', value: emergency, color: '#F56C6C', status: 'emergency' },
-    { title: '其他就诊数', value: other, color: '#909399', status: 'other' },
+    {title: '总就诊次数', value: total, color: '#409EFF', status: 'total'},
+    {title: '待审核预约数', value: pending, color: '#E6A23C', status: 'pending'},
+    {title: '已完成就诊数', value: finished, color: '#67C23A', status: 'finished'},
+    {title: '门诊就诊数', value: outpatient, color: '#909399', status: 'outpatient'},
+    {title: '急诊就诊数', value: emergency, color: '#F56C6C', status: 'emergency'},
+    {title: '其他就诊数', value: other, color: '#909399', status: 'other'},
   ];
 });
 
-// 近一周就诊趋势折线图
 const lineData = computed(() => {
   const trend = chartData.value.recentWeekTreatTrend || [];
   return {
     xAxis: trend.map(item => item.date),
-    series: [{ name: '就诊次数', data: trend.map(item => item.count) }],
+    series: [{name: '就诊次数', data: trend.map(item => item.count)}],
   };
 });
 
-// 就诊类型分布饼图数据（后端字段 type → name）
 const treatTypePieData = computed(() => {
   const data = distributionData.value.treatTypeDistribution || [];
   return data.map(item => ({
-    name: item.type,   // 后端返回 type
+    name: item.type,
     value: item.value,
   }));
 });
 
-// 年级分布饼图数据（后端字段 grade → name）
 const gradePieData = computed(() => {
   const data = distributionData.value.gradeDistribution || [];
   return data.map(item => ({
-    name: item.grade,  // 后端返回 grade
+    name: item.grade,
     value: item.value,
   }));
 });
 
-// 饼图切换选项
 const pieOptions = computed(() => [
-  { type: 'treatType', title: '就诊类型分布', data: treatTypePieData.value },
-  { type: 'grade', title: '就诊学生年级分布', data: gradePieData.value },
+  {type: 'treatType', title: '就诊类型分布', data: treatTypePieData.value},
+  {type: 'grade', title: '就诊学生年级分布', data: gradePieData.value},
 ]);
 
 const activePieIndex = ref(0);
@@ -105,37 +99,74 @@ const handlePieChange = (index) => {
   activePieIndex.value = index;
 };
 
-const emit = defineEmits(['cardSelect', 'pieSelect', 'lineSelect']);
-
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'pending':
+      filterType = 'status';
+      filterValue = '待审核';
+      break;
+    case 'finished':
+      filterType = 'status';
+      filterValue = '已就诊';
+      break;
+    case 'outpatient':
+      filterType = 'treatType';
+      filterValue = '门诊';
+      break;
+    case 'emergency':
+      filterType = 'treatType';
+      filterValue = '急诊';
+      break;
+    case 'other':
+      filterType = 'treatType';
+      filterValue = '其他';
+      break;
+    case 'total':
+    default:
+      return;
+  }
+  window.dispatchEvent(new CustomEvent('treat-chart-filter', {
+    detail: {type: filterType, value: filterValue}
+  }));
 };
 
 const handlePieClick = (params) => {
-  emit('pieSelect', {
-    name: params.name,
-    type: currentPie.value.type,
-  });
+  const currentType = currentPie.value.type;
+  if (currentType === 'treatType') {
+    window.dispatchEvent(new CustomEvent('treat-chart-filter', {
+      detail: {type: 'treatType', value: params.name}
+    }));
+  } else if (currentType === 'grade') {
+    window.dispatchEvent(new CustomEvent('treat-chart-filter', {
+      detail: {type: 'grade', value: params.name}
+    }));
+  }
 };
 
 const handleLineClick = (params) => {
-  emit('lineSelect', { field: 'date', value: params.xValue });
+  const date = params.xValue || params.name;
+  if (date) {
+    // 按该日期筛选就诊记录（创建时间或就诊日期）
+    window.dispatchEvent(new CustomEvent('treat-chart-filter', {
+      detail: {type: 'createTime', value: [date, date]}
+    }));
+  }
 };
 
-// 加载数据 - 保持原始数据结构不变
+// 加载数据（保持不变）
 const loadData = async () => {
   loading.value = true;
   try {
     const timeRangeParam = getTimeRangeParam();
     const [chartRes, distRes] = await Promise.allSettled([
-      getTreatMgmtChart({ timeRange: timeRangeParam }),
-      getTreatMgmtDistribution({ timeRange: timeRangeParam }),
+      getTreatMgmtChart({timeRange: timeRangeParam}),
+      getTreatMgmtDistribution({timeRange: timeRangeParam}),
     ]);
-
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
-    } else {
-      // 模拟数据（保持与真实接口相同的字段）
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else {
       chartData.value = {
         totalTreatCount: 86,
         pendingAuditCount: 12,
@@ -144,32 +175,28 @@ const loadData = async () => {
         emergencyCount: 18,
         otherCount: 6,
         recentWeekTreatTrend: [
-          { date: '2025-03-25', count: 8 },
-          { date: '2025-03-26', count: 12 },
-          { date: '2025-03-27', count: 10 },
-          { date: '2025-03-28', count: 9 },
-          { date: '2025-03-29', count: 7 },
-          { date: '2025-03-30', count: 5 },
-          { date: '2025-03-31', count: 6 },
+          {date: '2025-03-25', count: 8},
+          {date: '2025-03-26', count: 12},
+          {date: '2025-03-27', count: 10},
+          {date: '2025-03-28', count: 9},
+          {date: '2025-03-29', count: 7},
+          {date: '2025-03-30', count: 5},
+          {date: '2025-03-31', count: 6},
         ],
       };
     }
-
-    if (distRes.status === 'fulfilled') {
-      // 直接保存后端返回的原始数据，不做修改
-      distributionData.value = distRes.value;
-    } else {
-      // 模拟数据也使用 type/grade 字段，保持与真实接口一致
+    if (distRes.status === 'fulfilled') distributionData.value = distRes.value;
+    else {
       distributionData.value = {
         treatTypeDistribution: [
-          { type: '门诊', value: 62 },
-          { type: '急诊', value: 18 },
-          { type: '其他', value: 6 },
+          {type: '门诊', value: 62},
+          {type: '急诊', value: 18},
+          {type: '其他', value: 6},
         ],
         gradeDistribution: [
-          { grade: '高一', value: 25 },
-          { grade: '高二', value: 30 },
-          { grade: '高三', value: 31 },
+          {grade: '高一', value: 25},
+          {grade: '高二', value: 30},
+          {grade: '高三', value: 31},
         ],
       };
     }
@@ -198,7 +225,6 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 折线图区域（含日期选择器） -->
     <div class="line-chart-container" style="flex: 1.5 !important; position: relative;">
       <div class="date-range-wrapper">
         <el-date-picker
@@ -230,7 +256,7 @@ onMounted(() => {
     <div class="chart-area">
       <div class="chart-select-wrapper">
         <el-select v-model="activePieIndex" size="small" @change="handlePieChange">
-          <el-option v-for="(opt, idx) in pieOptions" :key="idx" :label="opt.title" :value="idx" />
+          <el-option v-for="(opt, idx) in pieOptions" :key="idx" :label="opt.title" :value="idx"/>
         </el-select>
       </div>
       <Pie

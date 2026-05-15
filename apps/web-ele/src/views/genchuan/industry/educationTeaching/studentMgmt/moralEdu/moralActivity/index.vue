@@ -1,11 +1,11 @@
 <script setup>
-import {reactive, ref, watch} from 'vue';
-import {useVbenDrawer, useVbenModal} from '@vben/common-ui';
-import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
+import { reactive, ref, watch, onMounted, onUnmounted } from 'vue';
+import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
-import {useVbenForm} from '#/adapter/form';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
-import {downloadFileFromBlobPart} from '@vben/utils';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import MoralActivityDetailDrawer from './components/moralActivityDetail.vue';
 import {
   getMoralActivityPage,
@@ -16,7 +16,6 @@ import {
   recordMoralActivity,
   exportMoralActivity,
   getMoralActivityDetail,
-  getDeptOptions,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/moralEdu/moralActivity/data.js';
 import {
   textObj,
@@ -27,9 +26,8 @@ import {
   useRecordFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/moralEdu/moralActivity/form.js';
 
-// 辅助函数
 const getStatusType = (status) => {
-  const map = {'未发布': 'warning', '进行中': 'success', '已结束': 'info'};
+  const map = { '未发布': 'warning', '进行中': 'success', '已结束': 'info' };
   return map[status] || 'info';
 };
 
@@ -59,34 +57,38 @@ const getDateFromTimestamp = (timestamp) => {
 const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
-// 标签筛选
+// ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query();
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -106,7 +108,14 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// 抽屉与模态框
+// ---------- 前端写死的部门选项 ----------
+const deptOptions = ref([
+  {label: '学生工作部', value: '学生工作部'},
+  {label: '团委', value: '团委'},
+  {label: '教务处', value: '教务处'},
+]);
+
+// ---------- 抽屉与模态框 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
@@ -136,75 +145,40 @@ const currentEditId = ref(null);
 const joinActivityId = ref(null);
 const recordActivityId = ref(null);
 
-// 部门选项
-const deptOptions = ref([]);
-const loadDeptOptions = async () => {
-  const res = await getDeptOptions();
-  deptOptions.value = res;
-};
-loadDeptOptions();
-
 const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
-    const params = {
+    const merged = {
       ...searchParams.value,
+      ...tagFilters.value,
+    };
+    const params = {
+      ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-
-    const res = await getMoralActivityPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'activityType':
-            itemValue = item.activityType;
-            break;
-          case 'hostDept':
-            itemValue = item.hostDept;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          case 'activityName':
-            itemValue = item.activityName;
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    if (params.createTime && Array.isArray(params.createTime) && params.createTime.length === 2) {
+      params.createTimeStart = params.createTime[0];
+      params.createTimeEnd = params.createTime[1];
+      delete params.createTime;
+    } else if (params.createTime && typeof params.createTime === 'string') {
+      params.createTimeStart = params.createTime;
+      params.createTimeEnd = params.createTime;
+      delete params.createTime;
+    }
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getMoralActivityPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取活动列表失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -213,41 +187,33 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportMoralActivity(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportMoralActivity(searchParams.value);
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
 async function handleBatchPublish() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个活动');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个活动');
   const unPublishRows = checkedRows.value.filter(row => row.status === '未发布');
-  if (unPublishRows.length === 0) {
-    ElMessage.warning('请选择状态为【未发布】的活动进行发布');
-    return;
-  }
+  if (unPublishRows.length === 0) return ElMessage.warning('请选择状态为【未发布】的活动进行发布');
   try {
     await ElMessageBox.confirm(`确认发布选中的 ${unPublishRows.length} 个活动？发布后状态将变为“进行中”。`, '批量发布确认', {
       confirmButtonText: '确认',
@@ -284,10 +250,7 @@ function handleEdit(row) {
 }
 
 async function handlePublish(row) {
-  if (row.status !== '未发布') {
-    ElMessage.warning('只有未发布的活动可以发布');
-    return;
-  }
+  if (row.status !== '未发布') return ElMessage.warning('只有未发布的活动可以发布');
   try {
     await ElMessageBox.confirm(`确认发布活动"${row.activityName}"？发布后状态将变为“进行中”。`, '发布确认', {
       confirmButtonText: '确认',
@@ -319,14 +282,11 @@ const [JoinForm, joinFormApi] = useVbenForm({
     try {
       const studentIdNum = Number(values.studentId);
       if (isNaN(studentIdNum) || studentIdNum <= 0) {
-        ElMessage.error('请输入有效的学生ID');
+        ElMessage.error('请输入有效的学号');
         loading.close();
         return;
       }
-      const payload = {
-        id: Number(joinActivityId.value),
-        studentId: studentIdNum
-      };
+      const payload = {id: Number(joinActivityId.value), studentId: studentIdNum};
       const res = await joinMoralActivity(payload);
       const isSuccess = res === true || (res && res.code === 0);
       if (isSuccess) {
@@ -354,27 +314,18 @@ const [JoinModal, joinModalApi] = useVbenModal({
   footer: false,
   onCancel: () => joinModalApi.close(),
   onOpenChange: async (isOpen) => {
-    if (isOpen) {
-      await joinFormApi.resetForm();
-    }
+    if (isOpen) await joinFormApi.resetForm();
   },
 });
 
 async function handleJoin(row) {
-  if (row.status !== '进行中') {
-    ElMessage.warning('只有进行中的活动可以报名');
-    return;
-  }
+  if (row.status !== '进行中') return ElMessage.warning('只有进行中的活动可以报名');
   joinActivityId.value = row.id;
   joinModalApi.open();
 }
 
-// 记录功能
 async function handleRecord(row) {
-  if (row.status !== '进行中') {
-    ElMessage.warning('只有进行中的活动可以记录');
-    return;
-  }
+  if (row.status !== '进行中') return ElMessage.warning('只有进行中的活动可以记录');
   recordActivityId.value = row.id;
   recordFormApi.resetForm();
   recordDrawerApi.open();
@@ -386,6 +337,15 @@ const [CreateForm, createFormApi] = useVbenForm({
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
     const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '发布中...'});
+
+    // ========== 新增开始时间与结束时间的校验 ==========
+    if (values.startTime && values.endTime && values.endTime <= values.startTime) {
+      ElMessage.error('结束时间必须晚于开始时间');
+      loading.close();
+      return;
+    }
+    // ================================================
+
     try {
       let res;
       if (isEditMode.value) res = await updateMoralActivity({...values, id: currentEditId.value});
@@ -426,7 +386,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
             status: detail.status,
             content: detail.content,
             remark: detail.remark,
-            photo: detail.photo || '',   // 新增 photo 回显
+            photo: detail.photo || '',
           });
         } catch (error) {
           console.error('加载详情失败', error);
@@ -440,6 +400,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   },
 });
 
+// 为 createForm 的 hostDept 字段注入写死的选项
 watch(createFormApi, (api) => {
   if (api && deptOptions.value.length) {
     const schema = api.getSchema();
@@ -473,7 +434,6 @@ const [RecordForm, recordFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 详情抽屉
 const moralActivityDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -481,26 +441,27 @@ function handleOpenDetail(row) {
   moralActivityDetailDrawerRef.value.open();
 }
 
-// 查询表单
+// 查询表单：注入写死的部门选项
 const [QueryForm] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
     delete v.rules;
-    if (v.fieldName === 'hostDept') v.componentProps.options = deptOptions.value;
+    if (v.fieldName === 'hostDept') {
+      v.componentProps.options = deptOptions.value;
+    }
     return v;
   }),
   showCollapseButton: true,
   submitButtonOptions: {content: '查询'},
 });
 
-// VxeGrid
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
@@ -522,8 +483,26 @@ const showChart = ref(true);
 const toggleChart = () => {
   showChart.value = !showChart.value;
 };
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'activityType') {
+    handleFilterTagClick('activityType', value);
+  } else if (type === 'status') {
+    handleFilterTagClick('status', value);
+  } else if (type === 'createTime') {
+    handleFilterTagClick('createTime', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('moral-activity-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('moral-activity-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -564,9 +543,7 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
@@ -601,7 +578,6 @@ defineExpose({handleFilterTagClick, clearFilters});
                  type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
-
       <template #startTime="{ row }">
         <el-text>{{ formatTimestamp(row.startTime) }}</el-text>
       </template>

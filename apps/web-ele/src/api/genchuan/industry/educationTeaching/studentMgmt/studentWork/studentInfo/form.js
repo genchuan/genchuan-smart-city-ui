@@ -35,6 +35,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择学籍状态',
+        clearable: true,
         options: [
           { label: '在籍', value: '在籍' },
           { label: '休学', value: '休学' },

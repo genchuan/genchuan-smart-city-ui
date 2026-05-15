@@ -499,7 +499,7 @@ async function handleFormConfirm() {
   }
 
   formDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -559,11 +559,15 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     proxyConfig: {
       ajax: {
-        query: async ({ page }) => {
+        query: async ({ page }, formValues = {}) => {
+          const query = sanitizeParams({
+            ...appliedQuery.value,
+            ...formValues,
+          });
           return await pageApi[`get${apiName}Page`]({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
-            ...appliedQuery.value,
+            ...query,
           });
         },
       },
@@ -597,16 +601,17 @@ function handleCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
-function handleRefresh() {
+function handleRefresh(query = appliedQuery.value) {
+  const nextQuery = sanitizeParams(query);
   if (gridApi.query) {
-    gridApi.query();
+    gridApi.query(nextQuery);
   } else {
-    gridApi.reload?.();
+    gridApi.reload?.(nextQuery);
   }
-  loadChart();
+  loadChart(nextQuery);
 }
 
-async function loadChart() {
+async function loadChart(query = appliedQuery.value) {
   if (
     !pageConfig.chart ||
     typeof pageApi[`get${apiName}Chart`] !== 'function'
@@ -616,7 +621,7 @@ async function loadChart() {
   chartLoading.value = true;
   try {
     chartData.value =
-      (await pageApi[`get${apiName}Chart`](appliedQuery.value)) || {};
+      (await pageApi[`get${apiName}Chart`](sanitizeParams(query))) || {};
   } finally {
     chartLoading.value = false;
   }
@@ -625,14 +630,14 @@ async function loadChart() {
 async function handleQuerySubmit() {
   appliedQuery.value = sanitizeParams(queryFormApi.form.values || {});
   searchDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleResetSearch() {
   appliedQuery.value = {};
   await queryFormApi.resetForm();
   searchDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 function handleCreate() {
@@ -697,7 +702,7 @@ async function handleBind(row) {
     id: row.id,
   });
   ElMessage.success('绑定成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleSave() {
@@ -707,7 +712,7 @@ async function handleSave() {
   }
   await pageApi[`save${apiName}`]({ ids: checkedIds.value });
   ElMessage.success('保存成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleResetConfig() {
@@ -721,7 +726,7 @@ async function handleResetConfig() {
   );
   await pageApi[`reset${apiName}`]({ stationId: Number(value) });
   ElMessage.success('重置成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleBatchSync() {
@@ -731,7 +736,7 @@ async function handleBatchSync() {
   }
   await pageApi[`batchSync${apiName}`]({ ids: checkedIds.value });
   ElMessage.success('批量同步成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleExport(extraParams = {}) {
@@ -867,22 +872,26 @@ function handleRowAction(action, row) {
     return ElMessage.warning(`已触发告警：${row[primaryField] || row.id}`);
 }
 
-async function applySearchPatch(patch) {
+async function syncQueryForm(values = {}) {
+  const nextValues = sanitizeParams(values);
+  try {
+    await queryFormApi.resetForm();
+    if (!isEmpty(nextValues)) {
+      await queryFormApi.setValues(nextValues);
+    }
+  } catch (error) {
+    console.warn('Failed to set form values', error);
+  }
+}
+function applySearchPatch(patch) {
   const nextQuery = sanitizeParams({
     ...appliedQuery.value,
     ...patch,
   });
   appliedQuery.value = nextQuery;
-  handleRefresh();
+  handleRefresh(nextQuery);
   nextTick(() => {
-    try {
-      const result = queryFormApi.setValues(nextQuery);
-      Promise.resolve(result).catch((error) => {
-        console.warn('Failed to set form values', error);
-      });
-    } catch (error) {
-      console.warn('Failed to set form values', error);
-    }
+    syncQueryForm(nextQuery);
   });
 }
 
@@ -902,24 +911,18 @@ function getTagDisplayText(field, value) {
   return value;
 }
 
-function removeFilterTag(field) {
+async function removeFilterTag(field) {
   const nextQuery = { ...appliedQuery.value };
   delete nextQuery[field];
-  appliedQuery.value = nextQuery;
-  try {
-    queryFormApi.setValues(nextQuery);
-  } catch (error) {
-    console.warn('Failed to set form values', error);
-  }
-  nextTick(() => {
-    handleRefresh();
-  });
+  appliedQuery.value = sanitizeParams(nextQuery);
+  await syncQueryForm(appliedQuery.value);
+  handleRefresh(appliedQuery.value);
 }
 
-function clearFilters() {
+async function clearFilters() {
   appliedQuery.value = {};
-  queryFormApi.resetForm();
-  handleRefresh();
+  await syncQueryForm({});
+  handleRefresh(appliedQuery.value);
 }
 
 function getCellDisplayText(column, row) {
@@ -1034,8 +1037,11 @@ function handleToggleOverview() {
   showOverview.value = !showOverview.value;
 }
 
-function handleOpenSearch() {
+async function handleOpenSearch() {
+  await syncQueryForm(appliedQuery.value);
   searchDrawerApi.open();
+  await nextTick();
+  await syncQueryForm(appliedQuery.value);
 }
 
 function handleFullScreen() {
@@ -1290,8 +1296,8 @@ defineExpose({
   .station-overview {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding-bottom: 12px;
+    gap: 8px;
+    padding-bottom: 8px;
   }
 
   .station-map-wrap {

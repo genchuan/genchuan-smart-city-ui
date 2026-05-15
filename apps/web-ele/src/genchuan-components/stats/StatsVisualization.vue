@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { nextTick, onActivated, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -59,9 +59,19 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits([
+  'barClick',
+  'cardClick',
+  'chartClick',
+  'lineClick',
+  'pieClick',
+]);
+
+const rootRef = ref(null);
 const chartRefs = ref({});
 const chartInstances = ref({});
 const showMap = ref(false);
+let resizeObserver;
 const toggleView = () => {
   showMap.value = !showMap.value;
   // 当切换回图表视图时，重新初始化图表
@@ -87,7 +97,46 @@ const initCharts = () => {
 
     const option = getChartOption(chart);
     chartInstance.setOption(option);
+    chartInstance.off('click');
+    chartInstance.on('click', (params) => {
+      const payload = {
+        chart,
+        dataIndex: params.dataIndex,
+        name: String(params.name || ''),
+        value: params.value,
+      };
+
+      switch (chart.type) {
+        case 'bar': {
+          emit('barClick', payload);
+          break;
+        }
+        case 'line': {
+          emit('lineClick', payload);
+          break;
+        }
+        case 'pie': {
+          emit('pieClick', payload);
+          break;
+        }
+        // No default
+      }
+
+      emit('chartClick', payload);
+
+      if (typeof chart.onClick === 'function') {
+        chart.onClick(payload);
+      }
+    });
   });
+};
+
+const handleCardClick = (card, index) => {
+  emit('cardClick', { card, index, type: card.type });
+
+  if (typeof card.onClick === 'function') {
+    card.onClick({ card, index });
+  }
 };
 
 const getChartOption = (chart) => {
@@ -120,9 +169,6 @@ const getChartOption = (chart) => {
   };
 
   if (chart.type === 'pie') {
-    // 计算数据总和用于百分比计算
-    const total = chart.data.reduce((sum, item) => sum + item.value, 0);
-
     option.title = {
       text: chart.title,
       left: 'center',
@@ -311,21 +357,40 @@ const handleResize = () => {
   });
 };
 
+const refreshCharts = async () => {
+  await nextTick();
+  initCharts();
+  await nextTick();
+  handleResize();
+};
+
 watch(
   () => props.data,
   () => {
-    initCharts();
+    void refreshCharts();
   },
   { deep: true, immediate: true },
 );
 
 onMounted(() => {
-  initCharts();
+  void refreshCharts();
   window.addEventListener('resize', handleResize);
+
+  if (typeof ResizeObserver !== 'undefined' && rootRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+    resizeObserver.observe(rootRef.value);
+  }
+});
+
+onActivated(() => {
+  void refreshCharts();
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
+  resizeObserver?.disconnect();
   Object.values(chartInstances.value).forEach((chartInstance) => {
     chartInstance.dispose();
   });
@@ -333,16 +398,18 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="park-chart-box">
+  <div ref="rootRef" class="park-chart-box">
     <!-- 卡片区域 -->
     <div class="chart-box-left">
       <div
         v-for="(card, index) in data.cards"
         :key="`card-${index}`"
         class="stat-card"
+        :class="{ 'stat-card-clickable': typeof card.onClick === 'function' }"
         :style="{
           borderLeftColor: card.color || '#13ce66',
         }"
+        @click="handleCardClick(card, index)"
       >
         <div class="card-header">
           <h3 class="card-title">{{ card.title }}</h3>
@@ -418,6 +485,10 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 16px;
   width: 200px;
+}
+
+.stat-card-clickable {
+  cursor: pointer;
 }
 
 .charts-wrapper {

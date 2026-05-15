@@ -259,7 +259,7 @@ export function useGridColumns() {
       title: '商品数量',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'goodsCount' },
+      // slots: { default: 'goodsCount' },
     },
     {
       field: 'scopeName',
@@ -287,7 +287,7 @@ export function useGridColumns() {
       title: '审核人',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'auditorName' },
+      // slots: { default: 'auditorName' },
     },
     {
       field: 'auditTime',

@@ -1,5 +1,6 @@
 import type { PageParam, PageResult } from '@vben/request';
 
+import { normalizeQueryDateTimeRanges } from '#/api/genchuan/industry/chargePark/userMerchant/utils/query';
 import { requestClient } from '#/api/request';
 
 // 会员标签 VO
@@ -41,7 +42,12 @@ export const MemberTagApi = {
   getMemberTagPage: async (params: MemberTagPageReqVO) => {
     return await requestClient.get<PageResult<MemberTagVO>>(
       '/usermerchant/member-tag/page',
-      { params },
+      {
+        params: normalizeQueryDateTimeRanges(params, [
+          'createTime',
+          'updateTime',
+        ]),
+      },
     );
   },
 
@@ -70,7 +76,10 @@ export const MemberTagApi = {
 
   exportMemberTag: async (params: MemberTagPageReqVO) => {
     return await requestClient.download('/usermerchant/member-tag/export', {
-      params,
+      params: normalizeQueryDateTimeRanges(params, [
+        'createTime',
+        'updateTime',
+      ]),
     });
   },
 

@@ -1,11 +1,11 @@
 <script setup>
-import {computed, reactive, ref, watch, nextTick, onMounted} from 'vue';
-import {confirm, useVbenDrawer} from '@vben/common-ui';
-import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
+import { computed, reactive, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
-import {useVbenForm} from '#/adapter/form';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
-import {downloadFileFromBlobPart} from '@vben/utils';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import FundDetailDrawer from './components/fundDetail.vue';
 import {
   getFundSystemPage,
@@ -14,7 +14,7 @@ import {
   auditFundSystem,
   exportFundSystem,
   getFundSystemDetail,
-  getStudentOptions,
+  // getStudentOptions 已删除
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/studentWork/fundSystem/data.js';
 import {
   textObj,
@@ -23,16 +23,10 @@ import {
   useCreateFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/studentWork/fundSystem/form.js';
 
-// 辅助函数：状态标签类型
 const getStatusType = (status) => {
-  const map = {
-    '待审核': 'warning',
-    '已汇总': 'success',
-  };
+  const map = {'待审核': 'warning', '已汇总': 'success'};
   return map[status] || 'info';
 };
-
-// 时间戳格式化
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
   const date = new Date(parseInt(timestamp));
@@ -45,8 +39,6 @@ const formatTimestamp = (timestamp) => {
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 };
-
-// 提取日期部分
 const getDateFromTimestamp = (timestamp) => {
   if (!timestamp) return '';
   const date = new Date(parseInt(timestamp));
@@ -56,8 +48,6 @@ const getDateFromTimestamp = (timestamp) => {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
-
-// 格式化金额
 const formatMoney = (amount) => {
   if (amount === null || amount === undefined) return '-';
   return `¥${parseFloat(amount).toFixed(2)}`;
@@ -70,30 +60,34 @@ const emit = defineEmits(['arrow-change']);
 const tagFilters = ref({});
 
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query();
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -102,7 +96,7 @@ function getFieldLabel(field) {
     fundType: '资助类型',
     status: '状态',
     creator: '创建人',
-    createTime: '创建时间',
+    createTime: '创建时间'
   };
   return map[field] || field;
 }
@@ -116,7 +110,7 @@ function getTagDisplayText(field, value) {
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
 
 const dataObj = reactive({
@@ -143,82 +137,30 @@ const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
 
-// 学生选项
-const studentOptions = ref([]);
-const loadStudentOptions = async () => {
-  const res = await getStudentOptions();
-  studentOptions.value = res;
-};
+const createFormSchemaStatic = useCreateFormSchema();
 
-// 动态生成申请表单 schema（包含实时学生选项）
-const createFormSchema = computed(() => {
-  const schema = useCreateFormSchema();
-  // 为学生选择框注入选项
-  const studentField = schema.find(item => item.fieldName === 'studentId');
-  if (studentField) {
-    studentField.componentProps.options = studentOptions.value;
-  }
-  return schema;
-});
-
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-
-    const res = await getFundSystemPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'grade':
-            itemValue = item.grade;
-            break;
-          case 'fundType':
-            itemValue = item.fundType;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getFundSystemPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取资助申请列表失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -227,47 +169,39 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportFundSystem(searchParams.value);
-      downloadFileFromBlobPart({fileName: '资助系统列表.xls', source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportFundSystem(searchParams.value);
+    downloadFileFromBlobPart({fileName: '资助系统列表.xls', source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
 // 批量审核
 async function handleBatchAudit() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一条资助申请');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一条资助申请');
   const selectedRows = checkedRows.value.filter(row => row.status === '待审核');
-  if (selectedRows.length === 0) {
-    ElMessage.warning('请选择状态为【待审核】的资助申请');
-    return;
-  }
+  if (selectedRows.length === 0) return ElMessage.warning('请选择状态为【待审核】的资助申请');
   try {
     await ElMessageBox.confirm(`确认审核选中的 ${selectedRows.length} 条资助申请？审核后状态将变为"已汇总"。`, '批量审核确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
@@ -286,35 +220,25 @@ async function handleBatchAudit() {
   }
 }
 
-// 打开申请抽屉
 function handleCreate() {
-  try {
-    isEditMode.value = false;
-    currentEditId.value = null;
-    createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
-  } catch (error) {
-    console.error('打开申请抽屉失败:', error);
-    ElMessage.error('打开申请表单失败，请刷新页面重试');
-  }
+  isEditMode.value = false;
+  currentEditId.value = null;
+  createDrawerApi.open();
 }
 
 function handleEdit(row) {
   isEditMode.value = true;
   currentEditId.value = row.id;
-  createDrawerApi.open(); // 打开抽屉，数据填充由 onOpenChange 负责
+  createDrawerApi.open();
 }
 
-// 单行审核
 async function handleAudit(row) {
-  if (row.status !== '待审核') {
-    ElMessage.warning('只有待审核状态的资助申请可以审核');
-    return;
-  }
+  if (row.status !== '待审核') return ElMessage.warning('只有待审核状态的资助申请可以审核');
   try {
-    await ElMessageBox.confirm(`确认审核资助申请（学生：${row.studentId}，类型：${row.fundType}）？审核后状态将变为"已汇总"。`, '审核确认', {
+    await ElMessageBox.confirm(`确认审核资助申请（学号：${row.studentId}，类型：${row.fundType}）？审核后状态将变为"已汇总"。`, '审核确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
-      type: 'warning',
+      type: 'warning'
     });
     const loading = ElLoading.service({text: '审核中...'});
     try {
@@ -341,12 +265,9 @@ const [CreateForm, createFormApi] = useVbenForm({
     try {
       let res;
       if (isEditMode.value) {
-        // 编辑时传递 status（表单中已包含）
         res = await updateFundSystem({...values, id: currentEditId.value});
       } else {
-        // 新增时确保 status 字段存在（默认待审核）
-        const submitData = {...values, status: values.status || '待审核'};
-        res = await createFundSystem(submitData);
+        res = await createFundSystem({...values, status: values.status || '待审核'});
       }
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '申请成功');
@@ -360,26 +281,24 @@ const [CreateForm, createFormApi] = useVbenForm({
     }
   },
   layout: 'horizontal',
-  schema: createFormSchema,  // 使用响应式计算属性，确保学生选项动态更新
+  schema: createFormSchemaStatic,
   showCollapseButton: false,
   submitButtonOptions: {content: computed(() => isEditMode.value ? '保存' : '申请')},
 });
 
-// 修复的核心：在抽屉打开时重置表单并加载编辑数据
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
   onCancel: () => createDrawerApi.close(),
   async onOpenChange(isOpen) {
     if (isOpen) {
-      // 每次打开前先重置表单（清空值 + 清除校验错误）
       await createFormApi.resetForm();
-      // 如果是编辑模式，则填充数据
       if (isEditMode.value && currentEditId.value) {
         try {
           const detail = await getFundSystemDetail({id: currentEditId.value});
+          // 注意：detail.studentId 可能是数字或字符串，InputNumber 需要 number 类型
           await createFormApi.setValues({
-            studentId: detail.studentId,
+            studentId: Number(detail.studentId),
             fundType: detail.fundType,
             applyAmount: detail.applyAmount,
             applyTime: detail.applyTime,
@@ -389,17 +308,15 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
         } catch (error) {
           console.error('加载详情失败', error);
           ElMessage.error('加载详情失败，请检查网络或联系管理员');
-          createDrawerApi.close(); // 加载失败则关闭抽屉
+          createDrawerApi.close();
         }
       } else {
-        // 新增模式：设置默认状态为“待审核”
         await createFormApi.setValues({status: '待审核'});
       }
     }
   },
 });
 
-// 查看详情
 const fundDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -413,7 +330,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -443,27 +360,38 @@ watch(activeName, (newVal) => {
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
   else gridApi.setGridOptions?.({columns: gridColumns.value});
-  gridApi.reload();
+  gridApi.query();
 });
 
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 const showChart = ref(true);
 const toggleChart = () => {
   showChart.value = !showChart.value;
 };
-
 defineExpose({handleFilterTagClick, clearFilters});
 
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'status') {
+    handleFilterTagClick('status', value);
+  } else if (type === 'grade') {
+    handleFilterTagClick('grade', value);
+  }
+};
+
 onMounted(() => {
-  loadStudentOptions();
+  window.addEventListener('fund-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('fund-chart-filter', handleChartFilter);
 });
 </script>
 
 <template>
-  <div class="park-lot-table-new">
+  <div class="tools-table-new">
     <FundDetailDrawer ref="fundDetailDrawerRef" :detail-obj="dataObj.detailObj"
                       @refresh="handleRefresh"/>
     <Drawer title="搜索">
@@ -494,9 +422,7 @@ onMounted(() => {
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
-          <IconButton :content="showChart ? '隐藏图表' : '显示图表'" icon-name="PieChart"
-                      @click="toggleChart"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 

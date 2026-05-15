@@ -6,6 +6,7 @@ import type { UserOpReportDetailVO } from '#/api/genchuan/industry/chargePark/us
 import { computed, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import {
   ElButton,
@@ -58,6 +59,9 @@ const generateFilterPlaceholder =
 const generateForm = ref({
   filterCondition: '',
   remark: '',
+  reportCycle: '自定义报表',
+  statEndTime: '',
+  statStartTime: '',
 });
 const filterReportType = ref('');
 const searchParams = ref<Record<string, any>>({});
@@ -161,8 +165,8 @@ async function queryUserOpReportPage(
   formValues: Record<string, any> = {},
 ) {
   const queryValues = {
-    ...searchParams.value,
     ...formValues,
+    ...searchParams.value,
   };
 
   if (filterReportType.value) {
@@ -185,9 +189,7 @@ async function queryUserOpReportPage(
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: getGridColumns(),
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
-    height: 'auto',
     proxyConfig: {
       ajax: {
         query: queryUserOpReportPage,
@@ -198,6 +200,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
@@ -233,7 +236,7 @@ async function setSearchValues(values: Record<string, any>) {
     ...values,
   };
   filterReportType.value = '';
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   return gridApi.reload();
 }
 
@@ -280,9 +283,10 @@ async function handleExport() {
   }
 
   try {
-    await UserOpReportApi.exportUserOpReport(
+    const data = await UserOpReportApi.exportUserOpReport(
       buildUserOpReportQueryParams(exportValues),
     );
+    downloadFileFromBlobPart({ fileName: '用户运营报表.xls', source: data });
     ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
@@ -293,11 +297,15 @@ async function handleExport() {
 /** 导出单条报表 */
 async function handleExportRow(row: UserOpReportRow) {
   try {
-    await UserOpReportApi.exportUserOpReport({
+    const data = await UserOpReportApi.exportUserOpReport({
       createTime: row.createTime,
       reportType: row.reportType,
       statTime: row.statTime,
       timeScale: row.timeScale,
+    });
+    downloadFileFromBlobPart({
+      fileName: `用户运营报表_${row.reportType || row.id}.xls`,
+      source: data,
     });
     ElMessage.success('导出成功');
   } catch (error) {
@@ -352,11 +360,17 @@ async function handleConfirmGenerate() {
     await UserOpReportApi.generateUserOpReport({
       filterCondition: generateForm.value.filterCondition.trim(),
       remark: generateForm.value.remark.trim(),
+      reportCycle: generateForm.value.reportCycle,
+      statEndTime: generateForm.value.statEndTime || undefined,
+      statStartTime: generateForm.value.statStartTime || undefined,
     });
     generateDialogVisible.value = false;
     generateForm.value = {
       filterCondition: '',
       remark: '',
+      reportCycle: '自定义报表',
+      statEndTime: '',
+      statStartTime: '',
     };
     ElMessage.success('自定义报表已生成');
     await handleReloadPage();
@@ -370,102 +384,100 @@ async function handleConfirmGenerate() {
 </script>
 
 <template>
-  <div class="user-op-report-table">
-    <div class="user-op-report-grid-wrap">
-      <Grid>
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton
-              content="生成自定义报表"
-              icon-name="Plus"
-              @click="() => (generateDialogVisible = true)"
-            />
-            <IconButton
-              content="导出"
-              icon-name="download"
-              @click="handleExport"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSerachShow"
-            />
-            <IconButton
-              :content="props.showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="props.toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
+  <div class="park-lot-table-new user-merchant-table-grid">
+    <Grid>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton
+            content="生成自定义报表"
+            icon-name="Plus"
+            @click="() => (generateDialogVisible = true)"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
+      </template>
 
-        <template #reportType="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleReportFieldDrill('reportType', row.reportType)"
-          >
-            {{ row.reportType }}
-          </el-text>
-        </template>
+      <template #reportType="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleReportFieldDrill('reportType', row.reportType)"
+        >
+          {{ row.reportType }}
+        </el-text>
+      </template>
 
-        <template #timeScale="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleReportFieldDrill('reportTimeScale', row.timeScale)"
-          >
-            {{ row.timeScale }}
-          </el-text>
-        </template>
+      <template #timeScale="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleReportFieldDrill('reportTimeScale', row.timeScale)"
+        >
+          {{ row.timeScale }}
+        </el-text>
+      </template>
 
-        <template #statTime="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleReportFieldDrill('statTime', row.statTime)"
-          >
-            {{ row.statTime }}
-          </el-text>
-        </template>
+      <template #statTime="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleReportFieldDrill('statTime', row.statTime)"
+        >
+          {{ row.statTime }}
+        </el-text>
+      </template>
 
-        <template #filterCondition="{ row }">
-          <span>{{ row.filterCondition || '-' }}</span>
-        </template>
+      <template #filterCondition="{ row }">
+        <span>{{ row.filterCondition || '-' }}</span>
+      </template>
 
-        <template #status="{ row }">
-          <ElTag
-            :type="getStatusTagType(row.status)"
-            style="cursor: pointer"
-            @click="handleReportFieldDrill('reportStatus', row.status)"
-          >
-            {{ row.status }}
-          </ElTag>
-        </template>
+      <template #status="{ row }">
+        <ElTag
+          :type="getStatusTagType(row.status)"
+          style="cursor: pointer"
+          @click="handleReportFieldDrill('reportStatus', row.status)"
+        >
+          {{ row.status }}
+        </ElTag>
+      </template>
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="详情"
-              icon-name="View"
-              @click="handleOpenDetail(row)"
-            />
-            <IconButton
-              content="导出"
-              icon-name="download"
-              @click="handleExportRow(row)"
-            />
-          </div>
-        </template>
-      </Grid>
-    </div>
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExportRow(row)"
+          />
+        </div>
+      </template>
+    </Grid>
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -561,23 +573,6 @@ async function handleConfirmGenerate() {
 </template>
 
 <style scoped lang="scss">
-.user-op-report-table,
-.user-op-report-grid-wrap {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.user-op-report-table {
-  display: flex;
-  flex-direction: column;
-}
-
-.user-op-report-grid-wrap {
-  flex: 1;
-  min-height: 0;
-}
-
 .report-detail-body {
   display: flex;
   flex-direction: column;
@@ -611,16 +606,5 @@ async function handleConfirmGenerate() {
 
 .generate-required {
   color: var(--el-color-danger);
-}
-
-:deep(.vxe-grid) {
-  height: 100% !important;
-}
-
-:deep(.vxe-grid--layout-body-wrapper),
-:deep(.vxe-grid--layout-body-content-wrapper),
-:deep(.vxe-grid--table-container),
-:deep(.vxe-grid--table-wrapper) {
-  min-height: 0;
 }
 </style>

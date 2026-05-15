@@ -12,8 +12,7 @@ const loading = ref(true);
 const chartData = ref({});
 const indexData = ref({});
 
-// 年份选择器相关
-const currentYear = ref(new Date().getFullYear()); // 默认当前年份
+const currentYear = ref(new Date().getFullYear());
 const yearOptions = () => {
   const current = new Date().getFullYear();
   const years = [];
@@ -23,7 +22,6 @@ const yearOptions = () => {
   return years;
 };
 
-// 监听年份变化，重新加载数据
 watch(currentYear, () => {
   loadData();
 });
@@ -53,10 +51,30 @@ const barData = computed(() => {
   };
 });
 
-const emit = defineEmits(['cardSelect', 'barSelect']);
-
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
 const handleCardClick = (cardInfo) => {
-  emit('cardSelect', cardInfo.status);
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'assigned':
+      filterType = 'status';
+      filterValue = '已分配';
+      break;
+    case 'empty':
+    case 'rate':
+    default:
+      // 空余床位和分配完成率不触发筛选
+      return;
+  }
+  window.dispatchEvent(new CustomEvent('dormassign-chart-filter', {
+    detail: {type: filterType, value: filterValue}
+  }));
+};
+
+const handleBarClick = (buildingName) => {
+  window.dispatchEvent(new CustomEvent('dormassign-chart-filter', {
+    detail: {type: 'dormNum', value: buildingName}
+  }));
 };
 
 const loadData = async () => {
@@ -66,9 +84,8 @@ const loadData = async () => {
       getDormAssignChart({year: currentYear.value}),
       getDormAssignIndex({year: currentYear.value}),
     ]);
-    if (chartRes.status === 'fulfilled') {
-      chartData.value = chartRes.value;
-    } else {
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else {
       chartData.value = {
         waitAssignCount: 40,
         finishedCount: 280,
@@ -79,9 +96,8 @@ const loadData = async () => {
         buildingBedCountList: [90, 80, 75, 75],
       };
     }
-    if (indexRes.status === 'fulfilled') {
-      indexData.value = indexRes.value;
-    } else {
+    if (indexRes.status === 'fulfilled') indexData.value = indexRes.value;
+    else {
       indexData.value = {
         totalStudentCount: 320,
         assignedCount: 280,
@@ -108,17 +124,11 @@ onMounted(() => {
                  @click="handleCardClick"/>
     </div>
 
-    <!-- 柱状图区域（含年份选择器） -->
     <div class="bar-chart-container" style="flex: 2 !important; position: relative;">
-      <!-- 年份选择器（紧凑样式，位于右上角） -->
       <div class="year-select-wrapper">
         <el-select v-model="currentYear" size="small">
-          <el-option
-            v-for="opt in yearOptions()"
-            :key="opt.value"
-            :label="opt.label"
-            :value="opt.value"
-          />
+          <el-option v-for="opt in yearOptions()" :key="opt.value" :label="opt.label"
+                     :value="opt.value"/>
         </el-select>
       </div>
       <Bar
@@ -126,7 +136,7 @@ onMounted(() => {
         :x-data="barData.xData"
         :series-data="barData.seriesData"
         y-name="人数"
-        @bar-click="(name) => emit('barSelect', { field: 'building', value: name })"
+        @bar-click="handleBarClick"
       />
     </div>
   </div>
@@ -150,7 +160,6 @@ onMounted(() => {
     margin: 0;
   }
 
-  /* 柱状图容器特殊样式，用于绝对定位年份选择器 */
   .bar-chart-container {
     position: relative;
     flex: 2;
@@ -165,7 +174,6 @@ onMounted(() => {
     z-index: 10;
   }
 
-  /* 紧凑的年份选择器样式 */
   :deep(.el-select) {
     width: 100px;
   }

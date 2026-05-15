@@ -14,6 +14,8 @@ import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
+const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+
 export type MerchantLinkStatus = '已对接' | '未对接';
 
 export interface SyncLog {
@@ -391,12 +393,15 @@ export function buildMerchantLinkRowFromApi(
   fallback: Partial<MerchantLinkRow> = {},
   merchantLookup: Record<number, Partial<MerchantProfileInfo>> = {},
 ): MerchantLinkRow {
+  const merchantId = Number(
+    data.merchantId ?? data.merchantInfo?.id ?? fallback.merchantId ?? 0,
+  );
   const merchantProfile = buildMerchantProfile(
     data.merchantInfo
       ? {
           address: data.merchantInfo.address,
           contact: data.merchantInfo.contact,
-          id: data.merchantInfo.id || data.merchantId,
+          id: data.merchantInfo.id || merchantId,
           merchantType: data.merchantInfo.merchantType,
           name: data.merchantInfo.name,
           phone: data.merchantInfo.phone,
@@ -405,7 +410,10 @@ export function buildMerchantLinkRowFromApi(
           status: data.merchantInfo.status,
         }
       : undefined,
-    fallback,
+    {
+      ...fallback,
+      merchantId,
+    },
     merchantLookup,
   );
 
@@ -420,7 +428,7 @@ export function buildMerchantLinkRowFromApi(
     linkType: data.linkType || fallback.linkType || '-',
     merchantAddress: merchantProfile.address,
     merchantContact: merchantProfile.contact,
-    merchantId: Number(data.merchantId ?? fallback.merchantId ?? 0),
+    merchantId,
     merchantName: merchantProfile.name,
     merchantPhone: merchantProfile.phone,
     merchantRegisterTime: merchantProfile.registerTime,
@@ -525,7 +533,10 @@ function buildRangeParam(value: any) {
     return undefined;
   }
 
-  return `${dayjs(value[0]).format('YYYY-MM-DD HH:mm:ss')},${dayjs(value[1]).format('YYYY-MM-DD HH:mm:ss')}`;
+  return [
+    dayjs(value[0]).format(QUERY_TIME_FORMAT),
+    dayjs(value[1]).format(QUERY_TIME_FORMAT),
+  ];
 }
 
 /**

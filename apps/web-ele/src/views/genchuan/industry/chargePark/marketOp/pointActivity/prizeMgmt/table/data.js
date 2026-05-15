@@ -1,8 +1,16 @@
+import { ref } from 'vue';
+
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import { getPointActivitySimpleList } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
+
+import {
+  getPointActivityStatusTagType,
+  getPointActivityTypeTagType,
+} from '../../pointActivity/table/data';
 
 /** 获取奖品类型标签类型 */
 export function getPrizeTypeTagType(type) {
@@ -26,6 +34,34 @@ export function getPrizeTypeLabel(type) {
 export function getPrizeStatusLabel(status) {
   const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_STATUS, String(status));
   return dict ? dict.label : status;
+}
+
+/** 动态活动选项（从接口获取） */
+export const dynamicActivityOptions = ref([]);
+
+/** 获取当前可用的活动选项 */
+export function getCurrentActivityOptions() {
+  return dynamicActivityOptions.value.length > 0
+    ? dynamicActivityOptions.value
+    : [];
+}
+
+/** 获取活动精简列表 */
+export async function fetchActivityOptions() {
+  try {
+    const res = await getPointActivitySimpleList();
+    if (res && Array.isArray(res)) {
+      // 将接口返回数据转换为 Select 组件需要的格式
+      dynamicActivityOptions.value = res.map((item) => ({
+        label: item.name,
+        value: String(item.id),
+      }));
+      return dynamicActivityOptions.value;
+    }
+  } catch (error) {
+    console.error('获取活动列表失败:', error);
+  }
+  return [];
 }
 
 /** 奖品管理静态数据 - 参照接口返回格式 */
@@ -218,14 +254,13 @@ export function useSearchFormSchema() {
     },
     {
       fieldName: 'activityId',
-      label: '绑定活动',
+      label: '关联活动',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择绑定活动',
+        placeholder: '请选择关联活动',
         options: [],
         clearable: true,
         filterable: true,
-        remote: true,
       },
     },
     {
@@ -291,7 +326,6 @@ export function useGridColumns() {
       title: '发放量',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'sendCount' },
     },
     {
       field: 'syncTime',
@@ -372,14 +406,13 @@ export function useFormSchema(isEdit = false) {
     },
     {
       fieldName: 'activityId',
-      label: '关联活动',
+      label: '绑定活动',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择关联活动',
+        placeholder: '请选择绑定活动',
         options: [],
         clearable: true,
         filterable: true,
-        remote: true,
       },
     },
   ];
@@ -392,6 +425,45 @@ export const textObj = {
   excelAllName: '奖品数据.xlsx',
   total: ' 总计: 奖品数量8;启用:6;禁用:2',
 };
+
+/** 活动详情字段配置 - 1:1 参照 pointActivity 的 detailFields 配置 */
+export const activityDetailFields = [
+  // { key: 'id', label: '活动ID' },
+  { key: 'name', label: '活动名称' },
+  {
+    key: 'type',
+    label: '活动类型',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.POINT_ACTIVITY_TYPE, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => getPointActivityTypeTagType(value),
+  },
+  { key: 'startTimeStr', label: '开始时间' },
+  { key: 'endTimeStr', label: '结束时间' },
+  { key: 'rule', label: '积分规则' },
+  { key: 'description', label: '活动描述' },
+  { key: 'stationNames', label: '适用场站' },
+  { key: 'joinCount', label: '参与人数' },
+  { key: 'auditorName', label: '审核人' },
+  { key: 'auditTimeStr', label: '审核时间' },
+  { key: 'remainPoint', label: '剩余积分额度' },
+  {
+    key: 'status',
+    label: '活动状态',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.POINT_ACTIVITY_STATUS, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => getPointActivityStatusTagType(value),
+  },
+  // { key: 'creator', label: '创建者' },
+  { key: 'updater', label: '更新者' },
+  { key: 'createTimeStr', label: '创建时间' },
+  { key: 'updateTimeStr', label: '更新时间' },
+];
 
 /** 详情抽屉字段配置 - 使用与表格相同的字典颜色逻辑 */
 export const detailFields = [

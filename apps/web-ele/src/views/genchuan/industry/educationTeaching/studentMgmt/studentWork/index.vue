@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, nextTick } from 'vue';
-import { ElMessage } from 'element-plus';
+import {ref, computed, nextTick} from 'vue';
+import {ElMessage} from 'element-plus';
 import workHome from './workHome/index.vue';
 import workHomeChart from './workHome/components/chart.vue';
 import studentInfo from './studentInfo/index.vue';
@@ -42,16 +42,96 @@ const tabArray = ref([
     arrowShow: true,
     arrowState: false,
   },
-  { label: '学生信息', components: studentInfo, chartComponent: studentInfoChart, showSecondary: true, secondShow: false, arrowShow: true, arrowState: false },
-  { label: '荣誉管理', components: honorMgmt, chartComponent: honorMgmtChart, showSecondary: true, secondShow: false, arrowShow: true, arrowState: false },
-  { label: '考评管理', components: assessMgmt, chartComponent: assessMgmtChart, showSecondary: true, secondShow: false, arrowShow: true, arrowState: false },
-  { label: '违纪管理', components: violateMgmt, chartComponent: violateMgmtChart, showSecondary: true, secondShow: false, arrowShow: true, arrowState: false },
-  { label: '心理管理', components: mentalMgmt, chartComponent: mentalMgmtChart, showSecondary: true, secondShow: false, arrowShow: true, arrowState: false },
-  { label: '行为管理', components: behaviorMgmt, chartComponent: behaviorMgmtChart, showSecondary: true, secondShow: false, arrowShow: true, arrowState: false },
-  { label: '资助系统', components: fundSystem, chartComponent: fundSystemChart, showSecondary: true, secondShow: false, arrowShow: true, arrowState: false },
-  { label: '社团管理', components: clubMgmt, chartComponent: clubMgmtChart, showSecondary: true, secondShow: false, arrowShow: true, arrowState: false },
-  { label: '奖助勤贷', components: aidWork, chartComponent: aidWorkChart, showSecondary: true, secondShow: false, arrowShow: true, arrowState: false },
-  { label: '值班管理', components: dutyMgmt, chartComponent: dutyMgmtChart, showSecondary: true, secondShow: false, arrowShow: true, arrowState: false },
+  {
+    label: '学生信息',
+    components: studentInfo,
+    chartComponent: studentInfoChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false
+  },
+  {
+    label: '荣誉管理',
+    components: honorMgmt,
+    chartComponent: honorMgmtChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false
+  },
+  {
+    label: '考评管理',
+    components: assessMgmt,
+    chartComponent: assessMgmtChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false
+  },
+  {
+    label: '违纪管理',
+    components: violateMgmt,
+    chartComponent: violateMgmtChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false
+  },
+  {
+    label: '心理管理',
+    components: mentalMgmt,
+    chartComponent: mentalMgmtChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false
+  },
+  {
+    label: '行为管理',
+    components: behaviorMgmt,
+    chartComponent: behaviorMgmtChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false
+  },
+  {
+    label: '资助系统',
+    components: fundSystem,
+    chartComponent: fundSystemChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false
+  },
+  {
+    label: '社团管理',
+    components: clubMgmt,
+    chartComponent: clubMgmtChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false
+  },
+  {
+    label: '奖助勤贷',
+    components: aidWork,
+    chartComponent: aidWorkChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false
+  },
+  {
+    label: '值班管理',
+    components: dutyMgmt,
+    chartComponent: dutyMgmtChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false
+  },
 ]);
 
 const arrowChange = () => {
@@ -65,33 +145,57 @@ const secondShow = ref(false);
 
 // ==================== 各模块组件引用 ====================
 const workHomeRef = ref(null);
-const setWorkHomeRef = (el) => { if (el) workHomeRef.value = el; };
+const setWorkHomeRef = (el) => {
+  if (el) workHomeRef.value = el;
+};
 const studentInfoRef = ref(null);
-const setStudentInfoRef = (el) => { if (el) studentInfoRef.value = el; };
+const setStudentInfoRef = (el) => {
+  if (el) studentInfoRef.value = el;
+};
 const honorMgmtRef = ref(null);
-const setHonorMgmtRef = (el) => { if (el) honorMgmtRef.value = el; };
+const setHonorMgmtRef = (el) => {
+  if (el) honorMgmtRef.value = el;
+};
 const assessMgmtRef = ref(null);
-const setAssessMgmtRef = (el) => { if (el) assessMgmtRef.value = el; };
+const setAssessMgmtRef = (el) => {
+  if (el) assessMgmtRef.value = el;
+};
 const violateMgmtRef = ref(null);
-const setViolateMgmtRef = (el) => { if (el) violateMgmtRef.value = el; };
+const setViolateMgmtRef = (el) => {
+  if (el) violateMgmtRef.value = el;
+};
 const mentalMgmtRef = ref(null);
-const setMentalMgmtRef = (el) => { if (el) mentalMgmtRef.value = el; };
+const setMentalMgmtRef = (el) => {
+  if (el) mentalMgmtRef.value = el;
+};
 const behaviorMgmtRef = ref(null);
-const setBehaviorMgmtRef = (el) => { if (el) behaviorMgmtRef.value = el; };
+const setBehaviorMgmtRef = (el) => {
+  if (el) behaviorMgmtRef.value = el;
+};
 const fundSystemRef = ref(null);
-const setFundSystemRef = (el) => { if (el) fundSystemRef.value = el; };
+const setFundSystemRef = (el) => {
+  if (el) fundSystemRef.value = el;
+};
 const clubMgmtRef = ref(null);
-const setClubMgmtRef = (el) => { if (el) clubMgmtRef.value = el; };
+const setClubMgmtRef = (el) => {
+  if (el) clubMgmtRef.value = el;
+};
 const aidWorkRef = ref(null);
-const setAidWorkRef = (el) => { if (el) aidWorkRef.value = el; };
+const setAidWorkRef = (el) => {
+  if (el) aidWorkRef.value = el;
+};
 const dutyMgmtRef = ref(null);
-const setDutyMgmtRef = (el) => { if (el) dutyMgmtRef.value = el; };
+const setDutyMgmtRef = (el) => {
+  if (el) dutyMgmtRef.value = el;
+};
 
 // ==================== 学工首页图表事件 ====================
 const onWorkHomeCardClick = async (status) => {
   await nextTick();
-  if (!workHomeRef.value) { ElMessage.warning('学工首页列表组件未就绪'); return; }
-  // 根据卡片状态跳转对应模块
+  if (!workHomeRef.value) {
+    ElMessage.warning('学工首页列表组件未就绪');
+    return;
+  }
   switch (status) {
     case 'totalStudent':
       activeName.value = '学生信息';
@@ -112,9 +216,7 @@ const onWorkHomeCardClick = async (status) => {
       activeName.value = '资助系统';
       return;
     case 'unhandledViolate':
-      // 待处理违纪：跳转违纪管理，并筛选待审批状态
       activeName.value = '违纪管理';
-      // 延迟一下等待组件加载完成再设置筛选条件
       setTimeout(() => {
         if (violateMgmtRef.value) {
           violateMgmtRef.value.clearFilters();
@@ -123,7 +225,6 @@ const onWorkHomeCardClick = async (status) => {
       }, 100);
       return;
     case 'unhandledWarn':
-      // 待处理预警：跳转违纪管理，并筛选已预警状态
       activeName.value = '违纪管理';
       setTimeout(() => {
         if (violateMgmtRef.value) {
@@ -133,176 +234,273 @@ const onWorkHomeCardClick = async (status) => {
       }, 100);
       return;
     default:
-      // 其他卡片（如待处理违纪/预警已在上面处理）不做额外操作
       break;
   }
 };
 
-const onWorkHomePieClick = async ({ dimension }) => {
+const onWorkHomePieClick = async ({dimension}) => {
   await nextTick();
-  if (!workHomeRef.value) { ElMessage.warning('学工首页列表组件未就绪'); return; }
-  // 饼图点击筛选对应维度的记录
-  workHomeRef.value.setExternalFilters({ type: dimension });
+  if (!workHomeRef.value) {
+    ElMessage.warning('学工首页列表组件未就绪');
+    return;
+  }
+  workHomeRef.value.setExternalFilters({type: dimension});
 };
 
-const onWorkHomeRadarClick = async ({ className }) => {
+const onWorkHomeRadarClick = async ({className}) => {
   await nextTick();
-  if (!workHomeRef.value) { ElMessage.warning('学工首页列表组件未就绪'); return; }
-  // 雷达图点击筛选对应班级的记录
-  workHomeRef.value.setExternalFilters({ className });
+  if (!workHomeRef.value) {
+    ElMessage.warning('学工首页列表组件未就绪');
+    return;
+  }
+  workHomeRef.value.setExternalFilters({className});
 };
 
-const onWorkHomeLineClick = async ({ date }) => {
+const onWorkHomeLineClick = async ({date}) => {
   await nextTick();
-  if (!workHomeRef.value) { ElMessage.warning('学工首页列表组件未就绪'); return; }
-  // 折线图点击筛选该日期范围
-  workHomeRef.value.setExternalFilters({ startTime: `${date} 00:00:00`, endTime: `${date} 23:59:59` });
+  if (!workHomeRef.value) {
+    ElMessage.warning('学工首页列表组件未就绪');
+    return;
+  }
+  workHomeRef.value.setExternalFilters({
+    startTime: `${date} 00:00:00`,
+    endTime: `${date} 23:59:59`
+  });
 };
 
 // ==================== 学生信息图表事件 ====================
-const onStudentPieSelect = async ({ field, value }) => {
+const onStudentPieSelect = async ({field, value}) => {
   await nextTick();
-  if (!studentInfoRef.value) { ElMessage.warning('学生信息列表组件未就绪'); return; }
+  if (!studentInfoRef.value) {
+    ElMessage.warning('学生信息列表组件未就绪');
+    return;
+  }
   if (field === 'major') studentInfoRef.value.handleFilterTagClick('major', value);
   else if (field === 'className') studentInfoRef.value.handleFilterTagClick('className', value);
 };
 const onStudentBarSelect = async (date) => {
   await nextTick();
-  if (!studentInfoRef.value) { ElMessage.warning('学生信息列表组件未就绪'); return; }
+  if (!studentInfoRef.value) {
+    ElMessage.warning('学生信息列表组件未就绪');
+    return;
+  }
   studentInfoRef.value.handleFilterTagClick('createTime', date);
 };
 const onStudentCardSelect = async (status) => {
   await nextTick();
-  if (!studentInfoRef.value) { ElMessage.warning('学生信息列表组件未就绪'); return; }
+  if (!studentInfoRef.value) {
+    ElMessage.warning('学生信息列表组件未就绪');
+    return;
+  }
   studentInfoRef.value.clearFilters();
   switch (status) {
-    case 'total': break;
-    case 'inSchool': studentInfoRef.value.handleFilterTagClick('status', '在籍'); break;
-    case 'abnormal': studentInfoRef.value.handleFilterTagClick('status', ['休学', '异动']); break;
-    default: break;
+    case 'total':
+      break;
+    case 'inSchool':
+      studentInfoRef.value.handleFilterTagClick('status', '在籍');
+      break;
+    case 'abnormal':
+      studentInfoRef.value.handleFilterTagClick('status', ['休学', '异动']);
+      break;
+    default:
+      break;
   }
 };
 
 // ==================== 荣誉管理图表事件 ====================
-const onHonorBarSelect = async ({ field, value }) => {
+const onHonorBarSelect = async ({field, value}) => {
   await nextTick();
-  if (!honorMgmtRef.value) { ElMessage.warning('荣誉管理列表组件未就绪'); return; }
+  if (!honorMgmtRef.value) {
+    ElMessage.warning('荣誉管理列表组件未就绪');
+    return;
+  }
   honorMgmtRef.value.handleFilterTagClick(field, value);
 };
 const onHonorCardSelect = async (status) => {
   await nextTick();
-  if (!honorMgmtRef.value) { ElMessage.warning('荣誉管理列表组件未就绪'); return; }
+  if (!honorMgmtRef.value) {
+    ElMessage.warning('荣誉管理列表组件未就绪');
+    return;
+  }
   honorMgmtRef.value.clearFilters();
   switch (status) {
-    case 'total': break;
-    case 'pending': honorMgmtRef.value.handleFilterTagClick('status', '待审核'); break;
-    case 'pushed': honorMgmtRef.value.handleFilterTagClick('status', '已推送'); break;
-    default: break;
+    case 'total':
+      break;
+    case 'pending':
+      honorMgmtRef.value.handleFilterTagClick('status', '待审核');
+      break;
+    case 'pushed':
+      honorMgmtRef.value.handleFilterTagClick('status', '已推送');
+      break;
+    default:
+      break;
   }
 };
 
 // ==================== 考评管理图表事件 ====================
-const onAssessRadarClick = async ({ className }) => {
+const onAssessRadarClick = async ({className}) => {
   await nextTick();
-  if (!assessMgmtRef.value) { ElMessage.warning('考评管理列表组件未就绪'); return; }
+  if (!assessMgmtRef.value) {
+    ElMessage.warning('考评管理列表组件未就绪');
+    return;
+  }
   assessMgmtRef.value.handleFilterTagClick('className', className);
 };
-const onAssessLineClick = async ({ cycleName }) => {
+const onAssessLineClick = async ({cycleName}) => {
   await nextTick();
-  if (!assessMgmtRef.value) { ElMessage.warning('考评管理列表组件未就绪'); return; }
+  if (!assessMgmtRef.value) {
+    ElMessage.warning('考评管理列表组件未就绪');
+    return;
+  }
   // 周期筛选不支持
 };
 const onAssessCardSelect = async (status) => {
   await nextTick();
-  if (!assessMgmtRef.value) { ElMessage.warning('考评管理列表组件未就绪'); return; }
+  if (!assessMgmtRef.value) {
+    ElMessage.warning('考评管理列表组件未就绪');
+    return;
+  }
   assessMgmtRef.value.clearFilters();
   switch (status) {
-    case 'published': assessMgmtRef.value.handleFilterTagClick('status', '已发布'); break;
-    default: break;
+    case 'published':
+      assessMgmtRef.value.handleFilterTagClick('status', '已发布');
+      break;
+    default:
+      break;
   }
 };
 
 // ==================== 违纪管理图表事件 ====================
-const onViolateBarClick = async ({ type, value }) => {
+const onViolateBarClick = async ({type, value}) => {
   await nextTick();
-  if (!violateMgmtRef.value) { ElMessage.warning('违纪管理列表组件未就绪'); return; }
+  if (!violateMgmtRef.value) {
+    ElMessage.warning('违纪管理列表组件未就绪');
+    return;
+  }
   if (type === 'class') violateMgmtRef.value.handleFilterTagClick('className', value);
 };
-const onViolatePieClick = async ({ type, value }) => {
+const onViolatePieClick = async ({type, value}) => {
   await nextTick();
-  if (!violateMgmtRef.value) { ElMessage.warning('违纪管理列表组件未就绪'); return; }
+  if (!violateMgmtRef.value) {
+    ElMessage.warning('违纪管理列表组件未就绪');
+    return;
+  }
   if (type === 'violateType') violateMgmtRef.value.handleFilterTagClick('violateType', value);
 };
 const onViolateCardSelect = async (status) => {
   await nextTick();
-  if (!violateMgmtRef.value) { ElMessage.warning('违纪管理列表组件未就绪'); return; }
+  if (!violateMgmtRef.value) {
+    ElMessage.warning('违纪管理列表组件未就绪');
+    return;
+  }
   violateMgmtRef.value.clearFilters();
   switch (status) {
-    case 'pending': violateMgmtRef.value.handleFilterTagClick('status', '待审批'); break;
-    case 'warn': violateMgmtRef.value.handleFilterTagClick('status', '已预警'); break;
-    default: break;
+    case 'pending':
+      violateMgmtRef.value.handleFilterTagClick('status', '待审批');
+      break;
+    case 'warn':
+      violateMgmtRef.value.handleFilterTagClick('status', '已预警');
+      break;
+    default:
+      break;
   }
 };
 
 // ==================== 心理管理图表事件 ====================
-const onMentalPieSelect = async ({ type, value }) => {
+const onMentalPieSelect = async ({type, value}) => {
   await nextTick();
-  if (!mentalMgmtRef.value) { ElMessage.warning('心理管理列表组件未就绪'); return; }
+  if (!mentalMgmtRef.value) {
+    ElMessage.warning('心理管理列表组件未就绪');
+    return;
+  }
   if (type === 'mentalStatus') mentalMgmtRef.value.handleFilterTagClick('mentalStatus', value);
   else if (type === 'riskLevel') mentalMgmtRef.value.handleFilterTagClick('riskLevel', value);
 };
 
 // ==================== 行为管理图表事件 ====================
-const onBehaviorBarClick = async ({ className }) => {
+const onBehaviorBarClick = async ({className}) => {
   await nextTick();
-  if (!behaviorMgmtRef.value) { ElMessage.warning('行为管理列表组件未就绪'); return; }
+  if (!behaviorMgmtRef.value) {
+    ElMessage.warning('行为管理列表组件未就绪');
+    return;
+  }
   behaviorMgmtRef.value.handleFilterTagClick('className', className);
 };
 const onBehaviorCardSelect = async (status) => {
   await nextTick();
-  if (!behaviorMgmtRef.value) { ElMessage.warning('行为管理列表组件未就绪'); return; }
+  if (!behaviorMgmtRef.value) {
+    ElMessage.warning('行为管理列表组件未就绪');
+    return;
+  }
   behaviorMgmtRef.value.clearFilters();
   switch (status) {
-    case 'pending': behaviorMgmtRef.value.handleFilterTagClick('status', '待审批'); break;
-    case 'abnormal': behaviorMgmtRef.value.handleFilterTagClick('attendanceSync', '未同步'); break;
-    case 'synced': behaviorMgmtRef.value.handleFilterTagClick('attendanceSync', '已同步'); break;
-    default: break;
+    case 'pending':
+      behaviorMgmtRef.value.handleFilterTagClick('status', '待审批');
+      break;
+    case 'abnormal':
+      behaviorMgmtRef.value.handleFilterTagClick('attendanceSync', '未同步');
+      break;
+    case 'synced':
+      behaviorMgmtRef.value.handleFilterTagClick('attendanceSync', '已同步');
+      break;
+    default:
+      break;
   }
 };
-const onBehaviorPieClick = async ({ type, value }) => {
+const onBehaviorPieClick = async ({type, value}) => {
   await nextTick();
-  if (!behaviorMgmtRef.value) { ElMessage.warning('行为管理列表组件未就绪'); return; }
+  if (!behaviorMgmtRef.value) {
+    ElMessage.warning('行为管理列表组件未就绪');
+    return;
+  }
   if (type === 'leaveType') behaviorMgmtRef.value.handleFilterTagClick('leaveType', value);
 };
-const onBehaviorLineClick = async ({ date }) => {
+const onBehaviorLineClick = async ({date}) => {
   await nextTick();
-  if (!behaviorMgmtRef.value) { ElMessage.warning('行为管理列表组件未就绪'); return; }
+  if (!behaviorMgmtRef.value) {
+    ElMessage.warning('行为管理列表组件未就绪');
+    return;
+  }
   const currentYear = new Date().getFullYear();
   const fullDate = `${currentYear}-${date}`;
   behaviorMgmtRef.value.handleFilterTagClick('createTime', fullDate);
 };
 
 // ==================== 资助系统图表事件 ====================
-const onFundBarClick = async ({ type, value }) => {
+const onFundBarClick = async ({type, value}) => {
   await nextTick();
-  if (!fundSystemRef.value) { ElMessage.warning('资助系统列表组件未就绪'); return; }
+  if (!fundSystemRef.value) {
+    ElMessage.warning('资助系统列表组件未就绪');
+    return;
+  }
   // 年级筛选不支持
 };
 const onFundCardSelect = async (status) => {
   await nextTick();
-  if (!fundSystemRef.value) { ElMessage.warning('资助系统列表组件未就绪'); return; }
+  if (!fundSystemRef.value) {
+    ElMessage.warning('资助系统列表组件未就绪');
+    return;
+  }
   fundSystemRef.value.clearFilters();
   switch (status) {
-    case 'pending': fundSystemRef.value.handleFilterTagClick('status', '待审核'); break;
-    case 'approved': fundSystemRef.value.handleFilterTagClick('status', '已汇总'); break;
-    default: break;
+    case 'pending':
+      fundSystemRef.value.handleFilterTagClick('status', '待审核');
+      break;
+    case 'approved':
+      fundSystemRef.value.handleFilterTagClick('status', '已汇总');
+      break;
+    default:
+      break;
   }
 };
 
 // ==================== 社团管理图表事件 ====================
-const onClubPieSelect = async ({ type, value }) => {
+const onClubPieSelect = async ({type, value}) => {
   await nextTick();
-  if (!clubMgmtRef.value) { ElMessage.warning('社团管理列表组件未就绪'); return; }
+  if (!clubMgmtRef.value) {
+    ElMessage.warning('社团管理列表组件未就绪');
+    return;
+  }
   if (type === 'clubName') clubMgmtRef.value.handleFilterTagClick('clubName', value);
   else if (type === 'clubType') clubMgmtRef.value.handleFilterTagClick('clubType', value);
 };
@@ -310,30 +508,67 @@ const onClubPieSelect = async ({ type, value }) => {
 // ==================== 奖助勤贷图表事件 ====================
 const onAidWorkCardClick = async (status) => {
   await nextTick();
-  if (!aidWorkRef.value) { ElMessage.warning('奖助勤贷列表组件未就绪'); return; }
+  if (!aidWorkRef.value) {
+    ElMessage.warning('奖助勤贷列表组件未就绪');
+    return;
+  }
   aidWorkRef.value.clearFilters();
   switch (status) {
-    case 'passed': aidWorkRef.value.handleFilterTagClick('status', '已通过'); break;
-    default: break;
+    case 'passed':
+      aidWorkRef.value.handleFilterTagClick('status', '已通过');
+      break;
+    default:
+      break;
   }
 };
-const onAidWorkPieClick = async ({ type, value }) => {
+const onAidWorkPieClick = async ({type, value}) => {
   await nextTick();
-  if (!aidWorkRef.value) { ElMessage.warning('奖助勤贷列表组件未就绪'); return; }
+  if (!aidWorkRef.value) {
+    ElMessage.warning('奖助勤贷列表组件未就绪');
+    return;
+  }
   if (type === 'status') aidWorkRef.value.handleFilterTagClick('status', value);
   else if (type === 'aidType') aidWorkRef.value.handleFilterTagClick('aidType', value);
 };
-const onAidWorkBarClick = async ({ type, value }) => {
+const onAidWorkBarClick = async ({type, value}) => {
   await nextTick();
-  if (!aidWorkRef.value) { ElMessage.warning('奖助勤贷列表组件未就绪'); return; }
+  if (!aidWorkRef.value) {
+    ElMessage.warning('奖助勤贷列表组件未就绪');
+    return;
+  }
   if (type === 'aidType') aidWorkRef.value.handleFilterTagClick('aidType', value);
 };
 
 // ==================== 值班管理图表事件 ====================
-const onDutyLineClick = async ({ month }) => {
+const onDutyLineClick = async ({month}) => {
   await nextTick();
-  if (!dutyMgmtRef.value) { ElMessage.warning('值班管理列表组件未就绪'); return; }
-  // 月份筛选不支持
+  if (!dutyMgmtRef.value) {
+    ElMessage.warning('值班管理列表组件未就绪');
+    return;
+  }
+  // 实际筛选由文件3的全局事件处理，这里可留空
+};
+
+const onDutyCardClick = async (cardInfo) => {
+  await nextTick();
+  if (!dutyMgmtRef.value) {
+    ElMessage.warning('值班管理列表组件未就绪');
+    return;
+  }
+  const {status} = cardInfo;
+  switch (status) {
+    case 'shiftApplyCount':
+      dutyMgmtRef.value.handleFilterTagClick('transferStatus', '待审批');
+      break;
+    case 'vehicleApplyCount':
+      dutyMgmtRef.value.handleFilterTagClick('carStatus', '待审批');
+      break;
+    case 'checkInRate':
+      dutyMgmtRef.value.handleFilterTagClick('checkInStatus', '已打卡');
+      break;
+    default:
+      break;
+  }
 };
 
 // ==================== 当前激活的 Tab 相关 ====================
@@ -425,6 +660,7 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
       v-if="currentArrowShow && activeName === '值班管理'"
       :is="currentChartComponent"
       @lineClick="onDutyLineClick"
+      @cardClick="onDutyCardClick"
     />
 
     <el-tabs v-model="activeName" class="common-tabs" type="card">

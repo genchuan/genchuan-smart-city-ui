@@ -5,11 +5,16 @@ import type {
   MerchantSelectOption,
 } from '../data';
 
-import type { MerchantInfoDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
+import type {
+  MerchantInfoDetailVO,
+  MerchantInfoVO,
+} from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import type {
   MerchantLinkDetailVO,
   MerchantLinkPageReqVO,
+  MerchantLinkVO,
 } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantLink';
+import type { ActiveFilterTag } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import { computed, nextTick, onMounted, ref } from 'vue';
 
@@ -31,11 +36,8 @@ import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant
 import { MerchantLinkApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantLink';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import {
-  buildActiveFilterTags,
-  type ActiveFilterTag,
-} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 import { exportToExcel } from '#/utils/excel.js';
+import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildExportRows,
@@ -84,6 +86,7 @@ const merchantSelectOptions = ref<MerchantSelectOption[]>(merchantOptions);
 const filterLinkType = ref('');
 const filterStatus = ref('');
 const searchParams = ref<Record<string, any>>({});
+const MAX_PAGE_SIZE = 200;
 
 function getMerchantOptionLabel(value: any) {
   const merchantId = Number(value);
@@ -224,11 +227,12 @@ function getStatusTagType(status: MerchantLinkRow['status']) {
 /** 加载商户下拉 */
 async function loadMerchantOptions() {
   try {
-    const result = await MerchantInfoApi.getMerchantInfoPage({
-      pageNo: 1,
-      pageSize: 9999,
-    });
-    const list = Array.isArray(result?.list) ? result.list : [];
+    const list = await fetchAllPages<MerchantInfoVO>((pageNo) =>
+      MerchantInfoApi.getMerchantInfoPage({
+        pageNo,
+        pageSize: MAX_PAGE_SIZE,
+      }),
+    );
 
     merchantSelectOptions.value = buildMerchantOptionsFromApi(list);
     merchantProfileLookup.value = buildMerchantProfileLookup(
@@ -260,6 +264,29 @@ async function loadMerchantOptions() {
   ]);
 
   await handleRefresh();
+}
+
+async function fetchAllPages<T>(
+  request: (pageNo: number) => Promise<{ list?: T[]; total?: number }>,
+) {
+  const list: T[] = [];
+  let pageNo = 1;
+  let total = 0;
+
+  do {
+    const result = await request(pageNo);
+    const currentList = Array.isArray(result?.list) ? result.list : [];
+
+    list.push(...currentList);
+    total = Number(result?.total || 0);
+    pageNo += 1;
+
+    if (currentList.length === 0) {
+      break;
+    }
+  } while (list.length < total);
+
+  return list;
 }
 
 /** 获取商户详情 */
@@ -330,8 +357,8 @@ async function queryMerchantLinkPage(
   formValues: Record<string, any> = {},
 ) {
   const queryValues = {
-    ...searchParams.value,
     ...formValues,
+    ...searchParams.value,
   };
 
   if (filterLinkType.value) {
@@ -463,9 +490,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
-    height: 'auto',
     proxyConfig: {
       ajax: {
         query: queryMerchantLinkPage,
@@ -476,6 +501,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
@@ -515,7 +541,7 @@ async function setSearchValues(values: Record<string, any>) {
   };
   filterLinkType.value = '';
   filterStatus.value = '';
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   return gridApi.reload();
 }
 
@@ -556,12 +582,14 @@ async function handleExport() {
       exportValues.status = filterStatus.value;
     }
 
-    const result = await MerchantLinkApi.getMerchantLinkPage({
-      pageNo: 1,
-      pageSize: 9999,
-      ...buildMerchantLinkQueryParams(exportValues),
-    });
-    const list = Array.isArray(result?.list) ? result.list : [];
+    const queryParams = buildMerchantLinkQueryParams(exportValues);
+    const list = await fetchAllPages<MerchantLinkVO>((pageNo) =>
+      MerchantLinkApi.getMerchantLinkPage({
+        pageNo,
+        pageSize: MAX_PAGE_SIZE,
+        ...queryParams,
+      }),
+    );
 
     exportToExcel(
       buildExportRows(
@@ -745,122 +773,115 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
 </script>
 
 <template>
-  <div class="merchant-link-table">
-    <div class="merchant-link-grid-wrap">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-              align-items: center;
-            "
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
-            >
-              {{ tag.label }}：{{ tag.value }}
-            </ElTag>
-          </div>
-        </template>
-
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-            <IconButton
-              content="导出"
-              icon-name="download"
-              @click="handleExport"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSerachShow"
-            />
-            <IconButton
-              :content="props.showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="props.toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
-
-        <template #merchantName="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenMerchant(row)"
-          >
-            {{ row.merchantName }}
-          </el-text>
-        </template>
-
-        <template #linkType="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleFilterLinkType(row.linkType)"
-          >
-            {{ row.linkType }}
-          </el-text>
-        </template>
-
-        <template #apiKey="{ row }">
-          {{ maskApiKey(row.apiKey) }}
-        </template>
-
-        <template #status="{ row }">
+  <div class="park-lot-table-new user-merchant-table-grid">
+    <Grid>
+      <template #table-title>
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; align-items: center"
+        >
           <ElTag
-            :type="getStatusTagType(row.status)"
-            style="cursor: pointer"
-            @click="handleFilterStatus(row.status)"
+            v-for="tag in activeFilterTags"
+            :key="`${tag.source}-${tag.key}`"
+            :type="tag.type"
+            closable
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+            @close="handleRemoveFilterTag(tag)"
           >
-            {{ row.status }}
+            {{ tag.label }}：{{ tag.value }}
           </ElTag>
-        </template>
+        </div>
+      </template>
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              v-if="row.status === '未对接'"
-              content="对接"
-              icon-name="Check"
-              @click="handleLink(row)"
-            />
-            <IconButton
-              v-if="row.status === '已对接'"
-              content="断开"
-              icon-name="Close"
-              @click="handleUnlink(row)"
-            />
-            <IconButton
-              content="编辑"
-              icon-name="Edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              content="详情"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-          </div>
-        </template>
-      </Grid>
-    </div>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
+      </template>
+
+      <template #merchantName="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenMerchant(row)"
+        >
+          {{ row.merchantName }}
+        </el-text>
+      </template>
+
+      <template #linkType="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterLinkType(row.linkType)"
+        >
+          {{ row.linkType }}
+        </el-text>
+      </template>
+
+      <template #apiKey="{ row }">
+        {{ maskApiKey(row.apiKey) }}
+      </template>
+
+      <template #status="{ row }">
+        <ElTag
+          :type="getStatusTagType(row.status)"
+          style="cursor: pointer"
+          @click="handleFilterStatus(row.status)"
+        >
+          {{ row.status }}
+        </ElTag>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            v-if="row.status === '未对接'"
+            content="对接"
+            icon-name="Check"
+            @click="handleLink(row)"
+          />
+          <IconButton
+            v-if="row.status === '已对接'"
+            content="断开"
+            icon-name="Close"
+            @click="handleUnlink(row)"
+          />
+          <IconButton
+            content="编辑"
+            icon-name="Edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleDetail(row)"
+          />
+        </div>
+      </template>
+    </Grid>
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -910,31 +931,4 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   </div>
 </template>
 
-<style scoped lang="scss">
-.merchant-link-table,
-.merchant-link-grid-wrap {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.merchant-link-table {
-  display: flex;
-  flex-direction: column;
-}
-
-.merchant-link-grid-wrap {
-  flex: 1;
-}
-
-:deep(.vxe-grid) {
-  height: 100% !important;
-}
-
-:deep(.vxe-grid--layout-body-wrapper),
-:deep(.vxe-grid--layout-body-content-wrapper),
-:deep(.vxe-grid--table-container),
-:deep(.vxe-grid--table-wrapper) {
-  min-height: 0;
-}
-</style>
+<style scoped lang="scss"></style>

@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择活动类型',
+        clearable: true,
         options: [
           { label: '党团活动', value: '党团活动' },
           { label: '志愿活动', value: '志愿活动' },
@@ -28,8 +29,12 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择主办部门',
-        filterable: true,
-        options: [],
+        clearable: true,
+        options: [
+          { label: '学生工作部', value: '1001' },
+          { label: '团委', value: '1002' },
+          { label: '教务处', value: '1003' },
+        ],
       },
       labelWidth: '100',
     },
@@ -39,6 +44,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '未发布', value: '未发布' },
           { label: '进行中', value: '进行中' },
@@ -108,7 +114,11 @@ export function useCreateFormSchema(isEdit = false) {
       componentProps: {
         placeholder: '请选择主办部门',
         filterable: true,
-        options: [],
+        options: [
+          { label: '学生工作部', value: '1001' },
+          { label: '团委', value: '1002' },
+          { label: '教务处', value: '1003' },
+        ],
       },
       rules: 'required',
       labelWidth: '100',
@@ -168,7 +178,6 @@ export function useCreateFormSchema(isEdit = false) {
       componentProps: { placeholder: '请输入备注', type: 'textarea', rows: 2 },
       labelWidth: '100',
     },
-    // 新增 photo 字段
     {
       fieldName: 'photo',
       label: '活动照片地址',
@@ -179,15 +188,14 @@ export function useCreateFormSchema(isEdit = false) {
   ];
 }
 
-// 报名表单 schema（使用 InputNumber 直接输入学生ID）
 export function useJoinFormSchema() {
   return [
     {
       fieldName: 'studentId',
-      label: '学生ID',
+      label: '学号',
       component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入学生ID',
+        placeholder: '请输入学号',
         controls: false,
         style: 'width: 100%',
         min: 1,

@@ -4,16 +4,16 @@ import type {
   OperatorInfo,
   PlateAuthRow,
   UserProfileInfo,
-  UserSelectOption,
 } from '../data';
 
 import type { PlateAuthDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/plateAuth';
 import type { UserCarDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userCar';
+import type { ActiveFilterTag } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import { computed, nextTick, onMounted, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import {
   ElButton,
@@ -38,16 +38,11 @@ import { UserCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/user
 import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import {
-  buildActiveFilterTags,
-  type ActiveFilterTag,
-} from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
+import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
   buildPlateAuthQueryParams,
   buildPlateAuthRowFromApi,
-  buildUserProfileLookup,
-  buildUserSelectOptions,
   formatAuthLogs,
   getCarProfile,
   getOperatorDetail,
@@ -55,7 +50,6 @@ import {
   maskPhone,
   detailFields as plateAuthDetailFields,
   useGridColumns,
-  userOptions,
   useSearchSchema,
 } from '../data';
 
@@ -97,7 +91,6 @@ const rejectReason = ref('');
 const rejectRow = ref<PlateAuthRow>();
 const userDialogVisible = ref(false);
 const userProfileLookup = ref<Record<number, Partial<UserProfileInfo>>>({});
-const userSelectOptions = ref<UserSelectOption[]>(userOptions);
 const vehicleDialogVisible = ref(false);
 
 // 快捷筛选变量
@@ -125,7 +118,7 @@ const searchFilterConfigs = {
     label: '认证状态',
     type: 'warning',
   },
-  userId: {
+  nickname: {
     label: '所属用户',
     type: 'info',
   },
@@ -171,7 +164,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   },
   handleSubmit: onQuerySubmit,
   layout: 'horizontal',
-  schema: useSearchSchema(userSelectOptions.value).map((v: any) => {
+  schema: useSearchSchema().map((v: any) => {
     delete v.rules;
     return { ...v };
   }),
@@ -206,8 +199,8 @@ async function queryPlateAuthPage(
   formValues: Record<string, any> = {},
 ) {
   const queryValues = {
-    ...searchParams.value,
     ...formValues,
+    ...searchParams.value,
   };
 
   if (filterStatus.value) {
@@ -233,8 +226,6 @@ async function queryPlateAuthPage(
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
-    height: 'auto',
     keepSource: true,
     proxyConfig: {
       ajax: {
@@ -246,6 +237,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
@@ -257,43 +249,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
   },
   showSearchForm: false,
 });
-
-/** 加载所属用户下拉 */
-async function loadUserOptions() {
-  try {
-    const result = await UserInfoApi.getUserInfoPage({
-      pageNo: 1,
-      pageSize: 200, // 最多200
-    });
-    const list = Array.isArray(result?.list) ? result.list : [];
-
-    userSelectOptions.value = buildUserSelectOptions(
-      list.map((item) => ({
-        label: item.nickname,
-        phone: item.phone,
-        remark: item.remark,
-        userType: item.userType,
-        value: Number(item.id ?? 0),
-      })),
-    );
-    userProfileLookup.value = buildUserProfileLookup(userSelectOptions.value);
-  } catch (error) {
-    console.error('[plateAuth] load user options failed:', error);
-    userSelectOptions.value = buildUserSelectOptions(userSelectOptions.value);
-    userProfileLookup.value = buildUserProfileLookup(userSelectOptions.value);
-  }
-
-  await queryFormApi.updateSchema([
-    {
-      fieldName: 'userId',
-      componentProps: {
-        options: userSelectOptions.value,
-      },
-    },
-  ]);
-
-  await handleRefresh();
-}
 
 /** 获取车辆详情 */
 async function fetchUserCarDetail(
@@ -412,7 +367,7 @@ async function setSearchValues(values: Record<string, any>) {
     ...values,
   };
   filterStatus.value = '';
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   return gridApi.reload();
 }
 
@@ -430,7 +385,7 @@ defineExpose({
 
 onMounted(async () => {
   await nextTick();
-  await loadUserOptions();
+  await handleRefresh();
 });
 
 /** 导出当前列表 */
@@ -444,7 +399,10 @@ async function handleExport() {
   }
 
   try {
-    await PlateAuthApi.exportPlateAuth(buildPlateAuthQueryParams(exportValues));
+    const data = await PlateAuthApi.exportPlateAuth(
+      buildPlateAuthQueryParams(exportValues),
+    );
+    downloadFileFromBlobPart({ fileName: '车牌认证.xls', source: data });
     ElMessage.success('导出成功');
   } catch (error) {
     ElMessage.error('导出失败');
@@ -739,153 +697,146 @@ async function handleOpenOperator(row: PlateAuthRow) {
 </script>
 
 <template>
-  <div class="plate-auth-table">
-    <div class="plate-auth-grid-wrap">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="
-              display: flex;
-              flex-wrap: wrap;
-              gap: 10px;
-              align-items: center;
-            "
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
-            >
-              {{ tag.label }}：{{ tag.value }}
-            </ElTag>
-          </div>
-        </template>
-
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton
-              content="导出"
-              icon-name="download"
-              @click="handleExport"
-            />
-            <IconButton
-              content="批量审核"
-              :disabled="isEmpty(checkedIds)"
-              icon-name="Check"
-              @click="handleOpenBatchAudit"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSerachShow"
-            />
-            <IconButton
-              :content="props.showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="props.toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
-
-        <template #userName="{ row }">
-          <ElText
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenUser(row)"
-          >
-            {{ row.userName }}
-          </ElText>
-        </template>
-
-        <template #plateNo="{ row }">
-          <ElText
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenCar(row)"
-          >
-            {{ row.plateNo }}
-          </ElText>
-        </template>
-
-        <template #drivingLicense="{ row }">
-          <ElImage
-            :preview-src-list="[row.drivingLicense]"
-            :preview-teleported="true"
-            :src="row.drivingLicense"
-            fit="cover"
-            style="width: 68px; height: 42px; border-radius: 4px"
-          />
-        </template>
-
-        <template #status="{ row }">
+  <div class="park-lot-table-new user-merchant-table-grid">
+    <Grid>
+      <template #table-title>
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; align-items: center"
+        >
           <ElTag
-            :type="
-              row.status === '已认证'
-                ? 'success'
-                : row.status === '待审核'
-                  ? 'warning'
-                  : 'danger'
-            "
-            style="cursor: pointer"
-            @click="handleFilterStatus(row.status)"
+            v-for="tag in activeFilterTags"
+            :key="`${tag.source}-${tag.key}`"
+            :type="tag.type"
+            closable
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+            @close="handleRemoveFilterTag(tag)"
           >
-            {{ row.status }}
+            {{ tag.label }}：{{ tag.value }}
           </ElTag>
-        </template>
+        </div>
+      </template>
 
-        <template #auditorName="{ row }">
-          <ElText
-            v-if="row.auditorName !== '-'"
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleOpenOperator(row)"
-          >
-            {{ row.auditorName }}
-          </ElText>
-          <span v-else>{{ row.auditorName }}</span>
-        </template>
+      <template #toolbar-tools>
+        <div class="common-toolbar-tools">
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="批量审核"
+            :disabled="isEmpty(checkedIds)"
+            icon-name="Check"
+            @click="handleOpenBatchAudit"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.showStats ? '隐藏统计' : '显示统计'"
+            :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
+            @click="props.toggleStats"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="() => screenfull.toggle()"
+          />
+        </div>
+      </template>
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="详情"
-              icon-name="View"
-              @click="handleOpenDetail(row)"
-            />
-            <IconButton
-              v-if="row.status === '待审核'"
-              content="通过"
-              icon-name="Check"
-              @click="handleApprove(row)"
-            />
-            <IconButton
-              v-if="row.status === '待审核'"
-              content="驳回"
-              icon-name="Close"
-              @click="handleOpenReject(row)"
-            />
-            <IconButton
-              v-if="row.status === '已驳回'"
-              content="重新认证"
-              icon-name="RefreshRight"
-              @click="handleReauth(row)"
-            />
-          </div>
-        </template>
-      </Grid>
-    </div>
+      <template #userName="{ row }">
+        <ElText
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenUser(row)"
+        >
+          {{ row.userName }}
+        </ElText>
+      </template>
+
+      <template #plateNo="{ row }">
+        <ElText
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenCar(row)"
+        >
+          {{ row.plateNo }}
+        </ElText>
+      </template>
+
+      <template #drivingLicense="{ row }">
+        <ElImage
+          :preview-src-list="[row.drivingLicense]"
+          :preview-teleported="true"
+          :src="row.drivingLicense"
+          fit="cover"
+          style="width: 68px; height: 42px; border-radius: 4px"
+        />
+      </template>
+
+      <template #status="{ row }">
+        <ElTag
+          :type="
+            row.status === '已认证'
+              ? 'success'
+              : row.status === '待审核'
+                ? 'warning'
+                : 'danger'
+          "
+          style="cursor: pointer"
+          @click="handleFilterStatus(row.status)"
+        >
+          {{ row.status }}
+        </ElTag>
+      </template>
+
+      <template #auditorName="{ row }">
+        <ElText
+          v-if="row.auditorName !== '-'"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleOpenOperator(row)"
+        >
+          {{ row.auditorName }}
+        </ElText>
+        <span v-else>{{ row.auditorName }}</span>
+      </template>
+
+      <template #actions="{ row }">
+        <div class="table-toolbar-tools">
+          <IconButton
+            content="详情"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            v-if="row.status === '待审核'"
+            content="通过"
+            icon-name="Check"
+            @click="handleApprove(row)"
+          />
+          <IconButton
+            v-if="row.status === '待审核'"
+            content="驳回"
+            icon-name="Close"
+            @click="handleOpenReject(row)"
+          />
+          <IconButton
+            v-if="row.status === '已驳回'"
+            content="重新认证"
+            icon-name="RefreshRight"
+            @click="handleReauth(row)"
+          />
+        </div>
+      </template>
+    </Grid>
 
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -1003,33 +954,6 @@ async function handleOpenOperator(row: PlateAuthRow) {
 </template>
 
 <style scoped lang="scss">
-.plate-auth-table,
-.plate-auth-grid-wrap {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.plate-auth-table {
-  display: flex;
-  flex-direction: column;
-}
-
-.plate-auth-grid-wrap {
-  flex: 1;
-}
-
-:deep(.vxe-grid) {
-  height: 100% !important;
-}
-
-:deep(.vxe-grid--layout-body-wrapper),
-:deep(.vxe-grid--layout-body-content-wrapper),
-:deep(.vxe-grid--table-container),
-:deep(.vxe-grid--table-wrapper) {
-  min-height: 0;
-}
-
 .table-title-wrap {
   display: flex;
   gap: 12px;

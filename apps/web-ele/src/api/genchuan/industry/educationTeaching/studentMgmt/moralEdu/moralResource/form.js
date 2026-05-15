@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择资源类型',
+        clearable: true,
         options: [
           { label: '课程', value: '课程' },
           { label: '图书', value: '图书' },
@@ -28,6 +29,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '未上架', value: '未上架' },
           { label: '已上架', value: '已上架' },

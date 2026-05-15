@@ -16,7 +16,6 @@ import * as stationInfoApi from '#/api/genchuan/industry/chargePark/stationResou
 import CommonDetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import IconButton from '#/genchuan-components/IconButton.vue';
 
-import ChartDrillDrawer from '../../components/ChartDrillDrawer.vue';
 import DetailDrawer from './detail.vue';
 import gateChart from './gateChart.vue';
 import {
@@ -54,8 +53,34 @@ const importLoading = ref(false);
 const importResult = ref(null);
 const importUpdateSupport = ref(false);
 const chartData = ref({});
-const chartDrillDrawerRef = ref(null);
 const selectOptionsMap = ref({});
+
+function padTime(value) {
+  return String(value).padStart(2, '0');
+}
+
+function formatDateTime(value) {
+  if (value === undefined || value === null || value === '') return '--';
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${value.getFullYear()}-${padTime(value.getMonth() + 1)}-${padTime(value.getDate())} ${padTime(value.getHours())}:${padTime(value.getMinutes())}:${padTime(value.getSeconds())}`;
+  }
+  if (typeof value === 'number' || /^\d+$/.test(String(value))) {
+    const text = String(value);
+    const timestamp = Number(text.length === 10 ? `${text}000` : text);
+    const date = new Date(timestamp);
+    if (!Number.isNaN(date.getTime())) return formatDateTime(date);
+  }
+  const normalized = String(value)
+    .replace('T', ' ')
+    .replace(/\.\d+Z?$/, '');
+  const parsed = new Date(String(value).replaceAll('-', '/'));
+  if (!Number.isNaN(parsed.getTime())) return formatDateTime(parsed);
+  return normalized.length >= 19 ? normalized.slice(0, 19) : normalized;
+}
+
+const columnFormatters = {
+  formatDateTime: ({ cellValue }) => formatDateTime(cellValue),
+};
 
 function normalizeOptions(options = []) {
   return options.map((item) => {
@@ -215,6 +240,7 @@ function createSchema(fields, isSearch = false) {
     if (field.type === 'select') {
       Object.assign(componentProps, {
         allowClear: true,
+        clearable: true,
         filterOption: true,
         options: getSelectFieldOptions(field),
         showSearch: true,
@@ -534,7 +560,7 @@ async function handleFormConfirm() {
   }
 
   formDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -568,7 +594,10 @@ function buildGridColumns() {
         sortable: true,
       };
       if (column.formatter) {
-        columnConfig.formatter = column.formatter;
+        columnConfig.formatter =
+          typeof column.formatter === 'string'
+            ? columnFormatters[column.formatter]
+            : column.formatter;
       }
       const slotName = getCellSlotName(column);
       if (slotName) {
@@ -594,11 +623,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
     },
     proxyConfig: {
       ajax: {
-        query: async ({ page }) => {
+        query: async ({ page }, formValues = {}) => {
+          const explicitValues = sanitizeParams(formValues);
+          const query =
+            Object.keys(explicitValues).length > 0
+              ? explicitValues
+              : sanitizeParams(appliedQuery.value);
           return await pageApi[`get${apiName}Page`]({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
-            ...appliedQuery.value,
+            ...query,
           });
         },
       },
@@ -632,16 +666,17 @@ function handleCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
-function handleRefresh() {
+function handleRefresh(query = appliedQuery.value) {
+  const nextQuery = sanitizeParams(query);
   if (gridApi.query) {
-    gridApi.query();
+    gridApi.query(nextQuery);
   } else {
-    gridApi.reload?.();
+    gridApi.reload?.(nextQuery);
   }
-  loadChart();
+  loadChart(nextQuery);
 }
 
-async function loadChart() {
+async function loadChart(query = appliedQuery.value) {
   if (
     !pageConfig.chart ||
     typeof pageApi[`get${apiName}Chart`] !== 'function'
@@ -651,7 +686,7 @@ async function loadChart() {
   chartLoading.value = true;
   try {
     chartData.value =
-      (await pageApi[`get${apiName}Chart`](appliedQuery.value)) || {};
+      (await pageApi[`get${apiName}Chart`](sanitizeParams(query))) || {};
   } finally {
     chartLoading.value = false;
   }
@@ -660,14 +695,14 @@ async function loadChart() {
 async function handleQuerySubmit() {
   appliedQuery.value = sanitizeParams(queryFormApi.form.values || {});
   searchDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleResetSearch() {
   appliedQuery.value = {};
   await queryFormApi.resetForm();
   searchDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 function handleCreate() {
@@ -682,8 +717,16 @@ function handleEdit(row) {
 
 async function handleOpenDetail(row) {
   const detailApi = pageApi[`get${apiName}Detail`];
-  detailObj.value =
+  const detail =
     typeof detailApi === 'function' ? (await detailApi(row.id)) || row : row;
+  const nextDetail = {
+    ...row,
+    ...detail,
+  };
+  if (isEmpty(nextDetail.stationName) && !isEmpty(nextDetail.stationId)) {
+    nextDetail.stationName = getOptionLabel('stationId', nextDetail.stationId);
+  }
+  detailObj.value = nextDetail;
   await nextTick();
   detailDrawerRef.value?.open();
 }
@@ -732,7 +775,7 @@ async function handleBind(row) {
     id: row.id,
   });
   ElMessage.success('绑定成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleSave() {
@@ -742,7 +785,7 @@ async function handleSave() {
   }
   await pageApi[`save${apiName}`]({ ids: checkedIds.value });
   ElMessage.success('保存成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleResetConfig() {
@@ -756,7 +799,7 @@ async function handleResetConfig() {
   );
   await pageApi[`reset${apiName}`]({ stationId: Number(value) });
   ElMessage.success('重置成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleBatchSync() {
@@ -766,7 +809,7 @@ async function handleBatchSync() {
   }
   await pageApi[`batchSync${apiName}`]({ ids: checkedIds.value });
   ElMessage.success('批量同步成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleExport(extraParams = {}) {
@@ -800,7 +843,29 @@ function handleRemoveImportFile() {
 
 function normalizeImportResult(result) {
   const data = result?.data || result || {};
-  const failureList = data.failureList || data.failures || [];
+  const rawFailureList =
+    data.failureList ||
+    data.failures ||
+    data.errorList ||
+    data.errors ||
+    data.failMsgs ||
+    [];
+  const failureList = rawFailureList.map((item, index) => {
+    if (typeof item === 'string') {
+      return { msg: item, row: index + 1 };
+    }
+    return {
+      ...item,
+      msg:
+        item.msg ||
+        item.message ||
+        item.errorMsg ||
+        item.reason ||
+        item.failReason ||
+        item.error ||
+        '导入失败',
+    };
+  });
   return {
     failureCount: data.failureCount ?? failureList.length ?? 0,
     failureList,
@@ -902,22 +967,26 @@ function handleRowAction(action, row) {
     return ElMessage.warning(`已触发告警：${row[primaryField] || row.id}`);
 }
 
-async function applySearchPatch(patch) {
+async function syncQueryForm(values = {}) {
+  const nextValues = sanitizeParams(values);
+  try {
+    await queryFormApi.resetForm();
+    if (!isEmpty(nextValues)) {
+      await queryFormApi.setValues(nextValues);
+    }
+  } catch (error) {
+    console.warn('Failed to set form values', error);
+  }
+}
+function applySearchPatch(patch) {
   const nextQuery = sanitizeParams({
     ...appliedQuery.value,
     ...patch,
   });
   appliedQuery.value = nextQuery;
-  handleRefresh();
+  handleRefresh(nextQuery);
   nextTick(() => {
-    try {
-      const result = queryFormApi.setValues(nextQuery);
-      Promise.resolve(result).catch((error) => {
-        console.warn('Failed to set form values', error);
-      });
-    } catch (error) {
-      console.warn('Failed to set form values', error);
-    }
+    syncQueryForm(nextQuery);
   });
 }
 
@@ -928,54 +997,114 @@ function getFieldLabel(field) {
   return column?.label || field;
 }
 
+function getOptionLabel(field, value) {
+  const config = searchFields.find((item) => item.field === field);
+  const options = config ? getSelectFieldOptions(config) : [];
+  const option = options.find(
+    (item) => item.value === value || String(item.value) === String(value),
+  );
+  return option?.label || value;
+}
+
 function getTagDisplayText(field, value) {
   if (field === 'status') {
     if (value === 'enabled' || value === '已生效') return '已生效';
     if (value === 'disabled' || value === '已禁用') return '已禁用';
     if (value === 'wait' || value === '未生效') return '未生效';
   }
-  return value;
+  return getOptionLabel(field, value);
 }
 
-function removeFilterTag(field) {
+async function removeFilterTag(field) {
   const nextQuery = { ...appliedQuery.value };
   delete nextQuery[field];
-  appliedQuery.value = nextQuery;
-  try {
-    queryFormApi.setValues(nextQuery);
-  } catch (error) {
-    console.warn('Failed to set form values', error);
-  }
-  nextTick(() => {
-    handleRefresh();
-  });
+  const sanitizedQuery = sanitizeParams(nextQuery);
+  appliedQuery.value = sanitizedQuery;
+  handleRefresh(sanitizedQuery);
+  await syncQueryForm(sanitizedQuery);
 }
 
-function clearFilters() {
+async function clearFilters() {
   appliedQuery.value = {};
-  queryFormApi.resetForm();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
+  await syncQueryForm({});
 }
 
 function getCellDisplayText(column, row) {
   const value = row?.[column.field];
   if (!isEmpty(value)) {
-    return Array.isArray(value) ? value.join('、') : value;
+    const nextValue = Array.isArray(value) ? value.join('、') : value;
+    const formatted =
+      column.formatter === 'formatDateTime'
+        ? formatDateTime(nextValue)
+        : nextValue;
+    return column.suffix && formatted !== '--'
+      ? `${formatted}${column.suffix}`
+      : formatted;
   }
   if (column.field === primaryField) {
     return row?.[pageConfig.nameField] || row?.id || '--';
   }
   return '--';
 }
-function openChartDrill(chartType, value, field, title) {
-  chartDrillDrawerRef.value?.open({
-    chartType,
-    field,
-    label: getFieldLabel(field),
-    pageTitle: pageConfig.title,
-    title,
-    value,
+
+function findChartSourceItem(config = [], value) {
+  const [dataKey, nameField] = config;
+  return (chartData.value?.[dataKey] || []).find(
+    (item) => String(item?.[nameField]) === String(value),
+  );
+}
+
+function resolveChartFilterValue(field, sourceRow, fallback) {
+  if (field !== 'stationId') {
+    return sourceRow?.[field] ?? fallback;
+  }
+  const directValue =
+    sourceRow?.stationId ?? sourceRow?.id ?? sourceRow?.stationID;
+  if (!isEmpty(directValue)) {
+    return directValue;
+  }
+  const stationName =
+    sourceRow?.stationName ||
+    sourceRow?.name ||
+    sourceRow?.stationNo ||
+    fallback;
+  const stationOptions = selectOptionsMap.value.StationInfo || [];
+  const matched = stationOptions.find((item) => {
+    const label = String(item.label || '');
+    return (
+      String(item.value) === String(stationName) ||
+      label === String(stationName) ||
+      label.startsWith(`${stationName} (`)
+    );
   });
+  return matched?.value ?? fallback;
+}
+
+function formatDateValue(date) {
+  return `${date.getFullYear()}-${padTime(date.getMonth() + 1)}-${padTime(date.getDate())}`;
+}
+
+function getPeriodRange(value) {
+  const text = String(value || '').trim();
+  const monthMatch = text.match(/^(\d{4})[-/年](\d{1,2})月?$/);
+  if (monthMatch) {
+    const year = Number(monthMatch[1]);
+    const month = Number(monthMatch[2]);
+    if (year && month >= 1 && month <= 12) {
+      return {
+        createTimeEnd: formatDateValue(new Date(year, month, 0)),
+        createTimeStart: formatDateValue(new Date(year, month - 1, 1)),
+      };
+    }
+  }
+
+  const parsed = new Date(text.replaceAll('-', '/'));
+  if (Number.isNaN(parsed.getTime())) return null;
+  return {
+    createTimeEnd: formatDateValue(parsed),
+    createTimeStart: formatDateValue(parsed),
+  };
 }
 
 function handleCardClick(item) {
@@ -983,24 +1112,34 @@ function handleCardClick(item) {
   applySearchPatch({ status: item.status });
 }
 
-function handleBarClick(name) {
-  const field = pageConfig.chart?.bar?.[4] || pageConfig.chart?.bar?.[1];
-  openChartDrill('bar', name, field, `${pageConfig.title}分布`);
+async function handleBarClick(name) {
+  const chartConfig = pageConfig.chart?.bar || [];
+  const field = chartConfig[4] || chartConfig[1];
+  if (!field) return;
+  if (
+    field === 'stationId' &&
+    (selectOptionsMap.value.StationInfo || []).length === 0
+  ) {
+    await loadSelectOptions();
+  }
+  const sourceRow = findChartSourceItem(chartConfig, name);
+  const value = resolveChartFilterValue(field, sourceRow, name);
+  applySearchPatch({ [field]: value });
 }
 
 function handleLineClick(payload) {
-  const field = pageConfig.chart?.line?.[4] || pageConfig.chart?.line?.[1];
-  openChartDrill(
-    'line',
-    payload?.categoryName || payload?.name,
-    field,
-    `${pageConfig.title}趋势`,
-  );
+  const range = getPeriodRange(payload?.categoryName || payload?.name);
+  if (!range) return;
+  applySearchPatch(range);
 }
 
 function handlePieClick(payload) {
-  const field = pageConfig.chart?.pie?.[3] || pageConfig.chart?.pie?.[1];
-  openChartDrill('pie', payload?.name, field, `${pageConfig.title}占比`);
+  const chartConfig = pageConfig.chart?.pie || [];
+  const field = chartConfig[3] || chartConfig[1];
+  if (!field) return;
+  const sourceRow = findChartSourceItem(chartConfig, payload?.name);
+  const value = sourceRow?.[field] ?? payload?.name;
+  applySearchPatch({ [field]: value });
 }
 
 function getDrillValue(column, row) {
@@ -1069,8 +1208,10 @@ function handleToggleOverview() {
   showOverview.value = !showOverview.value;
 }
 
-function handleOpenSearch() {
+async function handleOpenSearch() {
   searchDrawerApi.open();
+  await nextTick();
+  await syncQueryForm(appliedQuery.value);
 }
 
 function handleFullScreen() {
@@ -1128,8 +1269,6 @@ defineExpose({
         :fields="drillDetailFields"
         width="38%"
       />
-
-      <ChartDrillDrawer ref="chartDrillDrawerRef" />
 
       <SearchDrawer title="筛选">
         <QueryForm class="query-form" @reset="handleResetSearch" />
@@ -1325,8 +1464,8 @@ defineExpose({
   .station-overview {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding-bottom: 12px;
+    gap: 8px;
+    padding-bottom: 8px;
   }
 
   .station-map-wrap {

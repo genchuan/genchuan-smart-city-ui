@@ -14,6 +14,8 @@ import {
 import { useAccessStore } from '@vben/stores';
 import { createApiEncrypt } from '@vben/utils';
 
+import { ElMessage } from 'element-plus';
+
 import { useAuthStore } from '#/store';
 
 import { refreshTokenApi } from './core';
@@ -151,14 +153,12 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
       const responseData = error?.response?.data ?? {};
       const errorMessage =
         responseData?.error ?? responseData?.message ?? responseData.msg ?? '';
-      // add by 芋艿：特殊：避免 401 “账号未登录”，重复提示。因为，此时会跳转到登录界面，只需提示一次！！！
+      // add by 芋艿：特殊：避免 401 "账号未登录"，重复提示。因为，此时会跳转到登录界面，只需提示一次！！！
       if (error?.data?.code === 401) {
         return;
       }
-      // 如果没有错误信息，则会根据状态码进行提示
-      // ElMessage.error(errorMessage || msg);
-      // 将错误信息输出到控制台，不在页面上显示弹窗，避免影响用户访问体验
-      console.log('[Request Error]', errorMessage || msg, error);
+      // 显示错误提示弹窗
+      ElMessage.error(errorMessage || msg);
     }),
   );
 

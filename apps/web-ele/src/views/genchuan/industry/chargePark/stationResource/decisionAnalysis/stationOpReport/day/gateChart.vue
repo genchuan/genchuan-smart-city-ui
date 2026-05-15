@@ -51,6 +51,10 @@ function hasChartContent(data = {}) {
   return Boolean(
     Object.keys(data.cardData || {}).length > 0 ||
     data.mapData?.length ||
+    data.stationMapList?.length ||
+    data.stationMapData?.length ||
+    data.mapList?.length ||
+    data.stationList?.length ||
     data.lineData?.length ||
     data.areaStationBarData?.length ||
     data.areaBarData?.length ||
@@ -86,7 +90,7 @@ function mergeChartData(list) {
     result = {
       ...result,
       cardData: mergeCardData(result.cardData, item.cardData),
-      mapData: [...(result.mapData || []), ...(item.mapData || [])],
+      mapData: [...(result.mapData || []), ...pickMapList(item)],
       lineData: [...(result.lineData || []), ...(item.lineData || [])],
       areaStationBarData: [
         ...(result.areaStationBarData || []),
@@ -154,11 +158,75 @@ function pickList(keys) {
   return [];
 }
 
+function pickMapList(source = chartData.value) {
+  const keys = [
+    'mapData',
+    'stationMapList',
+    'stationMapData',
+    'stationMap',
+    'mapList',
+    'stationList',
+    'stationData',
+  ];
+  for (const key of keys) {
+    const value = source?.[key];
+    if (Array.isArray(value) && value.length > 0) return value;
+  }
+  return [];
+}
+
 function pickValue(item, keys, fallback = 0) {
   for (const key of keys) {
     if (item?.[key] !== undefined && item?.[key] !== null) return item[key];
   }
   return fallback;
+}
+
+function pickText(item, keys, fallback = '') {
+  for (const key of keys) {
+    const value = item?.[key];
+    if (value !== undefined && value !== null && value !== '') return value;
+  }
+  return fallback;
+}
+
+function normalizeCoordinateValue(value) {
+  if (Array.isArray(value) && value.length >= 2) {
+    return `${value[0]},${value[1]}`;
+  }
+
+  if (value && typeof value === 'object') {
+    const lng = pickText(value, ['longitude', 'lng', 'lon', 'x']);
+    const lat = pickText(value, ['latitude', 'lat', 'y']);
+    return lng !== '' && lat !== '' ? `${lng},${lat}` : '';
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().replace('，', ',');
+  }
+
+  return value === undefined || value === null ? '' : `${value}`;
+}
+
+function getCoordinate(item) {
+  const direct = pickText(item, [
+    'coordinate',
+    'coordinateInfo',
+    'coordinates',
+    'location',
+    'position',
+  ]);
+  const directCoordinate = normalizeCoordinateValue(direct);
+  if (directCoordinate) return directCoordinate;
+
+  const lng = pickText(item, ['longitude', 'lng', 'lon', 'x']);
+  const lat = pickText(item, ['latitude', 'lat', 'y']);
+  return lng !== '' && lat !== '' ? `${lng},${lat}` : '';
+}
+
+function isValidCoordinate(coordinate) {
+  const [lng, lat] = `${coordinate}`.split(',').map(Number);
+  return Number.isFinite(lng) && Number.isFinite(lat);
 }
 
 const chartCards = computed(() => {
@@ -172,27 +240,81 @@ const chartCards = computed(() => {
 });
 
 const mapData = computed(() =>
-  (chartData.value?.mapData || []).map((item, index) => ({
-    ...item,
-    coordinate:
-      item.coordinate ||
-      (item.longitude && item.latitude
-        ? `${item.longitude},${item.latitude}`
-        : ''),
-    geoCode: item.geoCode || item.id || `station-report-map-${index}`,
-    locationName:
-      item.locationName || item.stationName || item.areaName || '场站资源',
-    statusName: item.statusName || item.status || '正常',
-  })),
+  pickMapList()
+    .map((item, index) => {
+      const coordinate = getCoordinate(item);
+      const stationNo = pickText(item, [
+        'stationNo',
+        'stationCode',
+        'geoCode',
+        'code',
+      ]);
+      const stationId = pickText(item, ['stationId', 'id']);
+      const stationName = pickText(item, [
+        'stationName',
+        'station_name',
+        'name',
+        'station',
+        'locationName',
+        'pointName',
+      ]);
+      const locationName = pickText(
+        item,
+        ['locationName', 'stationName', 'name', 'areaName'],
+        '场站资源',
+      );
+      const stationCount = pickText(item, [
+        'stationCount',
+        'totalStationCount',
+        'coverStationCount',
+      ]);
+      const spaceCount = pickText(item, [
+        'spaceCount',
+        'totalSpaceCount',
+        'availableSpaceCount',
+      ]);
+      const statusName = pickText(
+        item,
+        ['statusName', 'stationStatus', 'status'],
+        '正常',
+      );
+
+      return {
+        ...item,
+        areaName: pickText(item, ['areaName', 'regionName']),
+        coordinate,
+        geoCode: pickText(
+          item,
+          ['geoCode', 'stationNo', 'stationCode', 'stationId', 'id', 'code'],
+          `station-report-map-${index}`,
+        ),
+        locationName,
+        orderCount: pickText(item, ['orderCount', 'totalOrderCount']),
+        revenue: pickText(item, ['revenue', 'totalRevenue', 'amount']),
+        spaceCount,
+        stationCount,
+        stationId,
+        stationName,
+        stationNo,
+        stationStatus: statusName,
+        stationType: pickText(item, ['stationType', 'typeName', 'type']),
+        statusName,
+      };
+    })
+    .filter((item) => isValidCoordinate(item.coordinate)),
 );
 
 const mapInfoWindowConfig = {
   title: 'locationName',
   fields: [
+    { key: 'geoCode', label: '场站编码' },
     { key: 'areaName', label: '片区' },
     { key: 'stationName', label: '场站' },
-    { key: 'stationCount', label: '场站数', bold: true },
+    { key: 'coordinate', label: '坐标' },
+    { key: 'stationCount', label: '场站数' },
     { key: 'spaceCount', label: '车位数' },
+    { key: 'orderCount', label: '订单量', bold: true },
+    { key: 'revenue', label: '营收' },
     { key: 'statusName', label: '状态' },
   ],
 };
@@ -427,6 +549,21 @@ function handleLineClick(info) {
     drillValue: info?.value,
   });
 }
+
+function handleMapMarkerClick(marker) {
+  openDrillDown({
+    source: 'map',
+    drillType: 'mapStation',
+    drillLabel: '地图场站',
+    drillName:
+      marker?.stationName ||
+      marker?.locationName ||
+      marker?.stationNo ||
+      marker?.geoCode,
+    drillValue: 1,
+    row: marker || {},
+  });
+}
 </script>
 
 <template>
@@ -459,6 +596,7 @@ function handleLineClick(info) {
           :data="mapData"
           :info-window-config="mapInfoWindowConfig"
           class="chart-panel-inner"
+          @marker-click="handleMapMarkerClick"
         />
       </div>
 

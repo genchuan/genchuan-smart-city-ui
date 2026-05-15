@@ -46,12 +46,12 @@ export type MerchantInfoUpdateReqVO = MerchantInfoCreateReqVO & {
 export type MerchantInfoPageReqVO = PageParam & {
   address?: string;
   auditorId?: number;
-  auditTime?: string;
+  auditTime?: string[];
   contact?: string;
   merchantType?: string;
   name?: string;
   phone?: string;
-  registerTime?: string;
+  registerTime?: string[];
   remark?: string;
   status?: string;
   walletBalance?: number;
@@ -61,15 +61,13 @@ export type MerchantInfoOperateReqVO = {
   ids: number[];
 };
 
-export type MerchantInfoAuditReqVO = {
+export type MerchantInfoAuditReqVO = MerchantInfoUpdateReqVO & {
   auditRemark?: string;
-  ids: number[];
+  auditResult?: string;
+  ids?: number[];
 };
 
-export type MerchantInfoRejectReqVO = {
-  auditRemark: string;
-  ids: number[];
-};
+export type MerchantInfoRejectReqVO = MerchantInfoAuditReqVO;
 
 export type MerchantInfoOperatorVO = {
   account?: string;
@@ -187,6 +185,10 @@ export const MerchantInfoApi = {
     return await requestClient.upload('/usermerchant/merchant-info/import', {
       file,
     });
+  },
+
+  importMerchantInfoTemplate: async () => {
+    return await requestClient.download('/usermerchant/merchant-info/template');
   },
 
   exportMerchantInfo: async (params: MerchantInfoPageReqVO) => {

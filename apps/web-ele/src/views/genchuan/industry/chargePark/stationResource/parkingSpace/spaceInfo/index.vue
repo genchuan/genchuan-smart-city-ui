@@ -39,6 +39,7 @@ const primaryField =
 const chartLoading = ref(false);
 const checkedIds = ref([]);
 const appliedQuery = ref({});
+const suppressTableFilterChange = ref(false);
 const detailObj = ref({});
 const showOverview = ref(true);
 const formMode = ref('create');
@@ -57,6 +58,8 @@ const importUpdateSupport = ref(false);
 const chartData = ref({});
 const chartDrillDrawerRef = ref(null);
 const selectOptionsMap = ref({});
+let refreshRunning = false;
+let pendingRefreshQuery = null;
 
 function padTime(value) {
   return String(value).padStart(2, '0');
@@ -393,7 +396,7 @@ const dialogFieldCatalog = {
     { key: 'status', label: '状态', section: '区域信息' },
   ],
   stationId: [
-    { key: 'stationId', label: '场站ID', section: '关联信息' },
+    { key: 'stationName', label: '场站名称', section: '关联信息' },
     { key: 'stationNo', label: '场站编号', section: '关联信息' },
     { key: 'name', label: '名称', section: '当前记录' },
     { key: 'areaId', label: '所属片区ID', section: '归属信息' },
@@ -478,9 +481,13 @@ function dedupeFields(fields = []) {
 
 function buildDialogFields(column, row) {
   const fieldKey = column.drillValueField || column.field;
+  const displayFieldKey =
+    column.displayField && !isEmpty(row?.[column.displayField])
+      ? column.displayField
+      : fieldKey;
   const dialogFields = [
     {
-      key: fieldKey,
+      key: displayFieldKey,
       label: column.drillLabel || column.label || '关联信息',
       section: '关联信息',
     },
@@ -580,7 +587,7 @@ async function handleFormConfirm() {
   }
 
   formDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
@@ -652,12 +659,18 @@ const [Grid, gridApi] = useVbenVxeGrid({
       pageSize: 10,
     },
     proxyConfig: {
+      filter: false,
       ajax: {
-        query: async ({ page }) => {
+        query: async ({ page }, formValues = {}) => {
+          const explicitValues = sanitizeParams(formValues);
+          const query =
+            Object.keys(explicitValues).length > 0
+              ? explicitValues
+              : sanitizeParams(appliedQuery.value);
           return await pageApi[`get${apiName}Page`]({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
-            ...appliedQuery.value,
+            ...query,
           });
         },
       },
@@ -692,27 +705,61 @@ function handleCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
 }
 
-function handleTableFilterChange({ column, values }) {
-  const field = column?.field;
+function getTableFilterValue(params = {}) {
+  const candidates = [
+    ...(Array.isArray(params.values) ? params.values : []),
+    ...(Array.isArray(params.datas) ? params.datas : []),
+    ...(Array.isArray(params.filterList)
+      ? params.filterList.flatMap((item) => item.values || item.datas || [])
+      : []),
+    params.option?.data,
+    params.option?.value,
+  ];
+  return candidates.find((value) => !isEmpty(value));
+}
+
+function handleTableFilterChange(params) {
+  if (suppressTableFilterChange.value) return;
+  const field = params?.column?.field;
   if (!field) return;
-  const [value] = values || [];
+  const value = getTableFilterValue(params);
   if (isEmpty(value)) {
+    if (!Object.prototype.hasOwnProperty.call(appliedQuery.value, field)) {
+      return;
+    }
     removeFilterTag(field);
     return;
   }
   applySearchPatch({ [field]: value });
 }
 
-function handleRefresh() {
-  if (gridApi.query) {
-    gridApi.query();
-  } else {
-    gridApi.reload?.();
+function handleRefresh(query = appliedQuery.value) {
+  pendingRefreshQuery = sanitizeParams(query);
+  if (!refreshRunning) {
+    runPendingRefresh();
   }
-  loadChart();
 }
 
-async function loadChart() {
+async function runPendingRefresh() {
+  const nextQuery = pendingRefreshQuery || sanitizeParams(appliedQuery.value);
+  pendingRefreshQuery = null;
+  refreshRunning = true;
+  try {
+    const gridQuery = gridApi.query
+      ? gridApi.query(nextQuery)
+      : gridApi.reload?.(nextQuery);
+    await Promise.all([Promise.resolve(gridQuery), loadChart(nextQuery)]);
+  } finally {
+    refreshRunning = false;
+    if (pendingRefreshQuery) {
+      nextTick(() => {
+        runPendingRefresh();
+      });
+    }
+  }
+}
+
+async function loadChart(query = appliedQuery.value) {
   if (
     !pageConfig.chart ||
     typeof pageApi[`get${apiName}Chart`] !== 'function'
@@ -722,7 +769,7 @@ async function loadChart() {
   chartLoading.value = true;
   try {
     chartData.value =
-      (await pageApi[`get${apiName}Chart`](appliedQuery.value)) || {};
+      (await pageApi[`get${apiName}Chart`](sanitizeParams(query))) || {};
   } finally {
     chartLoading.value = false;
   }
@@ -731,14 +778,15 @@ async function loadChart() {
 async function handleQuerySubmit() {
   appliedQuery.value = sanitizeParams(queryFormApi.form.values || {});
   searchDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleResetSearch() {
   appliedQuery.value = {};
+  clearTableFilter();
   await queryFormApi.resetForm();
   searchDrawerApi.close();
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 function handleCreate() {
@@ -761,6 +809,10 @@ async function handleOpenDetail(row) {
   };
   if (isEmpty(nextDetail.stationName) && !isEmpty(nextDetail.stationId)) {
     nextDetail.stationName = getOptionLabel('stationId', nextDetail.stationId);
+  }
+  if (isEmpty(nextDetail.qrcode)) {
+    nextDetail.qrcode =
+      nextDetail.qrCodeUrl || nextDetail.qrcodeUrl || nextDetail.qrCode || '';
   }
   detailObj.value = nextDetail;
   await nextTick();
@@ -809,7 +861,7 @@ async function handleBind(row) {
     ids: [row.id],
   });
   ElMessage.success('绑定成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleSave() {
@@ -819,7 +871,7 @@ async function handleSave() {
   }
   await pageApi[`save${apiName}`]({ ids: checkedIds.value });
   ElMessage.success('保存成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleResetConfig() {
@@ -833,7 +885,7 @@ async function handleResetConfig() {
   );
   await pageApi[`reset${apiName}`]({ stationId: Number(value) });
   ElMessage.success('重置成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleBatchSync() {
@@ -843,7 +895,7 @@ async function handleBatchSync() {
   }
   await pageApi[`batchSync${apiName}`]({ ids: checkedIds.value });
   ElMessage.success('批量同步成功');
-  handleRefresh();
+  handleRefresh(appliedQuery.value);
 }
 
 async function handleExport(extraParams = {}) {
@@ -981,23 +1033,68 @@ function handleRowAction(action, row) {
     return ElMessage.warning(`已触发告警：${row[primaryField] || row.id}`);
 }
 
-async function applySearchPatch(patch) {
+function clearTableFilter(field) {
+  const grid = gridApi.grid;
+  suppressTableFilterChange.value = true;
+  try {
+    if (field) {
+      const column =
+        grid?.getColumnByField?.(field) ||
+        grid?.getColumnByField?.(String(field));
+      if (column && typeof grid?.clearFilter === 'function') {
+        grid.clearFilter(column);
+      }
+      return;
+    }
+    grid?.clearFilter?.();
+  } catch (error) {
+    console.warn('Failed to clear table filter', error);
+  } finally {
+    nextTick(() => {
+      suppressTableFilterChange.value = false;
+    });
+  }
+}
+async function syncQueryForm(values = {}) {
+  const nextValues = sanitizeParams(values);
+  try {
+    await queryFormApi.resetForm();
+    if (!isEmpty(nextValues)) {
+      await queryFormApi.setValues(nextValues);
+    }
+  } catch (error) {
+    console.warn('Failed to set form values', error);
+  }
+}
+function applySearchPatch(patch) {
   const nextQuery = sanitizeParams({
     ...appliedQuery.value,
     ...patch,
   });
   appliedQuery.value = nextQuery;
-  handleRefresh();
+  handleRefresh(nextQuery);
   nextTick(() => {
-    try {
-      const result = queryFormApi.setValues(nextQuery);
-      Promise.resolve(result).catch((error) => {
-        console.warn('Failed to set form values', error);
-      });
-    } catch (error) {
-      console.warn('Failed to set form values', error);
-    }
+    syncQueryForm(nextQuery);
   });
+}
+
+function findChartSourceItem(config = [], value) {
+  const [dataKey, nameField] = config;
+  return (chartData.value?.[dataKey] || []).find(
+    (item) => String(item?.[nameField]) === String(value),
+  );
+}
+
+function getChartSearchPatch(config = [], value) {
+  const field = config[4] || config[3] || config[1];
+  if (!field || isEmpty(value)) return {};
+  const sourceRow = findChartSourceItem(config, value);
+  const searchableFields = searchFields.map((item) => item.field);
+  if (searchableFields.includes(field)) {
+    return { [field]: sourceRow?.[field] ?? value };
+  }
+  const nameField = pageConfig.nameField || 'name';
+  return { [nameField]: sourceRow?.[nameField] ?? sourceRow?.name ?? value };
 }
 
 function getFieldLabel(field) {
@@ -1028,28 +1125,30 @@ function getTagDisplayText(field, value) {
 async function removeFilterTag(field) {
   const nextQuery = { ...appliedQuery.value };
   delete nextQuery[field];
-  appliedQuery.value = nextQuery;
-  try {
-    await queryFormApi.resetForm();
-    await queryFormApi.setValues(nextQuery);
-  } catch (error) {
-    console.warn('Failed to set form values', error);
-  }
-  nextTick(() => {
-    handleRefresh();
-  });
+  const sanitizedQuery = sanitizeParams(nextQuery);
+  appliedQuery.value = sanitizedQuery;
+  clearTableFilter(field);
+  handleRefresh(sanitizedQuery);
+  await syncQueryForm(sanitizedQuery);
 }
 
 async function clearFilters() {
   appliedQuery.value = {};
-  await queryFormApi.resetForm();
-  handleRefresh();
+  clearTableFilter();
+  handleRefresh(appliedQuery.value);
+  await syncQueryForm({});
 }
 
 function getCellDisplayText(column, row) {
   let value = column.displayField ? row?.[column.displayField] : undefined;
   if (isEmpty(value)) {
     value = row?.[column.field];
+  }
+  if (isEmpty(value)) {
+    for (const field of column.fallbackFields || []) {
+      value = row?.[field];
+      if (!isEmpty(value)) break;
+    }
   }
   if (column.displayField && column.field === 'stationId') {
     value = row?.[column.displayField] || getOptionLabel('stationId', value);
@@ -1073,22 +1172,31 @@ function getCellDisplayText(column, row) {
 
 function getImageUrl(value) {
   if (!value || value === '--') return '';
-  if (/^https?:\/\//.test(value)) return value;
+  const imageValue = Array.isArray(value) ? value[0] : value;
+  if (!imageValue || imageValue === '--') return '';
+  if (/^data:image\//.test(imageValue)) return imageValue;
+  if (/^https?:\/\//.test(imageValue)) return imageValue;
   const baseUrl = import.meta.env.VITE_BASE_URL || '';
-  return `${baseUrl}${String(value).startsWith('/') ? '' : '/'}${value}`;
+  return `${baseUrl}${String(imageValue).startsWith('/') ? '' : '/'}${imageValue}`;
 }
 
 function handleCardClick(item) {
-  if (!item.status) return;
+  if (!item.status) {
+    return openChartDrill('card', item.title, item.key, `${item.title}明细`, {
+      metricValue: item.value,
+      rowCount: item.value,
+    });
+  }
   const field = item.field || item.filterField || 'status';
   applySearchPatch({ [field]: item.status });
 }
 
-function openChartDrill(chartType, value, field, title) {
+function openChartDrill(chartType, value, field, title, extra = {}) {
   chartDrillDrawerRef.value?.open({
     chartType,
     field,
     label: getFieldLabel(field),
+    ...extra,
     pageTitle: pageConfig.title,
     title,
     value,
@@ -1096,23 +1204,22 @@ function openChartDrill(chartType, value, field, title) {
 }
 
 function handleBarClick(name) {
-  const field = pageConfig.chart?.bar?.[4] || pageConfig.chart?.bar?.[1];
-  openChartDrill('bar', name, field, `${pageConfig.title}分布`);
+  applySearchPatch(getChartSearchPatch(pageConfig.chart?.bar || [], name));
 }
 
 function handleLineClick(payload) {
-  const field = pageConfig.chart?.line?.[4] || pageConfig.chart?.line?.[1];
-  openChartDrill(
-    'line',
-    payload?.categoryName || payload?.name,
-    field,
-    `${pageConfig.title}趋势`,
+  applySearchPatch(
+    getChartSearchPatch(
+      pageConfig.chart?.line || [],
+      payload?.categoryName || payload?.name,
+    ),
   );
 }
 
 function handlePieClick(payload) {
-  const field = pageConfig.chart?.pie?.[3] || pageConfig.chart?.pie?.[1];
-  openChartDrill('pie', payload?.name, field, `${pageConfig.title}占比`);
+  applySearchPatch(
+    getChartSearchPatch(pageConfig.chart?.pie || [], payload?.name),
+  );
 }
 
 function getDrillValue(column, row) {
@@ -1181,8 +1288,10 @@ function handleToggleOverview() {
   showOverview.value = !showOverview.value;
 }
 
-function handleOpenSearch() {
+async function handleOpenSearch() {
   searchDrawerApi.open();
+  await nextTick();
+  await syncQueryForm(appliedQuery.value);
 }
 
 function handleFullScreen() {
@@ -1348,10 +1457,15 @@ defineExpose({
               #[column.slotName]="{ row }"
             >
               <el-image
-                v-if="column.type === 'image' && getImageUrl(row[column.field])"
+                v-if="
+                  column.type === 'image' &&
+                  getImageUrl(getCellDisplayText(column, row))
+                "
                 class="common-cell-image"
-                :src="getImageUrl(row[column.field])"
-                :preview-src-list="[getImageUrl(row[column.field])]"
+                :src="getImageUrl(getCellDisplayText(column, row))"
+                :preview-src-list="[
+                  getImageUrl(getCellDisplayText(column, row)),
+                ]"
                 fit="cover"
                 preview-teleported
               />

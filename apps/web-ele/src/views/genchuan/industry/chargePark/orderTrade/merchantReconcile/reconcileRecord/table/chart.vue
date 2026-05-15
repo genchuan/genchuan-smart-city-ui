@@ -6,55 +6,55 @@ import * as echarts from 'echarts';
 import { getReconcileRecordChart } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
 import Card from '#/components/stats/card.vue';
 
+const emit = defineEmits(['filter-change']);
+
 const state = reactive({
   cardList: [
-    { title: '未匹配数', value: 0, color: '#FF6B6B' },
-    { title: '总记录数', value: 0, color: '#4ECDC4' },
-    { title: '匹配率', value: 0, color: '#13ce66', suffix: '%' },
+    { title: '未匹配数', value: 0, color: '#FF6B6B', matchResult: 'unmatched' },
+    { title: '总记录数', value: 0, color: '#4ECDC4', matchResult: null },
   ],
   trendData: [],
 });
 
+const handleCardClick = (matchResult) => {
+  emit('filter-change', { matchResult: matchResult || null });
+};
+
+const handleLineChartClick = (params) => {
+  if (params && params.name) {
+    emit('filter-change', {
+      createTimeStart: params.name + ' 00:00:00',
+      createTimeEnd: params.name + ' 23:59:59',
+    });
+  }
+};
+
 const lineChartRef = ref(null);
 let lineChartInstance = null;
 
-// 获取对账记录图表数据
 const fetchReconcileRecordChartData = async () => {
   try {
     const res = await getReconcileRecordChart();
-    state.cardList[0].value = res.unmatchedCount || 0;
-    state.cardList[1].value = res.totalCount || 0;
-    state.cardList[2].value = res.matchRate || 0;
-    // 如果trendData为空，使用假数据
+    state.cardList[0].value = res.cardData?.unmatchedCount || res.unmatchedCount || 0;
+    state.cardList[1].value = res.cardData?.totalCount || res.totalCount || 0;
     state.trendData =
       res.trendData && res.trendData.length > 0
         ? res.trendData
         : [
-            { date: '2026-04-01', count: 2 },
-            { date: '2026-04-08', count: 1 },
-            { date: '2026-04-10', count: 1 },
-            { date: '2026-04-26', count: 10 },
+            { date: '2026-04-27', count: 10 },
           ];
-    // 更新折线图
     updateChart();
   } catch (error) {
     console.error('获取对账记录图表数据失败:', error);
-    // 接口调用失败时使用假数据
-    state.cardList[0].value = 3;
-    state.cardList[1].value = 15;
-    state.cardList[2].value = 80;
+    state.cardList[0].value = 2;
+    state.cardList[1].value = 10;
     state.trendData = [
-      { date: '2026-04-01', count: 2 },
-      { date: '2026-04-08', count: 1 },
-      { date: '2026-04-10', count: 1 },
-      { date: '2026-04-26', count: 10 },
+      { date: '2026-04-27', count: 10 },
     ];
-    // 更新折线图
     updateChart();
   }
 };
 
-// 初始化折线图
 const initChart = () => {
   if (!lineChartRef.value) return;
 
@@ -115,9 +115,12 @@ const initChart = () => {
   };
 
   lineChartInstance.setOption(option);
+
+  lineChartInstance.on('click', (params) => {
+    handleLineChartClick(params);
+  });
 };
 
-// 更新折线图
 const updateChart = () => {
   if (!lineChartInstance) return;
 
@@ -148,51 +151,26 @@ onMounted(() => {
   <div class="park-chart-box">
     <div class="chart-box-left">
       <Card
-        class="left-card"
+        class="left-card cursor-pointer"
         v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
+        @click="handleCardClick(item.matchResult)"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
   </div>
 </template>
 
-<style scoped lang="scss">
-.park-chart-box {
-  display: flex;
-  gap: 20px;
-  padding: 20px;
-  background-color: hsl(var(--card));
-  border-radius: 8px;
-}
+<style scoped lang="scss"> 
+ 
+.left-card {
+  flex:1;
+  width: 330px; 
 
-.chart-box-left {
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  grid-template-rows: repeat(3, 1fr) !important;
-  gap: 16px !important;
-  flex-shrink: 0;
-  width: 30%;
-}
-
-.chart-box-left :deep(.left-card) {
-  width: 100% !important;
-  flex-shrink: 0;
-}
-
-.chart-box-left :deep(.stat-card) {
-  width: 100% !important;
-  height: 100px !important;
-  min-width: unset !important;
-  max-width: unset !important;
-}
-
-.simple-bar-chart {
-  width: 100%;
-  height: 200px;
-  background-color: #f9fafb;
-  border-radius: 8px;
-  padding: 16px;
+  :deep(.stat-card) {
+    flex:1;
+  }
 }
 </style>
+

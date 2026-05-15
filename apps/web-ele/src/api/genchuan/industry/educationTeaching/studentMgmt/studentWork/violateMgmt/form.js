@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择违纪类型',
+        clearable: true,
         options: [
           { label: '仪容仪表', value: '仪容仪表' },
           { label: '行为违规', value: '行为违规' },
@@ -28,6 +29,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择处分类型',
+        clearable: true,
         options: [
           { label: '警告', value: '警告' },
           { label: '记过', value: '记过' },
@@ -43,6 +45,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '待审批', value: '待审批' },
           { label: '已执行', value: '已执行' },
@@ -91,6 +94,7 @@ export function useCreateFormSchema(isEdit = false) {
       label: '学号',
       component: 'Input',
       componentProps: { placeholder: '请输入学号' },
+      rules: 'required',
       labelWidth: '100',
     },
     {

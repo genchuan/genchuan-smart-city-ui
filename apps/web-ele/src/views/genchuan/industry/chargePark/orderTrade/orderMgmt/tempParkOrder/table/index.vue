@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 
@@ -35,6 +35,14 @@ const props = defineProps({
   arrowState: {
     type: Boolean,
     default: false,
+  },
+  filterParams: {
+    type: Object,
+    default: () => ({
+      createOrderTimeStart: null,
+      createOrderTimeEnd: null,
+      stationName: null,
+    }),
   },
 });
 const emit = defineEmits(['arrow-change']);
@@ -191,6 +199,7 @@ const getTableData = async (pageObj) => {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchObj,
+    ...props.filterParams,
   };
 
   try {
@@ -293,6 +302,14 @@ const createLabel = (item) => {
 const handleClick = () => {
   gridApi.query();
 };
+watch(
+  () => props.filterParams,
+  () => {
+    dataObj.currentPage = 1;
+    gridApi.query();
+  },
+  { deep: true }
+);
 const handleSearchShow = () => {
   drawerApi.open();
 };
@@ -416,6 +433,7 @@ const handleRefundSubmit = async () => {
 const invoiceDialogVisible = ref(false);
 const invoiceForm = reactive({
   id: '',
+  orderNo: '',
   invoiceTitle: '',
   invoiceTaxNo: '',
   invoiceEmail: '',
@@ -429,6 +447,7 @@ const currentPlateNo = ref('');
 // 打开开票弹窗
 const handleInvoice = (row) => {
   invoiceForm.id = row.id;
+  invoiceForm.orderNo = row.orderNo;
   invoiceForm.remark = '';
   invoiceDialogVisible.value = true;
 };
@@ -589,6 +608,9 @@ const alarmColumns = [
       <el-form :model="invoiceForm" label-width="80px">
         <el-form-item label="订单ID">
           <el-input v-model="invoiceForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="订单编号">
+          <el-input v-model="invoiceForm.orderNo" disabled />
         </el-form-item>
         <el-form-item label="发票抬头">
           <el-input v-model="invoiceForm.invoiceTitle" placeholder="请输入发票抬头" />

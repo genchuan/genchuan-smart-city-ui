@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择报修类型',
+        clearable: true,
         options: [
           { label: '水电', value: '水电' },
           { label: '家具', value: '家具' },
@@ -28,6 +29,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '待派单', value: '待派单' },
           { label: '维修中', value: '维修中' },

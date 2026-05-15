@@ -74,7 +74,6 @@ export function createCoopEnterprise(data) {
   const convertedData = convertZhToEn(data);
   return requestClient.post('/studentmgmt/coop-enterprise/create', convertedData).catch(err => {
     console.warn('建档接口失败，模拟成功', err);
-    return Promise.resolve(true);
   });
 }
 
@@ -82,7 +81,6 @@ export function maintainCoopEnterprise(data) {
   const convertedData = convertZhToEn(data);
   return requestClient.put('/studentmgmt/coop-enterprise/maintain', convertedData).catch(err => {
     console.warn('维护接口失败，模拟成功', err);
-    return Promise.resolve(true);
   });
 }
 

@@ -33,7 +33,7 @@ const getStyleIdByStatus = (status) => {
 
 // 信息窗内容
 const getTooltipContent = (properties) => {
-  const { stationName, statusName, id } = properties;
+  const { cameraName, statusName, id } = properties;
   const statusText = statusName || (properties.stationStatus === 'enabled' ? '正常' : (properties.stationStatus === 'disabled' ? '异常' : '离线'));
   const statusColor = statusText === '正常' ? 'green' : (statusText === '异常' ? 'red' : 'orange');
 
@@ -42,7 +42,7 @@ const getTooltipContent = (properties) => {
       <div style="margin-bottom: 8px; font-weight: bold; color: #409EFF; border-bottom: 1px solid #eee; padding-bottom: 4px;">摄像头信息</div>
       <div style="margin: 6px 0; display: flex;">
         <span style="font-weight: bold; width: 70px;">名称：</span>
-        <span style="flex: 1;">${stationName || '未知'}</span>
+        <span style="flex: 1;">${cameraName || '未知'}</span>
       </div>
       <div style="margin: 6px 0; display: flex;">
         <span style="font-weight: bold; width: 70px;">状态：</span>
@@ -62,7 +62,7 @@ const handleMarkerClick = (e) => {
     infoWindow.setContent(getTooltipContent(properties));
     infoWindow.setPosition(e.geometry.position);
     infoWindow.open();
-    emit('markerClick', properties.stationName);
+    emit('markerClick', properties.cameraName);
   }
 };
 
@@ -123,7 +123,7 @@ const createMarkers = (map) => {
   const geometriesData = [];
   if (Array.isArray(props.geometriesArray)) {
     props.geometriesArray.forEach((item) => {
-      const { lon, lat, stationStatus, id, stationName, statusName } = item;
+      const { lon, lat, stationStatus, id, cameraName, statusName } = item;
       if (typeof lon === 'number' && typeof lat === 'number') {
         const styleId = getStyleIdByStatus(stationStatus);
         geometriesData.push({
@@ -132,7 +132,7 @@ const createMarkers = (map) => {
           position: new TMap.LatLng(lat, lon),
           properties: {
             id,
-            stationName,
+            cameraName,
             stationStatus,
             statusName,
           },

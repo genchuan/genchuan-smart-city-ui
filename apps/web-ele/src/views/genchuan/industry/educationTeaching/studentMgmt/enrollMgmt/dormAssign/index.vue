@@ -1,11 +1,11 @@
 <script setup>
-import { reactive, ref } from 'vue';
-import { useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import {reactive, ref, onMounted, onUnmounted} from 'vue';
+import {useVbenDrawer} from '@vben/common-ui';
+import {ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import DormAssignDetailDrawer from './components/dormAssignDetail.vue';
 import {
   getDormAssignPage,
@@ -20,41 +20,46 @@ import {
   useFormSchema,
   getColumns,
   useAssignFormSchema,
-  useAdjustFormSchema,
+  useSingleAdjustFormSchema,
+  useBatchAdjustFormSchema,
   useEditFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/enrollMgmt/dormAssign/form.js';
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
-// 标签筛选
+// ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
 function handleFilterTagClick(field, value) {
-  if (!field || value == null) return;
-  if (tagFilters.value[field] !== undefined) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
     const existing = tagFilters.value[field];
-    if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-      delete tagFilters.value[field];
-    } else if (!Array.isArray(existing) && existing === value) {
-      delete tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
     } else {
       tagFilters.value[field] = value;
     }
-  } else {
-    tagFilters.value[field] = value;
   }
-  gridApi.reload();
+  gridApi.query();
 }
 
 function clearFilters() {
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 function removeFilterTag(field) {
   delete tagFilters.value[field];
-  gridApi.reload();
+  gridApi.query();
 }
 
 function getFieldLabel(field) {
@@ -73,29 +78,31 @@ function getTagDisplayText(field, value) {
   return value || '-';
 }
 
-// 抽屉组件
+// ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => drawerApi.close(),
+  onCancel: () => drawerApi.close()
 });
-
 const [AssignDrawer, assignDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => assignDrawerApi.close(),
+  onCancel: () => assignDrawerApi.close()
 });
-
-const [AdjustDrawer, adjustDrawerApi] = useVbenDrawer({
+const [SingleAdjustDrawer, singleAdjustDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => adjustDrawerApi.close(),
+  onCancel: () => singleAdjustDrawerApi.close()
 });
-
+const [BatchAdjustDrawer, batchAdjustDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => batchAdjustDrawerApi.close()
+});
 const [EditDrawer, editDrawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
-  onCancel: () => editDrawerApi.close(),
+  onCancel: () => editDrawerApi.close()
 });
 
 const dataObj = reactive({
@@ -119,7 +126,8 @@ function handleRowCheckboxChange({records}) {
 
 const searchParams = ref({});
 const currentEditId = ref(null);
-const batchIds = ref([]);      // 批量操作选中的ID列表
+const batchIds = ref([]);        // 用于分配和调整（批量时存储多个ID）
+const singleAdjustId = ref(null); // 单行调整时存储单条ID
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '-';
@@ -145,10 +153,7 @@ const getDateFromTimestamp = (timestamp) => {
 };
 
 const getStatusType = (status) => {
-  const map = {
-    '未分配': 'warning',
-    '已分配': 'success',
-  };
+  const map = {'未分配': 'warning', '已分配': 'success'};
   return map[status] || 'info';
 };
 
@@ -157,59 +162,23 @@ const getTableData = async ({ page }) => {
   try {
     const params = {
       ...searchParams.value,
+      ...tagFilters.value,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
-
-    const res = await getDormAssignPage(params);
-
-    let filtered = res.list;
-
-    // 应用标签筛选
-    Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
-      filtered = filtered.filter((item) => {
-        let itemValue;
-        switch (field) {
-          case 'dormNum':
-            itemValue = item.dormNum;
-            break;
-          case 'status':
-            itemValue = item.status;
-            break;
-          case 'creator':
-            itemValue = item.creator;
-            break;
-          case 'createTime':
-            itemValue = item.createTime
-              ? getDateFromTimestamp(item.createTime)
-              : '';
-            break;
-          case 'studentId':
-            itemValue = item.studentId;
-            break;
-          default:
-            itemValue = item[field];
-        }
-
-        if (Array.isArray(filterValue)) {
-          return filterValue.includes(String(itemValue));
-        } else {
-          return String(itemValue) === String(filterValue);
-        }
-      });
+    Object.keys(params).forEach(key => {
+      if (params[key] === '' || params[key] === null || params[key] === undefined) {
+        delete params[key];
+      }
     });
-
-    // ✅ 关键修复点：使用前端筛选后的长度
-    dataObj.total = filtered.length;
-    dataObj.list = filtered;
-
+    const res = await getDormAssignPage(params);
+    dataObj.total = res.total || 0;
+    dataObj.list = res.list || [];
     return dataObj;
   } catch (error) {
     console.error('获取数据失败:', error);
-
     dataObj.total = 0;
     dataObj.list = [];
-
     ElMessage.error('获取宿舍分配记录失败，请检查网络或联系管理员');
     return dataObj;
   } finally {
@@ -218,42 +187,34 @@ const getTableData = async ({ page }) => {
 };
 
 function handleRefresh() {
-  gridApi.reload();
+  gridApi.query();
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.reload();
+  gridApi.query();
 }
 
 async function handleExport() {
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
-    const loading = ElLoading.service({text: '正在导出...'});
-    try {
-      const data = await exportDormAssign(searchParams.value);
-      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
-      ElMessage.success('导出成功');
-    } finally {
-      loading.close();
-    }
+    const data = await exportDormAssign(searchParams.value);
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
+  } finally {
+    loading.close();
   }
 }
 
 // 批量分配
 function handleBatchAssign() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个分配记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个分配记录');
   const unassignedRows = checkedRows.value.filter(row => row.status === '未分配');
-  if (unassignedRows.length === 0) {
-    ElMessage.warning('请选择状态为【未分配】的记录进行分配');
-    return;
-  }
+  if (unassignedRows.length === 0) return ElMessage.warning('请选择状态为【未分配】的记录进行分配');
   batchIds.value = unassignedRows.map(row => row.id);
   assignFormApi.resetForm();
   assignDrawerApi.open();
@@ -261,26 +222,17 @@ function handleBatchAssign() {
 
 // 批量调整
 function handleBatchAdjust() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一个分配记录');
-    return;
-  }
+  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个分配记录');
   const assignedRows = checkedRows.value.filter(row => row.status === '已分配');
-  if (assignedRows.length === 0) {
-    ElMessage.warning('请选择状态为【已分配】的记录进行调整');
-    return;
-  }
+  if (assignedRows.length === 0) return ElMessage.warning('请选择状态为【已分配】的记录进行调整');
   batchIds.value = assignedRows.map(row => row.id);
-  adjustFormApi.resetForm();
-  adjustDrawerApi.open();
+  batchAdjustFormApi.resetForm();
+  batchAdjustDrawerApi.open();
 }
 
 // 单行分配
 async function handleAssign(row) {
-  if (row.status !== '未分配') {
-    ElMessage.warning('只有未分配状态的记录可以分配');
-    return;
-  }
+  if (row.status !== '未分配') return ElMessage.warning('只有未分配状态的记录可以分配');
   batchIds.value = [row.id];
   assignFormApi.resetForm();
   assignDrawerApi.open();
@@ -288,26 +240,22 @@ async function handleAssign(row) {
 
 // 单行调整
 async function handleAdjust(row) {
-  if (row.status !== '已分配') {
-    ElMessage.warning('只有已分配状态的记录可以调整');
-    return;
-  }
-  batchIds.value = [row.id];
-  adjustFormApi.resetForm();
-  adjustDrawerApi.open();
+  if (row.status !== '已分配') return ElMessage.warning('只有已分配状态的记录可以调整');
+  singleAdjustId.value = row.id;
+  singleAdjustFormApi.resetForm();
+  singleAdjustDrawerApi.open();
 }
 
-// 分配表单提交
+// 分配表单
 const [AssignForm, assignFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
     const loading = ElLoading.service({text: '分配中...'});
     try {
-      // 生成床位ID数组（起始床位号 + 索引）
       const bedStartNum = values.bedStartNum;
       const newBedIds = batchIds.value.map((_, idx) => bedStartNum + idx);
-      const dormId = values.dormNum; // 模拟数据中 dormId 使用 dormNum 字符串（实际应转换，这里简化）
+      const dormId = values.dormNum;
       const res = await assignDormAssign({
         ids: batchIds.value,
         dormId: dormId,
@@ -332,26 +280,27 @@ const [AssignForm, assignFormApi] = useVbenForm({
   submitButtonOptions: {content: '确认分配'},
 });
 
-// 调整表单提交
-const [AdjustForm, adjustFormApi] = useVbenForm({
+// 单行调整表单
+const [SingleAdjustForm, singleAdjustFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
     const loading = ElLoading.service({text: '调整中...'});
     try {
-      const bedStartNum = values.newBedStartNum;
-      const newBedIds = batchIds.value.map((_, idx) => bedStartNum + idx);
-      const newDormId = values.newDormNum; // 简化，实际应为宿舍ID
+      const newDormId = parseInt(values.newDormId, 10);
+      const newBedId = parseInt(values.newBedId, 10);
+      if (isNaN(newDormId) || isNaN(newBedId)) {
+        ElMessage.error('宿舍ID和床位ID必须为有效数字');
+        return;
+      }
       const res = await adjustDormAssign({
-        ids: batchIds.value,
+        ids: [singleAdjustId.value],
         newDormId: newDormId,
-        newBedIds: newBedIds,
-        adjustTime: Date.now(),
-        remark: values.remark,
+        newBedIds: [newBedId],
       });
       if (res && res !== false) {
         ElMessage.success('调整成功');
-        adjustDrawerApi.close();
+        singleAdjustDrawerApi.close();
         handleRefresh();
       } else {
         ElMessage.error('调整失败');
@@ -361,7 +310,65 @@ const [AdjustForm, adjustFormApi] = useVbenForm({
     }
   },
   layout: 'horizontal',
-  schema: useAdjustFormSchema(),
+  schema: useSingleAdjustFormSchema(),
+  showCollapseButton: false,
+  submitButtonOptions: {content: '确认调整'},
+});
+
+// 批量调整表单
+const [BatchAdjustForm, batchAdjustFormApi] = useVbenForm({
+  collapsed: false,
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  handleSubmit: async (values) => {
+    const loading = ElLoading.service({text: '批量调整中...'});
+    try {
+      const newDormId = parseInt(values.newDormId, 10);
+      if (isNaN(newDormId)) {
+        ElMessage.error('新宿舍ID必须为数字');
+        return;
+      }
+      let bedIdsArray = [];
+      const inputStr = (values.newBedIdsInput || '').trim();
+      if (inputStr === '') {
+        ElMessage.error('请输入床位ID');
+        return;
+      }
+      const parts = inputStr.split(',');
+      for (const part of parts) {
+        const trimmed = part.trim();
+        if (trimmed === '') continue;
+        const num = parseInt(trimmed, 10);
+        if (isNaN(num)) {
+          ElMessage.error(`床位ID "${trimmed}" 不是有效数字`);
+          return;
+        }
+        bedIdsArray.push(num);
+      }
+      if (bedIdsArray.length === 0) {
+        ElMessage.error('请至少填写一个有效的床位ID');
+        return;
+      }
+      if (bedIdsArray.length !== batchIds.value.length) {
+        ElMessage.warning(`您填写了 ${bedIdsArray.length} 个床位ID，但选中了 ${batchIds.value.length} 条记录，请确保数量一致`);
+      }
+      const res = await adjustDormAssign({
+        ids: batchIds.value,
+        newDormId: newDormId,
+        newBedIds: bedIdsArray,
+      });
+      if (res && res !== false) {
+        ElMessage.success('批量调整成功');
+        batchAdjustDrawerApi.close();
+        handleRefresh();
+      } else {
+        ElMessage.error('批量调整失败');
+      }
+    } finally {
+      loading.close();
+    }
+  },
+  layout: 'horizontal',
+  schema: useBatchAdjustFormSchema(),
   showCollapseButton: false,
   submitButtonOptions: {content: '确认调整'},
 });
@@ -375,7 +382,7 @@ async function handleEdit(row) {
       studentId: detail.studentId,
       dormNum: detail.dormNum,
       bedId: detail.bedId,
-      status: detail.status,     // 补充状态赋值
+      status: detail.status,
       remark: detail.remark,
     });
     editDrawerApi.open();
@@ -392,7 +399,6 @@ const [EditForm, editFormApi] = useVbenForm({
   handleSubmit: async (values) => {
     const loading = ElLoading.service({text: '保存中...'});
     try {
-      // 确保 status 字段被传递
       const res = await updateDormAssign({...values, id: currentEditId.value});
       if (res && res !== false) {
         ElMessage.success('编辑成功');
@@ -411,7 +417,6 @@ const [EditForm, editFormApi] = useVbenForm({
   submitButtonOptions: {content: '保存'},
 });
 
-// 详情抽屉
 const dormAssignDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -425,7 +430,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.reload();
+    gridApi.query();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -453,8 +458,24 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-
 defineExpose({handleFilterTagClick, clearFilters});
+
+// ========== 监听图表自定义事件 ==========
+const handleChartFilter = (event) => {
+  const {type, value} = event.detail;
+  if (type === 'status') {
+    handleFilterTagClick('status', value);
+  } else if (type === 'dormNum') {
+    handleFilterTagClick('dormNum', value);
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('dormassign-chart-filter', handleChartFilter);
+});
+onUnmounted(() => {
+  window.removeEventListener('dormassign-chart-filter', handleChartFilter);
+});
 </script>
 
 <template>
@@ -467,9 +488,14 @@ defineExpose({handleFilterTagClick, clearFilters});
     <AssignDrawer title="分配宿舍床位">
       <AssignForm/>
     </AssignDrawer>
-    <AdjustDrawer title="调整宿舍床位">
-      <AdjustForm/>
-    </AdjustDrawer>
+    <!-- 单行调整抽屉 -->
+    <SingleAdjustDrawer title="调整宿舍床位">
+      <SingleAdjustForm/>
+    </SingleAdjustDrawer>
+    <!-- 批量调整抽屉 -->
+    <BatchAdjustDrawer title="批量调整宿舍床位">
+      <BatchAdjustForm/>
+    </BatchAdjustDrawer>
     <EditDrawer title="编辑分配信息">
       <EditForm/>
     </EditDrawer>
@@ -495,11 +521,10 @@ defineExpose({handleFilterTagClick, clearFilters});
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <IconButton :content="props.arrowShow ? '展开' : '收缩'"
                       :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
+          <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
-      <!-- 钻取列 -->
       <template #studentId="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
           {{ row.studentId }}
@@ -507,8 +532,7 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #dormNum="{ row }">
         <el-text @click="handleFilterTagClick('dormNum', row.dormNum)" type="primary"
-                 style="cursor: pointer;">
-          {{ row.dormNum || '-' }}
+                 style="cursor: pointer;">{{ row.dormNum || '-' }}
         </el-text>
       </template>
       <template #status="{ row }">
@@ -522,18 +546,14 @@ defineExpose({handleFilterTagClick, clearFilters});
       </template>
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer">
-          {{ row.creator || '-' }}
+                 style="cursor: pointer">{{ row.creator || '-' }}
         </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer">
-          {{ formatTimestamp(row.createTime) }}
+                 type="primary" style="cursor: pointer">{{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
-
-      <!-- 时间格式化 -->
       <template #assignTime="{ row }">
         <el-text>{{ formatTimestamp(row.assignTime) }}</el-text>
       </template>
@@ -544,7 +564,6 @@ defineExpose({handleFilterTagClick, clearFilters});
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>

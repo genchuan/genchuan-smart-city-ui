@@ -14,6 +14,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择评比周期',
+        clearable: true,
         options: [
           { label: '周', value: '周' },
           { label: '月', value: '月' },
@@ -28,6 +29,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '打分中', value: '打分中' },
           { label: '已汇总', value: '已汇总' },

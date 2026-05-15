@@ -89,55 +89,6 @@ export function useHandleFormSchema() {
   ];
 }
 
-// 分屏配置 schema
-export function useSplitScreenSchema() {
-  return [
-    {
-      fieldName: 'splitMode',
-      label: '分屏模式',
-      component: 'RadioGroup',
-      componentProps: {
-        options: [
-          { label: '1分屏', value: 1 },
-          { label: '4分屏', value: 4 },
-          { label: '9分屏', value: 9 },
-          { label: '16分屏', value: 16 },
-        ],
-      },
-      defaultValue: 4,
-      labelWidth: '100',
-    },
-  ];
-}
-
-// 告警表单 schema
-export function useAlarmFormSchema() {
-  return [
-    {
-      fieldName: 'alarmContent',
-      label: '告警内容',
-      component: 'Input',
-      componentProps: { placeholder: '请输入告警内容', type: 'textarea', rows: 3 },
-      rules: 'required',
-      labelWidth: '100',
-    },
-  ];
-}
-
-// 录像表单 schema
-export function useRecordFormSchema() {
-  return [
-    {
-      fieldName: 'recordDuration',
-      label: '录像时长（秒）',
-      component: 'InputNumber',
-      componentProps: { placeholder: '请输入录像时长', min: 10, max: 3600, step: 10 },
-      defaultValue: 300,
-      labelWidth: '100',
-    },
-  ];
-}
-
 // 文本常量
 export const textObj = {
   fullscreenText: '全屏',

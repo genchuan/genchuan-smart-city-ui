@@ -84,8 +84,8 @@ export type MerchantSendCouponDetailVO = MerchantSendCouponVO & {
 export type MerchantSendCouponPageReqVO = PageParam & {
   couponId?: number;
   couponName?: string;
-  execTime?: string;
-  finishTime?: string;
+  execTime?: string[];
+  finishTime?: string[];
   merchantId?: number;
   remark?: string;
   sendCount?: number | string;

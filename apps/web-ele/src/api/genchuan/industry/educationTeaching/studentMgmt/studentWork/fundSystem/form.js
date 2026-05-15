@@ -14,12 +14,17 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择年级',
+        clearable: true,
         options: [
+          { label: '2020级', value: '2020级' },
+          { label: '2021级', value: '2021级' },
           { label: '2022级', value: '2022级' },
           { label: '2023级', value: '2023级' },
           { label: '2024级', value: '2024级' },
           { label: '2025级', value: '2025级' },
           { label: '2026级', value: '2026级' },
+          { label: '2027级', value: '2027级' },
+          { label: '2028级', value: '2028级' },
         ],
       },
       labelWidth: '100',
@@ -30,6 +35,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择资助类型',
+        clearable: true,
         options: [
           { label: '助学金', value: '助学金' },
           { label: '勤工俭学', value: '勤工俭学' },
@@ -44,6 +50,7 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
+        clearable: true,
         options: [
           { label: '待审核', value: '待审核' },
           { label: '已汇总', value: '已汇总' },
@@ -80,14 +87,19 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 申请表单 schema（添加 status 字段）
+// 申请表单 schema（金额字段改为下拉选择）
 export function useCreateFormSchema() {
   return [
     {
       fieldName: 'studentId',
       label: '学号',
-      component: 'Input',
-      componentProps: { placeholder: '请输入学号' },
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入学号',
+        controls: false,
+        style: 'width: 100%',
+        min: 1,
+      },
       rules: 'required',
       labelWidth: '100',
     },
@@ -109,8 +121,27 @@ export function useCreateFormSchema() {
     {
       fieldName: 'applyAmount',
       label: '申请金额',
-      component: 'InputNumber',
-      componentProps: { placeholder: '请输入申请金额', min: 0, precision: 2, style: 'width: 100%' },
+      component: 'Select',          // 改为下拉选择
+      componentProps: {
+        placeholder: '请选择申请金额',
+        clearable: false,
+        options: [
+          { label: '100元', value: 100 },
+          { label: '200元', value: 200 },
+          { label: '300元', value: 300 },
+          { label: '400元', value: 400 },
+          { label: '500元', value: 500 },
+          { label: '1000元', value: 1000 },
+          { label: '2000元', value: 2000 },
+          { label: '3000元', value: 3000 },
+          { label: '4000元', value: 4000 },
+          { label: '5000元', value: 5000 },
+          { label: '6000元', value: 6000 },
+          { label: '8000元', value: 8000 },
+          { label: '10000元', value: 10000 },
+        ],
+      },
+      rules: 'required',
       labelWidth: '100',
     },
     {

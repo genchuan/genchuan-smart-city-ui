@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
-
 import dayjs from 'dayjs';
 import { ElMessage } from 'element-plus';
 
 import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
+import { buildDateRangeByChartName } from '#/views/genchuan/industry/chargePark/userMerchant/utils/chartDrill';
 
 import { buildStatsDataFromApi } from './data';
 import Table from './table/index.vue';
 
-import '#/components/page/index.scss';
+import '#/genchuan-components/page/index.scss';
 
 type TableInstance = {
   recalculateLayout: () => Promise<void> | void;
@@ -21,7 +20,7 @@ type TableInstance = {
 };
 
 const tableRef = ref<null | TableInstance>(null);
-const showStats = ref(false);
+const showStats = ref(true);
 const statsDataSource = ref(buildStatsDataFromApi());
 
 /** 等待布局稳定后再重算表格 */
@@ -64,37 +63,24 @@ async function loadStats() {
   }
 }
 
-const statsData = computed(() => {
-  const data = statsDataSource.value;
+const statsData = computed(() => statsDataSource.value);
 
-  return {
-    ...data,
-    cards: data.cards.map((item, index) => ({
-      ...item,
-      onClick:
-        index === 0 ? handleFilterAllMerchants : handleFilterRecentMerchants,
-    })),
-    charts: data.charts.map((item) => {
-      if (item.type === 'line') {
-        return {
-          ...item,
-          onClick: (params: { name: string }) =>
-            handleFilterByMonth(params.name),
-        };
-      }
+async function handleMerchantInfoCardClick({ index }: { index: number }) {
+  if (index === 0) {
+    await handleFilterAllMerchants();
+    return;
+  }
 
-      if (item.type === 'bar') {
-        return {
-          ...item,
-          onClick: (params: { name: string }) =>
-            handleFilterByMerchantType(params.name),
-        };
-      }
+  await handleFilterRecentMerchants();
+}
 
-      return item;
-    }),
-  };
-});
+async function handleMerchantInfoLineClick({ name }: { name: string }) {
+  await handleFilterByMonth(name);
+}
+
+async function handleMerchantInfoBarClick({ name }: { name: string }) {
+  await handleFilterByMerchantType(name);
+}
 
 /** 钻取全部商户列表 */
 async function handleFilterAllMerchants() {
@@ -113,12 +99,13 @@ async function handleFilterRecentMerchants() {
 
 /** 按月份钻取商户列表 */
 async function handleFilterByMonth(month: string) {
-  await tableRef.value?.setSearchValues({
-    registerTime: [
-      dayjs(`${month}-01`).startOf('month').format('YYYY-MM-DD HH:mm:ss'),
-      dayjs(`${month}-01`).endOf('month').format('YYYY-MM-DD HH:mm:ss'),
-    ],
-  });
+  const range = buildDateRangeByChartName(month);
+
+  if (!range) {
+    return;
+  }
+
+  await tableRef.value?.setSearchValues({ registerTime: range });
 }
 
 /** 按商户类型钻取列表 */
@@ -132,58 +119,91 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page auto-content-height class="merchant-info-page">
-    <div class="common-index merchant-info-index">
-      <div v-show="showStats" class="merchant-info-stats">
-        <StatsVisualization :data="statsData" />
-      </div>
-      <div class="merchant-info-table-wrap">
-        <Table
-          ref="tableRef"
-          :reload-stats="loadStats"
-          :show-stats="showStats"
-          :toggle-stats="toggleStats"
-        />
-      </div>
-    </div>
-  </Page>
+  <div class="common-index">
+    <StatsVisualization
+      v-if="showStats"
+      :data="statsData"
+      @bar-click="handleMerchantInfoBarClick"
+      @card-click="handleMerchantInfoCardClick"
+      @line-click="handleMerchantInfoLineClick"
+    />
+    <Table
+      ref="tableRef"
+      :reload-stats="loadStats"
+      :show-stats="showStats"
+      :toggle-stats="toggleStats"
+    />
+  </div>
 </template>
 
 <style scoped lang="scss">
-.merchant-info-page {
-  height: 100%;
+:deep(.vxe-pager--wrapper) {
+  justify-content: center;
 }
 
-:deep(.merchant-info-page .vben-page-content) {
-  height: 100%;
+:deep(.vxe-grid--pager-wrapper .vxe-pager) {
+  position: relative;
+  height: 65px;
+  margin-top: 0;
 }
 
-.merchant-info-index {
+:deep(.user-merchant-table-grid .vxe-grid--toolbar-wrapper) {
+  margin-top: 0;
+}
+
+:deep(.user-merchant-table-grid .vxe-toolbar) {
   display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+  align-items: center;
 }
 
-.merchant-info-stats {
-  flex-shrink: 0;
-  height: 280px;
-  overflow: hidden;
-}
-
-.merchant-info-table-wrap {
+:deep(.user-merchant-table-grid .vxe-buttons--wrapper) {
   flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  min-width: 0;
+  padding-top: 0;
+}
+
+:deep(.user-merchant-table-grid .tabel-tabs) {
+  flex-wrap: nowrap !important;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 32px;
+  overflow: auto hidden;
+  white-space: nowrap;
+}
+
+:deep(.user-merchant-table-grid .tabel-tabs .el-tag) {
+  flex-shrink: 0;
+}
+
+:deep(.user-merchant-table-grid .vxe-tools--wrapper),
+:deep(.user-merchant-table-grid .vxe-tools--operate) {
+  position: static !important;
+  flex-shrink: 0;
 }
 
 :deep(.park-chart-box) {
-  min-height: 280px;
+  height: 300px;
 }
 
-:deep(.simple-bar-chart),
-:deep(.park-type-chart) {
-  height: 280px;
+:deep(.park-chart-box .chart-box-left) {
+  height: 100%;
+}
+
+:deep(.park-chart-box .stat-card) {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+:deep(.park-chart-box .map-wrapper),
+:deep(.park-chart-box .park-type-chart),
+:deep(.park-chart-box .simple-bar-chart) {
+  height: 100%;
+}
+
+:deep(.rule-chart-box),
+:deep(.rule-chart-box .chart-box-left),
+:deep(.rule-chart-box .charts-wrapper),
+:deep(.rule-chart-box .chart-area) {
+  height: 300px;
 }
 </style>

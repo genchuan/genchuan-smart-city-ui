@@ -46,6 +46,8 @@ export const searchFields = [
     options: statusOptions,
     required: false,
   },
+  { field: 'creator', label: '创建人', type: 'input', required: false },
+  { field: 'updater', label: '更新人', type: 'input', required: false },
 ];
 
 export const formFields = [
@@ -74,7 +76,7 @@ export const formFields = [
 
 export const tableColumns = [
   { field: 'id', label: '名单编号', minWidth: 120, drillType: 'detail' },
-  { field: 'plateNo', label: '车牌号', minWidth: 130, drillType: 'filter' },
+  { field: 'plateNo', label: '车牌号', minWidth: 130, drillType: 'detail' },
   { field: 'type', label: '名单类型', minWidth: 120, drillType: 'filter' },
   { field: 'subType', label: '细分类型', minWidth: 120, drillType: 'filter' },
   {
@@ -93,8 +95,7 @@ export const tableColumns = [
     field: 'certInfo',
     label: '证明材料',
     minWidth: 160,
-    drillType: 'download',
-    drillLabel: '证明材料',
+    drillType: 'filter',
   },
   {
     field: 'interceptCount',
@@ -110,7 +111,12 @@ export const tableColumns = [
     minWidth: 180,
     formatter: 'formatDateTime',
   },
-  { field: 'auditUserId', label: '审核人ID', minWidth: 120 },
+  {
+    field: 'auditUserName',
+    label: '审核人',
+    minWidth: 120,
+    displayField: 'auditUserName',
+  },
   { field: 'creator', label: '创建人', minWidth: 120, drillType: 'filter' },
   {
     field: 'createTime',
@@ -133,17 +139,40 @@ export const detailFields = [
   { key: 'type', label: '名单类型', section: '车辆信息' },
   { key: 'subType', label: '细分类型', section: '车辆信息' },
   { key: 'status', label: '状态', section: '基础信息' },
-  { key: 'startTime', label: '生效时间', section: '生效信息' },
-  { key: 'endTime', label: '失效时间', section: '生效信息' },
+  {
+    key: 'startTime',
+    label: '生效时间',
+    section: '生效信息',
+    formatter: 'formatDateTime',
+  },
+  {
+    key: 'endTime',
+    label: '失效时间',
+    section: '生效信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'certInfo', label: '证明材料', section: '生效信息' },
   { key: 'interceptCount', label: '拦截次数', section: '运营信息' },
   { key: 'remark', label: '备注', section: '生效信息' },
-  { key: 'reserve1', label: '备用字段1', section: '扩展信息' },
-  { key: 'reserve2', label: '备用字段2', section: '扩展信息' },
-  { key: 'auditTime', label: '审核时间', section: '审计信息' },
-  { key: 'auditUserId', label: '审核人ID', section: '审计信息' },
+  {
+    key: 'auditTime',
+    label: '审核时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
+  { key: 'auditUserName', label: '审核人', section: '审计信息' },
   { key: 'creator', label: '创建人', section: '审计信息' },
-  { key: 'createTime', label: '创建时间', section: '审计信息' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'updater', label: '更新人', section: '审计信息' },
-  { key: 'updateTime', label: '更新时间', section: '审计信息' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
 ];

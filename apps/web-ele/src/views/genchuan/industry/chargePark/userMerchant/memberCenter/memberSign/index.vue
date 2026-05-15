@@ -8,6 +8,7 @@ import type {
 import { computed, ref } from 'vue';
 
 import { DocAlert, Page, useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -130,9 +131,10 @@ async function handleSearchShow() {
 /** 导出当前列表 */
 async function handleExport() {
   try {
-    await MemberSignApi.exportMemberSign(
+    const data = await MemberSignApi.exportMemberSign(
       searchParams.value as MemberSignPageReqVO,
     );
+    downloadFileFromBlobPart({ fileName: '会员签到.xls', source: data });
     ElMessage.success('导出成功');
   } catch {
     ElMessage.error('导出失败');
@@ -199,3 +201,75 @@ async function handleDetail(row: MemberSignVO) {
     />
   </Page>
 </template>
+
+<style scoped lang="scss">
+:deep(.vxe-pager--wrapper) {
+  justify-content: center;
+}
+
+:deep(.vxe-grid--pager-wrapper .vxe-pager) {
+  position: relative;
+  height: 65px;
+  margin-top: 0;
+}
+
+:deep(.user-merchant-table-grid .vxe-grid--toolbar-wrapper) {
+  margin-top: 0;
+}
+
+:deep(.user-merchant-table-grid .vxe-toolbar) {
+  display: flex;
+  align-items: center;
+}
+
+:deep(.user-merchant-table-grid .vxe-buttons--wrapper) {
+  flex: 1;
+  min-width: 0;
+  padding-top: 0;
+}
+
+:deep(.user-merchant-table-grid .tabel-tabs) {
+  flex-wrap: nowrap !important;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 32px;
+  overflow: auto hidden;
+  white-space: nowrap;
+}
+
+:deep(.user-merchant-table-grid .tabel-tabs .el-tag) {
+  flex-shrink: 0;
+}
+
+:deep(.user-merchant-table-grid .vxe-tools--wrapper),
+:deep(.user-merchant-table-grid .vxe-tools--operate) {
+  position: static !important;
+  flex-shrink: 0;
+}
+
+:deep(.park-chart-box) {
+  height: 300px;
+}
+
+:deep(.park-chart-box .chart-box-left) {
+  height: 100%;
+}
+
+:deep(.park-chart-box .stat-card) {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+:deep(.park-chart-box .map-wrapper),
+:deep(.park-chart-box .park-type-chart),
+:deep(.park-chart-box .simple-bar-chart) {
+  height: 100%;
+}
+
+:deep(.rule-chart-box),
+:deep(.rule-chart-box .chart-box-left),
+:deep(.rule-chart-box .charts-wrapper),
+:deep(.rule-chart-box .chart-area) {
+  height: 300px;
+}
+</style>
