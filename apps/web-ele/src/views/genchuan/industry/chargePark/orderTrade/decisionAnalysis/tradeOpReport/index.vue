@@ -32,7 +32,7 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <Chart />
+    <Chart  v-if="tabArray[0].arrowShow"/>
     <div class="icon-change">
       <el-icon
         class="tabel-tab-icon"
