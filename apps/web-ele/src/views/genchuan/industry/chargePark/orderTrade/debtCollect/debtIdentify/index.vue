@@ -31,6 +31,12 @@ const handleFilterChange = (params) => {
   Object.assign(filterParams, params);
 };
 
+const handleClearFilters = () => {
+  filterParams.identifyTimeStart = null;
+  filterParams.identifyTimeEnd = null;
+  filterParams.status = null;
+};
+
 const statusMap = {
   pending: '待识别',
   identified: '已识别',
@@ -129,6 +135,7 @@ const secondShow = ref(false);
           :arrow-show="item.arrowShow"
           :filter-params="item.filterParams"
           @arrow-change="arrowChange"
+          @clear-filters="handleClearFilters"
         />
       </el-tab-pane>
     </el-tabs>
