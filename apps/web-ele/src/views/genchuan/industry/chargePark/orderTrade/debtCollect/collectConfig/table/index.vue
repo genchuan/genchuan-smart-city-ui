@@ -492,7 +492,27 @@ const handleDisableSubmit = async () => {
   }
 };
 
-// ====================== 告警明细弹窗 ===========      alarmType: type.name,
+// ====================== 告警明细弹窗 ======================
+const alarmDialogVisible = ref(false);
+const currentAlarmRow = ref({});
+const alarmList = ref([]);
+
+function generateAlarmData(row) {
+  const count = row.halfyearWarnCount || 0;
+  const typeItems = row.highIllegalType.split(',').map((item) => item.trim());
+  const avgCount = Math.ceil(count / typeItems.length);
+  const types = typeItems.map((name) => {
+    return { name, num: avgCount };
+  });
+
+  const list = [];
+  let id = 1;
+  types.forEach((type) => {
+    for (let i = 0; i < Math.min(type.num, 5); i++) {
+      list.push({
+        id: id++,
+        canteenName: row.canteenName,
+        alarmType: type.name,
         alarmTime: `${row.statCycle.split('-')[0].trim()} ${String(Math.trunc(Math.random() * 24)).padStart(2, '0')}:${String(Math.trunc(Math.random() * 60)).padStart(2, '0')}`,
         alarmLevel: ['一般', '较重', '严重'][Math.trunc(Math.random() * 3)],
         status: ['未处理', '处理中', '已整改'][Math.trunc(Math.random() * 3)],
