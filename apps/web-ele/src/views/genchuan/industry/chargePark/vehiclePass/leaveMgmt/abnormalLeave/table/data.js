@@ -107,15 +107,6 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'identifyTime',
-      label: '识别时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择识别时间',
-        type: 'datetimerange',
-      },
-    },
-    {
       fieldName: 'status',
       label: '处置状态',
       component: 'Select',
@@ -138,20 +129,12 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'handleUserId',
-      label: '处置人',
-      component: 'Select',
+      fieldName: 'identifyTime',
+      label: '时间范围',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择处置人',
-        options: [],
-      },
-    },
-    {
-      fieldName: 'remark',
-      label: '备注',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入备注',
+        placeholder: '请选择时间范围',
+        type: 'datetimerange',
       },
     },
   ];
@@ -168,7 +151,7 @@ export function useCheckFormSchema() {
         placeholder: '请输入核查结果',
         rows: 4,
       },
-      rules: [{ required: true, message: '请输入核查结果' }],
+      rules: 'required',
     },
     {
       fieldName: 'checkRemark',
@@ -193,14 +176,14 @@ export function useUpdateProgressFormSchema() {
         placeholder: '请输入处置进度',
         rows: 4,
       },
-      rules: [{ required: true, message: '请输入处置进度' }],
+      rules: 'required',
     },
     {
       fieldName: 'progressRemark',
-      label: '进度备注',
+      label: '处置备注',
       component: 'Textarea',
       componentProps: {
-        placeholder: '请输入进度备注',
+        placeholder: '请输入处置备注',
         rows: 3,
       },
     },
@@ -221,7 +204,7 @@ export function useBatchHandleFormSchema() {
           { label: '忽略', value: '忽略' },
         ],
       },
-      rules: [{ required: true, message: '请选择处置类型' }],
+      rules: 'required',
     },
     {
       fieldName: 'handleRemark',
@@ -300,40 +283,8 @@ export function useGridColumns() {
       minWidth: 150,
       sortable: true,
     },
-    {
-      field: 'isCorrected',
-      title: '修正记录标记',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'correctionMark' },
-    },
-    {
-      field: 'updater',
-      title: '操作人',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'updater' },
-    },
-    {
-      field: 'updateTime',
-      title: '操作时间',
-      minWidth: 180,
-      sortable: true,
-      slots: { default: 'updateTime' },
-    },
-    {
-      field: 'creator',
-      title: '创建人',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'createTime',
-      title: '创建时间',
-      minWidth: 180,
-      sortable: true,
-      formatter: createTimeFormatter(),
-    },
+    
+    
     {
       title: '操作',
       width: 220,

@@ -62,21 +62,77 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  const loadingInstance = ElLoading.service({
-    text: '导出中...',
-  });
   try {
-    if (USE_REAL_API) {
-      const res = await exportPayCheck(dataObj.searchParams);
-      downloadFileFromBlobPart({ fileName: '缴费核验.xlsx', source: res });
-    } else {
-      exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+    // 使用confirm对话框让用户选择格式
+    let exportFormat = 'excel';
+    try {
+      await ElMessageBox.confirm(
+        '请选择导出格式：\n• Excel格式支持完整数据和中文显示（推荐）\n• PDF格式中文显示可能不正确，仅供参考',
+        '选择导出格式',
+        {
+          confirmButtonText: 'Excel (.xlsx) 推荐',
+          cancelButtonText: 'PDF (.pdf)',
+          type: 'info',
+          distinguishCancelAndClose: true,
+        },
+      );
+      exportFormat = 'excel';
+    } catch (error) {
+      if (error === 'cancel') {
+        exportFormat = 'pdf';
+        // 再次确认PDF导出
+        try {
+          await ElMessageBox.confirm(
+            '提示：PDF格式中文显示可能不正确，建议使用Excel格式。确定继续导出PDF吗？',
+            '确认导出PDF',
+            {
+              confirmButtonText: '继续导出PDF',
+              cancelButtonText: '返回选择Excel',
+              type: 'warning',
+            },
+          );
+        } catch {
+          // 用户选择返回Excel
+          exportFormat = 'excel';
+        }
+      } else {
+        // 用户点击了关闭按钮
+        return;
+      }
+    }
+
+    const loadingInstance = ElLoading.service({
+      text: '导出中...',
+    });
+
+    try {
+      if (USE_REAL_API) {
+        const res = await exportPayCheck(dataObj.searchParams);
+        const fileExtension = exportFormat === 'pdf' ? '.pdf' : '.xlsx';
+        await downloadFileFromBlobPart({
+          fileName: `缴费核验数据${fileExtension}`,
+          source: res,
+        });
+        ElMessage.success({
+          message: '导出成功！文件已开始下载',
+          duration: 3000,
+        });
+      } else {
+        exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+        ElMessage.success({
+          message: '导出成功！',
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      const errorMessage = error.message || '未知错误';
+      ElMessage.error(`导出失败：${errorMessage}`);
+      console.error(error);
+    } finally {
+      loadingInstance.close();
     }
   } catch (error) {
-    ElMessage.error('导出失败');
-    console.error(error);
-  } finally {
-    loadingInstance.close();
+    console.error('导出操作失败:', error);
   }
 }
 
@@ -165,6 +221,19 @@ const activeFilters = computed(() => {
   if (obj.stationName) {
     filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
   }
+  if (obj.checkUserId && obj.checkUserName) {
+    filters.push({ label: `核验人：${obj.checkUserName}`, field: 'checkUserId' });
+  }
+  if (
+    obj.checkTime &&
+    Array.isArray(obj.checkTime) &&
+    obj.checkTime.length === 2
+  ) {
+    filters.push({
+      label: `核验时间：${obj.checkTime[0]} 至 ${obj.checkTime[1]}`,
+      field: 'checkTime',
+    });
+  }
 
   return filters;
 });
@@ -172,6 +241,10 @@ const activeFilters = computed(() => {
 const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
   delete next[fieldName];
+  // 清除核验人ID时，同时清除核验人名称
+  if (fieldName === 'checkUserId') {
+    delete next.checkUserName;
+  }
   dataObj.searchParams = next;
   dataObj.currentPage = 1;
   gridApi.query();
@@ -368,9 +441,47 @@ const handleFullShow = () => {
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
-  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+
+  // 如果是显示所有记录（平均核验时长卡片）
+  if (filterParams.showAll) {
+    // 清空所有筛选条件
+    dataObj.searchParams = {};
+    handleRefresh();
+    ElMessage.success('已显示所有核验记录');
+    return;
+  }
+
+  // 转换时间参数格式
+  if (filterParams.startTime && filterParams.endTime) {
+    const startDate = new Date(Number(filterParams.startTime));
+    const endDate = new Date(Number(filterParams.endTime));
+
+    // 格式化为 YYYY-MM-DD HH:mm:ss
+    const formatDateTime = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
+    dataObj.searchParams = {
+      ...dataObj.searchParams,
+      checkTime: [formatDateTime(startDate), formatDateTime(endDate)],
+    };
+    ElMessage.success('已应用图表筛选');
+  } else {
+    dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+    if (filterParams.status) {
+      ElMessage.success(`已筛选状态: ${filterParams.status}`);
+    } else {
+      ElMessage.success('已应用图表筛选');
+    }
+  }
+
   handleRefresh();
-  ElMessage.success('已应用图表筛选');
 };
 
 onMounted(() => {
@@ -406,7 +517,7 @@ const handleFieldFilter = (field, value) => {
       :fields="detailFields"
     />
     <VehicleDetailDialog ref="vehicleDetailDialogRef" />
-    <Drawer title="搜索">
+    <Drawer title="筛选">
       <SearchForm class="query-form" />
     </Drawer>
     <Grid>
@@ -456,8 +567,8 @@ const handleFieldFilter = (field, value) => {
             @click="handleExport"
           />
           <IconButton
-            content="搜索"
-            icon-name="search"
+            content="筛选"
+            icon-name="Filter"
             @click="handleSerachShow"
           />
           <IconButton
@@ -498,13 +609,15 @@ const handleFieldFilter = (field, value) => {
       </template>
       <template #checkUserName="{ row }">
         <el-text
-          @click="handleFieldFilter('checkUserId', row.checkUserId)"
+          v-if="row.checkUserName"
+          @click="handleFieldFilter('checkUserId', row.checkUserId); dataObj.searchParams.checkUserName = row.checkUserName"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
           {{ row.checkUserName }}
         </el-text>
+        <span v-else>-</span>
       </template>
       <template #updater="{ row }">
         <el-text>{{ row.updater || '-' }}</el-text>

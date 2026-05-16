@@ -1,9 +1,10 @@
 <script setup>
-import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
 
 import { getInParkStatusChart } from '#/api/genchuan/industry/chargePark/vehiclePass/inParkMgmt/inParkStatus';
+import Map from '#/genchuan-components/Map/index.vue';
 
 const props = defineProps({
   parkId: { type: Number, default: null },
@@ -26,6 +27,34 @@ const cards = reactive([
   },
 ]);
 
+const markerIcons = {
+  normal: '/static/imgs/dataHub/map/marker-blue.png',
+  warning: '/static/imgs/dataHub/map/marker-orange.png',
+  danger: '/static/imgs/dataHub/map/marker-red.png',
+};
+
+const statusIconMap = {
+  green: 'normal',
+  orange: 'warning',
+  red: 'danger',
+};
+
+const statusKeyMap = {
+  '正常在停': 'green',
+  '超时长在停': 'orange',
+  '异常状态': 'red',
+};
+
+const infoWindowConfig = {
+  title: 'locationName',
+  fields: [
+    { key: 'plateNo', label: '车牌号', bold: true },
+    { key: 'spaceName', label: '车位名称' },
+    { key: 'stationName', label: '场站名称' },
+    { key: 'statusName', label: '状态', bold: true },
+  ],
+};
+
 const state = reactive({
   chartData: {
     trend: [],
@@ -35,9 +64,23 @@ const state = reactive({
 });
 
 const trendChartRef = ref(null);
-const mapChartRef = ref(null);
 let trendChartInstance = null;
-let mapChartInstance = null;
+
+const mapData = computed(() => {
+  if (!state.chartData.locationList || state.chartData.locationList.length === 0) {
+    return [];
+  }
+
+  return state.chartData.locationList.map((item, index) => ({
+    id: item.id || `vehicle-${index}`,
+    coordinate: `${item.lon},${item.lat}`,
+    statusName: item.status || '正常在停',
+    locationName: item.plateNo,
+    plateNo: item.plateNo,
+    spaceName: item.spaceName,
+    stationName: item.stationName,
+  }));
+});
 
 async function loadChartData() {
   try {
@@ -127,96 +170,36 @@ function initTrendChart() {
 
   // 添加点击事件
   trendChartInstance.on('click', (params) => {
+    const clickDate = new Date(params.name);
+    const startTime = new Date(clickDate.setHours(0, 0, 0, 0)).getTime().toString();
+    const endTime = new Date(clickDate.setHours(23, 59, 59, 999)).getTime().toString();
     window.dispatchEvent(
       new CustomEvent('filterByChart:inParkStatus', {
-        detail: { time: params.name },
+        detail: { startTime, endTime },
       }),
     );
   });
 }
 
-function initMapChart() {
-  console.log(
-    '[inParkStatusChart] initMapChart called, ref:',
-    mapChartRef.value,
-    'data length:',
-    state.chartData.locationList.length,
+function handleMapMarkerClick(markerData) {
+  // Emit event to open vehicle detail dialog
+  window.dispatchEvent(
+    new CustomEvent('openVehicleDetail:inParkStatus', {
+      detail: {
+        plateNo: markerData.plateNo,
+        id: markerData.id,
+      },
+    }),
   );
-  if (!mapChartRef.value || state.chartData.locationList.length === 0) return;
-  if (mapChartInstance) mapChartInstance.dispose();
-  mapChartInstance = echarts.init(mapChartRef.value);
-
-  const scatterData = state.chartData.locationList.map((item) => ({
-    value: [item.lon, item.lat],
-    name: item.plateNo,
-    spaceName: item.spaceName,
-  }));
-
-  const option = {
-    backgroundColor: 'transparent',
-    title: {
-      text: '在停车辆分布地图',
-      left: 'center',
-      top: 10,
-      textStyle: { fontSize: 14, fontWeight: 500 },
-    },
-    tooltip: {
-      trigger: 'item',
-      formatter: (params) => {
-        return `车牌: ${params.data.name}<br/>车位: ${params.data.spaceName}<br/>经纬度: (${params.data.value[0]}, ${params.data.value[1]})`;
-      },
-    },
-    xAxis: {
-      type: 'value',
-      name: '经度',
-      scale: true,
-    },
-    yAxis: {
-      type: 'value',
-      name: '纬度',
-      scale: true,
-    },
-    series: [
-      {
-        name: '车辆位置',
-        type: 'scatter',
-        data: scatterData,
-        symbolSize: 12,
-        itemStyle: {
-          color: '#FF6B8B',
-          shadowBlur: 10,
-          shadowColor: 'rgba(255, 107, 139, 0.5)',
-        },
-        emphasis: {
-          itemStyle: {
-            color: '#FF3860',
-            borderColor: '#fff',
-            borderWidth: 2,
-          },
-        },
-      },
-    ],
-  };
-  mapChartInstance.setOption(option);
-
-  // 添加点击事件
-  mapChartInstance.on('click', (params) => {
-    window.dispatchEvent(
-      new CustomEvent('filterByChart:inParkStatus', {
-        detail: { plateNo: params.data.name },
-      }),
-    );
-  });
 }
 
 function initCharts() {
   initTrendChart();
-  initMapChart();
 }
 
 function handleCardClick(key) {
   const filterMap = {
-    inParkCarCount: {},
+    inParkCarCount: { showAll: true },
     overTimeCarCount: { parkStatus: '超时在停' },
   };
 
@@ -232,12 +215,10 @@ onMounted(() => {
   loadChartData();
   window.addEventListener('resize', () => {
     trendChartInstance?.resize();
-    mapChartInstance?.resize();
   });
 });
 onUnmounted(() => {
   trendChartInstance?.dispose();
-  mapChartInstance?.dispose();
 });
 </script>
 
@@ -270,14 +251,25 @@ onUnmounted(() => {
 
     <!-- 右侧图表区域 -->
     <div v-if="state.hasData" class="chart-wrapper">
+      <div class="chart-container">
+        <div v-if="state.chartData.trend.length > 0" ref="trendChartRef" style="width: 100%; height: 100%"></div>
+        <div v-else style="display: flex; align-items: center; justify-content: center; height: 100%; color: #909399;">
+          暂无趋势数据
+        </div>
+      </div>
       <div
         v-if="state.chartData.locationList.length > 0"
-        class="chart-container"
+        class="chart-container map-container"
       >
-        <div ref="mapChartRef" style="width: 100%; height: 100%"></div>
-      </div>
-      <div v-if="state.chartData.trend.length > 0" class="chart-container">
-        <div ref="trendChartRef" style="width: 100%; height: 100%"></div>
+        <div class="map-title">在停车辆分布地图</div>
+        <Map
+          :data="mapData"
+          :marker-icons="markerIcons"
+          :status-icon-map="statusIconMap"
+          :status-key-map="statusKeyMap"
+          :info-window-config="infoWindowConfig"
+          @marker-click="handleMapMarkerClick"
+        />
       </div>
     </div>
   </div>
@@ -386,11 +378,30 @@ onUnmounted(() => {
     .chart-container {
       flex: 1;
       min-width: 0;
+      max-width: 50%;
       height: 330px;
       padding: 10px;
       background-color: hsl(var(--card));
       border-radius: 8px;
       box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+    }
+
+    .map-container {
+      position: relative;
+
+      .map-title {
+        position: absolute;
+        top: 20px;
+        left: 50%;
+        z-index: 10;
+        padding: 8px 16px;
+        background: rgb(255 255 255 / 95%);
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+        font-size: 14px;
+        font-weight: 500;
+        transform: translateX(-50%);
+      }
     }
   }
 }

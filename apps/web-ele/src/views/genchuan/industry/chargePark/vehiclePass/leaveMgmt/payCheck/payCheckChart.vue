@@ -108,25 +108,39 @@ function initPieChart() {
 
   // 添加点击事件 - 点击折线数据点筛选对应日期的核验记录
   pieChartInstance.on('click', (params) => {
-    const clickedDate = params.name;
+    const clickDate = new Date(params.name);
+    const startTime = new Date(clickDate.setHours(0, 0, 0, 0))
+      .getTime()
+      .toString();
+    const endTime = new Date(clickDate.setHours(23, 59, 59, 999))
+      .getTime()
+      .toString();
     window.dispatchEvent(
       new CustomEvent('filterByChart:payCheck', {
-        detail: { createTimeRange: [clickedDate, clickedDate] },
+        detail: { startTime, endTime },
       }),
     );
   });
 }
 
-function handleCardClick(key) {
-  const filterMap = {
-    checkSuccessRate: { status: '核验成功' },
-    avgCheckDuration: {},
-  };
+function initCharts() {
+  initPieChart();
+}
 
-  const filterParams = filterMap[key];
-  if (filterParams !== undefined) {
+function handleCardClick(key) {
+  if (key === 'checkSuccessRate') {
+    // 核验成功率：筛选已缴清状态的记录
     window.dispatchEvent(
-      new CustomEvent('filterByChart:payCheck', { detail: filterParams }),
+      new CustomEvent('filterByChart:payCheck', {
+        detail: { status: '已缴清' },
+      }),
+    );
+  } else if (key === 'avgCheckDuration') {
+    // 平均核验时长：显示所有记录（不添加额外筛选）
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:payCheck', {
+        detail: { showAll: true },
+      }),
     );
   }
 }

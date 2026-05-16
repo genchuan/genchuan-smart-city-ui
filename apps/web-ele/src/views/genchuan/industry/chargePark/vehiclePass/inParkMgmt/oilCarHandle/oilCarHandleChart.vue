@@ -113,9 +113,13 @@ function initPieChart() {
 
   // 添加点击事件
   pieChartInstance.on('click', (params) => {
+    const clickDate = new Date(params.name);
+    const startTime = new Date(clickDate.setHours(0, 0, 0, 0)).getTime().toString();
+    const endTime = new Date(clickDate.setHours(23, 59, 59, 999)).getTime().toString();
+
     window.dispatchEvent(
       new CustomEvent('filterByChart:oilCarHandle', {
-        detail: { handleDate: params.name },
+        detail: { startTime, endTime },
       }),
     );
   });
@@ -167,8 +171,8 @@ function initCharts() {
 
 function handleCardClick(key) {
   const filterMap = {
-    waitHandleCount: { handleStatus: '待处置' },
-    handleCompleteRate: { handleStatus: '已完成' },
+    waitHandleCount: { status: '未处理' },
+    handleCompleteRate: { status: '已关闭' },
   };
 
   const filterParams = filterMap[key];

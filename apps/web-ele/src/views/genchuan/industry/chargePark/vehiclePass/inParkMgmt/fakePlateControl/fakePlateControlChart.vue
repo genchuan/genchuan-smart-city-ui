@@ -110,11 +110,14 @@ function initPieChart() {
   };
   pieChartInstance.setOption(option);
 
-  // 添加点击事件
+  // 添加点击事件 - 点击折线数据点钻取对应日期
   pieChartInstance.on('click', (params) => {
+    const clickDate = new Date(params.name);
+    const startTime = new Date(clickDate.setHours(0, 0, 0, 0)).getTime().toString();
+    const endTime = new Date(clickDate.setHours(23, 59, 59, 999)).getTime().toString();
     window.dispatchEvent(
       new CustomEvent('filterByChart:fakePlateControl', {
-        detail: { identifyDate: params.name },
+        detail: { startTime, endTime },
       }),
     );
   });
@@ -149,7 +152,7 @@ function initBarChart() {
   };
   barChartInstance.setOption(option);
 
-  // 添加点击事件
+  // 添加点击事件 - 点击柱形钻取对应场站
   barChartInstance.on('click', (params) => {
     window.dispatchEvent(
       new CustomEvent('filterByChart:fakePlateControl', {
@@ -165,9 +168,10 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
+  // 卡片点击钻取：待处置套牌数->未处理状态，处置完成率->已关闭状态
   const filterMap = {
-    fakePlateCount: { plateType: '套牌车' },
-    controlRate: { controlStatus: '已管控' },
+    waitHandleCount: { status: '未处理' },
+    handleCompleteRate: { status: '已关闭' },
   };
 
   const filterParams = filterMap[key];

@@ -81,6 +81,8 @@ const [CreateForm, createFormApi] = useVbenForm({
 const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
+  confirmText: '保存',
+  cancelText: '取消',
   onCancel() {
     createFormDrawerApi.close();
   },
@@ -134,6 +136,8 @@ const [UpdateForm, updateFormApi] = useVbenForm({
 const [UpdateFormDrawer, updateFormDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
+  confirmText: '保存',
+  cancelText: '取消',
   onCancel() {
     updateFormDrawerApi.close();
   },
@@ -195,6 +199,8 @@ const [CorrectForm, correctFormApi] = useVbenForm({
 const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
+  confirmText: '保存',
+  cancelText: '取消',
   onCancel() {
     correctFormDrawerApi.close();
   },
@@ -351,6 +357,9 @@ const activeFilters = computed(() => {
   }
   if (obj.stationName) {
     filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+  }
+  if (obj.updater) {
+    filters.push({ label: `操作人：${obj.updater}`, field: 'updater' });
   }
   if (obj.isCorrected !== undefined && obj.isCorrected !== null) {
     filters.push({
@@ -571,9 +580,51 @@ const handleFullShow = () => {
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
-  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+
+  // 转换时间参数格式
+  if (filterParams.startTime && filterParams.endTime) {
+    const startDate = new Date(Number(filterParams.startTime));
+    const endDate = new Date(Number(filterParams.endTime));
+
+    // 如果有 hour 参数，调整时间范围到指定小时
+    if (filterParams.hour) {
+      const hourMatch = filterParams.hour.match(/(\d+)/);
+      if (hourMatch) {
+        const hour = parseInt(hourMatch[1]);
+        startDate.setHours(hour, 0, 0, 0);
+        endDate.setHours(hour, 59, 59, 999);
+      }
+    }
+
+    // 格式化为 YYYY-MM-DD HH:mm:ss
+    const formatDateTime = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
+    const leaveTimeRange = [formatDateTime(startDate), formatDateTime(endDate)];
+    dataObj.searchParams = {
+      ...dataObj.searchParams,
+      leaveTime: leaveTimeRange,
+    };
+
+    // 显示具体的筛选信息
+    if (filterParams.hour) {
+      ElMessage.success(`已筛选 ${filterParams.hour} 时段的离场记录`);
+    } else {
+      ElMessage.success('已应用图表筛选');
+    }
+  } else {
+    dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+    ElMessage.success('已应用图表筛选');
+  }
+
   handleRefresh();
-  ElMessage.success('已应用图表筛选');
 };
 
 onMounted(() => {
@@ -677,8 +728,8 @@ const formatDuration = (minutes) => {
             @click="handleExport"
           />
           <IconButton
-            content="搜索"
-            icon-name="search"
+            content="筛选"
+            icon-name="Filter"
             @click="handleSerachShow"
           />
           <IconButton
@@ -702,7 +753,11 @@ const formatDuration = (minutes) => {
         <span>{{ formatDuration(row.parkDuration) }}</span>
       </template>
       <template #status="{ row }">
-        <el-tag :type="statusTypeMap[row.status]">
+        <el-tag
+          :type="statusTypeMap[row.status]"
+          @click="handleFieldFilter('status', row.status)"
+          style="cursor: pointer"
+        >
           {{ row.status }}
         </el-tag>
       </template>
@@ -722,7 +777,16 @@ const formatDuration = (minutes) => {
         </el-tag>
       </template>
       <template #updater="{ row }">
-        <el-text>{{ row.updater || '-' }}</el-text>
+        <el-text
+          v-if="row.updater"
+          @click="handleFieldFilter('updater', row.updater)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.updater }}
+        </el-text>
+        <span v-else>-</span>
       </template>
       <template #updateTime="{ row }">
         <el-text>{{

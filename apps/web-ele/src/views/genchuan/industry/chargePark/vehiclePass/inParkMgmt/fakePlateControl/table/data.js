@@ -78,18 +78,6 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'matchScene',
-      label: '匹配场景',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择匹配场景',
-        options: [
-          { label: '同牌多停', value: '同牌多停' },
-          { label: '车牌车型不匹配', value: '车牌车型不匹配' },
-        ],
-      },
-    },
-    {
       fieldName: 'status',
       label: '处置状态',
       component: 'Select',
@@ -112,10 +100,10 @@ export function useSearchFormSchema() {
     },
     {
       fieldName: 'identifyTime',
-      label: '识别时间',
+      label: '时间范围',
       component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择识别时间',
+        placeholder: '请选择时间范围',
         type: 'datetimerange',
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'YYYY-MM-DD HH:mm:ss',
@@ -166,6 +154,101 @@ export function useUpdateProgressFormSchema() {
       componentProps: {
         rows: 4,
         placeholder: '请输入处置进度',
+      },
+      rules: 'required',
+    },
+  ];
+}
+
+/** 补录表单配置 */
+export function useCreateFormSchema() {
+  return [
+    {
+      fieldName: 'plateNo',
+      label: '车牌',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入车牌',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'identifyTime',
+      label: '识别时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择识别时间',
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'matchScene',
+      label: '匹配场景',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择匹配场景',
+        options: [
+          { label: '同牌多停', value: '同牌多停' },
+          { label: '车牌车型不匹配', value: '车牌车型不匹配' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'stationId',
+      label: '场站',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择场站',
+        options: [],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Textarea',
+      componentProps: {
+        placeholder: '请输入备注',
+        rows: 3,
+      },
+    },
+  ];
+}
+
+/** 核查表单配置 */
+export function useCheckFormSchema() {
+  return [
+    {
+      fieldName: 'id',
+      label: 'ID',
+      component: 'Input',
+      componentProps: { disabled: true },
+    },
+    {
+      fieldName: 'checkResult',
+      label: '核查结果',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择核查结果',
+        options: [
+          { label: '确认套牌', value: '确认套牌' },
+          { label: '误判', value: '误判' },
+          { label: '需进一步核实', value: '需进一步核实' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'checkRemark',
+      label: '核查备注',
+      component: 'Textarea',
+      componentProps: {
+        rows: 4,
+        placeholder: '请输入核查备注',
       },
       rules: 'required',
     },

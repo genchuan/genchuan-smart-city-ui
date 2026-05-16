@@ -79,6 +79,8 @@ const [CheckForm, checkFormApi] = useVbenForm({
 
 const [CheckFormDrawer, checkFormDrawerApi] = useVbenDrawer({
   appendToMain: true,
+  cancelText: '取消',
+  confirmText: '保存',
   modal: false,
   onCancel() {
     checkFormDrawerApi.close();
@@ -91,10 +93,14 @@ const [CheckFormDrawer, checkFormDrawerApi] = useVbenDrawer({
       return;
     }
 
+    const obj = checkFormApi.form.values;
+
     if (USE_REAL_API) {
       try {
         await checkAbnormalLeave({
           id: formData.value?.id,
+          checkResult: obj.checkResult,
+          checkRemark: obj.checkRemark,
         });
         ElMessage.success('核查成功');
         handleRefresh();
@@ -112,7 +118,13 @@ const [CheckFormDrawer, checkFormDrawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = checkFormDrawerApi.getData();
-      checkFormApi.resetForm();
+      if (formData.value?.id) {
+        await checkFormApi.setValues({
+          id: formData.value.id,
+          checkResult: '',
+          checkRemark: '',
+        });
+      }
     }
   },
 });
@@ -129,10 +141,16 @@ const [UpdateProgressForm, updateProgressFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useUpdateProgressFormSchema(),
   showDefaultActions: false,
+  values: {
+    handleProgress: '',
+    progressRemark: '',
+  },
 });
 
 const [UpdateProgressFormDrawer, updateProgressFormDrawerApi] = useVbenDrawer({
   appendToMain: true,
+  cancelText: '取消',
+  confirmText: '保存',
   modal: false,
   onCancel() {
     updateProgressFormDrawerApi.close();
@@ -152,6 +170,7 @@ const [UpdateProgressFormDrawer, updateProgressFormDrawerApi] = useVbenDrawer({
         await updateAbnormalLeaveProgress({
           id: formData.value?.id,
           handleProgress: obj.handleProgress,
+          handleRemark: obj.progressRemark,
         });
         ElMessage.success('更新进度成功');
         handleRefresh();
@@ -169,9 +188,6 @@ const [UpdateProgressFormDrawer, updateProgressFormDrawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = updateProgressFormDrawerApi.getData();
-      await updateProgressFormApi.setValues({
-        handleProgress: formData.value?.handleProgress || '',
-      });
     }
   },
 });
@@ -188,10 +204,16 @@ const [BatchHandleForm, batchHandleFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useBatchHandleFormSchema(),
   showDefaultActions: false,
+  values: {
+    handleType: '',
+    handleRemark: '',
+  },
 });
 
 const [BatchHandleFormDrawer, batchHandleFormDrawerApi] = useVbenDrawer({
   appendToMain: true,
+  cancelText: '取消',
+  confirmText: '保存',
   modal: false,
   onCancel() {
     batchHandleFormDrawerApi.close();
@@ -229,7 +251,7 @@ const [BatchHandleFormDrawer, batchHandleFormDrawerApi] = useVbenDrawer({
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
-      batchHandleFormApi.resetForm();
+      // 不需要额外操作，使用默认值
     }
   },
 });
@@ -239,21 +261,77 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  const loadingInstance = ElLoading.service({
-    text: '导出中...',
-  });
   try {
-    if (USE_REAL_API) {
-      const res = await exportAbnormalLeave(dataObj.searchParams);
-      downloadFileFromBlobPart({ fileName: '异常离场.xlsx', source: res });
-    } else {
-      exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+    // 使用confirm对话框让用户选择格式
+    let exportFormat = 'excel';
+    try {
+      await ElMessageBox.confirm(
+        '请选择导出格式：\n• Excel格式支持完整数据和中文显示（推荐）\n• PDF格式中文显示可能不正确，仅供参考',
+        '选择导出格式',
+        {
+          confirmButtonText: 'Excel (.xlsx) 推荐',
+          cancelButtonText: 'PDF (.pdf)',
+          type: 'info',
+          distinguishCancelAndClose: true,
+        },
+      );
+      exportFormat = 'excel';
+    } catch (error) {
+      if (error === 'cancel') {
+        exportFormat = 'pdf';
+        // 再次确认PDF导出
+        try {
+          await ElMessageBox.confirm(
+            '提示：PDF格式中文显示可能不正确，建议使用Excel格式。确定继续导出PDF吗？',
+            '确认导出PDF',
+            {
+              confirmButtonText: '继续导出PDF',
+              cancelButtonText: '返回选择Excel',
+              type: 'warning',
+            },
+          );
+        } catch {
+          // 用户选择返回Excel
+          exportFormat = 'excel';
+        }
+      } else {
+        // 用户点击了关闭按钮
+        return;
+      }
+    }
+
+    const loadingInstance = ElLoading.service({
+      text: '导出中...',
+    });
+
+    try {
+      if (USE_REAL_API) {
+        const res = await exportAbnormalLeave(dataObj.searchParams);
+        const fileExtension = exportFormat === 'pdf' ? '.pdf' : '.xlsx';
+        await downloadFileFromBlobPart({
+          fileName: `异常离场数据${fileExtension}`,
+          source: res,
+        });
+        ElMessage.success({
+          message: '导出成功！文件已开始下载',
+          duration: 3000,
+        });
+      } else {
+        exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+        ElMessage.success({
+          message: '导出成功！',
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      const errorMessage = error.message || '未知错误';
+      ElMessage.error(`导出失败：${errorMessage}`);
+      console.error(error);
+    } finally {
+      loadingInstance.close();
     }
   } catch (error) {
-    ElMessage.error('导出失败');
-    console.error(error);
-  } finally {
-    loadingInstance.close();
+    console.error('导出操作失败:', error);
   }
 }
 
@@ -367,6 +445,8 @@ const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchParams;
 
+  console.log('searchParams:', obj);
+
   if (obj.plateNo) {
     filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
   }
@@ -382,6 +462,20 @@ const activeFilters = computed(() => {
   if (obj.stationName) {
     filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
   }
+  if (obj.handleUserName) {
+    console.log('处置人过滤:', obj.handleUserId, obj.handleUserName);
+    filters.push({ label: `处置人：${obj.handleUserName}`, field: 'handleUserId' });
+  }
+  if (
+    obj.leaveTime &&
+    Array.isArray(obj.leaveTime) &&
+    obj.leaveTime.length === 2
+  ) {
+    filters.push({
+      label: `离场时间：${obj.leaveTime[0]} 至 ${obj.leaveTime[1]}`,
+      field: 'leaveTime',
+    });
+  }
 
   return filters;
 });
@@ -389,6 +483,10 @@ const activeFilters = computed(() => {
 const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
   delete next[fieldName];
+  // 清除处置人ID时，同时清除处置人名称
+  if (fieldName === 'handleUserId') {
+    delete next.handleUserName;
+  }
   dataObj.searchParams = next;
   dataObj.currentPage = 1;
   gridApi.query();
@@ -594,9 +692,40 @@ const handleFullShow = () => {
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
-  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+
+  // 转换时间参数格式
+  if (filterParams.startTime && filterParams.endTime) {
+    const startDate = new Date(Number(filterParams.startTime));
+    const endDate = new Date(Number(filterParams.endTime));
+
+    // 格式化为 YYYY-MM-DD HH:mm:ss
+    const formatDateTime = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
+    dataObj.searchParams = {
+      ...dataObj.searchParams,
+      leaveTime: [formatDateTime(startDate), formatDateTime(endDate)],
+    };
+    ElMessage.success('已应用图表筛选');
+  } else {
+    dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+    if (filterParams.status) {
+      ElMessage.success(`已筛选状态: ${filterParams.status}`);
+    } else if (filterParams.stationName) {
+      ElMessage.success(`已筛选场站: ${filterParams.stationName}`);
+    } else {
+      ElMessage.success('已应用图表筛选');
+    }
+  }
+
   handleRefresh();
-  ElMessage.success('已应用图表筛选');
 };
 
 onMounted(() => {
@@ -644,7 +773,7 @@ const handleFieldFilter = (field, value) => {
       :fields="detailFields"
     />
     <VehicleDetailDialog ref="vehicleDetailDialogRef" />
-    <Drawer title="搜索">
+    <Drawer title="筛选">
       <SearchForm class="query-form" />
     </Drawer>
     <Grid>
@@ -700,8 +829,8 @@ const handleFieldFilter = (field, value) => {
             @click="handleBatchHandle"
           />
           <IconButton
-            content="搜索"
-            icon-name="search"
+            content="筛选"
+            icon-name="Filter"
             @click="handleSerachShow"
           />
           <IconButton
@@ -752,7 +881,7 @@ const handleFieldFilter = (field, value) => {
       <template #handleUserName="{ row }">
         <el-text
           v-if="row.handleUserName"
-          @click="handleFieldFilter('handleUserId', row.handleUserId)"
+          @click="() => { dataObj.searchParams = { ...dataObj.searchParams, handleUserId: row.handleUserId, handleUserName: row.handleUserName }; handleRefresh(); }"
           class="common-align"
           type="primary"
           style="cursor: pointer"

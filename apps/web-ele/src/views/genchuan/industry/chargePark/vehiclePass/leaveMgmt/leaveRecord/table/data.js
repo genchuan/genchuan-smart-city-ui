@@ -155,19 +155,6 @@ export function useCreateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'status',
-      label: '记录状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择记录状态',
-        options: [
-          { label: '正常记录', value: '正常记录' },
-          { label: '异常记录', value: '异常记录' },
-        ],
-      },
-      rules: 'required',
-    },
-    {
       fieldName: 'stationId',
       label: '场站',
       component: 'Select',
@@ -176,14 +163,6 @@ export function useCreateFormSchema() {
         options: [],
       },
       rules: 'required',
-    },
-    {
-      fieldName: 'proofImage',
-      label: '佐证图片',
-      component: 'Upload',
-      componentProps: {
-        placeholder: '请上传佐证图片',
-      },
     },
     {
       fieldName: 'remark',
@@ -230,19 +209,6 @@ export function useUpdateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'status',
-      label: '记录状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择记录状态',
-        options: [
-          { label: '正常记录', value: '正常记录' },
-          { label: '异常记录', value: '异常记录' },
-        ],
-      },
-      rules: 'required',
-    },
-    {
       fieldName: 'stationId',
       label: '场站',
       component: 'Select',
@@ -251,14 +217,6 @@ export function useUpdateFormSchema() {
         options: [],
       },
       rules: 'required',
-    },
-    {
-      fieldName: 'proofImage',
-      label: '佐证图片',
-      component: 'Upload',
-      componentProps: {
-        placeholder: '请上传佐证图片',
-      },
     },
     {
       fieldName: 'remark',
@@ -305,19 +263,6 @@ export function useCorrectFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'status',
-      label: '记录状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择记录状态',
-        options: [
-          { label: '正常记录', value: '正常记录' },
-          { label: '异常记录', value: '异常记录' },
-        ],
-      },
-      rules: 'required',
-    },
-    {
       fieldName: 'stationId',
       label: '场站',
       component: 'Select',
@@ -326,14 +271,6 @@ export function useCorrectFormSchema() {
         options: [],
       },
       rules: 'required',
-    },
-    {
-      fieldName: 'proofImage',
-      label: '佐证图片',
-      component: 'Upload',
-      componentProps: {
-        placeholder: '请上传佐证图片',
-      },
     },
     {
       fieldName: 'remark',
@@ -481,6 +418,4 @@ export const detailFields = [
   { key: 'creator', label: '创建人' },
   { key: 'createTime', label: '创建时间', formatter: formatTime },
   { key: 'remark', label: '备注' },
-];
-  { key: 'updateTime', label: '更新时间', formatter: formatTime },
 ];

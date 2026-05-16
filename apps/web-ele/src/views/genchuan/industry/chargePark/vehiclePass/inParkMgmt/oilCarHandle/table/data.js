@@ -87,18 +87,6 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'occupyType',
-      label: '占位类型',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择占位类型',
-        options: [
-          { label: '燃油车占位', value: '燃油车占位' },
-          { label: '其他', value: '其他' },
-        ],
-      },
-    },
-    {
       fieldName: 'status',
       label: '处置状态',
       component: 'Select',
@@ -121,10 +109,10 @@ export function useSearchFormSchema() {
     },
     {
       fieldName: 'identifyTime',
-      label: '识别时间',
+      label: '时间范围',
       component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择识别时间',
+        placeholder: '请选择时间范围',
         type: 'datetimerange',
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'YYYY-MM-DD HH:mm:ss',

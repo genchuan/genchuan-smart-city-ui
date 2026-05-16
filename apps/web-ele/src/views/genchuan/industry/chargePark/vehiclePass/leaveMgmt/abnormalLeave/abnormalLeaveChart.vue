@@ -113,10 +113,16 @@ function initPieChart() {
 
   // 添加点击事件 - 点击折线数据点筛选对应日期的异常离场记录
   pieChartInstance.on('click', (params) => {
-    const clickedDate = params.name;
+    const clickDate = new Date(params.name);
+    const startTime = new Date(clickDate.setHours(0, 0, 0, 0))
+      .getTime()
+      .toString();
+    const endTime = new Date(clickDate.setHours(23, 59, 59, 999))
+      .getTime()
+      .toString();
     window.dispatchEvent(
       new CustomEvent('filterByChart:abnormalLeave', {
-        detail: { createTimeRange: [clickedDate, clickedDate] },
+        detail: { startTime, endTime },
       }),
     );
   });
@@ -168,15 +174,19 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
-  const filterMap = {
-    waitHandleCount: { handleStatus: '待处置' },
-    handleCompleteRate: { handleStatus: '已完成' },
-  };
-
-  const filterParams = filterMap[key];
-  if (filterParams) {
+  if (key === 'waitHandleCount') {
+    // 待处置异常数：筛选未处理状态
     window.dispatchEvent(
-      new CustomEvent('filterByChart:abnormalLeave', { detail: filterParams }),
+      new CustomEvent('filterByChart:abnormalLeave', {
+        detail: { status: '未处理' },
+      }),
+    );
+  } else if (key === 'handleCompleteRate') {
+    // 处置完成率：筛选已关闭状态
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:abnormalLeave', {
+        detail: { status: '已关闭' },
+      }),
     );
   }
 }

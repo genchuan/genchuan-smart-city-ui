@@ -85,6 +85,32 @@ export function useSearchFormSchema() {
         ],
       },
     },
+    {
+      fieldName: 'inTimeRange',
+      label: '入场时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetimerange',
+        placeholder: '请选择入场时间范围',
+        rangeSeparator: '至',
+        startPlaceholder: '开始时间',
+        endPlaceholder: '结束时间',
+        valueFormat: 'x',
+      },
+    },
+    {
+      fieldName: 'updateTimeRange',
+      label: '更新时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetimerange',
+        placeholder: '请选择更新时间范围',
+        rangeSeparator: '至',
+        startPlaceholder: '开始时间',
+        endPlaceholder: '结束时间',
+        valueFormat: 'x',
+      },
+    },
   ];
 }
 
@@ -148,35 +174,15 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'isCorrected',
-      title: '修正记录标记',
-      minWidth: 120,
+      field: 'updateTime',
+      title: '最后更新时间',
+      minWidth: 180,
       sortable: true,
-      slots: { default: 'correctionMark' },
-    },
-    {
-      field: 'updater',
-      title: '操作人',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'updater' },
+      formatter: createTimeFormatter(),
     },
     {
       field: 'updateTime',
-      title: '操作时间',
-      minWidth: 180,
-      sortable: true,
-      slots: { default: 'updateTime' },
-    },
-    {
-      field: 'creator',
-      title: '创建人',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'createTime',
-      title: '创建时间',
+      title: '异常标记时间',
       minWidth: 180,
       sortable: true,
       formatter: createTimeFormatter(),
@@ -201,8 +207,11 @@ export const textObj = {
 /** 状态类型映射 */
 export const statusTypeMap = {
   正常在停: 'success',
+  正常: 'success',
   超时长在停: 'warning',
+  超时: 'warning',
   异常状态: 'danger',
+  异常: 'danger',
 };
 
 /** 超时长在停阈值（分钟） */
@@ -227,25 +236,3 @@ export const detailFields = [
   { key: 'creator', label: '创建人' },
   { key: 'createTime', label: '创建时间', formatter: formatTime },
 ];
-
-/** 告警表单配置 */
-export function useAlarmFormSchema() {
-  return [
-    {
-      fieldName: 'id',
-      label: 'ID',
-      component: 'Input',
-      componentProps: { disabled: true },
-    },
-    {
-      fieldName: 'alarmContent',
-      label: '告警内容',
-      component: 'Textarea',
-      componentProps: {
-        rows: 4,
-        placeholder: '请输入告警内容',
-      },
-      rules: 'required',
-    },
-  ];
-}

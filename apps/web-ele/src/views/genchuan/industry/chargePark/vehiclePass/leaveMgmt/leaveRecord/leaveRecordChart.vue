@@ -23,6 +23,7 @@ const cards = reactive([
     desc: '高峰时段',
     color: '#FF9F40',
     key: 'leavePeak',
+    peakHour: '', // 存储峰值时段
   },
 ]);
 
@@ -51,6 +52,15 @@ async function loadChartData() {
     if (res?.cardData) {
       cards[0].value = res.cardData.todayLeaveCount || 0;
       cards[1].value = res.cardData.leavePeak || 0;
+
+      // 从时段数据中找出峰值时段
+      if (res.hourLeaveCount?.length > 0) {
+        const peakData = res.hourLeaveCount.reduce((max, item) =>
+          item.count > max.count ? item : max
+        );
+        cards[1].peakHour = peakData.hour;
+        cards[1].desc = `高峰时段 ${peakData.hour}`;
+      }
     }
 
     // Check if there's chart data
@@ -187,16 +197,34 @@ function handleCardClick(key) {
     .getTime()
     .toString();
 
-  const filterMap = {
-    todayLeaveCount: { startTime: todayStart, endTime: todayEnd },
-    leavePeak: { startTime: todayStart, endTime: todayEnd },
-  };
-
-  const filterParams = filterMap[key];
-  if (filterParams) {
+  if (key === 'todayLeaveCount') {
+    // 今日离场量：筛选今日所有记录
     window.dispatchEvent(
-      new CustomEvent('filterByChart:leaveRecord', { detail: filterParams }),
+      new CustomEvent('filterByChart:leaveRecord', {
+        detail: { startTime: todayStart, endTime: todayEnd },
+      }),
     );
+  } else if (key === 'leavePeak') {
+    // 离场峰值：筛选今日峰值时段记录
+    const peakHour = cards[1].peakHour;
+    if (peakHour) {
+      window.dispatchEvent(
+        new CustomEvent('filterByChart:leaveRecord', {
+          detail: {
+            startTime: todayStart,
+            endTime: todayEnd,
+            hour: peakHour,
+          },
+        }),
+      );
+    } else {
+      // 如果没有峰值时段数据，则筛选今日所有记录
+      window.dispatchEvent(
+        new CustomEvent('filterByChart:leaveRecord', {
+          detail: { startTime: todayStart, endTime: todayEnd },
+        }),
+      );
+    }
   }
 }
 
