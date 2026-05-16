@@ -87,14 +87,19 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 申请表单 schema（添加 status 字段）
+// 申请表单 schema（金额字段改为下拉选择）
 export function useCreateFormSchema() {
   return [
     {
       fieldName: 'studentId',
       label: '学号',
-      component: 'Input',
-      componentProps: { placeholder: '请输入学号' },
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入学号',
+        controls: false,
+        style: 'width: 100%',
+        min: 1,
+      },
       rules: 'required',
       labelWidth: '100',
     },
@@ -116,8 +121,27 @@ export function useCreateFormSchema() {
     {
       fieldName: 'applyAmount',
       label: '申请金额',
-      component: 'InputNumber',
-      componentProps: { placeholder: '请输入申请金额', min: 0, precision: 2, style: 'width: 100%' },
+      component: 'Select',          // 改为下拉选择
+      componentProps: {
+        placeholder: '请选择申请金额',
+        clearable: false,
+        options: [
+          { label: '100元', value: 100 },
+          { label: '200元', value: 200 },
+          { label: '300元', value: 300 },
+          { label: '400元', value: 400 },
+          { label: '500元', value: 500 },
+          { label: '1000元', value: 1000 },
+          { label: '2000元', value: 2000 },
+          { label: '3000元', value: 3000 },
+          { label: '4000元', value: 4000 },
+          { label: '5000元', value: 5000 },
+          { label: '6000元', value: 6000 },
+          { label: '8000元', value: 8000 },
+          { label: '10000元', value: 10000 },
+        ],
+      },
+      rules: 'required',
       labelWidth: '100',
     },
     {

@@ -1,12 +1,12 @@
-import { DICT_TYPE } from '@vben/constants';
-import { getDictObj, getDictOptions } from '@vben/hooks';
 import { ref } from 'vue';
 
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getStationSimpleList } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatDate } from '#/utils/genchuan/formatTime';
-
-import { getStationSimpleList } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
 
 /** 场站选项配置 - 静态数据作为默认值 */
 export const stationOptions = [
@@ -25,7 +25,7 @@ export const stationOptions = [
 ];
 
 /** 动态场站选项（从接口获取） */
-export let dynamicStationOptions = ref([]);
+export const dynamicStationOptions = ref([]);
 
 /** 获取当前可用的场站选项（优先使用动态数据） */
 export function getCurrentStationOptions() {

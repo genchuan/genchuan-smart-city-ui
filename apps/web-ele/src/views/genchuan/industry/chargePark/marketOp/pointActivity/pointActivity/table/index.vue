@@ -138,7 +138,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
           const option = allOptions.find((opt) => opt.value === id);
           return option ? option.label : '';
         })
-        .filter((name) => name);
+        .filter(Boolean);
       submitStationNames = selectedNames.join(',');
     }
 
@@ -362,8 +362,7 @@ const getTableData = async (pageObj) => {
       updateTimeStr: formatDate(item.updateTime),
       auditTimeStr: formatDate(item.auditTime),
       // 优先使用后端接口返回的 stationNames，如果没有则使用本地函数作为回退
-      stationNames:
-        item.stationNames || getStationNamesByIds(item.stationIds),
+      stationNames: item.stationNames || getStationNamesByIds(item.stationIds),
     }));
   } else {
     // 接口返回为空或无数据，清空列表

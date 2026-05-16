@@ -1,7 +1,11 @@
-import { DICT_TYPE } from '@vben/constants';
-import { getDictOptions } from '@vben/hooks';
+import { ref } from 'vue';
 
+import { DICT_TYPE } from '@vben/constants';
+import { getDictObj, getDictOptions } from '@vben/hooks';
+
+import { getExchangeCategoryList } from '#/api/genchuan/industry/chargePark/marketOp/exchangeMgmt/exchangeCategory';
 import { formatDate } from '#/utils/genchuan/formatTime';
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 
 /** 兑换订单状态标签类型 */
 export const getExchangeOrderPayStatusTagType = (status) => {
@@ -42,6 +46,45 @@ export const getExchangeOrderShipStatusLabel = (status) => {
   };
   return labelMap[status] || status;
 };
+
+/** 商品类目搜索选项 - 静态数据作为默认值 */
+export const categorySearchOptions = [
+  { label: '美妆个护', value: 1 },
+  { label: '办公文具', value: 2 },
+  { label: '虚拟卡券', value: 3 },
+  { label: '数码配件', value: 4 },
+  { label: '车载用品', value: 5 },
+  { label: '图书音像', value: 6 },
+  { label: '生活用品', value: 7 },
+  { label: '美食零食', value: 8 },
+];
+
+/** 动态商品类目搜索选项（从接口获取） */
+export const dynamicCategorySearchOptions = ref([]);
+
+/** 获取当前可用的商品类目搜索选项（优先使用动态数据） */
+export function getCurrentCategorySearchOptions() {
+  return dynamicCategorySearchOptions.value.length > 0
+    ? dynamicCategorySearchOptions.value
+    : categorySearchOptions;
+}
+
+/** 获取商品类目精简列表用于搜索 */
+export async function fetchCategorySearchOptions() {
+  try {
+    const res = await getExchangeCategoryList();
+    if (res && Array.isArray(res)) {
+      dynamicCategorySearchOptions.value = res.map((item) => ({
+        label: item.name,
+        value: item.id,
+      }));
+      return dynamicCategorySearchOptions.value;
+    }
+  } catch (error) {
+    console.error('获取商品类目列表失败:', error);
+  }
+  return categorySearchOptions;
+}
 
 /** 兑换订单详情字段配置 - 使用formatter格式化时间和状态字段 */
 export const detailFields = [
@@ -159,6 +202,47 @@ export function useFormSchema() {
   ];
 }
 
+/** 商品详情字段配置 - 完全参照奖品管理列表详情页的 detailFields 配置 */
+export const goodsDetailFields = [
+  { key: 'name', label: '商品名称' },
+  {
+    key: 'type',
+    label: '商品类型',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_TYPE, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => {
+      const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_TYPE, String(value));
+      return getDictTagTypeFromDict(dict, 'primary');
+    },
+  },
+  { key: 'stock', label: '当前库存' },
+  {
+    key: 'status',
+    label: '商品状态',
+    type: 'tag',
+    formatter: (value) => {
+      const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_STATUS, String(value));
+      return dict ? dict.label : value;
+    },
+    tagType: (value) => {
+      const dict = getDictObj(DICT_TYPE.PRIZE_MGMT_STATUS, String(value));
+      return getDictTagTypeFromDict(dict, 'info');
+    },
+  },
+  { key: 'activityName', label: '绑定活动' },
+  { key: 'sendCount', label: '发放量' },
+  { key: 'warnThreshold', label: '预警阈值' },
+  { key: 'description', label: '商品描述' },
+  { key: 'createTimeStr', label: '创建时间' },
+  { key: 'syncTimeStr', label: '同步时间' },
+  { key: 'creator', label: '创建者' },
+  { key: 'updater', label: '更新者' },
+  { key: 'updateTimeStr', label: '更新时间' },
+];
+
 /** 兑换订单搜索表单配置 - 仅包含接口支持的参数 */
 export function useSearchFormSchema() {
   return [
@@ -186,10 +270,9 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择商品类目',
-        options: [],
+        options: categorySearchOptions,
         clearable: true,
         filterable: true,
-        remote: true,
       },
     },
     {
@@ -281,7 +364,7 @@ export function useGridColumns() {
       title: '物流信息',
       minWidth: 200,
       sortable: true,
-      slots: { default: 'logisticsInfo' },
+      // slots: { default: 'logisticsInfo' },
     },
     {
       field: 'archiveTime',

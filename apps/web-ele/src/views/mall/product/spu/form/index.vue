@@ -12,8 +12,6 @@ import { Page, useVbenModal } from '@vben/common-ui';
 import { useTabs } from '@vben/hooks';
 import { convertToInteger, formatToFraction } from '@vben/utils';
 
-import { $t } from '#/locales';
-
 import { ElButton, ElCard, ElMessage, ElTabPane, ElTabs } from 'element-plus';
 
 import { useVbenForm } from '#/adapter/form';
@@ -230,10 +228,8 @@ async function handleSubmit() {
       name: 'ProductSpu',
       query: { refresh: 'true' },
     });
-  } catch (error) {
-    ElMessage.error(
-      spuId.value ? '修改商品失败' : '新增商品失败',
-    );
+  } catch {
+    ElMessage.error(spuId.value ? '修改商品失败' : '新增商品失败');
   }
 }
 
@@ -258,8 +254,12 @@ async function getDetail() {
       item.price = Number(formatToFraction(item.price));
       item.marketPrice = Number(formatToFraction(item.marketPrice));
       item.costPrice = Number(formatToFraction(item.costPrice));
-      item.firstBrokeragePrice = Number(formatToFraction(item.firstBrokeragePrice));
-      item.secondBrokeragePrice = Number(formatToFraction(item.secondBrokeragePrice));
+      item.firstBrokeragePrice = Number(
+        formatToFraction(item.firstBrokeragePrice),
+      );
+      item.secondBrokeragePrice = Number(
+        formatToFraction(item.secondBrokeragePrice),
+      );
     });
     formData.value = res;
     // 初始化各表单值 - 必须使用await等待所有异步操作完成

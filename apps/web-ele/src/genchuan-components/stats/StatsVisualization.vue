@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { nextTick, onActivated, onMounted, onUnmounted, ref, watch } from 'vue';
 
 import * as echarts from 'echarts';
 
@@ -67,9 +67,11 @@ const emit = defineEmits([
   'pieClick',
 ]);
 
+const rootRef = ref(null);
 const chartRefs = ref({});
 const chartInstances = ref({});
 const showMap = ref(false);
+let resizeObserver;
 const toggleView = () => {
   showMap.value = !showMap.value;
   // 当切换回图表视图时，重新初始化图表
@@ -355,21 +357,40 @@ const handleResize = () => {
   });
 };
 
+const refreshCharts = async () => {
+  await nextTick();
+  initCharts();
+  await nextTick();
+  handleResize();
+};
+
 watch(
   () => props.data,
   () => {
-    initCharts();
+    void refreshCharts();
   },
   { deep: true, immediate: true },
 );
 
 onMounted(() => {
-  initCharts();
+  void refreshCharts();
   window.addEventListener('resize', handleResize);
+
+  if (typeof ResizeObserver !== 'undefined' && rootRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      handleResize();
+    });
+    resizeObserver.observe(rootRef.value);
+  }
+});
+
+onActivated(() => {
+  void refreshCharts();
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
+  resizeObserver?.disconnect();
   Object.values(chartInstances.value).forEach((chartInstance) => {
     chartInstance.dispose();
   });
@@ -377,7 +398,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="park-chart-box">
+  <div ref="rootRef" class="park-chart-box">
     <!-- 卡片区域 -->
     <div class="chart-box-left">
       <div

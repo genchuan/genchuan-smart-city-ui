@@ -122,3 +122,8 @@ export function updateExchangeCategory(data) {
 export function getExchangeCategoryChart() {
   return requestClient.get('/marketop/exchange-category/chart');
 }
+
+/** 获取兑换类目 精简列表（用于下拉选择） */
+export function getExchangeCategoryList() {
+  return requestClient.get('/marketop/exchange-category/simple-list');
+}

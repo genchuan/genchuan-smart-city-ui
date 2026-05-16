@@ -27,14 +27,13 @@ import {
   detailFields,
   dynamicStationOptions,
   fetchStationOptions,
-  getCurrentStationOptions,
   getCouponStatusLabel,
   getCouponStatusTagType,
   getCouponTypeLabel,
   getCouponTypeTagType,
+  getCurrentStationOptions,
   getStationNamesByIds,
   stationDetailFields,
-  stationOptions,
   textObj,
   useEditFormSchema,
   useFormSchema,
@@ -334,14 +333,18 @@ const getTableData = async (pageObj) => {
     senderName: dataObj.searchParams.senderName,
     receiverName: dataObj.searchParams.receiverName,
     // RangePicker 返回数组格式 [start, end]，后端会接收为两个同名参数
-    createTime:
-      !dataObj.searchParams.createTime ? undefined : dataObj.searchParams.createTime,
-    sendTime:
-      !dataObj.searchParams.sendTime ? undefined : dataObj.searchParams.sendTime,
-    verifyTime:
-      !dataObj.searchParams.verifyTime ? undefined : dataObj.searchParams.verifyTime,
-    validTime:
-      !dataObj.searchParams.validTime ? undefined : dataObj.searchParams.validTime,
+    createTime: dataObj.searchParams.createTime
+      ? dataObj.searchParams.createTime
+      : undefined,
+    sendTime: dataObj.searchParams.sendTime
+      ? dataObj.searchParams.sendTime
+      : undefined,
+    verifyTime: dataObj.searchParams.verifyTime
+      ? dataObj.searchParams.verifyTime
+      : undefined,
+    validTime: dataObj.searchParams.validTime
+      ? dataObj.searchParams.validTime
+      : undefined,
   };
 
   const response = await getCouponMgmtPage(queryParams);
@@ -355,8 +358,7 @@ const getTableData = async (pageObj) => {
       verifyTimeStr: formatDate(item.verifyTime),
       validTimeStr: formatDate(item.validTime),
       // 优先使用后端接口返回的 stationNames，如果没有则使用本地函数作为回退
-      stationNames:
-        item.stationNames || getStationNamesByIds(item.stationIds),
+      stationNames: item.stationNames || getStationNamesByIds(item.stationIds),
     }));
     dataObj.apilist = dataObj.list;
   } else {

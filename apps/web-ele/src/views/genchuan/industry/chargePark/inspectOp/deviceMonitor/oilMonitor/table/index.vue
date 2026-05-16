@@ -276,6 +276,7 @@ async function handleExport() {
 
 function onSubmit(values) {
   dataObj.searchParams = { ...values };
+  filterStationName.value = values.stationName;
   filterTrendTime.value = '';
   gridApi.reload();
   drawerApi.close();
@@ -502,9 +503,7 @@ watch(
     }
     if (filter.type === 'station') {
       filterStationId.value = filter.value.stationId || '';
-      filterStationName.value = filter.value.stationId
-        ? ''
-        : filter.value.stationName;
+      filterStationName.value = filter.value.stationName;
     }
     if (filter.type === 'trendTime') {
       filterTrendTime.value = filter.value;

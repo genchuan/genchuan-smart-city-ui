@@ -5,10 +5,14 @@ import type {
   MerchantSelectOption,
 } from '../data';
 
-import type { MerchantInfoDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
+import type {
+  MerchantInfoDetailVO,
+  MerchantInfoVO,
+} from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import type {
   MerchantLinkDetailVO,
   MerchantLinkPageReqVO,
+  MerchantLinkVO,
 } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantLink';
 import type { ActiveFilterTag } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
@@ -82,6 +86,7 @@ const merchantSelectOptions = ref<MerchantSelectOption[]>(merchantOptions);
 const filterLinkType = ref('');
 const filterStatus = ref('');
 const searchParams = ref<Record<string, any>>({});
+const MAX_PAGE_SIZE = 200;
 
 function getMerchantOptionLabel(value: any) {
   const merchantId = Number(value);
@@ -222,11 +227,12 @@ function getStatusTagType(status: MerchantLinkRow['status']) {
 /** 加载商户下拉 */
 async function loadMerchantOptions() {
   try {
-    const result = await MerchantInfoApi.getMerchantInfoPage({
-      pageNo: 1,
-      pageSize: 9999,
-    });
-    const list = Array.isArray(result?.list) ? result.list : [];
+    const list = await fetchAllPages<MerchantInfoVO>((pageNo) =>
+      MerchantInfoApi.getMerchantInfoPage({
+        pageNo,
+        pageSize: MAX_PAGE_SIZE,
+      }),
+    );
 
     merchantSelectOptions.value = buildMerchantOptionsFromApi(list);
     merchantProfileLookup.value = buildMerchantProfileLookup(
@@ -258,6 +264,29 @@ async function loadMerchantOptions() {
   ]);
 
   await handleRefresh();
+}
+
+async function fetchAllPages<T>(
+  request: (pageNo: number) => Promise<{ list?: T[]; total?: number }>,
+) {
+  const list: T[] = [];
+  let pageNo = 1;
+  let total = 0;
+
+  do {
+    const result = await request(pageNo);
+    const currentList = Array.isArray(result?.list) ? result.list : [];
+
+    list.push(...currentList);
+    total = Number(result?.total || 0);
+    pageNo += 1;
+
+    if (currentList.length === 0) {
+      break;
+    }
+  } while (list.length < total);
+
+  return list;
 }
 
 /** 获取商户详情 */
@@ -553,12 +582,14 @@ async function handleExport() {
       exportValues.status = filterStatus.value;
     }
 
-    const result = await MerchantLinkApi.getMerchantLinkPage({
-      pageNo: 1,
-      pageSize: 9999,
-      ...buildMerchantLinkQueryParams(exportValues),
-    });
-    const list = Array.isArray(result?.list) ? result.list : [];
+    const queryParams = buildMerchantLinkQueryParams(exportValues);
+    const list = await fetchAllPages<MerchantLinkVO>((pageNo) =>
+      MerchantLinkApi.getMerchantLinkPage({
+        pageNo,
+        pageSize: MAX_PAGE_SIZE,
+        ...queryParams,
+      }),
+    );
 
     exportToExcel(
       buildExportRows(

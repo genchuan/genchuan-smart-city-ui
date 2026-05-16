@@ -7,7 +7,10 @@ import type {
   RedemptionLog,
 } from '../data';
 
-import type { MerchantInfoDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
+import type {
+  MerchantInfoDetailVO,
+  MerchantInfoVO,
+} from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import type {
   MerchantSendCouponDetailVO,
   MerchantSendCouponPageReqVO,
@@ -56,7 +59,6 @@ import {
   formatRedemptions,
   getStatusTagType,
   maskPhone,
-  merchantOptions,
   detailFields as merchantSendCouponDetailFields,
   textObj,
   useCreateSchema,
@@ -89,12 +91,13 @@ const detailDrawerRef = ref<null | { open: () => void }>(null);
 const detailObj = ref<MerchantSendCouponRow>();
 const merchantDetailCache = new Map<number, MerchantInfoDetailVO>();
 const merchantDialogVisible = ref(false);
-const merchantProfileLookup = ref(buildMerchantProfileLookup(merchantOptions));
-const merchantSelectOptions = ref<MerchantSelectOption[]>(merchantOptions);
+const merchantProfileLookup = ref(buildMerchantProfileLookup([]));
+const merchantSelectOptions = ref<MerchantSelectOption[]>([]);
 const queryExtraValues = ref<Record<string, any>>({});
 const redemptionDialogVisible = ref(false);
 const couponSelectOptions = ref(buildCouponSelectOptions());
 const searchParams = ref<Record<string, any>>({});
+const MAX_PAGE_SIZE = 200;
 
 function getMerchantOptionLabel(value: any) {
   const merchantId = Number(value);
@@ -223,11 +226,12 @@ async function onQuerySubmit(values: Record<string, any>) {
 /** 加载商户下拉 */
 async function loadMerchantOptions() {
   try {
-    const result = await MerchantInfoApi.getMerchantInfoPage({
-      pageNo: 1,
-      pageSize: 9999,
-    });
-    const list = Array.isArray(result?.list) ? result.list : [];
+    const list = await fetchAllPages<MerchantInfoVO>((pageNo) =>
+      MerchantInfoApi.getMerchantInfoPage({
+        pageNo,
+        pageSize: MAX_PAGE_SIZE,
+      }),
+    );
 
     merchantSelectOptions.value = buildMerchantOptionsFromApi(list);
     merchantProfileLookup.value = buildMerchantProfileLookup(
@@ -262,11 +266,12 @@ async function loadMerchantOptions() {
 /** 加载优惠券下拉 */
 async function loadCouponOptions() {
   try {
-    const result = await getCouponMgmtPage({
-      pageNo: 1,
-      pageSize: 9999,
-    });
-    const list = Array.isArray(result?.list) ? result.list : [];
+    const list = await fetchAllPages<Record<string, any>>((pageNo) =>
+      getCouponMgmtPage({
+        pageNo,
+        pageSize: MAX_PAGE_SIZE,
+      }),
+    );
 
     couponSelectOptions.value = buildCouponOptionsFromApi(list);
     couponProfileLookup.value = buildCouponProfileLookup(
@@ -286,6 +291,29 @@ async function loadCouponOptions() {
       couponSelectOptions.value,
     ),
   }));
+}
+
+async function fetchAllPages<T>(
+  request: (pageNo: number) => Promise<{ list?: T[]; total?: number }>,
+) {
+  const list: T[] = [];
+  let pageNo = 1;
+  let total = 0;
+
+  do {
+    const result = await request(pageNo);
+    const currentList = Array.isArray(result?.list) ? result.list : [];
+
+    list.push(...currentList);
+    total = Number(result?.total || 0);
+    pageNo += 1;
+
+    if (currentList.length === 0) {
+      break;
+    }
+  } while (list.length < total);
+
+  return list;
 }
 
 /** 获取商户详情 */

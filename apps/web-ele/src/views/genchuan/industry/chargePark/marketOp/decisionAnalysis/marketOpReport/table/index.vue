@@ -299,68 +299,70 @@ const getTableData = async (pageObj) => {
       pageSize: page.pageSize,
     };
 
-    // 只有当reportCycle有值时才添加到参数中
-    if (dataObj.searchParams.reportCycle) {
-      params.reportCycle = dataObj.searchParams.reportCycle;
-    }
-
-    // 添加其他可选参数
-    if (dataObj.searchParams.generateStatus) {
-      params.generateStatus = dataObj.searchParams.generateStatus;
-    }
-    if (dataObj.searchParams.operator) {
-      params.operator = dataObj.searchParams.operator;
-    }
-    if (dataObj.searchParams.filterRule) {
-      params.filterRule = dataObj.searchParams.filterRule;
-    }
-
-    // 处理统计时段
-    if (
-      dataObj.searchParams.statTimeRange &&
-      dataObj.searchParams.statTimeRange.length === 2
-    ) {
-      params.statStartTime = dataObj.searchParams.statTimeRange[0];
-      params.statEndTime = dataObj.searchParams.statTimeRange[1];
-    }
-
-    // 处理生成时间
-    if (
-      dataObj.searchParams.generateTimeRange &&
-      dataObj.searchParams.generateTimeRange.length === 2
-    ) {
-      params.generateStartTime = dataObj.searchParams.generateTimeRange[0];
-      params.generateEndTime = dataObj.searchParams.generateTimeRange[1];
-    }
-
-    // 处理数值范围筛选
-    const rangeFields = [
+    // 遍历所有搜索表单字段，确保有值的字段都传入请求参数
+    const searchFields = [
+      'reportCycle',
+      'generateStatus',
+      'operator',
+      'filterRule',
+      // 整数字段 - 直接传递
       'activityCount',
       'joinUserCount',
       'lotteryCount',
       'couponSendCount',
       'cardOrderCount',
-      'revenue',
       'exchangeCount',
       'totalStock',
       'warnStockCount',
     ];
-    rangeFields.forEach((field) => {
-      const minKey = `${field}Min`;
-      const maxKey = `${field}Max`;
-      if (
-        dataObj.searchParams[minKey] !== undefined &&
-        dataObj.searchParams[minKey] !== null
-      ) {
-        params[minKey] = dataObj.searchParams[minKey];
-      }
-      if (
-        dataObj.searchParams[maxKey] !== undefined &&
-        dataObj.searchParams[maxKey] !== null
-      ) {
-        params[maxKey] = dataObj.searchParams[maxKey];
+
+    // 需要保留小数精度的字段（设置了 precision: 2）
+    const decimalFields = ['revenue'];
+
+    // 处理普通字段和整数字段
+    searchFields.forEach((field) => {
+      const value = dataObj.searchParams[field];
+      if (value !== undefined && value !== null && value !== '') {
+        params[field] = value;
       }
     });
+
+    // 处理需要保留小数精度的字段（如 revenue）
+    decimalFields.forEach((field) => {
+      const value = dataObj.searchParams[field];
+      if (value !== undefined && value !== null && value !== '') {
+        // 使用 parseFloat 和 toFixed 确保保留两位小数精度
+        // 例如：8 → 8.00, 7.5 → 7.50, 8.00 → 8.00
+        params[field] = Number.parseFloat(Number(value).toFixed(2));
+      }
+    });
+
+    // 处理统计开始时间 - RangePicker 返回数组格式 [start, end]，直接传递给后端（参照积分活动开始时间的处理方式）
+    if (
+      dataObj.searchParams.statStartTime &&
+      Array.isArray(dataObj.searchParams.statStartTime) &&
+      dataObj.searchParams.statStartTime.length === 2
+    ) {
+      params.statStartTime = dataObj.searchParams.statStartTime;
+    }
+
+    // 处理统计结束时间 - RangePicker 返回数组格式 [start, end]，直接传递给后端（参照积分活动结束时间的处理方式）
+    if (
+      dataObj.searchParams.statEndTime &&
+      Array.isArray(dataObj.searchParams.statEndTime) &&
+      dataObj.searchParams.statEndTime.length === 2
+    ) {
+      params.statEndTime = dataObj.searchParams.statEndTime;
+    }
+
+    // 处理生成时间 - RangePicker 返回数组格式 [start, end]，直接传递给后端
+    if (
+      dataObj.searchParams.generateTime &&
+      Array.isArray(dataObj.searchParams.generateTime) &&
+      dataObj.searchParams.generateTime.length === 2
+    ) {
+      params.generateTime = dataObj.searchParams.generateTime;
+    }
 
     // 调用API
     const response = await getCycleReportPage(params);
@@ -391,19 +393,31 @@ const useLocalData = (page) => {
       const value = dataObj.searchParams[key];
       if (value !== undefined && value !== null && value !== '') {
         if (
-          key === 'statTimeRange' &&
+          key === 'statStartTime' &&
           Array.isArray(value) &&
           value.length === 2
         ) {
+          // 统计开始时间范围筛选（RangePicker 返回数组）
           searchMatch =
-            searchMatch && v.statTime.includes(value[0].split(' ')[0]);
+            searchMatch && v.statTime >= value[0] && v.statTime <= value[1];
         } else if (
-          key === 'generateTimeRange' &&
+          key === 'statEndTime' &&
           Array.isArray(value) &&
           value.length === 2
         ) {
+          // 统计结束时间范围筛选（RangePicker 返回数组）
           searchMatch =
-            searchMatch && v.generateTime.includes(value[0].split(' ')[0]);
+            searchMatch && v.statTime >= value[0] && v.statTime <= value[1];
+        } else if (
+          key === 'generateTime' &&
+          Array.isArray(value) &&
+          value.length === 2
+        ) {
+          // 生成时间范围筛选（RangePicker 返回数组）
+          searchMatch =
+            searchMatch &&
+            v.generateTime >= value[0] &&
+            v.generateTime <= value[1];
         } else if (key.endsWith('Min')) {
           const field = key.replace('Min', '');
           searchMatch = searchMatch && v[field] >= value;
@@ -584,7 +598,12 @@ const handleStatsFilter = (type, value) => {
     case 'line': {
       // 折线图钻取 - 根据日期筛选
       if (value) {
-        dataObj.searchParams.statTimeRange = [
+        // 使用数组格式传递统计时间，与搜索表单保持一致（参照积分活动 RangePicker 的处理方式）
+        dataObj.searchParams.statStartTime = [
+          `${value} 00:00:00`,
+          `${value} 23:59:59`,
+        ];
+        dataObj.searchParams.statEndTime = [
           `${value} 00:00:00`,
           `${value} 23:59:59`,
         ];

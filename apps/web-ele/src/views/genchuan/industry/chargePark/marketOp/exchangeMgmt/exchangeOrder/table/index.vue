@@ -2,22 +2,19 @@
 import { computed, nextTick, onMounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import {downloadFileFromBlobPart} from '@vben/utils';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
-import {
-  batchExportExchangeOrder,
-  cancelExchangeOrder,
-  exportExchangeOrder,
-  getExchangeOrderDetail,
-  getExchangeOrderPage,
-  payExchangeOrder,
-  shipExchangeOrder,
-} from '#/api/genchuan/industry/chargePark/marketOp/exchangeMgmt/exchangeOrder';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import {
+  batchExportExchangeOrder,
+  exportExchangeOrder,
+  getExchangeOrderPage,
+} from '#/api/genchuan/industry/chargePark/marketOp/exchangeMgmt/exchangeOrder';
+import { getPrizeMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/prizeMgmt';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
@@ -26,12 +23,15 @@ import { formatDate } from '#/utils/genchuan/formatTime';
 import CancelConfirmDialog from '../components/CancelConfirmDialog.vue';
 import PayConfirmDialog from '../components/PayConfirmDialog.vue';
 import ShipDialog from '../components/ShipDialog.vue';
-
 import {
   dataList,
   detailFields,
+  dynamicCategorySearchOptions,
+  fetchCategorySearchOptions,
+  getCurrentCategorySearchOptions,
   getExchangeOrderPayStatusLabel,
   getExchangeOrderPayStatusTagType,
+  goodsDetailFields,
   textObj,
   useFormSchema,
   useGridColumns,
@@ -67,12 +67,19 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm() {},
   async onOpenChange() {},
 });
-
 const detailDrawerRef = ref(null);
+const goodsDetailDrawerRef = ref(null);
 const payConfirmDialogRef = ref(null);
 const shipDialogRef = ref(null);
-const cancelConfirmDialogRef = ref(null);
 const formData = ref();
+const goodsDetailData = ref({});
+
+// 商品详情标题计算属性
+const goodsDetailTitle = computed(() => {
+  return goodsDetailData.value?.name
+    ? `${goodsDetailData.value.name}详情`
+    : '商品详情';
+});
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -309,7 +316,10 @@ const getTableData = async (pageObj) => {
     let searchMatch = true;
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
-      if (value && !['createTime', 'payTime', 'shipTime', 'archiveTime'].includes(key)) {
+      if (
+        value &&
+        !['archiveTime', 'createTime', 'payTime', 'shipTime'].includes(key)
+      ) {
         if (key === 'costPointMin') {
           searchMatch = searchMatch && v.costPoint >= value;
         } else if (key === 'costPointMax') {
@@ -337,7 +347,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -431,23 +441,30 @@ const handleStatsFilter = (type, value) => {
   filterDate.value = '';
 
   switch (type) {
-    case 'card':
+    case 'card': {
       if (value === 'todayOrder') {
         // 今日订单量 - 筛选今日订单
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        dataObj.searchParams.createTime = [today.getTime(), today.getTime() + 86400000];
+        dataObj.searchParams.createTime = [
+          today.getTime(),
+          today.getTime() + 86_400_000,
+        ];
         console.log('钻取：筛选今日订单');
       } else if (value === 'todayExchange') {
         // 今日兑换数 - 筛选今日已完成的订单
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        dataObj.searchParams.createTime = [today.getTime(), today.getTime() + 86400000];
+        dataObj.searchParams.createTime = [
+          today.getTime(),
+          today.getTime() + 86_400_000,
+        ];
         filterPayStatus.value = '2'; // 已完成
         console.log('钻取：筛选今日已完成订单');
       }
       break;
-    case 'category':
+    }
+    case 'category': {
       // 类目筛选 - value包含categoryId和name
       if (value) {
         filterCategoryId.value = value.categoryId;
@@ -457,16 +474,21 @@ const handleStatsFilter = (type, value) => {
         console.log('钻取：筛选类目', value.name, 'ID:', value.categoryId);
       }
       break;
-    case 'date':
+    }
+    case 'date': {
       // 日期筛选 - 筛选特定日期的订单
       if (value) {
         filterDate.value = value;
         const date = new Date(value);
         date.setHours(0, 0, 0, 0);
-        dataObj.searchParams.createTime = [date.getTime(), date.getTime() + 86400000];
+        dataObj.searchParams.createTime = [
+          date.getTime(),
+          date.getTime() + 86_400_000,
+        ];
         console.log('钻取：筛选日期', value);
       }
       break;
+    }
   }
 
   // 刷新表格
@@ -476,6 +498,21 @@ const handleStatsFilter = (type, value) => {
 // 暴露方法给父组件
 defineExpose({
   handleStatsFilter,
+});
+
+// 页面加载时获取商品类目列表
+onMounted(async () => {
+  await fetchCategorySearchOptions();
+  // 动态更新搜索表单的商品类目选项
+  const currentCategoryOptions = getCurrentCategorySearchOptions();
+  await queryFormApi.updateSchema([
+    {
+      fieldName: 'categoryId',
+      componentProps: {
+        options: currentCategoryOptions,
+      },
+    },
+  ]);
 });
 
 // ==================== 详情弹窗处理 ====================
@@ -499,10 +536,44 @@ const handleOpenUserDetail = (row) => {
   // TODO: 实现用户详情弹窗
 };
 
-/** 打开商品详情弹窗 */
-const handleOpenGoodsDetail = (row) => {
-  ElMessage.info(`查看商品详情: ${row.goodsName}`);
-  // TODO: 实现商品详情弹窗
+/** 打开商品详情弹窗 - 使用 getPrizeMgmtDetail 接口获取商品详情 */
+const handleOpenGoodsDetail = async (row) => {
+  if (!row.goodsId) {
+    ElMessage.warning('商品ID不存在');
+    return;
+  }
+  try {
+    const goodsDetail = await getPrizeMgmtDetail(Number(row.goodsId));
+    if (goodsDetail && goodsDetail.id) {
+      // 格式化时间字段为字符串（处理null值），参照 prizeMgmt 的 detailFields 配置使用带Str后缀的字段名
+      const formattedDetail = {
+        ...goodsDetail,
+        createTimeStr: goodsDetail.createTime
+          ? formatDate(new Date(Number(goodsDetail.createTime)), 'YYYY-MM-DD HH:mm:ss')
+          : '',
+        syncTimeStr: goodsDetail.syncTime
+          ? formatDate(new Date(Number(goodsDetail.syncTime)), 'YYYY-MM-DD HH:mm:ss')
+          : '',
+        updateTimeStr: goodsDetail.updateTime
+          ? formatDate(new Date(Number(goodsDetail.updateTime)), 'YYYY-MM-DD HH:mm:ss')
+          : '',
+      };
+      goodsDetailData.value = formattedDetail;
+      // 使用nextTick确保DOM更新后再打开抽屉
+      await nextTick();
+      if (goodsDetailDrawerRef.value) {
+        goodsDetailDrawerRef.value.open();
+      } else {
+        console.error('商品详情抽屉组件未找到');
+        ElMessage.error('打开详情失败，请重试');
+      }
+    } else {
+      ElMessage.error('获取商品详情失败');
+    }
+  } catch (error) {
+    console.error('获取商品详情失败:', error);
+    ElMessage.error('获取商品详情失败');
+  }
 };
 
 /** 打开物流跟踪弹窗 */
@@ -535,16 +606,17 @@ const handleFullShow = () => {
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <!--   商品详情抽屉-->
+    <DetailDrawer
+      ref="goodsDetailDrawerRef"
+      :title="goodsDetailTitle"
+      :data="goodsDetailData"
+      :fields="goodsDetailFields"
+    />
     <!--   支付确认弹窗-->
-    <PayConfirmDialog
-      ref="payConfirmDialogRef"
-      @success="handleRefresh"
-    />
+    <PayConfirmDialog ref="payConfirmDialogRef" @success="handleRefresh" />
     <!--   发货弹窗-->
-    <ShipDialog
-      ref="shipDialogRef"
-      @success="handleRefresh"
-    />
+    <ShipDialog ref="shipDialogRef" @success="handleRefresh" />
     <!--   取消确认弹窗-->
     <CancelConfirmDialog
       ref="cancelConfirmDialogRef"
@@ -594,7 +666,7 @@ const handleFullShow = () => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-<!--          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />-->
+          <!--          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />-->
           <IconButton
             content="导出"
             icon-name="download"
@@ -606,13 +678,13 @@ const handleFullShow = () => {
             :disabled="!checkedIds || checkedIds.length === 0"
             @click="handleBatchExport"
           />
-<!--          <IconButton-->
-<!--            content="批量删除"-->
-<!--            icon-name="delete"-->
-<!--            color="#F56C6C"-->
-<!--            :disabled="isEmpty(checkedIds)"-->
-<!--            @click="handleDeleteBatch"-->
-<!--          />-->
+          <!--          <IconButton-->
+          <!--            content="批量删除"-->
+          <!--            icon-name="delete"-->
+          <!--            color="#F56C6C"-->
+          <!--            :disabled="isEmpty(checkedIds)"-->
+          <!--            @click="handleDeleteBatch"-->
+          <!--          />-->
           <IconButton
             content="搜索"
             icon-name="search"
@@ -675,15 +747,30 @@ const handleFullShow = () => {
       </template>
       <!-- 生成时间 - 格式化显示 -->
       <template #createTime="{ row }">
-        <span>{{ row.createTime ? formatDate(new Date(Number(row.createTime)), 'YYYY-MM-DD HH:mm:ss') : '' }}</span>
+        <span>{{
+          row.createTime
+            ? formatDate(
+                new Date(Number(row.createTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : ''
+        }}</span>
       </template>
       <!-- 支付时间 - 格式化显示 -->
       <template #payTime="{ row }">
-        <span>{{ row.payTime ? formatDate(new Date(Number(row.payTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.payTime
+            ? formatDate(new Date(Number(row.payTime)), 'YYYY-MM-DD HH:mm:ss')
+            : '-'
+        }}</span>
       </template>
       <!-- 发货时间 - 格式化显示 -->
       <template #shipTime="{ row }">
-        <span>{{ row.shipTime ? formatDate(new Date(Number(row.shipTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.shipTime
+            ? formatDate(new Date(Number(row.shipTime)), 'YYYY-MM-DD HH:mm:ss')
+            : '-'
+        }}</span>
       </template>
       <!-- 物流信息 - 点击跳转物流跟踪 -->
       <template #logisticsInfo="{ row }">
@@ -700,7 +787,14 @@ const handleFullShow = () => {
       </template>
       <!-- 归档时间 - 格式化显示 -->
       <template #archiveTime="{ row }">
-        <span>{{ row.archiveTime ? formatDate(new Date(Number(row.archiveTime)), 'YYYY-MM-DD HH:mm:ss') : '-' }}</span>
+        <span>{{
+          row.archiveTime
+            ? formatDate(
+                new Date(Number(row.archiveTime)),
+                'YYYY-MM-DD HH:mm:ss',
+              )
+            : '-'
+        }}</span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

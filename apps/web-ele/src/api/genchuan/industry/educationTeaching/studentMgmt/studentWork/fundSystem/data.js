@@ -115,21 +115,6 @@ export function getFundSystemDetail(params) {
     });
 }
 
-// 获取学生选项（无需转换）
-export function getStudentOptions(params) {
-  return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
-    console.warn('获取学生选项失败，使用模拟数据', err);
-    return Promise.resolve([
-      { label: '张三', value: 1 },
-      { label: '李四', value: 2 },
-      { label: '王五', value: 3 },
-      { label: '赵六', value: 4 },
-      { label: '孙七', value: 5 },
-      { label: '周八', value: 6 },
-    ]);
-  });
-}
-
 // ==================== 图表接口 ====================
 // 图表接口暂不处理映射（因未提供后端数据结构），如有需要可参照添加
 export function getFundSystemChart(params) {
@@ -157,7 +142,7 @@ export function getFundSystemChart(params) {
 }
 
 export function getFundCount(params) {
-  return requestClient.get('/studentmgmt/fund-system/chart/fundCount', { params }).catch(err => {
+  return requestClient.get('/studentmgmt/fund-system/fundCount', { params }).catch(err => {
     console.warn('资助人数统计接口失败，使用模拟数据', err);
     return Promise.resolve({
       gradeStatistics: [

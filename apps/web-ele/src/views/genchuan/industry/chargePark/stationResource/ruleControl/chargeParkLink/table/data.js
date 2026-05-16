@@ -17,7 +17,7 @@ export const pageConfig = {
       ['payRate', '支付率'],
     ],
     line: ['discountLineList', 'date', 'useCount', '联动优惠使用趋势'],
-    bar: ['orderBarList', 'name', 'value', '各场站订单量'],
+    bar: ['orderBarList', 'name', 'value', '各场站订单量', 'stationId'],
   },
 };
 
@@ -53,6 +53,18 @@ export const searchFields = [
     label: '状态',
     type: 'select',
     options: statusOptions,
+    required: false,
+  },
+  {
+    field: 'createTimeStart',
+    label: '创建开始时间',
+    type: 'date',
+    required: false,
+  },
+  {
+    field: 'createTimeEnd',
+    label: '创建结束时间',
+    type: 'date',
     required: false,
   },
   { field: 'creator', label: '创建人', type: 'input', required: false },

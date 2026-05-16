@@ -66,16 +66,13 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
-// 核心修改：支持空值清除筛选，且使用 gridApi.query()
 function handleFilterTagClick(field, value) {
   if (!field) return;
-  // 空值或空字符串：删除该筛选条件
   if (value === '' || value === null || value === undefined) {
     if (tagFilters.value[field] !== undefined) {
       delete tagFilters.value[field];
     }
   } else {
-    // 已有相同值则删除，否则设置
     const existing = tagFilters.value[field];
     if (existing !== undefined) {
       if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
@@ -89,7 +86,7 @@ function handleFilterTagClick(field, value) {
       tagFilters.value[field] = value;
     }
   }
-  gridApi.query();  // 改为 query()
+  gridApi.query();
 }
 
 function clearFilters() {
@@ -197,43 +194,87 @@ async function handleExport() {
   } finally { loading.close(); }
 }
 
-// 审核相关
-const auditDialogVisible = ref(false);
-const currentAuditRows = ref([]);
-const auditResult = ref('');
-const auditRemark = ref('');
-
-function handleBatchAudit() {
-  if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一条奖助申请');
-  const selectedRows = checkedRows.value.filter(row => row.status === '待审核');
-  if (selectedRows.length === 0) return ElMessage.warning('请选择状态为【待审核】的奖助申请');
-  currentAuditRows.value = selectedRows;
-  auditResult.value = '';
-  auditRemark.value = '';
-  auditDialogVisible.value = true;
-}
-
-function handleAudit(row) {
-  if (row.status !== '待审核') return ElMessage.warning('只有待审核状态的奖助申请可以审核');
-  currentAuditRows.value = [row];
-  auditResult.value = '';
-  auditRemark.value = '';
-  auditDialogVisible.value = true;
-}
-
-async function confirmAudit() {
-  if (!auditResult.value) return ElMessage.warning('请选择审核结果');
-  const loading = ElLoading.service({ text: '审核中...' });
+// ---------- 单个审核 ----------
+async function handleAudit(row) {
+  if (row.status !== '待审核') {
+    ElMessage.warning('只有待审核状态的奖助申请可以审核');
+    return;
+  }
   try {
-    const ids = currentAuditRows.value.map(row => row.id);
-    const res = await auditAidWork({ ids, auditResult: auditResult.value, remark: auditRemark.value || '' });
-    if (res && res !== false) {
-      ElMessage.success('审核成功');
-      auditDialogVisible.value = false;
-      handleRefresh();
-    } else { ElMessage.error('审核失败'); }
-  } catch (error) { console.error('审核失败', error); ElMessage.error('审核失败'); }
-  finally { loading.close(); }
+    await ElMessageBox.confirm('确定要通过该奖助申请吗？', '审核确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'info',
+    });
+    const loading = ElLoading.service({ text: '审核中...' });
+    try {
+      const res = await auditAidWork({
+        ids: [row.id],
+        auditResult: '2',
+        remark: '',
+      });
+      if (res && res !== false) {
+        ElMessage.success('审核成功');
+        handleRefresh();
+      } else {
+        ElMessage.error('审核失败');
+      }
+    } finally {
+      loading.close();
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('审核失败', error);
+      ElMessage.error('审核失败');
+    }
+  }
+}
+
+// ---------- 批量审核 ----------
+async function handleBatchAudit() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请至少选择一条奖助申请');
+    return;
+  }
+  const selectedRows = checkedRows.value.filter(row => row.status === '待审核');
+  if (selectedRows.length === 0) {
+    ElMessage.warning('请选择状态为【待审核】的奖助申请');
+    return;
+  }
+  if (selectedRows.length < checkedRows.value.length) {
+    ElMessage.warning(`已自动过滤非待审核条目，将对 ${selectedRows.length} 条待审核申请进行批量通过`);
+  }
+  try {
+    await ElMessageBox.confirm(`确定要通过选中的 ${selectedRows.length} 条奖助申请吗？`, '批量审核确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'info',
+    });
+    const loading = ElLoading.service({ text: '批量审核中...' });
+    try {
+      const ids = selectedRows.map(row => row.id);
+      const res = await auditAidWork({
+        ids: ids,
+        auditResult: '已通过',
+        remark: '',
+      });
+      if (res && res !== false) {
+        ElMessage.success('批量审核成功');
+        checkedIds.value = [];
+        checkedRows.value = [];
+        handleRefresh();
+      } else {
+        ElMessage.error('批量审核失败');
+      }
+    } finally {
+      loading.close();
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量审核失败', error);
+      ElMessage.error('批量审核失败');
+    }
+  }
 }
 
 function handleCreate() {
@@ -462,23 +503,5 @@ onUnmounted(() => {
         </div>
       </template>
     </Grid>
-
-    <el-dialog title="审核" v-model="auditDialogVisible" width="400px">
-      <el-form label-width="100px">
-        <el-form-item label="审核结果" required>
-          <el-select v-model="auditResult" placeholder="请选择审核结果" style="width: 100%;">
-            <el-option label="已通过" value="已通过"/>
-            <el-option label="待审批" value="待审批"/>
-          </el-select>
-        </el-form-item>
-        <el-form-item label="审核备注">
-          <el-input v-model="auditRemark" type="textarea" :rows="3" placeholder="请输入备注（可选）"/>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="auditDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmAudit">确认</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>

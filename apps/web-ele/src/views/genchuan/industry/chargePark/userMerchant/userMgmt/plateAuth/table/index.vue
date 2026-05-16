@@ -4,7 +4,6 @@ import type {
   OperatorInfo,
   PlateAuthRow,
   UserProfileInfo,
-  UserSelectOption,
 } from '../data';
 
 import type { PlateAuthDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/plateAuth';
@@ -44,8 +43,6 @@ import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/user
 import {
   buildPlateAuthQueryParams,
   buildPlateAuthRowFromApi,
-  buildUserProfileLookup,
-  buildUserSelectOptions,
   formatAuthLogs,
   getCarProfile,
   getOperatorDetail,
@@ -53,7 +50,6 @@ import {
   maskPhone,
   detailFields as plateAuthDetailFields,
   useGridColumns,
-  userOptions,
   useSearchSchema,
 } from '../data';
 
@@ -95,7 +91,6 @@ const rejectReason = ref('');
 const rejectRow = ref<PlateAuthRow>();
 const userDialogVisible = ref(false);
 const userProfileLookup = ref<Record<number, Partial<UserProfileInfo>>>({});
-const userSelectOptions = ref<UserSelectOption[]>(userOptions);
 const vehicleDialogVisible = ref(false);
 
 // 快捷筛选变量
@@ -255,34 +250,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-/** 加载所属用户下拉 */
-async function loadUserOptions() {
-  try {
-    const result = await UserInfoApi.getUserInfoPage({
-      pageNo: 1,
-      pageSize: 200, // 最多200
-    });
-    const list = Array.isArray(result?.list) ? result.list : [];
-
-    userSelectOptions.value = buildUserSelectOptions(
-      list.map((item) => ({
-        label: item.nickname,
-        phone: item.phone,
-        remark: item.remark,
-        userType: item.userType,
-        value: Number(item.id ?? 0),
-      })),
-    );
-    userProfileLookup.value = buildUserProfileLookup(userSelectOptions.value);
-  } catch (error) {
-    console.error('[plateAuth] load user options failed:', error);
-    userSelectOptions.value = buildUserSelectOptions(userSelectOptions.value);
-    userProfileLookup.value = buildUserProfileLookup(userSelectOptions.value);
-  }
-
-  await handleRefresh();
-}
-
 /** 获取车辆详情 */
 async function fetchUserCarDetail(
   carId: number,
@@ -418,7 +385,7 @@ defineExpose({
 
 onMounted(async () => {
   await nextTick();
-  await loadUserOptions();
+  await handleRefresh();
 });
 
 /** 导出当前列表 */

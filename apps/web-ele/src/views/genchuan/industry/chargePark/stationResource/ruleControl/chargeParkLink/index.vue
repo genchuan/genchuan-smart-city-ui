@@ -240,6 +240,7 @@ function createSchema(fields, isSearch = false) {
     if (field.type === 'select') {
       Object.assign(componentProps, {
         allowClear: true,
+        clearable: true,
         filterOption: true,
         options: getSelectFieldOptions(field),
         showSearch: true,
@@ -623,10 +624,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues = {}) => {
-          const query = sanitizeParams({
-            ...appliedQuery.value,
-            ...formValues,
-          });
+          const explicitValues = sanitizeParams(formValues);
+          const query =
+            Object.keys(explicitValues).length > 0
+              ? explicitValues
+              : sanitizeParams(appliedQuery.value);
           return await pageApi[`get${apiName}Page`]({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
@@ -1016,15 +1018,16 @@ function getTagDisplayText(field, value) {
 async function removeFilterTag(field) {
   const nextQuery = { ...appliedQuery.value };
   delete nextQuery[field];
-  appliedQuery.value = sanitizeParams(nextQuery);
-  await syncQueryForm(appliedQuery.value);
-  handleRefresh(appliedQuery.value);
+  const sanitizedQuery = sanitizeParams(nextQuery);
+  appliedQuery.value = sanitizedQuery;
+  handleRefresh(sanitizedQuery);
+  await syncQueryForm(sanitizedQuery);
 }
 
 async function clearFilters() {
   appliedQuery.value = {};
-  await syncQueryForm({});
   handleRefresh(appliedQuery.value);
+  await syncQueryForm({});
 }
 
 function getCellDisplayText(column, row) {
@@ -1044,24 +1047,99 @@ function getCellDisplayText(column, row) {
   }
   return '--';
 }
+
+function findChartSourceItem(config = [], value) {
+  const [dataKey, nameField] = config;
+  return (chartData.value?.[dataKey] || []).find(
+    (item) => String(item?.[nameField]) === String(value),
+  );
+}
+
+function resolveChartFilterValue(field, sourceRow, fallback) {
+  if (field !== 'stationId') {
+    return sourceRow?.[field] ?? fallback;
+  }
+  const directValue =
+    sourceRow?.stationId ?? sourceRow?.id ?? sourceRow?.stationID;
+  if (!isEmpty(directValue)) {
+    return directValue;
+  }
+  const stationName =
+    sourceRow?.stationName ||
+    sourceRow?.name ||
+    sourceRow?.stationNo ||
+    fallback;
+  const stationOptions = selectOptionsMap.value.StationInfo || [];
+  const matched = stationOptions.find((item) => {
+    const label = String(item.label || '');
+    return (
+      String(item.value) === String(stationName) ||
+      label === String(stationName) ||
+      label.startsWith(`${stationName} (`)
+    );
+  });
+  return matched?.value ?? fallback;
+}
+
+function formatDateValue(date) {
+  return `${date.getFullYear()}-${padTime(date.getMonth() + 1)}-${padTime(date.getDate())}`;
+}
+
+function getPeriodRange(value) {
+  const text = String(value || '').trim();
+  const monthMatch = text.match(/^(\d{4})[-/年](\d{1,2})月?$/);
+  if (monthMatch) {
+    const year = Number(monthMatch[1]);
+    const month = Number(monthMatch[2]);
+    if (year && month >= 1 && month <= 12) {
+      return {
+        createTimeEnd: formatDateValue(new Date(year, month, 0)),
+        createTimeStart: formatDateValue(new Date(year, month - 1, 1)),
+      };
+    }
+  }
+
+  const parsed = new Date(text.replaceAll('-', '/'));
+  if (Number.isNaN(parsed.getTime())) return null;
+  return {
+    createTimeEnd: formatDateValue(parsed),
+    createTimeStart: formatDateValue(parsed),
+  };
+}
+
 function handleCardClick(item) {
   if (!item.status) return;
   applySearchPatch({ status: item.status });
 }
 
-function handleBarClick(name) {
-  const field = pageConfig.chart?.bar?.[4] || pageConfig.chart?.bar?.[1];
-  applySearchPatch({ [field]: name });
+async function handleBarClick(name) {
+  const chartConfig = pageConfig.chart?.bar || [];
+  const field = chartConfig[4] || chartConfig[1];
+  if (!field) return;
+  if (
+    field === 'stationId' &&
+    (selectOptionsMap.value.StationInfo || []).length === 0
+  ) {
+    await loadSelectOptions();
+  }
+  const sourceRow = findChartSourceItem(chartConfig, name);
+  const value = resolveChartFilterValue(field, sourceRow, name);
+  applySearchPatch({ [field]: value });
 }
 
 function handleLineClick(payload) {
-  const field = pageConfig.chart?.line?.[4] || pageConfig.chart?.line?.[1];
-  applySearchPatch({ [field]: payload?.categoryName || payload?.name });
+  const range = getPeriodRange(payload?.categoryName || payload?.name);
+  if (!range) return;
+  applySearchPatch(range);
 }
 
 function handlePieClick(payload) {
-  const field = pageConfig.chart?.pie?.[3] || pageConfig.chart?.pie?.[1];
-  applySearchPatch({ [field]: payload?.name });
+  const chartConfig = pageConfig.chart?.pie || [];
+  const field = chartConfig[3] || chartConfig[1];
+  if (!field) return;
+  const sourceRow = findChartSourceItem(chartConfig, payload?.name);
+  const value = sourceRow?.[field] ?? payload?.name;
+  applySearchPatch({ [field]: value });
 }
 
 function getDrillValue(column, row) {
@@ -1131,7 +1209,6 @@ function handleToggleOverview() {
 }
 
 async function handleOpenSearch() {
-  await syncQueryForm(appliedQuery.value);
   searchDrawerApi.open();
   await nextTick();
   await syncQueryForm(appliedQuery.value);
@@ -1387,8 +1464,8 @@ defineExpose({
   .station-overview {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding-bottom: 12px;
+    gap: 8px;
+    padding-bottom: 8px;
   }
 
   .station-map-wrap {
