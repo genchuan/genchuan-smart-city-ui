@@ -36,6 +36,11 @@ const clearFilter = () => {
   filterParams.status = null;
 };
 
+const handleClearFilters = () => {
+  filterParams.splitMode = null;
+  filterParams.status = null;
+};
+
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
   tabArray.value.forEach((v) => {
@@ -55,6 +60,7 @@ const tabArray = ref([
     secondShow: false,
     arrowShow: true,
     arrowState: false,
+    filterParams,
   },
 ]);
 const activeName = ref('分账比例');

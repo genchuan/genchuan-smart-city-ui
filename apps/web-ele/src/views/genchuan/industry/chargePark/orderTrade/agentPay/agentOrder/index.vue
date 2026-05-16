@@ -25,6 +25,11 @@ const clearFilter = () => {
   filterParams.createTimeEnd = null;
 };
 
+const handleClearFilters = () => {
+  filterParams.createTimeStart = null;
+  filterParams.createTimeEnd = null;
+};
+
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
   tabArray.value.forEach((v) => {
@@ -44,6 +49,7 @@ const tabArray = ref([
     secondShow: false,
     arrowShow: true,
     arrowState: false,
+    filterParams,
   },
 ]);
 const activeName = ref('代付订单');
@@ -100,8 +106,9 @@ const secondShow = ref(false);
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
-          :filter-params="filterParams"
+          :filter-params="item.filterParams"
           @arrow-change="arrowChange"
+          @clear-filters="handleClearFilters"
         />
       </el-tab-pane>
     </el-tabs>

@@ -510,14 +510,7 @@ const alarmColumns = [
             content="导出EXCEL"
             icon-name="download"
             @click="handleExport"
-          />
-          <IconButton
-            content="批量催缴"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleBatchRemind"
-          />
+          /> 
           <IconButton
             content="搜索"
             icon-name="search"

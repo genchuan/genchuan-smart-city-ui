@@ -568,14 +568,7 @@ watch(
             content="导出EXCEL"
             icon-name="download"
             @click="handleExport"
-          />
-          <IconButton
-            content="批量追缴"
-            icon-name="edit"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleBatchCollect"
-          />
+          /> 
           <IconButton
             content="搜索"
             icon-name="search"

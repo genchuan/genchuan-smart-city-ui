@@ -49,7 +49,7 @@ const props = defineProps({
     }),
   },
 });
-const emit = defineEmits(['arrow-change']);
+const emit = defineEmits(['arrow-change', 'clear-filters']);
 
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
@@ -189,6 +189,7 @@ const dataObj = reactive({
   list: [],
   loading: false,
   searchObj: {},
+  filterParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -200,7 +201,7 @@ const getTableData = async (pageObj) => {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchObj,
-    ...props.filterParams,
+    ...dataObj.filterParams,
   };
 
   try {
@@ -236,6 +237,8 @@ const [QueryForm, queryFormApi] = useVbenForm({
     const values = await queryFormApi.getValues();
     dataObj.searchObj = values;
     dataObj.currentPage = 1;
+    dataObj.filterParams = {};
+    emit('clear-filters');
     gridApi.query();
     drawerApi.close();
   },
@@ -302,7 +305,7 @@ const createLabel = (item) => {
 const handleClick = () => {
   gridApi.query();
 };
-const handleSerachShow = () => {
+const handleSearchShow = () => {
   drawerApi.open();
 };
 const handleFullShow = () => {
@@ -489,27 +492,7 @@ const handleDisableSubmit = async () => {
   }
 };
 
-// ====================== 告警明细弹窗 ======================
-const alarmDialogVisible = ref(false);
-const currentAlarmRow = ref({});
-const alarmList = ref([]);
-
-function generateAlarmData(row) {
-  const count = row.halfyearWarnCount || 0;
-  const typeItems = row.highIllegalType.split(',').map((item) => item.trim());
-  const avgCount = Math.ceil(count / typeItems.length);
-  const types = typeItems.map((name) => {
-    return { name, num: avgCount };
-  });
-
-  const list = [];
-  let id = 1;
-  types.forEach((type) => {
-    for (let i = 0; i < Math.min(type.num, 5); i++) {
-      list.push({
-        id: id++,
-        canteenName: row.canteenName,
-        alarmType: type.name,
+// ====================== 告警明细弹窗 ===========      alarmType: type.name,
         alarmTime: `${row.statCycle.split('-')[0].trim()} ${String(Math.trunc(Math.random() * 24)).padStart(2, '0')}:${String(Math.trunc(Math.random() * 60)).padStart(2, '0')}`,
         alarmLevel: ['一般', '较重', '严重'][Math.trunc(Math.random() * 3)],
         status: ['未处理', '处理中', '已整改'][Math.trunc(Math.random() * 3)],
@@ -538,6 +521,8 @@ watch(
   () => props.filterParams,
   () => {
     dataObj.currentPage = 1;
+    dataObj.searchObj = {};
+    dataObj.filterParams = props.filterParams;
     gridApi.query();
   },
   { deep: true }
@@ -744,7 +729,7 @@ watch(
           <IconButton
             content="搜索"
             icon-name="search"
-            @click="handleSerachShow"
+            @click="handleSearchShow"
           />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
