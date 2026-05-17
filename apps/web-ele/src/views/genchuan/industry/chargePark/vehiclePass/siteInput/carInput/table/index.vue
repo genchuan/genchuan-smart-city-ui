@@ -253,6 +253,7 @@ const dataObj = reactive({
   list: [],
   searchParams: {},
   currentRow: null,
+  filterLabels: {},
 });
 
 let isSearching = false;
@@ -260,16 +261,23 @@ let isSearching = false;
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchParams;
+  const labels = dataObj.filterLabels;
 
   if (obj.plateNo) {
     filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
   }
   if (obj.status) {
-    filters.push({ label: `审核状态：${obj.status}`, field: 'status' });
+    const statusLabel = labels.status || obj.status;
+    filters.push({ label: `审核状态：${statusLabel}`, field: 'status' });
   }
-  if (obj.areaId) {
-    const areaMap = { 1: '芗城区', 2: '龙文区', 3: '龙海区' };
-    filters.push({ label: `片区：${areaMap[obj.areaId]}`, field: 'areaId' });
+  if (obj.areaName) {
+    filters.push({ label: `片区：${obj.areaName}`, field: 'areaName' });
+  }
+  if (obj.inputUserName) {
+    filters.push({ label: `录入人：${obj.inputUserName}`, field: 'inputUserName' });
+  }
+  if (obj.auditUserName) {
+    filters.push({ label: `审核人：${obj.auditUserName}`, field: 'auditUserName' });
   }
   if (obj.inputTime && Array.isArray(obj.inputTime)) {
     const timeLabel = `时间范围：${obj.inputTime[0]} ~ ${obj.inputTime[1]}`;
@@ -283,6 +291,11 @@ const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
   delete next[fieldName];
   dataObj.searchParams = next;
+
+  const nextLabels = { ...dataObj.filterLabels };
+  delete nextLabels[fieldName];
+  dataObj.filterLabels = nextLabels;
+
   dataObj.currentPage = 1;
   gridApi.query();
 };
@@ -343,10 +356,15 @@ const getTableData = async (pageObj) => {
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
       if (value) {
-        searchMatch =
-          typeof value === 'string'
-            ? searchMatch && v[key]?.toString().includes(value)
-            : searchMatch && v[key] === value;
+        if (key === 'inputTime' && Array.isArray(value)) {
+          const itemTime = new Date(v.inputTime).toISOString().split('T')[0];
+          const startTime = value[0].split(' ')[0];
+          const endTime = value[1].split(' ')[0];
+          searchMatch = searchMatch && itemTime >= startTime && itemTime <= endTime;
+        } else {
+          searchMatch =
+            searchMatch && v[key]?.toString().includes(value.toString());
+        }
       }
     });
 
@@ -386,9 +404,33 @@ const [SearchForm] = useVbenForm({
 
 function onSubmit(values) {
   dataObj.searchParams = values;
+
+  // 保存标签信息
+  const labels = {};
+  const searchSchema = useSearchFormSchema();
+  searchSchema.forEach((field) => {
+    if (field.component === 'Select' && values[field.fieldName]) {
+      const option = field.componentProps.options?.find(
+        (opt) => opt.value === values[field.fieldName]
+      );
+      if (option) {
+        labels[field.fieldName] = option.label;
+      }
+    }
+  });
+
+  dataObj.filterLabels = labels;
   isSearching = true;
   gridApi.query();
   drawerApi.close();
+}
+
+function handleResetFilters() {
+  dataObj.searchParams = {};
+  dataObj.filterLabels = {};
+  dataObj.currentPage = 1;
+  gridApi.query();
+  ElMessage.success('已重置筛选条件');
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -674,6 +716,38 @@ const handleOpenVehicleDetail = (row) => {
   }
   vehicleDetailRef.value?.open(row.plateNo);
 };
+
+// 按审核状态筛选
+const handleFilterByStatus = (status) => {
+  dataObj.searchParams = { ...dataObj.searchParams, status };
+  isSearching = true;
+  gridApi.query();
+};
+
+// 按片区筛选
+const handleFilterByArea = (areaId, areaName) => {
+  dataObj.searchParams = { ...dataObj.searchParams, areaName };
+  isSearching = true;
+  gridApi.query();
+};
+
+// 按录入人筛选
+const handleFilterByInputUser = (inputUserName) => {
+  dataObj.searchParams = { ...dataObj.searchParams, inputUserName };
+  isSearching = true;
+  gridApi.query();
+};
+
+// 按审核人筛选
+const handleFilterByAuditUser = (auditUserName) => {
+  if (!auditUserName) {
+    ElMessage.warning('审核人信息不存在');
+    return;
+  }
+  dataObj.searchParams = { ...dataObj.searchParams, auditUserName };
+  isSearching = true;
+  gridApi.query();
+};
 </script>
 
 <template>
@@ -720,6 +794,12 @@ const handleOpenVehicleDetail = (row) => {
             >
               {{ filter.label }}
             </el-tag>
+            <IconButton
+              v-if="activeFilters.length > 0"
+              content="重置"
+              icon-name="RefreshLeft"
+              @click="handleResetFilters"
+            />
           </div>
           <div v-if="props.secondShow">
             <el-tabs
@@ -743,6 +823,11 @@ const handleOpenVehicleDetail = (row) => {
             content="筛选"
             icon-name="Filter"
             @click="handleSerachShow"
+          />
+          <IconButton
+            content="重置"
+            icon-name="Refresh"
+            @click="handleResetFilters"
           />
           <IconButton
             content="导出"
@@ -802,18 +887,40 @@ const handleOpenVehicleDetail = (row) => {
                 ? 'warning'
                 : 'danger'
           "
+          style="cursor: pointer"
+          @click="handleFilterByStatus(row.status)"
         >
           {{ row.status }}
         </el-tag>
       </template>
       <template #areaName="{ row }">
-        <el-text class="common-align" type="primary">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterByArea(row.areaId, row.areaName)"
+        >
           {{ row.areaName }}
         </el-text>
       </template>
       <template #inputUserName="{ row }">
-        <el-text class="common-align" type="primary">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterByInputUser(row.inputUserName)"
+        >
           {{ row.inputUserName }}
+        </el-text>
+      </template>
+      <template #auditUserName="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterByAuditUser(row.auditUserName)"
+        >
+          {{ row.auditUserName || '-' }}
         </el-text>
       </template>
       <template #updater="{ row }">

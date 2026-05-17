@@ -174,26 +174,56 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
   searchParams: {},
+  filterLabels: {}, // 存储筛选条件的标签
 });
 
 let isSearching = false;
 
+const areaMap = {
+  1: '芗城区',
+  2: '龙文区',
+  3: '龙海区',
+};
+
+const userMap = {
+  2: '张三',
+  3: '李四',
+};
+
+const spaceStatusMap = {
+  '空闲': '空闲',
+  '占用': '占用',
+};
+
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchParams;
+  const labels = dataObj.filterLabels;
 
   if (obj.spaceNo) {
     filters.push({ label: `泊位编号：${obj.spaceNo}`, field: 'spaceNo' });
   }
   if (obj.areaId) {
-    filters.push({ label: `片区：${obj.areaId}`, field: 'areaId' });
+    const areaName = labels.areaId || areaMap[obj.areaId] || obj.areaId;
+    filters.push({ label: `场站：${areaName}`, field: 'areaId' });
   }
   if (obj.queryUserId) {
-    filters.push({ label: `查询人：${obj.queryUserId}`, field: 'queryUserId' });
+    const userName = labels.queryUserId || userMap[obj.queryUserId] || obj.queryUserId;
+    filters.push({ label: `查询人：${userName}`, field: 'queryUserId' });
+  }
+  if (obj.spaceStatus) {
+    filters.push({ label: `泊位状态：${obj.spaceStatus}`, field: 'spaceStatus' });
+  }
+  if (obj.queryTime && Array.isArray(obj.queryTime) && obj.queryTime.length === 2) {
+    filters.push({
+      label: `查询时间：${obj.queryTime[0]} 至 ${obj.queryTime[1]}`,
+      field: 'queryTime',
+    });
   }
   if (obj.querySuccess !== undefined && obj.querySuccess !== null) {
+    const statusLabel = labels.querySuccess || (obj.querySuccess ? '成功' : '失败');
     filters.push({
-      label: `查询状态：${obj.querySuccess ? '成功' : '失败'}`,
+      label: `查询状态：${statusLabel}`,
       field: 'querySuccess',
     });
   }
@@ -205,6 +235,18 @@ const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
   delete next[fieldName];
   dataObj.searchParams = next;
+
+  const nextLabels = { ...dataObj.filterLabels };
+  delete nextLabels[fieldName];
+  dataObj.filterLabels = nextLabels;
+
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+const handleResetFilters = () => {
+  dataObj.searchParams = {};
+  dataObj.filterLabels = {};
   dataObj.currentPage = 1;
   gridApi.query();
 };
@@ -286,7 +328,26 @@ const [SearchForm] = useVbenForm({
 });
 
 function onSubmit(values) {
+  // 保存原始值用于过滤
   dataObj.searchParams = values;
+
+  // 保存标签信息
+  const labels = {};
+
+  // 从表单选项中获取标签
+  const searchSchema = useSearchFormSchema();
+  searchSchema.forEach((field) => {
+    if (field.component === 'Select' && values[field.fieldName]) {
+      const option = field.componentProps.options?.find(
+        (opt) => opt.value === values[field.fieldName]
+      );
+      if (option) {
+        labels[field.fieldName] = option.label;
+      }
+    }
+  });
+
+  dataObj.filterLabels = labels;
   isSearching = true;
   gridApi.query();
   drawerApi.close();
@@ -352,6 +413,11 @@ const handleSerachShow = () => {
 const handleFullShow = () => {
   screenfull.toggle();
 };
+
+// 定义事件处理函数引用，用于后续移除监听
+let handleFilterByStatus;
+let handleOpenSpaceDetail;
+let handleFilterByArea;
 
 // 地图弹窗
 const [MapDrawer, mapDrawerApi] = useVbenDrawer({
@@ -438,6 +504,10 @@ const handleQueryUserClick = (row) => {
     ...dataObj.searchParams,
     queryUserId: row.queryUserId,
   };
+  dataObj.filterLabels = {
+    ...dataObj.filterLabels,
+    queryUserId: row.queryUserName,
+  };
   handleRefresh();
   ElMessage.success(`已筛选查询人：${row.queryUserName}`);
 };
@@ -448,6 +518,10 @@ const handleAreaClick = (row) => {
     ...dataObj.searchParams,
     areaId: row.areaId,
   };
+  dataObj.filterLabels = {
+    ...dataObj.filterLabels,
+    areaId: row.areaName,
+  };
   handleRefresh();
   ElMessage.success(`已筛选片区：${row.areaName}`);
 };
@@ -455,39 +529,66 @@ const handleAreaClick = (row) => {
 // 监听图表下钻事件
 onMounted(() => {
   // 监听卡片点击事件 - 下钻到列表
-  const handleFilterByStatus = (e) => {
+  handleFilterByStatus = (e) => {
     const { status } = e.detail;
     if (status === '') {
       // 查询量卡片 - 清空筛选显示全部
       dataObj.searchParams = {};
-      ElMessage.success('已显示全部查询记录');
+      dataObj.filterLabels = {};
     } else if (status === 'success') {
       // 查询成功率卡片 - 筛选查询成功的记录
       dataObj.searchParams = {
         querySuccess: true,
       };
-      ElMessage.success('已筛选查询成功的记录');
+      dataObj.filterLabels = {
+        querySuccess: '成功',
+      };
     }
+    dataObj.currentPage = 1;
     handleRefresh();
   };
 
-  // 监听地图点击事件 - 下钻到列表
-  const handleFilterBySpace = (e) => {
-    const { spaceNo } = e.detail;
+  // 监听地图点击事件 - 打开泊位详情弹窗
+  handleOpenSpaceDetail = (e) => {
+    const { spaceNo, row } = e.detail;
+    if (spaceNo) {
+      // 从列表中查找对应的记录
+      const matchedRow = dataObj.apilist.find((item) => item.spaceNo === spaceNo);
+      if (matchedRow) {
+        handleView(matchedRow);
+      } else if (row && row.id) {
+        // 如果列表中没有找到，直接使用地图数据
+        handleView(row);
+      } else {
+        ElMessage.warning('未找到对应的泊位信息');
+      }
+    }
+  };
+
+  // 监听区域筛选事件 - 筛选该区域内所有泊位
+  handleFilterByArea = (e) => {
+    const { areaName, spaceNos } = e.detail;
     dataObj.searchParams = {
-      spaceNo: spaceNo,
+      areaName: areaName,
     };
     handleRefresh();
-    ElMessage.success(`已筛选泊位：${spaceNo}`);
   };
 
   window.addEventListener('filterByChart:spaceQuery', handleFilterByStatus);
-  window.addEventListener('filterBySpace', handleFilterBySpace);
+  window.addEventListener('openSpaceDetail:spaceQuery', handleOpenSpaceDetail);
+  window.addEventListener('filterByArea:spaceQuery', handleFilterByArea);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('filterByChart:spaceQuery', handleFilterByStatus);
-  window.removeEventListener('filterBySpace', handleFilterBySpace);
+  if (handleFilterByStatus) {
+    window.removeEventListener('filterByChart:spaceQuery', handleFilterByStatus);
+  }
+  if (handleOpenSpaceDetail) {
+    window.removeEventListener('openSpaceDetail:spaceQuery', handleOpenSpaceDetail);
+  }
+  if (handleFilterByArea) {
+    window.removeEventListener('filterByArea:spaceQuery', handleFilterByArea);
+  }
 });
 </script>
 
@@ -559,6 +660,12 @@ onUnmounted(() => {
             content="搜索"
             icon-name="search"
             @click="handleSerachShow"
+          />
+          <IconButton
+            v-if="activeFilters.length > 0"
+            content="重置"
+            icon-name="RefreshLeft"
+            @click="handleResetFilters"
           />
           <IconButton
             content="导出"

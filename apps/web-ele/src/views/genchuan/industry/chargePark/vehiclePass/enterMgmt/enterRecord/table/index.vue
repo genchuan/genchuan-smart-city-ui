@@ -32,6 +32,7 @@ import {
   recordTypeMap,
   statusTypeMap,
   textObj,
+  useAuditFormSchema,
   useCorrectFormSchema,
   useCreateFormSchema,
   useGridColumns,
@@ -201,6 +202,46 @@ const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
   },
 });
 
+// 审核表单
+const [AuditForm, auditFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 80,
+  },
+  layout: 'horizontal',
+  schema: useAuditFormSchema(),
+  showDefaultActions: false,
+});
+
+// 审核Drawer
+const [AuditFormDrawer, auditFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    auditFormDrawerApi.close();
+  },
+  onConfirm() {
+    const obj = auditFormApi.form.values;
+    handleAuditSubmit(obj);
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      formData.value = auditFormDrawerApi.getData();
+      if (formData.value?.id) {
+        const formValues = {
+          id: formData.value.id,
+          plateNo: formData.value.plateNo,
+          spaceNo: formData.value.spaceNo,
+        };
+        await auditFormApi.setValues(formValues);
+      }
+    }
+  },
+});
+
 function handleRefresh() {
   gridApi.query();
 }
@@ -337,6 +378,50 @@ async function handleCorrectSubmit(data) {
   }
 }
 
+function handleAudit(row) {
+  auditFormDrawerApi
+    .setData({
+      title: '审核入场记录',
+      id: row.id,
+      plateNo: row.plateNo,
+      spaceNo: row.spaceNo,
+    })
+    .open();
+}
+
+async function handleAuditSubmit(data) {
+  if (USE_REAL_API) {
+    const loadingInstance = ElLoading.service({
+      text: '正在审核...',
+    });
+    try {
+      // TODO: 调用审核API
+      ElMessage.success('审核成功');
+      handleRefresh();
+      auditFormDrawerApi.close();
+    } catch (error) {
+      ElMessage.error('审核失败');
+      console.error(error);
+    } finally {
+      loadingInstance.close();
+    }
+  } else {
+    const auditStatus = data.auditResult === 'pass' ? '正常记录' : '异常记录';
+    dataObj.apilist.forEach((v, i) => {
+      if (v.id === formData.value?.id) {
+        dataObj.apilist[i] = {
+          ...v,
+          status: auditStatus,
+          updater: 'admin',
+          updateTime: Date.now(),
+        };
+      }
+    });
+    handleRefresh();
+    auditFormDrawerApi.close();
+  }
+}
+
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.plateNo]),
@@ -381,6 +466,7 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
   searchParams: {},
+  filterLabels: {},
 });
 
 let isSearching = false;
@@ -388,21 +474,25 @@ let isSearching = false;
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchParams;
+  const labels = dataObj.filterLabels;
 
   if (obj.plateNo) {
     filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
   }
   if (obj.plateColor) {
-    filters.push({ label: `车牌颜色：${obj.plateColor}`, field: 'plateColor' });
+    const plateColorLabel = labels.plateColor || obj.plateColor;
+    filters.push({ label: `车牌颜色：${plateColorLabel}`, field: 'plateColor' });
   }
   if (obj.spaceNo) {
     filters.push({ label: `车位编号：${obj.spaceNo}`, field: 'spaceNo' });
   }
   if (obj.recordType) {
-    filters.push({ label: `记录类型：${obj.recordType}`, field: 'recordType' });
+    const recordTypeLabel = labels.recordType || obj.recordType;
+    filters.push({ label: `记录类型：${recordTypeLabel}`, field: 'recordType' });
   }
   if (obj.status) {
-    filters.push({ label: `记录状态：${obj.status}`, field: 'status' });
+    const statusLabel = labels.status || obj.status;
+    filters.push({ label: `记录状态：${statusLabel}`, field: 'status' });
   }
   if (obj.stationName) {
     filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
@@ -431,6 +521,11 @@ const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
   delete next[fieldName];
   dataObj.searchParams = next;
+
+  const nextLabels = { ...dataObj.filterLabels };
+  delete nextLabels[fieldName];
+  dataObj.filterLabels = nextLabels;
+
   dataObj.currentPage = 1;
   gridApi.query();
 };
@@ -486,11 +581,20 @@ const getTableData = async (pageObj) => {
     let searchMatch = true;
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
-      if (value) {
-        searchMatch =
-          typeof value === 'string'
-            ? searchMatch && v[key]?.toString().includes(value)
-            : searchMatch && v[key] === value;
+      if (value !== undefined && value !== null && value !== '') {
+        if (key === 'enterTime' && Array.isArray(value) && value.length === 2) {
+          // 处理时间范围
+          const [startTime, endTime] = value;
+          const start = new Date(startTime).getTime();
+          const end = new Date(endTime).getTime();
+          searchMatch = searchMatch && v[key] >= start && v[key] <= end;
+        } else if (typeof value === 'string') {
+          searchMatch = searchMatch && v[key]?.toString().includes(value);
+        } else if (typeof value === 'boolean') {
+          searchMatch = searchMatch && v[key] === value;
+        } else {
+          searchMatch = searchMatch && v[key] === value;
+        }
       }
     });
 
@@ -507,9 +611,33 @@ const getTableData = async (pageObj) => {
 
 function onSubmit(values) {
   dataObj.searchParams = values;
+
+  // 保存标签信息
+  const labels = {};
+  const searchSchema = useSearchFormSchema();
+  searchSchema.forEach((field) => {
+    if (field.component === 'Select' && values[field.fieldName]) {
+      const option = field.componentProps.options?.find(
+        (opt) => opt.value === values[field.fieldName]
+      );
+      if (option) {
+        labels[field.fieldName] = option.label;
+      }
+    }
+  });
+
+  dataObj.filterLabels = labels;
   isSearching = true;
   gridApi.query();
   drawerApi.close();
+}
+
+function handleResetFilters() {
+  dataObj.searchParams = {};
+  dataObj.filterLabels = {};
+  dataObj.currentPage = 1;
+  gridApi.query();
+  ElMessage.success('已重置筛选条件');
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -652,12 +780,36 @@ const handleStationClick = (row) => {
   ElMessage.success(`已筛选场站: ${row.stationName}`);
 };
 
+// 记录类型点击 - 筛选同类型记录
+const handleRecordTypeClick = (row) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    recordType: row.recordType,
+  };
+  handleRefresh();
+  ElMessage.success(`已筛选记录类型: ${row.recordType}`);
+};
+
+// 操作人点击 - 筛选同操作人记录
+const handleUpdaterClick = (row) => {
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    updater: row.updater,
+  };
+  handleRefresh();
+  ElMessage.success(`已筛选操作人: ${row.updater}`);
+};
+
 // 根据状态判断按钮显示
 const shouldShowEdit = (status) => {
   return status === '正常记录';
 };
 
 const shouldShowCorrect = (status) => {
+  return status === '异常记录';
+};
+
+const shouldShowAudit = (status) => {
   return status === '异常记录';
 };
 
@@ -689,6 +841,9 @@ onUnmounted(() => {
     <CorrectFormDrawer title="修正入场记录">
       <CorrectForm />
     </CorrectFormDrawer>
+    <AuditFormDrawer title="审核入场记录">
+      <AuditForm />
+    </AuditFormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.plateNo}详情`"
@@ -722,6 +877,12 @@ onUnmounted(() => {
             >
               {{ filter.label }}
             </el-tag>
+            <IconButton
+              v-if="activeFilters.length > 0"
+              content="重置"
+              icon-name="RefreshLeft"
+              @click="handleResetFilters"
+            />
           </div>
           <div v-if="props.secondShow">
             <el-tabs
@@ -745,6 +906,11 @@ onUnmounted(() => {
             content="筛选"
             icon-name="Filter"
             @click="handleSerachShow"
+          />
+          <IconButton
+            content="重置"
+            icon-name="Refresh"
+            @click="handleResetFilters"
           />
           <IconButton
             content="导出"
@@ -799,7 +965,11 @@ onUnmounted(() => {
         </el-text>
       </template>
       <template #recordType="{ row }">
-        <el-tag :type="recordTypeMap[row.recordType] || 'info'">
+        <el-tag
+          :type="recordTypeMap[row.recordType] || 'info'"
+          @click="handleRecordTypeClick(row)"
+          style="cursor: pointer"
+        >
           {{ row.recordType }}
         </el-tag>
       </template>
@@ -828,7 +998,14 @@ onUnmounted(() => {
         </el-tag>
       </template>
       <template #updater="{ row }">
-        <el-text>{{ row.updater || '-' }}</el-text>
+        <el-text
+          @click="handleUpdaterClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.updater || '-' }}
+        </el-text>
       </template>
       <template #updateTime="{ row }">
         <el-text>
@@ -858,6 +1035,12 @@ onUnmounted(() => {
             content="修正"
             icon-name="Edit"
             @click="handleCorrect(row)"
+          />
+          <IconButton
+            v-if="shouldShowAudit(row.status)"
+            content="审核"
+            icon-name="Check"
+            @click="handleAudit(row)"
           />
         </div>
       </template>

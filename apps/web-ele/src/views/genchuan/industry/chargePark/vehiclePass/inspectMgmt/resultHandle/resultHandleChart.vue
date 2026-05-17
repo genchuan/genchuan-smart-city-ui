@@ -49,6 +49,7 @@ async function loadChartData() {
       cards[0].value = res.cardData.handleCompleteRate
         ? `${res.cardData.handleCompleteRate}%`
         : '0%';
+
       cards[1].value = res.cardData.violationRectifyRate
         ? `${res.cardData.violationRectifyRate}%`
         : '0%';
@@ -78,40 +79,54 @@ function initPieChart() {
   if (pieChartInstance) pieChartInstance.dispose();
   pieChartInstance = echarts.init(pieChartRef.value);
 
+  const colors = ['#67C23A', '#E6A23C', '#F56C6C', '#909399'];
   const option = {
     backgroundColor: 'transparent',
     title: {
       text: '处置结果占比',
       left: 'center',
       top: 10,
-      textStyle: { fontSize: 14, fontWeight: 500 },
+      textStyle: { fontSize: 14, fontWeight: 500, color: '#303133' },
     },
     tooltip: {
       trigger: 'item',
-      formatter: '{b}: {c} ({d}%)',
+      formatter: (params) => {
+        return `${params.name}<br/>数量: ${params.value}<br/>占比: ${params.percent}%`;
+      },
+      backgroundColor: 'rgba(50, 50, 50, 0.9)',
+      borderColor: '#333',
+      textStyle: { color: '#fff' },
     },
     legend: {
       bottom: 10,
       left: 'center',
+      textStyle: { color: '#606266' },
     },
     series: [
       {
         type: 'pie',
         radius: ['40%', '70%'],
         center: ['50%', '50%'],
-        data: state.chartData.handleResultRate.map((item) => ({
+        data: state.chartData.handleResultRate.map((item, index) => ({
           name: item.name,
           value: item.value,
+          itemStyle: { color: colors[index % colors.length] },
         })),
         label: {
           show: true,
           formatter: '{b}: {d}%',
+          color: '#606266',
         },
         emphasis: {
           itemStyle: {
             shadowBlur: 10,
             shadowOffsetX: 0,
             shadowColor: 'rgba(0, 0, 0, 0.5)',
+          },
+          label: {
+            show: true,
+            fontSize: 14,
+            fontWeight: 'bold',
           },
         },
       },
@@ -124,49 +139,45 @@ function initPieChart() {
   pieChartInstance.on('click', (params) => {
     handlePieClick(params.name);
   });
+
+  // 鼠标悬停提示可点击
+  pieChartInstance.on('mouseover', () => {
+    pieChartRef.value.style.cursor = 'pointer';
+  });
 }
 
 function initCharts() {
   initPieChart();
 }
 
-// 处理饼图点击事件
+// 处理饼图点击事件 - 下钻到对应状态的记录
 function handlePieClick(name) {
-  // 映射饼图名称到状态
-  let status = '';
-  if (name === '已完成') {
-    status = '已完成';
-  } else if (name === '待处置') {
-    status = '待处置';
-  } else if (name === '待审核') {
-    status = '待审核';
-  } else if (name === '已驳回') {
-    status = '已驳回';
-  }
+  const filterKey = name;
 
   window.dispatchEvent(
     new CustomEvent('filterByChart:resultHandle', {
-      detail: { status, filterKey: status },
+      detail: { status: name, filterKey },
     }),
   );
 }
 
-// 处理卡片点击事件
+// 处理卡片点击事件 - 精确下钻
 function handleCardClick(key) {
-  let status = '';
-
   if (key === 'handleCompleteRate') {
-    status = '已完成';
+    // 处置完成率：筛选已完成的记录
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:resultHandle', {
+        detail: { status: '已完成', filterKey: 'handleCompleteRate' },
+      }),
+    );
   } else if (key === 'violationRectifyRate') {
-    // 违规整改率点击，筛选已整改的记录
-    status = '已完成';
+    // 违规整改率：筛选已完成且已整改的记录
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:resultHandle', {
+        detail: { status: '已完成', rectifyStatus: '已整改', filterKey: 'violationRectifyRate' },
+      }),
+    );
   }
-
-  window.dispatchEvent(
-    new CustomEvent('filterByChart:resultHandle', {
-      detail: { status, filterKey: key },
-    }),
-  );
 }
 
 onMounted(() => {
@@ -258,7 +269,6 @@ onUnmounted(() => {
       display: flex;
       flex-direction: column;
       flex: 1;
-      flex: 1;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;
@@ -266,10 +276,30 @@ onUnmounted(() => {
       border-radius: 8px;
       box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
       transition: all 0.3s ease;
+      position: relative;
+      background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, transparent 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+      }
 
       &:hover {
-        box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
-        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgb(0 0 0 / 15%);
+        transform: translateY(-4px);
+        background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
+
+        &::before {
+          opacity: 1;
+        }
       }
 
       .card-header {
@@ -290,6 +320,7 @@ onUnmounted(() => {
           width: 12px;
           height: 12px;
           border-radius: 50%;
+          box-shadow: 0 0 8px currentColor;
         }
       }
 
@@ -322,6 +353,7 @@ onUnmounted(() => {
     min-width: 0 !important;
     max-width: none !important;
     margin: 0 !important;
+    position: relative;
 
     .chart-container {
       flex: 1;
@@ -331,6 +363,12 @@ onUnmounted(() => {
       background-color: hsl(var(--card));
       border-radius: 8px;
       box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+      position: relative;
+      transition: all 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+      }
 
       &.no-data {
         display: flex;

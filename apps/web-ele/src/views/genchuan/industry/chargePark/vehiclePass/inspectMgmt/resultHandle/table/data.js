@@ -63,20 +63,59 @@ export const dataList = () => {
       updater: '赵六',
       updateTime: 1745019645000,
     },
+    {
+      id: 4,
+      taskId: 4,
+      violationType: '欠费逃费',
+      handleMethod: '补缴费用',
+      status: '已驳回',
+      areaId: 2,
+      areaName: '龙文区',
+      handleUserId: 3,
+      handleUserName: '李四',
+      handleTime: 1745023560000,
+      rectifyStatus: '未整改',
+      rejectReason: '处置方式不符合规范，请重新处置',
+      remark: '驳回处理',
+      isCorrected: false,
+      creator: 'admin',
+      createTime: 1745023560000,
+      updater: '孙七',
+      updateTime: 1745023560000,
+    },
   ];
 };
+
+// 时间戳格式化函数
+function formatDateTime(value) {
+  if (value === undefined || value === null || value === '') return '--';
+
+  function padTime(v) {
+    return String(v).padStart(2, '0');
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${value.getFullYear()}-${padTime(value.getMonth() + 1)}-${padTime(value.getDate())} ${padTime(value.getHours())}:${padTime(value.getMinutes())}:${padTime(value.getSeconds())}`;
+  }
+
+  if (typeof value === 'number' || /^\d+$/.test(String(value))) {
+    const text = String(value);
+    const timestamp = Number(text.length === 10 ? `${text}000` : text);
+    const date = new Date(timestamp);
+    if (!Number.isNaN(date.getTime())) return formatDateTime(date);
+  }
+
+  const normalized = String(value)
+    .replace('T', ' ')
+    .replace(/\.\d+Z?$/, '');
+  const parsed = new Date(String(value).replaceAll('-', '/'));
+  if (!Number.isNaN(parsed.getTime())) return formatDateTime(parsed);
+  return normalized.length >= 19 ? normalized.slice(0, 19) : normalized;
+}
 
 /** 查询表单配置 */
 export function useSearchFormSchema() {
   return [
-    {
-      fieldName: 'taskId',
-      label: '关联任务',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入任务ID',
-      },
-    },
     {
       fieldName: 'violationType',
       label: '违规类型',
@@ -86,20 +125,6 @@ export function useSearchFormSchema() {
         options: [
           { label: '违规通行', value: '违规通行' },
           { label: '欠费逃费', value: '欠费逃费' },
-          { label: '其他', value: '其他' },
-        ],
-      },
-    },
-    {
-      fieldName: 'handleMethod',
-      label: '处置方式',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择处置方式',
-        options: [
-          { label: '补缴费用', value: '补缴费用' },
-          { label: '限制入场', value: '限制入场' },
-          { label: '警告', value: '警告' },
           { label: '其他', value: '其他' },
         ],
       },
@@ -134,7 +159,7 @@ export function useSearchFormSchema() {
       componentProps: {
         type: 'daterange',
         placeholder: '请选择处置时间',
-        valueFormat: 'YYYY-MM-DD',
+        valueFormat: 'timestamp',
       },
     },
   ];
@@ -144,13 +169,6 @@ export function useSearchFormSchema() {
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-    {
-      field: 'id',
-      title: '处置ID',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'id' },
-    },
     {
       field: 'taskId',
       title: '关联任务',
@@ -207,27 +225,6 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'updater',
-      title: '操作人',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'updater' },
-    },
-    {
-      field: 'updateTime',
-      title: '操作时间',
-      minWidth: 160,
-      sortable: true,
-      slots: { default: 'updateTime' },
-    },
-    {
-      field: 'isCorrected',
-      title: '修正记录',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'correctionMark' },
-    },
-    {
       title: '操作',
       width: 200,
       fixed: 'right',
@@ -241,25 +238,21 @@ export const textObj = {
   addText: '新增结果处置',
   excelName: '结果处置列表',
   excelAllName: '结果处置导出.xlsx',
-  total: '总计: 处置3条; 待审核1条; 待处置1条; 已完成1条',
+  total: '总计: 处置4条; 待审核1条; 待处置1条; 已完成1条; 已驳回1条',
 };
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '处置ID' },
   { key: 'taskId', label: '关联任务' },
   { key: 'violationType', label: '违规类型' },
   { key: 'handleMethod', label: '处置方式' },
   { key: 'status', label: '状态' },
   { key: 'areaName', label: '片区' },
   { key: 'handleUserName', label: '处置人' },
-  { key: 'handleTime', label: '处置时间', formatter: formatTime },
+  { key: 'handleTime', label: '处置时间', formatter: formatDateTime },
   { key: 'rectifyStatus', label: '整改状态' },
+  { key: 'remark', label: '处置备注' },
   { key: 'rejectReason', label: '驳回理由' },
-  { key: 'remark', label: '备注' },
-  { key: 'creator', label: '创建者' },
-  { key: 'createTime', label: '创建时间', formatter: formatTime },
-  { key: 'updater', label: '操作人' },
-  { key: 'updateTime', label: '操作时间', formatter: formatTime },
-  { key: 'isCorrected', label: '修正记录' },
+  { key: 'createTime', label: '创建时间', formatter: formatDateTime },
+  { key: 'updateTime', label: '更新时间', formatter: formatDateTime },
 ];

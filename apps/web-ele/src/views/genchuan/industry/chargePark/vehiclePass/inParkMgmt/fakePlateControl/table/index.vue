@@ -1,10 +1,9 @@
 <script setup>
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, onUnmounted, reactive, ref, computed } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlobPart } from '@vben/utils';
 
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -12,6 +11,8 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   batchHandleFakePlateControl,
   checkFakePlateControl,
+  createFakePlateControl,
+  deleteFakePlateControl,
   exportFakePlateControl,
   getFakePlateControl,
   getFakePlateControlPage,
@@ -20,21 +21,21 @@ import {
 } from '#/api/genchuan/industry/chargePark/vehiclePass/inParkMgmt/fakePlateControl';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { exportWithFormat } from '#/utils/exportWithFormat.js';
+import { exportToExcel, downloadFile } from '#/utils/excel.js';
+import { formatTime } from '../../../utils/timeFormatter';
 
 import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
-import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
   matchSceneTypeMap,
   statusTypeMap,
   textObj,
-  useCreateFormSchema,
   useGridColumns,
   useIgnoreFormSchema,
   useSearchFormSchema,
   useUpdateProgressFormSchema,
+  useCreateFormSchema,
 } from './data';
 
 const props = defineProps({
@@ -75,8 +76,6 @@ const [IgnoreForm, ignoreFormApi] = useVbenForm({
 const [IgnoreFormDrawer, ignoreFormDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
-  confirmText: '保存',
-  cancelText: '取消',
   onCancel() {
     ignoreFormDrawerApi.close();
   },
@@ -129,8 +128,6 @@ const [UpdateProgressForm, updateProgressFormApi] = useVbenForm({
 const [UpdateProgressDrawer, updateProgressDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
-  confirmText: '保存',
-  cancelText: '取消',
   onCancel() {
     updateProgressDrawerApi.close();
   },
@@ -167,159 +164,27 @@ const [UpdateProgressDrawer, updateProgressDrawerApi] = useVbenDrawer({
   },
 });
 
-// 补录表单
-const [CreateForm, createFormApi] = useVbenForm({
-  commonConfig: {
-    componentProps: { class: 'w-full' },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
-  layout: 'horizontal',
-  schema: useCreateFormSchema(),
-  showDefaultActions: false,
-});
-
-const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  confirmText: '保存',
-  cancelText: '取消',
-  onCancel() {
-    createFormDrawerApi.close();
-  },
-  async onConfirm() {
-    try {
-      await createFormApi.validate();
-    } catch {
-      ElMessage.warning('请完善表单信息');
-      return;
-    }
-
-    const values = createFormApi.form.values;
-
-    if (USE_REAL_API) {
-      const loadingInstance = ElLoading.service({ text: '补录中...' });
-      try {
-        await getFakePlateControl(values);
-        ElMessage.success('补录成功');
-        handleRefresh();
-        createFormDrawerApi.close();
-      } catch (error) {
-        ElMessage.error('补录失败');
-        console.error(error);
-      } finally {
-        loadingInstance.close();
-      }
-    } else {
-      dataObj.apilist.push({
-        ...values,
-        id: Date.now(),
-        status: '未处理',
-        isCorrected: false,
-        creator: 'admin',
-        createTime: Date.now(),
-        updater: 'admin',
-        updateTime: Date.now(),
-      });
-      handleRefresh();
-      createFormDrawerApi.close();
-    }
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      createFormApi.resetForm();
-    }
-  },
-});
-
 function handleRefresh() {
   gridApi.query();
 }
 
 async function handleExport() {
+  const loadingInstance = ElLoading.service({
+    text: '导出中...',
+  });
   try {
-    // 使用confirm对话框让用户选择格式
-    let exportFormat = 'excel';
-    try {
-      await ElMessageBox.confirm(
-        '请选择导出格式：\n• Excel格式支持完整数据和中文显示（推荐）\n• PDF格式中文显示可能不正确，仅供参考',
-        '选择导出格式',
-        {
-          confirmButtonText: 'Excel (.xlsx) 推荐',
-          cancelButtonText: 'PDF (.pdf)',
-          type: 'info',
-          distinguishCancelAndClose: true,
-        },
-      );
-      exportFormat = 'excel';
-    } catch (error) {
-      if (error === 'cancel') {
-        exportFormat = 'pdf';
-        // 再次确认PDF导出
-        try {
-          await ElMessageBox.confirm(
-            '提示：PDF格式中文显示可能不正确，建议使用Excel格式。确定继续导出PDF吗？',
-            '确认导出PDF',
-            {
-              confirmButtonText: '继续导出PDF',
-              cancelButtonText: '返回选择Excel',
-              type: 'warning',
-            },
-          );
-        } catch {
-          // 用户选择返回Excel
-          exportFormat = 'excel';
-        }
-      } else {
-        // 用户点击了关闭按钮
-        return;
-      }
-    }
-
-    const loadingInstance = ElLoading.service({
-      text: '导出中...',
-    });
-
-    try {
-      if (USE_REAL_API) {
-        // 使用真实API导出（后端返回文件流）
-        const res = await exportFakePlateControl(dataObj.searchParams);
-        const fileExtension = exportFormat === 'pdf' ? '.pdf' : '.xlsx';
-        await downloadFileFromBlobPart({
-          fileName: `套牌管控数据${fileExtension}`,
-          source: res,
-        });
-        ElMessage.success({
-          message: '导出成功！文件已开始下载',
-          duration: 3000,
-        });
-      } else {
-        // 使用前端导出（模拟数据）
-        const exportData =
-          dataObj.list.length > 0 ? dataObj.list : dataObj.apilist;
-        const columns = useGridColumns();
-
-        const result = await exportWithFormat(
-          exportData,
-          columns,
-          exportFormat,
-          '套牌管控数据',
-        );
-
-        ElMessage.success({
-          message: result,
-          duration: 3000,
-        });
-      }
-    } catch (error) {
-      const errorMessage = error.message || '未知错误';
-      ElMessage.error(`导出失败：${errorMessage}`);
-      console.error(error);
-    } finally {
-      loadingInstance.close();
+    if (USE_REAL_API) {
+      const res = await exportFakePlateControl(dataObj.searchParams);
+      await  downloadFile(res, '套牌控制');
+      ElMessage.success('导出成功');
+    } else {
+      exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
     }
   } catch (error) {
-    console.error('导出操作失败:', error);
+    ElMessage.error('导出失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
   }
 }
 
@@ -398,14 +263,95 @@ function handleUpdateProgress(row) {
     .open();
 }
 
-// 补录
-function handleCreate() {
-  createFormDrawerApi
-    .setData({
-      title: textObj.addText,
-    })
-    .open();
+// 删除
+async function handleDelete(row) {
+  try {
+    await confirm('确认删除该套牌记录吗？');
+    const loadingInstance = ElLoading.service({ text: '删除中...' });
+    try {
+      await deleteFakePlateControl(row.id);
+      ElMessage.success('删除成功');
+      handleRefresh();
+    } finally {
+      loadingInstance.close();
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除失败');
+      console.error(error);
+    }
+  }
 }
+
+// 新增
+function handleCreate() {
+  createFormDrawerApi.setData({ title: '补录套牌记录' }).open();
+}
+
+// 新增表单
+const [CreateForm, createFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: { class: 'w-full' },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  layout: 'horizontal',
+  schema: useCreateFormSchema(),
+  showDefaultActions: false,
+});
+
+const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  confirmText: '保存',
+  cancelText: '取消',
+  onCancel() {
+    createFormDrawerApi.close();
+  },
+  async onConfirm() {
+    try {
+      await createFormApi.validate();
+    } catch {
+      ElMessage.warning('请完善表单信息');
+      return;
+    }
+
+    const values = createFormApi.form.values;
+
+    if (USE_REAL_API) {
+      const loadingInstance = ElLoading.service({ text: '补录中...' });
+      try {
+        await createFakePlateControl(values);
+        ElMessage.success('补录成功');
+        handleRefresh();
+        createFormDrawerApi.close();
+      } catch (error) {
+        ElMessage.error('补录失败');
+        console.error(error);
+      } finally {
+        loadingInstance.close();
+      }
+    } else {
+      dataObj.apilist.push({
+        ...values,
+        id: Date.now(),
+        status: '未处理',
+        isCorrected: false,
+        creator: 'admin',
+        createTime: Date.now(),
+        updater: 'admin',
+        updateTime: Date.now(),
+      });
+      handleRefresh();
+      createFormDrawerApi.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      createFormApi.resetForm();
+    }
+  },
+});
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
@@ -421,6 +367,7 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
   searchParams: {},
+  filterLabels: {}, // 存储筛选条件的标签
 });
 
 let isSearching = false;
@@ -428,28 +375,25 @@ let isSearching = false;
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchParams;
+  const labels = dataObj.filterLabels;
 
   if (obj.plateNo) {
     filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
   }
   if (obj.matchScene) {
-    filters.push({ label: `匹配场景：${obj.matchScene}`, field: 'matchScene' });
+    const matchSceneLabel = labels.matchScene || obj.matchScene;
+    filters.push({ label: `匹配场景：${matchSceneLabel}`, field: 'matchScene' });
   }
   if (obj.status) {
-    filters.push({ label: `状态：${obj.status}`, field: 'status' });
+    const statusLabel = labels.status || obj.status;
+    filters.push({ label: `状态：${statusLabel}`, field: 'status' });
   }
   if (obj.stationName) {
     filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
   }
-  if (obj.handleUserName) {
-    filters.push({
-      label: `处置人：${obj.handleUserName}`,
-      field: 'handleUserId',
-    });
-  }
-  if (obj.identifyTime && Array.isArray(obj.identifyTime)) {
-    const timeLabel = `识别时间：${obj.identifyTime[0]} ~ ${obj.identifyTime[1]}`;
-    filters.push({ label: timeLabel, field: 'identifyTime' });
+  if (obj.handleUserId) {
+    const handleUserName = labels.handleUserId || obj.handleUserId;
+    filters.push({ label: `处置人：${handleUserName}`, field: 'handleUserId' });
   }
 
   return filters;
@@ -458,11 +402,19 @@ const activeFilters = computed(() => {
 const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
   delete next[fieldName];
-  // 清除处置人ID时，同时清除处置人名称
-  if (fieldName === 'handleUserId') {
-    delete next.handleUserName;
-  }
   dataObj.searchParams = next;
+
+  const nextLabels = { ...dataObj.filterLabels };
+  delete nextLabels[fieldName];
+  dataObj.filterLabels = nextLabels;
+
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+const handleResetFilters = () => {
+  dataObj.searchParams = {};
+  dataObj.filterLabels = {};
   dataObj.currentPage = 1;
   gridApi.query();
 };
@@ -522,10 +474,17 @@ const getTableData = async (pageObj) => {
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
       if (value) {
-        searchMatch =
-          typeof value === 'string'
-            ? searchMatch && v[key]?.toString().includes(value)
-            : searchMatch && v[key] === value;
+        if (key === 'identifyTime' && Array.isArray(value) && value.length === 2) {
+          // 处理时间范围
+          const [startTime, endTime] = value;
+          const start = new Date(startTime).getTime();
+          const end = new Date(endTime).getTime();
+          searchMatch = searchMatch && v[key] >= start && v[key] <= end;
+        } else if (typeof value === 'string') {
+          searchMatch = searchMatch && v[key]?.toString().includes(value);
+        } else {
+          searchMatch = searchMatch && v[key] === value;
+        }
       }
     });
 
@@ -556,10 +515,27 @@ const [SearchForm] = useVbenForm({
 
 function onSubmit(values) {
   dataObj.searchParams = values;
+
+  // 保存标签信息
+  const labels = {};
+  const searchSchema = useSearchFormSchema();
+  searchSchema.forEach((field) => {
+    if (field.component === 'Select' && values[field.fieldName]) {
+      const option = field.componentProps.options?.find(
+        (opt) => opt.value === values[field.fieldName]
+      );
+      if (option) {
+        labels[field.fieldName] = option.label;
+      }
+    }
+  });
+
+  dataObj.filterLabels = labels;
   isSearching = true;
   gridApi.query();
   drawerApi.close();
 }
+
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
@@ -622,6 +598,7 @@ const handleMatchSceneClick = (row) => {
     ...dataObj.searchParams,
     matchScene: row.matchScene,
   };
+  dataObj.currentPage = 1;
   handleRefresh();
   ElMessage.success(`已筛选匹配场景: ${row.matchScene}`);
 };
@@ -629,6 +606,7 @@ const handleMatchSceneClick = (row) => {
 // 状态点击 - 筛选同状态记录
 const handleStatusClick = (row) => {
   dataObj.searchParams = { ...dataObj.searchParams, status: row.status };
+  dataObj.currentPage = 1;
   handleRefresh();
   ElMessage.success(`已筛选状态: ${row.status}`);
 };
@@ -639,6 +617,7 @@ const handleStationClick = (row) => {
     ...dataObj.searchParams,
     stationName: row.stationName,
   };
+  dataObj.currentPage = 1;
   handleRefresh();
   ElMessage.success(`已筛选场站: ${row.stationName}`);
 };
@@ -649,10 +628,34 @@ const handleHandleUserClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
     handleUserId: row.handleUserId,
-    handleUserName: row.handleUserName,
   };
+  dataObj.currentPage = 1;
   handleRefresh();
   ElMessage.success(`已筛选处置人: ${row.handleUserName}`);
+};
+
+// 片区点击 - 筛选同片区记录
+const handleAreaClick = (row) => {
+  if (!row.area) return;
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    area: row.area,
+  };
+  dataObj.currentPage = 1;
+  handleRefresh();
+  ElMessage.success(`已筛选片区: ${row.area}`);
+};
+
+// 操作人点击 - 筛选同操作人记录
+const handleUpdaterClick = (row) => {
+  if (!row.updater) return;
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    updater: row.updater,
+  };
+  dataObj.currentPage = 1;
+  handleRefresh();
+  ElMessage.success(`已筛选操作人: ${row.updater}`);
 };
 
 // 根据状态判断按钮显示
@@ -705,54 +708,17 @@ const handleFullShow = () => {
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
-
-  // 转换时间参数格式
-  if (filterParams.startTime && filterParams.endTime) {
-    const startDate = new Date(Number(filterParams.startTime));
-    const endDate = new Date(Number(filterParams.endTime));
-
-    // 格式化为 YYYY-MM-DD HH:mm:ss
-    const formatDateTime = (date) => {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      const seconds = String(date.getSeconds()).padStart(2, '0');
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    };
-
-    dataObj.searchParams = {
-      ...dataObj.searchParams,
-      identifyTime: [formatDateTime(startDate), formatDateTime(endDate)],
-    };
-    ElMessage.success('已应用图表筛选');
-  } else {
-    dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
-    if (filterParams.status) {
-      ElMessage.success(`已筛选状态: ${filterParams.status}`);
-    } else if (filterParams.stationName) {
-      ElMessage.success(`已筛选场站: ${filterParams.stationName}`);
-    } else {
-      ElMessage.success('已应用图表筛选');
-    }
-  }
-
+  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
   handleRefresh();
+  ElMessage.success('已应用图表筛选');
 };
 
 onMounted(() => {
-  window.addEventListener(
-    'filterByChart:fakePlateControl',
-    handleFilterByChart,
-  );
+  window.addEventListener('filterByChart:fakePlateControl', handleFilterByChart);
 });
 
 onUnmounted(() => {
-  window.removeEventListener(
-    'filterByChart:fakePlateControl',
-    handleFilterByChart,
-  );
+  window.removeEventListener('filterByChart:fakePlateControl', handleFilterByChart);
 });
 </script>
 
@@ -780,16 +746,7 @@ onUnmounted(() => {
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
-          <div
-            v-if="activeFilters.length > 0"
-            style="
-              display: flex;
-              flex-wrap: wrap;
-              gap: 8px;
-              align-items: center;
-              margin-bottom: 12px;
-            "
-          >
+          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
             <el-tag
               v-for="filter in activeFilters"
               :key="filter.field"
@@ -799,6 +756,12 @@ onUnmounted(() => {
             >
               {{ filter.label }}
             </el-tag>
+            <IconButton
+              v-if="activeFilters.length > 0"
+              content="重置"
+              icon-name="RefreshLeft"
+              @click="handleResetFilters"
+            />
           </div>
           <div v-if="props.secondShow">
             <el-tabs
@@ -824,6 +787,11 @@ onUnmounted(() => {
             @click="handleSerachShow"
           />
           <IconButton
+            content="重置"
+            icon-name="Refresh"
+            @click="handleResetFilters"
+          />
+          <IconButton
             content="导出"
             icon-name="Download"
             @click="handleExport"
@@ -841,54 +809,6 @@ onUnmounted(() => {
           />
         </div>
       </template>
-      <template #id="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-        >
-          {{ row.id }}
-        </el-text>
-      </template>
-      <template #plateNo="{ row }">
-        <el-text
-          @click="handlePlateNoClick(row)"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-        >
-          {{ row.plateNo }}
-        </el-text>
-      </template>
-      <template #matchScene="{ row }">
-        <el-tag
-          :type="matchSceneTypeMap[row.matchScene] || 'info'"
-          @click="handleMatchSceneClick(row)"
-          style="cursor: pointer"
-        >
-          {{ row.matchScene }}
-        </el-tag>
-      </template>
-      <template #status="{ row }">
-        <el-tag
-          :type="statusTypeMap[row.status] || 'info'"
-          @click="handleStatusClick(row)"
-          style="cursor: pointer"
-        >
-          {{ row.status }}
-        </el-tag>
-      </template>
-      <template #stationName="{ row }">
-        <el-text
-          @click="handleStationClick(row)"
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-        >
-          {{ row.stationName }}
-        </el-text>
-      </template>
       <template #handleUserName="{ row }">
         <el-text
           v-if="row.handleUserName"
@@ -900,16 +820,6 @@ onUnmounted(() => {
           {{ row.handleUserName }}
         </el-text>
         <span v-else>-</span>
-      </template>
-      <template #updater="{ row }">
-        <span>{{ row.updater || '-' }}</span>
-      </template>
-      <template #updateTime="{ row }">
-        <span>{{ formatTime(row.updateTime) }}</span>
-      </template>
-      <template #correctionMark="{ row }">
-        <el-tag v-if="row.isCorrected" type="success">已修正</el-tag>
-        <el-tag v-else type="info">未修正</el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
@@ -935,6 +845,11 @@ onUnmounted(() => {
             content="更新进度"
             icon-name="Edit"
             @click="handleUpdateProgress(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="Delete"
+            @click="handleDelete(row)"
           />
         </div>
       </template>

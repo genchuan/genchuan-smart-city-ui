@@ -9,20 +9,47 @@ const dialogVisible = ref(false);
 const vehicleData = ref({});
 const loading = ref(false);
 
+// 时间戳格式化函数
+function formatDateTime(value) {
+  if (value === undefined || value === null || value === '') return '-';
+
+  function padTime(v) {
+    return String(v).padStart(2, '0');
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${value.getFullYear()}-${padTime(value.getMonth() + 1)}-${padTime(value.getDate())} ${padTime(value.getHours())}:${padTime(value.getMinutes())}:${padTime(value.getSeconds())}`;
+  }
+
+  if (typeof value === 'number' || /^\d+$/.test(String(value))) {
+    const text = String(value);
+    const timestamp = Number(text.length === 10 ? `${text}000` : text);
+    const date = new Date(timestamp);
+    if (!Number.isNaN(date.getTime())) return formatDateTime(date);
+  }
+
+  const normalized = String(value)
+    .replace('T', ' ')
+    .replace(/\.\d+Z?$/, '');
+  const parsed = new Date(String(value).replaceAll('-', '/'));
+  if (!Number.isNaN(parsed.getTime())) return formatDateTime(parsed);
+  return normalized.length >= 19 ? normalized.slice(0, 19) : normalized;
+}
+
 // 车辆详情数据
 const vehicleInfo = computed(() => {
   return {
     plateNo: vehicleData.value.plateNo || '-',
     plateColor: vehicleData.value.plateColor || '-',
     carType: vehicleData.value.carType || '-',
-    bindTime: vehicleData.value.bindTime || '-',
+    bindTime: formatDateTime(vehicleData.value.bindTime),
     status: vehicleData.value.status || '-',
     auditorId: vehicleData.value.auditorId || '-',
-    auditTime: vehicleData.value.auditTime || '-',
+    auditTime: formatDateTime(vehicleData.value.auditTime),
     auditRemark: vehicleData.value.auditRemark || '-',
     remark: vehicleData.value.remark || '-',
-    createTime: vehicleData.value.createTime || '-',
-    updateTime: vehicleData.value.updateTime || '-',
+    createTime: formatDateTime(vehicleData.value.createTime),
+    updateTime: formatDateTime(vehicleData.value.updateTime),
   };
 });
 

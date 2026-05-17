@@ -72,14 +72,6 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'spaceId',
-      label: '车位ID',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入车位ID',
-      },
-    },
-    {
       fieldName: 'status',
       label: '缴费状态',
       component: 'Select',
@@ -112,7 +104,7 @@ export function useSearchFormSchema() {
       componentProps: {
         type: 'daterange',
         placeholder: '请选择结束时间范围',
-        valueFormat: 'YYYY-MM-DD',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
     },
   ];
@@ -170,13 +162,6 @@ export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
-      field: 'id',
-      title: '结束ID',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'id' },
-    },
-    {
       field: 'plateNo',
       title: '车牌',
       minWidth: 120,
@@ -225,33 +210,6 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'remark',
-      title: '备注',
-      minWidth: 150,
-      sortable: true,
-    },
-    {
-      field: 'updater',
-      title: '操作人',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'updater' },
-    },
-    {
-      field: 'updateTime',
-      title: '操作时间',
-      minWidth: 180,
-      sortable: true,
-      slots: { default: 'updateTime' },
-    },
-    {
-      field: 'isCorrected',
-      title: '修正记录标记',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'correctionMark' },
-    },
-    {
       title: '操作',
       width: 200,
       fixed: 'right',
@@ -270,20 +228,13 @@ export const textObj = {
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '结束ID' },
   { key: 'plateNo', label: '车牌' },
-  { key: 'spaceId', label: '车位ID' },
+  { key: 'spaceId', label: '车位' },
   { key: 'endTime', label: '结束时间', formatter: formatTime },
   { key: 'status', label: '缴费状态' },
   { key: 'areaName', label: '片区' },
   { key: 'operatorName', label: '操作人' },
   { key: 'orderNo', label: '订单编号' },
-  { key: 'remark', label: '备注' },
-  { key: 'creator', label: '创建人' },
-  { key: 'createTime', label: '创建时间', formatter: formatTime },
-  { key: 'updater', label: '操作人' },
-  { key: 'updateTime', label: '操作时间', formatter: formatTime },
-  { key: 'isCorrected', label: '修正记录标记' },
 ];
 
 /** 支付表单配置 */

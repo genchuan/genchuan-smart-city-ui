@@ -170,6 +170,7 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
   searchParams: {},
+  filterLabels: {}, // 存储筛选条件的标签
   currentRow: null,
 });
 
@@ -178,12 +179,22 @@ let isSearching = false;
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchParams;
+  const labels = dataObj.filterLabels;
 
   if (obj.plateNo) {
-    filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
+    filters.push({ label: `车牌：${obj.plateNo}`, field: 'plateNo' });
   }
   if (obj.status) {
-    filters.push({ label: `支付状态：${obj.status}`, field: 'status' });
+    const statusLabel = labels.status || obj.status;
+    filters.push({ label: `缴费状态：${statusLabel}`, field: 'status' });
+  }
+  if (obj.areaId) {
+    const areaName = labels.areaId || obj.areaName || obj.areaId;
+    filters.push({ label: `片区：${areaName}`, field: 'areaId' });
+  }
+  if (obj.operatorId) {
+    const operatorName = labels.operatorId || obj.operatorName || obj.operatorId;
+    filters.push({ label: `操作人：${operatorName}`, field: 'operatorId' });
   }
   if (obj.endTime && Array.isArray(obj.endTime) && obj.endTime.length === 2) {
     filters.push({
@@ -199,6 +210,18 @@ const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
   delete next[fieldName];
   dataObj.searchParams = next;
+
+  const nextLabels = { ...dataObj.filterLabels };
+  delete nextLabels[fieldName];
+  dataObj.filterLabels = nextLabels;
+
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+const handleResetFilters = () => {
+  dataObj.searchParams = {};
+  dataObj.filterLabels = {};
   dataObj.currentPage = 1;
   gridApi.query();
 };
@@ -301,7 +324,31 @@ const [SearchForm] = useVbenForm({
 });
 
 function onSubmit(values) {
-  dataObj.searchParams = values;
+  // 过滤掉空值，只合并有值的字段
+  const newParams = {};
+  Object.keys(values).forEach((key) => {
+    if (values[key] !== null && values[key] !== undefined && values[key] !== '') {
+      newParams[key] = values[key];
+    }
+  });
+
+  dataObj.searchParams = { ...dataObj.searchParams, ...newParams };
+
+  // 保存标签信息
+  const labels = {};
+  const searchSchema = useSearchFormSchema();
+  searchSchema.forEach((field) => {
+    if (field.component === 'Select' && newParams[field.fieldName]) {
+      const option = field.componentProps.options?.find(
+        (opt) => opt.value === newParams[field.fieldName]
+      );
+      if (option) {
+        labels[field.fieldName] = option.label;
+      }
+    }
+  });
+
+  dataObj.filterLabels = { ...dataObj.filterLabels, ...labels };
   isSearching = true;
   gridApi.query();
   drawerApi.close();
@@ -404,18 +451,33 @@ const handleFilterByChart = (event) => {
   if (status !== undefined) {
     // 卡片钻取：按状态筛选
     if (status === null) {
-      // 结束量卡片：显示所有记录
-      dataObj.searchParams = {};
+      // 结束量卡片：移除状态筛选，保留其他条件
+      const { status: _, ...rest } = dataObj.searchParams;
+      dataObj.searchParams = rest;
     } else {
       // 支付成功率卡片：显示已支付记录
-      dataObj.searchParams = { status };
+      dataObj.searchParams = { ...dataObj.searchParams, status };
     }
   } else if (date) {
-    // 折线图钻取：按日期筛选，将日期转换为时间戳范围
-    const timestamp = new Date(date).getTime();
-    const nextDayTimestamp = timestamp + 86400000;
+    // 折线图钻取：按日期筛选，将日期转换为时间范围
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const formatDate = (d) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const seconds = String(d.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
     dataObj.searchParams = {
-      endTime: [timestamp.toString(), nextDayTimestamp.toString()],
+      ...dataObj.searchParams,
+      endTime: [formatDate(startDate), formatDate(endDate)],
     };
   }
 
@@ -597,21 +659,32 @@ const handleSpaceIdClick = (row) => {
 
 // 点击缴费状态筛选同状态记录
 const handleStatusClick = (row) => {
-  dataObj.searchParams = { status: row.status };
+  dataObj.searchParams = { ...dataObj.searchParams, status: row.status };
+  dataObj.currentPage = 1;
   handleRefresh();
   ElMessage.success(`已筛选状态：${row.status}`);
 };
 
 // 点击片区筛选同片区记录
 const handleAreaClick = (row) => {
-  dataObj.searchParams = { areaId: row.areaId };
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    areaId: row.areaId,
+    areaName: row.areaName,
+  };
+  dataObj.currentPage = 1;
   handleRefresh();
   ElMessage.success(`已筛选片区：${row.areaName}`);
 };
 
 // 点击操作人筛选同操作人记录
 const handleOperatorClick = (row) => {
-  dataObj.searchParams = { operatorId: row.operatorId };
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    operatorId: row.operatorId,
+    operatorName: row.operatorName,
+  };
+  dataObj.currentPage = 1;
   handleRefresh();
   ElMessage.success(`已筛选操作人：${row.operatorName}`);
 };
@@ -633,19 +706,34 @@ const handleChartFilter = (event) => {
   if (status !== undefined) {
     // 卡片钻取：按状态筛选
     if (status === null) {
-      // 结束量卡片：显示所有记录
-      dataObj.searchParams = {};
+      // 结束量卡片：移除状态筛选，保留其他条件
+      const { status: _, ...rest } = dataObj.searchParams;
+      dataObj.searchParams = rest;
     } else {
       // 支付成功率卡片：显示已支付记录
-      dataObj.searchParams = { status };
+      dataObj.searchParams = { ...dataObj.searchParams, status };
       activeName.value = status;
     }
   } else if (date) {
     // 折线图钻取：按日期筛选
-    const timestamp = new Date(date).getTime();
-    const nextDayTimestamp = timestamp + 86400000;
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const formatDate = (d) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const seconds = String(d.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
     dataObj.searchParams = {
-      endTime: [timestamp.toString(), nextDayTimestamp.toString()],
+      ...dataObj.searchParams,
+      endTime: [formatDate(startDate), formatDate(endDate)],
     };
   }
 
@@ -686,6 +774,9 @@ const handleChartFilter = (event) => {
               gap: 8px;
               align-items: center;
               margin-bottom: 12px;
+              max-height: 100px;
+              overflow-y: auto;
+              padding-right: 8px;
             "
           >
             <el-tag
@@ -697,6 +788,12 @@ const handleChartFilter = (event) => {
             >
               {{ filter.label }}
             </el-tag>
+            <IconButton
+              v-if="activeFilters.length > 0"
+              content="重置"
+              icon-name="RefreshLeft"
+              @click="handleResetFilters"
+            />
           </div>
           <div v-if="props.secondShow">
             <el-tabs
@@ -792,16 +889,6 @@ const handleChartFilter = (event) => {
         >
           {{ row.operatorName }}
         </el-text>
-      </template>
-      <template #updater="{ row }">
-        <span>{{ row.updater || '-' }}</span>
-      </template>
-      <template #updateTime="{ row }">
-        <span>{{ formatTime(row.updateTime) }}</span>
-      </template>
-      <template #correctionMark="{ row }">
-        <el-tag v-if="row.isCorrected" type="success">已修正</el-tag>
-        <el-tag v-else type="info">未修正</el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

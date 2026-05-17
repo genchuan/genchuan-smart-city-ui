@@ -200,6 +200,7 @@ const dataObj = reactive({
   currentDispatchRow: null,
   currentProgressRow: null,
   currentTransferRow: null,
+  filterLabels: {},
 });
 
 let isSearching = false;
@@ -229,21 +230,24 @@ if (drillDownFilter) {
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchParams;
+  const labels = dataObj.filterLabels;
 
   if (obj.plateNo) {
     filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
   }
   if (obj.taskType) {
-    filters.push({ label: `任务类型：${obj.taskType}`, field: 'taskType' });
+    const taskTypeLabel = labels.taskType || obj.taskType;
+    filters.push({ label: `任务类型：${taskTypeLabel}`, field: 'taskType' });
   }
   if (obj.status) {
-    filters.push({ label: `任务状态：${obj.status}`, field: 'status' });
+    const statusLabel = labels.status || obj.status;
+    filters.push({ label: `任务状态：${statusLabel}`, field: 'status' });
   }
   if (obj.areaId) {
     filters.push({ label: `片区：${obj.areaId}`, field: 'areaId' });
   }
   if (obj.executeUserId !== undefined && obj.executeUserId !== null && obj.executeUserId !== '') {
-    const label = userNameMap.value.executeUserId || obj.executeUserId;
+    const label = labels.executeUserId || userNameMap.value.executeUserId || obj.executeUserId;
     filters.push({ label: `执行人：${label}`, field: 'executeUserId' });
   }
   if (
@@ -266,7 +270,11 @@ const handleClearField = (fieldName) => {
   dataObj.searchParams = next;
   dataObj.currentPage = 1;
 
-  // 清除对应的用户名映射
+  // 清除对应的标签和用户名映射
+  const nextLabels = { ...dataObj.filterLabels };
+  delete nextLabels[fieldName];
+  dataObj.filterLabels = nextLabels;
+
   if (fieldName === 'executeUserId') {
     userNameMap.value.executeUserId = '';
   }
@@ -333,11 +341,18 @@ const getTableData = async (pageObj) => {
     let searchMatch = true;
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
-      if (value) {
-        searchMatch =
-          typeof value === 'string'
-            ? searchMatch && v[key]?.toString().includes(value)
-            : searchMatch && v[key] === value;
+      if (value !== undefined && value !== null && value !== '') {
+        if (key === 'dispatchTime' && Array.isArray(value) && value.length === 2) {
+          // 处理时间范围（daterange 格式为 YYYY-MM-DD）
+          const [startDate, endDate] = value;
+          const start = new Date(startDate).getTime();
+          const end = new Date(endDate).getTime() + 86400000; // 加一天以包含整个结束日期
+          searchMatch = searchMatch && v[key] >= start && v[key] <= end;
+        } else if (typeof value === 'string') {
+          searchMatch = searchMatch && v[key]?.toString().includes(value);
+        } else {
+          searchMatch = searchMatch && v[key] === value;
+        }
       }
     });
 
@@ -377,11 +392,36 @@ const [SearchForm] = useVbenForm({
 
 function onSubmit(values) {
   dataObj.searchParams = values;
+
+  // 保存标签信息
+  const labels = {};
+  const searchSchema = useSearchFormSchema();
+  searchSchema.forEach((field) => {
+    if (field.component === 'Select' && values[field.fieldName]) {
+      const option = field.componentProps.options?.find(
+        (opt) => opt.value === values[field.fieldName]
+      );
+      if (option) {
+        labels[field.fieldName] = option.label;
+      }
+    }
+  });
+
+  dataObj.filterLabels = labels;
   // 清除用户名映射，因为搜索表单提交时没有用户名
   userNameMap.value.executeUserId = '';
   isSearching = true;
   gridApi.query();
   drawerApi.close();
+}
+
+function handleResetFilters() {
+  dataObj.searchParams = {};
+  dataObj.filterLabels = {};
+  dataObj.currentPage = 1;
+  userNameMap.value.executeUserId = '';
+  gridApi.query();
+  ElMessage.success('已重置筛选条件');
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -540,8 +580,13 @@ const [DispatchForm, dispatchFormApi] = useVbenForm({
 });
 
 const handleDispatch = async (row) => {
-  dataObj.currentDispatchRow = row;
-  dispatchDrawerApi.open();
+  try {
+    dataObj.currentDispatchRow = row;
+    dispatchDrawerApi.open();
+  } catch (error) {
+    console.error('打开派发抽屉失败:', error);
+    ElMessage.error('打开派发抽屉失败');
+  }
 };
 
 // 批量派发
@@ -590,7 +635,12 @@ const handleBatchDispatch = async () => {
     ElMessage.warning('请选择要派发的任务');
     return;
   }
-  batchDispatchDrawerApi.open();
+  try {
+    batchDispatchDrawerApi.open();
+  } catch (error) {
+    console.error('打开批量派发抽屉失败:', error);
+    ElMessage.error('打开批量派发抽屉失败');
+  }
 };
 
 // 认领任务
@@ -658,8 +708,13 @@ const [ProgressForm, progressFormApi] = useVbenForm({
 });
 
 const handleUpdateProgress = async (row) => {
-  dataObj.currentProgressRow = row;
-  progressDrawerApi.open();
+  try {
+    dataObj.currentProgressRow = row;
+    progressDrawerApi.open();
+  } catch (error) {
+    console.error('打开进度更新抽屉失败:', error);
+    ElMessage.error('打开进度更新抽屉失败');
+  }
 };
 
 // 转派任务
@@ -715,8 +770,13 @@ const [TransferForm, transferFormApi] = useVbenForm({
 });
 
 const handleTransfer = async (row) => {
-  dataObj.currentTransferRow = row;
-  transferDrawerApi.open();
+  try {
+    dataObj.currentTransferRow = row;
+    transferDrawerApi.open();
+  } catch (error) {
+    console.error('打开转派抽屉失败:', error);
+    ElMessage.error('打开转派抽屉失败');
+  }
 };
 
 // 归档任务
@@ -841,6 +901,18 @@ const handleFieldFilter = (field, value, userName = '') => {
     <Drawer title="搜索">
       <SearchForm class="query-form" />
     </Drawer>
+    <DispatchDrawer>
+      <DispatchForm />
+    </DispatchDrawer>
+    <BatchDispatchDrawer>
+      <BatchDispatchForm />
+    </BatchDispatchDrawer>
+    <ProgressDrawer>
+      <ProgressForm />
+    </ProgressDrawer>
+    <TransferDrawer>
+      <TransferForm />
+    </TransferDrawer>
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
@@ -863,6 +935,12 @@ const handleFieldFilter = (field, value, userName = '') => {
             >
               {{ filter.label }}
             </el-tag>
+            <IconButton
+              v-if="activeFilters.length > 0"
+              content="重置"
+              icon-name="RefreshLeft"
+              @click="handleResetFilters"
+            />
           </div>
           <div v-if="props.secondShow">
             <el-tabs
@@ -899,20 +977,16 @@ const handleFieldFilter = (field, value, userName = '') => {
             @click="handleSerachShow"
           />
           <IconButton
+            content="重置"
+            icon-name="Refresh"
+            @click="handleResetFilters"
+          />
+          <IconButton
             content="全屏"
             icon-name="FullScreen"
             @click="handleFullShow"
           />
         </div>
-      </template>
-      <template #id="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.id }}
-        </el-text>
       </template>
       <template #taskType="{ row }">
         <el-tag

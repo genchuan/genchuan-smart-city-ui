@@ -58,14 +58,6 @@ export const dataList = () => {
 export function useSearchFormSchema() {
   return [
     {
-      fieldName: 'spaceNo',
-      label: '泊位编号',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入泊位编号',
-      },
-    },
-    {
       fieldName: 'areaId',
       label: '片区',
       component: 'Select',
@@ -75,18 +67,6 @@ export function useSearchFormSchema() {
           { label: '芗城区', value: 1 },
           { label: '龙文区', value: 2 },
           { label: '龙海区', value: 3 },
-        ],
-      },
-    },
-    {
-      fieldName: 'spaceStatus',
-      label: '泊位状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择泊位状态',
-        options: [
-          { label: '空闲', value: '空闲' },
-          { label: '占用', value: '占用' },
         ],
       },
     },
@@ -107,13 +87,6 @@ export function useSearchFormSchema() {
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-    {
-      field: 'id',
-      title: '查询ID',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'id' },
-    },
     {
       field: 'spaceNo',
       title: '泊位编号',
@@ -137,7 +110,7 @@ export function useGridColumns() {
     },
     {
       field: 'areaName',
-      title: '片区',
+      title: '场站',
       minWidth: 120,
       sortable: true,
       slots: { default: 'areaName' },
@@ -148,33 +121,6 @@ export function useGridColumns() {
       minWidth: 100,
       sortable: true,
       slots: { default: 'spaceStatus' },
-    },
-    {
-      field: 'remark',
-      title: '备注',
-      minWidth: 150,
-      sortable: true,
-    },
-    {
-      field: 'updater',
-      title: '操作人',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'updater' },
-    },
-    {
-      field: 'updateTime',
-      title: '操作时间',
-      minWidth: 180,
-      sortable: true,
-      slots: { default: 'updateTime' },
-    },
-    {
-      field: 'isCorrected',
-      title: '修正记录标记',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'correctionMark' },
     },
     {
       title: '操作',
@@ -195,16 +141,9 @@ export const textObj = {
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '查询ID' },
   { key: 'spaceNo', label: '泊位编号' },
   { key: 'queryTime', label: '查询时间', formatter: formatTime },
   { key: 'queryUserName', label: '查询人' },
-  { key: 'areaName', label: '片区' },
+  { key: 'areaName', label: '场站' },
   { key: 'spaceStatus', label: '泊位状态' },
-  { key: 'remark', label: '备注' },
-  { key: 'creator', label: '创建人' },
-  { key: 'createTime', label: '创建时间', formatter: formatTime },
-  { key: 'updater', label: '操作人' },
-  { key: 'updateTime', label: '操作时间', formatter: formatTime },
-  { key: 'isCorrected', label: '修正记录标记' },
 ];

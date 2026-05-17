@@ -72,40 +72,6 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'plateColor',
-      label: '车牌颜色',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择车牌颜色',
-        options: [
-          { label: '蓝牌', value: '蓝牌' },
-          { label: '黄牌', value: '黄牌' },
-          { label: '绿牌', value: '绿牌' },
-          { label: '其他', value: '其他' },
-        ],
-      },
-    },
-    {
-      fieldName: 'spaceNo',
-      label: '车位编号',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入车位编号',
-      },
-    },
-    {
-      fieldName: 'recordType',
-      label: '记录类型',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择记录类型',
-        options: [
-          { label: '自动识别', value: '自动识别' },
-          { label: '人工补录', value: '人工补录' },
-        ],
-      },
-    },
-    {
       fieldName: 'status',
       label: '记录状态',
       component: 'Select',
@@ -123,18 +89,6 @@ export function useSearchFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入场站名称',
-      },
-    },
-    {
-      fieldName: 'isCorrected',
-      label: '修正状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择修正状态',
-        options: [
-          { label: '未修正', value: false },
-          { label: '已修正', value: true },
-        ],
       },
     },
     {
@@ -450,17 +404,60 @@ export function useCorrectFormSchema() {
   ];
 }
 
+/** 审核表单配置 */
+export function useAuditFormSchema() {
+  return [
+    {
+      fieldName: 'id',
+      label: '记录ID',
+      component: 'Input',
+      componentProps: { disabled: true },
+    },
+    {
+      fieldName: 'plateNo',
+      label: '车牌号码',
+      component: 'Input',
+      componentProps: { disabled: true },
+    },
+    {
+      fieldName: 'spaceNo',
+      label: '车位编号',
+      component: 'Input',
+      componentProps: { disabled: true },
+    },
+    {
+      fieldName: 'auditResult',
+      label: '审核结果',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择审核结果',
+        options: [
+          { label: '通过', value: 'pass' },
+          { label: '驳回', value: 'reject' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'auditOpinion',
+      label: '审核意见',
+      component: 'Textarea',
+      componentProps: {
+        rows: 4,
+        placeholder: '请输入审核意见（必填）',
+      },
+      rules: [
+        { required: true, message: '审核意见必填' },
+        { min: 1, message: '审核意见不能为空' },
+      ],
+    },
+  ];
+}
+
 /** 入场记录表格列配置 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-    {
-      field: 'id',
-      title: '记录ID',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'id' },
-    },
     {
       field: 'plateNo',
       title: '车牌',
@@ -532,25 +529,6 @@ export function useGridColumns() {
       slots: { default: 'updateTime' },
     },
     {
-      field: 'creator',
-      title: '创建人',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'createTime',
-      title: '创建时间',
-      minWidth: 180,
-      sortable: true,
-      formatter: createTimeFormatter(),
-    },
-    {
-      field: 'remark',
-      title: '备注',
-      minWidth: 150,
-      sortable: true,
-    },
-    {
       title: '操作',
       width: 200,
       fixed: 'right',
@@ -589,7 +567,6 @@ export const plateColorTypeMap = {
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '记录ID' },
   { key: 'plateNo', label: '车牌号' },
   { key: 'plateColor', label: '车牌颜色' },
   { key: 'spaceNo', label: '车位编号' },
@@ -605,7 +582,4 @@ export const detailFields = [
   },
   { key: 'updater', label: '操作人' },
   { key: 'updateTime', label: '操作时间', formatter: formatTime },
-  { key: 'creator', label: '创建人' },
-  { key: 'createTime', label: '创建时间', formatter: formatTime },
-  { key: 'remark', label: '备注' },
 ];

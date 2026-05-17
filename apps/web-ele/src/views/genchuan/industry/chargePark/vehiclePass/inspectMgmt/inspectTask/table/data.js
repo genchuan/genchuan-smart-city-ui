@@ -257,13 +257,6 @@ export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
-      field: 'id',
-      title: '任务ID',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'id' },
-    },
-    {
       field: 'taskType',
       title: '任务类型',
       minWidth: 140,
@@ -318,8 +311,6 @@ export function useGridColumns() {
       minWidth: 180,
       sortable: true,
     },
-
-
     {
       title: '操作',
       width: 200,
@@ -339,7 +330,6 @@ export const textObj = {
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '任务ID' },
   { key: 'taskType', label: '任务类型' },
   { key: 'dispatchTime', label: '派发时间', formatter: formatTime },
   { key: 'deadlineTime', label: '截止时间', formatter: formatTime },
@@ -348,11 +338,5 @@ export const detailFields = [
   { key: 'executeUserName', label: '执行人' },
   { key: 'finishTime', label: '完成时间', formatter: formatTime },
   { key: 'taskProgress', label: '任务进度' },
-  { key: 'remark', label: '备注' },
-  { key: 'creator', label: '创建者' },
-  { key: 'createTime', label: '创建时间', formatter: formatTime },
-  { key: 'updater', label: '操作人' },
-  { key: 'updateTime', label: '操作时间', formatter: formatTime },
-  { key: 'isCorrected', label: '修正记录' },
   { key: 'logs', label: '任务日志', isLogs: true },
 ];

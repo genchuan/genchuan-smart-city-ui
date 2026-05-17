@@ -136,6 +136,23 @@ export function updateFakePlateControlProgress(
   );
 }
 
+/** 创建套牌管控 */
+export function createFakePlateControl(
+  data: FakePlateControlApi.FakePlateControl,
+) {
+  return requestClient.post<boolean>(
+    '/vehiclepass/fake-plate-control/create',
+    data,
+  );
+}
+
+/** 删除套牌管控 */
+export function deleteFakePlateControl(id: number | string) {
+  return requestClient.delete<boolean>(
+    `/vehiclepass/fake-plate-control/delete?id=${id}`,
+  );
+}
+
 /** 查询套牌管控图表 */
 export function getFakePlateControlChart(
   params: FakePlateControlApi.ChartReqVO,

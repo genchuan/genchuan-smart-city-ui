@@ -94,15 +94,15 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'areaId',
+      fieldName: 'areaName',
       label: '片区',
       component: 'Select',
       componentProps: {
         placeholder: '请选择片区',
         options: [
-          { label: '芗城区', value: 1 },
-          { label: '龙文区', value: 2 },
-          { label: '龙海区', value: 3 },
+          { label: '芗城区', value: '芗城区' },
+          { label: '龙文区', value: '龙文区' },
+          { label: '龙海区', value: '龙海区' },
         ],
       },
     },
@@ -179,13 +179,6 @@ export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
-      field: 'id',
-      title: '录入ID',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'id' },
-    },
-    {
       field: 'plateNo',
       title: '车牌',
       minWidth: 120,
@@ -232,33 +225,14 @@ export function useGridColumns() {
       title: '审核人',
       minWidth: 100,
       sortable: true,
+      slots: { default: 'auditUserName' },
     },
     {
-      field: 'remark',
-      title: '备注',
-      minWidth: 150,
-      sortable: true,
-    },
-    {
-      field: 'updater',
-      title: '操作人',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'updater' },
-    },
-    {
-      field: 'updateTime',
-      title: '操作时间',
+      field: 'auditTime',
+      title: '审核时间',
       minWidth: 160,
       sortable: true,
-      slots: { default: 'updateTime' },
-    },
-    {
-      field: 'isCorrected',
-      title: '修正记录',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'correctionMark' },
+      formatter: createTimeFormatter(),
     },
     {
       title: '操作',
