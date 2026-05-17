@@ -7,7 +7,7 @@ export const dataList = () => {
       id: '001',
       plateNo: '闽E12345',
       spaceId: 1,
-      inputTime: 1745011815000,
+      inputTime: 1_745_011_815_000,
       status: '待审核',
       areaId: 1,
       areaName: '芗城区',
@@ -20,15 +20,15 @@ export const dataList = () => {
       remark: '现场录入车辆信息',
       isCorrected: false,
       creator: 'admin',
-      createTime: 1745011815000,
+      createTime: 1_745_011_815_000,
       updater: '张三',
-      updateTime: 1745011815000,
+      updateTime: 1_745_011_815_000,
     },
     {
       id: '002',
       plateNo: '闽E67890',
       spaceId: 2,
-      inputTime: 1745015730000,
+      inputTime: 1_745_015_730_000,
       status: '已通过',
       areaId: 1,
       areaName: '龙文区',
@@ -36,20 +36,20 @@ export const dataList = () => {
       inputUserName: '张三',
       auditUserId: 3,
       auditUserName: '李四',
-      auditTime: 1745016000000,
+      auditTime: 1_745_016_000_000,
       auditComment: '信息无误',
       remark: '',
       isCorrected: false,
       creator: 'admin',
-      createTime: 1745015730000,
+      createTime: 1_745_015_730_000,
       updater: '李四',
-      updateTime: 1745016000000,
+      updateTime: 1_745_016_000_000,
     },
     {
       id: '003',
       plateNo: '闽E11111',
       spaceId: 3,
-      inputTime: 1745019645000,
+      inputTime: 1_745_019_645_000,
       status: '已驳回',
       areaId: 2,
       areaName: '龙海区',
@@ -57,14 +57,14 @@ export const dataList = () => {
       inputUserName: '张三',
       auditUserId: 3,
       auditUserName: '李四',
-      auditTime: 1745019900000,
+      auditTime: 1_745_019_900_000,
       auditComment: '车牌信息有误',
       remark: '需要修正',
       isCorrected: false,
       creator: 'admin',
-      createTime: 1745019645000,
+      createTime: 1_745_019_645_000,
       updater: '李四',
-      updateTime: 1745019900000,
+      updateTime: 1_745_019_900_000,
     },
   ];
 };
@@ -78,14 +78,6 @@ export function useSearchFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入车牌号码',
-      },
-    },
-    {
-      fieldName: 'spaceId',
-      label: '车位ID',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入车位ID',
       },
     },
     {
@@ -116,12 +108,13 @@ export function useSearchFormSchema() {
     },
     {
       fieldName: 'inputTime',
-      label: '录入时间',
+      label: '时间范围',
       component: 'DatePicker',
       componentProps: {
-        type: 'daterange',
-        placeholder: '请选择录入时间范围',
-        valueFormat: 'YYYY-MM-DD',
+        type: 'datetimerange',
+        placeholder: '请选择时间范围',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
     },
   ];
@@ -132,25 +125,32 @@ export function useCreateFormSchema() {
   return [
     {
       fieldName: 'plateNo',
-      label: '车牌号码',
+      label: '车牌 *',
       component: 'Input',
       componentProps: {
         placeholder: '请输入车牌号码',
       },
-      rules: 'required',
+      rules: [
+        { required: true, message: '请输入车牌号码' },
+        {
+          pattern:
+            /^[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙吉青宁夏][A-Z][A-Z0-9]{4}[A-Z0-9挂学警港澳]$/,
+          message: '车牌格式不正确',
+        },
+      ],
     },
     {
       fieldName: 'spaceId',
-      label: '车位ID',
+      label: '车位 *',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入车位ID',
+        placeholder: '请输入车位号',
       },
-      rules: 'required',
+      rules: [{ required: true, message: '请输入车位号' }],
     },
     {
       fieldName: 'areaId',
-      label: '片区',
+      label: '片区 *',
       component: 'Select',
       componentProps: {
         placeholder: '请选择片区',
@@ -160,7 +160,7 @@ export function useCreateFormSchema() {
           { label: '龙海区', value: 3 },
         ],
       },
-      rules: 'required',
+      rules: [{ required: true, message: '请选择片区' }],
     },
     {
       fieldName: 'remark',

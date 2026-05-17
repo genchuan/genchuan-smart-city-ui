@@ -1,41 +1,40 @@
-﻿<script setup>
+<script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  exportCarInput,
-  getCarInputPage,
-  getCarInput,
-  createCarInput,
   auditCarInput,
   confirmCarInput,
   correctCarInput,
+  createCarInput,
+  exportCarInput,
+  getCarInput,
+  getCarInputPage,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/siteInput/carInput';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
-import IconButton from '#/components/common/IconButton.vue';
-import { downloadFileFromBlobPart } from '@vben/utils';
 import { exportToExcel } from '#/utils/excel.js';
-import { formatTime } from '../../../utils/timeFormatter';
 
 import SpaceDetailDialog from '../../../components/SpaceDetailDialog.vue';
 import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
   textObj,
-  useSearchFormSchema,
-  useCreateFormSchema,
-  useGridColumns,
   useAuditFormSchema,
   useCorrectFormSchema,
+  useCreateFormSchema,
+  useGridColumns,
+  useSearchFormSchema,
 } from './data';
 
 const props = defineProps({
@@ -83,20 +82,47 @@ const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
     createFormDrawerApi.close();
   },
   async onConfirm() {
+    try {
+      await createFormApi.validate();
+    } catch {
+      ElMessage.warning('请完善表单信息');
+      return;
+    }
+
+    const values = createFormApi.form.values;
+
     if (USE_REAL_API) {
+      const loadingInstance = ElLoading.service({ text: '新增中...' });
       try {
-        const values = createFormApi.form.values;
-        await createCarInput(values);
+        await createCarInput({
+          ...values,
+          status: '待审核',
+        });
         ElMessage.success('新增成功');
         handleRefresh();
         createFormDrawerApi.close();
       } catch (error) {
         ElMessage.error('新增失败');
         console.error(error);
+      } finally {
+        loadingInstance.close();
       }
     } else {
-      const obj = createFormApi.form.values;
-      dataObj.apilist.push(obj);
+      dataObj.apilist.push({
+        ...values,
+        id: Date.now().toString(),
+        status: '待审核',
+        inputTime: Date.now(),
+        auditUserId: null,
+        auditUserName: null,
+        auditTime: null,
+        auditComment: null,
+        isCorrected: false,
+        creator: 'admin',
+        createTime: Date.now(),
+        updater: 'admin',
+        updateTime: Date.now(),
+      });
       handleRefresh();
       createFormDrawerApi.close();
     }
@@ -113,21 +139,77 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  const loadingInstance = ElLoading.service({
-    text: '导出中...',
-  });
   try {
-    if (USE_REAL_API) {
-      const res = await exportCarInput(dataObj.searchParams);
-      downloadFileFromBlobPart({ fileName: '车辆录入.xlsx', source: res });
-    } else {
-      exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+    let exportFormat = 'excel';
+    try {
+      await ElMessageBox.confirm(
+        '请选择导出格式：\n• Excel格式支持完整数据和中文显示（推荐）\n• PDF格式中文显示可能不正确，仅供参考',
+        '选择导出格式',
+        {
+          confirmButtonText: 'Excel (.xlsx) 推荐',
+          cancelButtonText: 'PDF (.pdf)',
+          type: 'info',
+          distinguishCancelAndClose: true,
+        },
+      );
+      exportFormat = 'excel';
+    } catch (error) {
+      if (error === 'cancel') {
+        exportFormat = 'pdf';
+        try {
+          await ElMessageBox.confirm(
+            '提示：PDF格式中文显示可能不正确，建议使用Excel格式。确定继续导出PDF吗？',
+            '确认导出PDF',
+            {
+              confirmButtonText: '继续导出PDF',
+              cancelButtonText: '返回选择Excel',
+              type: 'warning',
+            },
+          );
+        } catch {
+          exportFormat = 'excel';
+        }
+      } else {
+        return;
+      }
+    }
+
+    const loadingInstance = ElLoading.service({
+      text: '导出中...',
+    });
+
+    try {
+      if (USE_REAL_API) {
+        const res = await exportCarInput(dataObj.searchParams);
+        const fileExtension = exportFormat === 'pdf' ? '.pdf' : '.xlsx';
+        await downloadFileFromBlobPart({
+          fileName: `车辆录入数据${fileExtension}`,
+          source: res,
+        });
+        ElMessage.success({
+          message: '导出成功！文件已开始下载',
+          duration: 3000,
+        });
+      } else {
+        exportToExcel(
+          dataObj.list.length > 0 ? dataObj.list : dataObj.apilist,
+          textObj.excelName,
+          textObj.excelAllName,
+        );
+        ElMessage.success({
+          message: '导出成功！',
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      const errorMessage = error.message || '未知错误';
+      ElMessage.error(`导出失败：${errorMessage}`);
+      console.error(error);
+    } finally {
+      loadingInstance.close();
     }
   } catch (error) {
-    ElMessage.error('导出失败');
-    console.error(error);
-  } finally {
-    loadingInstance.close();
+    console.error('导出操作失败:', error);
   }
 }
 
@@ -137,19 +219,6 @@ function handleCreate() {
       title: textObj.addText,
     })
     .open();
-}
-
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.plateNo]),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.plateNo]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
 }
 
 async function handleDeleteBatch() {
@@ -197,6 +266,14 @@ const activeFilters = computed(() => {
   }
   if (obj.status) {
     filters.push({ label: `审核状态：${obj.status}`, field: 'status' });
+  }
+  if (obj.areaId) {
+    const areaMap = { 1: '芗城区', 2: '龙文区', 3: '龙海区' };
+    filters.push({ label: `片区：${areaMap[obj.areaId]}`, field: 'areaId' });
+  }
+  if (obj.inputTime && Array.isArray(obj.inputTime)) {
+    const timeLabel = `时间范围：${obj.inputTime[0]} ~ ${obj.inputTime[1]}`;
+    filters.push({ label: timeLabel, field: 'inputTime' });
   }
 
   return filters;
@@ -248,16 +325,16 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '待审核': {
-        statusMatch = v.status === '待审核';
-        break;
-      }
       case '已通过': {
         statusMatch = v.status === '已通过';
         break;
       }
       case '已驳回': {
         statusMatch = v.status === '已驳回';
+        break;
+      }
+      case '待审核': {
+        statusMatch = v.status === '待审核';
         break;
       }
     }
@@ -378,16 +455,16 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '待审核': {
-      count = dataObj.apilist.filter((v) => v.status === '待审核').length;
-      break;
-    }
     case '已通过': {
       count = dataObj.apilist.filter((v) => v.status === '已通过').length;
       break;
     }
     case '已驳回': {
       count = dataObj.apilist.filter((v) => v.status === '已驳回').length;
+      break;
+    }
+    case '待审核': {
+      count = dataObj.apilist.filter((v) => v.status === '待审核').length;
       break;
     }
   }
@@ -625,7 +702,7 @@ const handleOpenVehicleDetail = (row) => {
       <template #table-title>
         <div class="tabel-tabs">
           <div
-            v-if="activeFilters.length"
+            v-if="activeFilters.length > 0"
             style="
               display: flex;
               flex-wrap: wrap;
@@ -662,23 +739,23 @@ const handleOpenVehicleDetail = (row) => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="筛选"
+            icon-name="Filter"
+            @click="handleSerachShow"
+          />
           <IconButton
             content="导出"
-            icon-name="download"
+            icon-name="Download"
             @click="handleExport"
           />
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="批量删除"
             icon-name="delete"
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
           />
           <IconButton
             content="全屏"
