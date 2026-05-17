@@ -1,5 +1,21 @@
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
 
+/** 状态类型映射 */
+export const statusTypeMap = {
+  待派发: 'info',
+  待认领: 'warning',
+  处理中: 'primary',
+  已完成: 'success',
+  已归档: 'info',
+};
+
+/** 任务类型映射 */
+export const taskTypeMap = {
+  '违规通行稽查': 'danger',
+  '欠费逃费稽查': 'warning',
+  '其他': 'info',
+};
+
 /** 模块表格初始数据 */
 export const dataList = () => {
   return [
@@ -19,6 +35,9 @@ export const dataList = () => {
       createTime: 1745011815000,
       updater: '张三',
       updateTime: 1745011815000,
+      logs: [
+        { time: 1745011815000, operator: 'admin', action: '创建任务', remark: '新建稽查任务' },
+      ],
     },
     {
       id: 2,
@@ -36,6 +55,10 @@ export const dataList = () => {
       createTime: 1745015730000,
       updater: '李四',
       updateTime: 1745015730000,
+      logs: [
+        { time: 1745015730000, operator: 'admin', action: '创建任务', remark: '新建稽查任务' },
+        { time: 1745015800000, operator: 'admin', action: '派发任务', remark: '派发给张三' },
+      ],
     },
     {
       id: 3,
@@ -53,6 +76,32 @@ export const dataList = () => {
       createTime: 1745019645000,
       updater: '王五',
       updateTime: 1745019645000,
+      logs: [
+        {
+          time: 1745019645000,
+          operator: 'admin',
+          action: '创建任务',
+          remark: '新建稽查任务',
+        },
+        {
+          time: 1745019700000,
+          operator: 'admin',
+          action: '派发任务',
+          remark: '派发给李四',
+        },
+        {
+          time: 1745019750000,
+          operator: '李四',
+          action: '认领任务',
+          remark: '已认领',
+        },
+        {
+          time: 1745019800000,
+          operator: '李四',
+          action: '更新进度',
+          remark: '已联系车主，等待处理',
+        },
+      ],
     },
     {
       id: 4,
@@ -70,6 +119,32 @@ export const dataList = () => {
       createTime: 1744925400000,
       updater: '赵六',
       updateTime: 1745091000000,
+      logs: [
+        {
+          time: 1744925400000,
+          operator: 'admin',
+          action: '创建任务',
+          remark: '新建稽查任务',
+        },
+        {
+          time: 1744925500000,
+          operator: 'admin',
+          action: '派发任务',
+          remark: '派发给王五',
+        },
+        {
+          time: 1744925600000,
+          operator: '王五',
+          action: '认领任务',
+          remark: '已认领',
+        },
+        {
+          time: 1745091000000,
+          operator: '王五',
+          action: '完成任务',
+          remark: '已完成处理',
+        },
+      ],
     },
   ];
 };
@@ -243,27 +318,8 @@ export function useGridColumns() {
       minWidth: 180,
       sortable: true,
     },
-    {
-      field: 'updater',
-      title: '操作人',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'updater' },
-    },
-    {
-      field: 'updateTime',
-      title: '操作时间',
-      minWidth: 160,
-      sortable: true,
-      slots: { default: 'updateTime' },
-    },
-    {
-      field: 'isCorrected',
-      title: '修正记录',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'correctionMark' },
-    },
+
+
     {
       title: '操作',
       width: 200,
@@ -298,4 +354,5 @@ export const detailFields = [
   { key: 'updater', label: '操作人' },
   { key: 'updateTime', label: '操作时间', formatter: formatTime },
   { key: 'isCorrected', label: '修正记录' },
+  { key: 'logs', label: '任务日志', isLogs: true },
 ];

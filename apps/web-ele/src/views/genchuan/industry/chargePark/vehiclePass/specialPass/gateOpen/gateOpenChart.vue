@@ -16,6 +16,7 @@ const cards = reactive([
     desc: '累计申请次数',
     color: '#4A90E2',
     key: 'applyCount',
+    icon: 'DocumentCopy',
   },
   {
     title: '审批通过率',
@@ -23,6 +24,7 @@ const cards = reactive([
     desc: '审核通过比例',
     color: '#50E3C2',
     key: 'auditPassRate',
+    icon: 'SuccessFilled',
   },
 ]);
 
@@ -41,11 +43,19 @@ let barChartInstance = null;
 
 async function loadChartData() {
   try {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
     const params = {
-      stationName: props.parkId,
+      startTime: startDate.toISOString().split('T')[0],
+      endTime: endDate.toISOString().split('T')[0],
+      ...(props.parkId && { stationId: props.parkId }),
     };
 
+    console.warn('Loading chart data with params:', params);
     const res = await getGateOpenChart(params);
+    console.warn('Chart data response:', res);
 
     // Always update card values
     if (res?.cardData) {
@@ -59,6 +69,15 @@ async function loadChartData() {
     const hasChartData =
       res &&
       (res.openApplyTrend?.length > 0 || res.stationOpenCount?.length > 0);
+
+    console.warn(
+      'Has chart data:',
+      hasChartData,
+      'trend length:',
+      res?.openApplyTrend?.length,
+      'station length:',
+      res?.stationOpenCount?.length,
+    );
 
     if (hasChartData) {
       state.chartData = {
@@ -115,7 +134,7 @@ function initPieChart() {
     const clickedDate = params.name;
     window.dispatchEvent(
       new CustomEvent('filterByChart:gateOpen', {
-        detail: { createTimeRange: [clickedDate, clickedDate] },
+        detail: { applyTime: [clickedDate, clickedDate] },
       }),
     );
   });
@@ -181,6 +200,7 @@ function handleCardClick(key) {
 }
 
 onMounted(() => {
+  console.warn('gateOpenChart mounted, loading chart data...');
   loadChartData();
   window.addEventListener('resize', () => {
     pieChartInstance?.resize();
@@ -206,10 +226,9 @@ onUnmounted(() => {
       >
         <div class="card-header">
           <span class="card-title">{{ card.title }}</span>
-          <div
-            class="card-indicator"
-            :style="{ backgroundColor: card.color }"
-          ></div>
+          <el-icon class="card-icon" :style="{ color: card.color }">
+            <component :is="card.icon" />
+          </el-icon>
         </div>
         <div class="card-body">
           <div class="card-value" :style="{ color: card.color }">
@@ -221,7 +240,7 @@ onUnmounted(() => {
     </div>
 
     <!-- 右侧图表区域 -->
-    <div v-if="state.hasData" class="chart-wrapper">
+    <div class="chart-wrapper">
       <div ref="pieChartRef" class="chart-container"></div>
       <div ref="barChartRef" class="chart-container"></div>
     </div>
@@ -275,6 +294,11 @@ onUnmounted(() => {
       &:hover {
         box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
         transform: translateY(-2px);
+
+        .card-icon {
+          opacity: 1;
+          transform: scale(1.1);
+        }
       }
 
       .card-header {
@@ -290,11 +314,11 @@ onUnmounted(() => {
           color: #606266;
         }
 
-        .card-indicator {
+        .card-icon {
           flex-shrink: 0;
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
+          font-size: 24px;
+          opacity: 0.8;
+          transition: all 0.3s ease;
         }
       }
 

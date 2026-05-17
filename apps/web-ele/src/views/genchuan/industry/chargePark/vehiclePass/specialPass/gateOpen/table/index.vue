@@ -36,6 +36,7 @@ import {
   useGridColumns,
   statusTypeMap,
   openReasonMap,
+  taskProgressMap,
 } from './data';
 
 const props = defineProps({
@@ -186,7 +187,9 @@ async function handleExport() {
   });
   try {
     if (USE_REAL_API) {
-      const res = await exportGateOpen(dataObj.searchParams);
+      // 过滤掉 API 不需要的字段
+      const { applyUserName, auditUserName, ...apiParams } = dataObj.searchParams;
+      const res = await exportGateOpen(apiParams);
       downloadFileFromBlobPart({ fileName: '开闸申请.xlsx', source: res });
     } else {
       exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
@@ -331,28 +334,65 @@ const dataObj = reactive({
 
 let isSearching = false;
 
+// 用户名映射缓存
+const userNameMap = ref({
+  applyUserId: '',
+  auditUserId: '',
+  executorId: '',
+});
+
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchParams;
 
-  if (obj.plateNo) {
-    filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
+  if (obj.stationName) {
+    filters.push({ label: `片区：${obj.stationName}`, field: 'stationName' });
   }
   if (obj.status) {
-    filters.push({ label: `申请状态：${obj.status}`, field: 'status' });
+    filters.push({ label: `状态：${obj.status}`, field: 'status' });
   }
   if (obj.openReason) {
-    filters.push({ label: `开闸原因：${obj.openReason}`, field: 'openReason' });
+    filters.push({ label: `任务类型：${obj.openReason}`, field: 'openReason' });
+  }
+  if (obj.applyTime && Array.isArray(obj.applyTime) && obj.applyTime.length > 0) {
+    const dateRange = obj.applyTime.length === 2
+      ? `${obj.applyTime[0]} 至 ${obj.applyTime[1]}`
+      : obj.applyTime[0];
+    filters.push({ label: `派发时间：${dateRange}`, field: 'applyTime' });
+  }
+  if (obj.auditStatus) {
+    filters.push({ label: `审批状态：${obj.auditStatus}`, field: 'auditStatus' });
+  }
+  if (obj.applyUserId !== undefined && obj.applyUserId !== null && obj.applyUserId !== '') {
+    const label = userNameMap.value.applyUserId || obj.applyUserId;
+    filters.push({ label: `申请人：${label}`, field: 'applyUserId' });
+  }
+  if (obj.auditUserId !== undefined && obj.auditUserId !== null && obj.auditUserId !== '') {
+    const label = userNameMap.value.auditUserId || obj.auditUserId;
+    filters.push({ label: `审批人：${label}`, field: 'auditUserId' });
+  }
+  if (obj.executorId !== undefined && obj.executorId !== null && obj.executorId !== '') {
+    const label = userNameMap.value.executorId || obj.executorId;
+    filters.push({ label: `执行人：${label}`, field: 'executorId' });
   }
 
   return filters;
 });
 
 const handleClearField = (fieldName) => {
-  const next = { ...dataObj.searchParams };
-  delete next[fieldName];
-  dataObj.searchParams = next;
+  delete dataObj.searchParams[fieldName];
   dataObj.currentPage = 1;
+
+  // 清除对应的用户名映射
+  if (fieldName === 'applyUserId') {
+    userNameMap.value.applyUserId = '';
+  } else if (fieldName === 'auditUserId') {
+    userNameMap.value.auditUserId = '';
+  } else if (fieldName === 'executorId') {
+    userNameMap.value.executorId = '';
+  }
+
+  isSearching = true;
   gridApi.query();
 };
 
@@ -367,10 +407,13 @@ const getTableData = async (pageObj) => {
   // 使用真实API
   if (USE_REAL_API) {
     try {
+      // 过滤掉 API 不需要的字段
+      const { applyUserName, auditUserName, ...apiParams } = dataObj.searchParams;
+
       const params = {
         pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
-        ...dataObj.searchParams,
+        ...apiParams,
       };
 
       if (isSearching) {
@@ -459,7 +502,11 @@ const [SearchForm] = useVbenForm({
 });
 
 function onSubmit(values) {
-  dataObj.searchParams = values;
+  Object.assign(dataObj.searchParams, values);
+  // 清除用户名映射，因为搜索表单提交时没有用户名
+  userNameMap.value.applyUserId = '';
+  userNameMap.value.auditUserId = '';
+  userNameMap.value.executorId = '';
   isSearching = true;
   gridApi.query();
   drawerApi.close();
@@ -580,11 +627,22 @@ onUnmounted(() => {
 });
 
 // 字段点击筛选
-const handleFieldFilter = (field, value) => {
-  dataObj.searchParams = {
-    ...dataObj.searchParams,
+const handleFieldFilter = (field, value, userName = '') => {
+  Object.assign(dataObj.searchParams, {
     [field]: value,
-  };
+  });
+
+  // 更新用户名映射
+  if (field === 'applyUserId' && userName) {
+    userNameMap.value.applyUserId = userName;
+  } else if (field === 'auditUserId' && userName) {
+    userNameMap.value.auditUserId = userName;
+  } else if (field === 'executorId' && userName) {
+    userNameMap.value.executorId = userName;
+  }
+
+  dataObj.currentPage = 1;
+  isSearching = true;
   handleRefresh();
 };
 </script>
@@ -681,7 +739,7 @@ const handleFieldFilter = (field, value) => {
       </template>
       <template #applyUserName="{ row }">
         <el-text
-          @click="handleFieldFilter('applyUserId', row.applyUserId)"
+          @click="handleFieldFilter('applyUserId', row.applyUserId, row.applyUserName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -698,20 +756,25 @@ const handleFieldFilter = (field, value) => {
           {{ row.status }}
         </el-tag>
       </template>
-      <template #auditUserName="{ row }">
+      <template #updater="{ row }">
+        <span>{{ row.updater || '-' }}</span>
+      </template>
+      <template #executorName="{ row }">
         <el-text
-          v-if="row.auditUserName"
-          @click="handleFieldFilter('auditUserId', row.auditUserId)"
+          @click="handleFieldFilter('executorId', row.executorId, row.executorName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
-          {{ row.auditUserName }}
+          {{ row.executorName }}
         </el-text>
-        <span v-else>-</span>
       </template>
-      <template #updater="{ row }">
-        <span>{{ row.updater || '-' }}</span>
+      <template #taskProgress="{ row }">
+        <el-tag
+          :type="taskProgressMap[row.taskProgress]"
+        >
+          {{ row.taskProgress }}
+        </el-tag>
       </template>
       <template #updateTime="{ row }">
         <span>{{ formatTime(row.updateTime) }}</span>

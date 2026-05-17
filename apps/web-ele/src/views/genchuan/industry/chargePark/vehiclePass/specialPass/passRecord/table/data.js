@@ -60,21 +60,21 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'operatorId',
+      fieldName: 'operator',
       label: '操作人',
       component: 'Input',
       componentProps: {
         placeholder: '请输入操作人',
       },
     },
-    {
-      fieldName: 'remark',
-      label: '备注',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入备注',
-      },
-    },
+    // {
+    //   fieldName: 'remark',
+    //   label: '备注',
+    //   component: 'Input',
+    //   componentProps: {
+    //     placeholder: '请输入备注',
+    //   },
+    // },
   ];
 }
 
@@ -90,7 +90,7 @@ export function useCheckFormSchema() {
         placeholder: '请输入核查结果',
         rows: 4,
       },
-      rules: [{ required: true, message: '请输入核查结果' }],
+      rules: 'required',
     },
     {
       fieldName: 'checkRemark',
@@ -177,27 +177,6 @@ export function useGridColumns() {
       title: '备注',
       minWidth: 150,
       sortable: true,
-    },
-    {
-      field: 'updater',
-      title: '操作人',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'updater' },
-    },
-    {
-      field: 'updateTime',
-      title: '操作时间',
-      minWidth: 180,
-      sortable: true,
-      slots: { default: 'updateTime' },
-    },
-    {
-      field: 'isCorrected',
-      title: '修正记录标记',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'correctionMark' },
     },
     {
       title: '操作',

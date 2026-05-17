@@ -32,6 +32,8 @@ import {
   textObj,
   useGridColumns,
   useSearchFormSchema,
+  statusTypeMap,
+  taskTypeMap,
 } from './data';
 
 const props = defineProps({
@@ -195,9 +197,17 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
   searchParams: {},
+  currentDispatchRow: null,
+  currentProgressRow: null,
+  currentTransferRow: null,
 });
 
 let isSearching = false;
+
+// 用户名映射缓存
+const userNameMap = ref({
+  executeUserId: '',
+});
 
 // 监听下钻筛选参数变化
 const { drillDownFilter } = props;
@@ -229,6 +239,13 @@ const activeFilters = computed(() => {
   if (obj.status) {
     filters.push({ label: `任务状态：${obj.status}`, field: 'status' });
   }
+  if (obj.areaId) {
+    filters.push({ label: `片区：${obj.areaId}`, field: 'areaId' });
+  }
+  if (obj.executeUserId !== undefined && obj.executeUserId !== null && obj.executeUserId !== '') {
+    const label = userNameMap.value.executeUserId || obj.executeUserId;
+    filters.push({ label: `执行人：${label}`, field: 'executeUserId' });
+  }
   if (
     obj.dispatchTime &&
     Array.isArray(obj.dispatchTime) &&
@@ -248,6 +265,12 @@ const handleClearField = (fieldName) => {
   delete next[fieldName];
   dataObj.searchParams = next;
   dataObj.currentPage = 1;
+
+  // 清除对应的用户名映射
+  if (fieldName === 'executeUserId') {
+    userNameMap.value.executeUserId = '';
+  }
+
   gridApi.query();
 };
 
@@ -354,6 +377,8 @@ const [SearchForm] = useVbenForm({
 
 function onSubmit(values) {
   dataObj.searchParams = values;
+  // 清除用户名映射，因为搜索表单提交时没有用户名
+  userNameMap.value.executeUserId = '';
   isSearching = true;
   gridApi.query();
   drawerApi.close();
@@ -474,96 +499,97 @@ onUnmounted(() => {
 });
 
 // 派发任务
-const handleDispatch = async (row) => {
-  const [DispatchDrawer, dispatchDrawerApi] = useVbenDrawer({
-    appendToMain: true,
-    modal: false,
-    title: '派发任务',
-    onCancel() {
+const [DispatchDrawer, dispatchDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  title: '派发任务',
+  onCancel() {
+    dispatchDrawerApi.close();
+  },
+  async onConfirm() {
+    const values = dispatchFormApi.form.values;
+    const currentRow = dataObj.currentDispatchRow;
+    try {
+      await dispatchInspectTask({
+        id: currentRow.id,
+        executeUserId: values.executeUserId,
+      });
+      ElMessage.success('派发成功');
+      handleRefresh();
       dispatchDrawerApi.close();
-    },
-    async onConfirm() {
-      const values = dispatchFormApi.form.values;
-      try {
-        await dispatchInspectTask({
-          id: row.id,
-          executeUserId: values.executeUserId,
-        });
-        ElMessage.success('派发成功');
-        handleRefresh();
-        dispatchDrawerApi.close();
-      } catch (error) {
-        ElMessage.error('派发失败');
-        console.error(error);
-      }
-    },
-  });
+    } catch (error) {
+      ElMessage.error('派发失败');
+      console.error(error);
+    }
+  },
+});
 
-  const [DispatchForm, dispatchFormApi] = useVbenForm({
-    schema: [
-      {
-        fieldName: 'executeUserId',
-        label: '执行人',
-        component: 'Select',
-        componentProps: {
-          placeholder: '请选择执行人',
-          options: [],
-        },
-        rules: 'required',
+const [DispatchForm, dispatchFormApi] = useVbenForm({
+  schema: [
+    {
+      fieldName: 'executeUserId',
+      label: '执行人',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择执行人',
+        options: [],
       },
-    ],
-  });
+      rules: 'required',
+    },
+  ],
+});
 
+const handleDispatch = async (row) => {
+  dataObj.currentDispatchRow = row;
   dispatchDrawerApi.open();
 };
 
 // 批量派发
+const [BatchDispatchDrawer, batchDispatchDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  title: '批量派发',
+  onCancel() {
+    batchDispatchDrawerApi.close();
+  },
+  async onConfirm() {
+    const values = batchDispatchFormApi.form.values;
+    try {
+      await batchDispatchInspectTask({
+        ids: checkedIds.value,
+        executeUserId: values.executeUserId,
+      });
+      ElMessage.success('批量派发成功');
+      checkedIds.value = [];
+      handleRefresh();
+      batchDispatchDrawerApi.close();
+    } catch (error) {
+      ElMessage.error('批量派发失败');
+      console.error(error);
+    }
+  },
+});
+
+const [BatchDispatchForm, batchDispatchFormApi] = useVbenForm({
+  schema: [
+    {
+      fieldName: 'executeUserId',
+      label: '执行人',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择执行人',
+        options: [],
+      },
+      rules: 'required',
+    },
+  ],
+});
+
 const handleBatchDispatch = async () => {
   if (isEmpty(checkedIds.value)) {
     ElMessage.warning('请选择要派发的任务');
     return;
   }
-
-  const [BatchDispatchDrawer, batchDispatchDrawerApi] = useVbenDrawer({
-    appendToMain: true,
-    modal: false,
-    title: '批量派发',
-    onCancel() {
-      batchDispatchDrawerApi.close();
-    },
-    async onConfirm() {
-      const values = batchDispatchFormApi.form.values;
-      try {
-        await batchDispatchInspectTask({
-          ids: checkedIds.value,
-          executeUserId: values.executeUserId,
-        });
-        ElMessage.success('批量派发成功');
-        checkedIds.value = [];
-        handleRefresh();
-        batchDispatchDrawerApi.close();
-      } catch (error) {
-        ElMessage.error('批量派发失败');
-        console.error(error);
-      }
-    },
-  });
-
-  const [BatchDispatchForm, batchDispatchFormApi] = useVbenForm({
-    schema: [
-      {
-        fieldName: 'executeUserId',
-        label: '执行人',
-        component: 'Select',
-        componentProps: {
-          placeholder: '请选择执行人',
-          options: [],
-        },
-        rules: 'required',
-      },
-    ],
-  });
-
   batchDispatchDrawerApi.open();
 };
 
@@ -581,111 +607,115 @@ const handleClaim = async (row) => {
 };
 
 // 更新进度
-const handleUpdateProgress = async (row) => {
-  const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
-    appendToMain: true,
-    modal: false,
-    title: '更新进度',
-    onCancel() {
+const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  title: '更新进度',
+  onCancel() {
+    progressDrawerApi.close();
+  },
+  async onConfirm() {
+    const values = progressFormApi.form.values;
+    const currentRow = dataObj.currentProgressRow;
+    try {
+      await updateInspectTaskProgress({
+        id: currentRow.id,
+        taskProgress: values.taskProgress,
+        remark: values.remark,
+      });
+      ElMessage.success('更新成功');
+      handleRefresh();
       progressDrawerApi.close();
-    },
-    async onConfirm() {
-      const values = progressFormApi.form.values;
-      try {
-        await updateInspectTaskProgress({
-          id: row.id,
-          taskProgress: values.taskProgress,
-          remark: values.remark,
-        });
-        ElMessage.success('更新成功');
-        handleRefresh();
-        progressDrawerApi.close();
-      } catch (error) {
-        ElMessage.error('更新失败');
-        console.error(error);
-      }
-    },
-  });
+    } catch (error) {
+      ElMessage.error('更新失败');
+      console.error(error);
+    }
+  },
+});
 
-  const [ProgressForm, progressFormApi] = useVbenForm({
-    schema: [
-      {
-        fieldName: 'taskProgress',
-        label: '任务进度',
-        component: 'Textarea',
-        componentProps: {
-          placeholder: '请输入任务进度',
-          rows: 3,
-        },
-        rules: 'required',
+const [ProgressForm, progressFormApi] = useVbenForm({
+  schema: [
+    {
+      fieldName: 'taskProgress',
+      label: '任务进度',
+      component: 'Textarea',
+      componentProps: {
+        placeholder: '请输入任务进度',
+        rows: 3,
       },
-      {
-        fieldName: 'remark',
-        label: '备注',
-        component: 'Textarea',
-        componentProps: {
-          placeholder: '请输入备注',
-          rows: 3,
-        },
+      rules: 'required',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Textarea',
+      componentProps: {
+        placeholder: '请输入备注',
+        rows: 3,
       },
-    ],
-  });
+    },
+  ],
+});
 
+const handleUpdateProgress = async (row) => {
+  dataObj.currentProgressRow = row;
   progressDrawerApi.open();
 };
 
 // 转派任务
-const handleTransfer = async (row) => {
-  const [TransferDrawer, transferDrawerApi] = useVbenDrawer({
-    appendToMain: true,
-    modal: false,
-    title: '转派任务',
-    onCancel() {
+const [TransferDrawer, transferDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  title: '转派任务',
+  onCancel() {
+    transferDrawerApi.close();
+  },
+  async onConfirm() {
+    const values = transferFormApi.form.values;
+    const currentRow = dataObj.currentTransferRow;
+    try {
+      await transferInspectTask({
+        id: currentRow.id,
+        targetUserId: values.targetUserId,
+        transferReason: values.transferReason,
+      });
+      ElMessage.success('转派成功');
+      handleRefresh();
       transferDrawerApi.close();
-    },
-    async onConfirm() {
-      const values = transferFormApi.form.values;
-      try {
-        await transferInspectTask({
-          id: row.id,
-          targetUserId: values.targetUserId,
-          transferReason: values.transferReason,
-        });
-        ElMessage.success('转派成功');
-        handleRefresh();
-        transferDrawerApi.close();
-      } catch (error) {
-        ElMessage.error('转派失败');
-        console.error(error);
-      }
-    },
-  });
+    } catch (error) {
+      ElMessage.error('转派失败');
+      console.error(error);
+    }
+  },
+});
 
-  const [TransferForm, transferFormApi] = useVbenForm({
-    schema: [
-      {
-        fieldName: 'targetUserId',
-        label: '目标执行人',
-        component: 'Select',
-        componentProps: {
-          placeholder: '请选择目标执行人',
-          options: [],
-        },
-        rules: 'required',
+const [TransferForm, transferFormApi] = useVbenForm({
+  schema: [
+    {
+      fieldName: 'targetUserId',
+      label: '目标执行人',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择目标执行人',
+        options: [],
       },
-      {
-        fieldName: 'transferReason',
-        label: '转派理由',
-        component: 'Textarea',
-        componentProps: {
-          placeholder: '请输入转派理由',
-          rows: 3,
-        },
-        rules: 'required',
+      rules: 'required',
+    },
+    {
+      fieldName: 'transferReason',
+      label: '转派理由',
+      component: 'Textarea',
+      componentProps: {
+        placeholder: '请输入转派理由',
+        rows: 3,
       },
-    ],
-  });
+      rules: 'required',
+    },
+  ],
+});
 
+const handleTransfer = async (row) => {
+  dataObj.currentTransferRow = row;
   transferDrawerApi.open();
 };
 
@@ -779,6 +809,22 @@ const getActionButtons = (row) => {
 
   return buttons;
 };
+
+// 字段点击筛选
+const handleFieldFilter = (field, value, userName = '') => {
+  Object.assign(dataObj.searchParams, {
+    [field]: value,
+  });
+
+  // 更新用户名映射
+  if (field === 'executeUserId' && userName) {
+    userNameMap.value.executeUserId = userName;
+  }
+
+  dataObj.currentPage = 1;
+  isSearching = true;
+  handleRefresh();
+};
 </script>
 
 <template>
@@ -869,34 +915,40 @@ const getActionButtons = (row) => {
         </el-text>
       </template>
       <template #taskType="{ row }">
-        <el-text class="common-align">
+        <el-tag
+          :type="taskTypeMap[row.taskType]"
+          @click="handleFieldFilter('taskType', row.taskType)"
+          style="cursor: pointer"
+        >
           {{ row.taskType }}
-        </el-text>
+        </el-tag>
       </template>
       <template #status="{ row }">
         <el-tag
-          :type="
-            row.status === '待派发'
-              ? 'info'
-              : row.status === '待认领'
-                ? 'warning'
-                : row.status === '处理中'
-                  ? 'primary'
-                  : row.status === '已完成'
-                    ? 'success'
-                    : 'info'
-          "
+          :type="statusTypeMap[row.status]"
+          @click="handleFieldFilter('status', row.status)"
+          style="cursor: pointer"
         >
           {{ row.status }}
         </el-tag>
       </template>
       <template #areaName="{ row }">
-        <el-text class="common-align" type="primary">
+        <el-text
+          @click="handleFieldFilter('areaId', row.areaName)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
           {{ row.areaName }}
         </el-text>
       </template>
       <template #executeUserName="{ row }">
-        <el-text class="common-align" type="primary">
+        <el-text
+          @click="handleFieldFilter('executeUserId', row.executeUserName, row.executeUserName)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
           {{ row.executeUserName || '-' }}
         </el-text>
       </template>

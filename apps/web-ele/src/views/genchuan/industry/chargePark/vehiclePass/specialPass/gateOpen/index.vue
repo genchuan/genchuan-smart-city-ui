@@ -27,7 +27,7 @@ const activeName = ref('开闸管理');
 
 <template>
   <div class="common-index">
-    <gateOpenChart v-if="tabArray[0].arrowShow" />
+    <gateOpenChart v-if="tabArray[0].arrowShow" :key="tabArray[0].arrowShow" />
     <el-tabs v-model="activeName" class="common-tabs mark-tabs" type="card">
       <el-tab-pane
         v-for="item in tabArray"

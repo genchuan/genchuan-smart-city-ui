@@ -199,8 +199,17 @@ const activeFilters = computed(() => {
   if (obj.plateNo) {
     filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
   }
+  if (obj.passReason) {
+    filters.push({ label: `放行原因：${obj.passReason}`, field: 'passReason' });
+  }
   if (obj.status) {
     filters.push({ label: `状态：${obj.status}`, field: 'status' });
+  }
+  if (obj.stationName) {
+    filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+  }
+  if (obj.operator) {
+    filters.push({ label: `操作人：${obj.operator}`, field: 'operator' });
   }
 
   return filters;
@@ -532,12 +541,6 @@ watch(
         >
           {{ row.operator }}
         </el-text>
-      </template>
-      <template #updater="{ row }">
-        <span>{{ row.updater || '-' }}</span>
-      </template>
-      <template #updateTime="{ row }">
-        <span>{{ formatTime(row.updateTime) }}</span>
       </template>
       <template #correctionMark="{ row }">
         <el-tag v-if="row.isCorrected" type="success">已修正</el-tag>
