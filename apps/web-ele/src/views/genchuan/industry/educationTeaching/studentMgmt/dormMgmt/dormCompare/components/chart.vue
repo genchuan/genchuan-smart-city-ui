@@ -95,8 +95,12 @@ const loadData = async () => {
   }
 };
 
-watch(currentCycle, () => {
+watch(currentCycle, (newCycle) => {
   loadData();
+  // 派发周期筛选事件，通知列表组件
+  window.dispatchEvent(new CustomEvent('dorm-compare-chart-filter', {
+    detail: { type: 'cycle', value: newCycle }
+  }));
 });
 onMounted(() => {
   loadData();

@@ -203,16 +203,19 @@ const getTableData = async ({ page }) => {
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
+
+    // 处理值班日期范围 -> 逗号分隔字符串
     if (params.dutyDate && Array.isArray(params.dutyDate) && params.dutyDate.length === 2) {
-      params.dutyDateStart = params.dutyDate[0];
-      params.dutyDateEnd = params.dutyDate[1];
-      delete params.dutyDate;
+      params.dutyDate = params.dutyDate.join(',');
     }
+
+    // 移除空值参数
     Object.keys(params).forEach(key => {
       if (params[key] === '' || params[key] === null || params[key] === undefined) {
         delete params[key];
       }
     });
+
     const res = await getDutyMgmtPage(params);
     dataObj.total = res.total || 0;
     dataObj.list = res.list || [];
@@ -269,7 +272,7 @@ const [ScheduleForm, scheduleFormApi] = useVbenForm({
       const res = await scheduleDutyMgmt({
         dutyDateList: allDates,
         dutyUser: values.dutyUser,
-        status: values.status || '待打卡',
+        status: '待打卡',
         remark: values.remark || '',
       });
       if (res && res !== false) {
@@ -346,7 +349,6 @@ const currentShiftRows = ref([]);
 function handleBatchShiftApply() {
   if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一条值班记录');
   const selectedRows = checkedRows.value.filter(row => row.status === '待打卡');
-  if (selectedRows.length === 0) return ElMessage.warning('请选择状态为【待打卡】的值班记录');
   currentShiftRows.value = selectedRows;
   shiftApplyFormApi.resetForm();
   shiftApplyDrawerApi.open();
@@ -387,7 +389,6 @@ const currentVehicleRows = ref([]);
 function handleBatchVehicleApply() {
   if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一条值班记录');
   const selectedRows = checkedRows.value.filter(row => row.status === '待打卡');
-  if (selectedRows.length === 0) return ElMessage.warning('请选择状态为【待打卡】的值班记录');
   currentVehicleRows.value = selectedRows;
   vehicleApplyFormApi.resetForm();
   vehicleApplyDrawerApi.open();
@@ -450,7 +451,6 @@ async function handleCheckin(row) {
 async function handleBatchCheckin() {
   if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一条值班记录');
   const selectedRows = checkedRows.value.filter(row => row.status === '待打卡');
-  if (selectedRows.length === 0) return ElMessage.warning('请选择状态为【待打卡】的值班记录');
   try {
     await ElMessageBox.confirm(`确认打卡选中的 ${selectedRows.length} 条值班记录？`, '批量打卡确认', {
       confirmButtonText: '确认',

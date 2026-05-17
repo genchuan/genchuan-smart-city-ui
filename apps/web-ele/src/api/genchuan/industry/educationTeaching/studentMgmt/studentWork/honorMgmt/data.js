@@ -79,10 +79,7 @@ export function getHonorMgmtPage(params) {
 
 export function createHonorMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/honor-mgmt/create', convertedData).catch(err => {
-    console.warn('新增接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/honor-mgmt/create', convertedData)
 }
 
 export function updateHonorMgmt(data) {
@@ -114,10 +111,7 @@ export function auditHonorMgmt(data) {
 
 export function pushHonorMgmt(data) {
   // 推送接口只传 id，无需转换
-  return requestClient.put('/studentmgmt/honor-mgmt/push', data).catch(err => {
-    console.warn('推送接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/honor-mgmt/push', data)
 }
 
 export function exportHonorMgmt(params) {
