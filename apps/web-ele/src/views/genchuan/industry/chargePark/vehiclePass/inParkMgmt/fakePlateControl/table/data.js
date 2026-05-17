@@ -203,7 +203,11 @@ export function useCreateFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择场站',
-        options: [],
+        options: [
+          { label: '充电站1', value: 1 },
+          { label: '充电站2', value: 2 },
+          { label: '充电站3', value: 3 },
+        ],
       },
       rules: 'required',
     },
@@ -215,6 +219,83 @@ export function useCreateFormSchema() {
         placeholder: '请输入备注',
         rows: 3,
       },
+    },
+  ];
+}
+
+/** 审核表单配置 */
+export function useAuditFormSchema() {
+  return [
+    {
+      fieldName: 'id',
+      label: 'ID',
+      component: 'Input',
+      componentProps: { disabled: true },
+    },
+    {
+      fieldName: 'auditResult',
+      label: '审核结果',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择审核结果',
+        options: [
+          { label: '通过', value: 'pass' },
+          { label: '驳回', value: 'reject' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'auditOpinion',
+      label: '审核意见',
+      component: 'Textarea',
+      componentProps: {
+        rows: 4,
+        placeholder: '请输入审核意见（必填）',
+      },
+      rules: [
+        { required: true, message: '审核意见必填' },
+        { min: 1, message: '审核意见不能为空' },
+      ],
+    },
+  ];
+}
+
+/** 修正表单配置 */
+export function useCorrectFormSchema() {
+  return [
+    {
+      fieldName: 'id',
+      label: 'ID',
+      component: 'Input',
+      componentProps: { disabled: true },
+    },
+    {
+      fieldName: 'plateNo',
+      label: '车牌',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入车牌',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'parkingSpot',
+      label: '车位',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入车位',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'area',
+      label: '片区',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入片区',
+      },
+      rules: 'required',
     },
   ];
 }
