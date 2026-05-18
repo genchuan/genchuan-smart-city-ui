@@ -49,7 +49,7 @@ const props = defineProps({
     }),
   },
 });
-const emit = defineEmits(['arrow-change']);
+const emit = defineEmits(['arrow-change', 'clear-filters']);
 
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
@@ -61,6 +61,8 @@ watch(
   () => props.filterParams,
   () => {
     dataObj.currentPage = 1;
+    dataObj.searchObj = {};
+    dataObj.filterParams = props.filterParams;
     gridApi.query();
   },
   { deep: true }
@@ -201,6 +203,7 @@ const dataObj = reactive({
   list: [],
   loading: false,
   searchObj: {},
+  filterParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -212,7 +215,7 @@ const getTableData = async (pageObj) => {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchObj,
-    ...props.filterParams,
+    ...dataObj.filterParams,
   };
 
   try {
@@ -250,6 +253,8 @@ const [QueryForm, queryFormApi] = useVbenForm({
     const values = await queryFormApi.getValues();
     dataObj.searchObj = values;
     dataObj.currentPage = 1;
+    dataObj.filterParams = {}; 
+    emit('clear-filters');
     gridApi.query();
     drawerApi.close();
   },
@@ -320,7 +325,7 @@ const createLabel = (item) => {
 const handleClick = () => {
   gridApi.query();
 };
-const handleSerachShow = () => {
+const handleSearchShow = () => {
   drawerApi.open();
 };
 const handleFullShow = () => {
@@ -586,7 +591,7 @@ const alarmColumns = [
       width="500px"
       append-to-body
     >
-      <el-form :model="batchIdentifyForm" label-width="80px">
+      <el-form :model="batchIdentifyForm" label-width="120px">
         <el-form-item label="识别ID列表">
           <el-input :value="batchIdentifyForm.ids.join(',')" disabled />
         </el-form-item>
@@ -627,7 +632,7 @@ const alarmColumns = [
           <IconButton
             content="搜索"
             icon-name="search"
-            @click="handleSerachShow"
+            @click="handleSearchShow"
           />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
@@ -696,14 +701,16 @@ const alarmColumns = [
             @click="handleOpenDetail(row)"
           />
           <IconButton
-            content="标记"
-            icon-name="edit"
-            @click="handleMark(row)"
-          />
-          <IconButton
+            v-if="row.status === 'pending'"
             content="识别"
             icon-name="Search"
             @click="handleIdentify(row)"
+          />
+          <IconButton
+            v-if="row.status === 'identified' || row.status === 'marked'"
+            content="标记"
+            icon-name="edit"
+            @click="handleMark(row)"
           />
         </div>
       </template>
