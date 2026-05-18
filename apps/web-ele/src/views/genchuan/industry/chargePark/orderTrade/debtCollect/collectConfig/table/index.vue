@@ -366,6 +366,7 @@ const getStatusType = (status) => {
 
 // 创建弹窗
 const createDialogVisible = ref(false);
+const createFormRef = ref(null);
 const createForm = reactive({
   id: 0,
   configNo: '',
@@ -376,6 +377,22 @@ const createForm = reactive({
   remark: '',
   operatorId: 0,
 });
+
+const createRules = {
+  configNo: [
+    { required: true, message: '请输入配置编号', trigger: 'blur' },
+  ],
+  collectMethod: [
+    { required: true, message: '请选择追缴方式', trigger: 'change' },
+  ],
+  pushFrequency: [
+    { required: true, message: '请输入推送频率', trigger: 'blur' },
+    { type: 'number', min: 1, message: '推送频率必须大于0', trigger: 'blur' },
+  ],
+  status: [
+    { required: true, message: '请选择状态', trigger: 'change' },
+  ],
+};
 
 // 打开创建弹窗
 const handleCreateConfig = () => {
@@ -394,14 +411,18 @@ const handleCreateConfig = () => {
 
 // 提交创建
 const handleCreateConfigSubmit = async () => {
-  try {
-    await createDebtRecordCollectConfig(createForm);
-    ElMessage.success('创建成功');
-    createDialogVisible.value = false;
-    handleRefresh();
-  } catch {
-    ElMessage.error('创建失败');
-  }
+  if (!createFormRef.value) return;
+  createFormRef.value.validate(async (valid) => {
+    if (!valid) return;
+    try {
+      await createDebtRecordCollectConfig(createForm);
+      ElMessage.success('创建成功');
+      createDialogVisible.value = false;
+      handleRefresh();
+    } catch {
+      ElMessage.error('创建失败');
+    }
+  });
 };
 
 // 更新弹窗
@@ -592,21 +613,21 @@ watch(
       width="500px"
       append-to-body
     >
-      <el-form :model="createForm" label-width="80px">
-        <el-form-item label="配置编号">
+      <el-form :model="createForm" label-width="80px" :rules="createRules" ref="createFormRef">
+        <el-form-item label="配置编号" prop="configNo">
           <el-input v-model="createForm.configNo" />
         </el-form-item>
-        <el-form-item label="追缴方式">
+        <el-form-item label="追缴方式" prop="collectMethod">
           <el-select v-model="createForm.collectMethod" placeholder="请选择追缴方式">
             <el-option label="短信" value="sms" />
             <el-option label="站内信" value="notify" />
             <el-option label="电话" value="phone" />
           </el-select>
         </el-form-item>
-        <el-form-item label="推送频率">
+        <el-form-item label="推送频率" prop="pushFrequency">
           <el-input v-model.number="createForm.pushFrequency" type="number" />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label="状态" prop="status">
           <el-select v-model="createForm.status" placeholder="请选择状态">
             <el-option label="未生效" value="inactive" />
             <el-option label="已生效" value="active" />
