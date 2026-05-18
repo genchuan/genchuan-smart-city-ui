@@ -24,7 +24,7 @@ export function executeRefundApply(data) {
 }
 /** 订单批量审核 */
 export function batchAuditRefundApply(data) {
-  return requestClient.put('/ordertrade/refund-apply/batch-audit', data);
+  return requestClient.post('/ordertrade/refund-apply/batch-audit', data);
 }
 /** 订单审核 */
 export function approveRefundApply(data) {

@@ -45,7 +45,7 @@ const props = defineProps({
     }),
   },
 });
-const emit = defineEmits(['arrow-change']);
+const emit = defineEmits(['arrow-change', 'clear-filters']);
 
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
@@ -188,18 +188,19 @@ const dataObj = reactive({
   list: [],
   loading: false,
   searchObj: {},
+  filterParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
 // 表格数据获取
-const getTableData = async (pageObj) => {
+const getTableData = async (pageObj) => { 
   const page = pageObj.page;
   const params = {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchObj,
-    ...props.filterParams,
+    ...dataObj.filterParams,
   };
 
   try {
@@ -236,8 +237,10 @@ const [QueryForm, queryFormApi] = useVbenForm({
   },
   handleSubmit: async () => {
     const values = await queryFormApi.getValues();
-    dataObj.searchObj = values;
+    dataObj.searchObj = values; 
+    dataObj.filterParams = {};
     dataObj.currentPage = 1;
+    emit('clear-filters');
     gridApi.query();
     drawerApi.close();
   },
@@ -306,6 +309,8 @@ watch(
   () => props.filterParams,
   () => {
     dataObj.currentPage = 1;
+    dataObj.searchObj = {}; 
+    dataObj.filterParams = props.filterParams;
     gridApi.query();
   },
   { deep: true }

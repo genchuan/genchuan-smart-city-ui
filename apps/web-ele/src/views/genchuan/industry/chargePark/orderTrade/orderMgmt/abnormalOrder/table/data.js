@@ -2,25 +2,36 @@
 export function useFormSchema() {
   return [
     {
-      fieldName: 'id',
-      label: '主键ID',
-      component: 'InputNumber',
+      fieldName: 'identifyTimeStart',
+      label: '异常识别时间',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: '请输入主键ID',
-        precision: 0,
-        min: 0,
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
       isSearch: true,
     },
     {
-      fieldName: 'orderId',
-      label: '关联订单ID',
-      component: 'InputNumber',
+      fieldName: 'identifyTimeEnd',
+      label: '异常识别时间',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: '请输入关联订单ID',
-        precision: 0,
-        min: 0,
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: 120,
+      isSearch: true,
+    },
+    {
+      fieldName: 'stationName',
+      label: '所属场站',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入所属场站',
+        maxLength: 50,
       },
       labelWidth: 120,
       isSearch: true,
@@ -31,10 +42,12 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择订单类型',
-        options: [
-          { label: '充电订单', value: 'charge' },
-          { label: '停车订单', value: 'park' },
-          { label: '设备借出订单', value: 'lend' },
+        options: [ 
+          { label: '临时停车', value: 'temp_park' },
+          { label: '错时停车', value: 'offtime_park' },
+          { label: '汽车充电', value: 'car_charge' },
+          { label: '两轮充电', value: 'bike_charge' },
+          { label: '共享充电', value: 'share_charge' },
         ],
       },
       labelWidth: 120,
@@ -46,10 +59,10 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择异常类型',
-        options: [
-          { label: '设备故障', value: 'device_fault' },
-          { label: '订单超时', value: 'order_timeout' },
-          { label: '支付异常', value: 'pay_error' },
+        options: [ 
+          { label: '支付异常', value: 'payment_error' },
+          { label: '计费异常', value: 'billing_error' },
+          { label: '状态异常', value: 'status_error' },
         ],
       },
       labelWidth: 120,
@@ -71,11 +84,10 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择处置状态',
-        options: [
-          { label: '待处理', value: 'pending' },
-          { label: '处理中', value: 'processing' },
-          { label: '已完成', value: 'completed' },
-          { label: '已忽略', value: 'ignored' },
+        options: [ 
+          { label: '未处理', value: 'unhandled' },
+          { label: '处理中', value: 'handling' },
+          { label: '已关闭', value: 'closed' }, 
         ],
       },
       labelWidth: 120,
@@ -195,7 +207,7 @@ export function useGridColumns() {
       minWidth: 100,
       sortable: true,
       slots: { default: 'id' },
-    }, 
+    },
     {
       field: 'orderType',
       title: '订单类型',

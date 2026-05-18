@@ -49,7 +49,7 @@ const props = defineProps({
     }),
   },
 });
-const emit = defineEmits(['arrow-change']);
+const emit = defineEmits(['arrow-change', 'clear-filters']);
 
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
@@ -189,6 +189,7 @@ const dataObj = reactive({
   list: [],
   loading: false,
   searchObj: {},
+  filterParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -200,7 +201,7 @@ const getTableData = async (pageObj) => {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchObj,
-    ...props.filterParams,
+    ...dataObj.filterParams,
   };
 
   try {
@@ -236,6 +237,8 @@ const [QueryForm, queryFormApi] = useVbenForm({
     const values = await queryFormApi.getValues();
     dataObj.searchObj = values;
     dataObj.currentPage = 1;
+    dataObj.filterParams = {};
+    emit('clear-filters');
     gridApi.query();
     drawerApi.close();
   },
@@ -302,7 +305,7 @@ const createLabel = (item) => {
 const handleClick = () => {
   gridApi.query();
 };
-const handleSerachShow = () => {
+const handleSearchShow = () => {
   drawerApi.open();
 };
 const handleFullShow = () => {
@@ -323,11 +326,15 @@ const openEn = async () => {
   enDetailObjRef.value?.open();
 };
 
-// 订单状态映射
 // 追缴配置状态映射
 const statusMap = {
   inactive: { label: '未生效', type: 'info' },
   active: { label: '已生效', type: 'success' },
+  disabled: { label: '已禁用', type: 'danger' },
+  enabled: { label: '已启用', type: 'success' },
+  pending: { label: '待推送', type: 'warning' },
+  collecting: { label: '追缴中', type: 'primary' },
+  completed: { label: '已完成', type: 'success' },
 };
 
 // 追缴方式映射
@@ -359,6 +366,7 @@ const getStatusType = (status) => {
 
 // 创建弹窗
 const createDialogVisible = ref(false);
+const createFormRef = ref(null);
 const createForm = reactive({
   id: 0,
   configNo: '',
@@ -369,6 +377,22 @@ const createForm = reactive({
   remark: '',
   operatorId: 0,
 });
+
+const createRules = {
+  configNo: [
+    { required: true, message: '请输入配置编号', trigger: 'blur' },
+  ],
+  collectMethod: [
+    { required: true, message: '请选择追缴方式', trigger: 'change' },
+  ],
+  pushFrequency: [
+    { required: true, message: '请输入推送频率', trigger: 'blur' },
+    { type: 'number', min: 1, message: '推送频率必须大于0', trigger: 'blur' },
+  ],
+  status: [
+    { required: true, message: '请选择状态', trigger: 'change' },
+  ],
+};
 
 // 打开创建弹窗
 const handleCreateConfig = () => {
@@ -387,14 +411,18 @@ const handleCreateConfig = () => {
 
 // 提交创建
 const handleCreateConfigSubmit = async () => {
-  try {
-    await createDebtRecordCollectConfig(createForm);
-    ElMessage.success('创建成功');
-    createDialogVisible.value = false;
-    handleRefresh();
-  } catch {
-    ElMessage.error('创建失败');
-  }
+  if (!createFormRef.value) return;
+  createFormRef.value.validate(async (valid) => {
+    if (!valid) return;
+    try {
+      await createDebtRecordCollectConfig(createForm);
+      ElMessage.success('创建成功');
+      createDialogVisible.value = false;
+      handleRefresh();
+    } catch {
+      ElMessage.error('创建失败');
+    }
+  });
 };
 
 // 更新弹窗
@@ -538,6 +566,8 @@ watch(
   () => props.filterParams,
   () => {
     dataObj.currentPage = 1;
+    dataObj.searchObj = {};
+    dataObj.filterParams = props.filterParams;
     gridApi.query();
   },
   { deep: true }
@@ -583,24 +613,26 @@ watch(
       width="500px"
       append-to-body
     >
-      <el-form :model="createForm" label-width="80px">
-        <el-form-item label="配置编号">
+      <el-form :model="createForm" label-width="80px" :rules="createRules" ref="createFormRef">
+        <el-form-item label="配置编号" prop="configNo">
           <el-input v-model="createForm.configNo" />
         </el-form-item>
-        <el-form-item label="追缴方式">
+        <el-form-item label="追缴方式" prop="collectMethod">
           <el-select v-model="createForm.collectMethod" placeholder="请选择追缴方式">
             <el-option label="短信" value="sms" />
             <el-option label="站内信" value="notify" />
             <el-option label="电话" value="phone" />
           </el-select>
         </el-form-item>
-        <el-form-item label="推送频率">
+        <el-form-item label="推送频率" prop="pushFrequency">
           <el-input v-model.number="createForm.pushFrequency" type="number" />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label="状态" prop="status">
           <el-select v-model="createForm.status" placeholder="请选择状态">
             <el-option label="未生效" value="inactive" />
             <el-option label="已生效" value="active" />
+            <el-option label="已禁用" value="disabled" />
+            <el-option label="已启用" value="enabled" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注">
@@ -647,6 +679,8 @@ watch(
           <el-select v-model="updateForm.status" placeholder="请选择状态">
             <el-option label="启用" value="enabled" />
             <el-option label="禁用" value="disabled" />
+            <el-option label="已生效" value="active" />
+            <el-option label="未生效" value="inactive" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注">
@@ -744,7 +778,7 @@ watch(
           <IconButton
             content="搜索"
             icon-name="search"
-            @click="handleSerachShow"
+            @click="handleSearchShow"
           />
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"

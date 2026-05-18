@@ -11,7 +11,7 @@ export function useFormSchema() {
         min: 0,
       },
       labelWidth: 120,
-     
+
     },
     {
       fieldName: 'orderNo',
@@ -22,7 +22,6 @@ export function useFormSchema() {
         maxLength: 50,
       },
       labelWidth: 120,
-      isSearch: true,
     },
     {
       fieldName: 'plateNo',
@@ -33,7 +32,7 @@ export function useFormSchema() {
         maxLength: 20,
       },
       labelWidth: 120,
-     
+
     },
     {
       fieldName: 'chargeDuration',
@@ -45,7 +44,7 @@ export function useFormSchema() {
         min: 0,
       },
       labelWidth: 120,
-     
+
     },
     {
       fieldName: 'chargeQuantity',
@@ -57,7 +56,7 @@ export function useFormSchema() {
         min: 0,
       },
       labelWidth: 120,
-     
+
     },
     {
       fieldName: 'chargePower',
@@ -69,7 +68,7 @@ export function useFormSchema() {
         min: 0,
       },
       labelWidth: 120,
-     
+
     },
     {
       fieldName: 'amount',
@@ -81,7 +80,7 @@ export function useFormSchema() {
         min: 0,
       },
       labelWidth: 120,
-     
+
     },
     {
       fieldName: 'status',
@@ -90,36 +89,51 @@ export function useFormSchema() {
       componentProps: {
         placeholder: '请选择订单状态',
         options: [
+          { label: '充电中', value: 'charging' },
+          { label: '待支付', value: 'pending_pay' },
+          { label: '已支付', value: 'paid' },
           { label: '已完成', value: 'completed' },
-          { label: '未支付', value: 'unpaid' },
           { label: '已取消', value: 'cancelled' },
+          { label: '退款中', value: 'refunding' },
         ],
       },
       labelWidth: 120,
-     
+      isSearch: true,
     },
     {
-      fieldName: 'createOrderTime',
+      fieldName: 'createOrderTimeStart',
       label: '订单生成时间',
-      component: 'DateTimePicker',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择订单生成时间',
+        type: 'datetime',
         format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
-     
+      isSearch: true,
     },
     {
-      fieldName: 'stationId',
-      label: '所属场站ID',
-      component: 'InputNumber',
+      fieldName: 'createOrderTimeEnd',
+      label: '订单结束时间',
+      component: 'DatePicker',
       componentProps: {
-        placeholder: '请输入所属场站ID',
-        precision: 0,
-        min: 0,
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       labelWidth: 120,
-     
+      isSearch: true,
+    },
+    {
+      fieldName: 'stationName',
+      label: '所属场站',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入所属场站',
+        maxLength: 50,
+      },
+      labelWidth: 120,
+      isSearch: true,
     },
     {
       fieldName: 'payTime',
@@ -144,7 +158,7 @@ export function useFormSchema() {
         ],
       },
       labelWidth: 120,
-     
+
     },
     {
       fieldName: 'discountAmount',
@@ -177,7 +191,7 @@ export function useFormSchema() {
         min: 0,
       },
       labelWidth: 120,
-    }, 
+    },
     {
       fieldName: 'creator',
       label: '创建者',
@@ -322,14 +336,14 @@ export function useGridColumns() {
       field: 'archiveTime',
       title: '归档时间',
       minWidth: 220,
-      sortable: true, 
+      sortable: true,
     },
     {
       field: 'operatorId',
       title: '操作人ID',
       minWidth: 120,
       sortable: true,
-    }, 
+    },
     {
       field: 'creator',
       title: '创建者',

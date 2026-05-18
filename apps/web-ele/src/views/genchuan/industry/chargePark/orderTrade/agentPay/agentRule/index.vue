@@ -31,6 +31,11 @@ const clearFilter = () => {
   filterParams.status = null;
 };
 
+const handleClearFilters = () => {
+  filterParams.agentType = null;
+  filterParams.status = null;
+};
+
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
   tabArray.value.forEach((v) => {
@@ -50,6 +55,7 @@ const tabArray = ref([
     secondShow: false,
     arrowShow: true,
     arrowState: false,
+    filterParams,
   },
 ]);
 const activeName = ref('代付规则');
@@ -58,7 +64,7 @@ const secondShow = ref(false);
 
 <template>
   <div class="common-index">
-    <Chart @filter-change="handleFilterChange" />
+    <Chart @filter-change="handleFilterChange" v-if="tabArray[0].arrowShow"/>
     <div v-if="hasActiveFilters" class="filter-tags">
       <el-tag
         v-if="filterParams.agentType"
@@ -106,8 +112,9 @@ const secondShow = ref(false);
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
-          :filter-params="filterParams"
+          :filter-params="item.filterParams"
           @arrow-change="arrowChange"
+          @clear-filters="handleClearFilters"
         />
       </el-tab-pane>
     </el-tabs>

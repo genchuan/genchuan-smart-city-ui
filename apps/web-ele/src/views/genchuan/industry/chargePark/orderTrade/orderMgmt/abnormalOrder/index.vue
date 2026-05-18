@@ -33,6 +33,13 @@ const handleFilterChange = (params) => {
   Object.assign(filterParams, params);
 };
 
+const handleClearFilters = () => {
+  filterParams.identifyTimeStart = null;
+  filterParams.identifyTimeEnd = null;
+  filterParams.abnormalType = null;
+  filterParams.status = null;
+};
+
 // 异常类型映射
 const abnormalTypeMap = {
   payment_error: '支付异常',
@@ -54,23 +61,15 @@ const hasActiveFilters = () => {
 const clearDateFilter = () => {
   filterParams.identifyTimeStart = null;
   filterParams.identifyTimeEnd = null;
-  filterParams.abnormalType = null;
-  filterParams.status = null;
 };
 
 // 清除异常类型筛选
 const clearAbnormalTypeFilter = () => {
-  filterParams.identifyTimeStart = null;
-  filterParams.identifyTimeEnd = null;
   filterParams.abnormalType = null;
-  filterParams.status = null;
 };
 
 // 清除状态筛选
 const clearStatusFilter = () => {
-  filterParams.identifyTimeStart = null;
-  filterParams.identifyTimeEnd = null;
-  filterParams.abnormalType = null;
   filterParams.status = null;
 };
 
@@ -90,8 +89,15 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <Chart @filter-change="handleFilterChange" />
+    <Chart @filter-change="handleFilterChange" v-if="tabArray[0].arrowShow"/>
     <div v-if="hasActiveFilters" class="filter-tags">
+      <el-tag
+        v-if="filterParams.identifyTimeStart"
+        closable
+        @close="clearDateFilter"
+      >
+        日期: {{ filterParams.identifyTimeStart.split(' ')[0] }}
+      </el-tag>
       <el-tag
         v-if="filterParams.abnormalType"
         closable
@@ -100,25 +106,18 @@ const secondShow = ref(false);
         异常类型: {{ getAbnormalTypeLabel(filterParams.abnormalType) }}
       </el-tag>
       <el-tag
-        v-else-if="filterParams.status === 'unhandled'"
+        v-if="filterParams.status === 'unhandled'"
         closable
         @close="clearStatusFilter"
       >
         状态: 未处理
       </el-tag>
       <el-tag
-        v-else-if="filterParams.status === 'closed'"
+        v-if="filterParams.status === 'closed'"
         closable
         @close="clearStatusFilter"
       >
         状态: 已关闭
-      </el-tag>
-      <el-tag
-        v-else-if="filterParams.identifyTimeStart"
-        closable
-        @close="clearDateFilter"
-      >
-        日期: {{ filterParams.identifyTimeStart.split(' ')[0] }}
       </el-tag>
     </div>
     <div class="icon-change">
@@ -160,6 +159,7 @@ const secondShow = ref(false);
           :arrow-show="item.arrowShow"
           :filter-params="item.filterParams"
           @arrow-change="arrowChange"
+          @clear-filters="handleClearFilters"
         />
       </el-tab-pane>
     </el-tabs>
@@ -171,13 +171,13 @@ const secondShow = ref(false);
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 0;
-  margin: 0;
-  min-height: 0;
-  height: auto;
+  padding: 12px 16px;
+  margin: 0 16px;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+  border: 1px solid #e4e7ed;
 
   .el-tag {
-    margin: 12px 8px 12px 16px;
     cursor: pointer;
 
     &:hover {

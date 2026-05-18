@@ -96,8 +96,8 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">所属场站ID:</div>
-        <div class="detail-row-right">{{ detailObj.stationId || '-' }}</div>
+        <div class="detail-row-left">所属场站:</div>
+        <div class="detail-row-right">{{ detailObj.stationName || detailObj.stationId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">

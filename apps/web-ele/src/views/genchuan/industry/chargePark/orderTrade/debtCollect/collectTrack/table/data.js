@@ -29,8 +29,8 @@ export function useFormSchema() {
       isSearch: true,
     },
     {
-      fieldName: 'createTimeStart',
-      label: '创建时间开始',
+      fieldName: 'collectTimeStart',
+      label: '追缴时间开始',
       component: 'DatePicker',
       componentProps: {
         type: 'datetime',
@@ -41,8 +41,8 @@ export function useFormSchema() {
       isSearch: true,
     },
     {
-      fieldName: 'createTimeEnd',
-      label: '创建结束时间',  
+      fieldName: 'collectTimeEnd',
+      label: '追缴时间结束时间',    
       component: 'DatePicker',
       componentProps: {
         type: 'datetime',
