@@ -107,19 +107,20 @@ const currentPageStats = computed(() => {
 
 function buildQueryParams(page) {
   const trendTrackTimeRange = buildTrendTrackTimeRange(filterTrendTime.value);
-
   return {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    ...dataObj.searchParams,
+    // ...dataObj.searchParams,
     userId: filterUserId.value || dataObj.searchParams.userId,
     area: filterArea.value || dataObj.searchParams.area,
     status: filterStatus.value || dataObj.searchParams.status,
     syncStatus: filterSyncStatus.value || dataObj.searchParams.syncStatus,
-    trackTime:
-      trendTrackTimeRange ||
-      dataObj.searchParams.trackTimeRange ||
-      dataObj.searchParams.trackTime,
+    'trackTime[0]': dataObj.searchParams?.trackTime?.[0],
+    'trackTime[1]': dataObj.searchParams?.trackTime?.[1],
+    // trackTime:
+    //   trendTrackTimeRange ||
+    //   dataObj.searchParams.trackTimeRange ||
+    //   dataObj.searchParams.trackTime,
     trendTime: filterTrendTime.value,
   };
 }

@@ -32,7 +32,7 @@ import {
   getProgressStatus,
   getTaskStatusLabel,
   getTaskStatusTagType,
-  getTaskTypeTagType,
+  getPlanTypeTagType,
   getUserName,
   isTaskStatusLabel,
   loadTaskUserOptions,
@@ -41,6 +41,7 @@ import {
   useGridColumns,
   userOptions,
   useSearchFormSchema,
+  getPlanTypeLabel
 } from './data';
 
 const props = defineProps({
@@ -79,7 +80,7 @@ const filterStatus = ref('');
 const filterStatusGroup = ref('');
 const filterArchive = ref('');
 const filterTrendTime = ref('');
-
+const filterUpdateMonth = ref('');
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
@@ -115,7 +116,7 @@ function buildQueryParams(page) {
     ...dataObj.searchParams,
     planId: filterPlanId.value || dataObj.searchParams.planId,
     userId: filterUserId.value || dataObj.searchParams.userId,
-    taskType: filterTaskType.value || dataObj.searchParams.taskType,
+    planTypeName: filterTaskType.value || dataObj.searchParams.taskType,
     status:
       filterStatusGroup.value === '待处理'
         ? undefined
@@ -125,7 +126,7 @@ function buildQueryParams(page) {
       filterArchive.value === ''
         ? dataObj.searchParams.isArchive
         : filterArchive.value,
-    trendTime: filterTrendTime.value,
+    updateMonth: filterTrendTime.value,
   };
 }
 
@@ -462,7 +463,7 @@ watch(
   (filter) => {
     if (!filter) return;
     if (filter.type === 'status') {
-      if (filter.value === '处理中') {
+      if (filter.value === '3') {
         filterStatus.value = '3';
         filterStatusGroup.value = '处理中';
       } else {
@@ -473,6 +474,7 @@ watch(
     }
     if (filter.type === 'taskType') {
       filterTaskType.value = filter.value;
+      filterTrendTime.value = '';
     }
     if (filter.type === 'trendTime') {
       filterTrendTime.value = filter.value;
@@ -535,7 +537,7 @@ onMounted(() => {
             type="warning"
             @close="cancelFilter('taskType')"
           >
-            任务类型：{{ filterTaskType }}
+            任务类型：{{ getPlanTypeLabel(filterTaskType) }}
           </ElTag>
           <ElTag
             v-if="filterStatus || filterStatusGroup"
@@ -559,7 +561,7 @@ onMounted(() => {
             type="danger"
             @close="cancelFilter('trendTime')"
           >
-            趋势时间：{{ filterTrendTime }}
+            更新时间：{{ filterTrendTime }}月
           </ElTag>
         </div>
       </template>
@@ -604,10 +606,10 @@ onMounted(() => {
       <template #taskType="{ row }">
         <ElTag
           style="cursor: pointer"
-          :type="getTaskTypeTagType(row.taskType)"
+          :type="getPlanTypeTagType(row.taskType)"
           @click="handleTaskTypeClick(row.taskType)"
         >
-          {{ row.taskType }}
+          {{ getPlanTypeLabel(row.taskType) }}
         </ElTag>
       </template>
 

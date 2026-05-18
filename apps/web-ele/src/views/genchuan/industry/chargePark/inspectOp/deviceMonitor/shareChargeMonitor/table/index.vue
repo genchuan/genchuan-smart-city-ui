@@ -261,7 +261,10 @@ function changeTotalShow() {
 async function handleOpenDetail(row) {
   try {
     const response = await getShareChargeMonitorDetail(row.id);
-    dataObj.detailObj = normalizeShareChargeMonitorRow(response || row);
+    dataObj.detailObj = {
+      ...normalizeShareChargeMonitorRow(response || row),
+      stationName: row.stationName,
+    }
   } catch (error) {
     console.error('获取共享充电监测详情失败，使用行数据:', error);
     dataObj.detailObj = row;

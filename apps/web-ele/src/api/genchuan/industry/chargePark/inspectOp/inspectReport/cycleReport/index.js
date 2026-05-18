@@ -27,3 +27,7 @@ export function getCycleReportDetail(id) {
 export function getCycleReportChart(params) {
   return requestClient.get('/inspectop/cycle-report/chart', { params });
 }
+
+export function getCycleReportStationOptions(params) {
+  return requestClient.get('/stationresource/station-info/page', { params });
+}

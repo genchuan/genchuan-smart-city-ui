@@ -1,9 +1,15 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import {
+  loadScheduleUserOptions,
+  userOptions,
+} from '#/api/genchuan/industry/chargePark/inspectOp/scheduleMgmt/userOptions';
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
+
+export { loadScheduleUserOptions, userOptions };
 
 export const HANDOVER_LOG_STATUS_DICT = DICT_TYPE.HANDOVER_LOG_STATUS;
 
@@ -34,13 +40,6 @@ export function getStatusLabel(value) {
 export function isStatusLabel(value, label) {
   return isDictLabel(HANDOVER_LOG_STATUS_DICT, value, label);
 }
-export const userOptions = [
-  { label: '张三', value: 1 },
-  { label: '李四', value: 2 },
-  { label: '王五', value: 3 },
-  { label: '赵六', value: 4 },
-  { label: '陈七', value: 5 },
-];
 
 export const statusOptions = getDictOptions(HANDOVER_LOG_STATUS_DICT, 'string');
 

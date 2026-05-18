@@ -483,7 +483,7 @@ export const detailFields = [
     tagType: getAssetStatusTagType,
     formatter: getAssetStatusLabel,
   },
-  { key: 'stationName', label: '所属场站' },
+  // { key: 'stationName', label: '所属场站' },
   { key: 'deviceName', label: '绑定设备' },
   { key: 'effectTimeStr', label: '生效时间' },
   // { key: 'changeRecord', label: '变更记录' },

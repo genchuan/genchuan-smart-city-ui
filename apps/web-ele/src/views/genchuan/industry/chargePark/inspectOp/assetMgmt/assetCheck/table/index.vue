@@ -149,13 +149,15 @@ function buildQueryParams(page) {
   return {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    ...dataObj.searchParams,
+    // ...dataObj.searchParams,
     type: filterType.value || dataObj.searchParams.type,
     status: filterStatus.value || dataObj.searchParams.status,
     creator: filterCreator.value || dataObj.searchParams.creator,
     updater:
       filterExecuteUserId.value || dataObj.searchParams.updater,
-    trendTime: filterTrendTime.value,
+    'checkTime[0]': dataObj.searchParams?.checkTime?.[0],
+    'checkTime[1]': dataObj.searchParams?.checkTime?.[1],
+    // trendTime: filterTrendTime.value,
   };
 }
 

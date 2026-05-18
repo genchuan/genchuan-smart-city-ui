@@ -1,9 +1,15 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import {
+  loadScheduleUserOptions,
+  userOptions,
+} from '#/api/genchuan/industry/chargePark/inspectOp/scheduleMgmt/userOptions';
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
+
+export { loadScheduleUserOptions, userOptions };
 
 export const SCHEDULE_VIEW_SHIFT_TYPE_DICT = DICT_TYPE.SCHEDULE_VIEW_SHIFT_TYPE;
 export const SCHEDULE_VIEW_STATUS_DICT = DICT_TYPE.SCHEDULE_VIEW_STATUS;
@@ -52,13 +58,6 @@ export function getApplyStatusLabel(value) {
 export function isApplyStatusLabel(value, label) {
   return isDictLabel(SHIFT_APPLY_STATUS_DICT, value, label);
 }
-export const userOptions = [
-  { label: '张三', position: '巡检员', value: 1 },
-  { label: '李四', position: '值班长', value: 2 },
-  { label: '王五', position: '设备工程师', value: 3 },
-  { label: '赵六', position: '安全巡检员', value: 4 },
-  { label: '陈七', position: '运维专员', value: 5 },
-];
 
 export const shiftTypeOptions = getDictOptions(
   SCHEDULE_VIEW_SHIFT_TYPE_DICT,
@@ -337,26 +336,26 @@ export function useSearchFormSchema() {
         ...getRangePickerDefaultProps(),
       },
     },
-    {
-      fieldName: 'shiftType',
-      label: '排班时段',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择排班时段',
-        clearable: true,
-        options: shiftTypeOptions,
-      },
-    },
-    {
-      fieldName: 'positionName',
-      label: '所属岗位',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择所属岗位',
-        clearable: true,
-        options: positionOptions,
-      },
-    },
+    // {
+    //   fieldName: 'shiftType',
+    //   label: '排班时段',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择排班时段',
+    //     clearable: true,
+    //     options: shiftTypeOptions,
+    //   },
+    // },
+    // {
+    //   fieldName: 'positionName',
+    //   label: '所属岗位',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择所属岗位',
+    //     clearable: true,
+    //     options: positionOptions,
+    //   },
+    // },
     {
       fieldName: 'status',
       label: '排班状态',
@@ -402,16 +401,16 @@ export function useShiftApplyFormSchema() {
       },
       rules: 'required',
     },
-    {
-      fieldName: 'newShiftType',
-      label: '新时段',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择新时段',
-        options: shiftTypeOptions,
-      },
-      rules: 'required',
-    },
+    // {
+    //   fieldName: 'newShiftType',
+    //   label: '新时段',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择新时段',
+    //     options: shiftTypeOptions,
+    //   },
+    //   rules: 'required',
+    // },
     {
       fieldName: 'applyRemark',
       label: '申请备注',
@@ -443,20 +442,20 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'scheduleDateStr' },
     },
-    {
-      field: 'shiftType',
-      title: '排班时段',
-      minWidth: 110,
-      sortable: true,
-      slots: { default: 'shiftType' },
-    },
-    {
-      field: 'positionName',
-      title: '所属岗位',
-      minWidth: 130,
-      sortable: true,
-      slots: { default: 'positionName' },
-    },
+    // {
+    //   field: 'shiftType',
+    //   title: '排班时段',
+    //   minWidth: 110,
+    //   sortable: true,
+    //   slots: { default: 'shiftType' },
+    // },
+    // {
+    //   field: 'positionName',
+    //   title: '所属岗位',
+    //   minWidth: 130,
+    //   sortable: true,
+    //   slots: { default: 'positionName' },
+    // },
     {
       field: 'status',
       title: '排班状态',
@@ -497,21 +496,21 @@ export const detailFields = [
   { key: 'id', label: '排班ID' },
   { key: 'userName', label: '关联人员' },
   { key: 'scheduleDateStr', label: '排班日期' },
-  {
-    key: 'shiftType',
-    label: '排班时段',
-    type: 'tag',
-    tagType: getShiftTypeTagType,
-    formatter: getShiftTypeLabel,
-  },
-  { key: 'positionName', label: '所属岗位' },
-  {
-    key: 'status',
-    label: '排班状态',
-    type: 'tag',
-    tagType: getScheduleStatusTagType,
-    formatter: getScheduleStatusLabel,
-  },
+  // {
+  //   key: 'shiftType',
+  //   label: '排班时段',
+  //   type: 'tag',
+  //   tagType: getShiftTypeTagType,
+  //   formatter: getShiftTypeLabel,
+  // },
+  // { key: 'positionName', label: '所属岗位' },
+  // {
+  //   key: 'status',
+  //   label: '排班状态',
+  //   type: 'tag',
+  //   tagType: getScheduleStatusTagType,
+  //   formatter: getScheduleStatusLabel,
+  // },
   {
     key: 'shiftApplyStatus',
     label: '换班状态',

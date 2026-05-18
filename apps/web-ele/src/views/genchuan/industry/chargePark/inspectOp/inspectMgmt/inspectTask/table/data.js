@@ -113,9 +113,21 @@ export const taskStatusOptions = getDictOptions(
   'string',
 );
 
+export const planTypeOptions = getDictOptions(
+  INSPECT_PLAN_TYPE_DICT,
+  'string',
+);
+
 /** 按任务状态字典 label 取 value，供图表卡片筛选 */
 export function getTaskStatusOptionValue(label) {
   const opt = taskStatusOptions.find(
+    (item) => String(item.label) === String(label),
+  );
+  return opt != null ? opt.value : label;
+}
+
+export function getPlanTypeOptionValue(label) {
+  const opt = planTypeOptions.find(
     (item) => String(item.label) === String(label),
   );
   return opt != null ? opt.value : label;
@@ -259,7 +271,7 @@ export function normalizeInspectTaskRow(row) {
     userId,
     userName: row.userName || row.user_name || getUserName(userId),
     taskType:
-      row.taskType || row.task_type || row.typeName || row.type || '其他',
+      row.taskType || row.task_type || row.typeName || row.type || row.planTypeName || '其他',
     dispatchTime,
     dispatchTimeStr: formatTaskTime(dispatchTime),
     claimTime,

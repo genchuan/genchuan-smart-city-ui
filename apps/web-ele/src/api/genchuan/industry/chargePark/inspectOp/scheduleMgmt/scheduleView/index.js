@@ -1,5 +1,7 @@
 import { requestClient } from '#/api/request.js';
 
+export { loadScheduleUserOptions, userOptions } from '../userOptions.js';
+
 /** 分页查询排班查看列表 */
 export function getScheduleViewPage(params) {
   return requestClient.get('/inspectop/schedule-view/page', { params });
