@@ -7,8 +7,12 @@ import { ElTag } from 'element-plus';
 const statusMap = {
   inactive: { label: '未生效', type: 'info' },
   active: { label: '已生效', type: 'success' },
-};
-
+  disabled: { label: '已禁用', type: 'danger' },
+  enabled: { label: '已启用', type: 'success' },
+  pending: { label: '待推送', type: 'warning' },
+  collecting: { label: '追缴中', type: 'primary' },
+  completed: { label: '已完成', type: 'success' },
+}; 
 // 追缴方式映射
 const collectMethodMap = {
   sms: { label: '短信', type: 'primary' },
@@ -66,8 +70,8 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   onCancel() {
     detailDrawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
+  onConfirm() { },
+  async onOpenChange() { },
 });
 
 defineExpose({
@@ -121,7 +125,7 @@ defineExpose({
         <div class="detail-row-left">配置说明:</div>
         <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
       </div>
- 
+
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
@@ -150,6 +154,7 @@ defineExpose({
   .detail-row-left {
     width: 150px;
   }
+
   .detail-card {
     min-height: 600px;
     max-height: 80vh;
@@ -175,6 +180,7 @@ defineExpose({
   &:last-child {
     border-bottom: none;
   }
+
   &:hover {
     padding: 12px 8px;
     margin: 0 -8px;
@@ -202,14 +208,17 @@ defineExpose({
 .detail-card::-webkit-scrollbar {
   width: 6px;
 }
+
 .detail-card::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 3px;
 }
+
 .detail-card::-webkit-scrollbar-thumb {
   background: #dcdfe6;
   border-radius: 3px;
 }
+
 .detail-card::-webkit-scrollbar-thumb:hover {
   background: #c0c4cc;
 }

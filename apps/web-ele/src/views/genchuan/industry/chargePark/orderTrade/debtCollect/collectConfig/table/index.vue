@@ -326,11 +326,15 @@ const openEn = async () => {
   enDetailObjRef.value?.open();
 };
 
-// 订单状态映射
 // 追缴配置状态映射
 const statusMap = {
   inactive: { label: '未生效', type: 'info' },
   active: { label: '已生效', type: 'success' },
+  disabled: { label: '已禁用', type: 'danger' },
+  enabled: { label: '已启用', type: 'success' },
+  pending: { label: '待推送', type: 'warning' },
+  collecting: { label: '追缴中', type: 'primary' },
+  completed: { label: '已完成', type: 'success' },
 };
 
 // 追缴方式映射
@@ -606,6 +610,8 @@ watch(
           <el-select v-model="createForm.status" placeholder="请选择状态">
             <el-option label="未生效" value="inactive" />
             <el-option label="已生效" value="active" />
+            <el-option label="已禁用" value="disabled" />
+            <el-option label="已启用" value="enabled" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注">
@@ -652,6 +658,8 @@ watch(
           <el-select v-model="updateForm.status" placeholder="请选择状态">
             <el-option label="启用" value="enabled" />
             <el-option label="禁用" value="disabled" />
+            <el-option label="已生效" value="active" />
+            <el-option label="未生效" value="inactive" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注">
