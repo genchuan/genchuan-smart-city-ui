@@ -17,6 +17,15 @@ import { getRangePickerDefaultProps } from '#/utils';
 
 const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
+function hasQueryValue(value: any) {
+  return !(
+    value === '' ||
+    value === null ||
+    value === undefined ||
+    (Array.isArray(value) && value.length === 0)
+  );
+}
+
 export type MerchantStatus = '已驳回' | '待审核' | '正常' | '禁用';
 
 export interface MerchantAccountLog {
@@ -604,9 +613,14 @@ export function buildMerchantInfoQueryParams(
   formValues: Record<string, any>,
   extraValues: Record<string, any> = {},
 ) {
+  const compactValues = (values: Record<string, any>) =>
+    Object.fromEntries(
+      Object.entries(values).filter(([, value]) => hasQueryValue(value)),
+    );
+
   const params = {
-    ...formValues,
-    ...extraValues,
+    ...compactValues(formValues),
+    ...compactValues(extraValues),
     registerTime:
       Array.isArray(formValues.registerTime) &&
       formValues.registerTime.length === 2
@@ -618,14 +632,7 @@ export function buildMerchantInfoQueryParams(
   };
 
   return Object.fromEntries(
-    Object.entries(params).filter(([, value]) => {
-      return !(
-        value === '' ||
-        value === null ||
-        value === undefined ||
-        (Array.isArray(value) && value.length === 0)
-      );
-    }),
+    Object.entries(params).filter(([, value]) => hasQueryValue(value)),
   );
 }
 
