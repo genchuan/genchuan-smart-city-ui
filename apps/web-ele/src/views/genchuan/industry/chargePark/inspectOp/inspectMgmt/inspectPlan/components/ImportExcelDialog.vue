@@ -130,6 +130,8 @@ async function handleImport() {
     };
     if (validationResult.value.failCount > 0) {
       ElMessage.warning('部分数据导入失败，请查看校验结果');
+      validationResult.value.success = false;
+      validationResult.value.message = response?.failureList?.[0]?.message || [];
     } else {
       ElMessage.success(response?.message || '导入成功');
       emit('success');

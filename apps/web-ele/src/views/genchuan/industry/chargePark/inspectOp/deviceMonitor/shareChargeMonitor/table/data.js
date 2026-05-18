@@ -462,7 +462,7 @@ export const detailFields = [
     tagType: getMonitorStatusTagType,
     formatter: getMonitorStatusLabel,
   },
-  { key: 'monitorTimeStr', label: '更新时间' },
+  // { key: 'monitorTimeStr', label: '更新时间' },
   {
     key: 'alarmStatus',
     label: '告警状态',

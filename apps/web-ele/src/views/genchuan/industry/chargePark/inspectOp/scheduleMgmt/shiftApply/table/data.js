@@ -1,9 +1,15 @@
 import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
+import {
+  loadScheduleUserOptions,
+  userOptions,
+} from '#/api/genchuan/industry/chargePark/inspectOp/scheduleMgmt/userOptions';
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
+
+export { loadScheduleUserOptions, userOptions };
 
 export const SHIFT_APPLY_STATUS_DICT = DICT_TYPE.SHIFT_APPLY_STATUS;
 
@@ -34,13 +40,6 @@ export function getStatusLabel(value) {
 export function isStatusLabel(value, label) {
   return isDictLabel(SHIFT_APPLY_STATUS_DICT, value, label);
 }
-export const userOptions = [
-  { label: '张三', position: '巡检员', value: 1 },
-  { label: '李四', position: '值班长', value: 2 },
-  { label: '王五', position: '设备工程师', value: 3 },
-  { label: '赵六', position: '安全巡检员', value: 4 },
-  { label: '陈七', position: '运维专员', value: 5 },
-];
 
 export const statusOptions = getDictOptions(SHIFT_APPLY_STATUS_DICT, 'string');
 
@@ -437,7 +436,7 @@ export const detailFields = [
   { key: 'targetUserName', label: '换班对象' },
   { key: 'oldDateStr', label: '原日期' },
   { key: 'newDateStr', label: '新日期' },
-  { key: 'status', label: '申请状态', type: 'tag', tagType: getStatusTagType },
+  { key: 'status', label: '申请状态', type: 'tag', tagType: getStatusTagType, formatter: getStatusLabel },
   { key: 'auditUserName', label: '审核人' },
   { key: 'auditTimeStr', label: '审核时间' },
   { key: 'effectTimeStr', label: '生效时间' },

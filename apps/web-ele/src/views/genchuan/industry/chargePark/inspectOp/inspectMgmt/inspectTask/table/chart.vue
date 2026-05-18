@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive } from 'vue';
 
 import { getInspectTaskChart } from '#/api/genchuan/industry/chargePark/inspectOp/inspectMgmt/inspectTask';
+import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
 import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
 import LineChartClick from '#/genchuan-components/stats/lineChartClick.vue';
@@ -10,6 +11,7 @@ import {
   getMockChartData,
   getPlanTypeLabel,
   getTaskStatusOptionValue,
+  getPlanTypeOptionValue
 } from './data';
 
 const emit = defineEmits(['statusFilter', 'trendFilter']);
@@ -55,7 +57,10 @@ function normalizeChartData(data) {
   state.cardList[1].value = cardData.finishTaskCount ?? 0;
   state.typeData = Array.isArray(chartData.typeData) ? chartData.typeData : [];
   state.trendData = Array.isArray(chartData.trendData)
-    ? chartData.trendData
+    ? chartData.trendData.map((item) => ({
+      ...item,
+      timeLabel: formatLocalDateTime(item.time, 'YYYY-MM-DD'),
+    }))
     : [];
 }
 
@@ -77,6 +82,11 @@ function handleTrendClick(payload) {
   if (payload?.categoryName) {
     emit('trendFilter', payload.categoryName);
   }
+}
+
+function handleTypeClick(payload) {
+  const typeName = getPlanTypeOptionValue(payload);
+  emit('typeFilter', typeName);
 }
 
 onMounted(() => {
@@ -108,6 +118,7 @@ onMounted(() => {
       y-name="分钟"
       @line-click="handleTrendClick"
     />
+    <!-- @line-click="handleTrendClick" -->
     <BarClick
       class="park-type-chart"
       title="任务类型分布"
@@ -115,6 +126,7 @@ onMounted(() => {
       :series-data="[
         { name: '任务数', data: state.typeData.map((item) => item.count) },
       ]"
+      @bar-click="handleTypeClick"
     />
   </div>
 </template>

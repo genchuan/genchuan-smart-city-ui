@@ -1,5 +1,6 @@
+import { getCycleReportStationOptions } from '#/api/genchuan/industry/chargePark/inspectOp/inspectReport/cycleReport';
+import { getRangePickerDefaultProps } from '#/utils/rangePickerProps';
 import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
-// import { getRangePickerDefaultProps } from '#/utils';
 
 export const reportCycleOptions = [
   { label: '日报', value: '日报' },
@@ -28,7 +29,7 @@ export const generateStatusOptions = [
   { label: '已生成', value: '已生成' },
 ];
 
-export const stationOptions = [
+const DEFAULT_STATION_OPTIONS = [
   {
     label: '泉州丰泽充电场站',
     value: 1001,
@@ -72,6 +73,62 @@ export const stationOptions = [
     regionName: '南安市',
   },
 ];
+
+export const stationOptions = [...DEFAULT_STATION_OPTIONS];
+let stationOptionsLoaded = false;
+let stationOptionsLoadingPromise = null;
+
+function mapStationOptionItem(item) {
+  return {
+    label:
+      item.name ||
+      item.stationName ||
+      item.label ||
+      `场站${item.id ?? ''}`,
+    value: item.id ?? item.stationId,
+    longitude: item.longitude ?? item.lng,
+    latitude: item.latitude ?? item.lat,
+    regionName: item.regionName || item.areaName || item.region || '-',
+  };
+}
+
+export async function loadCycleReportStationOptions(params) {
+  if (stationOptionsLoaded) return;
+  if (stationOptionsLoadingPromise) {
+    await stationOptionsLoadingPromise;
+    return;
+  }
+
+  stationOptionsLoadingPromise = (async () => {
+    try {
+      const response = await getCycleReportStationOptions({
+        pageNo: params?.pageNo || 1,
+        pageSize: params?.pageSize || 200,
+      });
+      const list = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.list)
+          ? response.list
+          : Array.isArray(response?.data)
+            ? response.data
+            : [];
+      const options = list
+        .map(mapStationOptionItem)
+        .filter((item) => item.value !== undefined && item.value !== null);
+
+      if (options.length > 0) {
+        stationOptions.splice(0, stationOptions.length, ...options);
+        stationOptionsLoaded = true;
+      }
+    } catch (error) {
+      console.error('加载场站选项失败，使用默认数据:', error);
+    } finally {
+      stationOptionsLoadingPromise = null;
+    }
+  })();
+
+  await stationOptionsLoadingPromise;
+}
 
 export const metricLabelMap = {
   abnormalDeviceNum: '异常设备数',
@@ -449,10 +506,7 @@ export function useSearchFormSchema() {
       label: '统计时段',
       component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择统计时段',
-        type: 'datetimerange',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+        ...getRangePickerDefaultProps(),
       },
     },
   ];
@@ -460,39 +514,28 @@ export function useSearchFormSchema() {
 
 export function useGenerateFormSchema() {
   return [
+
     {
-      fieldName: 'statTimeRange',
-      label: '统计时段',
-      component: 'DatePicker',
-      componentProps: {
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss',
-        type: 'datetimerange',
-        clearable: true,
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '所属场站',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入所属场站',
-        clearable: true,
-        // options: stationOptions,
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'reportType',
-      label: '报表类型',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择报表类型',
-        options: reportTypeOptions,
+        placeholder: '请选择所属场站',
+        clearable: true,
+        options: stationOptions,
       },
       rules: 'required',
     },
+    // {
+    //   fieldName: 'reportType',
+    //   label: '报表类型',
+    //   component: 'Select',
+    //   componentProps: {
+    //     placeholder: '请选择报表类型',
+    //     options: reportTypeOptions,
+    //   },
+    //   rules: 'required',
+    // },
     {
       fieldName: 'reportCycle',
       label: '报表周期',
@@ -502,6 +545,23 @@ export function useGenerateFormSchema() {
         options: reportCycleOptions,
       },
       rules: 'required',
+    },
+    {
+      fieldName: 'statTimeRange',
+      label: '统计时段',
+      component: 'RangePicker',
+      dependencies: {
+        show: (values) => {
+          return values.reportCycle === '自定义报表';
+        },
+        required(values) {
+          return values.reportCycle === '自定义报表';
+        },
+        triggerFields: ['reportCycle'],
+      },
+      componentProps: {
+        ...getRangePickerDefaultProps(),
+      },
     },
   ];
 }
