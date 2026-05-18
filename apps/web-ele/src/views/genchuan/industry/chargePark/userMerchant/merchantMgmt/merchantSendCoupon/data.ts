@@ -20,6 +20,15 @@ import { getRangePickerDefaultProps } from '#/utils';
 
 const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
+function hasQueryValue(value: any) {
+  return !(
+    value === '' ||
+    value === null ||
+    value === undefined ||
+    (Array.isArray(value) && value.length === 0)
+  );
+}
+
 export type MerchantSendCouponStatus = '已取消' | '已执行' | '待执行';
 
 export interface RedemptionLog {
@@ -81,6 +90,7 @@ export interface CouponProfileInfo {
 }
 
 export interface CouponMgmtApiVO {
+  amount?: number;
   description?: string;
   id?: number;
   name?: string;
@@ -489,25 +499,48 @@ export function buildMerchantProfile(
  * 构建优惠券弹窗信息
  */
 export function buildCouponProfile(
-  data?: Partial<MerchantSendCouponCouponVO>,
+  data?: Partial<CouponMgmtApiVO> | Partial<MerchantSendCouponCouponVO>,
   fallback: Partial<MerchantSendCouponRow> = {},
   lookup: Record<number, CouponProfileInfo> = buildCouponProfileLookup(),
 ): CouponProfileInfo {
   const couponId = Number(data?.id ?? fallback.couponId ?? 0);
   const profile = couponId ? lookup[couponId] : undefined;
+  const marketCoupon = data as Partial<CouponMgmtApiVO> | undefined;
+  const sendCoupon = data as Partial<MerchantSendCouponCouponVO> | undefined;
+  const validPeriod =
+    sendCoupon?.validPeriod ||
+    (marketCoupon?.validTime ? formatApiTime(marketCoupon.validTime) : '');
 
   return {
     name:
       data?.name || fallback.couponName || profile?.name || `优惠券${couponId}`,
-    remark: data?.remark || fallback.couponRemark || profile?.remark || '',
-    rule: data?.rule || fallback.couponRule || profile?.rule || '-',
-    status: data?.status || fallback.couponStatus || profile?.status || '-',
-    type: data?.type || fallback.couponType || profile?.type || '-',
-    validPeriod:
-      data?.validPeriod ||
-      fallback.couponValidPeriod ||
-      profile?.validPeriod ||
+    remark:
+      sendCoupon?.remark ||
+      fallback.remark ||
+      marketCoupon?.description ||
+      fallback.couponRemark ||
+      profile?.remark ||
+      '',
+    rule:
+      sendCoupon?.rule ||
+      marketCoupon?.useCondition ||
+      fallback.couponRule ||
+      profile?.rule ||
       '-',
+    status:
+      marketCoupon?.statusName ||
+      data?.status ||
+      fallback.couponStatus ||
+      profile?.status ||
+      '-',
+    type:
+      marketCoupon?.typeName ||
+      data?.type ||
+      fallback.couponType ||
+      profile?.type ||
+      '-',
+    validPeriod:
+      validPeriod || fallback.couponValidPeriod || profile?.validPeriod || '-',
   };
 }
 
@@ -822,14 +855,7 @@ export function buildMerchantSendCouponQueryParams(
   };
 
   return Object.fromEntries(
-    Object.entries(params).filter(([, value]) => {
-      return !(
-        value === '' ||
-        value === null ||
-        value === undefined ||
-        (Array.isArray(value) && value.length === 0)
-      );
-    }),
+    Object.entries(params).filter(([, value]) => hasQueryValue(value)),
   ) as MerchantSendCouponPageReqVO;
 }
 
