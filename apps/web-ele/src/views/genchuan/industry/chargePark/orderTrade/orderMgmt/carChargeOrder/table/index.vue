@@ -367,6 +367,25 @@ const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
 };
 
+// 开票状态映射
+const invoiceStatusMap = {
+  null: { label: '未申请', type: 'default' },
+  pending_audit: { label: '待审核', type: 'warning' },
+  pending_invoice: { label: '待开票', type: 'primary' },
+  invoiced: { label: '已开票', type: 'success' },
+  rejected: { label: '已驳回', type: 'danger' },
+};
+
+// 获取开票状态标签
+const getInvoiceStatusLabel = (status) => {
+  return invoiceStatusMap[status]?.label || '未申请';
+};
+
+// 获取开票状态类型
+const getInvoiceStatusType = (status) => {
+  return invoiceStatusMap[status]?.type || 'default';
+};
+
 // 支付弹窗
 const payDialogVisible = ref(false);
 const payForm = reactive({
@@ -803,6 +822,11 @@ const alarmColumns = [
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
+      <template #invoiceStatus="{ row }">
+        <el-tag :type="getInvoiceStatusType(row.invoiceStatus)">
+          {{ getInvoiceStatusLabel(row.invoiceStatus) }}
+        </el-tag>
+      </template>
       <template #orderNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
@@ -878,7 +902,7 @@ const alarmColumns = [
           />
           <IconButton
             content="开票"
-            v-if="row.status === 'completed'"
+            v-if="row.status === 'completed' && row.invoiceStatus !== 'invoiced'"
             icon-name="Document"
             @click="handleInvoice(row)"
           />
