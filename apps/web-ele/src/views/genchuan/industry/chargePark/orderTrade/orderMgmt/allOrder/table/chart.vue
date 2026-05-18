@@ -250,3 +250,16 @@ onMounted(async () => {
       :series-data="[{ name: '订单数', data: state.stationData.map(item => item.value) }]" @bar-click="handleBarChartClick" />
   </div>
 </template>
+
+<style scoped>
+.chart-box-left {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  
+  .left-card {
+    height: 159px !important;
+    flex: 1;
+  }
+}
+</style>
