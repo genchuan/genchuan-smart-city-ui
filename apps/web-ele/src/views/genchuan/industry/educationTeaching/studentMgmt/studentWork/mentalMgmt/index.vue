@@ -235,10 +235,15 @@ async function handleConsult(row) {
       inputPlaceholder: '请选择时间',
     });
     if (consultTime) {
-      const formattedTime = consultTime.replace('T', ' ') + ':00';
+      // 将 datetime-local 字符串（如 "2026-05-17T14:30"）转换为毫秒时间戳
+      const timestamp = new Date(consultTime).getTime();
+      if (isNaN(timestamp)) {
+        ElMessage.error('无效的时间格式');
+        return;
+      }
       const loading = ElLoading.service({ text: '预约中...' });
       try {
-        const res = await consultMentalMgmt({ id: row.id, consultTime: formattedTime });
+        const res = await consultMentalMgmt({ id: row.id, consultTime: timestamp });
         if (res && res !== false) {
           ElMessage.success('预约成功');
           handleRefresh();
@@ -250,6 +255,7 @@ async function handleConsult(row) {
       }
     }
   } catch {
+    // 用户取消选择，不做处理
   }
 }
 

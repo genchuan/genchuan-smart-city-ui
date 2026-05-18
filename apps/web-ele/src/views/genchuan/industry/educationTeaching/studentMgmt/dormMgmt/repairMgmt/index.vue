@@ -309,7 +309,11 @@ const [FeedbackForm, feedbackFormApi] = useVbenForm({
   handleSubmit: async (values) => {
     const loading = ElLoading.service({ text: '提交反馈...' });
     try {
-      const res = await feedbackRepairMgmt({ ids: feedbackIds.value, feedbackContent: values.feedbackContent });
+      const res = await feedbackRepairMgmt({
+        ids: feedbackIds.value,
+        feedbackContent: values.feedbackContent,
+        remark: values.remark || ''
+      });
       if (res && res !== false) { ElMessage.success('反馈成功'); feedbackDrawerApi.close(); handleRefresh(); }
       else { ElMessage.error('反馈失败'); }
     } finally { loading.close(); }

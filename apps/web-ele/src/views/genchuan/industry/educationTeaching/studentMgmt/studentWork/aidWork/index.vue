@@ -499,7 +499,7 @@ onUnmounted(() => {
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
           <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check" @click="handleAudit(row)"/>
-          <IconButton v-if="row.status === '已通过' || row.status === '已完成'" content="跟进" icon-name="EditPen" @click="handleFollow(row)"/>
+          <IconButton v-if="row.status === '已通过'" content="跟进" icon-name="EditPen" @click="handleFollow(row)"/>
         </div>
       </template>
     </Grid>
