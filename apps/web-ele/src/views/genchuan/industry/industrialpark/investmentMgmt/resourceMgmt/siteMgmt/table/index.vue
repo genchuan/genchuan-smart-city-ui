@@ -2,21 +2,41 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { useUserStore } from '@vben/stores';
 import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
+import {
+  createSiteMgmt,
+  exportSiteMgmt,
+  followSiteMgmt,
+  quitSiteMgmt,
+  rejectSiteMgmt,
+  renewSiteMgmt,
+  reserveSiteMgmt,
+  signSiteMgmt,
+  updateSiteMgmt,
+  updateSiteMgmtShow,
+  updateSiteMgmtStatus,
+} from '#/api/genchuan/industry/industrialpark/investmentMgmt/resourceMgmt/siteMgmt';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import SiteDetailDrawer from '../components/SiteDetailDrawer.vue';
+import SiteOperationDialog from '../components/SiteOperationDialog.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
 import {
   dataList,
   detailFields,
+  getSiteStatusLabel,
+  getSiteStatusConfig,
+  getSiteStatusTagType,
   textObj,
+  useSearchFormSchema,
   useFormSchema,
   useGridColumns,
 } from './data';
@@ -27,6 +47,15 @@ const props = defineProps({
     default: false,
   },
 });
+
+/** 获取当前用户信息 */
+const userStore = useUserStore();
+
+/** 获取当前登录用户的账号名 */
+const getCurrentUsername = () => {
+  return userStore.userInfo?.username || 'admin';
+};
+
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -42,6 +71,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
   async onOpenChange() {},
 });
 const detailDrawerRef = ref(null);
+const siteDetailDrawerRef = ref(null);
+const operationDialogRef = ref(null);
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -97,7 +128,7 @@ async function handleExport() {
   exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
 }
 
-/** 创建角色 */
+/** 录入场地 */
 function handleCreate() {
   formDrawerApi
     .setData({
@@ -106,44 +137,245 @@ function handleCreate() {
     .open();
 }
 
-/** 编辑角色 */
+/** 完善场地 - 需要选中数据 */
 function handleEdit(row) {
+  if (!row && checkedIds.value.length === 0) {
+    ElMessage.warning('请先选中一条数据');
+    return;
+  }
+
+  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  if (!targetRow) return;
+
   formDrawerApi
     .setData({
       title: textObj.editText,
-      ...row,
+      ...targetRow,
     })
     .open();
 }
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.garageName]),
-  });
+
+/** 标记场地状态 - 需要选中数据 */
+async function handleUpdateStatus(row) {
+  if (!row && checkedIds.value.length === 0) {
+    ElMessage.warning('请先选中一条数据');
+    return;
+  }
+
+  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  if (!targetRow) return;
+
+  await confirm('确定要标记该场地的状态吗？');
+  const loadingInstance = ElLoading.service({ text: '正在标记...' });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.garageName]));
+    await updateSiteMgmtStatus({
+      id: targetRow.id,
+      siteStatus: targetRow.siteStatus,
+      handleUser: getCurrentUsername(),
+    });
+    ElMessage.success('标记成功');
     handleRefresh();
+  } catch (error) {
+    console.error('标记失败:', error);
   } finally {
     loadingInstance.close();
   }
 }
 
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
+/** 展示场地 - 需要选中数据 */
+async function handleShow(row) {
+  if (!row && checkedIds.value.length === 0) {
+    ElMessage.warning('请先选中一条数据');
+    return;
+  }
+
+  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  if (!targetRow) return;
+
+  await confirm('确定要将该场地发布到招商展示吗？');
+  const loadingInstance = ElLoading.service({ text: '正在展示...' });
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
+    await updateSiteMgmtShow({
+      id: targetRow.id,
+      handleUser: getCurrentUsername(),
+    });
+    ElMessage.success('展示成功');
     handleRefresh();
+  } catch (error) {
+    console.error('展示失败:', error);
   } finally {
     loadingInstance.close();
   }
 }
+
+/** 签约入驻 - 需要选中数据（打开操作表单） */
+async function handleSign(row) {
+  if (!row && checkedIds.value.length === 0) {
+    ElMessage.warning('请先选中一条数据');
+    return;
+  }
+
+  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  if (!targetRow) return;
+
+  operationDialogRef.value.open({
+    title: '签约',
+    id: targetRow.id,
+    ...targetRow,
+  });
+}
+
+/** 预约场地（打开操作表单） */
+async function handleReserve(row) {
+  operationDialogRef.value.open({
+    title: '预约',
+    id: row.id,
+    ...row,
+  });
+}
+
+/** 跟进洽谈 */
+async function handleFollow(row) {
+  const loadingInstance = ElLoading.service({ text: '正在跟进...' });
+  try {
+    await followSiteMgmt({
+      id: row.id,
+      handleUser: getCurrentUsername(),
+    });
+    ElMessage.success('跟进记录已保存');
+    handleRefresh();
+  } catch (error) {
+    console.error('跟进失败:', error);
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 确认签约（打开操作表单） */
+async function handleConfirm(row) {
+  operationDialogRef.value.open({
+    title: '确认',
+    id: row.id,
+    ...row,
+  });
+}
+
+/** 处理操作对话框确认回调 */
+const handleOperationConfirm = async (values) => {
+  const { title, id, ...params } = values;
+  const loadingInstance = ElLoading.service({ text: `正在${title}...` });
+
+  try {
+    switch (title) {
+      case '续费':
+        await renewSiteMgmt({
+          id,
+          rentInfo: params.rentInfo,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      case '确认':
+        await signSiteMgmt({
+          id,
+          signCompany: params.signCompany,
+          rentInfo: params.rentInfo,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      case '签约':
+        await signSiteMgmt({
+          id,
+          signCompany: params.signCompany,
+          rentInfo: params.rentInfo,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      case '预约':
+        await reserveSiteMgmt({
+          id,
+          orderClient: params.orderClient,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      default:
+        throw new Error(`未知操作类型：${title}`);
+    }
+
+    ElMessage.success(`${title}成功`);
+    handleRefresh();
+  } catch (error) {
+    console.error(`${title}失败:`, error);
+    ElMessage.error(`${title}失败`);
+  } finally {
+    loadingInstance.close();
+  }
+};
+
+/** 驳回洽谈 */
+async function handleReject(row) {
+  await confirm('确定要驳回该洽谈吗？场地将重置为空置状态。');
+  const loadingInstance = ElLoading.service({ text: '正在驳回...' });
+  try {
+    await rejectSiteMgmt({
+      id: row.id,
+      handleUser: getCurrentUsername(),
+    });
+    ElMessage.success('驳回成功');
+    handleRefresh();
+  } catch (error) {
+    console.error('驳回失败:', error);
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 续费（打开操作表单） */
+async function handleRenew(row) {
+  operationDialogRef.value.open({
+    title: '续费',
+    id: row.id,
+    ...row,
+  });
+}
+
+/** 退租 */
+async function handleQuit(row) {
+  await confirm('确定要办理退租吗？场地将重置为空置状态。');
+  const loadingInstance = ElLoading.service({ text: '正在办理退租...' });
+  try {
+    await quitSiteMgmt({
+      id: row.id,
+      handleUser: getCurrentUsername(),
+    });
+    ElMessage.success('退租成功');
+    handleRefresh();
+  } catch (error) {
+    console.error('退租失败:', error);
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+/** 查看详情（基础详情） */
+const handleOpenDetail = (row) => {
+  dataObj.detailObj = row;
+  detailDrawerRef.value.open();
+};
+
+/** 查看完整详情（包含照片、平面图、签约信息） */
+const handleOpenSiteDetail = (row) => {
+  siteDetailDrawerRef.value.open(row);
+};
+
+/** 点击场地编号打开完整详情 */
+const handleSiteCodeClick = (row) => {
+  handleOpenSiteDetail(row);
+};
+
+/** 点击图片打开完整详情 */
+const handleImageClick = (row) => {
+  handleOpenSiteDetail(row);
+};
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
@@ -167,17 +399,19 @@ const changeTotalShow = () => {
 const getTableData = (pageObj) => {
   const page = pageObj.page;
 
-  // 根据searchParams筛选数据（已移除activeName状态筛选逻辑）
+  // 根据searchParams筛选数据
   const filteredList = dataObj.apilist.filter((v) => {
-    // 搜索条件筛选
     let searchMatch = true;
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
-      if (value) {
-        searchMatch =
-          typeof value === 'string'
-            ? searchMatch && v[key]?.toString().includes(value)
-            : searchMatch && v[key] === value;
+      if (value !== '' && value !== null && value !== undefined) {
+        if (key === 'siteArea') {
+          searchMatch = searchMatch && v[key] == Number(value);
+        } else if (typeof value === 'string') {
+          searchMatch = searchMatch && v[key]?.toString().includes(value);
+        } else {
+          searchMatch = searchMatch && v[key] === value;
+        }
       }
     });
 
@@ -193,29 +427,22 @@ const getTableData = (pageObj) => {
 };
 
 const [QueryForm] = useVbenForm({
-  // 默认展开
   collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
-    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  // 提交函数
   handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
+  schema: useSearchFormSchema().map((v) => {
     delete v.rules;
     return {
       ...v,
     };
   }),
-  // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -257,48 +484,34 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-// 三级状态相关逻辑 - 已屏蔽
-// const activeName = ref('全部');
+// 根据状态获取行按钮配置（使用字符串状态值）
+const getRowButtons = (row) => {
+  const status = Number(row.siteStatus);
 
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerRef.value.open();
+  switch (status) {
+    case 0:
+      return [
+        { content: '展示', iconName: 'Promotion', handler: () => handleShow(row) },
+        { content: '预约', iconName: 'Calendar', handler: () => handleReserve(row) },
+        { content: '修改', iconName: 'Edit', handler: () => handleEdit(row) },
+      ];
+    case 1:
+      return [
+        { content: '跟进', iconName: 'TrendCharts', handler: () => handleFollow(row) },
+        { content: '确认', iconName: 'CircleCheck', handler: () => handleConfirm(row) },
+        { content: '驳回', iconName: 'CircleClose', color: '#F56C6C', handler: () => handleReject(row) },
+      ];
+    case 2:
+      return [
+        { content: '查看', iconName: 'View', handler: () => handleOpenSiteDetail(row) },
+        { content: '续费', iconName: 'Money', handler: () => handleRenew(row) },
+        { content: '退租', iconName: 'Remove', color: '#F56C6C', handler: () => handleQuit(row) },
+      ];
+    default:
+      return [];
+  }
 };
 
-// 修改tabsData为三个标签：全部、启用、禁用 - 已屏蔽
-// const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
-
-// 创建标签文本，显示数量统计 - 已屏蔽
-// const createLabel = (item) => {
-//   let count = 0;
-//
-//   switch (item.label) {
-//     case '全部': {
-//       count = dataObj.apilist.length;
-//
-//       break;
-//     }
-//     case '启用': {
-//       // 统计status为'1'的数据
-//       count = dataObj.apilist.filter((v) => v.status === '1').length;
-//
-//       break;
-//     }
-//     case '禁用': {
-//       // 统计status为'0'的数据
-//       count = dataObj.apilist.filter((v) => v.status === '0').length;
-//
-//       break;
-//     }
-//     // No default
-//   }
-//
-//   return `${item.label}(${count})`;
-// };
-
-// const handleClick = () => {
-//   gridApi.query();
-// };
 const handleSerachShow = () => {
   drawerApi.open();
 };
@@ -312,92 +525,82 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!--   详情抽屉-->
+    <!--   基础详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.garageName}详情`"
+      :title="`${dataObj.detailObj.siteCode} 详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <!--   场地完整详情抽屉（含照片、平面图、签约信息） -->
+    <SiteDetailDrawer ref="siteDetailDrawerRef" />
+    <!--   操作对话框（续费/确认/签约） -->
+    <SiteOperationDialog ref="operationDialogRef" @confirm="handleOperationConfirm" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
-      <!-- 三级状态 - 已屏蔽 -->
-      <!--
-      <template #table-title>
-        <div class="tabel-tabs">
-          <div v-if="props.secondShow">
-            <el-tabs
-              v-model="activeName"
-              class="demo-tabs"
-              @tab-change="handleClick"
-            >
-              <el-tab-pane
-                v-for="item in tabsData"
-                :key="item.label"
-                :label="createLabel(item)"
-                :name="item.label"
-              />
-            </el-tabs>
-          </div>
-        </div>
-      </template>
-      -->
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="录入" icon-name="DocumentAdd" @click="handleCreate" />
+          <IconButton content="完善" icon-name="EditPen" @click="handleEdit()" />
+          <IconButton content="标记" icon-name="Flag" @click="handleUpdateStatus()" />
+          <IconButton content="展示" icon-name="Promotion" @click="handleShow()" />
+          <IconButton content="签约" icon-name="DocumentChecked" @click="handleSign()" />
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
-      <template #id="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
+      <template #siteCode="{ row }">
+        <span
+          class="site-code-link"
+          style="color: #409eff; cursor: pointer; text-decoration: underline;"
+          @click="handleSiteCodeClick(row)"
         >
-          {{ row.id }}
-        </el-text>
+          {{ row.siteCode }}
+        </span>
+      </template>
+      <template #siteStatus="{ row }">
+        <el-tag :type="getSiteStatusTagType(row.siteStatus)">
+          {{ getSiteStatusLabel(row.siteStatus) }}
+        </el-tag>
+      </template>
+      <template #photos="{ row }">
+        <div class="image-cell" v-if="row.photos">
+          <img
+            :src="row.photos.split(',')[0]"
+            alt="照片"
+            class="thumbnail-image"
+            @click="handleImageClick(row)"
+          />
+          <span class="image-count" v-if="row.photos.split(',').length > 1">
+            +{{ row.photos.split(',').length - 1 }}
+          </span>
+        </div>
+        <span v-else>-</span>
+      </template>
+      <template #floorPlan="{ row }">
+        <div class="image-cell" v-if="row.floorPlan">
+          <img
+            :src="row.floorPlan"
+            alt="平面图"
+            class="thumbnail-image"
+            @click="handleImageClick(row)"
+          />
+        </div>
+        <span v-else>-</span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="详情"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
-          />
+          <template v-for="(btn, index) in getRowButtons(row)" :key="index">
+            <IconButton
+              :content="btn.content"
+              :icon-name="btn.iconName"
+              :color="btn.color"
+              @click="btn.handler"
+            />
+          </template>
         </div>
       </template>
       <template #bottom>
@@ -408,7 +611,7 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：诱导屏数量: 10; 启用: 8; 禁用: 2 </span>
+          <span> 本页统计：{{ textObj.total }} </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>
@@ -417,3 +620,38 @@ const handleFullShow = () => {
     </Grid>
   </div>
 </template>
+
+<style scoped>
+.image-cell {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.thumbnail-image {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #dcdfe6;
+  transition: all 0.3s ease;
+}
+
+.thumbnail-image:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.image-count {
+  position: absolute;
+  top: -8px;
+  right: -12px;
+  background-color: #f56c6c;
+  color: white;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 8px;
+  line-height: 14px;
+}
+</style>

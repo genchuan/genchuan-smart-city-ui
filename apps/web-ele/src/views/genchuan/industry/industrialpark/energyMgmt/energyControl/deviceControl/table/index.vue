@@ -46,6 +46,7 @@ const dataObj = reactive({
 const userMap = ref(new Map());
 async function fetchUserMappings() {
   try {
+    // 模拟用户映射，实际可从字典或接口获取，为保持与后端关联，展示操作人昵称
     const users = [{ userId: 'admin', userName: '管理员' }, { userId: 'energy_operator', userName: '能耗操作员' }, { userId: 'maintainer', userName: '维护工程师' }];
     users.forEach(user => userMap.value.set(user.userId, user.userName));
   } catch (error) { console.error('获取用户数据失败', error); }

@@ -547,14 +547,14 @@ export function useGridColumns() {
     // },
     {
       field: 'outRecord',
-      title: '出库记录',
+      title: '领用人员',
       minWidth: 180,
       sortable: true,
       slots: { default: 'outRecord' },
     },
     {
       field: 'inRecord',
-      title: '入库记录',
+      title: '供应商',
       minWidth: 180,
       sortable: true,
       slots: { default: 'inRecord' },

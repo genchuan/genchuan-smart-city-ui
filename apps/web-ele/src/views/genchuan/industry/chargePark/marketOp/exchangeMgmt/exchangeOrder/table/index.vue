@@ -26,7 +26,6 @@ import ShipDialog from '../components/ShipDialog.vue';
 import {
   dataList,
   detailFields,
-  dynamicCategorySearchOptions,
   fetchCategorySearchOptions,
   getCurrentCategorySearchOptions,
   getExchangeOrderPayStatusLabel,
@@ -549,13 +548,22 @@ const handleOpenGoodsDetail = async (row) => {
       const formattedDetail = {
         ...goodsDetail,
         createTimeStr: goodsDetail.createTime
-          ? formatDate(new Date(Number(goodsDetail.createTime)), 'YYYY-MM-DD HH:mm:ss')
+          ? formatDate(
+              new Date(Number(goodsDetail.createTime)),
+              'YYYY-MM-DD HH:mm:ss',
+            )
           : '',
         syncTimeStr: goodsDetail.syncTime
-          ? formatDate(new Date(Number(goodsDetail.syncTime)), 'YYYY-MM-DD HH:mm:ss')
+          ? formatDate(
+              new Date(Number(goodsDetail.syncTime)),
+              'YYYY-MM-DD HH:mm:ss',
+            )
           : '',
         updateTimeStr: goodsDetail.updateTime
-          ? formatDate(new Date(Number(goodsDetail.updateTime)), 'YYYY-MM-DD HH:mm:ss')
+          ? formatDate(
+              new Date(Number(goodsDetail.updateTime)),
+              'YYYY-MM-DD HH:mm:ss',
+            )
           : '',
       };
       goodsDetailData.value = formattedDetail;

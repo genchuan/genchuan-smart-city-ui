@@ -1,6 +1,8 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
+import InfoPublishStats from './components/InfoPublishStats.vue';
+import InfoDetailDrawer from './components/InfoDetailDrawer.vue';
 import Table from './table/index.vue';
 
 import '#/genchuan-components/page/index.scss';
@@ -11,6 +13,7 @@ const changeArrowStatus = () => {
     v.secondShow = secondShow.value;
   });
 };
+
 const tabArray = ref([
   {
     label: '信息发布',
@@ -19,30 +22,44 @@ const tabArray = ref([
     secondShow: false,
   },
 ]);
+
 const activeName = ref('信息发布');
 const secondShow = ref(false);
+
+const showStats = ref(true);
+
+const toggleStats = () => {
+  showStats.value = !showStats.value;
+};
+
+const showStatsValue = computed(() => showStats.value);
+
+/** 信息完整详情抽屉引用 */
+const infoDetailDrawerRef = ref(null);
+
+const handleCardClick = (cardType) => {
+  console.log('卡片钻取:', cardType);
+};
+
+/** 处理地图标记点击 - 打开信息详情 */
+const handleSiteDetail = (markerData) => {
+  if (infoDetailDrawerRef.value && markerData) {
+    infoDetailDrawerRef.value.open(markerData);
+  }
+};
 </script>
+
 <template>
   <div class="common-index">
-    <!-- 箭头图标已屏蔽 -->
-    <!--
-    <div class="icon-change">
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="secondShow"
-        @click="changeArrowStatus"
-      >
-        <ArrowDown />
-      </el-icon>
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="!secondShow"
-        @click="changeArrowStatus"
-      >
-        <ArrowUp />
-      </el-icon>
-    </div>
-    -->
+    <InfoPublishStats
+      v-if="showStats"
+      @card-click="handleCardClick"
+      @site-detail="handleSiteDetail"
+    />
+
+    <!-- 信息完整详情抽屉 -->
+    <InfoDetailDrawer ref="infoDetailDrawerRef" />
+
     <el-tabs
       v-model="activeName"
       class="common-tabs"
@@ -62,6 +79,8 @@ const secondShow = ref(false);
         <component
           :is="item.components"
           :second-show="item.secondShow"
+          :show-stats="showStatsValue"
+          :toggle-stats="toggleStats"
           :key="item.label"
         />
       </el-tab-pane>

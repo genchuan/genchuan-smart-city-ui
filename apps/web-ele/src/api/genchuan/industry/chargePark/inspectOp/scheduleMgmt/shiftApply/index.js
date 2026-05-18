@@ -1,5 +1,7 @@
 import { requestClient } from '#/api/request.js';
 
+export { loadScheduleUserOptions, userOptions } from '../userOptions.js';
+
 export function getShiftApplyPage(params) {
   return requestClient.get('/inspectop/shift-apply/page', { params });
 }

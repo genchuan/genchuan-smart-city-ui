@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
@@ -25,6 +25,7 @@ import {
   getReportCycleTagType,
   getStationIdByName,
   getStationName,
+  loadCycleReportStationOptions,
   metricFieldMap,
   metricLabelMap,
   normalizeCycleReportRow,
@@ -124,14 +125,14 @@ const [GenerateDrawer, generateDrawerApi] = useVbenDrawer({
     const values = await generateFormApi.getValues();
     const [statTimeStart, statTimeEnd] = values.statTimeRange || [];
 
-    if (values.reportType === '自动' && values.reportCycle === '自定义报表') {
-      ElMessage.warning('自动报表不支持选择自定义报表周期');
-      return;
-    }
-    if (values.reportType === '自定义' && values.reportCycle !== '自定义报表') {
-      ElMessage.warning('自定义报表类型需选择自定义报表周期');
-      return;
-    }
+    // if (values.reportType === '自动' && values.reportCycle === '自定义报表') {
+    //   ElMessage.warning('自动报表不支持选择自定义报表周期');
+    //   return;
+    // }
+    // if (values.reportType === '自定义' && values.reportCycle !== '自定义报表') {
+    //   ElMessage.warning('自定义报表类型需选择自定义报表周期');
+    //   return;
+    // }
 
     try {
       await generateCycleReport({
@@ -154,8 +155,8 @@ const [GenerateDrawer, generateDrawerApi] = useVbenDrawer({
     if (!isOpen) return;
     await generateFormApi.resetForm();
     await generateFormApi.setValues({
-      reportCycle: '自定义报表',
-      reportType: '自定义',
+      reportCycle: '日报',
+      // reportType: '自定义',
     });
   },
 });
@@ -182,15 +183,18 @@ function applyLocalTrendFilter(list) {
 }
 
 function buildQueryParams(page) {
+  console.log('dataObj.searchParams', dataObj.searchParams);
   return {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    ...dataObj.searchParams,
+    // ...dataObj.searchParams,
     generateStatus:
       filterGenerateStatus.value || dataObj.searchParams.generateStatus,
     reportCycle: filterReportCycle.value || dataObj.searchParams.reportCycle,
     stationId: filterStationId.value || dataObj.searchParams.stationId,
-    trendTime: filterTrendTime.value,
+    statTimeStart: dataObj.searchParams?.statTimeStart,
+    statTimeEnd: dataObj.searchParams?.statTimeEnd,
+    // trendTime: filterTrendTime.value,
   };
 }
 
@@ -467,6 +471,10 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(() => {
+  loadCycleReportStationOptions();
+});
 
 defineExpose({
   handleStatsFilter,

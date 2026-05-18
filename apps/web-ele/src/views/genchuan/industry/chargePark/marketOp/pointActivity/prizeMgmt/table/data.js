@@ -367,12 +367,7 @@ export function useFormSchema(isEdit = false) {
       component: 'Select',
       componentProps: {
         placeholder: '请选择奖品类型',
-        options: [
-          { label: '优惠券', value: '0' },
-          { label: '积分', value: '1' },
-          { label: '实物', value: '2' },
-          { label: '虚拟', value: '3' },
-        ],
+        options: getDictOptions(DICT_TYPE.PRIZE_MGMT_TYPE, 'string'),
       },
       rules: 'required',
     },

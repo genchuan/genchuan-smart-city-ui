@@ -321,17 +321,33 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   },
 });
 
-// 维护表单 - 直接使用 timeRange 和 remark，与后端字段完全一致
 const [MaintainForm, maintainFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({text: '维护中...'});
+    const loading = ElLoading.service({ text: '维护中...' });
     try {
-      // values 中直接包含 timeRange（数组，例如 ["2023-01-01 00:00:00", "2027-01-31 23:59:59"]）和 remark
+      let coopStartTime = null;
+      let coopEndTime = null;
+      if (values.timeRange && Array.isArray(values.timeRange) && values.timeRange.length === 2) {
+        const [startStr, endStr] = values.timeRange;
+        coopStartTime = new Date(startStr).getTime();
+        coopEndTime = new Date(endStr).getTime();
+        if (isNaN(coopStartTime) || isNaN(coopEndTime)) {
+          ElMessage.error('合作时间范围格式无效');
+          loading.close();
+          return;
+        }
+      } else {
+        ElMessage.error('请选择完整的合作时间范围');
+        loading.close();
+        return;
+      }
+
       const params = {
         id: maintainId.value,
-        timeRange: values.timeRange,
+        coopStartTime,
+        coopEndTime,
         remark: values.remark || '',
       };
       const res = await maintainCoopEnterprise(params);
@@ -352,7 +368,7 @@ const [MaintainForm, maintainFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useMaintainFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: {content: '保存'},
+  submitButtonOptions: { content: '保存' },
 });
 
 const enterpriseDetailDrawerRef = ref(null);
