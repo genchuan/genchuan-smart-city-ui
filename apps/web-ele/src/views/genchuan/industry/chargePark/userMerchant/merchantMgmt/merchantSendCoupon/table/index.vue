@@ -36,7 +36,10 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getCouponMgmtPage } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
+import {
+  getCouponMgmtDetail,
+  getCouponMgmtPage,
+} from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import { MerchantSendCouponApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantSendCoupon';
 import IconButton from '#/components/common/IconButton.vue';
@@ -82,6 +85,7 @@ const props = withDefaults(
 const checkedIds = ref<number[]>([]);
 const checkedRows = ref<MerchantSendCouponRow[]>([]);
 const couponDialogVisible = ref(false);
+const couponDetailCache = new Map<number, Record<string, any>>();
 const couponProfileLookup = ref(buildCouponProfileLookup(couponOptions));
 const currentCouponProfile = ref<CouponProfileInfo | null>(null);
 const currentMerchantProfile = ref<MerchantProfileInfo | null>(null);
@@ -314,6 +318,28 @@ async function fetchAllPages<T>(
   } while (list.length < total);
 
   return list;
+}
+
+/** 获取优惠券详情 */
+async function fetchCouponProfile(couponId: number) {
+  if (!couponId) {
+    return null;
+  }
+
+  const cachedDetail = couponDetailCache.get(couponId);
+
+  if (cachedDetail) {
+    return cachedDetail;
+  }
+
+  try {
+    const data = await getCouponMgmtDetail(couponId);
+    couponDetailCache.set(couponId, data);
+    return data;
+  } catch (error) {
+    console.error('[merchantSendCoupon] load coupon detail failed:', error);
+    return null;
+  }
 }
 
 /** 获取商户详情 */
@@ -590,6 +616,7 @@ function handleRefresh() {
 async function handleReloadPage() {
   detailCache.clear();
   merchantDetailCache.clear();
+  couponDetailCache.clear();
   clearCheckedRows();
   await handleRefresh();
   await props.reloadStats?.();
@@ -807,11 +834,27 @@ async function handleOpenCoupon(row: MerchantSendCouponRow) {
     return;
   }
 
-  currentCouponProfile.value = buildCouponProfile(
-    detail.source.couponInfo || undefined,
-    detail.row,
-    couponProfileLookup.value,
-  );
+  const loadingInstance = ElLoading.service({
+    target: '.merchant-send-coupon-table',
+    text: '加载中...',
+  });
+
+  try {
+    const couponDetail = await fetchCouponProfile(detail.row.couponId);
+
+    if (!couponDetail) {
+      ElMessage.warning('未获取到优惠券详情，已展示发券记录中的基础信息');
+    }
+
+    currentCouponProfile.value = buildCouponProfile(
+      couponDetail || detail.source.couponInfo || undefined,
+      detail.row,
+      couponProfileLookup.value,
+    );
+  } finally {
+    loadingInstance.close();
+  }
+
   couponDialogVisible.value = true;
 }
 

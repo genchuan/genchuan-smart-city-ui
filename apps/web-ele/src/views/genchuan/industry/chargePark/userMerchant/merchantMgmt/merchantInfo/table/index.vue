@@ -218,7 +218,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
 /** 搜索表单提交 */
 async function onQuerySubmit(values: Record<string, any>) {
   searchParams.value = { ...values };
-  await handleRefresh();
+  await handleRefresh({ clearDrillFilters: true });
   drawerApi.close();
 }
 
@@ -439,8 +439,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-/** 刷新表格 - 同时清除所有快捷筛选 */
-function handleRefresh() {
+/** 刷新表格 */
+function handleRefresh(options: { clearDrillFilters?: boolean } = {}) {
+  const { clearDrillFilters = false } = options;
+
+  if (!clearDrillFilters) {
+    return gridApi.reload();
+  }
+
   drillFilters.value = {
     contact: '',
     merchantType: '',
@@ -453,7 +459,7 @@ function handleRefresh() {
 /** 联动刷新页面 */
 async function handleReloadPage() {
   detailCache.clear();
-  await handleRefresh();
+  await handleRefresh({ clearDrillFilters: true });
   await props.reloadStats?.();
 }
 
@@ -617,7 +623,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   delete nextValues[tag.key];
   searchParams.value = nextValues;
   await syncQueryFormValues();
-  await handleRefresh();
+  await handleRefresh({ clearDrillFilters: true });
 }
 
 /** 打开编辑抽屉 */
