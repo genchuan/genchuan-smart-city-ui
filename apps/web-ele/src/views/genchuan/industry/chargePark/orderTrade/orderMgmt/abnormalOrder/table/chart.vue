@@ -34,11 +34,7 @@ let lineChartInstance = null;
 
 // 点击卡片事件 - 查询今日数据
 const handleCardClick = (index) => {
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
   const params = {
-    identifyTimeStart: todayStr + ' 00:00:00',
-    identifyTimeEnd: todayStr + ' 23:59:59',
     abnormalType: null,
     status: null,
   };
