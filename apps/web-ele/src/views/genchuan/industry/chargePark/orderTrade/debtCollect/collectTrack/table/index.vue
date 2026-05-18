@@ -817,21 +817,25 @@ watch(
           <IconButton
             content="推送"
             icon-name="top"
+            v-if="row.status === 'pending'"
             @click="handlePush(row)"
           />
           <IconButton
-            content="转移"
+            content="转派"
             icon-name="right"
+            v-if="row.status === 'collecting'"
             @click="handleTransfer(row)"
           />
           <IconButton
             content="更新进度"
             icon-name="sort"
+            v-if="row.status === 'collecting'"
             @click="handleUpdateProgress(row)"
           />
           <IconButton
             content="归档"
             icon-name="check"
+            v-if="row.status === 'completed'"
             @click="handleArchive(row)"
           />
         </div>
