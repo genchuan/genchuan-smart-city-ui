@@ -94,50 +94,33 @@ export function getMentalMgmtPage(params) {
 
 export function createMentalMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/mental-mgmt/create', convertedData).catch(err => {
-    console.warn('建档接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/mental-mgmt/create', convertedData)
 }
 
 export function updateMentalMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/mental-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/mental-mgmt/update', convertedData)
 }
 
 export function consultMentalMgmt(data) {
   // 预约接口只传 id 和 consultTime，无需转换
-  return requestClient.put('/studentmgmt/mental-mgmt/consult', data).catch(err => {
-    console.warn('预约接口失败，模拟成功', err);
-  });
+  return requestClient.put('/studentmgmt/mental-mgmt/consult', data)
 }
 
 export function interveneMentalMgmt(data) {
   // 跟进接口只传 id、interveneTime、interveneContent，无需转换
-  return requestClient.put('/studentmgmt/mental-mgmt/intervene', data).catch(err => {
-    console.warn('跟进接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/mental-mgmt/intervene', data)
 }
 
 export function updateStatusMentalMgmt(data) {
   // 更新状态接口：需要转换 mentalStatus 和 riskLevel
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/mental-mgmt/updateStatus', convertedData).catch(err => {
-    console.warn('状态更新接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/mental-mgmt/updateStatus', convertedData)
 }
 
 export function exportMentalMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/mental-mgmt/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/mental-mgmt/export-excel', convertedParams)
 }
 
 export function getMentalMgmtDetail(params) {

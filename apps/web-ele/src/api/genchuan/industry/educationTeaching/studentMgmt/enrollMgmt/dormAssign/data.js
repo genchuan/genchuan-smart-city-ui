@@ -58,35 +58,25 @@ export function getDormAssignPage(params) {
 // 分配（批量）
 export function assignDormAssign(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/dorm-assign/assign', convertedData).catch(err => {
-    console.warn('分配接口失败，模拟成功', err);
-  });
+  return requestClient.put('/studentmgmt/dorm-assign/assign', convertedData)
 }
 
 // 调整（批量）
 export function adjustDormAssign(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/dorm-assign/adjust', convertedData).catch(err => {
-    console.warn('调整接口失败，模拟成功', err);
-  });
+  return requestClient.put('/studentmgmt/dorm-assign/adjust', convertedData)
 }
 
 // 编辑
 export function updateDormAssign(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/dorm-assign/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/dorm-assign/update', convertedData)
 }
 
 // 导出
 export function exportDormAssign(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/dorm-assign/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/dorm-assign/export-excel', convertedParams)
 }
 
 // 详情

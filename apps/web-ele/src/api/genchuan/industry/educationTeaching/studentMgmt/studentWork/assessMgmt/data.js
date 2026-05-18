@@ -91,33 +91,21 @@ export function getAssessMgmtPage(params) {
 
 export function createAssessMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/assess-mgmt/create', convertedData).catch(err => {
-    console.warn('录入接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/assess-mgmt/create', convertedData)
 }
 
 export function updateAssessMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/assess-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/assess-mgmt/update', convertedData)
 }
 
 export function publishAssessMgmt(data) {
-  return requestClient.put('/studentmgmt/assess-mgmt/publish', data).catch(err => {
-    console.warn('发布接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/assess-mgmt/publish', data)
 }
 
 export function exportAssessMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/assess-mgmt/export', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/assess-mgmt/export', convertedParams)
 }
 
 export function getAssessMgmtDetail(params) {

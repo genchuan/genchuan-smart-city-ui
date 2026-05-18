@@ -108,41 +108,26 @@ export function getBehaviorMgmtPage(params) {
 
 export function createBehaviorMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/behavior-mgmt/create', convertedData).catch(err => {
-    console.warn('申请接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/behavior-mgmt/create', convertedData)
 }
 
 export function updateBehaviorMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/behavior-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/behavior-mgmt/update', convertedData)
 }
 
 export function auditBehaviorMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/behavior-mgmt/audit', convertedData).catch(err => {
-    console.warn('审批接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/behavior-mgmt/audit', convertedData)
 }
 
 export function cancelBehaviorMgmt(data) {
-  return requestClient.put('/studentmgmt/behavior-mgmt/cancel', data).catch(err => {
-    console.warn('撤销接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/behavior-mgmt/cancel', data)
 }
 
 export function exportBehaviorMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/behavior-mgmt/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/behavior-mgmt/export-excel', convertedParams)
 }
 
 export function getBehaviorMgmtDetail(params) {

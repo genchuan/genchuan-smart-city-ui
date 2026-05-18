@@ -73,37 +73,25 @@ export function getAccessApplyPage(params) {
 // 新增申请
 export function createAccessApply(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/access-apply/create', convertedData).catch(err => {
-    console.warn('申请接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/access-apply/create', convertedData)
 }
 
 // 审核（批量）
 export function auditAccessApply(data) {
   // 审核接口只传 ids，无需转换
-  return requestClient.put('/studentmgmt/access-apply/audit', data).catch(err => {
-    console.warn('审核接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/access-apply/audit', data)
 }
 
 // 编辑申请
 export function updateAccessApply(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/access-apply/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/access-apply/update', convertedData)
 }
 
 // 导出
 export function exportAccessApply(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/access-apply/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/access-apply/export-excel', convertedParams)
 }
 
 // 详情

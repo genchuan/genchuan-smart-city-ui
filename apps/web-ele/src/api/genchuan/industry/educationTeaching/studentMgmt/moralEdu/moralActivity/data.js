@@ -88,25 +88,16 @@ export function getMoralActivityPage(params) {
 
 export function createMoralActivity(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/moral-activity/create', convertedData).catch(err => {
-    console.warn('新增接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/moral-activity/create', convertedData)
 }
 
 export function updateMoralActivity(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/moral-activity/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/moral-activity/update', convertedData)
 }
 
 export function publishMoralActivity(ids) {
-  return requestClient.put('/studentmgmt/moral-activity/publish', { ids }).catch(err => {
-    console.warn('发布接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/moral-activity/publish', { ids })
 }
 
 export function joinMoralActivity(data) {
@@ -118,18 +109,12 @@ export function joinMoralActivity(data) {
 }
 
 export function recordMoralActivity(data) {
-  return requestClient.put('/studentmgmt/moral-activity/record', data).catch(err => {
-    console.warn('记录接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/moral-activity/record', data)
 }
 
 export function exportMoralActivity(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/moral-activity/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/moral-activity/export-excel', convertedParams)
 }
 
 export function getMoralActivityDetail(params) {

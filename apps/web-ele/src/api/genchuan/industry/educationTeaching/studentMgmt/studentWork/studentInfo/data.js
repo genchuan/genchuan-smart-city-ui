@@ -140,40 +140,25 @@ export function getStudentInfoPage(params) {
 
 export function createStudentInfo(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/student-info/create', convertedData).catch(err => {
-    console.warn('新增接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/student-info/create', convertedData)
 }
 
 export function updateStudentInfo(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/student-info/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/student-info/update', convertedData)
 }
 
 export function deleteStudentInfo(params) {
-  return requestClient.delete('/studentmgmt/student-info/delete', { params }).catch(err => {
-    console.warn('删除接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.delete('/studentmgmt/student-info/delete', { params })
 }
 
 export function deleteStudentInfoList(data) {
-  return requestClient.delete('/studentmgmt/student-info/delete-list', { params: data }).catch(err => {
-    console.warn('批量删除接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.delete('/studentmgmt/student-info/delete-list', { params: data })
 }
 
 export function exportStudentInfo(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/student-info/export', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/student-info/export', convertedParams)
 }
 
 export function getStudentInfoDetail(params) {
