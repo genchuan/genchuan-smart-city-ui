@@ -396,6 +396,19 @@ const [QueryForm] = useVbenForm({
 
 // 搜索表单查询
 function onSubmit(values) {
+  const { startTime, endTime } = values;
+
+  // 验证开始时间和结束时间的逻辑关系
+  if (startTime && endTime && Array.isArray(startTime) && Array.isArray(endTime)) {
+    const startEndDate = startTime[1]; // 开始时间范围的结束日期
+    const endStartDate = endTime[0];   // 结束时间范围的开始日期
+
+    if (startEndDate && endStartDate && new Date(startEndDate) > new Date(endStartDate)) {
+      ElMessage.warning('开始时间的结束日期不能晚于结束时间的开始日期');
+      return;
+    }
+  }
+
   dataObj.searchParams = { ...values };
   handleRefresh();
   drawerApi.close();

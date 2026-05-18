@@ -1,429 +1,646 @@
-/** 车库表格初始数据 - 按指定字段生成 */
+import { getDictObj, getDictOptions } from '@vben/hooks';
+import { DICT_TYPE } from '@vben/constants';
+
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { formatDate } from '#/utils/genchuan/formatTime';
+
+import { getSiteMgmtPage } from '#/api/genchuan/industry/industrialpark/investmentMgmt/resourceMgmt/siteMgmt';
+
+/** 获取场地状态标签类型（使用标准字典函数） */
+export function getSiteStatusTagType(status) {
+  const dict = getDictObj(DICT_TYPE.SITE_MGMT_SITE_STATUS, String(status));
+  return getDictTagTypeFromDict(dict, 'primary');
+}
+
+/** 获取场地状态字典标签 */
+export function getSiteStatusLabel(status) {
+  const dict = getDictObj(DICT_TYPE.SITE_MGMT_SITE_STATUS, String(status));
+  return dict ? dict.label : status;
+}
+
+/** 获取场地状态配置 */
+export function getSiteStatusConfig(status) {
+  const dict = getDictObj(DICT_TYPE.SITE_MGMT_SITE_STATUS, String(status));
+  return {
+    label: dict ? dict.label : status,
+    colorType: dict ? dict.colorType : '',
+    tagType: getDictTagTypeFromDict(dict, 'primary'),
+  };
+}
+
+/** 客户档案数据（模拟） */
+export const clientList = [
+  { id: 5, name: '张三科技有限公司' },
+  { id: 8, name: '百度在线网络技术公司' },
+  { id: 12, name: '京东科技信息技术公司' },
+];
+
+/** 企业档案数据（模拟） */
+export const companyList = [
+  { id: 101, name: '华为技术有限公司' },
+  { id: 105, name: '阿里巴巴集团' },
+  { id: 108, name: '腾讯科技深圳有限公司' },
+  { id: 112, name: '字节跳动科技有限公司' },
+];
+
+/** 场地管理静态数据 - 用于错误回退和初始加载 */
+const staticDataList = [
+  {
+    id: 1,
+    siteCode: 'SITE-20250501-001',
+    siteLocation: '园区 A 栋 3 层',
+    siteArea: 120,
+    rentInfo: '30 元/㎡/月',
+    facility: '水电、网络、空调',
+    siteStatus: 0,
+    orderClient: null,
+    orderClientName: null,
+    signCompany: null,
+    signCompanyName: null,
+    handleUser: 'admin',
+    handleUserName: '管理员',
+    creator: 'admin',
+    createTime: 1746748800000,
+    updateTime: 1746748800000,
+    lngLat: '118.675324,24.896541',
+    photos: '/static/imgs/site-mgmt/photo1.jpg,/static/imgs/site-mgmt/photo2.jpg',
+    floorPlan: '/static/imgs/site-mgmt/floorplan1.png',
+  },
+  {
+    id: 2,
+    siteCode: 'SITE-20250501-002',
+    siteLocation: '园区 B 栋 2 层',
+    siteArea: 150,
+    rentInfo: '32 元/㎡/月',
+    facility: '水电、网络、空调、电梯',
+    siteStatus: 1,
+    orderClient: 5,
+    orderClientName: '张三科技有限公司',
+    signCompany: null,
+    signCompanyName: null,
+    handleUser: 'admin',
+    handleUserName: '管理员',
+    creator: 'admin',
+    createTime: 1746747180000,
+    updateTime: 1746824400000,
+    lngLat: '118.678923,24.898765',
+    photos: '/static/imgs/site-mgmt/photo3.jpg',
+    floorPlan: '/static/imgs/site-mgmt/floorplan2.png',
+  },
+  {
+    id: 3,
+    siteCode: 'SITE-20250502-001',
+    siteLocation: '园区 C 栋 1 层',
+    siteArea: 200,
+    rentInfo: '28 元/㎡/月',
+    facility: '水电、网络、空调、电梯、停车场',
+    siteStatus: 2,
+    orderClient: null,
+    orderClientName: null,
+    signCompany: 101,
+    signCompanyName: '华为技术有限公司',
+    handleUser: 'zhangsan',
+    handleUserName: '张三',
+    creator: 'zhangsan',
+    createTime: 1746662100000,
+    updateTime: 1746912300000,
+    lngLat: '118.681234,24.901234',
+    photos: '/static/imgs/site-mgmt/photo4.jpg,/static/imgs/site-mgmt/photo5.jpg',
+    floorPlan: '/static/imgs/site-mgmt/floorplan3.png',
+  },
+  {
+    id: 4,
+    siteCode: 'SITE-20250503-001',
+    siteLocation: '园区 D 栋 4 层',
+    siteArea: 180,
+    rentInfo: '35 元/㎡/月',
+    facility: '水电、网络',
+    siteStatus: 0,
+    orderClient: null,
+    orderClientName: null,
+    signCompany: null,
+    signCompanyName: null,
+    handleUser: 'lisi',
+    handleUserName: '李四',
+    creator: 'lisi',
+    createTime: '1746662100000',
+    updateTime: '1746662100000',
+    lngLat: '118.674567,24.894321',
+    photos: '/static/imgs/site-mgmt/photo6.jpg',
+    floorPlan: '/static/imgs/site-mgmt/floorplan4.png',
+  },
+  {
+    id: 5,
+    siteCode: 'SITE-20250504-001',
+    siteLocation: '园区 E 栋 2 层东侧',
+    siteArea: 160,
+    rentInfo: '30 元/㎡/月，年付优惠 5%',
+    facility: '水电、网络、空调、电梯',
+    siteStatus: 1,
+    orderClient: 8,
+    orderClientName: '百度在线网络技术公司',
+    signCompany: null,
+    signCompanyName: null,
+    handleUser: 'wangwu',
+    handleUserName: '王五',
+    creator: 'wangwu',
+    createTime: '1746662100000',
+    updateTime: '1746662100000',
+    lngLat: '118.679876,24.900123',
+    photos: '/static/imgs/site-mgmt/photo7.jpg,/static/imgs/site-mgmt/photo8.jpg',
+    floorPlan: '/static/imgs/site-mgmt/floorplan5.png',
+  },
+  {
+    id: 6,
+    siteCode: 'SITE-20250505-001',
+    siteLocation: '园区 F 栋 1 层',
+    siteArea: 250,
+    rentInfo: '26 元/㎡/月',
+    facility: '水电、网络、空调、电梯、停车场、会议室',
+    siteStatus: 2,
+    orderClient: null,
+    orderClientName: null,
+    signCompany: 105,
+    signCompanyName: '阿里巴巴集团',
+    handleUser: 'zhaoliu',
+    handleUserName: '赵六',
+    creator: 'zhaoliu',
+    createTime: 1746662100000,
+    updateTime: '1746662100000',
+    lngLat: '118.682345,24.903456',
+    photos: '/static/imgs/site-mgmt/photo9.jpg',
+    floorPlan: '/static/imgs/site-mgmt/floorplan6.png',
+  },
+  {
+    id: 7,
+    siteCode: 'SITE-20250506-001',
+    siteLocation: '园区 G 栋 3 层西侧',
+    siteArea: 140,
+    rentInfo: '33 元/㎡/月',
+    facility: '水电、网络、空调',
+    siteStatus: 0,
+    orderClient: null,
+    orderClientName: null,
+    signCompany: null,
+    signCompanyName: null,
+    handleUser: 'sunqi',
+    handleUserName: '孙七',
+    creator: 'sunqi',
+    createTime: 1746319200000,
+    updateTime: 1746319200000,
+    lngLat: '118.676123,24.897654',
+    photos: '/static/imgs/site-mgmt/photo10.jpg',
+    floorPlan: '/static/imgs/site-mgmt/floorplan7.png',
+  },
+  {
+    id: 8,
+    siteCode: 'SITE-20250507-001',
+    siteLocation: '园区 H 栋 2 层',
+    siteArea: 190,
+    rentInfo: '29 元/㎡/月',
+    facility: '水电、网络、空调、电梯',
+    siteStatus: 2,
+    orderClient: null,
+    orderClientName: null,
+    signCompany: 108,
+    signCompanyName: '腾讯科技深圳有限公司',
+    handleUser: 'zhouba',
+    handleUserName: '周八',
+    creator: 'zhouba',
+    createTime: 1746233400000,
+    updateTime: 1746825300000,
+    lngLat: '118.683456,24.905678',
+    photos: '/static/imgs/site-mgmt/photo11.jpg,/static/imgs/site-mgmt/photo12.jpg',
+    floorPlan: '/static/imgs/site-mgmt/floorplan8.png',
+  },
+  {
+    id: 9,
+    siteCode: 'SITE-20250508-001',
+    siteLocation: '园区 I 栋 1 层',
+    siteArea: 220,
+    rentInfo: '27 元/㎡/月',
+    facility: '水电、网络、空调、电梯、停车场',
+    siteStatus: 0,
+    orderClient: null,
+    orderClientName: null,
+    signCompany: null,
+    signCompanyName: null,
+    handleUser: 'wujiu',
+    handleUserName: '吴九',
+    creator: 'wujiu',
+    createTime: 1746147600000,
+    updateTime: 1746147600000,
+    lngLat: '118.677890,24.899876',
+    photos: '/static/imgs/site-mgmt/photo13.jpg',
+    floorPlan: '/static/imgs/site-mgmt/floorplan9.png',
+  },
+  {
+    id: 10,
+    siteCode: 'SITE-20250509-001',
+    siteLocation: '园区 J 栋 3 层',
+    siteArea: 170,
+    rentInfo: '31 元/㎡/月',
+    facility: '水电、网络、空调',
+    siteStatus: 1,
+    orderClient: 12,
+    orderClientName: '京东科技信息技术公司',
+    signCompany: null,
+    signCompanyName: null,
+    handleUser: 'zhengshi',
+    handleUserName: '郑十',
+    creator: 'zhengshi',
+    createTime: 1746061800000,
+    updateTime: 1746841600000,
+    lngLat: '118.680123,24.902345',
+    photos: '/static/imgs/site-mgmt/photo14.jpg',
+    floorPlan: '/static/imgs/site-mgmt/floorplan10.png',
+  },
+  {
+    id: 11,
+    siteCode: 'SITE-20250510-001',
+    siteLocation: '园区 K 栋 2 层东侧',
+    siteArea: 155,
+    rentInfo: '34 元/㎡/月',
+    facility: '水电、网络、空调、电梯',
+    siteStatus: 2,
+    orderClient: null,
+    orderClientName: null,
+    signCompany: 112,
+    signCompanyName: '字节跳动科技有限公司',
+    handleUser: 'admin',
+    handleUserName: '管理员',
+    creator: 'admin',
+    createTime: 1745976000000,
+    updateTime: 1746919200000,
+    lngLat: '118.684567,24.907890',
+    photos: '/static/imgs/site-mgmt/photo15.jpg,/static/imgs/site-mgmt/photo16.jpg',
+    floorPlan: '/static/imgs/site-mgmt/floorplan11.png',
+  },
+  {
+    id: 12,
+    siteCode: 'SITE-20250511-001',
+    siteLocation: '园区 L 栋 1 层',
+    siteArea: 210,
+    rentInfo: '28 元/㎡/月，年付优惠 8%',
+    facility: '水电、网络、空调、电梯、停车场、健身房',
+    siteStatus: 0,
+    orderClient: null,
+    orderClientName: null,
+    signCompany: null,
+    signCompanyName: null,
+    handleUser: 'zhangsan',
+    handleUserName: '张三',
+    creator: 'zhangsan',
+    createTime: 1745890200000,
+    updateTime: 1745890200000,
+    lngLat: '118.675678,24.895432',
+    photos: '/static/imgs/site-mgmt/photo17.jpg',
+    floorPlan: '/static/imgs/site-mgmt/floorplan12.png',
+  },
+];
+
+/** 获取场地列表数据 - 兼容原有接口 */
 export const dataList = () => {
-  return [
-    {
-      id: 'G001', // 车库ID（使用字段id）
-      assetExtendId: 'AE001', // 资产扩展ID（关联 tb_asset_extend）
-      parkId: '1', // 所属车场ID（关联原有停车场id）
-      garageName: '芗城区XX社区公共停车场-地下一层', // 车库名称
-      floorCount: '1', // 楼层数
-      totalParkingSpaces: '90', // 总车位数
-      accessControlType: '道闸', // 门禁类型
-      detailedAddress: '芗城区XX街道XX路88号地下一层', // 详细地址
-      longitude: '117.6589', // 经度
-      latitude: '24.5123', // 纬度
-      enableStatus: '启用', // 启用状态
-      creator: '张三', // 创建人
-      createTime: '2025-01-10 09:20:30', // 创建时间
-    },
-    {
-      id: 'G002',
-      assetExtendId: 'AE002',
-      parkId: '2',
-      garageName: '龙文区碧湖公园停车场-地面层',
-      floorCount: '1',
-      totalParkingSpaces: '120',
-      accessControlType: '车牌识别',
-      detailedAddress: '龙文区碧湖路126号',
-      longitude: '117.7056',
-      latitude: '24.4987',
-      enableStatus: '禁用',
-      creator: '李四',
-      createTime: '2025-01-12 14:15:20',
-    },
-    {
-      id: 'G003',
-      assetExtendId: 'AE003',
-      parkId: '3',
-      garageName: '龙海区石码镇便民停车场-地面层',
-      floorCount: '1',
-      totalParkingSpaces: '68',
-      accessControlType: '道闸+刷卡',
-      detailedAddress: '龙海区石码镇解放北路59号',
-      longitude: '117.8901',
-      latitude: '24.4562',
-      enableStatus: '禁用',
-      creator: '王五',
-      createTime: '2025-01-15 10:05:10',
-    },
-    {
-      id: 'G004',
-      assetExtendId: 'AE004',
-      parkId: '4',
-      garageName: '龙海区闽齐社区停车场-地面层',
-      floorCount: '1',
-      totalParkingSpaces: '35',
-      accessControlType: '车牌识别',
-      detailedAddress: '闽齐社区西门',
-      longitude: '117.8765',
-      latitude: '24.4438',
-      enableStatus: '启用',
-      creator: '赵六',
-      createTime: '2025-01-18 08:30:45',
-    },
-    {
-      id: 'G005',
-      assetExtendId: 'AE005',
-      parkId: '5',
-      garageName: '芗城区江滨路生态停车场-地面+地下一层',
-      floorCount: '2',
-      totalParkingSpaces: '150',
-      accessControlType: '智能道闸',
-      detailedAddress: '芗城区江滨南路189号',
-      longitude: '117.6789',
-      latitude: '24.5012',
-      enableStatus: '启用',
-      creator: '孙七',
-      createTime: '2025-01-20 16:40:15',
-    },
-    {
-      id: 'G006',
-      assetExtendId: 'AE006',
-      parkId: '6',
-      garageName: '龙文区万达商圈停车场-地下一/二层',
-      floorCount: '2',
-      totalParkingSpaces: '200',
-      accessControlType: '车牌识别+人脸识别',
-      detailedAddress: '龙文区建元东路2号万达广场B1-B2层',
-      longitude: '117.7234',
-      latitude: '24.4897',
-      enableStatus: '启用',
-      creator: '周八',
-      createTime: '2025-01-22 11:10:30',
-    },
-    {
-      id: 'G007',
-      assetExtendId: 'AE007',
-      parkId: '7',
-      garageName: '长泰区武安镇公共停车场-地面层',
-      floorCount: '1',
-      totalParkingSpaces: '85',
-      accessControlType: '道闸',
-      detailedAddress: '长泰区武安镇人民西路77号',
-      longitude: '117.7890',
-      latitude: '24.6123',
-      enableStatus: '启用',
-      creator: '吴九',
-      createTime: '2025-01-25 13:25:40',
-    },
-    {
-      id: 'G008',
-      assetExtendId: 'AE008',
-      parkId: '8',
-      garageName: '漳浦县绥安镇便民停车场-地面层',
-      floorCount: '1',
-      totalParkingSpaces: '72',
-      accessControlType: '刷卡',
-      detailedAddress: '漳浦县绥安镇金浦大道101号',
-      longitude: '117.4567',
-      latitude: '24.1234',
-      enableStatus: '禁用',
-      creator: '郑十',
-      createTime: '2025-01-28 09:50:25',
-    },
-    {
-      id: 'G009',
-      assetExtendId: 'AE009',
-      parkId: '9',
-      garageName: '芗城区巷口街道停车场-地面层',
-      floorCount: '1',
-      totalParkingSpaces: '45',
-      accessControlType: '车牌识别',
-      detailedAddress: '芗城区新华东路32号',
-      longitude: '117.6890',
-      latitude: '24.5234',
-      enableStatus: '启用',
-      creator: '张三',
-      createTime: '2025-02-01 15:15:10',
-    },
-    {
-      id: 'G010',
-      assetExtendId: 'AE010',
-      parkId: '10',
-      garageName: '龙文区蓝田街道停车场-地下一层',
-      floorCount: '1',
-      totalParkingSpaces: '110',
-      accessControlType: '智能道闸',
-      detailedAddress: '龙文区蓝田街道梧桥中路58号地下一层',
-      longitude: '117.7123',
-      latitude: '24.4789',
-      enableStatus: '启用',
-      creator: '李四',
-      createTime: '2025-02-05 10:30:50',
-    },
-    {
-      id: 'G011',
-      assetExtendId: 'AE011',
-      parkId: '11',
-      garageName: '龙文区步文街道停车场-地下一/二层',
-      floorCount: '2',
-      totalParkingSpaces: '180',
-      accessControlType: '车牌识别+道闸',
-      detailedAddress: '龙文区步文街道天亭路23号地下车库',
-      longitude: '117.7345',
-      latitude: '24.4812',
-      enableStatus: '启用',
-      creator: '王五',
-      createTime: '2025-02-08 14:20:15',
-    },
-    {
-      id: 'G012',
-      assetExtendId: 'AE012',
-      parkId: '12',
-      garageName: '芗城区东铺头街道停车场-地面层',
-      floorCount: '1',
-      totalParkingSpaces: '95',
-      accessControlType: '道闸',
-      detailedAddress: '芗城区东铺头街道新华西路128号',
-      longitude: '117.6456',
-      latitude: '24.5189',
-      enableStatus: '启用',
-      creator: '赵六',
-      createTime: '2025-02-10 09:40:30',
-    },
-  ];
+  return staticDataList.map((item) => ({
+    ...item,
+    _createTimeFormatted: formatDate(item.createTime),
+    _updateTimeFormatted: formatDate(item.updateTime),
+    _siteStatusConfig: getSiteStatusConfig(item.siteStatus),
+  }));
 };
 
-/** 车库表单配置（包含所有指定字段） */
-export function useFormSchema() {
+/** 获取场地列表数据（getList别名，保持向后兼容） */
+export const getList = dataList;
+
+/** 获取场地列表数据（支持动态加载与静态回退） */
+export async function fetchSiteMgmtData(params = {}) {
+  try {
+    const response = await getSiteMgmtPage({
+      pageNo: params.pageNo || 1,
+      pageSize: params.pageSize || 10,
+      ...params,
+    });
+
+    const data = response?.data || response;
+
+    if (data && data.list) {
+      return {
+        list: data.list.map((item) => ({
+          ...item,
+          _createTimeFormatted: formatDate(item.createTime),
+          _updateTimeFormatted: formatDate(item.updateTime),
+          _siteStatusConfig: getSiteStatusConfig(item.siteStatus),
+        })),
+        total: data.total || 0,
+      };
+    }
+
+    console.warn('API 返回数据格式异常，使用静态数据');
+    return {
+      list: staticDataList.map((item) => ({
+        ...item,
+        _createTimeFormatted: formatDate(item.createTime),
+        _updateTimeFormatted: formatDate(item.updateTime),
+        _siteStatusConfig: getSiteStatusConfig(item.siteStatus),
+      })),
+      total: staticDataList.length,
+    };
+  } catch (error) {
+    console.error('获取场地管理数据失败:', error);
+    return {
+      list: staticDataList.map((item) => ({
+        ...item,
+        _createTimeFormatted: formatDate(item.createTime),
+        _updateTimeFormatted: formatDate(item.updateTime),
+        _siteStatusConfig: getSiteStatusConfig(item.siteStatus),
+      })),
+      total: staticDataList.length,
+    };
+  }
+}
+
+/** 搜索表单配置（符合接口文档筛选参数） */
+export function useSearchFormSchema() {
   return [
     {
-      fieldName: 'id',
-      label: '车库ID',
+      fieldName: 'siteCode',
+      label: '场地编号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入车库ID',
+        placeholder: '请输入场地编号',
       },
-      rules: 'required',
     },
     {
-      fieldName: 'assetExtendId',
-      label: '资产扩展ID',
+      fieldName: 'siteLocation',
+      label: '场地位置',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入资产扩展ID（关联tb_asset_extend）',
+        placeholder: '请输入场地位置',
       },
-      rules: 'required',
     },
     {
-      fieldName: 'parkId',
-      label: '所属车场ID',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择所属车场',
-        options: [
-          { label: '芗城区XX社区公共停车场', value: '1' },
-          { label: '龙文区碧湖公园停车场', value: '2' },
-          { label: '龙海区石码镇便民停车场', value: '3' },
-          { label: '龙海区闽齐社区停车场', value: '4' },
-          { label: '芗城区江滨路生态停车场', value: '5' },
-          { label: '龙文区万达商圈停车场', value: '6' },
-          { label: '长泰区武安镇公共停车场', value: '7' },
-          { label: '漳浦县绥安镇便民停车场', value: '8' },
-          { label: '芗城区巷口街道停车场', value: '9' },
-          { label: '龙文区蓝田街道停车场', value: '10' },
-          { label: '龙文区步文街道停车场', value: '11' },
-          { label: '芗城区东铺头街道停车场', value: '12' },
-        ],
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'garageName',
-      label: '车库名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入车库名称',
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'floorCount',
-      label: '楼层数',
+      fieldName: 'siteArea',
+      label: '场地面积(㎡)',
       component: 'InputNumber',
       componentProps: {
-        placeholder: '请输入楼层数',
-        min: 1,
+        placeholder: '请输入场地面积',
+        min: 0,
       },
-      rules: 'required',
     },
     {
-      fieldName: 'totalParkingSpaces',
-      label: '总车位数',
-      component: 'InputNumber',
+      fieldName: 'rentInfo',
+      label: '租金信息',
+      component: 'Input',
       componentProps: {
-        placeholder: '请输入总车位数',
-        min: 1,
+        placeholder: '请输入租金信息',
       },
-      rules: 'required',
     },
     {
-      fieldName: 'accessControlType',
-      label: '门禁类型',
+      fieldName: 'facility',
+      label: '配套设施',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入配套设施',
+      },
+    },
+    {
+      fieldName: 'siteStatus',
+      label: '场地状态',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择门禁类型',
+        placeholder: '请选择场地状态',
         options: [
-          { label: '道闸', value: '道闸' },
-          { label: '车牌识别', value: '车牌识别' },
-          { label: '道闸+刷卡', value: '道闸+刷卡' },
-          { label: '智能道闸', value: '智能道闸' },
-          { label: '车牌识别+人脸识别', value: '车牌识别+人脸识别' },
-          { label: '刷卡', value: '刷卡' },
-          { label: '车牌识别+道闸', value: '车牌识别+道闸' },
+          { label: '空置中', value: 0 },
+          { label: '洽谈中', value: 1 },
+          { label: '已出租', value: 2 },
         ],
+        clearable: true,
       },
-      rules: 'required',
     },
     {
-      fieldName: 'detailedAddress',
-      label: '详细地址',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入详细地址',
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'longitude',
-      label: '经度',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入经度（例：117.6589）',
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'latitude',
-      label: '纬度',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入纬度（例：24.5123）',
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'enableStatus',
-      label: '启用状态',
+      fieldName: 'orderClient',
+      label: '预约客户',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择启用状态',
-        options: [
-          { label: '启用', value: '启用' },
-          { label: '禁用', value: '禁用' },
-        ],
+        placeholder: '请选择预约客户',
+        options: clientList.map((c) => ({ label: c.name, value: c.id })),
+        clearable: true,
       },
-      rules: 'required',
     },
     {
-      fieldName: 'creator',
-      label: '创建人',
-      component: 'Input',
+      fieldName: 'signCompany',
+      label: '签约企业',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入创建人',
+        placeholder: '请选择签约企业',
+        options: companyList.map((c) => ({ label: c.name, value: c.id })),
+        clearable: true,
       },
-      rules: 'required',
-    },
-    {
-      fieldName: 'createTime',
-      label: '创建时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择创建时间',
-        format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss',
-      },
-      rules: 'required',
     },
   ];
 }
 
-/** 车库表格列配置 */
+/** 编辑/录入表单配置（符合接口文档请求参数） */
+export function useFormSchema() {
+  return [
+    {
+      fieldName: 'siteCode',
+      label: '场地编号',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入场地编号',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'siteLocation',
+      label: '场地位置',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入场地位置',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'siteArea',
+      label: '场地面积(㎡)',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入场地面积',
+        min: 0,
+      },
+    },
+    {
+      fieldName: 'rentInfo',
+      label: '租金信息',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入租金信息',
+      },
+    },
+    {
+      fieldName: 'facility',
+      label: '配套设施',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入配套设施',
+      },
+    },
+    {
+      fieldName: 'siteStatus',
+      label: '场地状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择场地状态',
+        options: [
+          { label: '空置中', value: 0 },
+          { label: '洽谈中', value: 1 },
+          { label: '已出租', value: 2 },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'orderClient',
+      label: '预约客户',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择预约客户',
+        options: clientList.map((c) => ({ label: c.name, value: c.id })),
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'signCompany',
+      label: '签约企业',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择签约企业',
+        options: companyList.map((c) => ({ label: c.name, value: c.id })),
+        clearable: true,
+      },
+    },
+    {
+      fieldName: 'handleUser',
+      label: '操作人',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入操作人账号',
+      },
+    },
+    {
+      fieldName: 'lngLat',
+      label: '经纬度',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入经纬度(例：118.675324,24.896541)',
+      },
+    },
+    {
+      fieldName: 'photos',
+      label: '照片',
+      component: 'ImageUpload',
+      componentProps: {
+        maxNumber: 9,
+        multiple: true,
+        maxSize: 10,
+      },
+    },
+    {
+      fieldName: 'floorPlan',
+      label: '平面图',
+      component: 'ImageUpload',
+      componentProps: {
+        maxNumber: 1,
+        maxSize: 20,
+      },
+    },
+  ];
+}
+
+/** 场地表格列配置 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
-      field: 'id',
-      title: '车库ID',
-      minWidth: 100,
+      field: 'siteCode',
+      title: '场地编号',
+      minWidth: 180,
       sortable: true,
-      slots: { default: 'id' },
+      slots: { default: 'siteCode' },
     },
     {
-      field: 'assetExtendId',
-      title: '资产扩展ID',
+      field: 'siteLocation',
+      title: '场地位置',
+      minWidth: 150,
+      sortable: true,
+    },
+    {
+      field: 'siteArea',
+      title: '场地面积(㎡)',
       minWidth: 120,
       sortable: true,
     },
     {
-      field: 'parkId',
-      title: '所属车场ID',
-      minWidth: 100,
+      field: 'rentInfo',
+      title: '租金信息',
+      minWidth: 150,
       sortable: true,
     },
     {
-      field: 'garageName',
-      title: '车库名称',
-      minWidth: 200,
-      sortable: true,
-    },
-    {
-      field: 'floorCount',
-      title: '楼层数',
-      minWidth: 80,
-      sortable: true,
-    },
-    {
-      field: 'totalParkingSpaces',
-      title: '总车位数',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'accessControlType',
-      title: '门禁类型',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'detailedAddress',
-      title: '详细地址',
-      minWidth: 200,
-      sortable: true,
-    },
-    {
-      field: 'longitude',
-      title: '经度',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'latitude',
-      title: '纬度',
-      minWidth: 120,
-      sortable: true,
-    },
-    {
-      field: 'enableStatus',
-      title: '启用状态',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'creator',
-      title: '创建人',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'createTime',
-      title: '创建时间',
+      field: 'facility',
+      title: '配套设施',
       minWidth: 180,
       sortable: true,
     },
     {
+      field: 'siteStatus',
+      title: '场地状态',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'siteStatus' },
+    },
+    {
+      field: 'orderClientName',
+      title: '预约客户',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      field: 'signCompanyName',
+      title: '签约企业',
+      minWidth: 180,
+      sortable: true,
+    },
+    {
+      field: 'handleUserName',
+      title: '操作人',
+      minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: '_createTimeFormatted',
+      title: '创建时间',
+      minWidth: 160,
+      sortable: true,
+    },
+    {
+      field: 'photos',
+      title: '照片',
+      minWidth: 120,
+      sortable: false,
+      slots: { default: 'photos' },
+    },
+    {
+      field: 'floorPlan',
+      title: '平面图',
+      minWidth: 120,
+      sortable: false,
+      slots: { default: 'floorPlan' },
+    },
+    {
       title: '操作',
-      width: 100,
+      width: 200,
       fixed: 'right',
       slots: { default: 'actions' },
     },
@@ -431,29 +648,25 @@ export function useGridColumns() {
 }
 
 export const textObj = {
-  // 操作类文本（对应编辑/新增）
-  editText: '编辑车库',
-  addText: '新增车库',
-  // 导出Excel相关文本
-  excelName: '车库列表',
-  excelAllName: '全市车库数据.xlsx',
-  // 统计总计文本（结合之前生成的车库数据统计）
-  total: ' 总计: 车库数量12;车位总数:1245;评价车库车位8',
+  editText: '完善场地',
+  addText: '录入场地',
+  excelName: '场地管理列表',
+  excelAllName: '场地管理数据.xlsx',
+  total: ' 总计: 场地数量12;空置中:5;洽谈中:3;已出租:4',
 };
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '车库ID' },
-  { key: 'assetExtendId', label: '资产扩展ID' },
-  { key: 'parkId', label: '所属车场ID' },
-  { key: 'garageName', label: '车库名称' },
-  { key: 'floorCount', label: '楼层数' },
-  { key: 'totalParkingSpaces', label: '总车位数' },
-  { key: 'accessControlType', label: '门禁类型' },
-  { key: 'detailedAddress', label: '详细地址' },
-  { key: 'longitude', label: '经度' },
-  { key: 'latitude', label: '纬度' },
-  { key: 'enableStatus', label: '启用状态' },
+  { key: 'siteCode', label: '场地编号' },
+  { key: 'siteLocation', label: '场地位置' },
+  { key: 'siteArea', label: '场地面积(㎡)' },
+  { key: 'rentInfo', label: '租金信息' },
+  { key: 'facility', label: '配套设施' },
+  { key: 'siteStatus', label: '场地状态', isDict: true },
+  { key: 'orderClientName', label: '预约客户' },
+  { key: 'signCompanyName', label: '签约企业' },
+  { key: 'handleUserName', label: '操作人' },
   { key: 'creator', label: '创建人' },
-  { key: 'createTime', label: '创建时间' },
+  { key: '_createTimeFormatted', label: '创建时间' },
+  { key: '_updateTimeFormatted', label: '更新时间' },
 ];
