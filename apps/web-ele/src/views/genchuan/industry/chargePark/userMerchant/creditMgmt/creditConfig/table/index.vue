@@ -153,6 +153,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
+      clearable: true,
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
@@ -242,10 +243,8 @@ async function fetchCreditConfigDetail(
 /** 查询信用配置列表 */
 async function queryCreditConfigPage(
   { page }: { page: { currentPage: number; pageSize: number } },
-  formValues: Record<string, any> = {},
 ) {
   const queryValues = {
-    ...formValues,
     ...searchParams.value,
     levelThreshold: drillFilters.value.levelThreshold,
     ruleDesc: drillFilters.value.ruleDesc,
@@ -550,8 +549,12 @@ async function handleSerachShow() {
 }
 
 async function syncQueryFormValues() {
-  await queryFormApi.resetForm();
-  await queryFormApi.setValues(searchParams.value);
+  try {
+    await queryFormApi.resetForm();
+    await queryFormApi.setValues(searchParams.value);
+  } catch (error) {
+    console.warn('[creditConfig] sync query form failed:', error);
+  }
 }
 
 /** 按规则筛选 */
@@ -626,7 +629,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   const nextValues = { ...searchParams.value };
   delete nextValues[tag.key];
   searchParams.value = nextValues;
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   await handleRefresh();
 }
 </script>

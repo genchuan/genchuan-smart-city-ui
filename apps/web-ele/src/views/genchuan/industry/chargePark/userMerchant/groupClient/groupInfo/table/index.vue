@@ -187,6 +187,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
+      clearable: true,
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
@@ -248,17 +249,9 @@ async function fetchGroupDetail(
 }
 
 /** 查询集团列表 */
-async function queryGroupInfoPage(
-  { page }: any,
-  formValues: Record<string, any> = {},
-) {
-  const queryValues = {
-    ...formValues,
-    ...searchParams.value,
-  };
-
+async function queryGroupInfoPage({ page }: any) {
   const result = await GroupInfoApi.getGroupInfoPage({
-    ...buildGroupInfoQueryParams(queryValues, drillFilters.value),
+    ...buildGroupInfoQueryParams(searchParams.value, drillFilters.value),
     pageNo: page.currentPage,
     pageSize: page.pageSize,
   });
@@ -698,8 +691,12 @@ async function handleSerachShow() {
 }
 
 async function syncQueryFormValues() {
-  await queryFormApi.resetForm();
-  await queryFormApi.setValues(searchParams.value);
+  try {
+    await queryFormApi.resetForm();
+    await queryFormApi.setValues(searchParams.value);
+  } catch (error) {
+    console.warn('[groupInfo] sync query form failed:', error);
+  }
 }
 
 /** 按联系人筛选 */
@@ -780,7 +777,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   const nextValues = { ...searchParams.value };
   delete nextValues[tag.key];
   searchParams.value = nextValues;
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   await handleRefresh();
 }
 

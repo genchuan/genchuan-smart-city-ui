@@ -198,6 +198,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
+      clearable: true,
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
@@ -304,19 +305,11 @@ async function buildMerchantAuditPayload(
   };
 }
 
-async function queryMerchantInfoPage(
-  { page }: any,
-  formValues: Record<string, any> = {},
-) {
-  const queryValues = {
-    ...formValues,
-    ...searchParams.value,
-  };
-
+async function queryMerchantInfoPage({ page }: any) {
   const result = await MerchantInfoApi.getMerchantInfoPage({
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    ...buildMerchantInfoQueryParams(queryValues, drillFilters.value),
+    ...buildMerchantInfoQueryParams(searchParams.value, drillFilters.value),
   });
 
   const list = Array.isArray(result?.list) ? result.list : [];
@@ -591,8 +584,12 @@ async function handleSerachShow() {
 }
 
 async function syncQueryFormValues() {
-  await queryFormApi.resetForm();
-  await queryFormApi.setValues(searchParams.value);
+  try {
+    await queryFormApi.resetForm();
+    await queryFormApi.setValues(searchParams.value);
+  } catch (error) {
+    console.warn('[merchantInfo] sync query form failed:', error);
+  }
 }
 
 /** 移除筛选标签 */
@@ -622,7 +619,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   const nextValues = { ...searchParams.value };
   delete nextValues[tag.key];
   searchParams.value = nextValues;
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   await handleRefresh({ clearDrillFilters: true });
 }
 

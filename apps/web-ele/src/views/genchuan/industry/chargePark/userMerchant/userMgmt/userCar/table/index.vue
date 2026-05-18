@@ -208,12 +208,8 @@ async function fetchUserCarDetail(
 }
 
 /** 查询车辆列表 */
-async function queryUserCarPage(
-  { page }: any,
-  formValues: Record<string, any> = {},
-) {
+async function queryUserCarPage({ page }: any) {
   const queryValues = {
-    ...formValues,
     ...searchParams.value,
   };
 
@@ -335,6 +331,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
+      clearable: true,
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
@@ -749,8 +746,12 @@ async function handleSerachShow() {
 }
 
 async function syncQueryFormValues() {
-  await queryFormApi.resetForm();
-  await queryFormApi.setValues(searchParams.value);
+  try {
+    await queryFormApi.resetForm();
+    await queryFormApi.setValues(searchParams.value);
+  } catch (error) {
+    console.warn('[userCar] sync query form failed:', error);
+  }
 }
 
 /** 按状态筛选 */
@@ -792,7 +793,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   const nextValues = { ...searchParams.value };
   delete nextValues[tag.key];
   searchParams.value = nextValues;
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   await handleRefresh();
 }
 
