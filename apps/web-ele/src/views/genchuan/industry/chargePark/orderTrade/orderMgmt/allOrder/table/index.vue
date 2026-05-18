@@ -363,6 +363,7 @@ const statusMap = {
   completed: { label: '已完成', type: 'success' },
   cancelled: { label: '已取消', type: 'info' },
   refunding: { label: '退款中', type: 'danger' },
+  refunded: { label: '已退款', type: 'danger' },
 };
 
 // 获取状态标签
