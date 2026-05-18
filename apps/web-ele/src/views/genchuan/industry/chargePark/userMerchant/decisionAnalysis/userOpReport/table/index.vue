@@ -161,9 +161,11 @@ async function fetchUserOpReportDetail(
 }
 
 /** 查询报表列表 */
-async function queryUserOpReportPage(
-  { page }: { page: { currentPage: number; pageSize: number } },
-) {
+async function queryUserOpReportPage({
+  page,
+}: {
+  page: { currentPage: number; pageSize: number };
+}) {
   const queryValues = {
     ...searchParams.value,
   };

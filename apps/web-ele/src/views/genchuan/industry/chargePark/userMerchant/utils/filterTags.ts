@@ -46,10 +46,7 @@ export function formatFilterValue(value: any) {
 }
 
 function formatTagDisplayValue(value: string) {
-  return value.replace(
-    /(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})/g,
-    '$1 $2',
-  );
+  return value.replaceAll(/(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})/g, '$1 $2');
 }
 
 export function buildActiveFilterTags(groups: FilterTagGroup[]) {

@@ -241,9 +241,11 @@ async function fetchCreditConfigDetail(
 }
 
 /** 查询信用配置列表 */
-async function queryCreditConfigPage(
-  { page }: { page: { currentPage: number; pageSize: number } },
-) {
+async function queryCreditConfigPage({
+  page,
+}: {
+  page: { currentPage: number; pageSize: number };
+}) {
   const queryValues = {
     ...searchParams.value,
     levelThreshold: drillFilters.value.levelThreshold,

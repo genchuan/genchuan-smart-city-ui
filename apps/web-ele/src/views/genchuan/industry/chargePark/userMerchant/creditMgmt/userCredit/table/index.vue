@@ -257,9 +257,11 @@ async function fetchUserCreditDetail(
 }
 
 /** 查询用户信用列表 */
-async function queryUserCreditPage(
-  { page }: { page: { currentPage: number; pageSize: number } },
-) {
+async function queryUserCreditPage({
+  page,
+}: {
+  page: { currentPage: number; pageSize: number };
+}) {
   await ensureUserProfilesLoaded();
 
   const queryValues = {
