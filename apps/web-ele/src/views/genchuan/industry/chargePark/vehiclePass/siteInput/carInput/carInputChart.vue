@@ -112,12 +112,14 @@ function initPieChart() {
   };
   pieChartInstance.setOption(option);
 
-  // 添加点击事件，支持钻取
+  // 添加点击事件，支持钻取 - 点击折线数据点筛选对应日期的录入记录
   pieChartInstance.on('click', (params) => {
     if (params.componentType === 'series') {
-      const date = params.name;
+      const clickedDate = params.name;
       window.dispatchEvent(
-        new CustomEvent('filterByDate', { detail: { date } }),
+        new CustomEvent('filterByChart:carInput', {
+          detail: { createTimeRange: [clickedDate, clickedDate] },
+        }),
       );
     }
   });
@@ -209,8 +211,8 @@ onUnmounted(() => {
 .chart-box {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
   gap: 15px;
+  align-items: flex-end;
   width: 100% !important;
   padding-right: 15px;
   padding-bottom: 0.5rem;
@@ -227,9 +229,8 @@ onUnmounted(() => {
 
     .left-card {
       display: flex;
+      flex: 1;
       flex-direction: column;
-      flex: 1;
-      flex: 1;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;

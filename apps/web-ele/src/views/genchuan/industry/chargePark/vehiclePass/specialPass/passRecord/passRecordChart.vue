@@ -16,6 +16,7 @@ const cards = reactive([
     desc: '今日累计放行次数',
     color: '#4A90E2',
     key: 'todayPassCount',
+    icon: 'CaretRight',
   },
   {
     title: '异常放行占比',
@@ -23,6 +24,7 @@ const cards = reactive([
     desc: '异常放行比例',
     color: '#F56C6C',
     key: 'abnormalPassRate',
+    icon: 'Warning',
   },
 ]);
 
@@ -39,7 +41,7 @@ let trendChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationId: props.parkId,
+      stationName: props.parkId,
     };
 
     const res = await getPassRecordChart(params);
@@ -177,10 +179,9 @@ onUnmounted(() => {
       >
         <div class="card-header">
           <span class="card-title">{{ card.title }}</span>
-          <div
-            class="card-indicator"
-            :style="{ backgroundColor: card.color }"
-          ></div>
+          <el-icon class="card-icon" :style="{ color: card.color }">
+            <component :is="card.icon" />
+          </el-icon>
         </div>
         <div class="card-body">
           <div class="card-value" :style="{ color: card.color }">
@@ -236,7 +237,6 @@ onUnmounted(() => {
       display: flex;
       flex-direction: column;
       flex: 1;
-      flex: 1;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;
@@ -248,6 +248,11 @@ onUnmounted(() => {
       &:hover {
         box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
         transform: translateY(-2px);
+
+        .card-icon {
+          opacity: 1;
+          transform: scale(1.1);
+        }
       }
 
       .card-header {
@@ -263,11 +268,11 @@ onUnmounted(() => {
           color: #606266;
         }
 
-        .card-indicator {
+        .card-icon {
           flex-shrink: 0;
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
+          font-size: 24px;
+          opacity: 0.8;
+          transition: all 0.3s ease;
         }
       }
 

@@ -96,7 +96,7 @@ export function getFakePlateControl(id: number | string) {
 /** 导出套牌管控 */
 export function exportFakePlateControl(params?: FakePlateControlApi.PageReqVO) {
   return requestClient.download('/vehiclepass/fake-plate-control/export', {
-    params,
+    params: { ...params },
   });
 }
 
@@ -133,6 +133,23 @@ export function updateFakePlateControlProgress(
   return requestClient.put<boolean>(
     '/vehiclepass/fake-plate-control/update-progress',
     data,
+  );
+}
+
+/** 创建套牌管控 */
+export function createFakePlateControl(
+  data: FakePlateControlApi.FakePlateControl,
+) {
+  return requestClient.post<boolean>(
+    '/vehiclepass/fake-plate-control/create',
+    data,
+  );
+}
+
+/** 删除套牌管控 */
+export function deleteFakePlateControl(id: number | string) {
+  return requestClient.delete<boolean>(
+    `/vehiclepass/fake-plate-control/delete?id=${id}`,
   );
 }
 

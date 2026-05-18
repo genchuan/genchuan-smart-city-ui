@@ -15,6 +15,13 @@ export const openReasonMap = {
   其他: 'info',
 };
 
+/** 任务进度映射 */
+export const taskProgressMap = {
+  '未开始': 'info',
+  '进行中': 'warning',
+  '已完成': 'success',
+};
+
 /** 模块表格初始数据 */
 export const dataList = () => {
   return [
@@ -25,7 +32,7 @@ export const dataList = () => {
       openReason: '紧急通行',
       applyUserId: 1,
       applyUserName: '张三',
-      applyTime: '2025-04-18 08:30:15',
+      applyTime: 1745011815000,
       status: '待审批',
       auditUserId: null,
       auditUserName: null,
@@ -33,7 +40,15 @@ export const dataList = () => {
       executeTime: null,
       rejectReason: null,
       remark: '救护车紧急通行',
-      createTime: '2025-04-18 08:30:15',
+      creator: 'admin',
+      createTime: 1745011815000,
+      updater: null,
+      updateTime: null,
+      isCorrected: false,
+      executorId: 1,
+      executorName: '执行员A',
+      completeTime: null,
+      taskProgress: '未开始',
     },
     {
       id: '002',
@@ -42,15 +57,23 @@ export const dataList = () => {
       openReason: '故障处理',
       applyUserId: 2,
       applyUserName: '李四',
-      applyTime: '2025-04-18 09:15:30',
+      applyTime: 1745015730000,
       status: '已通过',
       auditUserId: 1,
       auditUserName: '管理员',
-      auditTime: '2025-04-18 09:30:00',
+      auditTime: 1745016600000,
       executeTime: null,
       rejectReason: null,
       remark: '道闸故障需要手动开闸',
-      createTime: '2025-04-18 09:15:30',
+      creator: 'admin',
+      createTime: 1745015730000,
+      updater: null,
+      updateTime: null,
+      isCorrected: false,
+      executorId: 2,
+      executorName: '执行员B',
+      completeTime: null,
+      taskProgress: '进行中',
     },
     {
       id: '003',
@@ -59,15 +82,23 @@ export const dataList = () => {
       openReason: '其他',
       applyUserId: 3,
       applyUserName: '王五',
-      applyTime: '2025-04-18 10:20:45',
+      applyTime: 1745019645000,
       status: '已执行',
       auditUserId: 1,
       auditUserName: '管理员',
-      auditTime: '2025-04-18 10:30:00',
-      executeTime: '2025-04-18 10:35:00',
+      auditTime: 1745020200000,
+      executeTime: 1745020500000,
       rejectReason: null,
       remark: '特殊车辆通行',
-      createTime: '2025-04-18 10:20:45',
+      creator: 'admin',
+      createTime: 1745019645000,
+      updater: null,
+      updateTime: null,
+      isCorrected: false,
+      executorId: 1,
+      executorName: '执行员A',
+      completeTime: 1745021000000,
+      taskProgress: '已完成',
     },
   ];
 };
@@ -76,20 +107,20 @@ export const dataList = () => {
 export function useSearchFormSchema() {
   return [
     {
-      fieldName: 'stationId',
-      label: '场站',
+      fieldName: 'stationName',
+      label: '片区',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择场站',
+        placeholder: '请选择片区',
         options: [],
       },
     },
     {
       fieldName: 'openReason',
-      label: '开闸原因',
+      label: '任务类型',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择开闸原因',
+        placeholder: '请选择任务类型',
         options: [
           { label: '紧急通行', value: '紧急通行' },
           { label: '故障处理', value: '故障处理' },
@@ -108,10 +139,10 @@ export function useSearchFormSchema() {
     },
     {
       fieldName: 'applyTime',
-      label: '申请时间',
+      label: '派发时间',
       component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择申请时间',
+        placeholder: '请选择派发时间',
         type: 'datetimerange',
       },
     },
@@ -130,11 +161,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'auditUserId',
-      label: '审批人',
+      fieldName: 'executorId',
+      label: '执行人',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择审批人',
+        placeholder: '请选择执行人',
         options: [],
       },
     },
@@ -160,7 +191,17 @@ export function useCreateFormSchema() {
         placeholder: '请选择场站',
         options: [],
       },
-      rules: [{ required: true, message: '请选择场站' }],
+      rules: 'required',
+    },
+    {
+      fieldName: 'applyUserId',
+      label: '申请人',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择申请人',
+        options: [],
+      },
+      rules: 'required',
     },
     {
       fieldName: 'openReason',
@@ -174,7 +215,7 @@ export function useCreateFormSchema() {
           { label: '其他', value: '其他' },
         ],
       },
-      rules: [{ required: true, message: '请选择开闸原因' }],
+      rules: 'required',
     },
     {
       fieldName: 'remark',
@@ -203,7 +244,7 @@ export function useReapplyFormSchema() {
           { label: '其他', value: '其他' },
         ],
       },
-      rules: [{ required: true, message: '请选择开闸原因' }],
+      rules: 'required',
     },
     {
       fieldName: 'remark',
@@ -229,14 +270,14 @@ export function useGridColumns() {
     },
     {
       field: 'stationName',
-      title: '场站',
+      title: '片区',
       minWidth: 180,
       sortable: true,
       slots: { default: 'stationName' },
     },
     {
       field: 'openReason',
-      title: '开闸原因',
+      title: '任务类型',
       minWidth: 120,
       sortable: true,
       slots: { default: 'openReason' },
@@ -250,7 +291,7 @@ export function useGridColumns() {
     },
     {
       field: 'applyTime',
-      title: '申请时间',
+      title: '派发时间',
       minWidth: 180,
       sortable: true,
       formatter: createTimeFormatter(),
@@ -263,25 +304,25 @@ export function useGridColumns() {
       slots: { default: 'status' },
     },
     {
-      field: 'auditUserName',
-      title: '审批人',
+      field: 'executorName',
+      title: '执行人',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'auditUserName' },
+      slots: { default: 'executorName' },
     },
     {
-      field: 'auditTime',
-      title: '审批时间',
+      field: 'completeTime',
+      title: '完成时间',
       minWidth: 180,
       sortable: true,
       formatter: createTimeFormatter(),
     },
     {
-      field: 'executeTime',
-      title: '执行时间',
-      minWidth: 180,
+      field: 'taskProgress',
+      title: '任务进度',
+      minWidth: 100,
       sortable: true,
-      formatter: createTimeFormatter(),
+      slots: { default: 'taskProgress' },
     },
     {
       title: '操作',
@@ -303,16 +344,19 @@ export const textObj = {
 /** 详情抽屉字段配置 */
 export const detailFields = [
   { key: 'id', label: '申请ID' },
-  { key: 'stationName', label: '场站' },
-  { key: 'openReason', label: '开闸原因' },
+  { key: 'stationName', label: '片区' },
+  { key: 'openReason', label: '任务类型' },
   { key: 'applyUserName', label: '申请人' },
-  { key: 'applyTime', label: '申请时间', formatter: formatTime },
+  { key: 'applyTime', label: '派发时间', formatter: formatTime },
   { key: 'status', label: '状态' },
-  { key: 'auditUserName', label: '审批人' },
-  { key: 'auditTime', label: '审批时间', formatter: formatTime },
-  { key: 'executeTime', label: '执行时间', formatter: formatTime },
+  { key: 'executorName', label: '执行人' },
+  { key: 'completeTime', label: '完成时间', formatter: formatTime },
+  { key: 'taskProgress', label: '任务进度' },
   { key: 'rejectReason', label: '驳回理由' },
   { key: 'remark', label: '备注' },
+  { key: 'creator', label: '创建人' },
   { key: 'createTime', label: '创建时间', formatter: formatTime },
-  { key: 'updateTime', label: '更新时间', formatter: formatTime },
+  { key: 'updater', label: '操作人' },
+  { key: 'updateTime', label: '操作时间', formatter: formatTime },
+  { key: 'isCorrected', label: '修正记录标记' },
 ];

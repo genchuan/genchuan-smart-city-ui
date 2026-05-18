@@ -101,7 +101,7 @@ export function getOilCarHandle(id: number | string) {
 /** 导出油车处置 */
 export function exportOilCarHandle(params?: OilCarHandleApi.PageReqVO) {
   return requestClient.download('/vehiclepass/oil-car-handle/export', {
-    params,
+    params: { ...params },
   });
 }
 

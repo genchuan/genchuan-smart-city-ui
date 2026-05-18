@@ -96,7 +96,7 @@ export function getResultHandle(id: number | string) {
 /** 导出结果处理 */
 export function exportResultHandle(params?: ResultHandleApi.PageReqVO) {
   return requestClient.download('/vehiclepass/result-handle/export', {
-    params,
+    params: { ...params },
   });
 }
 

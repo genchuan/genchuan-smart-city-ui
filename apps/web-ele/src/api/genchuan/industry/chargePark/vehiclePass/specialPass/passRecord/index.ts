@@ -76,7 +76,9 @@ export function getPassRecord(id: number | string) {
 
 /** 导出通行记录 */
 export function exportPassRecord(params?: PassRecordApi.PageReqVO) {
-  return requestClient.download('/vehiclepass/pass-record/export', { params });
+  return requestClient.download('/vehiclepass/pass-record/export', {
+    params: { ...params },
+  });
 }
 
 /** 核查通行记录 */

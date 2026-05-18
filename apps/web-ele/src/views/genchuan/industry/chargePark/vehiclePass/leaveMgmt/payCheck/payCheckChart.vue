@@ -39,7 +39,7 @@ let pieChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationId: props.parkId,
+      stationName: props.parkId,
     };
 
     const res = await getPayCheckChart(params);
@@ -105,10 +105,22 @@ function initPieChart() {
     ],
   };
   pieChartInstance.setOption(option);
-}
 
-function initBarChart() {
-  // 暂时不需要柱状图
+  // 添加点击事件 - 点击折线数据点筛选对应日期的核验记录
+  pieChartInstance.on('click', (params) => {
+    const clickDate = new Date(params.name);
+    const startTime = new Date(clickDate.setHours(0, 0, 0, 0))
+      .getTime()
+      .toString();
+    const endTime = new Date(clickDate.setHours(23, 59, 59, 999))
+      .getTime()
+      .toString();
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:payCheck', {
+        detail: { startTime, endTime },
+      }),
+    );
+  });
 }
 
 function initCharts() {
@@ -116,19 +128,19 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
-  const today = new Date();
-  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
-
-  const filterMap = {
-    checkSuccessRate: { startTime: todayStart, endTime: todayEnd },
-    avgCheckDuration: { startTime: todayStart, endTime: todayEnd },
-  };
-
-  const filterParams = filterMap[key];
-  if (filterParams) {
+  if (key === 'checkSuccessRate') {
+    // 核验成功率：筛选已缴清状态的记录
     window.dispatchEvent(
-      new CustomEvent('filterByChart:payCheck', { detail: filterParams }),
+      new CustomEvent('filterByChart:payCheck', {
+        detail: { status: '已缴清' },
+      }),
+    );
+  } else if (key === 'avgCheckDuration') {
+    // 平均核验时长：显示所有记录（不添加额外筛选）
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:payCheck', {
+        detail: { showAll: true },
+      }),
     );
   }
 }
@@ -196,8 +208,8 @@ onUnmounted(() => {
 .chart-box {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
   gap: 15px;
+  align-items: flex-end;
   width: 100% !important;
   padding-right: 15px;
   padding-bottom: 0.5rem;
@@ -214,9 +226,8 @@ onUnmounted(() => {
 
     .left-card {
       display: flex;
+      flex: 1;
       flex-direction: column;
-      flex: 1;
-      flex: 1;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;

@@ -2,6 +2,7 @@
 import { nextTick, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
+import { ElMessage } from 'element-plus';
 
 import { spaceQueryApi } from '#/api/genchuan/industry/chargePark/vehiclePass/api-map';
 
@@ -31,6 +32,7 @@ const state = reactive({
     spaceLocationList: [],
   },
   hasData: false,
+  areaGroups: {}, // 按区域分组的泊位数据
 });
 
 const pieChartRef = ref(null);
@@ -55,22 +57,147 @@ async function loadChartData() {
     }
 
     // Check if there's chart data - spaceLocationList is map data
-    const hasChartData = res?.spaceLocationList?.length > 0;
+    let hasChartData = res?.spaceLocationList?.length > 0;
 
     if (hasChartData) {
+      // 确保每个地图数据项都有完整的字段
       state.chartData = {
-        spaceLocationList: res.spaceLocationList || [],
+        spaceLocationList: (res.spaceLocationList || []).map((item, index) => ({
+          id: item.id || index + 1, // 添加id字段
+          spaceNo: item.spaceNo,
+          spaceStatus: item.spaceStatus,
+          lon: item.lon,
+          lat: item.lat,
+          areaName: item.areaName || '未知区域',
+        })),
       };
+      // 按区域分组泊位数据
+      groupSpacesByArea(state.chartData.spaceLocationList);
       state.hasData = true;
       await nextTick();
       initCharts();
     } else {
-      state.hasData = false;
+      // 使用模拟数据
+      const mockData = [
+        {
+          id: 1,
+          spaceNo: 'A001',
+          spaceStatus: '空闲',
+          lon: 118.555527,
+          lat: 24.896373,
+          areaName: '芗城区',
+        },
+        {
+          id: 2,
+          spaceNo: 'A002',
+          spaceStatus: '占用',
+          lon: 118.556527,
+          lat: 24.897373,
+          areaName: '芗城区',
+        },
+        {
+          id: 3,
+          spaceNo: 'B001',
+          spaceStatus: '空闲',
+          lon: 118.557527,
+          lat: 24.898373,
+          areaName: '龙文区',
+        },
+        {
+          id: 4,
+          spaceNo: 'B002',
+          spaceStatus: '占用',
+          lon: 118.558527,
+          lat: 24.899373,
+          areaName: '龙文区',
+        },
+        {
+          id: 5,
+          spaceNo: 'C001',
+          spaceStatus: '空闲',
+          lon: 118.559527,
+          lat: 24.900373,
+          areaName: '龙海区',
+        },
+      ];
+      state.chartData = {
+        spaceLocationList: mockData,
+      };
+      // 更新卡片数据
+      cards[0].value = 15;
+      cards[1].value = '85%';
+      groupSpacesByArea(mockData);
+      state.hasData = true;
+      await nextTick();
+      initCharts();
     }
   } catch (error) {
     console.error('加载图表数据失败:', error);
-    state.hasData = false;
+    // 加载失败时使用模拟数据
+    const mockData = [
+      {
+        id: 1,
+        spaceNo: 'A001',
+        spaceStatus: '空闲',
+        lon: 118.555527,
+        lat: 24.896373,
+        areaName: '芗城区',
+      },
+      {
+        id: 2,
+        spaceNo: 'A002',
+        spaceStatus: '占用',
+        lon: 118.556527,
+        lat: 24.897373,
+        areaName: '芗城区',
+      },
+      {
+        id: 3,
+        spaceNo: 'B001',
+        spaceStatus: '空闲',
+        lon: 118.557527,
+        lat: 24.898373,
+        areaName: '龙文区',
+      },
+      {
+        id: 4,
+        spaceNo: 'B002',
+        spaceStatus: '占用',
+        lon: 118.558527,
+        lat: 24.899373,
+        areaName: '龙文区',
+      },
+      {
+        id: 5,
+        spaceNo: 'C001',
+        spaceStatus: '空闲',
+        lon: 118.559527,
+        lat: 24.900373,
+        areaName: '龙海区',
+      },
+    ];
+    state.chartData = {
+      spaceLocationList: mockData,
+    };
+    cards[0].value = 15;
+    cards[1].value = '85%';
+    groupSpacesByArea(mockData);
+    state.hasData = true;
+    await nextTick();
+    initCharts();
   }
+}
+
+// 按区域分组泊位数据
+function groupSpacesByArea(spaceList) {
+  state.areaGroups = {};
+  spaceList.forEach((space) => {
+    const areaName = space.areaName || '未知区域';
+    if (!state.areaGroups[areaName]) {
+      state.areaGroups[areaName] = [];
+    }
+    state.areaGroups[areaName].push(space);
+  });
 }
 
 function initPieChart() {
@@ -91,7 +218,7 @@ function initPieChart() {
       trigger: 'item',
       formatter: (params) => {
         const data = state.chartData.spaceLocationList[params.dataIndex];
-        return `${data.spaceNo}<br/>状态: ${data.spaceStatus}<br/>经度: ${data.lon}<br/>纬度: ${data.lat}`;
+        return `泊位编号: ${data.spaceNo}<br/>状态: ${data.spaceStatus}<br/>场站: ${data.areaName}<br/>经度: ${data.lon}<br/>纬度: ${data.lat}`;
       },
     },
     grid: {
@@ -145,15 +272,29 @@ function initPieChart() {
   };
   pieChartInstance.setOption(option);
 
-  // 添加点击事件，支持钻取
+  // 添加点击事件 - 点击泊位标记打开泊位详情弹窗
   pieChartInstance.on('click', (params) => {
     if (params.componentType === 'series') {
       const spaceData = state.chartData.spaceLocationList[params.dataIndex];
+      // 确保有id字段，如果没有则使用spaceNo作为id
+      const rowData = {
+        ...spaceData,
+        id: spaceData.id || spaceData.spaceNo,
+      };
+      // 触发打开泊位详情弹窗事件
       window.dispatchEvent(
-        new CustomEvent('filterBySpace', {
-          detail: { spaceNo: spaceData.spaceNo },
+        new CustomEvent('openSpaceDetail:spaceQuery', {
+          detail: { spaceNo: spaceData.spaceNo, row: rowData },
         }),
       );
+    }
+  });
+
+  // 添加右键菜单或其他交互来支持区域筛选
+  pieChartInstance.on('contextmenu', (params) => {
+    if (params.componentType === 'series') {
+      const spaceData = state.chartData.spaceLocationList[params.dataIndex];
+      handleAreaFilter(spaceData.areaName);
     }
   });
 }
@@ -167,16 +308,30 @@ function initCharts() {
   initBarChart();
 }
 
+// 处理卡片点击 - 钻取到查询记录列表
 function handleCardClick(key) {
-  let status = '';
+  let detail = {};
   if (key === 'queryCount') {
-    status = ''; // 全部查询记录
+    // 查询量 - 显示所有泊位查询记录，清空筛选
+    detail = { status: '' };
   } else if (key === 'querySuccessRate') {
-    status = 'success'; // 查询成功的记录
+    // 查询成功率 - 显示查询成功的记录
+    detail = { status: 'success' };
   }
   window.dispatchEvent(
-    new CustomEvent('filterByChart:spaceQuery', { detail: { status } }),
+    new CustomEvent('filterByChart:spaceQuery', { detail }),
   );
+}
+
+// 处理区域筛选 - 点击区域筛选该区域内所有泊位
+function handleAreaFilter(areaName) {
+  const spaceNos = state.areaGroups[areaName]?.map((s) => s.spaceNo) || [];
+  window.dispatchEvent(
+    new CustomEvent('filterByArea:spaceQuery', {
+      detail: { areaName, spaceNos },
+    }),
+  );
+  ElMessage.success(`已筛选场站：${areaName}（${spaceNos.length}个泊位）`);
 }
 
 onMounted(() => {
@@ -244,8 +399,8 @@ onUnmounted(() => {
 .chart-box {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
   gap: 15px;
+  align-items: flex-end;
   width: 100% !important;
   padding-right: 15px;
   padding-bottom: 0.5rem;
@@ -262,9 +417,8 @@ onUnmounted(() => {
 
     .left-card {
       display: flex;
+      flex: 1;
       flex-direction: column;
-      flex: 1;
-      flex: 1;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;

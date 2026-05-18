@@ -32,7 +32,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'confirm']);
 
 const [DrawerComponent, drawerApi] = useVbenDrawer({
-  width: props.width,
+  width: computed(() => props.width),
   mask: false,
   modal: false,
   position: 'right',
@@ -40,20 +40,6 @@ const [DrawerComponent, drawerApi] = useVbenDrawer({
   title: computed(() => props.title),
   showCancelButton: false,
   showConfirmButton: false,
-  // cancelButtonOptions: {
-  //   content: '取消',
-  // },
-  // confirmButtonOptions: {
-  //   content: '确定',
-  // },
-  // onCancel() {
-  //   drawerApi.close();
-  //   emit('close');
-  // },
-  // onConfirm() {
-  //   drawerApi.close();
-  //   emit('confirm');
-  // },
 });
 
 const open = () => {
@@ -151,7 +137,22 @@ defineExpose({
           <div class="detail-item" v-for="field in fields" :key="field.key">
             <span class="detail-label">{{ field.label }}:</span>
             <span class="detail-value">
-              <template v-if="field.type === 'tag'">
+              <template v-if="field.isLogs">
+                <div class="logs-container">
+                  <div v-if="item[field.key] && item[field.key].length > 0" class="logs-list">
+                    <div v-for="(log, logIndex) in item[field.key]" :key="logIndex" class="log-item">
+                      <div class="log-time">{{ formatDateTime(log.time) }}</div>
+                      <div class="log-content">
+                        <div class="log-operator">操作人: {{ log.operator }}</div>
+                        <div class="log-action">操作: {{ log.action }}</div>
+                        <div class="log-remark">备注: {{ log.remark }}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="logs-empty">暂无日志</div>
+                </div>
+              </template>
+              <template v-else-if="field.type === 'tag'">
                 <ElTag
                   :type="
                     (() => {
@@ -225,6 +226,8 @@ defineExpose({
                   :preview-src-list="[getFullImageUrl(item[field.key])]"
                   style="width: 100px; height: 100px; cursor: pointer"
                   fit="cover"
+                  crossorigin="anonymous"
+                  referrerPolicy="no-referrer"
                 >
                   <template #error>
                     <div class="image-error">
@@ -273,28 +276,34 @@ defineExpose({
 .detail-content {
   display: flex;
   flex-direction: column;
+  gap: 0;
 }
 
 .detail-item {
-  display: flex;
+  display: grid;
+  grid-template-columns: 140px 1fr;
   gap: 12px;
-  align-items: center;
-  padding: 4px 0;
+  align-items: flex-start;
+  min-height: 32px;
+  padding: 8px 0;
 }
 
 .detail-label {
-  width: 120px;
   font-size: 14px;
   font-weight: 500;
   color: var(--el-text-color-regular, #606266);
   text-align: right;
+  word-break: break-word;
 }
 
 .detail-value {
-  flex: 1;
+  display: flex;
+  align-items: center;
+  min-height: 22px;
   font-size: 14px;
   color: var(--el-text-color-primary, #303133);
   text-align: left;
+  word-break: break-word;
 }
 
 .detail-separator {
@@ -328,5 +337,57 @@ defineExpose({
 
 .text-placeholder {
   color: var(--el-text-color-placeholder);
+}
+
+.logs-container {
+  width: 100%;
+}
+
+.logs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.log-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background-color: var(--el-fill-color-light, #f5f7fa);
+  border-left: 3px solid var(--el-color-primary, #409eff);
+  border-radius: 2px;
+}
+
+.log-time {
+  min-width: 160px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary, #909399);
+  font-weight: 500;
+}
+
+.log-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.log-operator,
+.log-action,
+.log-remark {
+  font-size: 13px;
+  color: var(--el-text-color-primary, #303133);
+  line-height: 1.5;
+}
+
+.log-operator {
+  font-weight: 500;
+}
+
+.logs-empty {
+  padding: 12px;
+  text-align: center;
+  color: var(--el-text-color-placeholder, #a8abb2);
+  font-size: 13px;
 }
 </style>

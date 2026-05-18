@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue';
-
 import { ElImageViewer } from 'element-plus';
 
 const dialogVisible = ref(false);
@@ -66,7 +65,7 @@ defineExpose({
       </div>
     </div>
     <teleport to="body">
-      <ElImageViewer
+      <el-image-viewer
         v-if="showViewer"
         :url-list="[imageUrl]"
         :initial-index="0"
@@ -84,6 +83,20 @@ defineExpose({
   min-height: 400px;
 }
 
+.image-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.image-wrapper img {
+  max-width: 100%;
+  max-height: 600px;
+  object-fit: contain;
+}
+
 .image-error {
   display: flex;
   flex-direction: column;
@@ -91,5 +104,13 @@ defineExpose({
   justify-content: center;
   height: 100%;
   color: var(--el-text-color-secondary);
+}
+
+.error-url {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--el-text-color-placeholder);
+  word-break: break-all;
+  max-width: 600px;
 }
 </style>

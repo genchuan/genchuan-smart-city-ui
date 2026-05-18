@@ -108,7 +108,9 @@ export function createGateOpen(data: GateOpenApi.CreateReqVO) {
 
 /** 导出开闸管理 */
 export function exportGateOpen(params?: GateOpenApi.PageReqVO) {
-  return requestClient.download('/vehiclepass/gate-open/export', { params });
+  return requestClient.download('/vehiclepass/gate-open/export', {
+    params: { ...params },
+  });
 }
 
 /** 审批通过开闸申请 */

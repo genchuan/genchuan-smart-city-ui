@@ -9,6 +9,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   exportEndPark,
   getEndParkPage,
@@ -20,6 +21,7 @@ import {
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import IconButton from '#/components/common/IconButton.vue';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import { exportToExcel } from '#/utils/excel.js';
 
 import SpaceDetailDialog from '../../../components/SpaceDetailDialog.vue';
@@ -98,16 +100,21 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  if (USE_REAL_API) {
-    try {
-      await exportEndPark(dataObj.searchParams);
-      ElMessage.success('导出成功');
-    } catch (error) {
-      ElMessage.error('导出失败');
-      console.error(error);
+  const loadingInstance = ElLoading.service({
+    text: '导出中...',
+  });
+  try {
+    if (USE_REAL_API) {
+      const res = await exportEndPark(dataObj.searchParams);
+      downloadFileFromBlobPart({ fileName: '结束停车.xlsx', source: res });
+    } else {
+      exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
     }
-  } else {
-    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  } catch (error) {
+    ElMessage.error('导出失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
   }
 }
 
@@ -163,8 +170,61 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
   searchParams: {},
+  filterLabels: {}, // 存储筛选条件的标签
   currentRow: null,
 });
+
+let isSearching = false;
+
+const activeFilters = computed(() => {
+  const filters = [];
+  const obj = dataObj.searchParams;
+  const labels = dataObj.filterLabels;
+
+  if (obj.plateNo) {
+    filters.push({ label: `车牌：${obj.plateNo}`, field: 'plateNo' });
+  }
+  if (obj.status) {
+    const statusLabel = labels.status || obj.status;
+    filters.push({ label: `缴费状态：${statusLabel}`, field: 'status' });
+  }
+  if (obj.areaId) {
+    const areaName = labels.areaId || obj.areaName || obj.areaId;
+    filters.push({ label: `片区：${areaName}`, field: 'areaId' });
+  }
+  if (obj.operatorId) {
+    const operatorName = labels.operatorId || obj.operatorName || obj.operatorId;
+    filters.push({ label: `操作人：${operatorName}`, field: 'operatorId' });
+  }
+  if (obj.endTime && Array.isArray(obj.endTime) && obj.endTime.length === 2) {
+    filters.push({
+      label: `结束时间：${obj.endTime[0]} 至 ${obj.endTime[1]}`,
+      field: 'endTime',
+    });
+  }
+
+  return filters;
+});
+
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchParams };
+  delete next[fieldName];
+  dataObj.searchParams = next;
+
+  const nextLabels = { ...dataObj.filterLabels };
+  delete nextLabels[fieldName];
+  dataObj.filterLabels = nextLabels;
+
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+const handleResetFilters = () => {
+  dataObj.searchParams = {};
+  dataObj.filterLabels = {};
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
 
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -177,10 +237,17 @@ const getTableData = async (pageObj) => {
   if (USE_REAL_API) {
     try {
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
         ...dataObj.searchParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getEndParkPage(params);
       dataObj.total = res.total || 0;
@@ -233,7 +300,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [SearchForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -257,8 +324,33 @@ const [QueryForm] = useVbenForm({
 });
 
 function onSubmit(values) {
-  dataObj.searchParams = values;
-  handleRefresh();
+  // 过滤掉空值，只合并有值的字段
+  const newParams = {};
+  Object.keys(values).forEach((key) => {
+    if (values[key] !== null && values[key] !== undefined && values[key] !== '') {
+      newParams[key] = values[key];
+    }
+  });
+
+  dataObj.searchParams = { ...dataObj.searchParams, ...newParams };
+
+  // 保存标签信息
+  const labels = {};
+  const searchSchema = useSearchFormSchema();
+  searchSchema.forEach((field) => {
+    if (field.component === 'Select' && newParams[field.fieldName]) {
+      const option = field.componentProps.options?.find(
+        (opt) => opt.value === newParams[field.fieldName]
+      );
+      if (option) {
+        labels[field.fieldName] = option.label;
+      }
+    }
+  });
+
+  dataObj.filterLabels = { ...dataObj.filterLabels, ...labels };
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
 }
 
@@ -359,18 +451,33 @@ const handleFilterByChart = (event) => {
   if (status !== undefined) {
     // 卡片钻取：按状态筛选
     if (status === null) {
-      // 结束量卡片：显示所有记录
-      dataObj.searchParams = {};
+      // 结束量卡片：移除状态筛选，保留其他条件
+      const { status: _, ...rest } = dataObj.searchParams;
+      dataObj.searchParams = rest;
     } else {
       // 支付成功率卡片：显示已支付记录
-      dataObj.searchParams = { status };
+      dataObj.searchParams = { ...dataObj.searchParams, status };
     }
   } else if (date) {
-    // 折线图钻取：按日期筛选，将日期转换为时间戳范围
-    const timestamp = new Date(date).getTime();
-    const nextDayTimestamp = timestamp + 86400000;
+    // 折线图钻取：按日期筛选，将日期转换为时间范围
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const formatDate = (d) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const seconds = String(d.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
     dataObj.searchParams = {
-      endTime: [timestamp.toString(), nextDayTimestamp.toString()],
+      ...dataObj.searchParams,
+      endTime: [formatDate(startDate), formatDate(endDate)],
     };
   }
 
@@ -385,7 +492,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.removeEventListener('filterByChart', handleFilterByChart);
+  window.removeEventListener('filterByChart:endPark', handleFilterByChart);
   window.removeEventListener('filterEndPark', handleChartFilter);
 });
 
@@ -552,21 +659,32 @@ const handleSpaceIdClick = (row) => {
 
 // 点击缴费状态筛选同状态记录
 const handleStatusClick = (row) => {
-  dataObj.searchParams = { status: row.status };
+  dataObj.searchParams = { ...dataObj.searchParams, status: row.status };
+  dataObj.currentPage = 1;
   handleRefresh();
   ElMessage.success(`已筛选状态：${row.status}`);
 };
 
 // 点击片区筛选同片区记录
 const handleAreaClick = (row) => {
-  dataObj.searchParams = { areaId: row.areaId };
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    areaId: row.areaId,
+    areaName: row.areaName,
+  };
+  dataObj.currentPage = 1;
   handleRefresh();
   ElMessage.success(`已筛选片区：${row.areaName}`);
 };
 
 // 点击操作人筛选同操作人记录
 const handleOperatorClick = (row) => {
-  dataObj.searchParams = { operatorId: row.operatorId };
+  dataObj.searchParams = {
+    ...dataObj.searchParams,
+    operatorId: row.operatorId,
+    operatorName: row.operatorName,
+  };
+  dataObj.currentPage = 1;
   handleRefresh();
   ElMessage.success(`已筛选操作人：${row.operatorName}`);
 };
@@ -588,19 +706,34 @@ const handleChartFilter = (event) => {
   if (status !== undefined) {
     // 卡片钻取：按状态筛选
     if (status === null) {
-      // 结束量卡片：显示所有记录
-      dataObj.searchParams = {};
+      // 结束量卡片：移除状态筛选，保留其他条件
+      const { status: _, ...rest } = dataObj.searchParams;
+      dataObj.searchParams = rest;
     } else {
       // 支付成功率卡片：显示已支付记录
-      dataObj.searchParams = { status };
+      dataObj.searchParams = { ...dataObj.searchParams, status };
       activeName.value = status;
     }
   } else if (date) {
     // 折线图钻取：按日期筛选
-    const timestamp = new Date(date).getTime();
-    const nextDayTimestamp = timestamp + 86400000;
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const formatDate = (d) => {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const seconds = String(d.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
     dataObj.searchParams = {
-      endTime: [timestamp.toString(), nextDayTimestamp.toString()],
+      ...dataObj.searchParams,
+      endTime: [formatDate(startDate), formatDate(endDate)],
     };
   }
 
@@ -628,11 +761,40 @@ const handleChartFilter = (event) => {
     <VehicleDetailDialog ref="vehicleDetailRef" />
     <SpaceDetailDialog ref="spaceDetailRef" />
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <SearchForm class="query-form" />
     </Drawer>
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
+          <div
+            v-if="activeFilters.length"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+              margin-bottom: 12px;
+              max-height: 100px;
+              overflow-y: auto;
+              padding-right: 8px;
+            "
+          >
+            <el-tag
+              v-for="filter in activeFilters"
+              :key="filter.field"
+              type="primary"
+              closable
+              @close="handleClearField(filter.field)"
+            >
+              {{ filter.label }}
+            </el-tag>
+            <IconButton
+              v-if="activeFilters.length > 0"
+              content="重置"
+              icon-name="RefreshLeft"
+              @click="handleResetFilters"
+            />
+          </div>
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"

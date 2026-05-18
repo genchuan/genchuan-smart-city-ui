@@ -8,27 +8,39 @@ export const dataList = () => {
       carNo: '闽C12345',
       spaceName: 'A-01',
       stationName: '充电站1',
-      inTime: '2026-04-26 10:00:15',
+      inTime: 1745011815000,
       status: '正常在停',
-      createTime: '2026-04-26 10:00:15',
+      isCorrected: false,
+      creator: 'admin',
+      createTime: 1745011815000,
+      updater: '张三',
+      updateTime: 1745011815000,
     },
     {
       id: '002',
       carNo: '闽C67890',
       spaceName: 'A-02',
       stationName: '充电站1',
-      inTime: '2026-04-26 07:30:15',
+      inTime: 1745015730000,
       status: '超时长在停',
-      createTime: '2026-04-26 07:30:15',
+      isCorrected: false,
+      creator: 'admin',
+      createTime: 1745015730000,
+      updater: '李四',
+      updateTime: 1745015730000,
     },
     {
       id: '003',
       carNo: '闽C11111',
       spaceName: 'A-03',
       stationName: '充电站1',
-      inTime: '2026-04-26 04:30:15',
+      inTime: 1745020845000,
       status: '异常状态',
-      createTime: '2026-04-26 04:30:15',
+      isCorrected: false,
+      creator: 'admin',
+      createTime: 1745020845000,
+      updater: '王五',
+      updateTime: 1745020845000,
     },
   ];
 };
@@ -71,6 +83,32 @@ export function useSearchFormSchema() {
           { label: '超时长在停', value: '超时长在停' },
           { label: '异常状态', value: '异常状态' },
         ],
+      },
+    },
+    {
+      fieldName: 'inTimeRange',
+      label: '入场时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetimerange',
+        placeholder: '请选择入场时间范围',
+        rangeSeparator: '至',
+        startPlaceholder: '开始时间',
+        endPlaceholder: '结束时间',
+        valueFormat: 'x',
+      },
+    },
+    {
+      fieldName: 'updateTimeRange',
+      label: '更新时间',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'datetimerange',
+        placeholder: '请选择更新时间范围',
+        rangeSeparator: '至',
+        startPlaceholder: '开始时间',
+        endPlaceholder: '结束时间',
+        valueFormat: 'x',
       },
     },
   ];
@@ -136,6 +174,20 @@ export function useGridColumns() {
       sortable: true,
     },
     {
+      field: 'updateTime',
+      title: '最后更新时间',
+      minWidth: 180,
+      sortable: true,
+      formatter: createTimeFormatter(),
+    },
+    {
+      field: 'updateTime',
+      title: '异常标记时间',
+      minWidth: 180,
+      sortable: true,
+      formatter: createTimeFormatter(),
+    },
+    {
       title: '操作',
       width: 280,
       fixed: 'right',
@@ -155,8 +207,11 @@ export const textObj = {
 /** 状态类型映射 */
 export const statusTypeMap = {
   正常在停: 'success',
+  正常: 'success',
   超时长在停: 'warning',
+  超时: 'warning',
   异常状态: 'danger',
+  异常: 'danger',
 };
 
 /** 超时长在停阈值（分钟） */
@@ -171,30 +226,13 @@ export const detailFields = [
   { key: 'inTime', label: '入场时间', formatter: formatTime },
   { key: 'status', label: '状态' },
   { key: 'remark', label: '备注' },
-  { key: 'creator', label: '创建者' },
+  {
+    key: 'isCorrected',
+    label: '修正记录标记',
+    formatter: (val) => (val ? '已修正' : '未修正'),
+  },
+  { key: 'updater', label: '操作人' },
+  { key: 'updateTime', label: '操作时间', formatter: formatTime },
+  { key: 'creator', label: '创建人' },
   { key: 'createTime', label: '创建时间', formatter: formatTime },
-  { key: 'updater', label: '更新者' },
-  { key: 'updateTime', label: '更新时间', formatter: formatTime },
 ];
-
-/** 告警表单配置 */
-export function useAlarmFormSchema() {
-  return [
-    {
-      fieldName: 'id',
-      label: 'ID',
-      component: 'Input',
-      componentProps: { disabled: true },
-    },
-    {
-      fieldName: 'alarmContent',
-      label: '告警内容',
-      component: 'Textarea',
-      componentProps: {
-        rows: 4,
-        placeholder: '请输入告警内容',
-      },
-      rules: 'required',
-    },
-  ];
-}

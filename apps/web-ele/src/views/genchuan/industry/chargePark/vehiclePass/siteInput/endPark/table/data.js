@@ -7,7 +7,7 @@ export const dataList = () => {
       id: '001',
       plateNo: '闽E12345',
       spaceId: 1,
-      endTime: '2025-04-18 08:30:15',
+      endTime: 1745011815000,
       status: '待支付',
       areaId: 1,
       areaName: '芗城区',
@@ -15,13 +15,17 @@ export const dataList = () => {
       operatorName: '张三',
       orderNo: 'PAY20250418001',
       remark: '现场结束停车',
-      createTime: '2025-04-18 08:30:15',
+      creator: 'admin',
+      createTime: 1745011815000,
+      updater: null,
+      updateTime: null,
+      isCorrected: false,
     },
     {
       id: '002',
       plateNo: '闽E67890',
       spaceId: 2,
-      endTime: '2025-04-18 09:15:30',
+      endTime: 1745015730000,
       status: '已支付',
       areaId: 1,
       areaName: '龙文区',
@@ -29,13 +33,17 @@ export const dataList = () => {
       operatorName: '张三',
       orderNo: 'PAY20250418002',
       remark: '',
-      createTime: '2025-04-18 09:15:30',
+      creator: 'admin',
+      createTime: 1745015730000,
+      updater: 'user1',
+      updateTime: 1745015730000,
+      isCorrected: false,
     },
     {
       id: '003',
       plateNo: '闽E11111',
       spaceId: 3,
-      endTime: '2025-04-18 10:20:45',
+      endTime: 1745019645000,
       status: '已取消',
       areaId: 2,
       areaName: '龙海区',
@@ -43,7 +51,11 @@ export const dataList = () => {
       operatorName: '李四',
       orderNo: '',
       remark: '用户取消',
-      createTime: '2025-04-18 10:20:45',
+      creator: 'admin',
+      createTime: 1745019645000,
+      updater: null,
+      updateTime: null,
+      isCorrected: false,
     },
   ];
 };
@@ -57,14 +69,6 @@ export function useSearchFormSchema() {
       component: 'Input',
       componentProps: {
         placeholder: '请输入车牌号码',
-      },
-    },
-    {
-      fieldName: 'spaceId',
-      label: '车位ID',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入车位ID',
       },
     },
     {
@@ -100,7 +104,7 @@ export function useSearchFormSchema() {
       componentProps: {
         type: 'daterange',
         placeholder: '请选择结束时间范围',
-        valueFormat: 'YYYY-MM-DD',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
     },
   ];
@@ -158,13 +162,6 @@ export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
-      field: 'id',
-      title: '结束ID',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'id' },
-    },
-    {
       field: 'plateNo',
       title: '车牌',
       minWidth: 120,
@@ -213,12 +210,6 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'remark',
-      title: '备注',
-      minWidth: 150,
-      sortable: true,
-    },
-    {
       title: '操作',
       width: 200,
       fixed: 'right',
@@ -237,16 +228,13 @@ export const textObj = {
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '结束ID' },
   { key: 'plateNo', label: '车牌' },
-  { key: 'spaceId', label: '车位ID' },
+  { key: 'spaceId', label: '车位' },
   { key: 'endTime', label: '结束时间', formatter: formatTime },
   { key: 'status', label: '缴费状态' },
   { key: 'areaName', label: '片区' },
   { key: 'operatorName', label: '操作人' },
   { key: 'orderNo', label: '订单编号' },
-  { key: 'remark', label: '备注' },
-  { key: 'createTime', label: '创建时间', formatter: formatTime },
 ];
 
 /** 支付表单配置 */

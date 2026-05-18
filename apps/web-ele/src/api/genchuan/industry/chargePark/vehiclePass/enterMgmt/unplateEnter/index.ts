@@ -107,7 +107,7 @@ export function createUnplateEnter(data: UnplateEnterApi.CreateReqVO) {
 /** 导出无牌入场 */
 export function exportUnplateEnter(params?: UnplateEnterApi.PageReqVO) {
   return requestClient.download('/vehiclepass/unplate-enter/export', {
-    params,
+    params: { ...params },
   });
 }
 

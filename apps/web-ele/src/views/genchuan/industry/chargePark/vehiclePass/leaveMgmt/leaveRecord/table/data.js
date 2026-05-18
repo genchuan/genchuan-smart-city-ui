@@ -12,38 +12,47 @@ export const dataList = () => {
     {
       id: '001',
       plateNo: '闽E12345',
-      enterTime: '2025-04-18 08:30:15',
-      leaveTime: '2025-04-18 10:30:15',
+      enterTime: 1745011815000,
+      leaveTime: 1745019015000,
       parkDuration: 120,
       status: '正常记录',
       stationName: '芗城区XX社区停车场',
       remark: '',
       isCorrected: false,
-      createTime: '2025-04-18 10:30:15',
+      creator: 'admin',
+      createTime: 1745019015000,
+      updater: '张三',
+      updateTime: 1745019015000,
     },
     {
       id: '002',
       plateNo: '闽E67890',
-      enterTime: '2025-04-18 09:15:30',
-      leaveTime: '2025-04-18 11:15:30',
+      enterTime: 1745015730000,
+      leaveTime: 1745022930000,
       parkDuration: 120,
       status: '正常记录',
       stationName: '龙文区碧湖公园停车场',
       remark: '',
       isCorrected: false,
-      createTime: '2025-04-18 11:15:30',
+      creator: 'admin',
+      createTime: 1745022930000,
+      updater: '李四',
+      updateTime: 1745022930000,
     },
     {
       id: '003',
       plateNo: '闽E11111',
-      enterTime: '2025-04-18 10:20:45',
-      leaveTime: '2025-04-18 12:20:45',
+      enterTime: 1745020845000,
+      leaveTime: 1745028045000,
       parkDuration: 120,
       status: '异常记录',
       stationName: '龙海区石码镇停车场',
       remark: '需要修正',
       isCorrected: false,
-      createTime: '2025-04-18 12:20:45',
+      creator: 'admin',
+      createTime: 1745028045000,
+      updater: '王五',
+      updateTime: 1745028045000,
     },
   ];
 };
@@ -90,7 +99,7 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationId',
+      fieldName: 'stationName',
       label: '场站',
       component: 'Select',
       componentProps: {
@@ -146,19 +155,6 @@ export function useCreateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'status',
-      label: '记录状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择记录状态',
-        options: [
-          { label: '正常记录', value: '正常记录' },
-          { label: '异常记录', value: '异常记录' },
-        ],
-      },
-      rules: 'required',
-    },
-    {
       fieldName: 'stationId',
       label: '场站',
       component: 'Select',
@@ -167,14 +163,6 @@ export function useCreateFormSchema() {
         options: [],
       },
       rules: 'required',
-    },
-    {
-      fieldName: 'proofImage',
-      label: '佐证图片',
-      component: 'Upload',
-      componentProps: {
-        placeholder: '请上传佐证图片',
-      },
     },
     {
       fieldName: 'remark',
@@ -221,19 +209,6 @@ export function useUpdateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'status',
-      label: '记录状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择记录状态',
-        options: [
-          { label: '正常记录', value: '正常记录' },
-          { label: '异常记录', value: '异常记录' },
-        ],
-      },
-      rules: 'required',
-    },
-    {
       fieldName: 'stationId',
       label: '场站',
       component: 'Select',
@@ -242,14 +217,6 @@ export function useUpdateFormSchema() {
         options: [],
       },
       rules: 'required',
-    },
-    {
-      fieldName: 'proofImage',
-      label: '佐证图片',
-      component: 'Upload',
-      componentProps: {
-        placeholder: '请上传佐证图片',
-      },
     },
     {
       fieldName: 'remark',
@@ -296,19 +263,6 @@ export function useCorrectFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'status',
-      label: '记录状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择记录状态',
-        options: [
-          { label: '正常记录', value: '正常记录' },
-          { label: '异常记录', value: '异常记录' },
-        ],
-      },
-      rules: 'required',
-    },
-    {
       fieldName: 'stationId',
       label: '场站',
       component: 'Select',
@@ -317,14 +271,6 @@ export function useCorrectFormSchema() {
         options: [],
       },
       rules: 'required',
-    },
-    {
-      fieldName: 'proofImage',
-      label: '佐证图片',
-      component: 'Upload',
-      componentProps: {
-        placeholder: '请上传佐证图片',
-      },
     },
     {
       fieldName: 'remark',
@@ -395,17 +341,31 @@ export function useGridColumns() {
       slots: { default: 'stationName' },
     },
     {
-      field: 'remark',
-      title: '备注',
-      minWidth: 180,
+      field: 'isCorrected',
+      title: '修正记录标记',
+      minWidth: 120,
       sortable: true,
+      slots: { default: 'correctionMark' },
     },
     {
-      field: 'isCorrected',
-      title: '修正日志',
+      field: 'updater',
+      title: '操作人',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'isCorrected' },
+      slots: { default: 'updater' },
+    },
+    {
+      field: 'updateTime',
+      title: '操作时间',
+      minWidth: 160,
+      sortable: true,
+      slots: { default: 'updateTime' },
+    },
+    {
+      field: 'creator',
+      title: '创建人',
+      minWidth: 100,
+      sortable: true,
     },
     {
       field: 'createTime',
@@ -413,6 +373,12 @@ export function useGridColumns() {
       minWidth: 160,
       sortable: true,
       formatter: createTimeFormatter(),
+    },
+    {
+      field: 'remark',
+      title: '备注',
+      minWidth: 180,
+      sortable: true,
     },
     {
       title: '操作',
@@ -441,11 +407,15 @@ export const detailFields = [
   { key: 'parkDuration', label: '停车时长（分钟）' },
   { key: 'status', label: '记录状态' },
   { key: 'stationName', label: '场站' },
-  { key: 'remark', label: '备注' },
-  { key: 'proofImage', label: '佐证图片' },
-  { key: 'isCorrected', label: '修正日志标记' },
+  { key: 'proofImage', label: '佐证图片', type: 'image' },
+  {
+    key: 'isCorrected',
+    label: '修正记录标记',
+    formatter: (val) => (val ? '已修正' : '未修正'),
+  },
+  { key: 'updater', label: '操作人' },
+  { key: 'updateTime', label: '操作时间', formatter: formatTime },
   { key: 'creator', label: '创建人' },
   { key: 'createTime', label: '创建时间', formatter: formatTime },
-  { key: 'updater', label: '更新人' },
-  { key: 'updateTime', label: '更新时间', formatter: formatTime },
+  { key: 'remark', label: '备注' },
 ];
