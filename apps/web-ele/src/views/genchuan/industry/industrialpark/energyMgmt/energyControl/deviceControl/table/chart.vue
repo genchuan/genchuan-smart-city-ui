@@ -28,6 +28,7 @@ let typePieChart = null;
 
 const fetchChartData = async () => {
   try {
+    // 根据需求，默认请求近30天数据，格式可根据后端调整
     const data = await getDeviceControlChart({ timeRange: '近30天' });
     if (data) {
       state.cardList[0].value = data.totalDevices ?? 0;
@@ -123,6 +124,7 @@ const initCharts = () => {
     if (energyBarChart) energyBarChart.dispose();
     energyBarChart = echarts.init(energyBarChartRef.value);
     energyBarChart.setOption(getBarOption(state.deviceEnergyBarData, '各设备能耗值', '能耗(kWh)', '#4A90E2'));
+    // 柱状图钻取：点击后筛选对应设备的管控明细
     energyBarChart.on('click', (params) => {
       if (params.componentType === 'series') {
         const deviceName = params.name;
@@ -134,6 +136,7 @@ const initCharts = () => {
     if (downEnergyBarChart) downEnergyBarChart.dispose();
     downEnergyBarChart = echarts.init(downEnergyBarChartRef.value);
     downEnergyBarChart.setOption(getBarOption(state.downEnergyBarData, '管控后能耗下降值', '能耗下降值(kWh)', '#50E3C2'));
+    // 柱状图钻取：点击后筛选对应设备的管控明细
     downEnergyBarChart.on('click', (params) => {
       if (params.componentType === 'series') {
         const deviceName = params.name;
@@ -145,6 +148,7 @@ const initCharts = () => {
     if (typePieChart) typePieChart.dispose();
     typePieChart = echarts.init(typePieChartRef.value);
     typePieChart.setOption(getPieOption(state.deviceTypePieData, '高能耗设备类型占比'));
+    // 饼图钻取：点击扇区筛选对应设备类型的明细
     typePieChart.on('click', (params) => {
       if (params.componentType === 'series') {
         const deviceType = params.name;
@@ -155,6 +159,7 @@ const initCharts = () => {
 };
 
 const handleCardClick = (index) => {
+  // 卡片点击均刷新图表数据或可触发列表刷新（此处简单刷新图表，保留原逻辑）
   const card = state.cardList[index];
   if (card.key === 'totalDevices') {
     emit('refresh', {});

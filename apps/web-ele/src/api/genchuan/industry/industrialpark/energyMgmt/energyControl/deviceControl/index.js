@@ -19,7 +19,7 @@ const mockStrategyMap = {
 };
 
 /**
- * 生成模拟设备数据
+ * 生成模拟设备数据（基于 device_control 表字段）
  * @returns {Array} 设备列表
  */
 function generateMockDevices() {
@@ -61,9 +61,7 @@ function getMockDevices() {
 }
 
 /**
- * 模拟分页查询接口
- * @param {Object} params 查询参数：deviceName, deviceType, controlStatus, pageNo, pageSize
- * @returns {Promise<{list: Array, total: number}>}
+ * 模拟分页查询接口，支持设备名称模糊、设备类型、管控状态筛选
  */
 async function mockGetPage(params) {
   let data = [...getMockDevices()];
@@ -78,7 +76,6 @@ async function mockGetPage(params) {
   return { list, total };
 }
 
-// 以下为各操作的模拟实现，控制台输出日志
 async function mockBind(data) { console.log('[Mock] 绑定设备', data); return true; }
 async function mockSetRule(data) { console.log('[Mock] 设置规则', data); return true; }
 async function mockControl(data) { console.log('[Mock] 远程控制', data); return true; }
@@ -86,29 +83,14 @@ async function mockOptimize(data) { console.log('[Mock] 优化能耗', data); re
 async function mockClose(data) { console.log('[Mock] 关闭管控', data); return true; }
 async function mockStart(data) { console.log('[Mock] 启动管控', data); return true; }
 
-/**
- * 模拟获取设备详情
- * @param {Object} params { id }
- * @returns {Promise<Object>}
- */
 async function mockGetDeviceDetail(params) {
   return getMockDevices().find(item => item.id === params.id) || getMockDevices()[0];
 }
 
-/**
- * 模拟获取策略详情
- * @param {Object} params { id }
- * @returns {Promise<Object>}
- */
 async function mockGetStrategyDetail(params) {
   return mockStrategyMap[params.id] || { id: params.id, strategyName: '默认策略', description: '策略描述' };
 }
 
-/**
- * 模拟获取用户详情
- * @param {Object} params { id }
- * @returns {Promise<Object>}
- */
 async function mockGetUserDetail(params) {
   return {
     id: params.id,
@@ -118,8 +100,7 @@ async function mockGetUserDetail(params) {
 }
 
 /**
- * 模拟图表数据（高能耗设备管控态势）
- * @returns {Promise<Object>}
+ * 模拟图表数据（高能耗设备管控态势），符合接口文档输出格式
  */
 async function mockGetChart() {
   const devices = getMockDevices();
@@ -143,24 +124,14 @@ async function mockGetChart() {
 
 /**
  * 获取设备管控分页列表
- * @param {Object} params - 查询参数
- * @param {string} [params.deviceName] - 设备名称（模糊查询）
- * @param {string} [params.deviceType] - 设备类型（空调/照明/水泵）
- * @param {string} [params.controlStatus] - 管控状态（管控中/未管控）
- * @param {number} [params.pageNo=1] - 页码
- * @param {number} [params.pageSize=10] - 每页条数
- * @returns {Promise<{list: Array, total: number}>}
+ * 支持设备名称模糊查询、设备类型、管控状态筛选
  */
 export function getDeviceControlPage(params) {
   return USE_MOCK ? mockGetPage(params) : requestClient.get('/energymgmt/device-control/page', { params });
 }
 
 /**
- * 绑定设备与节能策略
- * @param {Object} data - 请求数据
- * @param {number} data.deviceId - 设备ID
- * @param {number} data.strategyId - 策略ID
- * @returns {Promise<boolean>}
+ * 绑定设备与节能策略（单设备）
  */
 export function bindDeviceControl(data) {
   return USE_MOCK ? mockBind(data) : requestClient.post('/energymgmt/device-control/bind', data);
@@ -168,10 +139,6 @@ export function bindDeviceControl(data) {
 
 /**
  * 设置设备管控规则（支持批量）
- * @param {Object} data - 请求数据
- * @param {number[]} data.ids - 设备ID列表
- * @param {string} data.controlRule - 管控规则
- * @returns {Promise<boolean>}
  */
 export function setDeviceControlRule(data) {
   return USE_MOCK ? mockSetRule(data) : requestClient.put('/energymgmt/device-control/setting', data);
@@ -179,10 +146,6 @@ export function setDeviceControlRule(data) {
 
 /**
  * 远程控制设备（支持批量）
- * @param {Object} data - 请求数据
- * @param {number[]} data.ids - 设备ID列表
- * @param {string} data.controlCmd - 控制指令
- * @returns {Promise<boolean>}
  */
 export function controlDevice(data) {
   return USE_MOCK ? mockControl(data) : requestClient.post('/energymgmt/device-control/control', data);
@@ -190,9 +153,6 @@ export function controlDevice(data) {
 
 /**
  * 能耗优化（支持批量）
- * @param {Object} data - 请求数据
- * @param {number[]} data.ids - 设备ID列表
- * @returns {Promise<boolean>}
  */
 export function optimizeDevice(data) {
   return USE_MOCK ? mockOptimize(data) : requestClient.post('/energymgmt/device-control/optimize', data);
@@ -200,9 +160,6 @@ export function optimizeDevice(data) {
 
 /**
  * 关闭设备管控（支持批量）
- * @param {Object} data - 请求数据
- * @param {number[]} data.ids - 设备ID列表
- * @returns {Promise<boolean>}
  */
 export function closeDeviceControl(data) {
   return USE_MOCK ? mockClose(data) : requestClient.put('/energymgmt/device-control/close', data);
@@ -210,9 +167,6 @@ export function closeDeviceControl(data) {
 
 /**
  * 启动单个设备管控
- * @param {Object} data - 请求数据
- * @param {number} data.id - 设备ID
- * @returns {Promise<boolean>}
  */
 export function startDeviceControl(data) {
   return USE_MOCK ? mockStart(data) : requestClient.put('/energymgmt/device-control/start', data);
@@ -220,9 +174,6 @@ export function startDeviceControl(data) {
 
 /**
  * 获取设备详情
- * @param {Object} params - 请求参数
- * @param {number} params.id - 设备ID
- * @returns {Promise<Object>}
  */
 export function getDeviceDetail(params) {
   return USE_MOCK ? mockGetDeviceDetail(params) : requestClient.get('/energymgmt/device-control/get', { params });
@@ -230,9 +181,6 @@ export function getDeviceDetail(params) {
 
 /**
  * 获取节能策略详情
- * @param {Object} params - 请求参数
- * @param {number} params.id - 策略ID
- * @returns {Promise<Object>}
  */
 export function getStrategyDetail(params) {
   return USE_MOCK ? mockGetStrategyDetail(params) : requestClient.get('/energymgmt/strategy-set/get', { params });
@@ -240,9 +188,6 @@ export function getStrategyDetail(params) {
 
 /**
  * 获取用户详情
- * @param {Object} params - 请求参数
- * @param {string} params.id - 用户账号
- * @returns {Promise<Object>}
  */
 export function getUserDetail(params) {
   return USE_MOCK ? mockGetUserDetail(params) : requestClient.get('/system/user/get', { params });
@@ -250,9 +195,7 @@ export function getUserDetail(params) {
 
 /**
  * 获取高能耗设备管控态势图表数据
- * @param {Object} params - 请求参数
- * @param {string} [params.timeRange] - 时间范围，如 "近30天" 或具体时间区间
- * @returns {Promise<{deviceEnergyBar: Array, downEnergyBar: Array, deviceTypePie: Array}>}
+ * 返回各设备能耗值、管控后下降值、设备类型占比
  */
 export function getDeviceControlChart(params) {
   return USE_MOCK ? mockGetChart(params) : requestClient.get('/energymgmt/device-control/chart', { params });
