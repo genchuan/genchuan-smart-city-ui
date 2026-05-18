@@ -118,17 +118,22 @@ async function onSubmit(values) {
   searchDrawerApi.close();
 }
 
+// 修改 activeFilters：在具体周期标签页下隐藏“报表周期”筛选标签
 const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchObj;
-  // if (obj.reportType) filters.push({ label: `报表周期：${obj.reportType}`, field: 'reportType' });
+  // 仅在全部标签页（cycleType为空）时显示报表周期标签
+  if (obj.reportType && !props.cycleType) {
+    filters.push({ label: `报表周期：${obj.reportType}`, field: 'reportType' });
+  }
   if (obj.reportTimeStart || obj.reportTimeEnd) {
     const start = obj.reportTimeStart || '';
     const end = obj.reportTimeEnd || '';
     filters.push({ label: `统计时段：${start} 至 ${end}`, field: 'reportTime' });
   }
-  if (obj.generateStatus)
+  if (obj.generateStatus) {
     filters.push({ label: `生成状态：${obj.generateStatus}`, field: 'generateStatus' });
+  }
   return filters;
 });
 
@@ -150,7 +155,13 @@ const handleClearField = (fieldName) => {
   Promise.resolve(queryFormApi.setValues?.(formPatch, false)).catch(() => {});
 };
 
+// 修改 filterByField：具体标签页下点击报表周期时只刷新，不添加筛选标签
 const filterByField = (field, value) => {
+  // 在日报、周报等具体标签页下，点击报表周期不添加筛选条件，仅刷新数据
+  if (field === 'reportType' && props.cycleType) {
+    gridApi.query();
+    return;
+  }
   dataObj.searchObj = { ...dataObj.searchObj, [field]: value };
   dataObj.currentPage = 1;
   gridApi.query();
