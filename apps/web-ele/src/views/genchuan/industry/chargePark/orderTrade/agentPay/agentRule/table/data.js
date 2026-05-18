@@ -2,6 +2,26 @@
 export function useFormSchema() {
   return [
     {
+      fieldName: 'name',
+      label: '规则名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入规则名称',
+        maxLength: 100,
+      },
+      labelWidth: 120,
+    },
+    {
+      fieldName: 'merchantId',
+      label: '商户ID',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入商户ID',
+        min: 0,
+      },
+      labelWidth: 120,
+    },
+    {
       fieldName: 'merchantName',
       label: '所属商户',
       component: 'Input',
@@ -28,6 +48,38 @@ export function useFormSchema() {
       isSearch: true,
     },
     {
+      fieldName: 'singleLimit',
+      label: '单次限额',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入单次限额',
+        min: 0,
+        precision: 2,
+      },
+      labelWidth: 120,
+    },
+    {
+      fieldName: 'dayLimit',
+      label: '日累计限额',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入日累计限额',
+        min: 0,
+        precision: 2,
+      },
+      labelWidth: 120,
+    },
+    {
+      fieldName: 'scene',
+      label: '适用场景',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入适用场景',
+        maxLength: 100,
+      },
+      labelWidth: 120,
+    },
+    {
       fieldName: 'status',
       label: '状态',
       component: 'Select',
@@ -41,8 +93,7 @@ export function useFormSchema() {
       },
       labelWidth: 120,
       isSearch: true,
-    },
-    
+    }, 
   ];
 }
 /** 代付规则表格列配置 */
