@@ -4,8 +4,8 @@ import { DICT_TYPE } from '@vben/constants';
 import { getDictObj, getDictOptions } from '@vben/hooks';
 
 import { getExchangeCategoryList } from '#/api/genchuan/industry/chargePark/marketOp/exchangeMgmt/exchangeCategory';
-import { formatDate } from '#/utils/genchuan/formatTime';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 /** 兑换订单状态标签类型 */
 export const getExchangeOrderPayStatusTagType = (status) => {

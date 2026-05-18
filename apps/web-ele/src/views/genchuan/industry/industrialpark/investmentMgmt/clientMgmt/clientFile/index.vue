@@ -1,6 +1,8 @@
 <script setup>
 import { ref } from 'vue';
 
+import ClientFileStats from './components/ClientFileStats.vue';
+import ClientDetailDrawer from './components/ClientDetailDrawer.vue';
 import Table from './table/index.vue';
 
 import '#/genchuan-components/page/index.scss';
@@ -11,6 +13,7 @@ const changeArrowStatus = () => {
     v.secondShow = secondShow.value;
   });
 };
+
 const tabArray = ref([
   {
     label: '客户档案',
@@ -19,30 +22,38 @@ const tabArray = ref([
     secondShow: false,
   },
 ]);
+
 const activeName = ref('客户档案');
 const secondShow = ref(false);
+
+/** 处理卡片点击钻取 */
+const handleCardClick = (cardType) => {
+  console.log('卡片钻取:', cardType);
+};
+
+/** 处理饼图扇区点击筛选 */
+const handlePieClick = (type, name) => {
+  console.log('饼图筛选:', type, name);
+};
+
+/** 处理柱状图柱形点击筛选 */
+const handleBarClick = (scene, name) => {
+  console.log('柱状图筛选:', scene, name);
+};
 </script>
+
 <template>
   <div class="common-index">
-    <!-- 箭头图标已屏蔽 -->
-    <!--
-    <div class="icon-change">
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="secondShow"
-        @click="changeArrowStatus"
-      >
-        <ArrowDown />
-      </el-icon>
-      <el-icon
-        class="tabel-tab-icon"
-        v-if="!secondShow"
-        @click="changeArrowStatus"
-      >
-        <ArrowUp />
-      </el-icon>
-    </div>
-    -->
+    <!-- 统计组件 - 放在 el-tabs 外面（参照 siteMgmt 布局） -->
+    <ClientFileStats
+      @card-click="handleCardClick"
+      @pie-click="handlePieClick"
+      @bar-click="handleBarClick"
+    />
+
+    <!-- 客户完整详情抽屉 -->
+    <ClientDetailDrawer ref="clientDetailDrawerRef" />
+
     <el-tabs
       v-model="activeName"
       class="common-tabs"
@@ -63,6 +74,7 @@ const secondShow = ref(false);
           :is="item.components"
           :second-show="item.secondShow"
           :key="item.label"
+          ref="tableRef"
         />
       </el-tab-pane>
     </el-tabs>

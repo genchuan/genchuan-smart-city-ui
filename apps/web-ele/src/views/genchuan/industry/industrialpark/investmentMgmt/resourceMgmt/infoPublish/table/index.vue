@@ -2,21 +2,39 @@
 import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { useUserStore } from '@vben/stores';
 import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
+import {
+  createInfoPublish,
+  deleteInfoPublish,
+  offlineInfoPublish,
+  publishInfoPublish,
+  responseInfoPublish,
+  updateInfoPublish,
+  updateInfoPublishPolicy,
+} from '#/api/genchuan/industry/industrialpark/investmentMgmt/resourceMgmt/infoPublish';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import InfoDetailDrawer from '../components/InfoDetailDrawer.vue';
+import InfoOperationDialog from '../components/InfoOperationDialog.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
 import {
   dataList,
   detailFields,
+  getInfoStatusLabel,
+  getInfoStatusConfig,
+  getInfoStatusTagType,
+  getInfoTypeLabel,
+  getInfoTypeTagType,
   textObj,
+  useSearchFormSchema,
   useFormSchema,
   useGridColumns,
 } from './data';
@@ -27,6 +45,15 @@ const props = defineProps({
     default: false,
   },
 });
+
+/** 获取当前用户信息 */
+const userStore = useUserStore();
+
+/** 获取当前登录用户的账号名 */
+const getCurrentUsername = () => {
+  return userStore.userInfo?.username || 'admin';
+};
+
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -42,6 +69,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
   async onOpenChange() {},
 });
 const detailDrawerRef = ref(null);
+const infoDetailDrawerRef = ref(null);
+const operationDialogRef = ref(null);
 const formData = ref();
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -97,7 +126,7 @@ async function handleExport() {
   exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
 }
 
-/** 创建角色 */
+/** 录入信息 */
 function handleCreate() {
   formDrawerApi
     .setData({
@@ -106,44 +135,185 @@ function handleCreate() {
     .open();
 }
 
-/** 编辑角色 */
+/** 编辑信息 - 需要选中数据 */
 function handleEdit(row) {
+  if (!row && checkedIds.value.length === 0) {
+    ElMessage.warning('请先选中一条数据');
+    return;
+  }
+
+  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  if (!targetRow) return;
+
   formDrawerApi
     .setData({
       title: textObj.editText,
-      ...row,
+      ...targetRow,
     })
     .open();
 }
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.garageName]),
+
+/** 配置政策 - 需要选中数据（打开操作表单） */
+async function handleConfig(row) {
+  if (!row && checkedIds.value.length === 0) {
+    ElMessage.warning('请先选中一条数据');
+    return;
+  }
+
+  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  if (!targetRow) return;
+
+  operationDialogRef.value.open({
+    title: '配置',
+    id: targetRow.id,
+    ...targetRow,
   });
+}
+
+/** 发布信息 - 需要选中数据（打开操作表单） */
+async function handlePublish(row) {
+  if (!row && checkedIds.value.length === 0) {
+    ElMessage.warning('请先选中一条数据');
+    return;
+  }
+
+  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  if (!targetRow) return;
+
+  operationDialogRef.value.open({
+    title: '发布',
+    id: targetRow.id,
+    ...targetRow,
+  });
+}
+
+/** 响应咨询（打开操作表单） */
+async function handleResponse(row) {
+  operationDialogRef.value.open({
+    title: '响应',
+    id: row.id,
+    ...row,
+  });
+}
+
+/** 更新信息 - 需要选中数据（打开操作表单） */
+async function handleUpdate(row) {
+  if (!row && checkedIds.value.length === 0) {
+    ElMessage.warning('请先选中一条数据');
+    return;
+  }
+
+  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  if (!targetRow) return;
+
+  operationDialogRef.value.open({
+    title: '更新',
+    id: targetRow.id,
+    ...targetRow,
+  });
+}
+
+/** 下架信息 */
+async function handleOffline(row) {
+  await confirm('确定要下架该信息吗？下架后将不再对外展示。');
+  const loadingInstance = ElLoading.service({ text: '正在下架...' });
   try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.garageName]));
+    await offlineInfoPublish({
+      id: row.id,
+      handleUser: getCurrentUsername(),
+    });
+    ElMessage.success('下架成功');
     handleRefresh();
+  } catch (error) {
+    console.error('下架失败:', error);
   } finally {
     loadingInstance.close();
   }
 }
 
-async function handleDeleteBatch() {
-  await confirm($t('确定删除这些数据吗？'));
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deletingBatch'),
-  });
+/** 删除信息 */
+async function handleDelete(row) {
+  await confirm('确定要删除该信息吗？删除后不可恢复。');
+  const loadingInstance = ElLoading.service({ text: '正在删除...' });
   try {
-    dataObj.apilist = dataObj.apilist.filter(
-      (v) => !checkedIds.value.includes(v.id),
-    );
-    checkedIds.value = [];
-    ElMessage.success($t('删除成功'));
+    await deleteInfoPublish([row.id]);
+    ElMessage.success('删除成功');
     handleRefresh();
+  } catch (error) {
+    console.error('删除失败:', error);
   } finally {
     loadingInstance.close();
   }
 }
+
+/** 查看详情（基础详情） */
+const handleOpenDetail = (row) => {
+  dataObj.detailObj = row;
+  detailDrawerRef.value.open();
+};
+
+/** 查看完整详情（包含政策配置、咨询记录） */
+const handleOpenInfoDetail = (row) => {
+  infoDetailDrawerRef.value.open(row);
+};
+
+/** 点击信息标题打开完整详情 */
+const handleInfoTitleClick = (row) => {
+  handleOpenInfoDetail(row);
+};
+
+/** 处理操作对话框确认回调 */
+const handleOperationConfirm = async (values) => {
+  const { title, id, ...params } = values;
+  const loadingInstance = ElLoading.service({ text: `正在${title}...` });
+
+  try {
+    switch (title) {
+      case '配置':
+        await updateInfoPublishPolicy({
+          id,
+          policyConfig: params.policyConfig,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      case '响应':
+        await responseInfoPublish({
+          id,
+          responseUser: getCurrentUsername(),
+          consultCount: params.consultCount,
+          responseRate: params.responseRate,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      case '发布':
+        await publishInfoPublish({
+          id,
+          publishTime: params.publishTime || String(Math.floor(Date.now() / 1000)),
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      case '更新':
+        await updateInfoPublish({
+          id,
+          infoTitle: params.infoTitle,
+          infoType: params.infoType,
+          policyConfig: params.policyConfig,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      default:
+        throw new Error(`未知操作类型：${title}`);
+    }
+
+    ElMessage.success(`${title}成功`);
+    handleRefresh();
+  } catch (error) {
+    console.error(`${title}失败:`, error);
+    ElMessage.error(`${title}失败`);
+  } finally {
+    loadingInstance.close();
+  }
+};
 
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
@@ -167,17 +337,21 @@ const changeTotalShow = () => {
 const getTableData = (pageObj) => {
   const page = pageObj.page;
 
-  // 根据searchParams筛选数据（已移除activeName状态筛选逻辑）
+  // 根据searchParams筛选数据
   const filteredList = dataObj.apilist.filter((v) => {
-    // 搜索条件筛选
     let searchMatch = true;
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
-      if (value) {
-        searchMatch =
-          typeof value === 'string'
-            ? searchMatch && v[key]?.toString().includes(value)
-            : searchMatch && v[key] === value;
+      if (value !== '' && value !== null && value !== undefined) {
+        if (key === 'consultCount') {
+          searchMatch = searchMatch && v[key] == Number(value);
+        } else if (key === 'responseRate') {
+          searchMatch = searchMatch && v[key] == Number(value);
+        } else if (typeof value === 'string') {
+          searchMatch = searchMatch && v[key]?.toString().includes(value);
+        } else {
+          searchMatch = searchMatch && v[key] === value;
+        }
       }
     });
 
@@ -193,29 +367,22 @@ const getTableData = (pageObj) => {
 };
 
 const [QueryForm] = useVbenForm({
-  // 默认展开
   collapsed: false,
-  // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
-    // 所有表单项
     componentProps: {
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
     labelWidth: 100,
   },
-  // 提交函数
   handleSubmit: onSubmit,
-  // 垂直布局，label和input在不同行，值为vertical
-  // 水平布局，label和input在同一行
   layout: 'horizontal',
-  schema: useFormSchema().map((v) => {
+  schema: useSearchFormSchema().map((v) => {
     delete v.rules;
     return {
       ...v,
     };
   }),
-  // 是否可展开
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -257,48 +424,33 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-// 三级状态相关逻辑 - 已屏蔽
-// const activeName = ref('全部');
+// 根据状态获取行按钮配置
+const getRowButtons = (row) => {
+  const status = Number(row.infoStatus);
 
-const handleOpenDetail = (row) => {
-  dataObj.detailObj = row;
-  detailDrawerRef.value.open();
+  switch (status) {
+    case 0:
+      return [
+        { content: '编辑', iconName: 'Edit', handler: () => handleEdit(row) },
+        { content: '发布', iconName: 'Promotion', handler: () => handlePublish(row) },
+        { content: '删除', iconName: 'Delete', color: '#F56C6C', handler: () => handleDelete(row) },
+      ];
+    case 1:
+      return [
+        { content: '响应', iconName: 'ChatDotRound', handler: () => handleResponse(row) },
+        { content: '下架', iconName: 'Bottom', color: '#E6A23C', handler: () => handleOffline(row) },
+        { content: '修改', iconName: 'EditPen', handler: () => handleUpdate(row) },
+      ];
+    case 2:
+      return [
+        { content: '查看', iconName: 'View', handler: () => handleOpenInfoDetail(row) },
+        { content: '删除', iconName: 'Delete', color: '#F56C6C', handler: () => handleDelete(row) },
+      ];
+    default:
+      return [];
+  }
 };
 
-// 修改tabsData为三个标签：全部、启用、禁用 - 已屏蔽
-// const tabsData = ref([{ label: '全部' }, { label: '启用' }, { label: '禁用' }]);
-
-// 创建标签文本，显示数量统计 - 已屏蔽
-// const createLabel = (item) => {
-//   let count = 0;
-//
-//   switch (item.label) {
-//     case '全部': {
-//       count = dataObj.apilist.length;
-//
-//       break;
-//     }
-//     case '启用': {
-//       // 统计status为'1'的数据
-//       count = dataObj.apilist.filter((v) => v.status === '1').length;
-//
-//       break;
-//     }
-//     case '禁用': {
-//       // 统计status为'0'的数据
-//       count = dataObj.apilist.filter((v) => v.status === '0').length;
-//
-//       break;
-//     }
-//     // No default
-//   }
-//
-//   return `${item.label}(${count})`;
-// };
-
-// const handleClick = () => {
-//   gridApi.query();
-// };
 const handleSerachShow = () => {
   drawerApi.open();
 };
@@ -312,92 +464,65 @@ const handleFullShow = () => {
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <!--   详情抽屉-->
+    <!--   基础详情抽屉-->
     <DetailDrawer
       ref="detailDrawerRef"
-      :title="`${dataObj.detailObj.garageName}详情`"
+      :title="`${dataObj.detailObj.infoTitle} 详情`"
       :data="dataObj.detailObj"
       :fields="detailFields"
     />
+    <!--   信息完整详情抽屉（含政策配置、咨询记录） -->
+    <InfoDetailDrawer ref="infoDetailDrawerRef" />
+    <!--   操作对话框（配置/响应） -->
+    <InfoOperationDialog ref="operationDialogRef" @confirm="handleOperationConfirm" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
-      <!-- 三级状态 - 已屏蔽 -->
-      <!--
-      <template #table-title>
-        <div class="tabel-tabs">
-          <div v-if="props.secondShow">
-            <el-tabs
-              v-model="activeName"
-              class="demo-tabs"
-              @tab-change="handleClick"
-            >
-              <el-tab-pane
-                v-for="item in tabsData"
-                :key="item.label"
-                :label="createLabel(item)"
-                :name="item.label"
-              />
-            </el-tabs>
-          </div>
-        </div>
-      </template>
-      -->
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量删除"
-            icon-name="delete"
-            color="#F56C6C"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="编辑" icon-name="Edit" @click="handleEdit()" />
+          <IconButton content="配置" icon-name="Setting" @click="handleConfig()" />
+          <IconButton content="发布" icon-name="Promotion" @click="handlePublish()" />
+          <IconButton content="响应" icon-name="ChatDotRound" @click="handleResponse()" />
+          <IconButton content="更新" icon-name="RefreshRight" @click="handleUpdate()" />
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
-      <template #id="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
+      <template #infoTitle="{ row }">
+        <span
+          class="info-title-link"
+          style="color: #409eff; cursor: pointer; text-decoration: underline;"
+          @click="handleInfoTitleClick(row)"
         >
-          {{ row.id }}
-        </el-text>
+          {{ row.infoTitle }}
+        </span>
+      </template>
+      <template #infoType="{ row }">
+        <el-tag :type="getInfoTypeTagType(row.infoType)">
+          {{ getInfoTypeLabel(row.infoType) }}
+        </el-tag>
+      </template>
+      <template #responseRate="{ row }">
+        <span>{{ (row.responseRate * 100).toFixed(1) }}%</span>
+      </template>
+      <template #infoStatus="{ row }">
+        <el-tag :type="getInfoStatusTagType(row.infoStatus)">
+          {{ getInfoStatusLabel(row.infoStatus) }}
+        </el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="详情"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="编辑"
-            icon-name="edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            content="删除"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleDelete(row)"
-          />
+          <template v-for="(btn, index) in getRowButtons(row)" :key="index">
+            <IconButton
+              :content="btn.content"
+              :icon-name="btn.iconName"
+              :color="btn.color"
+              @click="btn.handler"
+            />
+          </template>
         </div>
       </template>
       <template #bottom>
@@ -408,7 +533,7 @@ const handleFullShow = () => {
           <el-icon class="tabel-tab-icon" v-if="dataObj.totalShow">
             <ArrowUp />
           </el-icon>
-          <span> 本页统计：诱导屏数量: 10; 启用: 8; 禁用: 2 </span>
+          <span> 本页统计：{{ textObj.total }} </span>
         </div>
         <div class="common-total-bottom" v-if="dataObj.totalShow">
           <span> 全部统计：{{ textObj.total }} </span>
@@ -417,3 +542,9 @@ const handleFullShow = () => {
     </Grid>
   </div>
 </template>
+
+<style scoped>
+.info-title-link:hover {
+  color: #66b1ff;
+}
+</style>
