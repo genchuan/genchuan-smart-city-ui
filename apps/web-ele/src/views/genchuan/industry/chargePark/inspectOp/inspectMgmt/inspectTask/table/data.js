@@ -486,12 +486,12 @@ export function useGridColumns() {
       minWidth: 180,
       sortable: true,
     },
-    {
-      field: 'completeTimeStr',
-      title: '完成时间',
-      minWidth: 180,
-      sortable: true,
-    },
+    // {
+    //   field: 'completeTimeStr',
+    //   title: '完成时间',
+    //   minWidth: 180,
+    //   sortable: true,
+    // },
     {
       field: 'archiveText',
       title: '归档状态',
