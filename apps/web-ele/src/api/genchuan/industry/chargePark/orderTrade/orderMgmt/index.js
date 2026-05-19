@@ -248,3 +248,10 @@ export function getPlateIdentifyPage(params) {
     params,
   });
 }
+
+/** 获取所有订单 */
+export function getAllOrderPage(params) {
+  return requestClient.get('/ordertrade/all-order/get', {
+    params,
+  });
+}
