@@ -19,12 +19,13 @@ import {
   invoiceAgentPayOrder,
   createAgentPayOrder,
   updateAgentPayOrder,
+  getAgentPayRulePage,
 } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
 
-import { useFormSchema, useGridColumns } from './data';
+import { useFormSchema, useEditFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
 
 const props = defineProps({
@@ -138,6 +139,100 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
 });
 
+// 商户选项
+const merchantOptions = ref([]);
+
+// 加载商户列表
+const loadMerchantOptions = async () => {
+  try {
+    const res = await getAgentPayRulePage({ pageNo: 1, pageSize: 100 });
+    const merchants = new Map();
+    res.list.forEach((item) => {
+      if (item.merchantId && item.merchantName) {
+        merchants.set(item.merchantId, item.merchantName);
+      }
+    });
+    merchantOptions.value = Array.from(merchants.entries()).map(([id, name]) => ({
+      label: name,
+      value: id,
+    }));
+  } catch (error) {
+    console.error('加载商户列表失败:', error);
+  }
+};
+
+// 编辑表单
+const editFormData = ref();
+const [EditForm, editFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  layout: 'horizontal',
+  schema: useEditFormSchema(),
+  showDefaultActions: false,
+});
+
+// 编辑弹窗
+const [EditDrawer, editDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  onCancel() {
+    editDrawerApi.close();
+  },
+  async onConfirm() {
+    const obj = editFormApi.form.values;
+    const loadingInstance = ElLoading.service({
+      text: '正在更新...',
+    });
+    try {
+      await updateAgentPayOrder({
+        id: obj.id || 0,
+        orderNo: obj.orderNo || '',
+        merchantId: obj.merchantId || 0,
+        merchantName: obj.merchantName || '',
+        carNo: obj.carNo || '',
+        amount: obj.amount || 0,
+        payType: obj.payType || '',
+        status: obj.status || '',
+        remark: obj.remark || '',
+        reserve1: obj.reserve1 || '',
+        reserve2: obj.reserve2 || '',
+      });
+      ElMessage.success('更新成功');
+      handleRefresh();
+      editDrawerApi.close();
+    } catch (error) {
+      console.error('更新失败:', error);
+      ElMessage.error('更新失败');
+    } finally {
+      loadingInstance.close();
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      if (merchantOptions.value.length === 0) {
+        await loadMerchantOptions();
+      }
+      const schema = useEditFormSchema();
+      const merchantField = schema.find((item) => item.fieldName === 'merchantId');
+      if (merchantField) {
+        merchantField.componentProps.options = merchantOptions.value;
+      }
+      await editFormApi.setSchema(schema);
+      editFormData.value = editDrawerApi.getData();
+      if (editFormData.value?.id) {
+        await editFormApi.setValues(editFormData.value);
+      } else {
+        editFormApi.resetForm();
+      }
+    }
+  },
+});
+
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
@@ -173,9 +268,9 @@ function handleEdit() {
 
 /** 编辑订单（行内） */
 function handleEditRow(row) {
-  formDrawerApi
+  editDrawerApi
     .setData({
-      title: '编辑',
+      title: '编辑代付订单',
       ...row,
     })
     .open();
@@ -511,6 +606,9 @@ watch(
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
+    <EditDrawer :title="'编辑代付订单'">
+      <EditForm />
+    </EditDrawer>
     <ParkDetailDrawer
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
@@ -665,11 +763,11 @@ watch(
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
-          <IconButton
+          <!-- <IconButton
             content="编辑"
             icon-name="Edit"
             @click="handleEditRow(row)"
-          />
+          /> -->
           <IconButton
             content="删除"
             icon-name="Delete"
