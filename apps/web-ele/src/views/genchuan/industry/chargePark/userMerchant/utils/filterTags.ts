@@ -45,6 +45,10 @@ export function formatFilterValue(value: any) {
   return String(value);
 }
 
+function formatTagDisplayValue(value: string) {
+  return value.replaceAll(/(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}:\d{2})/g, '$1 $2');
+}
+
 export function buildActiveFilterTags(groups: FilterTagGroup[]) {
   const seenKeys = new Set<string>();
   const tags: ActiveFilterTag[] = [];
@@ -60,8 +64,9 @@ export function buildActiveFilterTags(groups: FilterTagGroup[]) {
       const formattedValue = config.formatter
         ? config.formatter(value)
         : formatFilterValue(value);
+      const displayValue = formatTagDisplayValue(formattedValue);
 
-      if (!hasFilterValue(formattedValue)) {
+      if (!hasFilterValue(displayValue)) {
         return;
       }
 
@@ -71,7 +76,7 @@ export function buildActiveFilterTags(groups: FilterTagGroup[]) {
         label: config.label,
         source,
         type: config.type || 'info',
-        value: formattedValue,
+        value: displayValue,
       });
     });
   });

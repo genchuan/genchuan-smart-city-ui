@@ -237,8 +237,12 @@ const searchFilterConfigs = {
 } as const;
 
 async function syncQueryFormValues() {
-  await queryFormApi.resetForm();
-  await queryFormApi.setValues(searchParams.value);
+  try {
+    await queryFormApi.resetForm();
+    await queryFormApi.setValues(searchParams.value);
+  } catch (error) {
+    console.warn('[userInfo] sync query form failed:', error);
+  }
 }
 
 const activeFilterTags = computed<ActiveFilterTag[]>(() =>
@@ -336,6 +340,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
+      clearable: true,
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
@@ -390,12 +395,8 @@ async function fetchUserDetail(
 }
 
 /** 查询用户列表 */
-async function queryUserInfoPage(
-  { page }: any,
-  formValues: Record<string, any> = {},
-) {
+async function queryUserInfoPage({ page }: any) {
   const queryValues = {
-    ...formValues,
     ...searchParams.value,
   };
 
@@ -744,7 +745,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   const nextValues = { ...searchParams.value };
   delete nextValues[tag.key];
   searchParams.value = nextValues;
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   await handleRefresh();
 }
 

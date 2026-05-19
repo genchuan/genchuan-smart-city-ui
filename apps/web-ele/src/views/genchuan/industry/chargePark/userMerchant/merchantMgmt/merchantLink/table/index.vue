@@ -190,6 +190,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
+      clearable: true,
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
@@ -352,12 +353,8 @@ async function fetchMerchantLinkDetail(
 }
 
 /** 查询商户对接列表 */
-async function queryMerchantLinkPage(
-  { page }: any,
-  formValues: Record<string, any> = {},
-) {
+async function queryMerchantLinkPage({ page }: any) {
   const queryValues = {
-    ...formValues,
     ...searchParams.value,
   };
 
@@ -725,8 +722,12 @@ async function handleSerachShow() {
 }
 
 async function syncQueryFormValues() {
-  await queryFormApi.resetForm();
-  await queryFormApi.setValues(searchParams.value);
+  try {
+    await queryFormApi.resetForm();
+    await queryFormApi.setValues(searchParams.value);
+  } catch (error) {
+    console.warn('[merchantLink] sync query form failed:', error);
+  }
 }
 
 /** 按对接类型筛选 */
@@ -767,7 +768,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   const nextValues = { ...searchParams.value };
   delete nextValues[tag.key];
   searchParams.value = nextValues;
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   await handleRefresh();
 }
 </script>

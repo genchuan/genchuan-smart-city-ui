@@ -36,10 +36,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import {
-  getCouponMgmtDetail,
-  getCouponMgmtPage,
-} from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
+import { getCouponMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import { MerchantSendCouponApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantSendCoupon';
 import IconButton from '#/components/common/IconButton.vue';
@@ -47,16 +44,12 @@ import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 import {
-  buildCouponOptionsFromApi,
   buildCouponProfile,
-  buildCouponProfileLookup,
-  buildCouponSelectOptions,
   buildMerchantOptionsFromApi,
   buildMerchantProfile,
   buildMerchantProfileLookup,
   buildMerchantSendCouponQueryParams,
   buildMerchantSendCouponRowFromApi,
-  couponOptions,
   formatApiTime,
   formatOperationLogs,
   formatRedemptions,
@@ -86,7 +79,6 @@ const checkedIds = ref<number[]>([]);
 const checkedRows = ref<MerchantSendCouponRow[]>([]);
 const couponDialogVisible = ref(false);
 const couponDetailCache = new Map<number, Record<string, any>>();
-const couponProfileLookup = ref(buildCouponProfileLookup(couponOptions));
 const currentCouponProfile = ref<CouponProfileInfo | null>(null);
 const currentMerchantProfile = ref<MerchantProfileInfo | null>(null);
 const currentRedemptions = ref<RedemptionLog[]>([]);
@@ -99,7 +91,6 @@ const merchantProfileLookup = ref(buildMerchantProfileLookup([]));
 const merchantSelectOptions = ref<MerchantSelectOption[]>([]);
 const queryExtraValues = ref<Record<string, any>>({});
 const redemptionDialogVisible = ref(false);
-const couponSelectOptions = ref(buildCouponSelectOptions());
 const searchParams = ref<Record<string, any>>({});
 const MAX_PAGE_SIZE = 200;
 
@@ -182,10 +173,7 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 96,
   },
   layout: 'horizontal',
-  schema: useCreateSchema(
-    merchantSelectOptions.value,
-    couponSelectOptions.value,
-  ),
+  schema: useCreateSchema(merchantSelectOptions.value),
   showDefaultActions: false,
 });
 
@@ -203,6 +191,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
+      clearable: true,
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
@@ -258,43 +247,10 @@ async function loadMerchantOptions() {
   ]);
 
   formApi.setState(() => ({
-    schema: useCreateSchema(
-      merchantSelectOptions.value,
-      couponSelectOptions.value,
-    ),
+    schema: useCreateSchema(merchantSelectOptions.value),
   }));
 
   await handleRefresh();
-}
-
-/** 加载优惠券下拉 */
-async function loadCouponOptions() {
-  try {
-    const list = await fetchAllPages<Record<string, any>>((pageNo) =>
-      getCouponMgmtPage({
-        pageNo,
-        pageSize: MAX_PAGE_SIZE,
-      }),
-    );
-
-    couponSelectOptions.value = buildCouponOptionsFromApi(list);
-    couponProfileLookup.value = buildCouponProfileLookup(
-      couponSelectOptions.value,
-    );
-  } catch (error) {
-    console.error('[merchantSendCoupon] load coupon options failed:', error);
-    couponSelectOptions.value = buildCouponSelectOptions();
-    couponProfileLookup.value = buildCouponProfileLookup(
-      couponSelectOptions.value,
-    );
-  }
-
-  formApi.setState(() => ({
-    schema: useCreateSchema(
-      merchantSelectOptions.value,
-      couponSelectOptions.value,
-    ),
-  }));
 }
 
 async function fetchAllPages<T>(
@@ -320,28 +276,6 @@ async function fetchAllPages<T>(
   return list;
 }
 
-/** 获取优惠券详情 */
-async function fetchCouponProfile(couponId: number) {
-  if (!couponId) {
-    return null;
-  }
-
-  const cachedDetail = couponDetailCache.get(couponId);
-
-  if (cachedDetail) {
-    return cachedDetail;
-  }
-
-  try {
-    const data = await getCouponMgmtDetail(couponId);
-    couponDetailCache.set(couponId, data);
-    return data;
-  } catch (error) {
-    console.error('[merchantSendCoupon] load coupon detail failed:', error);
-    return null;
-  }
-}
-
 /** 获取商户详情 */
 async function fetchMerchantProfile(
   merchantId: number,
@@ -365,6 +299,28 @@ async function fetchMerchantProfile(
 }
 
 /** 补齐商户信息索引 */
+/** 获取优惠券详情 */
+async function fetchCouponProfile(couponId: number) {
+  if (!couponId) {
+    return null;
+  }
+
+  const cachedDetail = couponDetailCache.get(couponId);
+
+  if (cachedDetail) {
+    return cachedDetail;
+  }
+
+  try {
+    const data = await getCouponMgmtDetail(couponId);
+    couponDetailCache.set(couponId, data);
+    return data;
+  } catch (error) {
+    console.error('[merchantSendCoupon] load coupon detail failed:', error);
+    return null;
+  }
+}
+
 async function ensureMerchantProfiles(merchantIds: number[]) {
   const uniqueIds = [...new Set(merchantIds.filter((id) => id > 0))].filter(
     (id) => !merchantProfileLookup.value[id],
@@ -440,7 +396,6 @@ async function fetchMerchantSendCouponDetail(
         cachedDetail,
         row,
         merchantProfileLookup.value,
-        couponProfileLookup.value,
       ),
       source: cachedDetail,
     };
@@ -461,7 +416,6 @@ async function fetchMerchantSendCouponDetail(
         data,
         row,
         merchantProfileLookup.value,
-        couponProfileLookup.value,
       ),
       source: data,
     };
@@ -475,16 +429,10 @@ async function fetchMerchantSendCouponDetail(
 }
 
 /** 查询商户发券列表 */
-async function queryMerchantSendCouponPage(
-  { page }: any,
-  formValues: Record<string, any> = {},
-) {
+async function queryMerchantSendCouponPage({ page }: any) {
   const params: MerchantSendCouponPageReqVO = {
     ...buildMerchantSendCouponQueryParams(
-      {
-        ...formValues,
-        ...searchParams.value,
-      },
+      searchParams.value,
       queryExtraValues.value,
     ),
     pageNo: page.currentPage,
@@ -496,12 +444,7 @@ async function queryMerchantSendCouponPage(
 
   return {
     list: list.map((item) =>
-      buildMerchantSendCouponRowFromApi(
-        item,
-        {},
-        merchantProfileLookup.value,
-        couponProfileLookup.value,
-      ),
+      buildMerchantSendCouponRowFromApi(item, {}, merchantProfileLookup.value),
     ),
     total: result?.total || 0,
   };
@@ -667,7 +610,6 @@ defineExpose({
 
 onMounted(async () => {
   await nextTick();
-  await loadCouponOptions();
   await loadMerchantOptions();
 });
 
@@ -846,11 +788,7 @@ async function handleOpenCoupon(row: MerchantSendCouponRow) {
       ElMessage.warning('未获取到优惠券详情，已展示发券记录中的基础信息');
     }
 
-    currentCouponProfile.value = buildCouponProfile(
-      couponDetail || detail.source.couponInfo || undefined,
-      detail.row,
-      couponProfileLookup.value,
-    );
+    currentCouponProfile.value = buildCouponProfile(couponDetail, detail.row);
   } finally {
     loadingInstance.close();
   }
@@ -877,8 +815,12 @@ async function handleSerachShow() {
 }
 
 async function syncQueryFormValues() {
-  await queryFormApi.resetForm();
-  await queryFormApi.setValues(searchParams.value);
+  try {
+    await queryFormApi.resetForm();
+    await queryFormApi.setValues(searchParams.value);
+  } catch (error) {
+    console.warn('[merchantSendCoupon] sync query form failed:', error);
+  }
 }
 
 /** 按发券状态筛选 */
@@ -923,7 +865,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   const nextValues = { ...searchParams.value };
   delete nextValues[tag.key];
   searchParams.value = nextValues;
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   await handleRefresh();
 }
 </script>
@@ -1108,10 +1050,13 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
         <ElDescriptionsItem label="优惠券类型">
           {{ currentCouponProfile.type }}
         </ElDescriptionsItem>
-        <ElDescriptionsItem label="优惠券规则">
+        <ElDescriptionsItem label="面额">
+          {{ currentCouponProfile.amount }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="使用条件">
           {{ currentCouponProfile.rule }}
         </ElDescriptionsItem>
-        <ElDescriptionsItem label="有效期说明">
+        <ElDescriptionsItem label="有效期">
           {{ currentCouponProfile.validPeriod }}
         </ElDescriptionsItem>
         <ElDescriptionsItem label="优惠券状态">
