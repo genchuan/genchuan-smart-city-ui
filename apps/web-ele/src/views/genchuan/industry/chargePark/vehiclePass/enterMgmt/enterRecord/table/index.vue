@@ -28,6 +28,7 @@ import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
+  getStationOptions,
   plateColorTypeMap,
   recordTypeMap,
   statusTypeMap,
@@ -49,6 +50,16 @@ const props = defineProps({
 
 // 是否使用真实API（默认false使用模拟数据）
 const USE_REAL_API = true;
+
+const stationOptions = ref([]);
+
+async function loadStationOptions() {
+  try {
+    stationOptions.value = await getStationOptions();
+  } catch (error) {
+    console.error('Failed to load station options:', error);
+  }
+}
 
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
@@ -82,7 +93,14 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: computed(() => {
+    const schema = useSearchFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -99,7 +117,14 @@ const [CreateForm, createFormApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useCreateFormSchema(),
+  schema: computed(() => {
+    const schema = useCreateFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -113,7 +138,14 @@ const [UpdateForm, updateFormApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useUpdateFormSchema(),
+  schema: computed(() => {
+    const schema = useUpdateFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -127,7 +159,14 @@ const [CorrectForm, correctFormApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useCorrectFormSchema(),
+  schema: computed(() => {
+    const schema = useCorrectFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -494,8 +533,8 @@ const activeFilters = computed(() => {
     const statusLabel = labels.status || obj.status;
     filters.push({ label: `记录状态：${statusLabel}`, field: 'status' });
   }
-  if (obj.stationName) {
-    filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+  if (obj.stationId) {
+    filters.push({ label: `场站：${obj.stationName}`, field: 'stationId' });
   }
   if (obj.isCorrected !== undefined && obj.isCorrected !== null) {
     filters.push({
@@ -774,6 +813,7 @@ const handleStatusClick = (row) => {
 const handleStationClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
+    stationId: row.stationId,
     stationName: row.stationName,
   };
   handleRefresh();
@@ -816,12 +856,16 @@ const shouldShowAudit = (status) => {
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
+  console.log('[enterRecord] Received filter params:', filterParams);
   dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
-  handleRefresh();
+  console.log('[enterRecord] Updated searchParams:', dataObj.searchParams);
+  dataObj.currentPage = 1;
+  gridApi.query();
   ElMessage.success('已应用图表筛选');
 };
 
 onMounted(() => {
+  loadStationOptions();
   window.addEventListener('filterByChart:enterRecord', handleFilterByChart);
 });
 

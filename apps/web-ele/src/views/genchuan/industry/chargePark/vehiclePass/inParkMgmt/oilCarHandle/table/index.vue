@@ -28,6 +28,7 @@ import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
+  getStationOptions,
   occupyTypeMap,
   statusTypeMap,
   textObj,
@@ -45,6 +46,16 @@ const props = defineProps({
 });
 
 const USE_REAL_API = true;
+
+const stationOptions = ref([]);
+
+async function loadStationOptions() {
+  try {
+    stationOptions.value = await getStationOptions();
+  } catch (error) {
+    console.error('Failed to load station options:', error);
+  }
+}
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -409,7 +420,14 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: computed(() => {
+    const schema = useSearchFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showCollapseButton: true,
   submitButtonOptions: { content: '查询' },
 });
@@ -497,6 +515,7 @@ const handleStatusClick = (row) => {
 const handleStationClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
+    stationId: row.stationId,
     stationName: row.stationName,
   };
   handleRefresh();
@@ -599,6 +618,7 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
+  loadStationOptions();
   window.addEventListener('filterByChart:oilCarHandle', handleFilterByChart);
 });
 

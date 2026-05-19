@@ -1,4 +1,27 @@
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+import { requestClient } from '#/api/request';
+
+/** 获取场站列表 */
+let stationOptionsCache = null;
+export async function getStationOptions() {
+  if (stationOptionsCache) {
+    return stationOptionsCache;
+  }
+  try {
+    const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
+    if (response && response.data && Array.isArray(response.data)) {
+      stationOptionsCache = response.data.map(item => ({
+        label: item.stationName,
+        value: item.stationId,
+      }));
+      return stationOptionsCache;
+    }
+    return [];
+  } catch (error) {
+    console.error('获取场站列表失败:', error);
+    return [];
+  }
+}
 
 /** 记录状态类型映射 */
 export const statusTypeMap = {
@@ -99,7 +122,7 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '场站',
       component: 'Select',
       componentProps: {

@@ -27,6 +27,7 @@ import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
+  getStationOptions,
   textObj,
   useAuditFormSchema,
   useCorrectFormSchema,
@@ -44,6 +45,16 @@ const props = defineProps({
 
 // 是否使用真实API（默认false使用模拟数据）
 const USE_REAL_API = true;
+
+const stationOptions = ref([]);
+
+async function loadStationOptions() {
+  try {
+    stationOptions.value = await getStationOptions();
+  } catch (error) {
+    console.error('Failed to load station options:', error);
+  }
+}
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -67,7 +78,14 @@ const [SearchForm, searchFormApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: computed(() => {
+    const schema = useSearchFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -80,7 +98,14 @@ const [CreateForm, createFormApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useCreateFormSchema(),
+  schema: computed(() => {
+    const schema = useCreateFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -538,6 +563,7 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
+  loadStationOptions();
   window.addEventListener('filterByChart:unplateEnter', handleFilterByChart);
 });
 

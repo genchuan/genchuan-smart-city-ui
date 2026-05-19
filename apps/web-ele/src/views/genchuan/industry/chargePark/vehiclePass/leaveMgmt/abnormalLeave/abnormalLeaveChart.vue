@@ -42,7 +42,7 @@ let barChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationName: props.parkId,
+      stationId: props.parkId,
     };
 
     const res = await getAbnormalLeaveChart(params);

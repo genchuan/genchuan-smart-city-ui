@@ -25,6 +25,7 @@ import {
   dataList,
   detailFields,
   getReportCycleTagType,
+  getStationOptions,
   textObj,
   useCreateFormSchema,
   useGridColumns,
@@ -52,6 +53,16 @@ const props = defineProps({
 
 // 是否使用真实API（默认true使用真实API）
 const USE_REAL_API = true;
+
+const stationOptions = ref([]);
+
+async function loadStationOptions() {
+  try {
+    stationOptions.value = await getStationOptions();
+  } catch (error) {
+    console.error('Failed to load station options:', error);
+  }
+}
 
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
@@ -83,7 +94,14 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 120,
   },
   layout: 'horizontal',
-  schema: useCreateFormSchema(),
+  schema: computed(() => {
+    const schema = useCreateFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -308,7 +326,14 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: computed(() => {
+    const schema = useSearchFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -422,6 +447,7 @@ const handleReportCycleClick = (row) => {
 const handleStationClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
+    stationId: row.stationId,
     stationName: row.stationName,
   };
   handleRefresh();
@@ -604,6 +630,7 @@ onMounted(() => {
   };
 
   window.addEventListener('cycleReport:cardClick', handleCardClick);
+  loadStationOptions();
 });
 
 onUnmounted(() => {

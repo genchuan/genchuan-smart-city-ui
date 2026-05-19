@@ -29,6 +29,7 @@ import {
   useCheckFormSchema,
   useGridColumns,
   useSearchFormSchema,
+  getStationOptions,
 } from './data';
 
 const props = defineProps({
@@ -63,6 +64,7 @@ const detailDrawerRef = ref(null);
 const vehicleDetailDialogRef = ref(null);
 const imagePreviewRef = ref(null);
 const formData = ref();
+const stationOptions = ref([]);
 
 // 核查表单
 const [CheckForm, checkFormApi] = useVbenForm({
@@ -271,9 +273,16 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema().map((v) => {
-    delete v.rules;
-    return { ...v };
+  schema: computed(() => {
+    const schema = useSearchFormSchema().map((v) => {
+      delete v.rules;
+      return { ...v };
+    });
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
   }),
   showCollapseButton: true,
   submitButtonOptions: {
@@ -363,7 +372,8 @@ const handleFilterByChart = (event) => {
   ElMessage.success('已应用图表筛选');
 };
 
-onMounted(() => {
+onMounted(async () => {
+  stationOptions.value = await getStationOptions();
   window.addEventListener('filterByChart:passRecord', handleFilterByChart);
 });
 

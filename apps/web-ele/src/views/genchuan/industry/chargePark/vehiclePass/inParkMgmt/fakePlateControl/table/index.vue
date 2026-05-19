@@ -29,6 +29,7 @@ import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
 import {
   dataList,
   detailFields,
+  getStationOptions,
   matchSceneTypeMap,
   statusTypeMap,
   textObj,
@@ -48,6 +49,16 @@ const props = defineProps({
 
 // 是否使用真实API
 const USE_REAL_API = true;
+
+const stationOptions = ref([]);
+
+async function loadStationOptions() {
+  try {
+    stationOptions.value = await getStationOptions();
+  } catch (error) {
+    console.error('Failed to load station options:', error);
+  }
+}
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -297,7 +308,14 @@ const [CreateForm, createFormApi] = useVbenForm({
     labelWidth: 100,
   },
   layout: 'horizontal',
-  schema: useCreateFormSchema(),
+  schema: computed(() => {
+    const schema = useCreateFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -390,7 +408,7 @@ const activeFilters = computed(() => {
     filters.push({ label: `状态：${statusLabel}`, field: 'status' });
   }
   if (obj.stationName) {
-    filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+    filters.push({ label: `场站：${obj.stationName}`, field: 'stationId' });
   }
   if (obj.handleUserId) {
     const handleUserName = labels.handleUserId || obj.handleUserId;
@@ -509,7 +527,14 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: computed(() => {
+    const schema = useSearchFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showCollapseButton: true,
   submitButtonOptions: { content: '查询' },
 });
@@ -616,6 +641,7 @@ const handleStatusClick = (row) => {
 const handleStationClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
+    stationId: row.stationId,
     stationName: row.stationName,
   };
   dataObj.currentPage = 1;
@@ -715,6 +741,7 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
+  loadStationOptions();
   window.addEventListener('filterByChart:fakePlateControl', handleFilterByChart);
 });
 
@@ -809,6 +836,41 @@ onUnmounted(() => {
             @click="handleFullShow"
           />
         </div>
+      </template>
+      <template #plateNo="{ row }">
+        <el-text
+          @click="handlePlateNoClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.plateNo }}
+        </el-text>
+      </template>
+      <template #matchScene="{ row }">
+        <el-text
+          @click="handleMatchSceneClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.matchScene }}
+        </el-text>
+      </template>
+      <template #status="{ row }">
+        <el-tag :type="statusTypeMap[row.status]">
+          {{ row.status }}
+        </el-tag>
+      </template>
+      <template #stationName="{ row }">
+        <el-text
+          @click="handleStationClick(row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.stationName }}
+        </el-text>
       </template>
       <template #handleUserName="{ row }">
         <el-text

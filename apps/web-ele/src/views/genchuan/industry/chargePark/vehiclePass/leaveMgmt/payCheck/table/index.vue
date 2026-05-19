@@ -27,6 +27,7 @@ import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
 import {
   dataList,
   detailFields,
+  getStationOptions,
   textObj,
   useSearchFormSchema,
   useGridColumns,
@@ -42,6 +43,16 @@ const props = defineProps({
 
 // 是否使用真实API（默认false使用模拟数据）
 const USE_REAL_API = true;
+
+const stationOptions = ref([]);
+
+async function loadStationOptions() {
+  try {
+    stationOptions.value = await getStationOptions();
+  } catch (error) {
+    console.error('Failed to load station options:', error);
+  }
+}
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -331,11 +342,18 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
+  schema: computed(() => {
+    const schema = useSearchFormSchema().map((v) => {
+      delete v.rules;
+      return {
+        ...v,
+      };
+    });
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
   }),
   showCollapseButton: true,
   submitButtonOptions: {
@@ -485,6 +503,7 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
+  loadStationOptions();
   window.addEventListener('filterByChart:payCheck', handleFilterByChart);
 });
 
