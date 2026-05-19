@@ -3,13 +3,13 @@ import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { useUserStore } from '@vben/stores';
-import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  createInfoPublish,
   deleteInfoPublish,
   offlineInfoPublish,
   publishInfoPublish,
@@ -17,26 +17,22 @@ import {
   updateInfoPublish,
   updateInfoPublishPolicy,
 } from '#/api/genchuan/industry/industrialpark/investmentMgmt/resourceMgmt/infoPublish';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import InfoDetailDrawer from '../components/InfoDetailDrawer.vue';
-import InfoOperationDialog from '../components/InfoOperationDialog.vue';
-import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+import InfoDetailDrawer from '../components/InfoDetailDrawer.vue';
+import InfoOperationDialog from '../components/InfoOperationDialog.vue';
 import {
   dataList,
   detailFields,
   getInfoStatusLabel,
-  getInfoStatusConfig,
   getInfoStatusTagType,
   getInfoTypeLabel,
   getInfoTypeTagType,
   textObj,
-  useSearchFormSchema,
   useFormSchema,
   useGridColumns,
+  useSearchFormSchema,
 } from './data';
 
 const props = defineProps({
@@ -142,7 +138,8 @@ function handleEdit(row) {
     return;
   }
 
-  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  const targetRow =
+    row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
   if (!targetRow) return;
 
   formDrawerApi
@@ -160,7 +157,8 @@ async function handleConfig(row) {
     return;
   }
 
-  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  const targetRow =
+    row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
   if (!targetRow) return;
 
   operationDialogRef.value.open({
@@ -177,7 +175,8 @@ async function handlePublish(row) {
     return;
   }
 
-  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  const targetRow =
+    row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
   if (!targetRow) return;
 
   operationDialogRef.value.open({
@@ -203,7 +202,8 @@ async function handleUpdate(row) {
     return;
   }
 
-  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  const targetRow =
+    row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
   if (!targetRow) return;
 
   operationDialogRef.value.open({
@@ -269,14 +269,16 @@ const handleOperationConfirm = async (values) => {
 
   try {
     switch (title) {
-      case '配置':
-        await updateInfoPublishPolicy({
+      case '发布': {
+        await publishInfoPublish({
           id,
-          policyConfig: params.policyConfig,
+          publishTime:
+            params.publishTime || String(Math.floor(Date.now() / 1000)),
           handleUser: getCurrentUsername(),
         });
         break;
-      case '响应':
+      }
+      case '响应': {
         await responseInfoPublish({
           id,
           responseUser: getCurrentUsername(),
@@ -285,14 +287,8 @@ const handleOperationConfirm = async (values) => {
           handleUser: getCurrentUsername(),
         });
         break;
-      case '发布':
-        await publishInfoPublish({
-          id,
-          publishTime: params.publishTime || String(Math.floor(Date.now() / 1000)),
-          handleUser: getCurrentUsername(),
-        });
-        break;
-      case '更新':
+      }
+      case '更新': {
         await updateInfoPublish({
           id,
           infoTitle: params.infoTitle,
@@ -301,8 +297,18 @@ const handleOperationConfirm = async (values) => {
           handleUser: getCurrentUsername(),
         });
         break;
-      default:
+      }
+      case '配置': {
+        await updateInfoPublishPolicy({
+          id,
+          policyConfig: params.policyConfig,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      }
+      default: {
         throw new Error(`未知操作类型：${title}`);
+      }
     }
 
     ElMessage.success(`${title}成功`);
@@ -429,25 +435,60 @@ const getRowButtons = (row) => {
   const status = Number(row.infoStatus);
 
   switch (status) {
-    case 0:
+    case 0: {
       return [
         { content: '编辑', iconName: 'Edit', handler: () => handleEdit(row) },
-        { content: '发布', iconName: 'Promotion', handler: () => handlePublish(row) },
-        { content: '删除', iconName: 'Delete', color: '#F56C6C', handler: () => handleDelete(row) },
+        {
+          content: '发布',
+          iconName: 'Promotion',
+          handler: () => handlePublish(row),
+        },
+        {
+          content: '删除',
+          iconName: 'Delete',
+          color: '#F56C6C',
+          handler: () => handleDelete(row),
+        },
       ];
-    case 1:
+    }
+    case 1: {
       return [
-        { content: '响应', iconName: 'ChatDotRound', handler: () => handleResponse(row) },
-        { content: '下架', iconName: 'Bottom', color: '#E6A23C', handler: () => handleOffline(row) },
-        { content: '修改', iconName: 'EditPen', handler: () => handleUpdate(row) },
+        {
+          content: '响应',
+          iconName: 'ChatDotRound',
+          handler: () => handleResponse(row),
+        },
+        {
+          content: '下架',
+          iconName: 'Bottom',
+          color: '#E6A23C',
+          handler: () => handleOffline(row),
+        },
+        {
+          content: '修改',
+          iconName: 'EditPen',
+          handler: () => handleUpdate(row),
+        },
       ];
-    case 2:
+    }
+    case 2: {
       return [
-        { content: '查看', iconName: 'View', handler: () => handleOpenInfoDetail(row) },
-        { content: '删除', iconName: 'Delete', color: '#F56C6C', handler: () => handleDelete(row) },
+        {
+          content: '查看',
+          iconName: 'View',
+          handler: () => handleOpenInfoDetail(row),
+        },
+        {
+          content: '删除',
+          iconName: 'Delete',
+          color: '#F56C6C',
+          handler: () => handleDelete(row),
+        },
       ];
-    default:
+    }
+    default: {
       return [];
+    }
   }
 };
 
@@ -474,7 +515,10 @@ const handleFullShow = () => {
     <!--   信息完整详情抽屉（含政策配置、咨询记录） -->
     <InfoDetailDrawer ref="infoDetailDrawerRef" />
     <!--   操作对话框（配置/响应） -->
-    <InfoOperationDialog ref="operationDialogRef" @confirm="handleOperationConfirm" />
+    <InfoOperationDialog
+      ref="operationDialogRef"
+      @confirm="handleOperationConfirm"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -482,23 +526,51 @@ const handleFullShow = () => {
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="编辑" icon-name="Edit" @click="handleEdit()" />
-          <IconButton content="配置" icon-name="Setting" @click="handleConfig()" />
-          <IconButton content="发布" icon-name="Promotion" @click="handlePublish()" />
-          <IconButton content="响应" icon-name="ChatDotRound" @click="handleResponse()" />
-          <IconButton content="更新" icon-name="RefreshRight" @click="handleUpdate()" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton
+            content="配置"
+            icon-name="Setting"
+            @click="handleConfig()"
+          />
+          <IconButton
+            content="发布"
+            icon-name="Promotion"
+            @click="handlePublish()"
+          />
+          <IconButton
+            content="响应"
+            icon-name="ChatDotRound"
+            @click="handleResponse()"
+          />
+          <IconButton
+            content="更新"
+            icon-name="RefreshRight"
+            @click="handleUpdate()"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
         </div>
       </template>
       <template #infoTitle="{ row }">
-        <span
-          class="info-title-link"
-          style="color: #409eff; cursor: pointer; text-decoration: underline;"
+        <el-text
           @click="handleInfoTitleClick(row)"
+          class="common-align"
+          type="primary"
         >
           {{ row.infoTitle }}
-        </span>
+        </el-text>
       </template>
       <template #infoType="{ row }">
         <el-tag :type="getInfoTypeTagType(row.infoType)">

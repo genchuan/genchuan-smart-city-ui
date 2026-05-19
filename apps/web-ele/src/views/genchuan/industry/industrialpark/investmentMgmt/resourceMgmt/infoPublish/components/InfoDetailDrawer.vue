@@ -5,7 +5,7 @@ import { useVbenDrawer } from '@vben/common-ui';
 
 import { ElTag } from 'element-plus';
 
-import { getInfoStatusTagType, getInfoStatusLabel } from '../table/data';
+import { getInfoStatusLabel, getInfoStatusTagType } from '../table/data';
 
 const [Drawer, drawerApi] = useVbenDrawer({
   appendToMain: true,
@@ -46,7 +46,9 @@ defineExpose({ open });
           </div>
           <div class="detail-item">
             <span class="detail-label">发布时间：</span>
-            <span class="detail-value">{{ infoData._publishTimeFormatted || '-' }}</span>
+            <span class="detail-value">{{
+              infoData._publishTimeFormatted || '-'
+            }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">咨询数：</span>
@@ -59,9 +61,9 @@ defineExpose({ open });
           <div class="detail-item">
             <span class="detail-label">信息状态：</span>
             <span class="detail-value">
-              <el-tag :type="getInfoStatusTagType(infoData.infoStatus)">
+              <ElTag :type="getInfoStatusTagType(infoData.infoStatus)">
                 {{ getInfoStatusLabel(infoData.infoStatus) }}
-              </el-tag>
+              </ElTag>
             </span>
           </div>
           <div class="detail-item">
@@ -74,7 +76,9 @@ defineExpose({ open });
           </div>
           <div class="detail-item">
             <span class="detail-label">操作人：</span>
-            <span class="detail-value">{{ infoData.handleUserName || '-' }}</span>
+            <span class="detail-value">{{
+              infoData.handleUserName || '-'
+            }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">创建人：</span>
@@ -82,11 +86,15 @@ defineExpose({ open });
           </div>
           <div class="detail-item">
             <span class="detail-label">创建时间：</span>
-            <span class="detail-value">{{ infoData._createTimeFormatted || infoData.createTime }}</span>
+            <span class="detail-value">{{
+              infoData._createTimeFormatted || infoData.createTime
+            }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">更新时间：</span>
-            <span class="detail-value">{{ infoData._updateTimeFormatted || infoData.updateTime }}</span>
+            <span class="detail-value">{{
+              infoData._updateTimeFormatted || infoData.updateTime
+            }}</span>
           </div>
         </div>
       </div>
@@ -105,11 +113,15 @@ defineExpose({ open });
         <div class="detail-content">
           <div class="detail-item">
             <span class="detail-label">创建时间：</span>
-            <span class="detail-value">{{ infoData._createTimeFormatted || infoData.createTime }}</span>
+            <span class="detail-value">{{
+              infoData._createTimeFormatted || infoData.createTime
+            }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">更新时间：</span>
-            <span class="detail-value">{{ infoData._updateTimeFormatted || infoData.updateTime }}</span>
+            <span class="detail-value">{{
+              infoData._updateTimeFormatted || infoData.updateTime
+            }}</span>
           </div>
         </div>
       </div>
@@ -121,8 +133,8 @@ defineExpose({ open });
 .detail-container {
   box-sizing: border-box;
   height: 100%;
-  overflow-y: auto;
   padding: 0;
+  overflow-y: auto;
 }
 
 .detail-card {
@@ -151,12 +163,12 @@ defineExpose({ open });
 }
 
 .detail-label {
+  flex-shrink: 0;
   width: 120px;
   font-size: 14px;
   font-weight: 500;
   color: var(--el-text-color-regular, #606266);
   text-align: right;
-  flex-shrink: 0;
 }
 
 .detail-value {
@@ -168,7 +180,7 @@ defineExpose({ open });
 }
 
 .section-title {
-  margin: 0 0 12px 0;
+  margin: 0 0 12px;
   font-size: 14px;
   font-weight: 600;
   color: #303133;
@@ -179,9 +191,9 @@ defineExpose({ open });
   font-size: 14px;
   line-height: 1.6;
   color: var(--el-text-color-primary, #303133);
-  background-color: #f5f7fa;
-  border-radius: 4px;
   word-break: break-all;
   white-space: pre-wrap;
+  background-color: #f5f7fa;
+  border-radius: 4px;
 }
 </style>

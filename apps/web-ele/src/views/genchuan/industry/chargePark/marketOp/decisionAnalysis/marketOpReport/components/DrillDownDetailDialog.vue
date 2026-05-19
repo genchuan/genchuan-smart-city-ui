@@ -1608,17 +1608,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
       keyField: 'id',
       isHover: true,
     },
-    pagerConfig: {
-      total: dataObj.total,
-      currentPage: dataObj.currentPage,
-      pageSize: dataObj.pageSize,
-    },
+    pagerConfig: dataObj,
     toolbarConfig: {
       'class-name': 'common-tool-bar-config',
       refresh: true,
+      search: true,
     },
     showOverflow: true,
-    height: 'auto',
   },
   showSearchForm: false,
 });
@@ -2405,260 +2401,238 @@ defineExpose({
   <Drawer>
     <div class="drill-down-wrapper">
       <!-- 数据表格 -->
-      <div class="table-section">
-        <Grid>
-          <template #reportCycle="{ row }">
-            <ElTag :type="getReportCycleTagType(row.reportCycle)">
-              {{ row.reportCycle }}
-            </ElTag>
-          </template>
-          <template #generateStatus="{ row }">
-            <ElTag :type="getGenerateStatusTagType(row.generateStatus)">
-              {{ row.generateStatus }}
-            </ElTag>
-          </template>
-          <!-- 卡片钻取字典字段插槽 -->
-          <template #pointActivityType="{ row }">
-            <ElTag :type="getPointActivityTypeTagType(row.type)">
-              {{ getPointActivityTypeLabel(row.type) }}
-            </ElTag>
-          </template>
-          <template #pointActivityStatus="{ row }">
-            <ElTag :type="getPointActivityStatusTagType(row.status)">
-              {{ getPointActivityStatusLabel(row.status) }}
-            </ElTag>
-          </template>
-          <template #cardConfigType="{ row }">
-            <ElTag :type="getCardConfigTypeTagType(row.type || row.cardType)">
-              {{ getCardConfigTypeLabel(row.type || row.cardType) }}
-            </ElTag>
-          </template>
-          <template #cardConfigStatus="{ row }">
-            <ElTag :type="getCardConfigStatusTagType(row.status)">
-              {{ getCardConfigStatusLabel(row.status) }}
-            </ElTag>
-          </template>
-          <!-- 图表钻取字典字段插槽 -->
-          <template #ruleConfigType="{ row }">
-            <ElTag :type="getRuleConfigTypeTagType(row.ruleType)">
-              {{ getRuleConfigTypeLabel(row.ruleType) }}
-            </ElTag>
-          </template>
-          <template #activityConfigType="{ row }">
-            <ElTag :type="getActivityConfigTypeTagType(row.configType)">
-              {{ getActivityConfigTypeLabel(row.configType) }}
-            </ElTag>
-          </template>
-          <template #packageConfigType="{ row }">
-            <ElTag :type="getPackageConfigTypeTagType(row.packageType)">
-              {{ getPackageConfigTypeLabel(row.packageType) }}
-            </ElTag>
-          </template>
-          <template #commonStatus="{ row }">
-            <ElTag :type="getCommonStatusTagType(row.status)">
-              {{ getCommonStatusLabel(row.status) }}
-            </ElTag>
-          </template>
-          <template #status="{ row }">
-            <ElTag :type="getPointLotteryStatusTagType(row.status)">
-              {{ getPointLotteryStatusLabel(row.status) }}
-            </ElTag>
-          </template>
-          <template #prizeType="{ row }">
-            <ElTag :type="getPrizeMgmtTypeTagType(row.prizeType)">
-              {{ getPrizeMgmtTypeLabel(row.prizeType) }}
-            </ElTag>
-          </template>
-          <!-- 图表钻取-奖品类型（柱状图prizeType）使用 chartPrizeType 避免同名冲突 -->
-          <template #chartPrizeType="{ row }">
-            <ElTag :type="getPrizeMgmtTypeTagType(row.type)">
-              {{ getPrizeMgmtTypeLabel(row.type) }}
-            </ElTag>
-          </template>
-          <template #prizeMgmtStatus="{ row }">
-            <ElTag :type="getPrizeMgmtStatusTagType(row.status)">
-              {{ getPrizeMgmtStatusLabel(row.status) }}
-            </ElTag>
-          </template>
-          <template #couponType="{ row }">
-            <ElTag :type="getCouponMgmtTypeTagType(row.type || row.couponType)">
-              {{ getCouponMgmtTypeLabel(row.type || row.couponType) }}
-            </ElTag>
-          </template>
-          <template #couponStatus="{ row }">
-            <ElTag :type="getCouponMgmtStatusTagType(row.status)">
-              {{ getCouponMgmtStatusLabel(row.status) }}
-            </ElTag>
-          </template>
-          <template #cardOrderPayStatus="{ row }">
-            <ElTag :type="getCardOrderPayStatusTagType(row.payStatus)">
-              {{ getCardOrderPayStatusLabel(row.payStatus) }}
-            </ElTag>
-          </template>
-          <template #exchangeOrderPayStatus="{ row }">
-            <ElTag :type="getExchangeOrderPayStatusTagType(row.payStatus)">
-              {{ getExchangeOrderPayStatusLabel(row.payStatus) }}
-            </ElTag>
-          </template>
-          <template #stockControlStatus="{ row }">
-            <ElTag :type="getStockControlStatusTagType(row.status)">
-              {{ getStockControlStatusLabel(row.status) }}
-            </ElTag>
-          </template>
-          <template #stockControlWarnStatus="{ row }">
-            <ElTag :type="getStockControlWarnStatusTagType(row.warnStatus)">
-              {{ getStockControlWarnStatusLabel(row.warnStatus) }}
-            </ElTag>
-          </template>
-          <template #lotteryStatus="{ row }">
-            <ElTag :type="getLotteryStatusTagType(row.status)">
-              {{ getLotteryStatusLabel(row.status) }}
-            </ElTag>
-          </template>
-          <template #stockWarnStatus="{ row }">
-            <ElTag :type="getStockWarnStatusTagType(row.warnStatus)">
-              {{ getStockWarnStatusLabel(row.warnStatus) }}
-            </ElTag>
-          </template>
-          <!-- 时间字段格式化插槽 -->
-          <template #startTime="{ row }">
-            {{
-              row.startTime
-                ? formatDate(
-                    new Date(Number(row.startTime)),
-                    'YYYY-MM-DD HH:mm:ss',
-                  )
-                : '-'
-            }}
-          </template>
-          <template #endTime="{ row }">
-            {{
-              row.endTime
-                ? formatDate(
-                    new Date(Number(row.endTime)),
-                    'YYYY-MM-DD HH:mm:ss',
-                  )
-                : '-'
-            }}
-          </template>
-          <template #joinTime="{ row }">
-            {{
-              row.joinTime
-                ? formatDate(
-                    new Date(Number(row.joinTime)),
-                    'YYYY-MM-DD HH:mm:ss',
-                  )
-                : '-'
-            }}
-          </template>
-          <template #lotteryTime="{ row }">
-            {{
-              row.lotteryTime
-                ? formatDate(
-                    new Date(Number(row.lotteryTime)),
-                    'YYYY-MM-DD HH:mm:ss',
-                  )
-                : '-'
-            }}
-          </template>
-          <template #sendTime="{ row }">
-            {{
-              row.sendTime
-                ? formatDate(
-                    new Date(Number(row.sendTime)),
-                    'YYYY-MM-DD HH:mm:ss',
-                  )
-                : '-'
-            }}
-          </template>
-          <template #verifyTime="{ row }">
-            {{
-              row.verifyTime
-                ? formatDate(
-                    new Date(Number(row.verifyTime)),
-                    'YYYY-MM-DD HH:mm:ss',
-                  )
-                : '-'
-            }}
-          </template>
-          <template #receiveTime="{ row }">
-            {{
-              row.receiveTime
-                ? formatDate(
-                    new Date(Number(row.receiveTime)),
-                    'YYYY-MM-DD HH:mm:ss',
-                  )
-                : '-'
-            }}
-          </template>
-          <template #syncTime="{ row }">
-            {{
-              row.syncTime
-                ? formatDate(
-                    new Date(Number(row.syncTime)),
-                    'YYYY-MM-DD HH:mm:ss',
-                  )
-                : '-'
-            }}
-          </template>
-          <template #payTime="{ row }">
-            {{
-              row.payTime
-                ? formatDate(
-                    new Date(Number(row.payTime)),
-                    'YYYY-MM-DD HH:mm:ss',
-                  )
-                : '-'
-            }}
-          </template>
-          <template #exchangeTime="{ row }">
-            {{
-              row.exchangeTime
-                ? formatDate(
-                    new Date(Number(row.exchangeTime)),
-                    'YYYY-MM-DD HH:mm:ss',
-                  )
-                : '-'
-            }}
-          </template>
-          <template #createTime="{ row }">
-            {{
-              row.createTime
-                ? formatDate(
-                    new Date(Number(row.createTime)),
-                    'YYYY-MM-DD HH:mm:ss',
-                  )
-                : '-'
-            }}
-          </template>
-        </Grid>
-      </div>
+      <Grid>
+        <template #reportCycle="{ row }">
+          <ElTag :type="getReportCycleTagType(row.reportCycle)">
+            {{ row.reportCycle }}
+          </ElTag>
+        </template>
+        <template #generateStatus="{ row }">
+          <ElTag :type="getGenerateStatusTagType(row.generateStatus)">
+            {{ row.generateStatus }}
+          </ElTag>
+        </template>
+        <!-- 卡片钻取字典字段插槽 -->
+        <template #pointActivityType="{ row }">
+          <ElTag :type="getPointActivityTypeTagType(row.type)">
+            {{ getPointActivityTypeLabel(row.type) }}
+          </ElTag>
+        </template>
+        <template #pointActivityStatus="{ row }">
+          <ElTag :type="getPointActivityStatusTagType(row.status)">
+            {{ getPointActivityStatusLabel(row.status) }}
+          </ElTag>
+        </template>
+        <template #cardConfigType="{ row }">
+          <ElTag :type="getCardConfigTypeTagType(row.type || row.cardType)">
+            {{ getCardConfigTypeLabel(row.type || row.cardType) }}
+          </ElTag>
+        </template>
+        <template #cardConfigStatus="{ row }">
+          <ElTag :type="getCardConfigStatusTagType(row.status)">
+            {{ getCardConfigStatusLabel(row.status) }}
+          </ElTag>
+        </template>
+        <!-- 图表钻取字典字段插槽 -->
+        <template #ruleConfigType="{ row }">
+          <ElTag :type="getRuleConfigTypeTagType(row.ruleType)">
+            {{ getRuleConfigTypeLabel(row.ruleType) }}
+          </ElTag>
+        </template>
+        <template #activityConfigType="{ row }">
+          <ElTag :type="getActivityConfigTypeTagType(row.configType)">
+            {{ getActivityConfigTypeLabel(row.configType) }}
+          </ElTag>
+        </template>
+        <template #packageConfigType="{ row }">
+          <ElTag :type="getPackageConfigTypeTagType(row.packageType)">
+            {{ getPackageConfigTypeLabel(row.packageType) }}
+          </ElTag>
+        </template>
+        <template #commonStatus="{ row }">
+          <ElTag :type="getCommonStatusTagType(row.status)">
+            {{ getCommonStatusLabel(row.status) }}
+          </ElTag>
+        </template>
+        <template #status="{ row }">
+          <ElTag :type="getPointLotteryStatusTagType(row.status)">
+            {{ getPointLotteryStatusLabel(row.status) }}
+          </ElTag>
+        </template>
+        <template #prizeType="{ row }">
+          <ElTag :type="getPrizeMgmtTypeTagType(row.prizeType)">
+            {{ getPrizeMgmtTypeLabel(row.prizeType) }}
+          </ElTag>
+        </template>
+        <!-- 图表钻取-奖品类型（柱状图prizeType）使用 chartPrizeType 避免同名冲突 -->
+        <template #chartPrizeType="{ row }">
+          <ElTag :type="getPrizeMgmtTypeTagType(row.type)">
+            {{ getPrizeMgmtTypeLabel(row.type) }}
+          </ElTag>
+        </template>
+        <template #prizeMgmtStatus="{ row }">
+          <ElTag :type="getPrizeMgmtStatusTagType(row.status)">
+            {{ getPrizeMgmtStatusLabel(row.status) }}
+          </ElTag>
+        </template>
+        <template #couponType="{ row }">
+          <ElTag :type="getCouponMgmtTypeTagType(row.type || row.couponType)">
+            {{ getCouponMgmtTypeLabel(row.type || row.couponType) }}
+          </ElTag>
+        </template>
+        <template #couponStatus="{ row }">
+          <ElTag :type="getCouponMgmtStatusTagType(row.status)">
+            {{ getCouponMgmtStatusLabel(row.status) }}
+          </ElTag>
+        </template>
+        <template #cardOrderPayStatus="{ row }">
+          <ElTag :type="getCardOrderPayStatusTagType(row.payStatus)">
+            {{ getCardOrderPayStatusLabel(row.payStatus) }}
+          </ElTag>
+        </template>
+        <template #exchangeOrderPayStatus="{ row }">
+          <ElTag :type="getExchangeOrderPayStatusTagType(row.payStatus)">
+            {{ getExchangeOrderPayStatusLabel(row.payStatus) }}
+          </ElTag>
+        </template>
+        <template #stockControlStatus="{ row }">
+          <ElTag :type="getStockControlStatusTagType(row.status)">
+            {{ getStockControlStatusLabel(row.status) }}
+          </ElTag>
+        </template>
+        <template #stockControlWarnStatus="{ row }">
+          <ElTag :type="getStockControlWarnStatusTagType(row.warnStatus)">
+            {{ getStockControlWarnStatusLabel(row.warnStatus) }}
+          </ElTag>
+        </template>
+        <template #lotteryStatus="{ row }">
+          <ElTag :type="getLotteryStatusTagType(row.status)">
+            {{ getLotteryStatusLabel(row.status) }}
+          </ElTag>
+        </template>
+        <template #stockWarnStatus="{ row }">
+          <ElTag :type="getStockWarnStatusTagType(row.warnStatus)">
+            {{ getStockWarnStatusLabel(row.warnStatus) }}
+          </ElTag>
+        </template>
+        <!-- 时间字段格式化插槽 -->
+        <template #startTime="{ row }">
+          {{
+            row.startTime
+              ? formatDate(
+                  new Date(Number(row.startTime)),
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              : '-'
+          }}
+        </template>
+        <template #endTime="{ row }">
+          {{
+            row.endTime
+              ? formatDate(
+                  new Date(Number(row.endTime)),
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              : '-'
+          }}
+        </template>
+        <template #joinTime="{ row }">
+          {{
+            row.joinTime
+              ? formatDate(
+                  new Date(Number(row.joinTime)),
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              : '-'
+          }}
+        </template>
+        <template #lotteryTime="{ row }">
+          {{
+            row.lotteryTime
+              ? formatDate(
+                  new Date(Number(row.lotteryTime)),
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              : '-'
+          }}
+        </template>
+        <template #sendTime="{ row }">
+          {{
+            row.sendTime
+              ? formatDate(
+                  new Date(Number(row.sendTime)),
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              : '-'
+          }}
+        </template>
+        <template #verifyTime="{ row }">
+          {{
+            row.verifyTime
+              ? formatDate(
+                  new Date(Number(row.verifyTime)),
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              : '-'
+          }}
+        </template>
+        <template #receiveTime="{ row }">
+          {{
+            row.receiveTime
+              ? formatDate(
+                  new Date(Number(row.receiveTime)),
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              : '-'
+          }}
+        </template>
+        <template #syncTime="{ row }">
+          {{
+            row.syncTime
+              ? formatDate(
+                  new Date(Number(row.syncTime)),
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              : '-'
+          }}
+        </template>
+        <template #payTime="{ row }">
+          {{
+            row.payTime
+              ? formatDate(
+                  new Date(Number(row.payTime)),
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              : '-'
+          }}
+        </template>
+        <template #exchangeTime="{ row }">
+          {{
+            row.exchangeTime
+              ? formatDate(
+                  new Date(Number(row.exchangeTime)),
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              : '-'
+          }}
+        </template>
+        <template #createTime="{ row }">
+          {{
+            row.createTime
+              ? formatDate(
+                  new Date(Number(row.createTime)),
+                  'YYYY-MM-DD HH:mm:ss',
+                )
+              : '-'
+          }}
+        </template>
+      </Grid>
     </div>
   </Drawer>
 </template>
 
 <style scoped>
 .drill-down-wrapper {
-  display: flex;
-  flex-direction: column;
   width: 100%;
-  height: 100%;
-}
-
-.table-section {
-  flex: 1;
-  overflow: hidden;
-}
-
-:deep(.vxe-grid) {
-  height: 100%;
-}
-
-:deep(.vxe-table) {
-  height: calc(100% - 44px) !important;
-}
-
-:deep(.vxe-body--row) {
-  height: 40px;
 }
 </style>

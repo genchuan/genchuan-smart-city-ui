@@ -261,7 +261,7 @@ defineExpose({
 }
 
 .detail-card {
-  padding: 16px;
+  padding: 12px;
   margin-bottom: 0;
   background-color: var(--el-bg-color, #fff);
   border: 1px solid var(--el-border-color-light, #ebeef5);
@@ -276,34 +276,50 @@ defineExpose({
 .detail-content {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 2px;
 }
 
 .detail-item {
-  display: grid;
-  grid-template-columns: 140px 1fr;
-  gap: 12px;
+  display: flex;
   align-items: flex-start;
-  min-height: 32px;
-  padding: 8px 0;
+  min-height: 24px;
+  padding: 3px 0;
+  line-height: 1.4;
 }
 
 .detail-label {
-  font-size: 14px;
+  flex-shrink: 0;
+  width: 120px;
+
+  padding-right: 10px;
+
+  font-size: 13px;
   font-weight: 500;
+  line-height: 22px;
+
   color: var(--el-text-color-regular, #606266);
+
   text-align: right;
-  word-break: break-word;
+
+  box-sizing: border-box;
 }
 
 .detail-value {
+  flex: 1;
+
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+
   min-height: 22px;
-  font-size: 14px;
+
+  font-size: 13px;
+  line-height: 22px;
+
   color: var(--el-text-color-primary, #303133);
-  text-align: left;
+
   word-break: break-word;
+
+  overflow-wrap: break-word;
 }
 
 .detail-separator {
@@ -346,15 +362,19 @@ defineExpose({
 .logs-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 6px;
 }
 
 .log-item {
   display: flex;
-  gap: 12px;
-  padding: 12px;
+  gap: 8px;
+
+  padding: 8px 10px;
+
   background-color: var(--el-fill-color-light, #f5f7fa);
+
   border-left: 3px solid var(--el-color-primary, #409eff);
+
   border-radius: 2px;
 }
 
@@ -367,17 +387,26 @@ defineExpose({
 
 .log-content {
   flex: 1;
+
   display: flex;
   flex-direction: column;
-  gap: 4px;
+
+  gap: 2px;
 }
 
 .log-operator,
 .log-action,
 .log-remark {
-  font-size: 13px;
+  font-size: 12px;
+
   color: var(--el-text-color-primary, #303133);
-  line-height: 1.5;
+
+  line-height: 1.35;
+}
+
+.el-tag {
+  height: 22px;
+  line-height: 20px;
 }
 
 .log-operator {

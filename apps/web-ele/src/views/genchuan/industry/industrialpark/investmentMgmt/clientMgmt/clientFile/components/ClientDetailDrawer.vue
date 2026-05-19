@@ -62,7 +62,9 @@ defineExpose({ open });
           </div>
           <div class="detail-item">
             <span class="detail-label">企业名称：</span>
-            <span class="detail-value">{{ clientData.clientCompany || '-' }}</span>
+            <span class="detail-value">{{
+              clientData.clientCompany || '-'
+            }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">需求类型：</span>
@@ -79,9 +81,9 @@ defineExpose({ open });
           <div class="detail-item">
             <span class="detail-label">客户状态：</span>
             <span class="detail-value">
-              <el-tag size="small" type="success">
+              <ElTag size="small" type="success">
                 {{ getClientStatusLabel(clientData.clientStatus) }}
-              </el-tag>
+              </ElTag>
             </span>
           </div>
           <div class="detail-item">
@@ -109,7 +111,9 @@ defineExpose({ open });
           </div>
           <div class="detail-item">
             <span class="detail-label">创建时间：</span>
-            <span class="detail-value">{{ clientData._createTimeFormatted || '-' }}</span>
+            <span class="detail-value">{{
+              clientData._createTimeFormatted || '-'
+            }}</span>
           </div>
         </div>
       </div>
@@ -124,7 +128,7 @@ defineExpose({ open });
           type="primary"
           link
           size="small"
-          style="margin-top: 8px;"
+          style="margin-top: 8px"
           @click="handleTrackRecordClick"
         >
           查看跟踪明细
@@ -145,11 +149,15 @@ defineExpose({ open });
         <div class="detail-content">
           <div class="detail-item">
             <span class="detail-label">创建时间：</span>
-            <span class="detail-value">{{ clientData._createTimeFormatted || '-' }}</span>
+            <span class="detail-value">{{
+              clientData._createTimeFormatted || '-'
+            }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">更新时间：</span>
-            <span class="detail-value">{{ clientData._updateTimeFormatted || '-' }}</span>
+            <span class="detail-value">{{
+              clientData._updateTimeFormatted || '-'
+            }}</span>
           </div>
         </div>
       </div>
@@ -161,8 +169,8 @@ defineExpose({ open });
 .detail-container {
   box-sizing: border-box;
   height: 100%;
-  overflow-y: auto;
   padding: 0;
+  overflow-y: auto;
 }
 
 .detail-card {
@@ -191,12 +199,12 @@ defineExpose({ open });
 }
 
 .detail-label {
+  flex-shrink: 0;
   width: 100px;
   font-size: 14px;
   font-weight: 500;
   color: var(--el-text-color-regular, #606266);
   text-align: right;
-  flex-shrink: 0;
 }
 
 .detail-value {
@@ -208,7 +216,7 @@ defineExpose({ open });
 }
 
 .section-title {
-  margin: 0 0 12px 0;
+  margin: 0 0 12px;
   font-size: 14px;
   font-weight: 600;
   color: #303133;
@@ -219,9 +227,9 @@ defineExpose({ open });
   font-size: 14px;
   line-height: 1.6;
   color: var(--el-text-color-primary, #303133);
-  background-color: #f5f7fa;
-  border-radius: 4px;
   word-break: break-all;
   white-space: pre-wrap;
+  background-color: #f5f7fa;
+  border-radius: 4px;
 }
 </style>

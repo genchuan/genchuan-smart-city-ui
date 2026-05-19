@@ -270,13 +270,10 @@ export function useSearchFormSchema() {
     {
       fieldName: 'auditorName',
       label: '审核人',
-      component: 'Select',
+      component: 'Input',
       componentProps: {
         placeholder: '请输入审核人名称',
-        options: [],
         clearable: true,
-        filterable: true,
-        remote: true,
       },
     },
     {
