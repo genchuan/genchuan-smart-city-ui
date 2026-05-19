@@ -77,7 +77,7 @@ export function refreshAgentPayCode(data) {
 }
 /** 代理商支付代付码重新生成 */
 export function regenerateAgentPayCode(data) {
-  return requestClient.put('/ordertrade/agent-code/regenerate', null, {
+  return requestClient.post('/ordertrade/agent-code/regenerate', null, {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },

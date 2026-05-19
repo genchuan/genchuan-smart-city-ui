@@ -7,27 +7,31 @@ import Table from './table/index.vue';
 import '#/components/page/index.scss';
 
 const filterParams = reactive({
-  createTimeStart: null,
-  createTimeEnd: null,
+  startTime: null,
+  endTime: null,
+  status: null,
 });
 
 const hasActiveFilters = computed(() => {
-  return filterParams.createTimeStart;
+  return filterParams.startTime || filterParams.status;
 });
 
 const handleFilterChange = (params) => {
-  filterParams.createTimeStart = params.createTimeStart || null;
-  filterParams.createTimeEnd = params.createTimeEnd || null;
+  filterParams.startTime = params.startTime || null;
+  filterParams.endTime = params.endTime || null;
+  filterParams.status = params.status || null;
 };
 
 const clearFilter = () => {
-  filterParams.createTimeStart = null;
-  filterParams.createTimeEnd = null;
+  filterParams.startTime = null;
+  filterParams.endTime = null;
+  filterParams.status = null;
 };
 
 const handleClearFilters = () => {
-  filterParams.createTimeStart = null;
-  filterParams.createTimeEnd = null;
+  filterParams.startTime = null;
+  filterParams.endTime = null;
+  filterParams.status = null;
 };
 
 const changeArrowStatus = () => {
@@ -61,12 +65,20 @@ const secondShow = ref(false);
     <Chart @filter-change="handleFilterChange" v-if="tabArray[0].arrowShow"/>
     <div v-if="hasActiveFilters" class="filter-tags">
       <el-tag
-        v-if="filterParams.createTimeStart"
+        v-if="filterParams.startTime"
         closable
         @close="clearFilter"
         type="info"
       >
-        日期: {{ filterParams.createTimeStart?.split(' ')[0] }}
+        日期: {{ filterParams.startTime?.split(' ')[0] }}
+      </el-tag>
+      <el-tag
+        v-if="filterParams.status"
+        closable
+        @close="clearFilter"
+        type="info"
+      >
+        状态: {{ filterParams.status === 'used' ? '已使用' : filterParams.status }}
       </el-tag>
     </div>
     <div class="icon-change">

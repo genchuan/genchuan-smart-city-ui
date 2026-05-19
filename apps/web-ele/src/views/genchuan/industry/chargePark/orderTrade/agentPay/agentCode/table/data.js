@@ -38,7 +38,32 @@ export function useFormSchema() {
       labelWidth: 120,
       isSearch: true,
     },
-    
+    {
+      fieldName: 'startTime',
+      label: '开始时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择开始时间',
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: 120,
+      isSearch: true,
+    },
+    {
+      fieldName: 'endTime',
+      label: '结束时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择结束时间',
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: 120,
+      isSearch: true,
+    },
   ];
 }
 

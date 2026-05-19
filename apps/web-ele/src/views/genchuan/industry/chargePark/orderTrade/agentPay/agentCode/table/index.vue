@@ -296,6 +296,22 @@ async function handleDeleteBatch() {
   }
 }
 
+async function handleRefreshCode(row) {
+  const loadingInstance = ElLoading.service({
+    text: '正在刷新...',
+  });
+  try {
+    await refreshAgentPayCode({ id: row.id });
+    ElMessage.success('刷新成功');
+    handleRefresh();
+  } catch (error) {
+    console.error('刷新失败:', error);
+    ElMessage.error('刷新失败');
+  } finally {
+    loadingInstance.close();
+  }
+}
+
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
@@ -450,21 +466,36 @@ const openEn = async () => {
   enDetailObjRef.value?.open();
 };
 
-// 重新生成代付码
-async function handleRegenerate(row) {
+const regenerateDialogVisible = ref(false);
+const currentRegenerateRow = ref(null);
+
+function handleRegenerate(row) {
+  currentRegenerateRow.value = row;
+  regenerateDialogVisible.value = true;
+}
+
+async function handleRegenerateConfirm() {
+  if (!currentRegenerateRow.value) return;
+  
   const loadingInstance = ElLoading.service({
     text: '正在重新生成...',
   });
   try {
-    await regenerateAgentPayCode({ id: row.id });
+    await regenerateAgentPayCode({ id: currentRegenerateRow.value.id });
     ElMessage.success('重新生成成功');
     handleRefresh();
+    regenerateDialogVisible.value = false;
   } catch (error) {
     console.error('重新生成失败:', error);
     ElMessage.error('重新生成失败');
   } finally {
     loadingInstance.close();
   }
+}
+
+function handleRegenerateCancel() {
+  regenerateDialogVisible.value = false;
+  currentRegenerateRow.value = null;
 }
 
 // 代付码状态映射
@@ -746,6 +777,25 @@ watch(
       </template>
     </ElDialog>
 
+    <!-- 重新生成确认弹窗 -->
+    <ElDialog
+      v-model="regenerateDialogVisible"
+      title="确认重新生成"
+      width="400px"
+      append-to-body
+    >
+      <p>确定要基于原规则重新生成新的代付码吗？</p>
+      <p style="color: #999; font-size: 12px; margin-top: 10px;">重新生成后将更新过期时间</p>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="handleRegenerateCancel">取消</el-button>
+          <el-button type="primary" @click="handleRegenerateConfirm">
+            确认重新生成
+          </el-button>
+        </div>
+      </template>
+    </ElDialog>
+
     <!-- 生成代付码弹窗 -->
     <ElDialog
       v-model="generateDialogVisible"
@@ -832,13 +882,19 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
+            content="刷新"
+            v-if="row.status === 'unused'"
+            icon-name="Refresh"
+            @click="handleRefreshCode(row)"
+          />
+          <IconButton
             content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
           <IconButton
             content="重新生成"
-            v-if="row.status === 'used' || row.status === 'expired'"
+            v-if="row.status === 'expired'"
             icon-name="Refresh"
             @click="handleRegenerate(row)"
           />
