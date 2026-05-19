@@ -52,12 +52,15 @@ const calendarCells = computed(() => {
     });
     grouped.set(item.date, list);
   });
-
-  return [...grouped.entries()].map(([date, schedules]) => ({
-    date,
-    day: date.slice(-2),
-    schedules,
-  }));
+  console.log(grouped);
+  return [...grouped.entries()].map(([date, schedules]) => {
+    console.log(11,date, schedules);
+    return {
+      date,
+      day: date.slice(-2),
+      schedules,
+    };
+  });
 });
 
 function normalizeChartData(data) {
@@ -90,7 +93,8 @@ function handleCardClick(card) {
 }
 
 function handleDateClick(date) {
-  emit('dateFilter', date);
+  const dateTime = new Date(`${date} 00:00:00`)?.getTime();
+  emit('dateFilter', dateTime);
 }
 
 function handleUserClick(userName) {
@@ -131,12 +135,11 @@ onMounted(() => {
           <span class="calendar-day">{{ cell.day }}</span>
           <span class="calendar-date">{{ cell.date }}</span>
           <span
-            v-for="schedule in cell.schedules.slice(0, 2)"
+            v-for="schedule in cell.schedules"
             :key="`${cell.date}-${schedule.userId}-${schedule.shiftType}`"
             class="calendar-shift"
-            :class="`shift-${getShiftTypeTagType(schedule.shiftType)}`"
           >
-            {{ schedule.userName }} {{ schedule.shiftType }}
+            {{ schedule.userName }}
           </span>
         </button>
       </div>
@@ -165,6 +168,7 @@ onMounted(() => {
   min-width: 0;
   padding: 14px;
   overflow: hidden;
+  flex-direction: column;
 }
 
 .calendar-title {

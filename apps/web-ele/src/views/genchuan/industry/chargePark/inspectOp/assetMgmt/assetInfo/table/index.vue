@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
@@ -23,6 +23,7 @@ import StatusConfirmDialog from '../components/StatusConfirmDialog.vue';
 import {
   detailFields,
   filterMockList,
+  loadInspectOpStationOptions,
   getAssetStatusLabel,
   getAssetStatusTagType,
   getAssetTypeLabel,
@@ -379,6 +380,10 @@ watch(
   },
   { deep: true },
 );
+
+onMounted(() => {
+  loadInspectOpStationOptions();
+});
 </script>
 
 <template>
