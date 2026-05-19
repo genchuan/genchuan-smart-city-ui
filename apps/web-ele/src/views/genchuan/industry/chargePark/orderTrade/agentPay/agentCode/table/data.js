@@ -1,4 +1,4 @@
-/** 代付规则搜索表单配置 */
+/** 代付码搜索表单配置 */
 export function useFormSchema() {
   return [
     {
@@ -39,6 +39,58 @@ export function useFormSchema() {
       isSearch: true,
     },
     
+  ];
+}
+
+/** 生成代付码表单配置 */
+export function useGenerateFormSchema() {
+  return [
+    {
+      fieldName: 'merchantId',
+      label: '所属商户',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择所属商户',
+        options: [],
+      },
+      labelWidth: 120,
+    },
+    {
+      fieldName: 'ruleId',
+      label: '关联代付规则',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择代付规则',
+        options: [],
+      },
+      labelWidth: 120,
+    },
+    {
+      fieldName: 'expireTime',
+      label: '过期时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择过期时间',
+         type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: 120,
+    },
+    {
+      fieldName: 'status',
+      label: '状态',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择状态',
+        options: [ 
+          { label: '未使用', value: 'unused' },
+          { label: '已使用', value: 'used' },
+          { label: '已过期', value: 'expired' }, 
+        ],
+      },
+      labelWidth: 120,
+    }, 
   ];
 }
 /** 代付码表格列配置 */

@@ -18,14 +18,71 @@ import {
   updateAgentPayCode,
   refreshAgentPayCode,
   regenerateAgentPayCode,
+  getAgentPayRulePage,
 } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
-import { useFormSchema, useGridColumns } from './data';
+import { useFormSchema, useGridColumns, useGenerateFormSchema } from './data';
 import ParkDetailDrawer from './detail.vue';
+
+const merchantOptions = ref([]);
+const ruleOptions = ref([]);
+
+async function loadMerchantOptions() {
+  try {
+    const res = await getAgentPayRulePage({ pageNo: 1, pageSize: 100 });
+    const merchants = [...new Map(res.list.map(item => [item.merchantId, item])).values()];
+    merchantOptions.value = merchants.map(item => ({
+      label: item.merchantName,
+      value: item.merchantId,
+    }));
+  } catch (error) {
+    console.error('加载商户列表失败:', error);
+  }
+}
+
+async function loadRuleOptions(merchantId) {
+  try {
+    const res = await getAgentPayRulePage({ pageNo: 1, pageSize: 100, merchantId });
+    ruleOptions.value = res.list.map(item => ({
+      label: item.name,
+      value: item.id,
+    }));
+  } catch (error) {
+    console.error('加载代付规则列表失败:', error);
+  }
+}
+
+const generateFormSchema = computed(() => {
+  const schema = useGenerateFormSchema();
+  return schema.map(item => {
+    if (item.fieldName === 'merchantId') {
+      return {
+        ...item,
+        componentProps: {
+          ...item.componentProps,
+          options: merchantOptions.value,
+          onChange: (val) => {
+            loadRuleOptions(val);
+          },
+        },
+      };
+    }
+    if (item.fieldName === 'ruleId') {
+      return {
+        ...item,
+        componentProps: {
+          ...item.componentProps,
+          options: ruleOptions.value,
+        },
+      };
+    }
+    return item;
+  });
+});
 
 const props = defineProps({
   secondShow: {
@@ -133,6 +190,65 @@ function handleCreate() {
       title: '新增',
     })
     .open();
+}
+
+const [GenerateForm, generateFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 120,
+  },
+  layout: 'horizontal',
+  schema: generateFormSchema,
+  showDefaultActions: false,
+});
+
+const generateDialogVisible = ref(false);
+
+async function handleGenerateConfirm() {
+  const loadingInstance = ElLoading.service({
+    text: '正在生成...',
+  });
+  try {
+    const values = generateFormApi.form.values;
+    const data = { 
+      id: 0,
+      merchantId: values.merchantId || 0,
+      ruleId: values.ruleId || 0,
+      expireTime: values.expireTime ? new Date(values.expireTime).getTime() : '',
+      status: values.status || '',
+      remark: values.remark || '',
+      reserve1: values.reserve1 || '',
+      reserve2: values.reserve2 || '',
+    };
+    await createAgentPayCode(data);
+    ElMessage.success('生成成功');
+    handleRefresh();
+    generateDialogVisible.value = false;
+  } catch (error) {
+    console.error('生成失败:', error);
+    ElMessage.error('生成失败');
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+function handleGenerateCancel() {
+  generateDialogVisible.value = false;
+}
+
+async function handleGenerateOpen() {
+  generateFormApi.resetForm();
+  ruleOptions.value = [];
+  await loadMerchantOptions();
+  generateDialogVisible.value = true;
+}
+
+/** 生成代付码 */
+function handleGenerate() {
+  handleGenerateOpen();
 }
 
 /** 编辑角色 */
@@ -630,9 +746,32 @@ watch(
       </template>
     </ElDialog>
 
+    <!-- 生成代付码弹窗 -->
+    <ElDialog
+      v-model="generateDialogVisible"
+      title="生成代付码"
+      width="600px"
+      append-to-body
+    >
+      <GenerateForm />
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="handleGenerateCancel">取消</el-button>
+          <el-button type="primary" @click="handleGenerateConfirm">
+            生成
+          </el-button>
+        </div>
+      </template>
+    </ElDialog>
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
+          <IconButton
+            content="生成"
+            icon-name="Plus"
+            @click="handleGenerate"
+          />
           <IconButton
             content="导出EXCEL"
             icon-name="download"
