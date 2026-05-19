@@ -515,7 +515,9 @@ export const detailFields = [
     key: 'taskType',
     label: '任务类型',
     type: 'tag',
-    tagType: getTaskTypeTagType,
+    // tagType: getTaskTypeTagType,
+    tagType: getPlanTypeTagType,
+    formatter: getPlanTypeLabel,
   },
   { key: 'userName', label: '巡检人员' },
   {
