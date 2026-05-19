@@ -2,7 +2,7 @@
 import { computed, nextTick, reactive, ref, shallowRef } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
-
+import dayjs from 'dayjs';
 import { getAssetInfoPage } from '#/api/genchuan/industry/chargePark/inspectOp/assetMgmt/assetInfo';
 import { getAssetStockPage } from '#/api/genchuan/industry/chargePark/inspectOp/assetMgmt/stockMgmt';
 import { getBikeChargeMonitorPage } from '#/api/genchuan/industry/chargePark/inspectOp/deviceMonitor/bikeChargeMonitor';
@@ -621,11 +621,12 @@ function open(payload = {}) {
             label: '巡检上报',
             useColumns: useDrillInspectReportColumns,
             fetchPage: async (page) => {
+              console.log(11, sharedQuery.reportTimeRange);
               try {
                 const raw = await getInspectReportPage({
                   pageNo: page.pageNo,
                   pageSize: page.pageSize,
-                  reportTime: sharedQuery.reportTimeRange,
+                  reportTime: dayjs(sharedQuery.reportTimeRange?.[0]).format('YYYY-MM-DD'),
                 });
                 const pageResult = raw?.list ? raw : raw?.data || raw;
                 let list = Array.isArray(pageResult?.list)
