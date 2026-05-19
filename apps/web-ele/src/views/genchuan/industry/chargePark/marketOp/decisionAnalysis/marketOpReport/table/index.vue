@@ -670,6 +670,15 @@ watch(
   { immediate: false },
 );
 
+/** 格式化营收字段显示 - 整数时不显示小数点 */
+const formatRevenueDisplay = (value) => {
+  if (value === null || value === undefined || value === '') return '0';
+  const num = Number(value);
+  // 使用 parseFloat 去掉末尾的0和小数点，然后添加千位分隔符
+  const formatted = parseFloat(num.toFixed(2)).toLocaleString();
+  return formatted;
+};
+
 defineExpose({
   handleStatsFilter,
 });
@@ -839,7 +848,7 @@ defineExpose({
           style="color: #409eff; cursor: pointer"
           @click="handleFieldDrill('revenue', row)"
         >
-          ¥{{ row.revenue?.toFixed(2) }}
+          ¥{{ formatRevenueDisplay(row.revenue) }}
         </span>
       </template>
 

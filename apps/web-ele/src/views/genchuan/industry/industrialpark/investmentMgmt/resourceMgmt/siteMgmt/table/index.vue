@@ -3,42 +3,36 @@ import { computed, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { useUserStore } from '@vben/stores';
-import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  createSiteMgmt,
-  exportSiteMgmt,
   followSiteMgmt,
   quitSiteMgmt,
   rejectSiteMgmt,
   renewSiteMgmt,
   reserveSiteMgmt,
   signSiteMgmt,
-  updateSiteMgmt,
   updateSiteMgmtShow,
   updateSiteMgmtStatus,
 } from '#/api/genchuan/industry/industrialpark/investmentMgmt/resourceMgmt/siteMgmt';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import SiteDetailDrawer from '../components/SiteDetailDrawer.vue';
-import SiteOperationDialog from '../components/SiteOperationDialog.vue';
-import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+import SiteDetailDrawer from '../components/SiteDetailDrawer.vue';
+import SiteOperationDialog from '../components/SiteOperationDialog.vue';
 import {
   dataList,
   detailFields,
   getSiteStatusLabel,
-  getSiteStatusConfig,
   getSiteStatusTagType,
   textObj,
-  useSearchFormSchema,
   useFormSchema,
   useGridColumns,
+  useSearchFormSchema,
 } from './data';
 
 const props = defineProps({
@@ -144,7 +138,8 @@ function handleEdit(row) {
     return;
   }
 
-  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  const targetRow =
+    row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
   if (!targetRow) return;
 
   formDrawerApi
@@ -162,7 +157,8 @@ async function handleUpdateStatus(row) {
     return;
   }
 
-  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  const targetRow =
+    row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
   if (!targetRow) return;
 
   await confirm('确定要标记该场地的状态吗？');
@@ -189,7 +185,8 @@ async function handleShow(row) {
     return;
   }
 
-  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  const targetRow =
+    row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
   if (!targetRow) return;
 
   await confirm('确定要将该场地发布到招商展示吗？');
@@ -215,7 +212,8 @@ async function handleSign(row) {
     return;
   }
 
-  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  const targetRow =
+    row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
   if (!targetRow) return;
 
   operationDialogRef.value.open({
@@ -267,38 +265,43 @@ const handleOperationConfirm = async (values) => {
 
   try {
     switch (title) {
-      case '续费':
+      case '确认': {
+        await signSiteMgmt({
+          id,
+          signCompany: params.signCompany,
+          rentInfo: params.rentInfo,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      }
+      case '签约': {
+        await signSiteMgmt({
+          id,
+          signCompany: params.signCompany,
+          rentInfo: params.rentInfo,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      }
+      case '续费': {
         await renewSiteMgmt({
           id,
           rentInfo: params.rentInfo,
           handleUser: getCurrentUsername(),
         });
         break;
-      case '确认':
-        await signSiteMgmt({
-          id,
-          signCompany: params.signCompany,
-          rentInfo: params.rentInfo,
-          handleUser: getCurrentUsername(),
-        });
-        break;
-      case '签约':
-        await signSiteMgmt({
-          id,
-          signCompany: params.signCompany,
-          rentInfo: params.rentInfo,
-          handleUser: getCurrentUsername(),
-        });
-        break;
-      case '预约':
+      }
+      case '预约': {
         await reserveSiteMgmt({
           id,
           orderClient: params.orderClient,
           handleUser: getCurrentUsername(),
         });
         break;
-      default:
+      }
+      default: {
         throw new Error(`未知操作类型：${title}`);
+      }
     }
 
     ElMessage.success(`${title}成功`);
@@ -489,26 +492,60 @@ const getRowButtons = (row) => {
   const status = Number(row.siteStatus);
 
   switch (status) {
-    case 0:
+    case 0: {
       return [
-        { content: '展示', iconName: 'Promotion', handler: () => handleShow(row) },
-        { content: '预约', iconName: 'Calendar', handler: () => handleReserve(row) },
+        {
+          content: '展示',
+          iconName: 'Promotion',
+          handler: () => handleShow(row),
+        },
+        {
+          content: '预约',
+          iconName: 'Calendar',
+          handler: () => handleReserve(row),
+        },
         { content: '修改', iconName: 'Edit', handler: () => handleEdit(row) },
       ];
-    case 1:
+    }
+    case 1: {
       return [
-        { content: '跟进', iconName: 'TrendCharts', handler: () => handleFollow(row) },
-        { content: '确认', iconName: 'CircleCheck', handler: () => handleConfirm(row) },
-        { content: '驳回', iconName: 'CircleClose', color: '#F56C6C', handler: () => handleReject(row) },
+        {
+          content: '跟进',
+          iconName: 'TrendCharts',
+          handler: () => handleFollow(row),
+        },
+        {
+          content: '确认',
+          iconName: 'CircleCheck',
+          handler: () => handleConfirm(row),
+        },
+        {
+          content: '驳回',
+          iconName: 'CircleClose',
+          color: '#F56C6C',
+          handler: () => handleReject(row),
+        },
       ];
-    case 2:
+    }
+    case 2: {
       return [
-        { content: '查看', iconName: 'View', handler: () => handleOpenSiteDetail(row) },
+        {
+          content: '查看',
+          iconName: 'View',
+          handler: () => handleOpenSiteDetail(row),
+        },
         { content: '续费', iconName: 'Money', handler: () => handleRenew(row) },
-        { content: '退租', iconName: 'Remove', color: '#F56C6C', handler: () => handleQuit(row) },
+        {
+          content: '退租',
+          iconName: 'Remove',
+          color: '#F56C6C',
+          handler: () => handleQuit(row),
+        },
       ];
-    default:
+    }
+    default: {
       return [];
+    }
   }
 };
 
@@ -535,31 +572,66 @@ const handleFullShow = () => {
     <!--   场地完整详情抽屉（含照片、平面图、签约信息） -->
     <SiteDetailDrawer ref="siteDetailDrawerRef" />
     <!--   操作对话框（续费/确认/签约） -->
-    <SiteOperationDialog ref="operationDialogRef" @confirm="handleOperationConfirm" />
+    <SiteOperationDialog
+      ref="operationDialogRef"
+      @confirm="handleOperationConfirm"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="录入" icon-name="DocumentAdd" @click="handleCreate" />
-          <IconButton content="完善" icon-name="EditPen" @click="handleEdit()" />
-          <IconButton content="标记" icon-name="Flag" @click="handleUpdateStatus()" />
-          <IconButton content="展示" icon-name="Promotion" @click="handleShow()" />
-          <IconButton content="签约" icon-name="DocumentChecked" @click="handleSign()" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton
+            content="录入"
+            icon-name="DocumentAdd"
+            @click="handleCreate"
+          />
+          <IconButton
+            content="完善"
+            icon-name="EditPen"
+            @click="handleEdit()"
+          />
+          <IconButton
+            content="标记"
+            icon-name="Flag"
+            @click="handleUpdateStatus()"
+          />
+          <IconButton
+            content="展示"
+            icon-name="Promotion"
+            @click="handleShow()"
+          />
+          <IconButton
+            content="签约"
+            icon-name="DocumentChecked"
+            @click="handleSign()"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
         </div>
       </template>
       <template #siteCode="{ row }">
-        <span
-          class="site-code-link"
-          style="color: #409eff; cursor: pointer; text-decoration: underline;"
+        <el-text
           @click="handleSiteCodeClick(row)"
+          class="common-align"
+          type="primary"
         >
           {{ row.siteCode }}
-        </span>
+        </el-text>
       </template>
       <template #siteStatus="{ row }">
         <el-tag :type="getSiteStatusTagType(row.siteStatus)">
@@ -623,35 +695,35 @@ const handleFullShow = () => {
 
 <style scoped>
 .image-cell {
+  position: relative;
   display: inline-flex;
   align-items: center;
   cursor: pointer;
-  position: relative;
 }
 
 .thumbnail-image {
   width: 40px;
   height: 40px;
   object-fit: cover;
-  border-radius: 4px;
   border: 1px solid #dcdfe6;
+  border-radius: 4px;
   transition: all 0.3s ease;
 }
 
 .thumbnail-image:hover {
+  box-shadow: 0 2px 8px rgb(0 0 0 / 15%);
   transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .image-count {
   position: absolute;
   top: -8px;
   right: -12px;
-  background-color: #f56c6c;
-  color: white;
-  font-size: 10px;
   padding: 1px 4px;
-  border-radius: 8px;
+  font-size: 10px;
   line-height: 14px;
+  color: white;
+  background-color: #f56c6c;
+  border-radius: 8px;
 }
 </style>

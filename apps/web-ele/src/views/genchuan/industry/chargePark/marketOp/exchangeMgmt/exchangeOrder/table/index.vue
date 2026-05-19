@@ -404,12 +404,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
 // 处理支付状态点击
 const handleFilterByPayStatus = (status) => {
   filterPayStatus.value = filterPayStatus.value === status ? '' : status;
+  gridApi.grid.setCurrentPage(1);
   gridApi.query();
 };
 
 // 取消筛选
 const handleCancelPayStatusFilter = () => {
   filterPayStatus.value = '';
+  gridApi.grid.setCurrentPage(1);
   gridApi.query();
 };
 
@@ -418,6 +420,7 @@ const handleCancelCategoryFilter = () => {
   filterCategoryId.value = '';
   filterCategoryName.value = '';
   delete dataObj.searchParams.categoryId;
+  gridApi.grid.setCurrentPage(1);
   gridApi.query();
 };
 
@@ -425,6 +428,7 @@ const handleCancelCategoryFilter = () => {
 const handleCancelDateFilter = () => {
   filterDate.value = '';
   delete dataObj.searchParams.createTime;
+  gridApi.grid.setCurrentPage(1);
   gridApi.query();
 };
 
@@ -490,7 +494,8 @@ const handleStatsFilter = (type, value) => {
     }
   }
 
-  // 刷新表格
+  // 重置页码为第一页并刷新表格
+  gridApi.grid.setCurrentPage(1);
   gridApi.query();
 };
 
@@ -517,6 +522,10 @@ onMounted(async () => {
 // ==================== 详情弹窗处理 ====================
 
 const handleOpenDetail = async (row) => {
+  // 先关闭商品详情抽屉（如果已打开），确保订单详情可以覆盖
+  if (goodsDetailDrawerRef.value) {
+    goodsDetailDrawerRef.value.close();
+  }
   dataObj.detailObj = { ...row };
   await nextTick();
   detailDrawerRef.value.open();
@@ -524,6 +533,10 @@ const handleOpenDetail = async (row) => {
 
 /** 打开订单详情弹窗 */
 const handleOpenOrderDetail = async (row) => {
+  // 先关闭商品详情抽屉（如果已打开），确保订单详情可以覆盖
+  if (goodsDetailDrawerRef.value) {
+    goodsDetailDrawerRef.value.close();
+  }
   dataObj.detailObj = { ...row };
   await nextTick();
   detailDrawerRef.value.open();
@@ -541,6 +554,12 @@ const handleOpenGoodsDetail = async (row) => {
     ElMessage.warning('商品ID不存在');
     return;
   }
+
+  // 先关闭订单详情抽屉（如果已打开），确保商品详情可以覆盖
+  if (detailDrawerRef.value) {
+    detailDrawerRef.value.close();
+  }
+
   try {
     const goodsDetail = await getPrizeMgmtDetail(Number(row.goodsId));
     if (goodsDetail && goodsDetail.id) {

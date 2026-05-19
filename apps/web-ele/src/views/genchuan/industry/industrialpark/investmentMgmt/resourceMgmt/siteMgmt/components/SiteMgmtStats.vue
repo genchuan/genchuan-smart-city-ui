@@ -1,10 +1,10 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { getSiteMgmtChart } from '#/api/genchuan/industry/industrialpark/investmentMgmt/resourceMgmt/siteMgmt';
-import { dataList } from '../table/data';
-
 import Map from '#/genchuan-components/Map/index.vue';
+
+import { dataList } from '../table/data';
 
 const props = defineProps({
   data: {
@@ -112,12 +112,12 @@ const useMockData = () => {
     { title: '空置率', value: '21.4%', color: '#FF6B8B', type: 'emptyRate' },
   ];
 
-/** 场地状态名称映射 */
-const siteStatusNameMap = {
-  0: '空置中',
-  1: '洽谈中',
-  2: '已出租',
-};
+  /** 场地状态名称映射 */
+  const siteStatusNameMap = {
+    0: '空置中',
+    1: '洽谈中',
+    2: '已出租',
+  };
 
   // 使用静态数据中的经纬度信息
   const staticList = dataList();
@@ -126,7 +126,8 @@ const siteStatusNameMap = {
     siteName: item.siteCode,
     coordinate: item.lngLat,
     statusName: siteStatusNameMap[item.siteStatus] || String(item.siteStatus),
-    siteStatusName: siteStatusNameMap[item.siteStatus] || String(item.siteStatus),
+    siteStatusName:
+      siteStatusNameMap[item.siteStatus] || String(item.siteStatus),
     locationName: item.siteLocation,
     ...item,
   }));
@@ -262,12 +263,12 @@ onMounted(() => {
 
 .map-area {
   position: relative;
+  box-sizing: border-box;
   display: flex;
   flex: 1 1 0;
   align-items: center;
   min-width: 0;
   height: 280px;
   padding: 4px;
-  box-sizing: border-box;
 }
 </style>

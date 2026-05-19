@@ -2,7 +2,7 @@ import { DICT_TYPE } from '@vben/constants';
 import { getDictObj } from '@vben/hooks';
 
 import { getRangePickerDefaultProps } from '#/utils';
-
+import { formatDate } from '#/utils/genchuan/formatTime';
 /** 获取报表周期Tag类型 */
 export const getReportCycleTagType = (cycle) => {
   // 根据报表周期返回对应的tag类型
@@ -629,12 +629,27 @@ export const detailFields = [
     type: 'tag',
     tagType: getGenerateStatusTagType,
   },
-  { key: 'generateTime', label: '生成时间' },
+  {
+    key: 'generateTime',
+    label: '生成时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '--',
+  },
   { key: 'operator', label: '操作人' },
   { key: 'generateCost', label: '生成耗时(ms)' },
   { key: 'exportCount', label: '导出次数' },
   { key: 'filterRule', label: '筛选规则' },
   { key: 'creator', label: '创建者' },
-  { key: 'createTime', label: '创建时间' },
-  { key: 'updateTime', label: '更新时间' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    formatter: (value) =>
+      value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
+  },
 ];

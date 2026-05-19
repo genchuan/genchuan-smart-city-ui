@@ -1,10 +1,9 @@
-import { getDictObj, getDictOptions } from '@vben/hooks';
 import { DICT_TYPE } from '@vben/constants';
-
-import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
+import { getDictObj } from '@vben/hooks';
 
 import { getSiteMgmtPage } from '#/api/genchuan/industry/industrialpark/investmentMgmt/resourceMgmt/siteMgmt';
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 /** 获取场地状态标签类型（使用标准字典函数） */
 export function getSiteStatusTagType(status) {
@@ -60,10 +59,11 @@ const staticDataList = [
     handleUser: 'admin',
     handleUserName: '管理员',
     creator: 'admin',
-    createTime: 1746748800000,
-    updateTime: 1746748800000,
+    createTime: 1_746_748_800_000,
+    updateTime: 1_746_748_800_000,
     lngLat: '118.675324,24.896541',
-    photos: '/static/imgs/site-mgmt/photo1.jpg,/static/imgs/site-mgmt/photo2.jpg',
+    photos:
+      '/static/imgs/site-mgmt/photo1.jpg,/static/imgs/site-mgmt/photo2.jpg',
     floorPlan: '/static/imgs/site-mgmt/floorplan1.png',
   },
   {
@@ -81,8 +81,8 @@ const staticDataList = [
     handleUser: 'admin',
     handleUserName: '管理员',
     creator: 'admin',
-    createTime: 1746747180000,
-    updateTime: 1746824400000,
+    createTime: 1_746_747_180_000,
+    updateTime: 1_746_824_400_000,
     lngLat: '118.678923,24.898765',
     photos: '/static/imgs/site-mgmt/photo3.jpg',
     floorPlan: '/static/imgs/site-mgmt/floorplan2.png',
@@ -102,10 +102,11 @@ const staticDataList = [
     handleUser: 'zhangsan',
     handleUserName: '张三',
     creator: 'zhangsan',
-    createTime: 1746662100000,
-    updateTime: 1746912300000,
+    createTime: 1_746_662_100_000,
+    updateTime: 1_746_912_300_000,
     lngLat: '118.681234,24.901234',
-    photos: '/static/imgs/site-mgmt/photo4.jpg,/static/imgs/site-mgmt/photo5.jpg',
+    photos:
+      '/static/imgs/site-mgmt/photo4.jpg,/static/imgs/site-mgmt/photo5.jpg',
     floorPlan: '/static/imgs/site-mgmt/floorplan3.png',
   },
   {
@@ -147,7 +148,8 @@ const staticDataList = [
     createTime: '1746662100000',
     updateTime: '1746662100000',
     lngLat: '118.679876,24.900123',
-    photos: '/static/imgs/site-mgmt/photo7.jpg,/static/imgs/site-mgmt/photo8.jpg',
+    photos:
+      '/static/imgs/site-mgmt/photo7.jpg,/static/imgs/site-mgmt/photo8.jpg',
     floorPlan: '/static/imgs/site-mgmt/floorplan5.png',
   },
   {
@@ -165,7 +167,7 @@ const staticDataList = [
     handleUser: 'zhaoliu',
     handleUserName: '赵六',
     creator: 'zhaoliu',
-    createTime: 1746662100000,
+    createTime: 1_746_662_100_000,
     updateTime: '1746662100000',
     lngLat: '118.682345,24.903456',
     photos: '/static/imgs/site-mgmt/photo9.jpg',
@@ -186,8 +188,8 @@ const staticDataList = [
     handleUser: 'sunqi',
     handleUserName: '孙七',
     creator: 'sunqi',
-    createTime: 1746319200000,
-    updateTime: 1746319200000,
+    createTime: 1_746_319_200_000,
+    updateTime: 1_746_319_200_000,
     lngLat: '118.676123,24.897654',
     photos: '/static/imgs/site-mgmt/photo10.jpg',
     floorPlan: '/static/imgs/site-mgmt/floorplan7.png',
@@ -207,10 +209,11 @@ const staticDataList = [
     handleUser: 'zhouba',
     handleUserName: '周八',
     creator: 'zhouba',
-    createTime: 1746233400000,
-    updateTime: 1746825300000,
+    createTime: 1_746_233_400_000,
+    updateTime: 1_746_825_300_000,
     lngLat: '118.683456,24.905678',
-    photos: '/static/imgs/site-mgmt/photo11.jpg,/static/imgs/site-mgmt/photo12.jpg',
+    photos:
+      '/static/imgs/site-mgmt/photo11.jpg,/static/imgs/site-mgmt/photo12.jpg',
     floorPlan: '/static/imgs/site-mgmt/floorplan8.png',
   },
   {
@@ -228,8 +231,8 @@ const staticDataList = [
     handleUser: 'wujiu',
     handleUserName: '吴九',
     creator: 'wujiu',
-    createTime: 1746147600000,
-    updateTime: 1746147600000,
+    createTime: 1_746_147_600_000,
+    updateTime: 1_746_147_600_000,
     lngLat: '118.677890,24.899876',
     photos: '/static/imgs/site-mgmt/photo13.jpg',
     floorPlan: '/static/imgs/site-mgmt/floorplan9.png',
@@ -249,8 +252,8 @@ const staticDataList = [
     handleUser: 'zhengshi',
     handleUserName: '郑十',
     creator: 'zhengshi',
-    createTime: 1746061800000,
-    updateTime: 1746841600000,
+    createTime: 1_746_061_800_000,
+    updateTime: 1_746_841_600_000,
     lngLat: '118.680123,24.902345',
     photos: '/static/imgs/site-mgmt/photo14.jpg',
     floorPlan: '/static/imgs/site-mgmt/floorplan10.png',
@@ -270,10 +273,11 @@ const staticDataList = [
     handleUser: 'admin',
     handleUserName: '管理员',
     creator: 'admin',
-    createTime: 1745976000000,
-    updateTime: 1746919200000,
+    createTime: 1_745_976_000_000,
+    updateTime: 1_746_919_200_000,
     lngLat: '118.684567,24.907890',
-    photos: '/static/imgs/site-mgmt/photo15.jpg,/static/imgs/site-mgmt/photo16.jpg',
+    photos:
+      '/static/imgs/site-mgmt/photo15.jpg,/static/imgs/site-mgmt/photo16.jpg',
     floorPlan: '/static/imgs/site-mgmt/floorplan11.png',
   },
   {
@@ -291,8 +295,8 @@ const staticDataList = [
     handleUser: 'zhangsan',
     handleUserName: '张三',
     creator: 'zhangsan',
-    createTime: 1745890200000,
-    updateTime: 1745890200000,
+    createTime: 1_745_890_200_000,
+    updateTime: 1_745_890_200_000,
     lngLat: '118.675678,24.895432',
     photos: '/static/imgs/site-mgmt/photo17.jpg',
     floorPlan: '/static/imgs/site-mgmt/floorplan12.png',

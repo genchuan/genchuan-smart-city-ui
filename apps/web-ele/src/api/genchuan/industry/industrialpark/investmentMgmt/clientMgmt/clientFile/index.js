@@ -41,7 +41,9 @@ export function signClientFile(data) {
 
 /** 获取客户档案详情 */
 export function getClientFileDetail(id) {
-  return requestClient.get('/investmentmgmt/client-file/get', { params: { id } });
+  return requestClient.get('/investmentmgmt/client-file/get', {
+    params: { id },
+  });
 }
 
 /** 跟进潜在客户 */

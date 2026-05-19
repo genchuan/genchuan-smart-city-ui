@@ -554,12 +554,20 @@ const handleCancelStatusFilter = () => {
 // ==================== 详情弹窗处理 ====================
 
 const handleOpenDetail = (row) => {
+  // 先关闭优惠券详情抽屉（如果已打开），确保券包详情可以覆盖
+  if (couponDetailDrawerRef.value) {
+    couponDetailDrawerRef.value.close();
+  }
   dataObj.detailObj = row;
   detailDrawerRef.value.open();
 };
 
 /** 打开券包详情弹窗 */
 const handleOpenPackageDetail = (row) => {
+  // 先关闭优惠券详情抽屉（如果已打开），确保券包详情可以覆盖
+  if (couponDetailDrawerRef.value) {
+    couponDetailDrawerRef.value.close();
+  }
   dataObj.detailObj = row;
   detailDrawerRef.value.open();
 };
@@ -569,6 +577,11 @@ async function handleOpenCouponList(row) {
   if (!row.couponIds) {
     ElMessage.warning('该券包未包含优惠券');
     return;
+  }
+
+  // 先关闭券包详情抽屉（如果已打开），确保优惠券详情可以覆盖
+  if (detailDrawerRef.value) {
+    detailDrawerRef.value.close();
   }
 
   const couponIdArr = row.couponIds.split(',').filter((id) => id.trim());
