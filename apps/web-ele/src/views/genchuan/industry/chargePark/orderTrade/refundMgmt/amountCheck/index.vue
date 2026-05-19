@@ -7,27 +7,27 @@ import Table from './table/index.vue';
 import '#/components/page/index.scss';
 
 const filterParams = reactive({
-  checkTimeStart: null,
-  checkTimeEnd: null,
+  createTimeStart: null,
+  createTimeEnd: null,
 });
 
 const hasActiveFilters = computed(() => {
-  return filterParams.checkTimeStart;
+  return filterParams.createTimeStart;
 });
 
 const handleFilterChange = (params) => {
-  filterParams.checkTimeStart = params.checkTimeStart || null;
-  filterParams.checkTimeEnd = params.checkTimeEnd || null;
+  filterParams.createTimeStart = params.createTimeStart || null;
+  filterParams.createTimeEnd = params.createTimeEnd || null;
 };
 
 const clearFilter = () => {
-  filterParams.checkTimeStart = null;
-  filterParams.checkTimeEnd = null;
+  filterParams.createTimeStart = null;
+  filterParams.createTimeEnd = null;
 };
 
 const handleClearFilters = () => {
-  filterParams.checkTimeStart = null;
-  filterParams.checkTimeEnd = null;
+  filterParams.createTimeStart = null;
+  filterParams.createTimeEnd = null;
 };
 
 const changeArrowStatus = () => {
@@ -61,12 +61,12 @@ const secondShow = ref(false);
     <Chart @filter-change="handleFilterChange" v-if="tabArray[0].arrowShow"/>
     <div v-if="hasActiveFilters" class="filter-tags">
       <el-tag
-        v-if="filterParams.checkTimeStart"
+        v-if="filterParams.createTimeStart"
         closable
         @close="clearFilter"
         type="info"
       >
-        日期: {{ filterParams.checkTimeStart?.split(' ')[0] }}
+        日期: {{ filterParams.createTimeStart?.split(' ')[0] }}
       </el-tag>
     </div>
     <div class="icon-change">
