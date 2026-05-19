@@ -28,8 +28,8 @@ export function useFormSchema() {
       isSearch: true,
     },
     {
-      fieldName: 'createTimeStart',
-      label: '创建时间开始',
+      fieldName: 'identifyTimeStart',
+      label: '识别时间开始',
       component: 'DatePicker',
       componentProps: {
         type: 'datetime',
@@ -40,8 +40,8 @@ export function useFormSchema() {
       isSearch: true,
     },
     {
-      fieldName: 'createTimeEnd',
-      label: '创建结束时间',  
+      fieldName: 'identifyTimeEnd',
+      label: '识别结束时间',  
       component: 'DatePicker',
       componentProps: {
         type: 'datetime',
