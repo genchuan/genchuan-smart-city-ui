@@ -606,11 +606,11 @@ watch(
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
+          <!-- <IconButton
             content="新增"
             icon-name="Plus"
             @click="handleCreate"
-          />
+          /> -->
          
           <IconButton
             content="批量删除"
