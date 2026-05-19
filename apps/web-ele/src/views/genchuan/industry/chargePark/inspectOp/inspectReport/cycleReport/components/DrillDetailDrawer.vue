@@ -184,7 +184,7 @@ function deviceFetchFactory(kind, query, stationNameParam) {
       stationId: query.stationId || undefined,
       stationName: stationNameForApi || undefined,
       monitorStatus: monitorStatus ?? undefined,
-      trendTime: query.trendTime || undefined,
+      createTime: query.trendTime || undefined,
     };
     try {
       const raw = await m.getPage(params);
@@ -595,7 +595,7 @@ function open(payload = {}) {
                 const raw = await getInspectTaskPage({
                   pageNo: page.pageNo,
                   pageSize: page.pageSize,
-                  trendTime: sharedQuery.trendTime,
+                  createTime: sharedQuery.trendTime,
                 });
                 const { list, total } = unwrapPageResult(raw);
                 return {
