@@ -170,8 +170,7 @@ const secondShow = ref(false);
 .filter-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 12px; 
   margin: 0 16px; 
   border-radius: 8px;
   .el-tag {
