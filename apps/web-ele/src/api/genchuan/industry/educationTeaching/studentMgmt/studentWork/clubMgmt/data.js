@@ -90,50 +90,32 @@ export function getClubMgmtPage(params) {
 
 export function createClubMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/club-mgmt/create', convertedData).catch(err => {
-    console.warn('申请接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/club-mgmt/create', convertedData)
 }
 
 export function updateClubMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/club-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/club-mgmt/update', convertedData)
 }
 
 export function auditClubMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/club-mgmt/audit', convertedData).catch(err => {
-    console.warn('审核接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/club-mgmt/audit', convertedData)
 }
 
 export function archiveClubMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/club-mgmt/archive', convertedData).catch(err => {
-    console.warn('建档接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/club-mgmt/archive', convertedData)
 }
 
 export function venueApplyClubMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/club-mgmt/venueApply', null, { params: convertedData }).catch(err => {
-    console.warn('场馆申请接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/club-mgmt/venueApply', null, { params: convertedData })
 }
 
 export function exportClubMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/club-mgmt/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/club-mgmt/export-excel', convertedParams)
 }
 
 export function getClubMgmtDetail(params) {

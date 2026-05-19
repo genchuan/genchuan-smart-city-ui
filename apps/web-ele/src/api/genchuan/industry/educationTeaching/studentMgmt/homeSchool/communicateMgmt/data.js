@@ -55,49 +55,31 @@ export function getCommunicateMgmtPage(params) {
 
 export function createCommunicateMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/communicate-mgmt/create', convertedData).catch(err => {
-    console.warn('新增接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/communicate-mgmt/create', convertedData)
 }
 
 export function publishCommunicateMgmt(data) {
   // 发布接口不需要转换 status（前端传入 ids 和 sendTime）
-  return requestClient.put('/studentmgmt/communicate-mgmt/publish', data).catch(err => {
-    console.warn('发布接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/communicate-mgmt/publish', data)
 }
 
 export function feedbackCommunicateMgmt(data) {
   // 反馈接口不需要转换
-  return requestClient.put('/studentmgmt/communicate-mgmt/feedback', data).catch(err => {
-    console.warn('反馈接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/communicate-mgmt/feedback', data)
 }
 
 export function replyCommunicateMgmt(data) {
-  return requestClient.put('/studentmgmt/communicate-mgmt/reply', data).catch(err => {
-    console.warn('回复接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/communicate-mgmt/reply', data)
 }
 
 export function updateCommunicateMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/communicate-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/communicate-mgmt/update', convertedData)
 }
 
 export function exportCommunicateMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/communicate-mgmt/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/communicate-mgmt/export-excel', convertedParams)
 }
 
 export function getCommunicateMgmtDetail(params) {
