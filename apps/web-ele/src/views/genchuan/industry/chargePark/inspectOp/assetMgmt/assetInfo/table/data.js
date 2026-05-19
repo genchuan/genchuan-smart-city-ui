@@ -4,6 +4,11 @@ import { getDictObj, getDictOptions } from '@vben/hooks';
 import { getRangePickerDefaultProps } from '#/utils';
 import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 import { formatLocalDateTime } from '#/views/genchuan/industry/chargePark/inspectOp/utils/formatLocalDateTime';
+import {
+  getStationName,
+  loadInspectOpStationOptions,
+  stationOptions,
+} from '#/views/genchuan/industry/chargePark/inspectOp/utils/stationOptions';
 
 export const ASSET_INFO_TYPE_DICT = DICT_TYPE.ASSET_INFO_TYPE;
 export const ASSET_INFO_STATUS_DICT = DICT_TYPE.ASSET_INFO_STATUS;
@@ -61,14 +66,7 @@ export function getAssetInfoStatusOptionValue(label) {
 const MOCK_ASSET_TYPE_VALUES = ['监测设备', '充电设备', '巡检工具'];
 const MOCK_ASSET_STATUS_VALUES = ['正常', '禁用', '报废'];
 
-export const stationOptions = [
-  { label: '泉州丰泽充电站', value: 1 },
-  { label: '鲤城公共停车场', value: 2 },
-  { label: '洛江万安充停站', value: 3 },
-  { label: '晋江池店综合能源站', value: 4 },
-  { label: '石狮服装城充停站', value: 5 },
-  { label: '南安水头交通枢纽站', value: 6 },
-];
+export { loadInspectOpStationOptions, stationOptions };
 
 const assetNames = [
   '丰泽站车位监测摄像头',
@@ -117,12 +115,7 @@ export function formatAssetTime(value) {
   return formatLocalDateTime(value) || text;
 }
 
-export function getStationName(stationId) {
-  return (
-    stationOptions.find((item) => Number(item.value) === Number(stationId))
-      ?.label || '-'
-  );
-}
+export { getStationName };
 
 export function getAssetTypeTagType(type) {
   const tagMap = {
@@ -298,16 +291,16 @@ export function useSearchFormSchema() {
         options: assetStatusOptions,
       },
     },
-    // {
-    //   fieldName: 'stationName',
-    //   label: '所属场站',
-    //   component: 'Input',
-    //   componentProps: {
-    //     placeholder: '请输入所属场站',
-    //     clearable: true,
-    //     // options: stationOptions,
-    //   },
-    // },
+    {
+      fieldName: 'stationId',
+      label: '所属场站',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请选择所属场站',
+        clearable: true,
+        options: stationOptions,
+      },
+    },
     {
       fieldName: 'purchaseTime',
       label: '采购时间',
@@ -354,16 +347,16 @@ export function useFormSchema() {
         type: 'datetime',
       },
     },
-    // {
-    //   fieldName: 'stationId',
-    //   label: '所属场站',
-    //   component: 'Select',
-    //   componentProps: {
-    //     placeholder: '请选择所属场站',
-    //     options: stationOptions,
-    //   },
-    //   rules: 'required',
-    // },
+    {
+      fieldName: 'stationId',
+      label: '所属场站',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择所属场站',
+        options: stationOptions,
+      },
+      rules: 'required',
+    },
     // {
     //   fieldName: 'status',
     //   label: '资产状态',
@@ -423,13 +416,13 @@ export function useGridColumns() {
       sortable: true,
       slots: { default: 'status' },
     },
-    // {
-    //   field: 'stationName',
-    //   title: '所属场站',
-    //   minWidth: 180,
-    //   sortable: true,
-    //   slots: { default: 'stationName' },
-    // },
+    {
+      field: 'stationName',
+      title: '所属场站',
+      minWidth: 180,
+      sortable: true,
+      slots: { default: 'stationName' },
+    },
     // {
     //   field: 'deviceName',
     //   title: '绑定设备',
@@ -483,7 +476,7 @@ export const detailFields = [
     tagType: getAssetStatusTagType,
     formatter: getAssetStatusLabel,
   },
-  // { key: 'stationName', label: '所属场站' },
+  { key: 'stationName', label: '所属场站' },
   { key: 'deviceName', label: '绑定设备' },
   { key: 'effectTimeStr', label: '生效时间' },
   // { key: 'changeRecord', label: '变更记录' },
