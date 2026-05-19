@@ -94,41 +94,26 @@ export function getAidWorkPage(params) {
 
 export function createAidWork(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/aid-work/create', convertedData).catch(err => {
-    console.warn('申报接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/aid-work/create', convertedData)
 }
 
 export function updateAidWork(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/aid-work/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/aid-work/update', convertedData)
 }
 
 export function auditAidWork(data) {
-  return requestClient.put('/studentmgmt/aid-work/audit', data).catch(err => {
-    console.warn('审核接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/aid-work/audit', data)
 }
 
 export function followAidWork(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/aid-work/follow', convertedData).catch(err => {
-    console.warn('跟进接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/aid-work/follow', convertedData)
 }
 
 export function exportAidWork(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/aid-work/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/aid-work/export-excel', convertedParams)
 }
 
 export function getAidWorkDetail(params) {

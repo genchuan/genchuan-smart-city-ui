@@ -24,6 +24,10 @@ const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
 const tenantEnable = isTenantEnable();
 const apiEncrypt = createApiEncrypt(import.meta.env);
 
+function formatToken(token: null | string) {
+  return token ? `Bearer ${token}` : null;
+}
+
 function createRequestClient(baseURL: string, options?: RequestClientOptions) {
   const client = new RequestClient({
     ...options,
@@ -65,10 +69,6 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
     }
     accessStore.setAccessToken(newToken);
     return newToken;
-  }
-
-  function formatToken(token: null | string) {
-    return token ? `Bearer ${token}` : null;
   }
 
   // 请求头处理
@@ -173,6 +173,9 @@ export const baseRequestClient = new RequestClient({ baseURL: apiURL });
 baseRequestClient.addRequestInterceptor({
   fulfilled: (config) => {
     const accessStore = useAccessStore();
+    // 添加认证头
+    config.headers.Authorization = formatToken(accessStore.accessToken);
+    config.headers['Accept-Language'] = preferences.app.locale;
     // 添加租户编号
     config.headers['tenant-id'] = tenantEnable
       ? accessStore.tenantId

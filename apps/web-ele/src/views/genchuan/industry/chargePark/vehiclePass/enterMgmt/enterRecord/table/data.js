@@ -8,7 +8,7 @@ export const dataList = () => {
       plateNo: '闽E12345',
       plateColor: '蓝牌',
       spaceNo: 'A-101',
-      enterTime: '2025-04-18 08:30:15',
+      enterTime: 1745011815000,
       recordType: '自动识别',
       status: '正常记录',
       stationId: 1,
@@ -17,15 +17,16 @@ export const dataList = () => {
       proofImage: '',
       isCorrected: false,
       creator: 'admin',
-      createTime: '2025-04-18 08:30:15',
-      updateTime: '2025-04-18 08:30:15',
+      createTime: 1745011815000,
+      updater: '张三',
+      updateTime: 1745011815000,
     },
     {
       id: 2,
       plateNo: '闽E67890',
       plateColor: '黄牌',
       spaceNo: 'B-205',
-      enterTime: '2025-04-18 09:15:30',
+      enterTime: 1745015730000,
       recordType: '自动识别',
       status: '正常记录',
       stationId: 2,
@@ -34,15 +35,16 @@ export const dataList = () => {
       proofImage: '',
       isCorrected: false,
       creator: 'admin',
-      createTime: '2025-04-18 09:15:30',
-      updateTime: '2025-04-18 09:15:30',
+      createTime: 1745015730000,
+      updater: '李四',
+      updateTime: 1745015730000,
     },
     {
       id: 3,
       plateNo: '闽E11111',
       plateColor: '蓝牌',
       spaceNo: 'C-308',
-      enterTime: '2025-04-18 10:20:45',
+      enterTime: 1745020845000,
       recordType: '人工补录',
       status: '异常记录',
       stationId: 3,
@@ -51,8 +53,9 @@ export const dataList = () => {
       proofImage: '',
       isCorrected: false,
       creator: 'admin',
-      createTime: '2025-04-18 10:20:45',
-      updateTime: '2025-04-18 10:20:45',
+      createTime: 1745020845000,
+      updater: '王五',
+      updateTime: 1745020845000,
     },
   ];
 };
@@ -69,40 +72,6 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'plateColor',
-      label: '车牌颜色',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择车牌颜色',
-        options: [
-          { label: '蓝牌', value: '蓝牌' },
-          { label: '黄牌', value: '黄牌' },
-          { label: '绿牌', value: '绿牌' },
-          { label: '其他', value: '其他' },
-        ],
-      },
-    },
-    {
-      fieldName: 'spaceNo',
-      label: '车位编号',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入车位编号',
-      },
-    },
-    {
-      fieldName: 'recordType',
-      label: '记录类型',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择记录类型',
-        options: [
-          { label: '自动识别', value: '自动识别' },
-          { label: '人工补录', value: '人工补录' },
-        ],
-      },
-    },
-    {
       fieldName: 'status',
       label: '记录状态',
       component: 'Select',
@@ -115,23 +84,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationId',
+      fieldName: 'stationName',
       label: '场站',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入场站ID',
-      },
-    },
-    {
-      fieldName: 'isCorrected',
-      label: '修正状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择修正状态',
-        options: [
-          { label: '未修正', value: false },
-          { label: '已修正', value: true },
-        ],
+        placeholder: '请输入场站名称',
       },
     },
     {
@@ -220,13 +177,21 @@ export function useCreateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'stationId',
-      label: '场站ID',
-      component: 'InputNumber',
+      fieldName: 'stationName',
+      label: '场站',
+      component: 'Input',
       componentProps: {
-        placeholder: '请输入场站ID',
+        placeholder: '请输入场站',
       },
       rules: 'required',
+    },
+    {
+      fieldName: 'stationName',
+      label: '场站名称',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入场站名称',
+      },
     },
     {
       fieldName: 'proofImage',
@@ -322,11 +287,11 @@ export function useUpdateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'stationId',
-      label: '场站ID',
-      component: 'InputNumber',
+      fieldName: 'stationName',
+      label: '场站',
+      component: 'Input',
       componentProps: {
-        placeholder: '请输入场站ID',
+        placeholder: '请输入场站名称',
       },
       rules: 'required',
     },
@@ -411,11 +376,11 @@ export function useCorrectFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'stationId',
-      label: '场站ID',
-      component: 'InputNumber',
+      fieldName: 'stationName',
+      label: '场站',
+      component: 'Input',
       componentProps: {
-        placeholder: '请输入场站ID',
+        placeholder: '请输入场站名称',
       },
       rules: 'required',
     },
@@ -439,17 +404,60 @@ export function useCorrectFormSchema() {
   ];
 }
 
+/** 审核表单配置 */
+export function useAuditFormSchema() {
+  return [
+    {
+      fieldName: 'id',
+      label: '记录ID',
+      component: 'Input',
+      componentProps: { disabled: true },
+    },
+    {
+      fieldName: 'plateNo',
+      label: '车牌号码',
+      component: 'Input',
+      componentProps: { disabled: true },
+    },
+    {
+      fieldName: 'spaceNo',
+      label: '车位编号',
+      component: 'Input',
+      componentProps: { disabled: true },
+    },
+    {
+      fieldName: 'auditResult',
+      label: '审核结果',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择审核结果',
+        options: [
+          { label: '通过', value: 'pass' },
+          { label: '驳回', value: 'reject' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'auditOpinion',
+      label: '审核意见',
+      component: 'Textarea',
+      componentProps: {
+        rows: 4,
+        placeholder: '请输入审核意见（必填）',
+      },
+      rules: [
+        { required: true, message: '审核意见必填' },
+        { min: 1, message: '审核意见不能为空' },
+      ],
+    },
+  ];
+}
+
 /** 入场记录表格列配置 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-    {
-      field: 'id',
-      title: '记录ID',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'id' },
-    },
     {
       field: 'plateNo',
       title: '车牌',
@@ -501,16 +509,24 @@ export function useGridColumns() {
     },
     {
       field: 'isCorrected',
-      title: '修正标记',
-      minWidth: 100,
+      title: '修正记录标记',
+      minWidth: 120,
       sortable: true,
-      slots: { default: 'isCorrected' },
+      slots: { default: 'correctionMark' },
     },
     {
-      field: 'remark',
-      title: '备注',
-      minWidth: 150,
+      field: 'updater',
+      title: '操作人',
+      minWidth: 100,
       sortable: true,
+      slots: { default: 'updater' },
+    },
+    {
+      field: 'updateTime',
+      title: '操作时间',
+      minWidth: 180,
+      sortable: true,
+      slots: { default: 'updateTime' },
     },
     {
       title: '操作',
@@ -551,7 +567,6 @@ export const plateColorTypeMap = {
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '记录ID' },
   { key: 'plateNo', label: '车牌号' },
   { key: 'plateColor', label: '车牌颜色' },
   { key: 'spaceNo', label: '车位编号' },
@@ -562,11 +577,9 @@ export const detailFields = [
   { key: 'proofImage', label: '佐证图片', type: 'image' },
   {
     key: 'isCorrected',
-    label: '是否已修正',
-    formatter: (val) => (val ? '是' : '否'),
+    label: '修正记录标记',
+    formatter: (val) => (val ? '已修正' : '未修正'),
   },
-  { key: 'remark', label: '备注' },
-  { key: 'creator', label: '创建人' },
-  { key: 'createTime', label: '创建时间', formatter: formatTime },
-  { key: 'updateTime', label: '更新时间', formatter: formatTime },
+  { key: 'updater', label: '操作人' },
+  { key: 'updateTime', label: '操作时间', formatter: formatTime },
 ];

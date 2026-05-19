@@ -6,7 +6,7 @@ export const dataList = () => {
     {
       id: 1,
       plateNo: '闽C12345',
-      identifyTime: '2026-04-26 08:30:15',
+      identifyTime: 1_745_011_815_000,
       matchScene: '同牌多停',
       status: '未处理',
       stationId: 1,
@@ -17,45 +17,51 @@ export const dataList = () => {
       handleProgress: null,
       ignoreReason: null,
       remark: '',
+      isCorrected: false,
       creator: 'admin',
-      createTime: '2026-04-26 08:30:15',
-      updateTime: '2026-04-26 08:30:15',
+      createTime: 1_745_011_815_000,
+      updater: '张三',
+      updateTime: 1_745_011_815_000,
     },
     {
       id: 2,
       plateNo: '闽C67890',
-      identifyTime: '2026-04-26 05:30:15',
+      identifyTime: 1_744_998_615_000,
       matchScene: '车牌车型不匹配',
       status: '处理中',
       stationId: 2,
       stationName: '充电站2',
       handleUserId: 1,
       handleUserName: '张三',
-      handleTime: '2026-04-26 09:30:15',
+      handleTime: 1_745_015_730_000,
       handleProgress: '已联系车主，等待核实',
       ignoreReason: null,
       remark: '',
+      isCorrected: false,
       creator: 'admin',
-      createTime: '2026-04-26 05:30:15',
-      updateTime: '2026-04-26 09:30:15',
+      createTime: 1_744_998_615_000,
+      updater: '李四',
+      updateTime: 1_745_015_730_000,
     },
     {
       id: 3,
       plateNo: '闽C11111',
-      identifyTime: '2026-04-25 10:30:15',
+      identifyTime: 1_744_925_415_000,
       matchScene: '同牌多停',
       status: '已关闭',
       stationId: 3,
       stationName: '充电站3',
       handleUserId: 2,
       handleUserName: '李四',
-      handleTime: '2026-04-25 22:30:15',
+      handleTime: 1_744_968_615_000,
       handleProgress: '已核实，确认套牌',
       ignoreReason: null,
       remark: '已处理完成',
+      isCorrected: false,
       creator: 'admin',
-      createTime: '2026-04-25 10:30:15',
-      updateTime: '2026-04-25 22:30:15',
+      createTime: 1_744_925_415_000,
+      updater: '王五',
+      updateTime: 1_744_968_615_000,
     },
   ];
 };
@@ -72,18 +78,6 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'matchScene',
-      label: '匹配场景',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择匹配场景',
-        options: [
-          { label: '同牌多停', value: '同牌多停' },
-          { label: '车牌车型不匹配', value: '车牌车型不匹配' },
-        ],
-      },
-    },
-    {
       fieldName: 'status',
       label: '处置状态',
       component: 'Select',
@@ -97,19 +91,19 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationId',
+      fieldName: 'stationName',
       label: '场站',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入场站ID',
+        placeholder: '请输入场站',
       },
     },
     {
       fieldName: 'identifyTime',
-      label: '识别时间',
+      label: '时间范围',
       component: 'DatePicker',
       componentProps: {
-        placeholder: '请选择识别时间',
+        placeholder: '请选择时间范围',
         type: 'datetimerange',
         format: 'YYYY-MM-DD HH:mm:ss',
         valueFormat: 'YYYY-MM-DD HH:mm:ss',
@@ -166,17 +160,186 @@ export function useUpdateProgressFormSchema() {
   ];
 }
 
+/** 补录表单配置 */
+export function useCreateFormSchema() {
+  return [
+    {
+      fieldName: 'plateNo',
+      label: '车牌',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入车牌',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'identifyTime',
+      label: '识别时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择识别时间',
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'matchScene',
+      label: '匹配场景',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择匹配场景',
+        options: [
+          { label: '同牌多停', value: '同牌多停' },
+          { label: '车牌车型不匹配', value: '车牌车型不匹配' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'stationId',
+      label: '场站',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择场站',
+        options: [
+          { label: '充电站1', value: 1 },
+          { label: '充电站2', value: 2 },
+          { label: '充电站3', value: 3 },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Textarea',
+      componentProps: {
+        placeholder: '请输入备注',
+        rows: 3,
+      },
+    },
+  ];
+}
+
+/** 审核表单配置 */
+export function useAuditFormSchema() {
+  return [
+    {
+      fieldName: 'id',
+      label: 'ID',
+      component: 'Input',
+      componentProps: { disabled: true },
+    },
+    {
+      fieldName: 'auditResult',
+      label: '审核结果',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择审核结果',
+        options: [
+          { label: '通过', value: 'pass' },
+          { label: '驳回', value: 'reject' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'auditOpinion',
+      label: '审核意见',
+      component: 'Textarea',
+      componentProps: {
+        rows: 4,
+        placeholder: '请输入审核意见（必填）',
+      },
+      rules: [
+        { required: true, message: '审核意见必填' },
+        { min: 1, message: '审核意见不能为空' },
+      ],
+    },
+  ];
+}
+
+/** 修正表单配置 */
+export function useCorrectFormSchema() {
+  return [
+    {
+      fieldName: 'id',
+      label: 'ID',
+      component: 'Input',
+      componentProps: { disabled: true },
+    },
+    {
+      fieldName: 'plateNo',
+      label: '车牌',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入车牌',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'parkingSpot',
+      label: '车位',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入车位',
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'area',
+      label: '片区',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入片区',
+      },
+      rules: 'required',
+    },
+  ];
+}
+
+/** 核查表单配置 */
+export function useCheckFormSchema() {
+  return [
+    {
+      fieldName: 'id',
+      label: 'ID',
+      component: 'Input',
+      componentProps: { disabled: true },
+    },
+    {
+      fieldName: 'checkResult',
+      label: '核查结果',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择核查结果',
+        options: [
+          { label: '确认套牌', value: '确认套牌' },
+          { label: '误判', value: '误判' },
+          { label: '需进一步核实', value: '需进一步核实' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
+      fieldName: 'checkRemark',
+      label: '核查备注',
+      component: 'Textarea',
+      componentProps: {
+        rows: 4,
+        placeholder: '请输入核查备注',
+      },
+      rules: 'required',
+    },
+  ];
+}
+
 /** 套牌管控表格列配置 */
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-    {
-      field: 'id',
-      title: '管控ID',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'id' },
-    },
     {
       field: 'plateNo',
       title: '车牌',
@@ -264,7 +427,6 @@ export const matchSceneTypeMap = {
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '管控ID' },
   { key: 'plateNo', label: '车牌号' },
   { key: 'identifyTime', label: '识别时间', formatter: formatTime },
   { key: 'matchScene', label: '匹配场景' },
@@ -275,7 +437,4 @@ export const detailFields = [
   { key: 'handleProgress', label: '处置进度' },
   { key: 'ignoreReason', label: '忽略理由' },
   { key: 'remark', label: '备注' },
-  { key: 'creator', label: '创建者' },
-  { key: 'createTime', label: '创建时间', formatter: formatTime },
-  { key: 'updateTime', label: '更新时间', formatter: formatTime },
 ];

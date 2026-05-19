@@ -49,7 +49,7 @@ const props = defineProps({
     }),
   },
 });
-const emit = defineEmits(['arrow-change']);
+const emit = defineEmits(['arrow-change', 'clear-filters']);
 
 const getTitle = computed(() => {
   return formData.value?.id ? '编辑' : '新增';
@@ -121,6 +121,8 @@ watch(
   () => props.filterParams,
   () => {
     dataObj.currentPage = 1;
+    dataObj.searchObj = {};
+    dataObj.filterParams = props.filterParams;
     gridApi.query();
   },
   { deep: true }
@@ -200,6 +202,7 @@ const dataObj = reactive({
   list: [],
   loading: false,
   searchObj: {},
+  filterParams: {},
 });
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -211,20 +214,8 @@ const getTableData = async (pageObj) => {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchObj,
+    ...dataObj.filterParams,
   };
-
-  if (props.filterParams.identifyTimeStart) {
-    params.identifyTimeStart = props.filterParams.identifyTimeStart;
-  }
-  if (props.filterParams.identifyTimeEnd) {
-    params.identifyTimeEnd = props.filterParams.identifyTimeEnd;
-  }
-  if (props.filterParams.abnormalType) {
-    params.abnormalType = props.filterParams.abnormalType;
-  }
-  if (props.filterParams.status) {
-    params.status = props.filterParams.status;
-  }
 
   try {
     dataObj.loading = true;
@@ -264,6 +255,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
     const values = await queryFormApi.getValues();
     dataObj.searchObj = values;
     dataObj.currentPage = 1;
+    emit('clear-filters');
     gridApi.query();
     drawerApi.close();
   },

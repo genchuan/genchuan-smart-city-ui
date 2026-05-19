@@ -73,40 +73,25 @@ export function getMoralResourcePage(params) {
 
 export function createMoralResource(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/moral-resource/create', convertedData).catch(err => {
-    console.warn('上传接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/moral-resource/create', convertedData)
 }
 
 export function updateMoralResource(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/moral-resource/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/moral-resource/update', convertedData)
 }
 
 export function onlineMoralResource(ids) {
-  return requestClient.put('/studentmgmt/moral-resource/online', { ids }).catch(err => {
-    console.warn('上架接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/moral-resource/online', { ids })
 }
 
 export function offlineMoralResource(ids) {
-  return requestClient.put('/studentmgmt/moral-resource/offline', { ids }).catch(err => {
-    console.warn('下架接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/moral-resource/offline', { ids })
 }
 
 export function exportMoralResource(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/moral-resource/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/moral-resource/export-excel', convertedParams)
 }
 
 export function getMoralResourceDetail(params) {

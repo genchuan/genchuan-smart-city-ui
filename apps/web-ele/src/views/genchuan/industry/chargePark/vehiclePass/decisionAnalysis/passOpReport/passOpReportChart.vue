@@ -2,7 +2,6 @@
 import { onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import * as echarts from 'echarts';
-import { ElMessage } from 'element-plus';
 
 import { getCycleReportChart } from '#/api/genchuan/industry/chargePark/vehiclePass/passReport/cycleReport';
 
@@ -89,7 +88,7 @@ async function loadChartData() {
     // 使用真实API
     const params = {
       reportCycle: '日报',
-      stationId: props.parkId,
+      stationName: props.parkId,
       statTime: new Date().toISOString().split('T')[0],
       tenantId: 1, // TODO: 从用户信息获取
     };
@@ -128,9 +127,9 @@ async function loadChartData() {
 
     // 检查是否有图表数据
     const hasChartData =
-      (state.chartData.lineData?.length > 0 ||
-        state.chartData.barData?.length > 0 ||
-        state.chartData.pieData?.length > 0);
+      state.chartData.lineData?.length > 0 ||
+      state.chartData.barData?.length > 0 ||
+      state.chartData.pieData?.length > 0;
 
     console.log('是否有图表数据:', hasChartData);
     console.log('lineData长度:', state.chartData.lineData?.length);
@@ -361,7 +360,10 @@ function initPieChart() {
   pieChartInstance.setOption(option);
 
   pieChartInstance.on('click', (params) => {
-    openDetailDialog('pie', params.name, { type: params.name, count: params.value });
+    openDetailDialog('pie', params.name, {
+      type: params.name,
+      count: params.value,
+    });
   });
 }
 
@@ -375,8 +377,12 @@ function handleCardClick(key) {
   console.log('卡片点击:', key);
   const today = new Date();
   // 使用 ISO 8601 格式：YYYY-MM-DDTHH:mm:ss
-  const todayStart = new Date(today.setHours(0, 0, 0, 0)).toISOString().slice(0, 19);
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).toISOString().slice(0, 19);
+  const todayStart = new Date(today.setHours(0, 0, 0, 0))
+    .toISOString()
+    .slice(0, 19);
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999))
+    .toISOString()
+    .slice(0, 19);
 
   const cardTitleMap = {
     enterCount: '入场量',
@@ -420,58 +426,98 @@ function openDetailDialog(chartType, seriesName, data) {
   let filterParams = {};
 
   // 根据图表类型和系列名称确定筛选参数
-  if (chartType === 'bar') {
-    const target = data.stationName || data.hour || '未知';
-    if (seriesName === '通行量') {
-      title = `${target} - 通行量明细`;
-      filterParams = {
-        stationName: data.stationName,
-      };
-    } else if (seriesName === '异常数') {
-      title = `${target} - 异常明细`;
-      filterParams = {
-        stationName: data.stationName,
-      };
-    } else if (seriesName === 'ETC通行量') {
-      title = `${target} - ETC通行明细`;
-      filterParams = {
-        stationName: data.stationName,
-      };
-    }
-  } else if (chartType === 'line') {
-    // 将日期字符串转换为 ISO 8601 格式
-    const statDate = new Date(data.statTime);
-    const beginTime = new Date(statDate.setHours(0, 0, 0, 0)).toISOString().slice(0, 19);
-    const endTime = new Date(statDate.setHours(23, 59, 59, 999)).toISOString().slice(0, 19);
+  switch (chartType) {
+    case 'bar': {
+      const target = data.stationName || data.hour || '未知';
+      switch (seriesName) {
+        case 'ETC通行量': {
+          title = `${target} - ETC通行明细`;
+          filterParams = {
+            stationName: data.stationName,
+          };
 
-    if (seriesName === '通行量') {
-      title = `${data.statTime} - 通行量明细`;
-      filterParams = {
-        beginTime,
-        endTime,
-      };
-    } else if (seriesName === '识别成功率') {
-      title = `${data.statTime} - 识别明细`;
-      filterParams = {
-        beginTime,
-        endTime,
-      };
-    } else if (seriesName === '核验成功率') {
-      title = `${data.statTime} - 核验明细`;
-      filterParams = {
-        beginTime,
-        endTime,
-      };
-    } else if (seriesName === '异常处置率') {
-      title = `${data.statTime} - 异常处置明细`;
-      filterParams = {
-        beginTime,
-        endTime,
-      };
+          break;
+        }
+        case '异常数': {
+          title = `${target} - 异常明细`;
+          filterParams = {
+            stationName: data.stationName,
+          };
+
+          break;
+        }
+        case '通行量': {
+          title = `${target} - 通行量明细`;
+          filterParams = {
+            stationName: data.stationName,
+          };
+
+          break;
+        }
+        // No default
+      }
+
+      break;
     }
-  } else if (chartType === 'pie') {
-    title = `${data.type} - 明细`;
-    filterParams = {};
+    case 'line': {
+      // 将日期字符串转换为 ISO 8601 格式
+      const statDate = new Date(data.statTime);
+      const beginTime = new Date(statDate.setHours(0, 0, 0, 0))
+        .toISOString()
+        .slice(0, 19);
+      const endTime = new Date(statDate.setHours(23, 59, 59, 999))
+        .toISOString()
+        .slice(0, 19);
+
+      switch (seriesName) {
+        case '异常处置率': {
+          title = `${data.statTime} - 异常处置明细`;
+          filterParams = {
+            beginTime,
+            endTime,
+          };
+
+          break;
+        }
+        case '核验成功率': {
+          title = `${data.statTime} - 核验明细`;
+          filterParams = {
+            beginTime,
+            endTime,
+          };
+
+          break;
+        }
+        case '识别成功率': {
+          title = `${data.statTime} - 识别明细`;
+          filterParams = {
+            beginTime,
+            endTime,
+          };
+
+          break;
+        }
+        case '通行量': {
+          title = `${data.statTime} - 通行量明细`;
+          filterParams = {
+            beginTime,
+            endTime,
+          };
+
+          break;
+        }
+        // No default
+      }
+
+      break;
+    }
+    case 'pie': {
+      title = `${data.type} - 明细`;
+      filterParams = {};
+
+      break;
+    }
+    // No default
   }
 
   if (detailDialogRef.value && title) {
@@ -558,8 +604,8 @@ onUnmounted(() => {
 .chart-box {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
   gap: 15px;
+  align-items: flex-end;
   width: 100% !important;
   padding-right: 15px;
   padding-bottom: 0.5rem;
@@ -574,9 +620,8 @@ onUnmounted(() => {
 
     .left-card {
       display: flex;
+      flex: 1;
       flex-direction: column;
-      flex: 1;
-      flex: 1;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;

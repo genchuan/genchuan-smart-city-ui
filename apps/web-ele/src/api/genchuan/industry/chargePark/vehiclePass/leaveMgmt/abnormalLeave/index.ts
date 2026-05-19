@@ -96,7 +96,7 @@ export function getAbnormalLeave(id: number | string) {
 /** 导出异常离场 */
 export function exportAbnormalLeave(params?: AbnormalLeaveApi.PageReqVO) {
   return requestClient.download('/vehiclepass/abnormal-leave/export', {
-    params,
+    params: { ...params },
   });
 }
 

@@ -86,18 +86,12 @@ export function pushDormCompare(data) {
 
 export function updateDormCompare(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/dorm-compare/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/dorm-compare/update', convertedData)
 }
 
 export function exportDormCompare(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/dorm-compare/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/dorm-compare/export-excel', convertedParams)
 }
 
 export function getDormCompareDetail(params) {

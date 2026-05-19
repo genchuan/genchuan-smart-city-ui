@@ -31,6 +31,12 @@ const handleFilterChange = (params) => {
   Object.assign(filterParams, params);
 };
 
+const handleClearFilters = () => {
+  filterParams.createOrderTimeStart = null;
+  filterParams.createOrderTimeEnd = null;
+  filterParams.stationName = null;
+};
+
 const hasActiveFilters = () => {
   return filterParams.createOrderTimeStart || filterParams.stationName;
 };
@@ -38,12 +44,9 @@ const hasActiveFilters = () => {
 const clearDateFilter = () => {
   filterParams.createOrderTimeStart = null;
   filterParams.createOrderTimeEnd = null;
-  filterParams.stationName = null;
 };
 
 const clearStationFilter = () => {
-  filterParams.createOrderTimeStart = null;
-  filterParams.createOrderTimeEnd = null;
   filterParams.stationName = null;
 };
 
@@ -63,7 +66,7 @@ const secondShow = ref(false);
 </script>
 <template>
   <div class="common-index">
-    <Chart @filter-change="handleFilterChange" />
+    <Chart @filter-change="handleFilterChange" v-if="tabArray[0].arrowShow"/>
     <div v-if="hasActiveFilters" class="filter-tags">
       <el-tag
         v-if="filterParams.stationName"
@@ -119,6 +122,7 @@ const secondShow = ref(false);
           :arrow-show="item.arrowShow"
           :filter-params="item.filterParams"
           @arrow-change="arrowChange"
+          @clear-filters="handleClearFilters"
         />
       </el-tab-pane>
     </el-tabs>

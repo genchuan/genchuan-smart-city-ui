@@ -75,42 +75,27 @@ export function getLeaveHandlePage(params) {
 
 export function createLeaveHandle(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/leave-handle/create', convertedData).catch(err => {
-    console.warn('申请接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/leave-handle/create', convertedData)
 }
 
 export function updateLeaveHandle(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/leave-handle/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/leave-handle/update', convertedData)
 }
 
 export function confirmLeaveHandle(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/leave-handle/confirm', convertedData).catch(err => {
-    console.warn('确认接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/leave-handle/confirm', convertedData)
 }
 
 export function handleLeaveHandle(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/leave-handle/handle', convertedData).catch(err => {
-    console.warn('办理接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/leave-handle/handle', convertedData)
 }
 
 export function exportLeaveHandle(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/leave-handle/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/leave-handle/export-excel', convertedParams)
 }
 
 export function getLeaveHandleDetail(params) {

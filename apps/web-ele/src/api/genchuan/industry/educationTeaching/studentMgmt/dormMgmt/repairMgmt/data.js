@@ -91,47 +91,29 @@ export function getRepairMgmtPage(params) {
 
 export function createRepairMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/repair-mgmt/create', convertedData).catch(err => {
-    console.warn('申请接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/repair-mgmt/create', convertedData)
 }
 
 export function assignRepairMgmt(data) {
-  return requestClient.put('/studentmgmt/repair-mgmt/assign', data).catch(err => {
-    console.warn('派单接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/repair-mgmt/assign', data)
 }
 
 export function feedbackRepairMgmt(data) {
-  return requestClient.put('/studentmgmt/repair-mgmt/feedback', data).catch(err => {
-    console.warn('反馈接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/repair-mgmt/feedback', data)
 }
 
 export function acceptRepairMgmt(data) {
-  return requestClient.put('/studentmgmt/repair-mgmt/accept', data).catch(err => {
-    console.warn('验收接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/repair-mgmt/accept', data)
 }
 
 export function updateRepairMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/repair-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/repair-mgmt/update', convertedData)
 }
 
 export function exportRepairMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/repair-mgmt/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/repair-mgmt/export-excel', convertedParams)
 }
 
 export function getRepairMgmtDetail(params) {

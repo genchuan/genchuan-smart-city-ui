@@ -68,48 +68,30 @@ export function getTargetMgmtPage(params) {
 
 export function createTargetMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/target-mgmt/create', convertedData).catch(err => {
-    console.warn('新增接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/target-mgmt/create', convertedData)
 }
 
 export function updateTargetMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/target-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/target-mgmt/update', convertedData)
 }
 
 export function configTargetMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/target-mgmt/config', convertedData).catch(err => {
-    console.warn('配置接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/target-mgmt/config', convertedData)
 }
 
 export function enableTargetMgmt(ids) {
-  return requestClient.put('/studentmgmt/target-mgmt/enable', { ids }).catch(err => {
-    console.warn('启用接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/target-mgmt/enable', { ids })
 }
 
 export function disableTargetMgmt(ids) {
-  return requestClient.put('/studentmgmt/target-mgmt/disable', { ids }).catch(err => {
-    console.warn('停用接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/target-mgmt/disable', { ids })
 }
 
 export function exportTargetMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/target-mgmt/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/target-mgmt/export-excel', convertedParams)
 }
 
 export function getTargetMgmtDetail(params) {

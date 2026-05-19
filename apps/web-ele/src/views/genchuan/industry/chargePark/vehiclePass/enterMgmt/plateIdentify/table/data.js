@@ -1,4 +1,5 @@
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+import { getStationInfoPage } from '#/api/genchuan/industry/chargePark/stationResource/stationMgmt/stationInfo';
 
 /** 车牌识别表格初始数据 */
 export const dataList = () => {
@@ -15,8 +16,12 @@ export const dataList = () => {
       remark: '',
       isCorrected: false,
       creator: '系统',
-      createTime: '2025-04-18 08:30:15',
-      updateTime: '2025-04-18 08:30:15',
+      createTime: 1745011815000,
+      updateTime: 1745011815000,
+      updater: '张三',
+      operator: '张三',
+      operationTime: 1745012120000,
+      correctionMark: '无',
     },
     {
       id: 2,
@@ -30,8 +35,12 @@ export const dataList = () => {
       remark: '',
       isCorrected: false,
       creator: '系统',
-      createTime: '2025-04-18 09:15:30',
-      updateTime: '2025-04-18 09:15:30',
+      createTime: 1745015730000,
+      updateTime: 1745015730000,
+      updater: '李四',
+      operator: '李四',
+      operationTime: 1745016015000,
+      correctionMark: '无',
     },
     {
       id: 3,
@@ -45,8 +54,12 @@ export const dataList = () => {
       remark: '需人工处理',
       isCorrected: false,
       creator: '系统',
-      createTime: '2025-04-18 10:20:45',
-      updateTime: '2025-04-18 10:20:45',
+      createTime: 1745020845000,
+      updateTime: 1745020845000,
+      updater: '王五',
+      operator: '王五',
+      operationTime: 1745021130000,
+      correctionMark: '待修正',
     },
   ];
 };
@@ -89,11 +102,11 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationId',
+      fieldName: 'stationName',
       label: '场站',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入场站ID',
+        placeholder: '请输入场站',
       },
     },
     {
@@ -106,6 +119,19 @@ export function useSearchFormSchema() {
           { label: '未修正', value: false },
           { label: '已修正', value: true },
         ],
+      },
+    },
+    {
+      fieldName: 'createTimeRange',
+      label: '时间范围',
+      component: 'DatePicker',
+      componentProps: {
+        type: 'daterange',
+        placeholder: '请选择时间范围',
+        startPlaceholder: '开始日期',
+        endPlaceholder: '结束日期',
+        format: 'YYYY-MM-DD',
+        valueFormat: 'YYYY-MM-DD',
       },
     },
   ];
@@ -170,11 +196,13 @@ export function useCreateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'stationId',
-      label: '场站ID',
-      component: 'InputNumber',
+      fieldName: 'stationName',
+      label: '场站',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入场站ID',
+        placeholder: '请选择场站',
+        options: [],
+        filterable: true,
       },
       rules: 'required',
     },
@@ -249,11 +277,13 @@ export function useCorrectFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'stationId',
-      label: '场站ID',
-      component: 'InputNumber',
+      fieldName: 'stationName',
+      label: '场站',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入场站ID',
+        placeholder: '请选择场站',
+        options: [],
+        filterable: true,
       },
       rules: 'required',
     },
@@ -330,6 +360,27 @@ export function useGridColumns() {
       slots: { default: 'isCorrected' },
     },
     {
+      field: 'updater',
+      title: '操作人',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'updater' },
+    },
+    {
+      field: 'updateTime',
+      title: '操作时间',
+      minWidth: 180,
+      sortable: true,
+      slots: { default: 'updateTime' },
+    },
+    {
+      field: 'isCorrected',
+      title: '修正记录标记',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'correctionMark' },
+    },
+    {
       field: 'remark',
       title: '备注',
       minWidth: 150,
@@ -379,16 +430,17 @@ export const detailFields = [
   { key: 'plateNo', label: '车牌号' },
   { key: 'plateColor', label: '车牌颜色' },
   { key: 'confidence', label: '置信度(%)' },
-  { key: 'imageUrl', label: '抓拍图片' },
+  { key: 'imageUrl', label: '抓拍图片', type: 'image' },
   { key: 'status', label: '识别状态' },
   { key: 'stationName', label: '场站' },
   {
     key: 'isCorrected',
-    label: '是否已修正',
-    formatter: (val) => (val ? '是' : '否'),
+    label: '修正记录标记',
+    formatter: (val) => (val ? '已修正' : '未修正'),
   },
+  { key: 'updater', label: '操作人' },
+  { key: 'updateTime', label: '操作时间', formatter: formatTime },
   { key: 'remark', label: '备注' },
   { key: 'creator', label: '创建人' },
   { key: 'createTime', label: '识别时间', formatter: formatTime },
-  { key: 'updateTime', label: '更新时间', formatter: formatTime },
 ];

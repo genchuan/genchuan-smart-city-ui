@@ -64,8 +64,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
+  onConfirm() { },
+  async onOpenChange() { },
 });
 
 const formData = ref();
@@ -213,8 +213,7 @@ const getTableData = async (pageObj) => {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchObj,
-  };
-
+  }; 
   if (props.filterParams.createOrderTimeStart) {
     params.createOrderTimeStart = props.filterParams.createOrderTimeStart;
   }
@@ -256,7 +255,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
     labelWidth: 100,
   },
   handleSubmit: async () => {
-    const values = await queryFormApi.getValues();
+    const values = await queryFormApi.getValues(); 
     dataObj.searchObj = values;
     dataObj.currentPage = 1;
     gridApi.query();
@@ -345,7 +344,7 @@ const handleFullShow = () => {
 const parkDetailDrawerRef = ref(null);
 const enDetailObjRef = ref(null);
 const arrowChange = () => {
-  emit('arrow-change');  
+  emit('arrow-change');
 };
 const autoElmessage = () => {
   ElMessage.success($t('月报自动刷新成功'));
@@ -364,6 +363,7 @@ const statusMap = {
   completed: { label: '已完成', type: 'success' },
   cancelled: { label: '已取消', type: 'info' },
   refunding: { label: '退款中', type: 'danger' },
+  refunded: { label: '已退款', type: 'danger' },
 };
 
 // 获取状态标签
@@ -565,10 +565,7 @@ const alarmColumns = [
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <ParkDetailDrawer
-      ref="parkDetailDrawerRef"
-      :detail-obj="dataObj.detailObj"
-    />
+    <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -578,30 +575,15 @@ const alarmColumns = [
     <PlateNoDetail v-model:visible="plateDetailVisible" :plate-no="currentPlateNo" />
 
     <!-- 告警明细弹窗 -->
-    <ElDialog
-      v-model="alarmDialogVisible"
-      title="本半年食品安全问题明细"
-      width="900px"
-      append-to-body
-    >
+    <ElDialog v-model="alarmDialogVisible" title="本半年食品安全问题明细" width="900px" append-to-body>
       <el-table :data="alarmList" border height="450">
-        <el-table-column
-          v-for="col in alarmColumns"
-          :key="col.prop"
-          :label="col.label"
-          :prop="col.prop"
-          :width="col.width"
-        />
+        <el-table-column v-for="col in alarmColumns" :key="col.prop" :label="col.label" :prop="col.prop"
+          :width="col.width" />
       </el-table>
     </ElDialog>
 
     <!-- 支付弹窗 -->
-    <ElDialog
-      v-model="payDialogVisible"
-      title="订单支付"
-      width="500px"
-      append-to-body
-    >
+    <ElDialog v-model="payDialogVisible" title="订单支付" width="500px" append-to-body>
       <el-form :model="payForm" label-width="80px">
         <el-form-item label="订单ID">
           <el-input v-model="payForm.id" disabled />
@@ -610,31 +592,19 @@ const alarmColumns = [
           <el-input v-model="payForm.orderNo" disabled />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input
-            v-model="payForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入支付备注"
-          />
+          <el-input v-model="payForm.remark" type="textarea" rows="3" placeholder="请输入支付备注" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="payDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handlePaySubmit"
-            >确认支付</el-button
-          >
+          <el-button type="primary" @click="handlePaySubmit">确认支付</el-button>
         </div>
       </template>
     </ElDialog>
 
     <!-- 取消弹窗 -->
-    <ElDialog
-      v-model="cancelDialogVisible"
-      title="取消订单"
-      width="500px"
-      append-to-body
-    >
+    <ElDialog v-model="cancelDialogVisible" title="取消订单" width="500px" append-to-body>
       <el-form :model="cancelForm" label-width="80px">
         <el-form-item label="订单ID">
           <el-input v-model="cancelForm.id" disabled />
@@ -643,31 +613,19 @@ const alarmColumns = [
           <el-input v-model="cancelForm.orderNo" disabled />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input
-            v-model="cancelForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入取消备注"
-          />
+          <el-input v-model="cancelForm.remark" type="textarea" rows="3" placeholder="请输入取消备注" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="cancelDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleCancelSubmit"
-            >确认取消</el-button
-          >
+          <el-button type="primary" @click="handleCancelSubmit">确认取消</el-button>
         </div>
       </template>
     </ElDialog>
 
     <!-- 退款弹窗 -->
-    <ElDialog
-      v-model="refundDialogVisible"
-      title="退款申请"
-      width="500px"
-      append-to-body
-    >
+    <ElDialog v-model="refundDialogVisible" title="退款申请" width="500px" append-to-body>
       <el-form :model="refundForm" label-width="80px">
         <el-form-item label="订单ID">
           <el-input v-model="refundForm.id" disabled />
@@ -676,31 +634,19 @@ const alarmColumns = [
           <el-input v-model="refundForm.orderNo" disabled />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input
-            v-model="refundForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入退款备注"
-          />
+          <el-input v-model="refundForm.remark" type="textarea" rows="3" placeholder="请输入退款备注" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="refundDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleRefundSubmit"
-            >确认退款</el-button
-          >
+          <el-button type="primary" @click="handleRefundSubmit">确认退款</el-button>
         </div>
       </template>
     </ElDialog>
 
     <!-- 开票弹窗 -->
-    <ElDialog
-      v-model="invoiceDialogVisible"
-      title="开票申请"
-      width="500px"
-      append-to-body
-    >
+    <ElDialog v-model="invoiceDialogVisible" title="开票申请" width="500px" append-to-body>
       <el-form :model="invoiceForm" label-width="80px">
         <el-form-item label="订单ID">
           <el-input v-model="invoiceForm.id" disabled />
@@ -709,38 +655,22 @@ const alarmColumns = [
           <el-input v-model="invoiceForm.orderNo" disabled />
         </el-form-item>
         <el-form-item label="发票抬头">
-          <el-input
-            v-model="invoiceForm.invoiceTitle"
-            placeholder="请输入发票抬头"
-          />
+          <el-input v-model="invoiceForm.invoiceTitle" placeholder="请输入发票抬头" />
         </el-form-item>
         <el-form-item label="发票税号">
-          <el-input
-            v-model="invoiceForm.invoiceTaxNo"
-            placeholder="请输入发票税号"
-          />
+          <el-input v-model="invoiceForm.invoiceTaxNo" placeholder="请输入发票税号" />
         </el-form-item>
         <el-form-item label="接收邮箱">
-          <el-input
-            v-model="invoiceForm.invoiceEmail"
-            placeholder="请输入接收邮箱"
-          />
+          <el-input v-model="invoiceForm.invoiceEmail" placeholder="请输入接收邮箱" />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input
-            v-model="invoiceForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入开票备注"
-          />
+          <el-input v-model="invoiceForm.remark" type="textarea" rows="3" placeholder="请输入开票备注" />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="invoiceDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleInvoiceSubmit"
-            >确认开票</el-button
-          >
+          <el-button type="primary" @click="handleInvoiceSubmit">确认开票</el-button>
         </div>
       </template>
     </ElDialog>
@@ -748,11 +678,7 @@ const alarmColumns = [
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
-            content="导出EXCEL"
-            icon-name="download"
-            @click="handleExport"
-          />
+          <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
           <!-- <IconButton
             content="批量删除"
             icon-name="delete"
@@ -760,21 +686,10 @@ const alarmColumns = [
             :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch"
           /> -->
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
-          <IconButton
-            :content="props.arrowShow ? '展开' : '收缩'"
-            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
-            @click="arrowChange"
-          />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange" />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
       <template #orderType="{ row }">
@@ -791,11 +706,7 @@ const alarmColumns = [
         </el-tag>
       </template>
       <template #reportNumber="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
           {{ row.reportNumber }}
         </el-text>
       </template>
@@ -807,57 +718,26 @@ const alarmColumns = [
       </template>
 
       <template #orderNo="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
           {{ row.orderNo }}
         </el-text>
       </template>
 
       <template #plateNo="{ row }">
-        <el-text
-          @click="handlePlateDetail(row)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text @click="handlePlateDetail(row)" class="common-align" type="primary">
           {{ row.plateNo }}
         </el-text>
       </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="查看"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="支付"
-            icon-name="Money"
-            @click="handlePay(row)"
-            v-if="row.status === 'pending_pay'"
-          />
-          <IconButton
-            content="取消"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleCancel(row)"
-            v-if="row.status === 'pending_pay'"
-          />
-          <IconButton
-            content="退款"
-            icon-name="back"
-            @click="handleRefund(row)"
-            v-if="row.status === 'paid'"
-          />
-          <IconButton
-            content="开票"
-            icon-name="Document"
-            @click="handleInvoice(row)"
-            v-if="row.status === 'paid' || row.status === 'completed'"
-          />
+          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          <IconButton content="支付" icon-name="Money" @click="handlePay(row)" v-if="row.status === 'pending_pay'" />
+          <IconButton content="取消" icon-name="delete" color="#F56C6C" @click="handleCancel(row)"
+            v-if="row.status === 'pending_pay'" />
+          <IconButton content="退款" icon-name="back" @click="handleRefund(row)" v-if="row.status === 'paid'" />
+          <IconButton content="开票" icon-name="Document" @click="handleInvoice(row)"
+            v-if="row.status === 'paid' || row.status === 'completed'" />
         </div>
       </template>
       <template #bottom>

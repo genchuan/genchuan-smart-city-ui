@@ -160,60 +160,36 @@ export function scheduleDutyMgmt(data) {
     convertedData.dutyDate = convertedData.dutyDateList;
     delete convertedData.dutyDateList;
   }
-  return requestClient.post('/studentmgmt/duty-mgmt/schedule', convertedData).catch(err => {
-    console.warn('排班接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/duty-mgmt/schedule', convertedData)
 }
 
 export function checkinDutyMgmt(data) {
-  return requestClient.put('/studentmgmt/duty-mgmt/checkin', data).catch(err => {
-    console.warn('打卡接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/duty-mgmt/checkin', data)
 }
 
 export function shiftApplyDutyMgmt(data) {
-  return requestClient.put('/studentmgmt/duty-mgmt/shiftApply', data).catch(err => {
-    console.warn('调班申请接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/duty-mgmt/shiftApply', data)
 }
 
 export function vehicleApplyDutyMgmt(data) {
-  return requestClient.put('/studentmgmt/duty-mgmt/vehicleApply', data).catch(err => {
-    console.warn('出车申请接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/duty-mgmt/vehicleApply', data)
 }
 
 export function shiftAuditDutyMgmt(data) {
-  return requestClient.put('/studentmgmt/duty-mgmt/shiftAudit', data).catch(err => {
-    console.warn('调班审批接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/duty-mgmt/shiftAudit', data)
 }
 
 export function vehicleAuditDutyMgmt(data) {
-  return requestClient.put('/studentmgmt/duty-mgmt/vehicleAudit', data).catch(err => {
-    console.warn('出车审批接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/duty-mgmt/vehicleAudit', data)
 }
 
 export function uploadRecordDutyMgmt(data) {
-  return requestClient.put('/studentmgmt/duty-mgmt/uploadRecord', data).catch(err => {
-    console.warn('上传记录接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/duty-mgmt/uploadRecord', data)
 }
 
 export function exportDutyMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/duty-mgmt/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/duty-mgmt/export-excel', convertedParams)
 }
 
 export function getDutyMgmtDetail(params) {
@@ -227,10 +203,7 @@ export function getDutyMgmtDetail(params) {
 
 export function updateDutyMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/duty-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/duty-mgmt/update', convertedData)
 }
 
 // ==================== 图表接口 ====================

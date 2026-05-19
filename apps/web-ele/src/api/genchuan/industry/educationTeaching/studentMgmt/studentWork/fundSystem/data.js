@@ -74,35 +74,23 @@ export function getFundSystemPage(params) {
 
 export function createFundSystem(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/fund-system/create', convertedData).catch(err => {
-    console.warn('申请接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/fund-system/create', convertedData)
 }
 
 export function updateFundSystem(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/fund-system/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/fund-system/update', convertedData)
 }
 
 export function auditFundSystem(data) {
   // 审核接口需要转换 status 字段（前端传“已汇总”转为后端数字“1”）
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/fund-system/audit', convertedData).catch(err => {
-    console.warn('审核接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/fund-system/audit', convertedData)
 }
 
 export function exportFundSystem(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/fund-system/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/fund-system/export-excel', convertedParams)
 }
 
 export function getFundSystemDetail(params) {

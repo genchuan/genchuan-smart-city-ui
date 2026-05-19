@@ -9,10 +9,22 @@ export function useFormSchema() {
       labelWidth: '100',
     },
     {
-      fieldName: 'className',
-      label: '班级名称',
+      fieldName: 'studentNum',
+      label: '分班学生数',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入分班学生数',
+        min: 1,
+        step: 1,
+        style: 'width: 100%'
+      },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'confirmUser',
+      label: '确认人',
       component: 'Input',
-      componentProps: { placeholder: '请输入班级名称' },
+      componentProps: { placeholder: '请输入确认人' },
       labelWidth: '100',
     },
     {

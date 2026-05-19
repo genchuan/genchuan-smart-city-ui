@@ -79,18 +79,12 @@ export function getHonorMgmtPage(params) {
 
 export function createHonorMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/honor-mgmt/create', convertedData).catch(err => {
-    console.warn('新增接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/honor-mgmt/create', convertedData)
 }
 
 export function updateHonorMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/honor-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/honor-mgmt/update', convertedData)
 }
 
 export function auditHonorMgmt(data) {
@@ -106,26 +100,16 @@ export function auditHonorMgmt(data) {
       status: convertedData.status,
       auditRemark: convertedData.auditRemark || '',
     },
-  }).catch(err => {
-    console.warn('审核接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  })
 }
 
 export function pushHonorMgmt(data) {
-  // 推送接口只传 id，无需转换
-  return requestClient.put('/studentmgmt/honor-mgmt/push', data).catch(err => {
-    console.warn('推送接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/honor-mgmt/push', data)
 }
 
 export function exportHonorMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/honor-mgmt/export', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/honor-mgmt/export', convertedParams)
 }
 
 export function getHonorMgmtDetail(params) {

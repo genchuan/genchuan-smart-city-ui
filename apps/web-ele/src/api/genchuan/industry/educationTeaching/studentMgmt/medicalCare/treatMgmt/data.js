@@ -75,55 +75,37 @@ export function getTreatMgmtPage(params) {
 // 预约
 export function appointTreatMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/treat-mgmt/appoint', convertedData).catch(err => {
-    console.warn('预约接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/treat-mgmt/appoint', convertedData)
 }
 
 // 审核（批量）
 export function auditTreatMgmt(data) {
   // 审核接口只传 ids，无需转换
-  return requestClient.put('/studentmgmt/treat-mgmt/audit', data).catch(err => {
-    console.warn('审核接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/treat-mgmt/audit', data)
 }
 
 // 登记（批量）
 export function registerTreatMgmt(data) {
   // 登记接口只传 ids, treatContent, registerTime，无需转换
-  return requestClient.put('/studentmgmt/treat-mgmt/register', data).catch(err => {
-    console.warn('登记接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/treat-mgmt/register', data)
 }
 
 // 编辑
 export function updateTreatMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/treat-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/treat-mgmt/update', convertedData)
 }
 
 // 反馈（单个）
 export function feedbackTreatMgmt(data) {
   // 反馈接口只传 id 和 feedbackTime，无需转换
-  return requestClient.put('/studentmgmt/treat-mgmt/feedback', data).catch(err => {
-    console.warn('反馈接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/treat-mgmt/feedback', data)
 }
 
 // 导出
 export function exportTreatMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/treat-mgmt/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/treat-mgmt/export-excel', convertedParams)
 }
 
 // 详情

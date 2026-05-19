@@ -72,7 +72,7 @@ const cardList = computed(() => {
   const transfer = overviewData.value.transferCount || 0;
   const suspend = overviewData.value.suspendCount || 0;
   const dropOut = overviewData.value.dropOutCount || 0;
-  const abnormal = transfer + suspend + dropOut;
+  const abnormal = transfer;
   return [
     {title: '学生总人数', value: total, color: '#409EFF', status: 'total'},
     {title: '在籍人数', value: inSchool, color: '#67C23A', status: 'inSchool'},

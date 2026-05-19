@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -25,12 +25,15 @@ import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
   textObj,
   useGridColumns,
   useSearchFormSchema,
+  statusTypeMap,
+  taskTypeMap,
 } from './data';
 
 const props = defineProps({
@@ -115,16 +118,21 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  if (USE_REAL_API) {
-    try {
-      await exportInspectTask(dataObj.searchParams);
-      ElMessage.success('导出成功');
-    } catch (error) {
-      ElMessage.error('导出失败');
-      console.error(error);
+  const loadingInstance = ElLoading.service({
+    text: '导出中...',
+  });
+  try {
+    if (USE_REAL_API) {
+      const res = await exportInspectTask(dataObj.searchParams);
+      downloadFileFromBlobPart({ fileName: '稽查任务.xlsx', source: res });
+    } else {
+      exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
     }
-  } else {
-    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  } catch (error) {
+    ElMessage.error('导出失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
   }
 }
 
@@ -189,6 +197,17 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
   searchParams: {},
+  currentDispatchRow: null,
+  currentProgressRow: null,
+  currentTransferRow: null,
+  filterLabels: {},
+});
+
+let isSearching = false;
+
+// 用户名映射缓存
+const userNameMap = ref({
+  executeUserId: '',
 });
 
 // 监听下钻筛选参数变化
@@ -208,6 +227,61 @@ if (drillDownFilter) {
   }
 }
 
+const activeFilters = computed(() => {
+  const filters = [];
+  const obj = dataObj.searchParams;
+  const labels = dataObj.filterLabels;
+
+  if (obj.plateNo) {
+    filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
+  }
+  if (obj.taskType) {
+    const taskTypeLabel = labels.taskType || obj.taskType;
+    filters.push({ label: `任务类型：${taskTypeLabel}`, field: 'taskType' });
+  }
+  if (obj.status) {
+    const statusLabel = labels.status || obj.status;
+    filters.push({ label: `任务状态：${statusLabel}`, field: 'status' });
+  }
+  if (obj.areaId) {
+    filters.push({ label: `片区：${obj.areaId}`, field: 'areaId' });
+  }
+  if (obj.executeUserId !== undefined && obj.executeUserId !== null && obj.executeUserId !== '') {
+    const label = labels.executeUserId || userNameMap.value.executeUserId || obj.executeUserId;
+    filters.push({ label: `执行人：${label}`, field: 'executeUserId' });
+  }
+  if (
+    obj.dispatchTime &&
+    Array.isArray(obj.dispatchTime) &&
+    obj.dispatchTime.length === 2
+  ) {
+    filters.push({
+      label: `派发时间：${obj.dispatchTime[0]} 至 ${obj.dispatchTime[1]}`,
+      field: 'dispatchTime',
+    });
+  }
+
+  return filters;
+});
+
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchParams };
+  delete next[fieldName];
+  dataObj.searchParams = next;
+  dataObj.currentPage = 1;
+
+  // 清除对应的标签和用户名映射
+  const nextLabels = { ...dataObj.filterLabels };
+  delete nextLabels[fieldName];
+  dataObj.filterLabels = nextLabels;
+
+  if (fieldName === 'executeUserId') {
+    userNameMap.value.executeUserId = '';
+  }
+
+  gridApi.query();
+};
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -219,10 +293,17 @@ const getTableData = async (pageObj) => {
   if (USE_REAL_API) {
     try {
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
         ...dataObj.searchParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getInspectTaskPage(params);
       dataObj.total = res.total || 0;
@@ -260,11 +341,18 @@ const getTableData = async (pageObj) => {
     let searchMatch = true;
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
-      if (value) {
-        searchMatch =
-          typeof value === 'string'
-            ? searchMatch && v[key]?.toString().includes(value)
-            : searchMatch && v[key] === value;
+      if (value !== undefined && value !== null && value !== '') {
+        if (key === 'dispatchTime' && Array.isArray(value) && value.length === 2) {
+          // 处理时间范围（daterange 格式为 YYYY-MM-DD）
+          const [startDate, endDate] = value;
+          const start = new Date(startDate).getTime();
+          const end = new Date(endDate).getTime() + 86400000; // 加一天以包含整个结束日期
+          searchMatch = searchMatch && v[key] >= start && v[key] <= end;
+        } else if (typeof value === 'string') {
+          searchMatch = searchMatch && v[key]?.toString().includes(value);
+        } else {
+          searchMatch = searchMatch && v[key] === value;
+        }
       }
     });
 
@@ -279,7 +367,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [SearchForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -304,8 +392,36 @@ const [QueryForm] = useVbenForm({
 
 function onSubmit(values) {
   dataObj.searchParams = values;
-  handleRefresh();
+
+  // 保存标签信息
+  const labels = {};
+  const searchSchema = useSearchFormSchema();
+  searchSchema.forEach((field) => {
+    if (field.component === 'Select' && values[field.fieldName]) {
+      const option = field.componentProps.options?.find(
+        (opt) => opt.value === values[field.fieldName]
+      );
+      if (option) {
+        labels[field.fieldName] = option.label;
+      }
+    }
+  });
+
+  dataObj.filterLabels = labels;
+  // 清除用户名映射，因为搜索表单提交时没有用户名
+  userNameMap.value.executeUserId = '';
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
+}
+
+function handleResetFilters() {
+  dataObj.searchParams = {};
+  dataObj.filterLabels = {};
+  dataObj.currentPage = 1;
+  userNameMap.value.executeUserId = '';
+  gridApi.query();
+  ElMessage.success('已重置筛选条件');
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -423,97 +539,108 @@ onUnmounted(() => {
 });
 
 // 派发任务
-const handleDispatch = async (row) => {
-  const [DispatchDrawer, dispatchDrawerApi] = useVbenDrawer({
-    appendToMain: true,
-    modal: false,
-    title: '派发任务',
-    onCancel() {
+const [DispatchDrawer, dispatchDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  title: '派发任务',
+  onCancel() {
+    dispatchDrawerApi.close();
+  },
+  async onConfirm() {
+    const values = dispatchFormApi.form.values;
+    const currentRow = dataObj.currentDispatchRow;
+    try {
+      await dispatchInspectTask({
+        id: currentRow.id,
+        executeUserId: values.executeUserId,
+      });
+      ElMessage.success('派发成功');
+      handleRefresh();
       dispatchDrawerApi.close();
-    },
-    async onConfirm() {
-      const values = dispatchFormApi.form.values;
-      try {
-        await dispatchInspectTask({
-          id: row.id,
-          executeUserId: values.executeUserId,
-        });
-        ElMessage.success('派发成功');
-        handleRefresh();
-        dispatchDrawerApi.close();
-      } catch (error) {
-        ElMessage.error('派发失败');
-        console.error(error);
-      }
-    },
-  });
+    } catch (error) {
+      ElMessage.error('派发失败');
+      console.error(error);
+    }
+  },
+});
 
-  const [DispatchForm, dispatchFormApi] = useVbenForm({
-    schema: [
-      {
-        fieldName: 'executeUserId',
-        label: '执行人',
-        component: 'Select',
-        componentProps: {
-          placeholder: '请选择执行人',
-          options: [],
-        },
-        rules: 'required',
+const [DispatchForm, dispatchFormApi] = useVbenForm({
+  schema: [
+    {
+      fieldName: 'executeUserId',
+      label: '执行人',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择执行人',
+        options: [],
       },
-    ],
-  });
+      rules: 'required',
+    },
+  ],
+});
 
-  dispatchDrawerApi.open();
+const handleDispatch = async (row) => {
+  try {
+    dataObj.currentDispatchRow = row;
+    dispatchDrawerApi.open();
+  } catch (error) {
+    console.error('打开派发抽屉失败:', error);
+    ElMessage.error('打开派发抽屉失败');
+  }
 };
 
 // 批量派发
+const [BatchDispatchDrawer, batchDispatchDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  title: '批量派发',
+  onCancel() {
+    batchDispatchDrawerApi.close();
+  },
+  async onConfirm() {
+    const values = batchDispatchFormApi.form.values;
+    try {
+      await batchDispatchInspectTask({
+        ids: checkedIds.value,
+        executeUserId: values.executeUserId,
+      });
+      ElMessage.success('批量派发成功');
+      checkedIds.value = [];
+      handleRefresh();
+      batchDispatchDrawerApi.close();
+    } catch (error) {
+      ElMessage.error('批量派发失败');
+      console.error(error);
+    }
+  },
+});
+
+const [BatchDispatchForm, batchDispatchFormApi] = useVbenForm({
+  schema: [
+    {
+      fieldName: 'executeUserId',
+      label: '执行人',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择执行人',
+        options: [],
+      },
+      rules: 'required',
+    },
+  ],
+});
+
 const handleBatchDispatch = async () => {
   if (isEmpty(checkedIds.value)) {
     ElMessage.warning('请选择要派发的任务');
     return;
   }
-
-  const [BatchDispatchDrawer, batchDispatchDrawerApi] = useVbenDrawer({
-    appendToMain: true,
-    modal: false,
-    title: '批量派发',
-    onCancel() {
-      batchDispatchDrawerApi.close();
-    },
-    async onConfirm() {
-      const values = batchDispatchFormApi.form.values;
-      try {
-        await batchDispatchInspectTask({
-          ids: checkedIds.value,
-          executeUserId: values.executeUserId,
-        });
-        ElMessage.success('批量派发成功');
-        checkedIds.value = [];
-        handleRefresh();
-        batchDispatchDrawerApi.close();
-      } catch (error) {
-        ElMessage.error('批量派发失败');
-        console.error(error);
-      }
-    },
-  });
-
-  const [BatchDispatchForm, batchDispatchFormApi] = useVbenForm({
-    schema: [
-      {
-        fieldName: 'executeUserId',
-        label: '执行人',
-        component: 'Select',
-        componentProps: {
-          placeholder: '请选择执行人',
-          options: [],
-        },
-        rules: 'required',
-      },
-    ],
-  });
-
-  batchDispatchDrawerApi.open();
+  try {
+    batchDispatchDrawerApi.open();
+  } catch (error) {
+    console.error('打开批量派发抽屉失败:', error);
+    ElMessage.error('打开批量派发抽屉失败');
+  }
 };
 
 // 认领任务
@@ -530,112 +657,126 @@ const handleClaim = async (row) => {
 };
 
 // 更新进度
-const handleUpdateProgress = async (row) => {
-  const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
-    appendToMain: true,
-    modal: false,
-    title: '更新进度',
-    onCancel() {
+const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  title: '更新进度',
+  onCancel() {
+    progressDrawerApi.close();
+  },
+  async onConfirm() {
+    const values = progressFormApi.form.values;
+    const currentRow = dataObj.currentProgressRow;
+    try {
+      await updateInspectTaskProgress({
+        id: currentRow.id,
+        taskProgress: values.taskProgress,
+        remark: values.remark,
+      });
+      ElMessage.success('更新成功');
+      handleRefresh();
       progressDrawerApi.close();
-    },
-    async onConfirm() {
-      const values = progressFormApi.form.values;
-      try {
-        await updateInspectTaskProgress({
-          id: row.id,
-          taskProgress: values.taskProgress,
-          remark: values.remark,
-        });
-        ElMessage.success('更新成功');
-        handleRefresh();
-        progressDrawerApi.close();
-      } catch (error) {
-        ElMessage.error('更新失败');
-        console.error(error);
-      }
-    },
-  });
+    } catch (error) {
+      ElMessage.error('更新失败');
+      console.error(error);
+    }
+  },
+});
 
-  const [ProgressForm, progressFormApi] = useVbenForm({
-    schema: [
-      {
-        fieldName: 'taskProgress',
-        label: '任务进度',
-        component: 'Textarea',
-        componentProps: {
-          placeholder: '请输入任务进度',
-          rows: 3,
-        },
-        rules: 'required',
+const [ProgressForm, progressFormApi] = useVbenForm({
+  schema: [
+    {
+      fieldName: 'taskProgress',
+      label: '任务进度',
+      component: 'Textarea',
+      componentProps: {
+        placeholder: '请输入任务进度',
+        rows: 3,
       },
-      {
-        fieldName: 'remark',
-        label: '备注',
-        component: 'Textarea',
-        componentProps: {
-          placeholder: '请输入备注',
-          rows: 3,
-        },
+      rules: 'required',
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Textarea',
+      componentProps: {
+        placeholder: '请输入备注',
+        rows: 3,
       },
-    ],
-  });
+    },
+  ],
+});
 
-  progressDrawerApi.open();
+const handleUpdateProgress = async (row) => {
+  try {
+    dataObj.currentProgressRow = row;
+    progressDrawerApi.open();
+  } catch (error) {
+    console.error('打开进度更新抽屉失败:', error);
+    ElMessage.error('打开进度更新抽屉失败');
+  }
 };
 
 // 转派任务
-const handleTransfer = async (row) => {
-  const [TransferDrawer, transferDrawerApi] = useVbenDrawer({
-    appendToMain: true,
-    modal: false,
-    title: '转派任务',
-    onCancel() {
+const [TransferDrawer, transferDrawerApi] = useVbenDrawer({
+  appendToMain: true,
+  modal: false,
+  title: '转派任务',
+  onCancel() {
+    transferDrawerApi.close();
+  },
+  async onConfirm() {
+    const values = transferFormApi.form.values;
+    const currentRow = dataObj.currentTransferRow;
+    try {
+      await transferInspectTask({
+        id: currentRow.id,
+        targetUserId: values.targetUserId,
+        transferReason: values.transferReason,
+      });
+      ElMessage.success('转派成功');
+      handleRefresh();
       transferDrawerApi.close();
-    },
-    async onConfirm() {
-      const values = transferFormApi.form.values;
-      try {
-        await transferInspectTask({
-          id: row.id,
-          targetUserId: values.targetUserId,
-          transferReason: values.transferReason,
-        });
-        ElMessage.success('转派成功');
-        handleRefresh();
-        transferDrawerApi.close();
-      } catch (error) {
-        ElMessage.error('转派失败');
-        console.error(error);
-      }
-    },
-  });
+    } catch (error) {
+      ElMessage.error('转派失败');
+      console.error(error);
+    }
+  },
+});
 
-  const [TransferForm, transferFormApi] = useVbenForm({
-    schema: [
-      {
-        fieldName: 'targetUserId',
-        label: '目标执行人',
-        component: 'Select',
-        componentProps: {
-          placeholder: '请选择目标执行人',
-          options: [],
-        },
-        rules: 'required',
+const [TransferForm, transferFormApi] = useVbenForm({
+  schema: [
+    {
+      fieldName: 'targetUserId',
+      label: '目标执行人',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择目标执行人',
+        options: [],
       },
-      {
-        fieldName: 'transferReason',
-        label: '转派理由',
-        component: 'Textarea',
-        componentProps: {
-          placeholder: '请输入转派理由',
-          rows: 3,
-        },
-        rules: 'required',
+      rules: 'required',
+    },
+    {
+      fieldName: 'transferReason',
+      label: '转派理由',
+      component: 'Textarea',
+      componentProps: {
+        placeholder: '请输入转派理由',
+        rows: 3,
       },
-    ],
-  });
+      rules: 'required',
+    },
+  ],
+});
 
-  transferDrawerApi.open();
+const handleTransfer = async (row) => {
+  try {
+    dataObj.currentTransferRow = row;
+    transferDrawerApi.open();
+  } catch (error) {
+    console.error('打开转派抽屉失败:', error);
+    ElMessage.error('打开转派抽屉失败');
+  }
 };
 
 // 归档任务
@@ -728,6 +869,22 @@ const getActionButtons = (row) => {
 
   return buttons;
 };
+
+// 字段点击筛选
+const handleFieldFilter = (field, value, userName = '') => {
+  Object.assign(dataObj.searchParams, {
+    [field]: value,
+  });
+
+  // 更新用户名映射
+  if (field === 'executeUserId' && userName) {
+    userNameMap.value.executeUserId = userName;
+  }
+
+  dataObj.currentPage = 1;
+  isSearching = true;
+  handleRefresh();
+};
 </script>
 
 <template>
@@ -742,11 +899,49 @@ const getActionButtons = (row) => {
       :fields="detailFields"
     />
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <SearchForm class="query-form" />
     </Drawer>
+    <DispatchDrawer>
+      <DispatchForm />
+    </DispatchDrawer>
+    <BatchDispatchDrawer>
+      <BatchDispatchForm />
+    </BatchDispatchDrawer>
+    <ProgressDrawer>
+      <ProgressForm />
+    </ProgressDrawer>
+    <TransferDrawer>
+      <TransferForm />
+    </TransferDrawer>
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
+          <div
+            v-if="activeFilters.length > 0"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+              margin-bottom: 12px;
+            "
+          >
+            <el-tag
+              v-for="filter in activeFilters"
+              :key="filter.field"
+              type="primary"
+              closable
+              @close="handleClearField(filter.field)"
+            >
+              {{ filter.label }}
+            </el-tag>
+            <IconButton
+              v-if="activeFilters.length > 0"
+              content="重置"
+              icon-name="RefreshLeft"
+              @click="handleResetFilters"
+            />
+          </div>
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -782,52 +977,64 @@ const getActionButtons = (row) => {
             @click="handleSerachShow"
           />
           <IconButton
+            content="重置"
+            icon-name="Refresh"
+            @click="handleResetFilters"
+          />
+          <IconButton
             content="全屏"
             icon-name="FullScreen"
             @click="handleFullShow"
           />
         </div>
       </template>
-      <template #id="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
-          {{ row.id }}
-        </el-text>
-      </template>
       <template #taskType="{ row }">
-        <el-text class="common-align">
+        <el-tag
+          :type="taskTypeMap[row.taskType]"
+          @click="handleFieldFilter('taskType', row.taskType)"
+          style="cursor: pointer"
+        >
           {{ row.taskType }}
-        </el-text>
+        </el-tag>
       </template>
       <template #status="{ row }">
         <el-tag
-          :type="
-            row.status === '待派发'
-              ? 'info'
-              : row.status === '待认领'
-                ? 'warning'
-                : row.status === '处理中'
-                  ? 'primary'
-                  : row.status === '已完成'
-                    ? 'success'
-                    : 'info'
-          "
+          :type="statusTypeMap[row.status]"
+          @click="handleFieldFilter('status', row.status)"
+          style="cursor: pointer"
         >
           {{ row.status }}
         </el-tag>
       </template>
       <template #areaName="{ row }">
-        <el-text class="common-align" type="primary">
+        <el-text
+          @click="handleFieldFilter('areaId', row.areaName)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
           {{ row.areaName }}
         </el-text>
       </template>
       <template #executeUserName="{ row }">
-        <el-text class="common-align" type="primary">
+        <el-text
+          @click="handleFieldFilter('executeUserId', row.executeUserName, row.executeUserName)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
           {{ row.executeUserName || '-' }}
         </el-text>
+      </template>
+      <template #updater="{ row }">
+        <span>{{ row.updater || '-' }}</span>
+      </template>
+      <template #updateTime="{ row }">
+        <span>{{ formatTime(row.updateTime) }}</span>
+      </template>
+      <template #correctionMark="{ row }">
+        <el-tag v-if="row.isCorrected" type="success">已修正</el-tag>
+        <el-tag v-else type="info">未修正</el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

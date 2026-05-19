@@ -42,7 +42,7 @@ let barChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationId: props.parkId,
+      stationName: props.parkId,
     };
 
     const res = await getAbnormalLeaveChart(params);
@@ -110,6 +110,22 @@ function initPieChart() {
     ],
   };
   pieChartInstance.setOption(option);
+
+  // 添加点击事件 - 点击折线数据点筛选对应日期的异常离场记录
+  pieChartInstance.on('click', (params) => {
+    const clickDate = new Date(params.name);
+    const startTime = new Date(clickDate.setHours(0, 0, 0, 0))
+      .getTime()
+      .toString();
+    const endTime = new Date(clickDate.setHours(23, 59, 59, 999))
+      .getTime()
+      .toString();
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:abnormalLeave', {
+        detail: { startTime, endTime },
+      }),
+    );
+  });
 }
 
 function initBarChart() {
@@ -140,6 +156,16 @@ function initBarChart() {
     ],
   };
   barChartInstance.setOption(option);
+
+  // 添加点击事件 - 点击柱形筛选对应场站的异常离场记录
+  barChartInstance.on('click', (params) => {
+    const stationName = params.name;
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:abnormalLeave', {
+        detail: { stationName },
+      }),
+    );
+  });
 }
 
 function initCharts() {
@@ -148,15 +174,19 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
-  const filterMap = {
-    waitHandleCount: { handleStatus: '待处置' },
-    handleCompleteRate: { handleStatus: '已完成' },
-  };
-
-  const filterParams = filterMap[key];
-  if (filterParams) {
+  if (key === 'waitHandleCount') {
+    // 待处置异常数：筛选未处理状态
     window.dispatchEvent(
-      new CustomEvent('filterByChart:abnormalLeave', { detail: filterParams }),
+      new CustomEvent('filterByChart:abnormalLeave', {
+        detail: { status: '未处理' },
+      }),
+    );
+  } else if (key === 'handleCompleteRate') {
+    // 处置完成率：筛选已关闭状态
+    window.dispatchEvent(
+      new CustomEvent('filterByChart:abnormalLeave', {
+        detail: { status: '已关闭' },
+      }),
     );
   }
 }
@@ -229,8 +259,8 @@ onUnmounted(() => {
 .chart-box {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
   gap: 15px;
+  align-items: flex-end;
   width: 100% !important;
   padding-right: 15px;
   padding-bottom: 0.5rem;
@@ -247,9 +277,8 @@ onUnmounted(() => {
 
     .left-card {
       display: flex;
+      flex: 1;
       flex-direction: column;
-      flex: 1;
-      flex: 1;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;

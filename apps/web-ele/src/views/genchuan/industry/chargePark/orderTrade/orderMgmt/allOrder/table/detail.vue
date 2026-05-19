@@ -12,6 +12,7 @@ const statusMap = {
   completed: { label: '已完成', type: 'success' },
   cancelled: { label: '已取消', type: 'info' },
   refunding: { label: '退款中', type: 'danger' },
+  refunded: { label: '已退款', type: 'danger' },
 };
 
 // 订单类型映射
@@ -55,8 +56,8 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   onCancel() {
     detailDrawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
+  onConfirm() { },
+  async onOpenChange() { },
 });
 
 // 对外暴露打开/关闭抽屉的方法
@@ -117,7 +118,7 @@ defineExpose({
         <div class="detail-row-right">
           {{ detailObj.payTime || '-' }}
         </div>
-      </div> 
+      </div>
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">

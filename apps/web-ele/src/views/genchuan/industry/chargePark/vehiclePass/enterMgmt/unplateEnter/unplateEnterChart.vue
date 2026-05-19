@@ -24,13 +24,6 @@ const cards = reactive([
     color: '#50E3C2',
     key: 'passRate',
   },
-  {
-    title: '待审核数',
-    value: 0,
-    desc: '等待审核',
-    color: '#FF6B8B',
-    key: 'pending',
-  },
 ]);
 
 const state = reactive({
@@ -46,7 +39,7 @@ let barChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationId: props.parkId,
+      stationName: props.parkId,
     };
 
     const res = await unplateEnterApi.getChart(params);
@@ -57,7 +50,6 @@ async function loadChartData() {
       cards[1].value = res.cardData.auditPassRate
         ? `${res.cardData.auditPassRate}%`
         : '0%';
-      cards[2].value = res.cardData.pendingAuditCount || 0;
     }
 
     // 使用模拟数据测试
@@ -141,7 +133,9 @@ function initCharts() {
 function handleCardClick(key) {
   const today = new Date();
   const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999))
+    .getTime()
+    .toString();
 
   const filterMap = {
     total: { startTime: todayStart, endTime: todayEnd },
@@ -220,8 +214,8 @@ onUnmounted(() => {
 .chart-box {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
   gap: 15px;
+  align-items: flex-end;
   width: 100% !important;
   padding-right: 15px;
   padding-bottom: 0.5rem;
@@ -238,8 +232,8 @@ onUnmounted(() => {
 
     .left-card {
       display: flex;
-      flex-direction: column;
       flex: 1;
+      flex-direction: column;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;

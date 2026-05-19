@@ -95,21 +95,6 @@ export function useScheduleFormSchema() {
       labelWidth: '100',
     },
     {
-      fieldName: 'status',
-      label: '状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择状态',
-        options: [
-          { label: '待打卡', value: '待打卡' },
-          { label: '已完成', value: '已完成' },
-        ],
-        defaultValue: '待打卡',
-      },
-      rules: 'required',
-      labelWidth: '100',
-    },
-    {
       fieldName: 'remark',
       label: '备注',
       component: 'Input',

@@ -424,9 +424,17 @@ defineExpose({handleFilterTagClick, clearFilters});
 
 // ========== 监听图表自定义事件 ==========
 const handleChartFilter = (event) => {
-  const {type, value} = event.detail;
+  const { type, value } = event.detail;
   if (type === 'dormNum') {
     handleFilterTagClick('dormNum', value);
+  } else if (type === 'cycle') {
+    // 周期筛选：直接设置 searchParams 并刷新列表
+    if (value) {
+      searchParams.value.cycle = value;
+    } else {
+      delete searchParams.value.cycle;
+    }
+    gridApi.query(); // 触发列表重新查询
   }
 };
 

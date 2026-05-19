@@ -28,7 +28,7 @@ export const getGenerateStatusTagType = (status) => {
 export const dataList = () => {
   return [
     // 日报数据
-    
+
     {
       id: 9,
       reportCycle: '日报',
@@ -48,6 +48,7 @@ export const dataList = () => {
       createCost: 10,
       updateTime: '2026-05-07 00:05:15',
       creator: '系统自动',
+      isCorrected: false,
       remark: '自动生成日报',
     },
     {
@@ -69,6 +70,7 @@ export const dataList = () => {
       createCost: 15,
       updateTime: '2026-05-08 00:05:18',
       creator: '系统自动',
+      isCorrected: false,
       remark: '自动生成日报',
     },
     // 周报数据
@@ -91,6 +93,7 @@ export const dataList = () => {
       createCost: 45,
       updateTime: '2026-05-12 01:15:32',
       creator: '系统自动',
+      isCorrected: false,
       remark: '自动生成周报',
     },
     // 月报数据
@@ -113,6 +116,7 @@ export const dataList = () => {
       createCost: 0,
       updateTime: '2026-05-08 10:30:00',
       creator: '系统自动',
+      isCorrected: false,
       remark: '月报生成中',
     },
     // 季报数据
@@ -135,6 +139,7 @@ export const dataList = () => {
       createCost: 285,
       updateTime: '2026-04-01 03:45:28',
       creator: '系统自动',
+      isCorrected: false,
       remark: '自动生成季报',
     },
     // 半年报数据
@@ -157,6 +162,7 @@ export const dataList = () => {
       createCost: 456,
       updateTime: '2026-01-01 05:25:15',
       creator: '系统自动',
+      isCorrected: false,
       remark: '自动生成半年报',
     },
     // 年报数据
@@ -179,6 +185,7 @@ export const dataList = () => {
       createCost: 825,
       updateTime: '2026-01-01 08:15:42',
       creator: '系统自动',
+      isCorrected: false,
       remark: '自动生成年报',
     },
     // 自定义报表数据
@@ -201,6 +208,7 @@ export const dataList = () => {
       createCost: 28,
       updateTime: '2026-05-07 15:32:18',
       creator: '张三',
+      isCorrected: false,
       remark: '工作日高峰时段分析',
     },
   ];
@@ -227,7 +235,7 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationId',
+      fieldName: 'stationName',
       label: '场站',
       component: 'Select',
       componentProps: {
@@ -386,6 +394,13 @@ export function useGridColumns() {
       slots: { default: 'creator' },
     },
     {
+      field: 'isCorrected',
+      title: '修正记录标记',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'correctionMark' },
+    },
+    {
       title: '操作',
       width: 180,
       fixed: 'right',
@@ -420,6 +435,11 @@ export const detailFields = [
   { key: 'createCost', label: '报表生成耗时(秒)' },
   { key: 'updateTime', label: '数据更新时间', formatter: formatTime },
   { key: 'creator', label: '操作人' },
+  {
+    key: 'isCorrected',
+    label: '修正记录标记',
+    formatter: (val) => (val ? '已修正' : '未修正'),
+  },
   { key: 'remark', label: '备注' },
 ];
 
