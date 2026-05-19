@@ -84,6 +84,7 @@ const [Form, formApi] = useVbenForm({
 const [FormDrawer, formDrawerApi] = useVbenDrawer({
   appendToMain: true,
   modal: false,
+  width: 800,
   onCancel() {
     formDrawerApi.close();
   },

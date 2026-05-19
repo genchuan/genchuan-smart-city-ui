@@ -212,6 +212,20 @@ const ENERGYCHARGE_DICT = {
   ORDER_REFUND_CHANNEL: 'order_refund_refund_channel', // 订单退款渠道
   ORDER_REFUND_STATUS: 'order_refund_refund_status', // 订单退款状态
 } as const;
+/** ========== 智慧园区模块 ========== */
+const SMARTPARK_DICT = {
+  // 招商运营
+  // 招商资源
+  // 场地管理
+  SITE_MGMT_SITE_STATUS: 'site_mgmt_site_status', // 场地状态
+  // 信息发布
+  INFO_PUBLISH_INFO_STATUS: 'info_publish_info_status', // 信息发布状态
+  INFO_PUBLISH_INFO_TYPE: 'info_publish_info_type', // 信息类型
+  // 客户档案
+  CLIENT_FILE_INTENT_LEVEL: 'client_file_intent_level', // 意向程度
+  CLIENT_FILE_DEMAND_TYPE: 'client_file_demand_type', // 需求类型
+  CLIENT_FILE_CLIENT_STATUS: 'client_file_client_status', // 客户状态
+} as const;
 
 /** ========== CHGPARKMGT  - 充电停车一体化管理模块 ========== */
 const CHGPARKMGT_DICT = {
@@ -333,6 +347,7 @@ const DICT_TYPE = {
   ...SHUNCHANG_DICT,
   ...ENERGYCHARGE_DICT,
   ...CHGPARKMGT_DICT,
+  ...SMARTPARK_DICT,
 } as const;
 
 export { DICT_TYPE };

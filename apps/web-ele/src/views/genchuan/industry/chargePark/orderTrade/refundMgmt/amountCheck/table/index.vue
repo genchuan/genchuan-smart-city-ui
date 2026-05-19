@@ -704,6 +704,12 @@ watch(
             v-if="row.status === 'checked'"
             icon-name="Check"
             @click="handleConfirm(row)"
+          /> 
+          <IconButton
+            content="核算"
+            v-if="row.status === 'pending'"
+            icon-name="Check"
+            @click="handleConfirm(row)"
           />
         </div>
       </template>

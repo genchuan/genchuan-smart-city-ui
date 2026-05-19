@@ -369,6 +369,13 @@ export function useGridColumns() {
       sortable: true,
     },
     {
+      field: 'invoiceStatus',
+      title: '开票状态',
+      minWidth: 120,
+      sortable: true,
+      slots: { default: 'invoiceStatus' },
+    },
+    {
       title: '操作',
       width: 150,
       fixed: 'right',
