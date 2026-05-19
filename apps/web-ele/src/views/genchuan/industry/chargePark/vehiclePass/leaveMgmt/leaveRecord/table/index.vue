@@ -202,7 +202,12 @@ const [UpdateFormDrawer, updateFormDrawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = updateFormDrawerApi.getData();
-      await updateFormApi.setValues(formData.value);
+      const formValues = {
+        ...formData.value,
+        enterTime: formData.value.enterTime ? new Date(formData.value.enterTime).getTime() : null,
+        leaveTime: formData.value.leaveTime ? new Date(formData.value.leaveTime).getTime() : null,
+      };
+      await updateFormApi.setValues(formValues);
     }
   },
 });
@@ -272,7 +277,12 @@ const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = correctFormDrawerApi.getData();
-      await correctFormApi.setValues(formData.value);
+      const formValues = {
+        ...formData.value,
+        enterTime: formData.value.enterTime ? new Date(formData.value.enterTime).getTime() : null,
+        leaveTime: formData.value.leaveTime ? new Date(formData.value.leaveTime).getTime() : null,
+      };
+      await correctFormApi.setValues(formValues);
     }
   },
 });

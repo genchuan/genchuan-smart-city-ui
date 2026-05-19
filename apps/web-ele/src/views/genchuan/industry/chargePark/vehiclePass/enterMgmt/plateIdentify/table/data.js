@@ -10,8 +10,8 @@ export async function getStationOptions() {
   }
   try {
     const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
-    if (response && response.data && Array.isArray(response.data)) {
-      stationOptionsCache = response.data.map(item => ({
+    if (response && Array.isArray(response)) {
+      stationOptionsCache = response.map(item => ({
         label: item.stationName,
         value: item.stationId,
       }));
