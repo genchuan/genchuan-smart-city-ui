@@ -159,7 +159,7 @@ defineExpose({
         </ElSelect> -->
         <ElInput v-model="form.area" placeholder="请输入所属片区" />
       </ElFormItem>
-      <ElFormItem label="绑定设备">
+      <ElFormItem label="绑定设备ID">
         <!-- <ElSelect
           v-model="form.deviceId"
           clearable
@@ -173,7 +173,7 @@ defineExpose({
             :value="item.value"
           />
         </ElSelect> -->
-        <ElInput v-model="form.deviceId" placeholder="请输入绑定设备Id" />
+        <ElInputNumber v-model="form.deviceId" placeholder="请输入绑定设备Id" style="width: 100%;" />
       </ElFormItem>
       <ElFormItem label="人员状态" prop="status">
         <ElSelect
