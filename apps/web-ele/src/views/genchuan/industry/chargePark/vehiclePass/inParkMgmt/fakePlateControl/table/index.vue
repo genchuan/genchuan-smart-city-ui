@@ -21,7 +21,8 @@ import {
 } from '#/api/genchuan/industry/chargePark/vehiclePass/inParkMgmt/fakePlateControl';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { exportToExcel, downloadFile } from '#/utils/excel.js';
+import { exportToExcel } from '#/utils/excel.js';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import { formatTime } from '../../../utils/timeFormatter';
 
 import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
@@ -175,7 +176,7 @@ async function handleExport() {
   try {
     if (USE_REAL_API) {
       const res = await exportFakePlateControl(dataObj.searchParams);
-      await  downloadFile(res, '套牌控制');
+      downloadFileFromBlobPart({ fileName: '套牌控制.xlsx', source: res });
       ElMessage.success('导出成功');
     } else {
       exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
