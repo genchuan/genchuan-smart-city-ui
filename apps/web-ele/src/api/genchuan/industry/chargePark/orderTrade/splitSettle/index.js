@@ -40,7 +40,7 @@ export function regenerateSettleBill(data) {
 }
 /** 结算单据结算 */
 export function settleSettleBill(data) {
-  return requestClient.put('/ordertrade/settle-bill/settle', data);
+  return requestClient.post('/ordertrade/settle-bill/settle', data);
 }
 /** 结算单据审核驳回 */
 export function rejectSettleBill(data) {
