@@ -101,7 +101,7 @@ async function handleBatchInvoice() {
   }
   await confirm('确定批量开票选中的记录吗？');
   try {
-    await batchInvoice({ ids: checkedIds.value });
+    await batchInvoice(checkedIds.value);
     ElMessage.success('批量开票成功');
     handleRefresh();
   } catch (error) {
