@@ -137,7 +137,7 @@ const [GenerateDrawer, generateDrawerApi] = useVbenDrawer({
     try {
       await generateCycleReport({
         reportCycle: values.reportCycle,
-        reportType: values.reportType,
+        reportType: values.reportCycle === '自定义报表' ? '自定义' : '',
         stationId: values.stationId,
         stationName: values.stationName,
         statTimeEnd,

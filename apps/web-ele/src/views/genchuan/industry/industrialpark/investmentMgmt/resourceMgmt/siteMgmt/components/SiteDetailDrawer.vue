@@ -4,9 +4,6 @@ import { ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 
 import { ElImage, ElTag } from 'element-plus';
-import { DICT_TYPE } from '@vben/constants';
-import { getDictObj} from '@vben/hooks';
-import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
 
 import { getSiteStatusConfig, getSiteStatusTagType } from '../table/data';
 
@@ -58,22 +55,31 @@ defineExpose({ open });
           <div class="detail-item">
             <span class="detail-label">场地状态：</span>
             <span class="detail-value">
-              <el-tag :type="getSiteStatusTagType(siteData.siteStatus)">
+              <ElTag :type="getSiteStatusTagType(siteData.siteStatus)">
                 {{ getSiteStatusConfig(siteData.siteStatus).label }}
-              </el-tag>
+              </ElTag>
             </span>
           </div>
-          <div class="detail-item" v-if="siteData.siteStatus === 1 || siteData.siteStatus === 2">
+          <div
+            class="detail-item"
+            v-if="siteData.siteStatus === 1 || siteData.siteStatus === 2"
+          >
             <span class="detail-label">预约客户：</span>
-            <span class="detail-value">{{ siteData.orderClientName || '-' }}</span>
+            <span class="detail-value">{{
+              siteData.orderClientName || '-'
+            }}</span>
           </div>
           <div class="detail-item" v-if="siteData.siteStatus === 2">
             <span class="detail-label">签约企业：</span>
-            <span class="detail-value">{{ siteData.signCompanyName || '-' }}</span>
+            <span class="detail-value">{{
+              siteData.signCompanyName || '-'
+            }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">操作人：</span>
-            <span class="detail-value">{{ siteData.handleUserName || '-' }}</span>
+            <span class="detail-value">{{
+              siteData.handleUserName || '-'
+            }}</span>
           </div>
         </div>
       </div>
@@ -81,7 +87,7 @@ defineExpose({ open });
       <!-- 照片和平面图卡片 -->
       <div class="detail-card" v-if="siteData.photos || siteData.floorPlan">
         <!-- 照片展示 -->
-        <div v-if="siteData.photos" style="margin-bottom: 16px;">
+        <div v-if="siteData.photos" style="margin-bottom: 16px">
           <h4 class="section-title">照片</h4>
           <div class="image-gallery">
             <ElImage
@@ -121,11 +127,15 @@ defineExpose({ open });
           </div>
           <div class="detail-item">
             <span class="detail-label">创建时间：</span>
-            <span class="detail-value">{{ siteData._createTimeFormatted || siteData.createTime }}</span>
+            <span class="detail-value">{{
+              siteData._createTimeFormatted || siteData.createTime
+            }}</span>
           </div>
           <div class="detail-item">
             <span class="detail-label">更新时间：</span>
-            <span class="detail-value">{{ siteData._updateTimeFormatted || siteData.updateTime }}</span>
+            <span class="detail-value">{{
+              siteData._updateTimeFormatted || siteData.updateTime
+            }}</span>
           </div>
         </div>
       </div>
@@ -137,8 +147,8 @@ defineExpose({ open });
 .detail-container {
   box-sizing: border-box;
   height: 100%;
-  overflow-y: auto;
   padding: 0;
+  overflow-y: auto;
 }
 
 .detail-card {
@@ -167,12 +177,12 @@ defineExpose({ open });
 }
 
 .detail-label {
+  flex-shrink: 0;
   width: 120px;
   font-size: 14px;
   font-weight: 500;
   color: var(--el-text-color-regular, #606266);
   text-align: right;
-  flex-shrink: 0;
 }
 
 .detail-value {
@@ -184,7 +194,7 @@ defineExpose({ open });
 }
 
 .section-title {
-  margin: 0 0 12px 0;
+  margin: 0 0 12px;
   font-size: 14px;
   font-weight: 600;
   color: #303133;
@@ -199,15 +209,15 @@ defineExpose({ open });
 .gallery-image {
   width: 100%;
   height: 150px;
-  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
   border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
 .gallery-image:hover {
+  box-shadow: 0 8px 16px rgb(0 0 0 / 15%);
   transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
 .floor-plan-container {
@@ -215,8 +225,8 @@ defineExpose({ open });
   justify-content: center;
   padding: 16px;
   background-color: #f5f7fa;
-  border-radius: 8px;
   border: 1px solid #e4e7ed;
+  border-radius: 8px;
 }
 
 .floor-plan-image {

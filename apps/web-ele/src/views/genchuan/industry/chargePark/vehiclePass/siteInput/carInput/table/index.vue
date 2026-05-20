@@ -1,39 +1,40 @@
-﻿<script setup>
+<script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  exportCarInput,
-  getCarInputPage,
-  getCarInput,
-  createCarInput,
   auditCarInput,
   confirmCarInput,
   correctCarInput,
+  createCarInput,
+  exportCarInput,
+  getCarInput,
+  getCarInputPage,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/siteInput/carInput';
+import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
-import IconButton from '#/components/common/IconButton.vue';
 import { exportToExcel } from '#/utils/excel.js';
 
 import SpaceDetailDialog from '../../../components/SpaceDetailDialog.vue';
 import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
   textObj,
-  useSearchFormSchema,
-  useCreateFormSchema,
-  useGridColumns,
   useAuditFormSchema,
   useCorrectFormSchema,
+  useCreateFormSchema,
+  useGridColumns,
+  useSearchFormSchema,
 } from './data';
 
 const props = defineProps({
@@ -81,20 +82,47 @@ const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
     createFormDrawerApi.close();
   },
   async onConfirm() {
+    try {
+      await createFormApi.validate();
+    } catch {
+      ElMessage.warning('请完善表单信息');
+      return;
+    }
+
+    const values = createFormApi.form.values;
+
     if (USE_REAL_API) {
+      const loadingInstance = ElLoading.service({ text: '新增中...' });
       try {
-        const values = createFormApi.form.values;
-        await createCarInput(values);
+        await createCarInput({
+          ...values,
+          status: '待审核',
+        });
         ElMessage.success('新增成功');
         handleRefresh();
         createFormDrawerApi.close();
       } catch (error) {
         ElMessage.error('新增失败');
         console.error(error);
+      } finally {
+        loadingInstance.close();
       }
     } else {
-      const obj = createFormApi.form.values;
-      dataObj.apilist.push(obj);
+      dataObj.apilist.push({
+        ...values,
+        id: Date.now().toString(),
+        status: '待审核',
+        inputTime: Date.now(),
+        auditUserId: null,
+        auditUserName: null,
+        auditTime: null,
+        auditComment: null,
+        isCorrected: false,
+        creator: 'admin',
+        createTime: Date.now(),
+        updater: 'admin',
+        updateTime: Date.now(),
+      });
       handleRefresh();
       createFormDrawerApi.close();
     }
@@ -111,16 +139,77 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  if (USE_REAL_API) {
+  try {
+    let exportFormat = 'excel';
     try {
-      await exportCarInput(dataObj.searchParams);
-      ElMessage.success('导出成功');
+      await ElMessageBox.confirm(
+        '请选择导出格式：\n• Excel格式支持完整数据和中文显示（推荐）\n• PDF格式中文显示可能不正确，仅供参考',
+        '选择导出格式',
+        {
+          confirmButtonText: 'Excel (.xlsx) 推荐',
+          cancelButtonText: 'PDF (.pdf)',
+          type: 'info',
+          distinguishCancelAndClose: true,
+        },
+      );
+      exportFormat = 'excel';
     } catch (error) {
-      ElMessage.error('导出失败');
-      console.error(error);
+      if (error === 'cancel') {
+        exportFormat = 'pdf';
+        try {
+          await ElMessageBox.confirm(
+            '提示：PDF格式中文显示可能不正确，建议使用Excel格式。确定继续导出PDF吗？',
+            '确认导出PDF',
+            {
+              confirmButtonText: '继续导出PDF',
+              cancelButtonText: '返回选择Excel',
+              type: 'warning',
+            },
+          );
+        } catch {
+          exportFormat = 'excel';
+        }
+      } else {
+        return;
+      }
     }
-  } else {
-    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+
+    const loadingInstance = ElLoading.service({
+      text: '导出中...',
+    });
+
+    try {
+      if (USE_REAL_API) {
+        const res = await exportCarInput(dataObj.searchParams);
+        const fileExtension = exportFormat === 'pdf' ? '.pdf' : '.xlsx';
+        await downloadFileFromBlobPart({
+          fileName: `车辆录入数据${fileExtension}`,
+          source: res,
+        });
+        ElMessage.success({
+          message: '导出成功！文件已开始下载',
+          duration: 3000,
+        });
+      } else {
+        exportToExcel(
+          dataObj.list.length > 0 ? dataObj.list : dataObj.apilist,
+          textObj.excelName,
+          textObj.excelAllName,
+        );
+        ElMessage.success({
+          message: '导出成功！',
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      const errorMessage = error.message || '未知错误';
+      ElMessage.error(`导出失败：${errorMessage}`);
+      console.error(error);
+    } finally {
+      loadingInstance.close();
+    }
+  } catch (error) {
+    console.error('导出操作失败:', error);
   }
 }
 
@@ -130,19 +219,6 @@ function handleCreate() {
       title: textObj.addText,
     })
     .open();
-}
-
-async function handleDelete(row) {
-  const loadingInstance = ElLoading.service({
-    text: $t('ui.actionMessage.deleting', [row.plateNo]),
-  });
-  try {
-    dataObj.apilist = dataObj.apilist.filter((v) => v.id !== row.id);
-    ElMessage.success($t('ui.actionMessage.deleteSuccess', [row.plateNo]));
-    handleRefresh();
-  } finally {
-    loadingInstance.close();
-  }
 }
 
 async function handleDeleteBatch() {
@@ -177,7 +253,52 @@ const dataObj = reactive({
   list: [],
   searchParams: {},
   currentRow: null,
+  filterLabels: {},
 });
+
+let isSearching = false;
+
+const activeFilters = computed(() => {
+  const filters = [];
+  const obj = dataObj.searchParams;
+  const labels = dataObj.filterLabels;
+
+  if (obj.plateNo) {
+    filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
+  }
+  if (obj.status) {
+    const statusLabel = labels.status || obj.status;
+    filters.push({ label: `审核状态：${statusLabel}`, field: 'status' });
+  }
+  if (obj.areaName) {
+    filters.push({ label: `片区：${obj.areaName}`, field: 'areaName' });
+  }
+  if (obj.inputUserName) {
+    filters.push({ label: `录入人：${obj.inputUserName}`, field: 'inputUserName' });
+  }
+  if (obj.auditUserName) {
+    filters.push({ label: `审核人：${obj.auditUserName}`, field: 'auditUserName' });
+  }
+  if (obj.inputTime && Array.isArray(obj.inputTime)) {
+    const timeLabel = `时间范围：${obj.inputTime[0]} ~ ${obj.inputTime[1]}`;
+    filters.push({ label: timeLabel, field: 'inputTime' });
+  }
+
+  return filters;
+});
+
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchParams };
+  delete next[fieldName];
+  dataObj.searchParams = next;
+
+  const nextLabels = { ...dataObj.filterLabels };
+  delete nextLabels[fieldName];
+  dataObj.filterLabels = nextLabels;
+
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
 
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -190,10 +311,17 @@ const getTableData = async (pageObj) => {
   if (USE_REAL_API) {
     try {
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
         ...dataObj.searchParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getCarInputPage(params);
       dataObj.total = res.total || 0;
@@ -210,10 +338,6 @@ const getTableData = async (pageObj) => {
   const filteredList = dataObj.apilist.filter((v) => {
     let statusMatch = true;
     switch (activeName.value) {
-      case '待审核': {
-        statusMatch = v.status === '待审核';
-        break;
-      }
       case '已通过': {
         statusMatch = v.status === '已通过';
         break;
@@ -222,16 +346,25 @@ const getTableData = async (pageObj) => {
         statusMatch = v.status === '已驳回';
         break;
       }
+      case '待审核': {
+        statusMatch = v.status === '待审核';
+        break;
+      }
     }
 
     let searchMatch = true;
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
       if (value) {
-        searchMatch =
-          typeof value === 'string'
-            ? searchMatch && v[key]?.toString().includes(value)
-            : searchMatch && v[key] === value;
+        if (key === 'inputTime' && Array.isArray(value)) {
+          const itemTime = new Date(v.inputTime).toISOString().split('T')[0];
+          const startTime = value[0].split(' ')[0];
+          const endTime = value[1].split(' ')[0];
+          searchMatch = searchMatch && itemTime >= startTime && itemTime <= endTime;
+        } else {
+          searchMatch =
+            searchMatch && v[key]?.toString().includes(value.toString());
+        }
       }
     });
 
@@ -246,7 +379,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [SearchForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -271,8 +404,33 @@ const [QueryForm] = useVbenForm({
 
 function onSubmit(values) {
   dataObj.searchParams = values;
-  handleRefresh();
+
+  // 保存标签信息
+  const labels = {};
+  const searchSchema = useSearchFormSchema();
+  searchSchema.forEach((field) => {
+    if (field.component === 'Select' && values[field.fieldName]) {
+      const option = field.componentProps.options?.find(
+        (opt) => opt.value === values[field.fieldName]
+      );
+      if (option) {
+        labels[field.fieldName] = option.label;
+      }
+    }
+  });
+
+  dataObj.filterLabels = labels;
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
+}
+
+function handleResetFilters() {
+  dataObj.searchParams = {};
+  dataObj.filterLabels = {};
+  dataObj.currentPage = 1;
+  gridApi.query();
+  ElMessage.success('已重置筛选条件');
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
@@ -339,16 +497,16 @@ const createLabel = (item) => {
       count = dataObj.apilist.length;
       break;
     }
-    case '待审核': {
-      count = dataObj.apilist.filter((v) => v.status === '待审核').length;
-      break;
-    }
     case '已通过': {
       count = dataObj.apilist.filter((v) => v.status === '已通过').length;
       break;
     }
     case '已驳回': {
       count = dataObj.apilist.filter((v) => v.status === '已驳回').length;
+      break;
+    }
+    case '待审核': {
+      count = dataObj.apilist.filter((v) => v.status === '待审核').length;
       break;
     }
   }
@@ -558,6 +716,38 @@ const handleOpenVehicleDetail = (row) => {
   }
   vehicleDetailRef.value?.open(row.plateNo);
 };
+
+// 按审核状态筛选
+const handleFilterByStatus = (status) => {
+  dataObj.searchParams = { ...dataObj.searchParams, status };
+  isSearching = true;
+  gridApi.query();
+};
+
+// 按片区筛选
+const handleFilterByArea = (areaId, areaName) => {
+  dataObj.searchParams = { ...dataObj.searchParams, areaName };
+  isSearching = true;
+  gridApi.query();
+};
+
+// 按录入人筛选
+const handleFilterByInputUser = (inputUserName) => {
+  dataObj.searchParams = { ...dataObj.searchParams, inputUserName };
+  isSearching = true;
+  gridApi.query();
+};
+
+// 按审核人筛选
+const handleFilterByAuditUser = (auditUserName) => {
+  if (!auditUserName) {
+    ElMessage.warning('审核人信息不存在');
+    return;
+  }
+  dataObj.searchParams = { ...dataObj.searchParams, auditUserName };
+  isSearching = true;
+  gridApi.query();
+};
 </script>
 
 <template>
@@ -580,11 +770,37 @@ const handleOpenVehicleDetail = (row) => {
     <SpaceDetailDialog ref="spaceDetailRef" />
     <VehicleDetailDialog ref="vehicleDetailRef" />
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <SearchForm class="query-form" />
     </Drawer>
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
+          <div
+            v-if="activeFilters.length > 0"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+              margin-bottom: 12px;
+            "
+          >
+            <el-tag
+              v-for="filter in activeFilters"
+              :key="filter.field"
+              type="primary"
+              closable
+              @close="handleClearField(filter.field)"
+            >
+              {{ filter.label }}
+            </el-tag>
+            <IconButton
+              v-if="activeFilters.length > 0"
+              content="重置"
+              icon-name="RefreshLeft"
+              @click="handleResetFilters"
+            />
+          </div>
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -603,23 +819,28 @@ const handleOpenVehicleDetail = (row) => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton
+            content="筛选"
+            icon-name="Filter"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            content="重置"
+            icon-name="Refresh"
+            @click="handleResetFilters"
+          />
           <IconButton
             content="导出"
-            icon-name="download"
+            icon-name="Download"
             @click="handleExport"
           />
+          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="批量删除"
             icon-name="delete"
             color="#F56C6C"
             :disabled="isEmpty(checkedIds)"
             @click="handleDeleteBatch"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
           />
           <IconButton
             content="全屏"
@@ -666,19 +887,51 @@ const handleOpenVehicleDetail = (row) => {
                 ? 'warning'
                 : 'danger'
           "
+          style="cursor: pointer"
+          @click="handleFilterByStatus(row.status)"
         >
           {{ row.status }}
         </el-tag>
       </template>
       <template #areaName="{ row }">
-        <el-text class="common-align" type="primary">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterByArea(row.areaId, row.areaName)"
+        >
           {{ row.areaName }}
         </el-text>
       </template>
       <template #inputUserName="{ row }">
-        <el-text class="common-align" type="primary">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterByInputUser(row.inputUserName)"
+        >
           {{ row.inputUserName }}
         </el-text>
+      </template>
+      <template #auditUserName="{ row }">
+        <el-text
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+          @click="handleFilterByAuditUser(row.auditUserName)"
+        >
+          {{ row.auditUserName || '-' }}
+        </el-text>
+      </template>
+      <template #updater="{ row }">
+        <span>{{ row.updater || '-' }}</span>
+      </template>
+      <template #updateTime="{ row }">
+        <span>{{ formatTime(row.updateTime) }}</span>
+      </template>
+      <template #correctionMark="{ row }">
+        <el-tag v-if="row.isCorrected" type="success">已修正</el-tag>
+        <el-tag v-else type="info">未修正</el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

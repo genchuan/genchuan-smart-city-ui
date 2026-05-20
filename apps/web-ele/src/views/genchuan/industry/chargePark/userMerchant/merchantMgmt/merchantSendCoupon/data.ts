@@ -6,7 +6,6 @@ import type {
 } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import type {
   MerchantSendCouponChartVO,
-  MerchantSendCouponCouponVO,
   MerchantSendCouponDetailVO,
   MerchantSendCouponLogVO,
   MerchantSendCouponMerchantVO,
@@ -19,6 +18,15 @@ import dayjs from 'dayjs';
 import { getRangePickerDefaultProps } from '#/utils';
 
 const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+
+function hasQueryValue(value: any) {
+  return !(
+    value === '' ||
+    value === null ||
+    value === undefined ||
+    (Array.isArray(value) && value.length === 0)
+  );
+}
 
 export type MerchantSendCouponStatus = '已取消' | '已执行' | '待执行';
 
@@ -61,17 +69,8 @@ export interface MerchantSelectOption {
   value: number;
 }
 
-export interface CouponSelectOption {
-  label: string;
-  remark?: string;
-  rule?: string;
-  status?: string;
-  type?: string;
-  validPeriod?: string;
-  value: number;
-}
-
 export interface CouponProfileInfo {
+  amount: string;
   name: string;
   remark: string;
   rule: string;
@@ -81,6 +80,7 @@ export interface CouponProfileInfo {
 }
 
 export interface CouponMgmtApiVO {
+  amount?: number;
   description?: string;
   id?: number;
   name?: string;
@@ -95,11 +95,6 @@ export interface CouponMgmtApiVO {
 export interface MerchantSendCouponRow {
   couponId: number;
   couponName: string;
-  couponRemark: string;
-  couponRule: string;
-  couponStatus: string;
-  couponType: string;
-  couponValidPeriod: string;
   createTime: string;
   creator: string;
   execTime: string;
@@ -116,9 +111,12 @@ export interface MerchantSendCouponRow {
   merchantType: string;
   redemptions: RedemptionLog[];
   remark: string;
+  reserve1: string;
+  reserve2: string;
   sendCount: number;
   status: MerchantSendCouponStatus;
   updateTime: string;
+  updater: string;
   useCount: number;
 }
 
@@ -186,45 +184,6 @@ export const merchantOptions: MerchantSelectOption[] = [
   },
 ];
 
-export const couponOptions: CouponSelectOption[] = [
-  {
-    label: '停车满 20 减 5 券',
-    remark: '适用于停车订单抵扣',
-    rule: '满 20 元减 5 元',
-    status: '启用',
-    type: '停车券',
-    validPeriod: '领取后 7 天内有效',
-    value: 101,
-  },
-  {
-    label: '停车满 50 减 10 券',
-    remark: '适用于停车订单抵扣',
-    rule: '满 50 元减 10 元',
-    status: '启用',
-    type: '停车券',
-    validPeriod: '领取后 15 天内有效',
-    value: 102,
-  },
-  {
-    label: '充电满 30 减 8 券',
-    remark: '适用于充电订单抵扣',
-    rule: '满 30 元减 8 元',
-    status: '启用',
-    type: '充电券',
-    validPeriod: '领取后 7 天内有效',
-    value: 103,
-  },
-  {
-    label: '充停联名体验券',
-    remark: '适用于充停联合营销活动',
-    rule: '充电、停车通用体验券',
-    status: '启用',
-    type: '联名券',
-    validPeriod: '领取后 30 天内有效',
-    value: 104,
-  },
-];
-
 export const textObj = {
   addText: '发券任务',
 };
@@ -240,15 +199,8 @@ export const detailFields = [
   { key: 'merchantContact', label: '联系人' },
   { key: 'maskedMerchantPhone', label: '联系电话' },
   { key: 'merchantAddress', label: '商户地址' },
+  { key: 'couponId', label: '优惠券ID' },
   { key: 'couponName', label: '优惠券名称' },
-  {
-    key: 'couponType',
-    label: '优惠券类型',
-    type: 'tag',
-    tagType: () => 'warning',
-  },
-  { key: 'couponRule', label: '优惠券规则' },
-  { key: 'couponValidPeriod', label: '有效期说明' },
   { key: 'sendCountDisplay', label: '发放数量' },
   { key: 'useCountDisplay', label: '已核销数量' },
   {
@@ -263,8 +215,11 @@ export const detailFields = [
   { key: 'redemptionSummary', label: '核销明细' },
   { key: 'logSummary', label: '操作日志' },
   { key: 'creator', label: '创建人' },
+  { key: 'updater', label: '更新人' },
   { key: 'createTime', label: '创建时间' },
   { key: 'updateTime', label: '更新时间' },
+  { key: 'reserve1', label: '预留字段1' },
+  { key: 'reserve2', label: '预留字段2' },
   { key: 'remark', label: '备注' },
 ];
 
@@ -379,78 +334,6 @@ export function buildMerchantProfileLookup(
   return result;
 }
 
-/**
- * 构建优惠券下拉
- */
-export function buildCouponSelectOptions(
-  options: Array<Partial<CouponSelectOption>> = couponOptions,
-) {
-  const uniqueMap = new Map<number, CouponSelectOption>();
-
-  for (const item of options) {
-    const value = Number(item.value ?? 0);
-    const label = String(item.label || '');
-
-    if (!label || value <= 0) {
-      continue;
-    }
-
-    uniqueMap.set(value, {
-      label,
-      remark: item.remark || '',
-      rule: item.rule || '-',
-      status: item.status || '-',
-      type: item.type || '-',
-      validPeriod: item.validPeriod || '-',
-      value,
-    });
-  }
-
-  return uniqueMap.size > 0 ? [...uniqueMap.values()] : couponOptions;
-}
-
-/**
- * 将优惠券管理接口数据转下拉项
- */
-export function buildCouponOptionsFromApi(list: CouponMgmtApiVO[] = []) {
-  return buildCouponSelectOptions(
-    list.map((item) => ({
-      label: item.name || '',
-      remark: item.description || '',
-      rule: item.useCondition || '-',
-      status: item.statusName || item.status || '-',
-      type: item.typeName || item.type || '-',
-      validPeriod: formatApiTime(item.validTime),
-      value: Number(item.id ?? 0),
-    })),
-  );
-}
-
-/**
- * 构建优惠券信息索引
- */
-export function buildCouponProfileLookup(
-  options: CouponSelectOption[] = couponOptions,
-) {
-  const result: Record<number, CouponProfileInfo> = {};
-
-  for (const item of options) {
-    result[item.value] = {
-      name: item.label,
-      remark: item.remark || '',
-      rule: item.rule || '-',
-      status: item.status || '-',
-      type: item.type || '-',
-      validPeriod: item.validPeriod || '-',
-    };
-  }
-
-  return result;
-}
-
-/**
- * 构建商户弹窗信息
- */
 export function buildMerchantProfile(
   data?: Partial<MerchantInfoDetailVO> | Partial<MerchantSendCouponMerchantVO>,
   fallback: Partial<MerchantSendCouponRow> = {},
@@ -485,29 +368,21 @@ export function buildMerchantProfile(
   };
 }
 
-/**
- * 构建优惠券弹窗信息
- */
 export function buildCouponProfile(
-  data?: Partial<MerchantSendCouponCouponVO>,
+  data?: null | Partial<CouponMgmtApiVO>,
   fallback: Partial<MerchantSendCouponRow> = {},
-  lookup: Record<number, CouponProfileInfo> = buildCouponProfileLookup(),
 ): CouponProfileInfo {
-  const couponId = Number(data?.id ?? fallback.couponId ?? 0);
-  const profile = couponId ? lookup[couponId] : undefined;
-
   return {
-    name:
-      data?.name || fallback.couponName || profile?.name || `优惠券${couponId}`,
-    remark: data?.remark || fallback.couponRemark || profile?.remark || '',
-    rule: data?.rule || fallback.couponRule || profile?.rule || '-',
-    status: data?.status || fallback.couponStatus || profile?.status || '-',
-    type: data?.type || fallback.couponType || profile?.type || '-',
-    validPeriod:
-      data?.validPeriod ||
-      fallback.couponValidPeriod ||
-      profile?.validPeriod ||
-      '-',
+    amount:
+      data?.amount === null || data?.amount === undefined
+        ? '-'
+        : String(data.amount),
+    name: data?.name || fallback.couponName || '-',
+    remark: data?.description || fallback.remark || '',
+    rule: data?.useCondition || '-',
+    status: data?.statusName || data?.status || '-',
+    type: data?.typeName || data?.type || '-',
+    validPeriod: formatApiTime(data?.validTime),
   };
 }
 
@@ -605,7 +480,6 @@ export function buildMerchantSendCouponRowFromApi(
   data: Partial<MerchantSendCouponDetailVO>,
   fallback: Partial<MerchantSendCouponRow> = {},
   merchantLookup: Record<number, Partial<MerchantProfileInfo>> = {},
-  couponLookup: Record<number, CouponProfileInfo> = buildCouponProfileLookup(),
 ): MerchantSendCouponRow {
   const merchantId = Number(
     data.merchantId ?? data.merchantInfo?.id ?? fallback.merchantId ?? 0,
@@ -630,33 +504,12 @@ export function buildMerchantSendCouponRowFromApi(
     },
     merchantLookup,
   );
-  const couponProfile = buildCouponProfile(
-    data.couponInfo
-      ? {
-          id: data.couponInfo.id || data.couponId,
-          name: data.couponInfo.name || data.couponName,
-          remark: data.couponInfo.remark,
-          rule: data.couponInfo.rule,
-          status: data.couponInfo.status,
-          type: data.couponInfo.type,
-          validPeriod: data.couponInfo.validPeriod,
-        }
-      : undefined,
-    fallback,
-    couponLookup,
-  );
 
   const row: MerchantSendCouponRow = {
     couponId: Number(data.couponId ?? fallback.couponId ?? 0),
-    couponName:
-      data.couponName || fallback.couponName || couponProfile.name || '-',
-    couponRemark: couponProfile.remark,
-    couponRule: couponProfile.rule,
-    couponStatus: couponProfile.status,
-    couponType: couponProfile.type,
-    couponValidPeriod: couponProfile.validPeriod,
+    couponName: data.couponName || fallback.couponName || '-',
     createTime: formatApiTime(data.createTime ?? fallback.createTime),
-    creator: data.creator || fallback.creator || 'admin',
+    creator: data.creator || fallback.creator || '-',
     execTime: formatApiTime(data.execTime ?? fallback.execTime),
     finishTime: formatApiTime(data.finishTime ?? fallback.finishTime),
     id: Number(data.id ?? fallback.id ?? 0),
@@ -675,11 +528,14 @@ export function buildMerchantSendCouponRowFromApi(
       ? data.redemptions.map((item) => buildRedemptionLog(item))
       : fallback.redemptions || [],
     remark: data.remark || fallback.remark || '',
+    reserve1: data.reserve1 || fallback.reserve1 || '',
+    reserve2: data.reserve2 || fallback.reserve2 || '',
     sendCount: Number(data.sendCount ?? fallback.sendCount ?? 0),
     status: (data.status ||
       fallback.status ||
-      '待执行') as MerchantSendCouponStatus,
+      sendStatusOptions[0]) as MerchantSendCouponStatus,
     updateTime: formatApiTime(data.updateTime ?? fallback.updateTime),
+    updater: data.updater || fallback.updater || '-',
     useCount: Number(data.useCount ?? fallback.useCount ?? 0),
   };
 
@@ -822,14 +678,7 @@ export function buildMerchantSendCouponQueryParams(
   };
 
   return Object.fromEntries(
-    Object.entries(params).filter(([, value]) => {
-      return !(
-        value === '' ||
-        value === null ||
-        value === undefined ||
-        (Array.isArray(value) && value.length === 0)
-      );
-    }),
+    Object.entries(params).filter(([, value]) => hasQueryValue(value)),
   ) as MerchantSendCouponPageReqVO;
 }
 
@@ -904,7 +753,6 @@ export function useSearchSchema(
  */
 export function useCreateSchema(
   currentMerchantOptions: MerchantSelectOption[] = merchantOptions,
-  currentCouponOptions: CouponSelectOption[] = couponOptions,
 ): VbenFormSchema[] {
   return [
     {
@@ -919,16 +767,13 @@ export function useCreateSchema(
     },
     {
       fieldName: 'couponId',
-      label: '优惠券名称',
-      component: 'Select',
+      label: '优惠券ID',
+      component: 'InputNumber',
       componentProps: {
-        options: currentCouponOptions.map((item) => ({
-          label: item.label,
-          value: item.value,
-        })),
-        placeholder: '请选择优惠券',
+        min: 1,
+        placeholder: '请输入优惠券ID',
       },
-      rules: 'selectRequired',
+      rules: 'required',
     },
     {
       fieldName: 'sendCount',

@@ -180,6 +180,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
+      clearable: true,
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
@@ -399,12 +400,8 @@ async function fetchMerchantRechargeDetail(
 }
 
 /** 查询商户充值列表 */
-async function queryMerchantRechargePage(
-  { page }: any,
-  formValues: Record<string, any> = {},
-) {
+async function queryMerchantRechargePage({ page }: any) {
   const queryValues = {
-    ...formValues,
     ...searchParams.value,
   };
 
@@ -676,8 +673,12 @@ async function handleSerachShow() {
 }
 
 async function syncQueryFormValues() {
-  await queryFormApi.resetForm();
-  await queryFormApi.setValues(searchParams.value);
+  try {
+    await queryFormApi.resetForm();
+    await queryFormApi.setValues(searchParams.value);
+  } catch (error) {
+    console.warn('[merchantRecharge] sync query form failed:', error);
+  }
 }
 
 /** 按充值金额筛选 */
@@ -741,7 +742,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   const nextValues = { ...searchParams.value };
   delete nextValues[tag.key];
   searchParams.value = nextValues;
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   await handleRefresh();
 }
 </script>

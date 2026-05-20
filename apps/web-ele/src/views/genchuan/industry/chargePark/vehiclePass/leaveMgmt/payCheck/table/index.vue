@@ -19,7 +19,9 @@ import {
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import IconButton from '#/components/common/IconButton.vue';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import { exportToExcel } from '#/utils/excel.js';
+import { formatTime } from '../../../utils/timeFormatter';
 import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
 
 import {
@@ -60,16 +62,77 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  if (USE_REAL_API) {
+  try {
+    // 使用confirm对话框让用户选择格式
+    let exportFormat = 'excel';
     try {
-      await exportPayCheck(dataObj.searchParams);
-      ElMessage.success('导出成功');
+      await ElMessageBox.confirm(
+        '请选择导出格式：\n• Excel格式支持完整数据和中文显示（推荐）\n• PDF格式中文显示可能不正确，仅供参考',
+        '选择导出格式',
+        {
+          confirmButtonText: 'Excel (.xlsx) 推荐',
+          cancelButtonText: 'PDF (.pdf)',
+          type: 'info',
+          distinguishCancelAndClose: true,
+        },
+      );
+      exportFormat = 'excel';
     } catch (error) {
-      ElMessage.error('导出失败');
-      console.error(error);
+      if (error === 'cancel') {
+        exportFormat = 'pdf';
+        // 再次确认PDF导出
+        try {
+          await ElMessageBox.confirm(
+            '提示：PDF格式中文显示可能不正确，建议使用Excel格式。确定继续导出PDF吗？',
+            '确认导出PDF',
+            {
+              confirmButtonText: '继续导出PDF',
+              cancelButtonText: '返回选择Excel',
+              type: 'warning',
+            },
+          );
+        } catch {
+          // 用户选择返回Excel
+          exportFormat = 'excel';
+        }
+      } else {
+        // 用户点击了关闭按钮
+        return;
+      }
     }
-  } else {
-    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+
+    const loadingInstance = ElLoading.service({
+      text: '导出中...',
+    });
+
+    try {
+      if (USE_REAL_API) {
+        const res = await exportPayCheck(dataObj.searchParams);
+        const fileExtension = exportFormat === 'pdf' ? '.pdf' : '.xlsx';
+        await downloadFileFromBlobPart({
+          fileName: `缴费核验数据${fileExtension}`,
+          source: res,
+        });
+        ElMessage.success({
+          message: '导出成功！文件已开始下载',
+          duration: 3000,
+        });
+      } else {
+        exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+        ElMessage.success({
+          message: '导出成功！',
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      const errorMessage = error.message || '未知错误';
+      ElMessage.error(`导出失败：${errorMessage}`);
+      console.error(error);
+    } finally {
+      loadingInstance.close();
+    }
+  } catch (error) {
+    console.error('导出操作失败:', error);
   }
 }
 
@@ -143,6 +206,50 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+let isSearching = false;
+
+const activeFilters = computed(() => {
+  const filters = [];
+  const obj = dataObj.searchParams;
+
+  if (obj.plateNo) {
+    filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
+  }
+  if (obj.status) {
+    filters.push({ label: `缴费状态：${obj.status}`, field: 'status' });
+  }
+  if (obj.stationName) {
+    filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+  }
+  if (obj.checkUserId && obj.checkUserName) {
+    filters.push({ label: `核验人：${obj.checkUserName}`, field: 'checkUserId' });
+  }
+  if (
+    obj.checkTime &&
+    Array.isArray(obj.checkTime) &&
+    obj.checkTime.length === 2
+  ) {
+    filters.push({
+      label: `核验时间：${obj.checkTime[0]} 至 ${obj.checkTime[1]}`,
+      field: 'checkTime',
+    });
+  }
+
+  return filters;
+});
+
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchParams };
+  delete next[fieldName];
+  // 清除核验人ID时，同时清除核验人名称
+  if (fieldName === 'checkUserId') {
+    delete next.checkUserName;
+  }
+  dataObj.searchParams = next;
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -154,10 +261,17 @@ const getTableData = async (pageObj) => {
   if (USE_REAL_API) {
     try {
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
         ...dataObj.searchParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getPayCheckPage(params);
       dataObj.total = res.total || 0;
@@ -206,7 +320,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [SearchForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -231,7 +345,8 @@ const [QueryForm] = useVbenForm({
 
 function onSubmit(values) {
   dataObj.searchParams = values;
-  handleRefresh();
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
 }
 
@@ -326,9 +441,47 @@ const handleFullShow = () => {
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
-  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+
+  // 如果是显示所有记录（平均核验时长卡片）
+  if (filterParams.showAll) {
+    // 清空所有筛选条件
+    dataObj.searchParams = {};
+    handleRefresh();
+    ElMessage.success('已显示所有核验记录');
+    return;
+  }
+
+  // 转换时间参数格式
+  if (filterParams.startTime && filterParams.endTime) {
+    const startDate = new Date(Number(filterParams.startTime));
+    const endDate = new Date(Number(filterParams.endTime));
+
+    // 格式化为 YYYY-MM-DD HH:mm:ss
+    const formatDateTime = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
+    dataObj.searchParams = {
+      ...dataObj.searchParams,
+      checkTime: [formatDateTime(startDate), formatDateTime(endDate)],
+    };
+    ElMessage.success('已应用图表筛选');
+  } else {
+    dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+    if (filterParams.status) {
+      ElMessage.success(`已筛选状态: ${filterParams.status}`);
+    } else {
+      ElMessage.success('已应用图表筛选');
+    }
+  }
+
   handleRefresh();
-  ElMessage.success('已应用图表筛选');
 };
 
 onMounted(() => {
@@ -364,12 +517,32 @@ const handleFieldFilter = (field, value) => {
       :fields="detailFields"
     />
     <VehicleDetailDialog ref="vehicleDetailDialogRef" />
-    <Drawer title="搜索">
-      <QueryForm class="query-form" />
+    <Drawer title="筛选">
+      <SearchForm class="query-form" />
     </Drawer>
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
+          <div
+            v-if="activeFilters.length"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+              margin-bottom: 12px;
+            "
+          >
+            <el-tag
+              v-for="filter in activeFilters"
+              :key="filter.field"
+              type="primary"
+              closable
+              @close="handleClearField(filter.field)"
+            >
+              {{ filter.label }}
+            </el-tag>
+          </div>
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -394,8 +567,8 @@ const handleFieldFilter = (field, value) => {
             @click="handleExport"
           />
           <IconButton
-            content="搜索"
-            icon-name="search"
+            content="筛选"
+            icon-name="Filter"
             @click="handleSerachShow"
           />
           <IconButton
@@ -426,7 +599,7 @@ const handleFieldFilter = (field, value) => {
       </template>
       <template #stationName="{ row }">
         <el-text
-          @click="handleFieldFilter('stationId', row.stationId)"
+          @click="handleFieldFilter('stationName', row.stationName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -436,13 +609,28 @@ const handleFieldFilter = (field, value) => {
       </template>
       <template #checkUserName="{ row }">
         <el-text
-          @click="handleFieldFilter('checkUserId', row.checkUserId)"
+          v-if="row.checkUserName"
+          @click="handleFieldFilter('checkUserId', row.checkUserId); dataObj.searchParams.checkUserName = row.checkUserName"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
           {{ row.checkUserName }}
         </el-text>
+        <span v-else>-</span>
+      </template>
+      <template #updater="{ row }">
+        <el-text>{{ row.updater || '-' }}</el-text>
+      </template>
+      <template #updateTime="{ row }">
+        <el-text>{{
+          row.updateTime ? formatTime(row.updateTime) : '-'
+        }}</el-text>
+      </template>
+      <template #correctionMark="{ row }">
+        <el-tag :type="row.isCorrected ? 'success' : 'info'">
+          {{ row.isCorrected ? '已修正' : '未修正' }}
+        </el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

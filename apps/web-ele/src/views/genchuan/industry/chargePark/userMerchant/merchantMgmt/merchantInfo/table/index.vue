@@ -198,6 +198,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
+      clearable: true,
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
@@ -218,7 +219,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
 /** 搜索表单提交 */
 async function onQuerySubmit(values: Record<string, any>) {
   searchParams.value = { ...values };
-  await handleRefresh();
+  await handleRefresh({ clearDrillFilters: true });
   drawerApi.close();
 }
 
@@ -304,19 +305,11 @@ async function buildMerchantAuditPayload(
   };
 }
 
-async function queryMerchantInfoPage(
-  { page }: any,
-  formValues: Record<string, any> = {},
-) {
-  const queryValues = {
-    ...formValues,
-    ...searchParams.value,
-  };
-
+async function queryMerchantInfoPage({ page }: any) {
   const result = await MerchantInfoApi.getMerchantInfoPage({
     pageNo: page.currentPage,
     pageSize: page.pageSize,
-    ...buildMerchantInfoQueryParams(queryValues, drillFilters.value),
+    ...buildMerchantInfoQueryParams(searchParams.value, drillFilters.value),
   });
 
   const list = Array.isArray(result?.list) ? result.list : [];
@@ -439,8 +432,14 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-/** 刷新表格 - 同时清除所有快捷筛选 */
-function handleRefresh() {
+/** 刷新表格 */
+function handleRefresh(options: { clearDrillFilters?: boolean } = {}) {
+  const { clearDrillFilters = false } = options;
+
+  if (!clearDrillFilters) {
+    return gridApi.reload();
+  }
+
   drillFilters.value = {
     contact: '',
     merchantType: '',
@@ -453,7 +452,7 @@ function handleRefresh() {
 /** 联动刷新页面 */
 async function handleReloadPage() {
   detailCache.clear();
-  await handleRefresh();
+  await handleRefresh({ clearDrillFilters: true });
   await props.reloadStats?.();
 }
 
@@ -585,8 +584,12 @@ async function handleSerachShow() {
 }
 
 async function syncQueryFormValues() {
-  await queryFormApi.resetForm();
-  await queryFormApi.setValues(searchParams.value);
+  try {
+    await queryFormApi.resetForm();
+    await queryFormApi.setValues(searchParams.value);
+  } catch (error) {
+    console.warn('[merchantInfo] sync query form failed:', error);
+  }
 }
 
 /** 移除筛选标签 */
@@ -616,8 +619,8 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   const nextValues = { ...searchParams.value };
   delete nextValues[tag.key];
   searchParams.value = nextValues;
-  await syncQueryFormValues();
-  await handleRefresh();
+  void syncQueryFormValues();
+  await handleRefresh({ clearDrillFilters: true });
 }
 
 /** 打开编辑抽屉 */

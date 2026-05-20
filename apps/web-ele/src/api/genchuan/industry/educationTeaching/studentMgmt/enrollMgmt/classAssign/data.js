@@ -58,46 +58,31 @@ export function getClassAssignPage(params) {
 // 配置（新增分班任务）
 export function createClassAssignConfig(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/class-assign/config', convertedData).catch(err => {
-    console.warn('配置接口失败，模拟成功', err);
-    return Promise.resolve({ id: Date.now() });
-  });
+  return requestClient.post('/studentmgmt/class-assign/config', convertedData)
 }
 
 // 分班（批量）
 export function assignClassAssign(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/class-assign/assign', convertedData).catch(err => {
-    console.warn('分班接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/class-assign/assign', convertedData)
 }
 
 // 确认（批量）
 export function confirmClassAssign(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/class-assign/confirm', convertedData).catch(err => {
-    console.warn('确认接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/class-assign/confirm', convertedData)
 }
 
 // 编辑
 export function updateClassAssign(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/class-assign/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/class-assign/update', convertedData)
 }
 
 // 导出
 export function exportClassAssign(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/class-assign/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/class-assign/export-excel', convertedParams)
 }
 
 // 详情

@@ -123,7 +123,9 @@ export function updateCarInput(data: CarInputApi.UpdateReqVO) {
 
 /** 导出车辆录入 */
 export function exportCarInput(params?: CarInputApi.PageReqVO) {
-  return requestClient.download('/vehiclepass/car-input/export', { params });
+  return requestClient.download('/vehiclepass/car-input/export', {
+    params: { ...params },
+  });
 }
 
 /** 审核车辆录入 */

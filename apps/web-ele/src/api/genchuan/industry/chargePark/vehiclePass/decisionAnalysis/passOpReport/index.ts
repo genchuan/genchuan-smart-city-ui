@@ -78,7 +78,7 @@ export function getPassOpReport(id: number | string) {
 /** 导出通行运营报表 */
 export function exportPassOpReport(params?: PassOpReportApi.PageReqVO) {
   return requestClient.download('/vehiclepass/pass-op-report/export', {
-    params,
+    params: { ...params },
   });
 }
 

@@ -1,8 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue';
 
-import InfoPublishStats from './components/InfoPublishStats.vue';
 import InfoDetailDrawer from './components/InfoDetailDrawer.vue';
+import InfoPublishStats from './components/InfoPublishStats.vue';
 import Table from './table/index.vue';
 
 import '#/genchuan-components/page/index.scss';

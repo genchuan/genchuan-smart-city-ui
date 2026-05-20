@@ -47,7 +47,7 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationId',
+      fieldName: 'stationName',
       label: '场站',
       component: 'Select',
       componentProps: {
@@ -60,21 +60,21 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'operatorId',
+      fieldName: 'operator',
       label: '操作人',
       component: 'Input',
       componentProps: {
         placeholder: '请输入操作人',
       },
     },
-    {
-      fieldName: 'remark',
-      label: '备注',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入备注',
-      },
-    },
+    // {
+    //   fieldName: 'remark',
+    //   label: '备注',
+    //   component: 'Input',
+    //   componentProps: {
+    //     placeholder: '请输入备注',
+    //   },
+    // },
   ];
 }
 
@@ -90,7 +90,7 @@ export function useCheckFormSchema() {
         placeholder: '请输入核查结果',
         rows: 4,
       },
-      rules: [{ required: true, message: '请输入核查结果' }],
+      rules: 'required',
     },
     {
       fieldName: 'checkRemark',
@@ -197,7 +197,7 @@ export const detailFields = [
   { key: 'plateNo', label: '车牌' },
   { key: 'passReason', label: '放行原因' },
   { key: 'passTime', label: '放行时间', formatter: formatTime },
-  { key: 'imageUrl', label: '抓拍图片' },
+  { key: 'imageUrl', label: '抓拍图片', type: 'image' },
   { key: 'status', label: '状态' },
   { key: 'stationName', label: '场站' },
   { key: 'operator', label: '操作人' },
@@ -206,8 +206,9 @@ export const detailFields = [
   { key: 'remark', label: '备注' },
   { key: 'creator', label: '创建人' },
   { key: 'createTime', label: '创建时间', formatter: formatTime },
-  { key: 'updater', label: '更新人' },
-  { key: 'updateTime', label: '更新时间', formatter: formatTime },
+  { key: 'updater', label: '操作人' },
+  { key: 'updateTime', label: '操作时间', formatter: formatTime },
+  { key: 'isCorrected', label: '修正记录标记' },
 ];
 
 /** 模拟详情数据 */
@@ -215,7 +216,7 @@ export const mockDetailData = {
   id: 1,
   plateNo: '闽C12345',
   passReason: '人工开闸',
-  passTime: '2026-04-18 10:30:15',
+  passTime: 1745011815000,
   imageUrl:
     '/genchuan/chargePark/vehiclePass/specialPass/passRecord/2025/04/13/123456.jpg',
   status: '正常记录',
@@ -223,13 +224,14 @@ export const mockDetailData = {
   stationName: '1号场站',
   operatorId: 1,
   operator: '张三',
-  operatorTime: '2026-04-18 10:30:15',
+  operatorTime: 1745011815000,
   checkResult: '',
   remark: '',
   creator: 'admin',
-  createTime: '2026-04-18 10:30:15',
-  updater: 'admin',
-  updateTime: '2026-04-18 10:30:15',
+  createTime: 1745011815000,
+  updater: null,
+  updateTime: null,
+  isCorrected: false,
 };
 
 /** 状态类型映射 */

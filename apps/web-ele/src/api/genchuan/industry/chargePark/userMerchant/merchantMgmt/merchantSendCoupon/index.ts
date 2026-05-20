@@ -17,6 +17,7 @@ export type MerchantSendCouponVO = {
   reserve2?: null | string;
   sendCount: number;
   status?: string;
+  updater?: string;
   updateTime?: number | string;
   useCount?: number;
 };
@@ -45,16 +46,6 @@ export type MerchantSendCouponMerchantVO = {
   status?: string;
 };
 
-export type MerchantSendCouponCouponVO = {
-  id?: number;
-  name?: string;
-  remark?: string;
-  rule?: string;
-  status?: string;
-  type?: string;
-  validPeriod?: string;
-};
-
 export type MerchantSendCouponRedemptionVO = {
   count?: number;
   id?: number;
@@ -74,7 +65,6 @@ export type MerchantSendCouponLogVO = {
 };
 
 export type MerchantSendCouponDetailVO = MerchantSendCouponVO & {
-  couponInfo?: MerchantSendCouponCouponVO | null;
   logs?: MerchantSendCouponLogVO[];
   merchantInfo?: MerchantSendCouponMerchantVO | null;
   redemptions?: MerchantSendCouponRedemptionVO[];

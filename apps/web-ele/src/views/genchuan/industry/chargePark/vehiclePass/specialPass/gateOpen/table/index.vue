@@ -9,6 +9,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   exportGateOpen,
   getGateOpenPage,
@@ -22,6 +23,7 @@ import {
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
 import IconButton from '#/components/common/IconButton.vue';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import { exportToExcel } from '#/utils/excel.js';
 
 import {
@@ -34,6 +36,7 @@ import {
   useGridColumns,
   statusTypeMap,
   openReasonMap,
+  taskProgressMap,
 } from './data';
 
 const props = defineProps({
@@ -179,16 +182,23 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  if (USE_REAL_API) {
-    try {
-      await exportGateOpen(dataObj.searchParams);
-      ElMessage.success('导出成功');
-    } catch (error) {
-      ElMessage.error('导出失败');
-      console.error(error);
+  const loadingInstance = ElLoading.service({
+    text: '导出中...',
+  });
+  try {
+    if (USE_REAL_API) {
+      // 过滤掉 API 不需要的字段
+      const { applyUserName, auditUserName, ...apiParams } = dataObj.searchParams;
+      const res = await exportGateOpen(apiParams);
+      downloadFileFromBlobPart({ fileName: '开闸申请.xlsx', source: res });
+    } else {
+      exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
     }
-  } else {
-    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  } catch (error) {
+    ElMessage.error('导出失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
   }
 }
 
@@ -322,6 +332,71 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+let isSearching = false;
+
+// 用户名映射缓存
+const userNameMap = ref({
+  applyUserId: '',
+  auditUserId: '',
+  executorId: '',
+});
+
+const activeFilters = computed(() => {
+  const filters = [];
+  const obj = dataObj.searchParams;
+
+  if (obj.stationName) {
+    filters.push({ label: `片区：${obj.stationName}`, field: 'stationName' });
+  }
+  if (obj.status) {
+    filters.push({ label: `状态：${obj.status}`, field: 'status' });
+  }
+  if (obj.openReason) {
+    filters.push({ label: `任务类型：${obj.openReason}`, field: 'openReason' });
+  }
+  if (obj.applyTime && Array.isArray(obj.applyTime) && obj.applyTime.length > 0) {
+    const dateRange = obj.applyTime.length === 2
+      ? `${obj.applyTime[0]} 至 ${obj.applyTime[1]}`
+      : obj.applyTime[0];
+    filters.push({ label: `派发时间：${dateRange}`, field: 'applyTime' });
+  }
+  if (obj.auditStatus) {
+    filters.push({ label: `审批状态：${obj.auditStatus}`, field: 'auditStatus' });
+  }
+  if (obj.applyUserId !== undefined && obj.applyUserId !== null && obj.applyUserId !== '') {
+    const label = userNameMap.value.applyUserId || obj.applyUserId;
+    filters.push({ label: `申请人：${label}`, field: 'applyUserId' });
+  }
+  if (obj.auditUserId !== undefined && obj.auditUserId !== null && obj.auditUserId !== '') {
+    const label = userNameMap.value.auditUserId || obj.auditUserId;
+    filters.push({ label: `审批人：${label}`, field: 'auditUserId' });
+  }
+  if (obj.executorId !== undefined && obj.executorId !== null && obj.executorId !== '') {
+    const label = userNameMap.value.executorId || obj.executorId;
+    filters.push({ label: `执行人：${label}`, field: 'executorId' });
+  }
+
+  return filters;
+});
+
+const handleClearField = (fieldName) => {
+  delete dataObj.searchParams[fieldName];
+  dataObj.currentPage = 1;
+
+  // 清除对应的用户名映射
+  if (fieldName === 'applyUserId') {
+    userNameMap.value.applyUserId = '';
+  } else if (fieldName === 'auditUserId') {
+    userNameMap.value.auditUserId = '';
+  } else if (fieldName === 'executorId') {
+    userNameMap.value.executorId = '';
+  }
+
+  isSearching = true;
+  gridApi.query();
+};
+
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -332,11 +407,21 @@ const getTableData = async (pageObj) => {
   // 使用真实API
   if (USE_REAL_API) {
     try {
+      // 过滤掉 API 不需要的字段
+      const { applyUserName, auditUserName, ...apiParams } = dataObj.searchParams;
+
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
-        ...dataObj.searchParams,
+        ...apiParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getGateOpenPage(params);
       dataObj.total = res.total || 0;
@@ -393,7 +478,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [SearchForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -417,8 +502,13 @@ const [QueryForm] = useVbenForm({
 });
 
 function onSubmit(values) {
-  dataObj.searchParams = values;
-  handleRefresh();
+  Object.assign(dataObj.searchParams, values);
+  // 清除用户名映射，因为搜索表单提交时没有用户名
+  userNameMap.value.applyUserId = '';
+  userNameMap.value.auditUserId = '';
+  userNameMap.value.executorId = '';
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
 }
 
@@ -537,11 +627,22 @@ onUnmounted(() => {
 });
 
 // 字段点击筛选
-const handleFieldFilter = (field, value) => {
-  dataObj.searchParams = {
-    ...dataObj.searchParams,
+const handleFieldFilter = (field, value, userName = '') => {
+  Object.assign(dataObj.searchParams, {
     [field]: value,
-  };
+  });
+
+  // 更新用户名映射
+  if (field === 'applyUserId' && userName) {
+    userNameMap.value.applyUserId = userName;
+  } else if (field === 'auditUserId' && userName) {
+    userNameMap.value.auditUserId = userName;
+  } else if (field === 'executorId' && userName) {
+    userNameMap.value.executorId = userName;
+  }
+
+  dataObj.currentPage = 1;
+  isSearching = true;
   handleRefresh();
 };
 </script>
@@ -561,11 +662,22 @@ const handleFieldFilter = (field, value) => {
       :fields="detailFields"
     />
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <SearchForm class="query-form" />
     </Drawer>
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
+          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+            <el-tag
+              v-for="filter in activeFilters"
+              :key="filter.field"
+              type="primary"
+              closable
+              @close="handleClearField(filter.field)"
+            >
+              {{ filter.label }}
+            </el-tag>
+          </div>
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -608,7 +720,7 @@ const handleFieldFilter = (field, value) => {
       </template>
       <template #stationName="{ row }">
         <el-text
-          @click="handleFieldFilter('stationId', row.stationId)"
+          @click="handleFieldFilter('stationName', row.stationName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -627,7 +739,7 @@ const handleFieldFilter = (field, value) => {
       </template>
       <template #applyUserName="{ row }">
         <el-text
-          @click="handleFieldFilter('applyUserId', row.applyUserId)"
+          @click="handleFieldFilter('applyUserId', row.applyUserId, row.applyUserName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -644,17 +756,32 @@ const handleFieldFilter = (field, value) => {
           {{ row.status }}
         </el-tag>
       </template>
-      <template #auditUserName="{ row }">
+      <template #updater="{ row }">
+        <span>{{ row.updater || '-' }}</span>
+      </template>
+      <template #executorName="{ row }">
         <el-text
-          v-if="row.auditUserName"
-          @click="handleFieldFilter('auditUserId', row.auditUserId)"
+          @click="handleFieldFilter('executorId', row.executorId, row.executorName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
-          {{ row.auditUserName }}
+          {{ row.executorName }}
         </el-text>
-        <span v-else>-</span>
+      </template>
+      <template #taskProgress="{ row }">
+        <el-tag
+          :type="taskProgressMap[row.taskProgress]"
+        >
+          {{ row.taskProgress }}
+        </el-tag>
+      </template>
+      <template #updateTime="{ row }">
+        <span>{{ formatTime(row.updateTime) }}</span>
+      </template>
+      <template #correctionMark="{ row }">
+        <el-tag v-if="row.isCorrected" type="success">已修正</el-tag>
+        <el-tag v-else type="info">未修正</el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

@@ -96,7 +96,7 @@ export function getInParkStatus(id: number | string) {
 /** 导出在场状态 */
 export function exportInParkStatus(params?: InParkStatusApi.PageReqVO) {
   return requestClient.download('/vehiclepass/in-park-status/export', {
-    params,
+    params: { ...params },
   });
 }
 

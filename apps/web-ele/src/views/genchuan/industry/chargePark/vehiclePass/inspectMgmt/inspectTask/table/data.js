@@ -1,59 +1,150 @@
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
 
+/** 状态类型映射 */
+export const statusTypeMap = {
+  待派发: 'info',
+  待认领: 'warning',
+  处理中: 'primary',
+  已完成: 'success',
+  已归档: 'info',
+};
+
+/** 任务类型映射 */
+export const taskTypeMap = {
+  '违规通行稽查': 'danger',
+  '欠费逃费稽查': 'warning',
+  '其他': 'info',
+};
+
 /** 模块表格初始数据 */
 export const dataList = () => {
   return [
     {
       id: 1,
       taskType: '违规通行稽查',
-      dispatchTime: '2025-04-18 08:30:15',
-      deadlineTime: '2025-04-20 18:00:00',
+      dispatchTime: 1745011815000,
+      deadlineTime: 1745184000000,
       status: '待派发',
       areaName: '芗城区',
       executeUserName: '',
-      finishTime: '',
+      finishTime: null,
       taskProgress: '',
       remark: '稽查违规通行车辆',
-      createTime: '2025-04-18 08:30:15',
+      isCorrected: false,
+      creator: 'admin',
+      createTime: 1745011815000,
+      updater: '张三',
+      updateTime: 1745011815000,
+      logs: [
+        { time: 1745011815000, operator: 'admin', action: '创建任务', remark: '新建稽查任务' },
+      ],
     },
     {
       id: 2,
       taskType: '欠费逃费稽查',
-      dispatchTime: '2025-04-18 09:15:30',
-      deadlineTime: '2025-04-21 18:00:00',
+      dispatchTime: 1745015730000,
+      deadlineTime: 1745270400000,
       status: '待认领',
       areaName: '龙文区',
       executeUserName: '张三',
-      finishTime: '',
+      finishTime: null,
       taskProgress: '',
       remark: '稽查欠费逃费车辆',
-      createTime: '2025-04-18 09:15:30',
+      isCorrected: false,
+      creator: 'admin',
+      createTime: 1745015730000,
+      updater: '李四',
+      updateTime: 1745015730000,
+      logs: [
+        { time: 1745015730000, operator: 'admin', action: '创建任务', remark: '新建稽查任务' },
+        { time: 1745015800000, operator: 'admin', action: '派发任务', remark: '派发给张三' },
+      ],
     },
     {
       id: 3,
       taskType: '违规通行稽查',
-      dispatchTime: '2025-04-18 10:20:45',
-      deadlineTime: '2025-04-22 18:00:00',
+      dispatchTime: 1745019645000,
+      deadlineTime: 1745356800000,
       status: '处理中',
       areaName: '龙海区',
       executeUserName: '李四',
-      finishTime: '',
+      finishTime: null,
       taskProgress: '已联系车主，等待处理',
       remark: '稽查违规通行车辆',
-      createTime: '2025-04-18 10:20:45',
+      isCorrected: false,
+      creator: 'admin',
+      createTime: 1745019645000,
+      updater: '王五',
+      updateTime: 1745019645000,
+      logs: [
+        {
+          time: 1745019645000,
+          operator: 'admin',
+          action: '创建任务',
+          remark: '新建稽查任务',
+        },
+        {
+          time: 1745019700000,
+          operator: 'admin',
+          action: '派发任务',
+          remark: '派发给李四',
+        },
+        {
+          time: 1745019750000,
+          operator: '李四',
+          action: '认领任务',
+          remark: '已认领',
+        },
+        {
+          time: 1745019800000,
+          operator: '李四',
+          action: '更新进度',
+          remark: '已联系车主，等待处理',
+        },
+      ],
     },
     {
       id: 4,
       taskType: '欠费逃费稽查',
-      dispatchTime: '2025-04-17 14:30:00',
-      deadlineTime: '2025-04-19 18:00:00',
+      dispatchTime: 1744925400000,
+      deadlineTime: 1745098800000,
       status: '已完成',
       areaName: '芗城区',
       executeUserName: '王五',
-      finishTime: '2025-04-19 16:30:00',
+      finishTime: 1745091000000,
       taskProgress: '已完成处理',
       remark: '稽查欠费逃费车辆',
-      createTime: '2025-04-17 14:30:00',
+      isCorrected: false,
+      creator: 'admin',
+      createTime: 1744925400000,
+      updater: '赵六',
+      updateTime: 1745091000000,
+      logs: [
+        {
+          time: 1744925400000,
+          operator: 'admin',
+          action: '创建任务',
+          remark: '新建稽查任务',
+        },
+        {
+          time: 1744925500000,
+          operator: 'admin',
+          action: '派发任务',
+          remark: '派发给王五',
+        },
+        {
+          time: 1744925600000,
+          operator: '王五',
+          action: '认领任务',
+          remark: '已认领',
+        },
+        {
+          time: 1745091000000,
+          operator: '王五',
+          action: '完成任务',
+          remark: '已完成处理',
+        },
+      ],
     },
   ];
 };
@@ -166,13 +257,6 @@ export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
-      field: 'id',
-      title: '任务ID',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'id' },
-    },
-    {
       field: 'taskType',
       title: '任务类型',
       minWidth: 140,
@@ -246,7 +330,6 @@ export const textObj = {
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
-  { key: 'id', label: '任务ID' },
   { key: 'taskType', label: '任务类型' },
   { key: 'dispatchTime', label: '派发时间', formatter: formatTime },
   { key: 'deadlineTime', label: '截止时间', formatter: formatTime },
@@ -255,6 +338,5 @@ export const detailFields = [
   { key: 'executeUserName', label: '执行人' },
   { key: 'finishTime', label: '完成时间', formatter: formatTime },
   { key: 'taskProgress', label: '任务进度' },
-  { key: 'remark', label: '备注' },
-  { key: 'createTime', label: '创建时间', formatter: formatTime },
+  { key: 'logs', label: '任务日志', isLogs: true },
 ];

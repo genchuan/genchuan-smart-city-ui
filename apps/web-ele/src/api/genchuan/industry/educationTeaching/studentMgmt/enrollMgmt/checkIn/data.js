@@ -77,35 +77,23 @@ export function getCheckInPage(params) {
 // 补充信息
 export function supplyCheckIn(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/check-in/supply', convertedData).catch(err => {
-    console.warn('补充接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/check-in/supply', convertedData)
 }
 
 // 确认（批量）
 export function confirmCheckIn(data) {
-  return requestClient.put('/studentmgmt/check-in/confirm', data).catch(err => {
-    console.warn('确认接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/check-in/confirm', data)
 }
 
 // 审核（批量）
 export function auditCheckIn(data) {
-  return requestClient.put('/studentmgmt/check-in/audit', data).catch(err => {
-    console.warn('审核接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/check-in/audit', data)
 }
 
 // 导出
 export function exportCheckIn(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/check-in/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/check-in/export-excel', convertedParams)
 }
 
 // 详情

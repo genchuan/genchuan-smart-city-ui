@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -23,7 +24,6 @@ import DrillDownDetailDialog from '../components/DrillDownDetailDialog.vue';
 import {
   dataList,
   detailFields,
-  getGenerateStatusTagType,
   getReportCycleTagType,
   textObj,
   useCreateFormSchema,
@@ -162,19 +162,17 @@ function handleRefresh() {
 
 async function handleExport() {
   if (USE_REAL_API) {
+    const loadingInstance = ElLoading.service({
+      text: '正在导出报表...',
+    });
     try {
-      const loadingInstance = ElLoading.service({
-        text: '正在导出报表...',
-      });
-      try {
-        await exportCycleReport(dataObj.searchParams);
-        ElMessage.success('导出成功');
-      } finally {
-        loadingInstance.close();
-      }
+      const res = await exportCycleReport(dataObj.searchParams);
+      downloadFileFromBlobPart({ fileName: '周期报表.xlsx', source: res });
     } catch (error) {
       ElMessage.error('导出失败');
       console.error(error);
+    } finally {
+      loadingInstance.close();
     }
   } else {
     exportToExcel(dataObj.list, textObj.excelName, textObj.excelAllName);
@@ -214,6 +212,8 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+let isSearching = false;
+
 // 当前激活的筛选标签
 const activeFilterTags = reactive({
   reportStatus: '',
@@ -239,10 +239,17 @@ const getTableData = async (pageObj) => {
   if (USE_REAL_API) {
     try {
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
         ...dataObj.searchParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getCycleReportPage(params);
       dataObj.total = res.total || 0;
@@ -290,7 +297,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [SearchForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -310,7 +317,8 @@ const [QueryForm] = useVbenForm({
 
 function onSubmit(values) {
   dataObj.searchParams = values;
-  handleRefresh();
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
 }
 
@@ -380,11 +388,10 @@ const tabsData = ref([
 const createLabel = (item) => {
   let count = 0;
 
-  if (item.label === '全部') {
-    count = dataObj.apilist.length;
-  } else {
-    count = dataObj.apilist.filter((v) => v.reportCycle === item.label).length;
-  }
+  count =
+    item.label === '全部'
+      ? dataObj.apilist.length
+      : dataObj.apilist.filter((v) => v.reportCycle === item.label).length;
 
   return `${item.label}(${count})`;
 };
@@ -415,7 +422,7 @@ const handleReportCycleClick = (row) => {
 const handleStationClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
-    stationId: row.stationId,
+    stationName: row.stationName,
   };
   handleRefresh();
 };
@@ -429,7 +436,7 @@ const handleEnterCountClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -443,7 +450,7 @@ const handleLeaveCountClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -457,7 +464,7 @@ const handleParkingCountClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -471,7 +478,7 @@ const handleIdentifySuccessRateClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -485,7 +492,7 @@ const handleCheckSuccessRateClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -499,7 +506,7 @@ const handleAbnormalHandleRateClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -513,7 +520,7 @@ const handleEtcPassSuccessRateClick = (row) => {
       drillName: row.reportCycle,
       reportCycle: row.reportCycle,
       reportId: row.id,
-      stationId: row.stationId,
+      stationName: row.stationName,
     });
   }
 };
@@ -545,11 +552,9 @@ const handleExportRow = async (row) => {
   try {
     if (USE_REAL_API) {
       await exportCycleReportById(row.id);
-      ElMessage.success(`${row.reportCycle}导出成功`);
     } else {
       // 模拟导出
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      ElMessage.success(`${row.reportCycle}导出成功`);
     }
   } catch (error) {
     ElMessage.error('导出失败');
@@ -565,8 +570,12 @@ onMounted(() => {
     const { key } = e.detail;
     const today = new Date();
     // 使用 ISO 8601 格式：YYYY-MM-DDTHH:mm:ss
-    const todayStart = new Date(today.setHours(0, 0, 0, 0)).toISOString().slice(0, 19);
-    const todayEnd = new Date(today.setHours(23, 59, 59, 999)).toISOString().slice(0, 19);
+    const todayStart = new Date(today.setHours(0, 0, 0, 0))
+      .toISOString()
+      .slice(0, 19);
+    const todayEnd = new Date(today.setHours(23, 59, 59, 999))
+      .toISOString()
+      .slice(0, 19);
 
     // 根据卡片类型筛选报表列表，并传递点击类型参数
     const filterParams = {
@@ -609,13 +618,13 @@ const handleStatsFilter = (type, value) => {
   switch (type) {
     case 'card': {
       switch (value) {
-        case 'enterCount':
-        case 'leaveCount':
-        case 'parkingCount':
-        case 'identifySuccessRate':
-        case 'checkSuccessRate':
         case 'abnormalHandleRate':
-        case 'etcPassSuccessRate': {
+        case 'checkSuccessRate':
+        case 'enterCount':
+        case 'etcPassSuccessRate':
+        case 'identifySuccessRate':
+        case 'leaveCount':
+        case 'parkingCount': {
           console.log('钻取：卡片', value);
           break;
         }
@@ -671,7 +680,7 @@ defineExpose({
     />
     <DrillDownDetailDialog ref="drillDownDialogRef" />
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <SearchForm class="query-form" />
     </Drawer>
 
     <Grid>
@@ -849,6 +858,11 @@ defineExpose({
         >
           {{ row.creator }}
         </el-text>
+      </template>
+      <template #correctionMark="{ row }">
+        <el-tag :type="row.isCorrected ? 'success' : 'info'">
+          {{ row.isCorrected ? '已修正' : '未修正' }}
+        </el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

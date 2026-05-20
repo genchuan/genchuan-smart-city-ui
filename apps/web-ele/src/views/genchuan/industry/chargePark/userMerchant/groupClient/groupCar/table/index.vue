@@ -168,6 +168,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
+      clearable: true,
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
@@ -246,12 +247,8 @@ async function fetchGroupCarDetail(
 }
 
 /** 查询车辆列表 */
-async function queryGroupCarPage(
-  { page }: any,
-  formValues: Record<string, any> = {},
-) {
+async function queryGroupCarPage({ page }: any) {
   const queryValues = {
-    ...formValues,
     ...searchParams.value,
     ...drillFilters.value,
   };
@@ -774,8 +771,12 @@ async function handleSerachShow() {
 }
 
 async function syncQueryFormValues() {
-  await queryFormApi.resetForm();
-  await queryFormApi.setValues(searchParams.value);
+  try {
+    await queryFormApi.resetForm();
+    await queryFormApi.setValues(searchParams.value);
+  } catch (error) {
+    console.warn('[groupCar] sync query form failed:', error);
+  }
 }
 
 /** 按绑定状态筛选 */
@@ -811,7 +812,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   const nextValues = { ...searchParams.value };
   delete nextValues[tag.key];
   searchParams.value = nextValues;
-  await syncQueryFormValues();
+  void syncQueryFormValues();
   await handleRefresh();
 }
 </script>

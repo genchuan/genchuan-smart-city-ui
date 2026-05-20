@@ -72,32 +72,22 @@ export function getCoopEnterprisePage(params) {
 
 export function createCoopEnterprise(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/coop-enterprise/create', convertedData).catch(err => {
-    console.warn('建档接口失败，模拟成功', err);
-  });
+  return requestClient.post('/studentmgmt/coop-enterprise/create', convertedData)
 }
 
 export function maintainCoopEnterprise(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/coop-enterprise/maintain', convertedData).catch(err => {
-    console.warn('维护接口失败，模拟成功', err);
-  });
+  return requestClient.put('/studentmgmt/coop-enterprise/maintain', convertedData)
 }
 
 export function updateCoopEnterprise(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/coop-enterprise/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/coop-enterprise/update', convertedData)
 }
 
 export function exportCoopEnterprise(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/coop-enterprise/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/coop-enterprise/export-excel', convertedParams)
 }
 
 export function getCoopEnterpriseDetail(params) {

@@ -92,20 +92,12 @@ export function getDormCheckPage(params) {
 
 // 打卡（批量）
 export function createDormCheck(data) {
-  // 打卡接口只传 studentIds、checkTime、remark，无需转换
-  return requestClient.post('/studentmgmt/dorm-check/create', data).catch(err => {
-    console.warn('打卡接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/dorm-check/create', data)
 }
 
 // 补卡（批量）
 export function recheckDormCheck(data) {
-  // 补卡接口只传 ids，无需转换
-  return requestClient.put('/studentmgmt/dorm-check/recheck', data).catch(err => {
-    console.warn('补卡接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/dorm-check/recheck', data)
 }
 
 // 推送（批量）
@@ -116,10 +108,7 @@ export function pushDormCheck(data) {
 // 导出
 export function exportDormCheck(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/dorm-check/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/dorm-check/export-excel', convertedParams)
 }
 
 // 详情

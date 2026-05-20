@@ -57,44 +57,29 @@ export function getRegisterMgmtPage(params) {
 // 报名
 export function createRegisterMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/register-mgmt/create', convertedData).catch(err => {
-    console.warn('报名接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/register-mgmt/create', convertedData)
 }
 
 // 审核（批量）
 export function auditRegisterMgmt(data) {
-  return requestClient.put('/studentmgmt/register-mgmt/audit', data).catch(err => {
-    console.warn('审核接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/register-mgmt/audit', data)
 }
 
 // 确认（批量）
 export function confirmRegisterMgmt(data) {
-  return requestClient.put('/studentmgmt/register-mgmt/confirm', data).catch(err => {
-    console.warn('确认接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/register-mgmt/confirm', data)
 }
 
 // 编辑
 export function updateRegisterMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/register-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/register-mgmt/update', convertedData)
 }
 
 // 导出
 export function exportRegisterMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/register-mgmt/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/register-mgmt/export-excel', convertedParams)
 }
 
 // 详情

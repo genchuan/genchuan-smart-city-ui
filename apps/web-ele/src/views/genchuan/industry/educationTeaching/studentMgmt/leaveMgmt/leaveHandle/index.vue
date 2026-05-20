@@ -55,47 +55,6 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
-// 核心修改：支持空值清除筛选，使用 gridApi.query()
-function handleFilterTagClick(field, value) {
-  if (!field) return;
-  if (value === '' || value === null || value === undefined) {
-    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
-  } else {
-    const existing = tagFilters.value[field];
-    if (existing !== undefined) {
-      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-        delete tagFilters.value[field];
-      } else if (!Array.isArray(existing) && existing === value) {
-        delete tagFilters.value[field];
-      } else {
-        tagFilters.value[field] = value;
-      }
-    } else {
-      tagFilters.value[field] = value;
-    }
-  }
-  gridApi.query(); // 改为 query()
-}
-
-function clearFilters() {
-  tagFilters.value = {};
-  gridApi.query();
-}
-
-function removeFilterTag(field) {
-  delete tagFilters.value[field];
-  gridApi.query();
-}
-
-function getFieldLabel(field) {
-  const map = { status: '状态', creator: '创建人', createTime: '创建时间', studentId: '学号' };
-  return map[field] || field;
-}
-function getTagDisplayText(field, value) {
-  if (Array.isArray(value)) return value.join('、');
-  return value || '-';
-}
-
 // ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => drawerApi.close() });
 
@@ -165,8 +124,48 @@ const getTableData = async ({ page }) => {
   }
 };
 
-function handleRefresh() { gridApi.query(); }
-function handleReset() { searchParams.value = {}; tagFilters.value = {}; gridApi.query(); }
+// ========== 表格实例 ==========
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: gridColumns.value,
+    keepSource: true,
+    proxyConfig: { ajax: { query: getTableData } },
+    rowConfig: { keyField: 'id', isHover: true },
+    pagerConfig: dataObj,
+    toolbarConfig: { refresh: true, search: true },
+    showOverflow: true,
+  },
+  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  showSearchForm: false,
+});
+
+// ========== 核心修复：强制重置分页到第一页并刷新 ==========
+function resetPageAndQuery() {
+  // 使用 commitProxy('reload') 重置分页并重新加载
+  if (gridApi.commitProxy) {
+    gridApi.commitProxy('reload');
+  } else if (gridApi.reload) {
+    gridApi.reload();
+  } else {
+    // 兜底方案：手动重置 dataObj.currentPage 并调用 query
+    dataObj.currentPage = 1;
+    gridApi.query();
+  }
+  // 确保界面分页显示第一页
+  dataObj.currentPage = 1;
+}
+
+// 手动刷新（保持当前页码）
+function handleRefresh() {
+  gridApi.query();
+}
+
+// 重置所有筛选条件
+function handleReset() {
+  searchParams.value = {};
+  tagFilters.value = {};
+  resetPageAndQuery();
+}
 
 async function handleExport() {
   const loading = ElLoading.service({ text: '正在导出...' });
@@ -278,13 +277,14 @@ function handleOpenDetail(row) {
   leaveDetailDrawerRef.value.open();
 }
 
+// 高级查询表单
 const [QueryForm] = useVbenForm({
   collapsed: false,
   commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: (values) => {
     searchParams.value = { ...values };
     drawerApi.close();
-    gridApi.query();
+    resetPageAndQuery(); // 查询时重置页码
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => { delete v.rules; return v; }),
@@ -292,19 +292,46 @@ const [QueryForm] = useVbenForm({
   submitButtonOptions: { content: '查询' },
 });
 
-const [Grid, gridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: gridColumns.value,
-    keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
-    pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
-    showOverflow: true,
-  },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
-  showSearchForm: false,
-});
+// 筛选标签相关函数
+function getFieldLabel(field) {
+  const map = { status: '状态', creator: '创建人', createTime: '创建时间', studentId: '学号' };
+  return map[field] || field;
+}
+function getTagDisplayText(field, value) {
+  if (Array.isArray(value)) return value.join('、');
+  return value || '-';
+}
+
+function handleFilterTagClick(field, value) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
+    const existing = tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
+    } else {
+      tagFilters.value[field] = value;
+    }
+  }
+  resetPageAndQuery();
+}
+
+function clearFilters() {
+  tagFilters.value = {};
+  resetPageAndQuery();
+}
+
+function removeFilterTag(field) {
+  delete tagFilters.value[field];
+  resetPageAndQuery();
+}
 
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();

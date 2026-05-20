@@ -1,8 +1,8 @@
 <script setup>
 import { computed, ref } from 'vue';
 
-import SiteMgmtStats from './components/SiteMgmtStats.vue';
 import SiteDetailDrawer from './components/SiteDetailDrawer.vue';
+import SiteMgmtStats from './components/SiteMgmtStats.vue';
 import Table from './table/index.vue';
 
 import '#/genchuan-components/page/index.scss';

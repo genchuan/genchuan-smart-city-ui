@@ -288,11 +288,11 @@ export function useSearchFormSchema() {
     {
       fieldName: 'createTime',
       label: '生成时间',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择生成时间',
+        placeholder: ['开始时间', '结束时间'],
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: 'timestamp',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
         type: 'datetimerange',
         clearable: true,
       },
@@ -376,7 +376,7 @@ export function useGridColumns() {
     {
       field: 'action',
       title: '操作',
-      width: 200,
+      width: 80,
       fixed: 'right',
       slots: { default: 'actions' },
     },

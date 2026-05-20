@@ -59,44 +59,29 @@ export function getStayMgmtPage(params) {
 // 申请留宿
 export function createStayMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/stay-mgmt/create', convertedData).catch(err => {
-    console.warn('申请接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/stay-mgmt/create', convertedData)
 }
 
 // 家长确认（批量）
 export function confirmStayMgmt(data) {
-  return requestClient.put('/studentmgmt/stay-mgmt/confirm', data).catch(err => {
-    console.warn('确认接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/stay-mgmt/confirm', data)
 }
 
 // 审核（批量）
 export function auditStayMgmt(data) {
-  return requestClient.put('/studentmgmt/stay-mgmt/audit', data).catch(err => {
-    console.warn('审核接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/stay-mgmt/audit', data)
 }
 
 // 编辑留宿申请
 export function updateStayMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/stay-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/stay-mgmt/update', convertedData)
 }
 
 // 导出
 export function exportStayMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/stay-mgmt/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/stay-mgmt/export-excel', convertedParams)
 }
 
 // 详情

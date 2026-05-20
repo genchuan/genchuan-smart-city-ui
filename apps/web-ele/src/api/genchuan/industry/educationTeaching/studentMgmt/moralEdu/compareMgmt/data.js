@@ -73,40 +73,25 @@ export function getCompareMgmtPage(params) {
 
 export function createCompareMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/compare-mgmt/create', convertedData).catch(err => {
-    console.warn('发起接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/compare-mgmt/create', convertedData)
 }
 
 export function updateCompareMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/compare-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/compare-mgmt/update', convertedData)
 }
 
 export function scoreCompareMgmt(data) {
-  return requestClient.put('/studentmgmt/compare-mgmt/score', data).catch(err => {
-    console.warn('打分接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/compare-mgmt/score', data)
 }
 
 export function awardCompareMgmt(data) {
-  return requestClient.put('/studentmgmt/compare-mgmt/award', data).catch(err => {
-    console.warn('授予接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/compare-mgmt/award', data)
 }
 
 export function exportCompareMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/compare-mgmt/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/compare-mgmt/export-excel', convertedParams)
 }
 
 export function getCompareMgmtDetail(params) {

@@ -84,6 +84,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
+      clearable: true,
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
@@ -160,12 +161,12 @@ async function fetchUserOpReportDetail(
 }
 
 /** 查询报表列表 */
-async function queryUserOpReportPage(
-  { page }: { page: { currentPage: number; pageSize: number } },
-  formValues: Record<string, any> = {},
-) {
+async function queryUserOpReportPage({
+  page,
+}: {
+  page: { currentPage: number; pageSize: number };
+}) {
   const queryValues = {
-    ...formValues,
     ...searchParams.value,
   };
 
@@ -321,8 +322,12 @@ async function handleSerachShow() {
 }
 
 async function syncQueryFormValues() {
-  await queryFormApi.resetForm();
-  await queryFormApi.setValues(searchParams.value);
+  try {
+    await queryFormApi.resetForm();
+    await queryFormApi.setValues(searchParams.value);
+  } catch (error) {
+    console.warn('[userOpReport] sync query form failed:', error);
+  }
 }
 
 function handleOpenDrillDown(info: {

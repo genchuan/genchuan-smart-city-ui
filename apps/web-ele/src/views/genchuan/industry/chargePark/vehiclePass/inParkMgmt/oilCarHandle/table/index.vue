@@ -1,9 +1,10 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { downloadFileFromBlobPart } from '@vben/utils';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -23,6 +24,7 @@ import { exportToExcel } from '#/utils/excel.js';
 
 import SpaceDetailDialog from '../../../components/SpaceDetailDialog.vue';
 import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
@@ -31,7 +33,6 @@ import {
   textObj,
   useGridColumns,
   useHandleFormSchema,
-  useIgnoreFormSchema,
   useSearchFormSchema,
   useUpdateProgressFormSchema,
 } from './data';
@@ -107,58 +108,6 @@ const [HandleFormDrawer, handleFormDrawerApi] = useVbenDrawer({
   },
 });
 
-// 忽略表单
-const [IgnoreForm, ignoreFormApi] = useVbenForm({
-  commonConfig: {
-    componentProps: { class: 'w-full' },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
-  layout: 'horizontal',
-  schema: useIgnoreFormSchema(),
-  showDefaultActions: false,
-});
-
-const [IgnoreFormDrawer, ignoreFormDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  onCancel() {
-    ignoreFormDrawerApi.close();
-  },
-  async onConfirm() {
-    try {
-      const values = ignoreFormApi.form.values;
-      if (!values.ignoreReason || values.ignoreReason.length < 10) {
-        ElMessage.error('忽略理由至少10个字');
-        return;
-      }
-      const loadingInstance = ElLoading.service({ text: '提交中...' });
-      try {
-        await ignoreOilCarHandle({
-          id: values.id,
-          ignoreReason: values.ignoreReason,
-        });
-        ElMessage.success('忽略成功');
-        handleRefresh();
-        ignoreFormDrawerApi.close();
-      } finally {
-        loadingInstance.close();
-      }
-    } catch (error) {
-      ElMessage.error('忽略失败');
-      console.error(error);
-    }
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      const data = ignoreFormDrawerApi.getData();
-      if (data?.id) {
-        await ignoreFormApi.setValues({ id: data.id });
-      }
-    }
-  },
-});
-
 // 更新进度表单
 const [UpdateProgressForm, updateProgressFormApi] = useVbenForm({
   commonConfig: {
@@ -215,16 +164,21 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  if (USE_REAL_API) {
-    try {
-      await exportOilCarHandle(dataObj.searchParams);
-      ElMessage.success('导出成功');
-    } catch (error) {
-      ElMessage.error('导出失败');
-      console.error(error);
+  const loadingInstance = ElLoading.service({
+    text: '导出中...',
+  });
+  try {
+    if (USE_REAL_API) {
+      const res = await exportOilCarHandle(dataObj.searchParams);
+      downloadFileFromBlobPart({ fileName: '油车处理.xlsx', source: res });
+    } else {
+      exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
     }
-  } else {
-    exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  } catch (error) {
+    ElMessage.error('导出失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
   }
 }
 
@@ -269,8 +223,41 @@ function handleHandle(row) {
 }
 
 // 忽略
-function handleIgnore(row) {
-  ignoreFormDrawerApi.setData({ title: '忽略油车占位', id: row.id }).open();
+async function handleIgnore(row) {
+  try {
+    const { value } = await ElMessageBox.prompt('请输入忽略理由（至少10个字）', '忽略油车占位', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputType: 'textarea',
+      inputPlaceholder: '请输入忽略理由',
+      inputValidator: (value) => {
+        if (!value) {
+          return '请输入忽略理由';
+        }
+        if (value.length < 10) {
+          return '忽略理由至少10个字';
+        }
+        return true;
+      },
+    });
+
+    const loadingInstance = ElLoading.service({ text: '提交中...' });
+    try {
+      await ignoreOilCarHandle({
+        id: row.id,
+        ignoreReason: value,
+      });
+      ElMessage.success('忽略成功');
+      handleRefresh();
+    } finally {
+      loadingInstance.close();
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('忽略失败');
+      console.error(error);
+    }
+  }
 }
 
 // 更新进度
@@ -298,7 +285,48 @@ const dataObj = reactive({
   apilist: dataList(),
   list: [],
   searchParams: {},
+  _displayDate: '', // 用于展示的日期字符串
 });
+
+let isSearching = false;
+
+const activeFilters = computed(() => {
+  const filters = [];
+  const obj = dataObj.searchParams;
+
+  if (obj.plateNo) {
+    filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
+  }
+  if (obj.occupyType) {
+    filters.push({ label: `占位类型：${obj.occupyType}`, field: 'occupyType' });
+  }
+  if (obj.status) {
+    filters.push({ label: `处置状态：${obj.status}`, field: 'status' });
+  }
+  if (obj.stationName) {
+    filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+  }
+  if (obj.identifyTime && Array.isArray(obj.identifyTime) && obj.identifyTime.length === 2) {
+    filters.push({
+      label: `识别时间：${obj.identifyTime[0]} 至 ${obj.identifyTime[1]}`,
+      field: 'identifyTime'
+    });
+  }
+
+  return filters;
+});
+
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchParams };
+  delete next[fieldName];
+  // 清除日期时，同时清除展示字段
+  if (fieldName === 'identifyTime') {
+    dataObj._displayDate = '';
+  }
+  dataObj.searchParams = next;
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
 
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
@@ -310,10 +338,17 @@ const getTableData = async (pageObj) => {
   if (USE_REAL_API) {
     try {
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
         ...dataObj.searchParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getOilCarHandlePage(params);
       dataObj.total = res.total || 0;
@@ -365,7 +400,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [SearchForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: { class: 'w-full' },
@@ -381,7 +416,8 @@ const [QueryForm] = useVbenForm({
 
 function onSubmit(values) {
   dataObj.searchParams = values;
-  handleRefresh();
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
 }
 
@@ -526,9 +562,40 @@ const handleFullShow = () => {
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
-  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+
+  // 转换时间参数格式
+  if (filterParams.startTime && filterParams.endTime) {
+    const startDate = new Date(Number(filterParams.startTime));
+    const endDate = new Date(Number(filterParams.endTime));
+
+    // 格式化为 YYYY-MM-DD HH:mm:ss
+    const formatDateTime = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
+    dataObj.searchParams = {
+      ...dataObj.searchParams,
+      identifyTime: [formatDateTime(startDate), formatDateTime(endDate)],
+    };
+    ElMessage.success('已应用图表筛选');
+  } else {
+    dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+    if (filterParams.status) {
+      ElMessage.success(`已筛选状态: ${filterParams.status}`);
+    } else if (filterParams.stationName) {
+      ElMessage.success(`已筛选场站: ${filterParams.stationName}`);
+    } else {
+      ElMessage.success('已应用图表筛选');
+    }
+  }
+
   handleRefresh();
-  ElMessage.success('已应用图表筛选');
 };
 
 onMounted(() => {
@@ -553,18 +620,35 @@ onUnmounted(() => {
     <HandleFormDrawer title="处置油车占位">
       <HandleForm />
     </HandleFormDrawer>
-    <IgnoreFormDrawer title="忽略油车占位">
-      <IgnoreForm />
-    </IgnoreFormDrawer>
     <UpdateProgressDrawer title="更新处置进度">
       <UpdateProgressForm />
     </UpdateProgressDrawer>
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <SearchForm class="query-form" />
     </Drawer>
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
+          <div
+            v-if="activeFilters.length > 0"
+            style="
+              display: flex;
+              flex-wrap: wrap;
+              gap: 8px;
+              align-items: center;
+              margin-bottom: 12px;
+            "
+          >
+            <el-tag
+              v-for="filter in activeFilters"
+              :key="filter.field"
+              type="primary"
+              closable
+              @close="handleClearField(filter.field)"
+            >
+              {{ filter.label }}
+            </el-tag>
+          </div>
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -675,13 +759,18 @@ onUnmounted(() => {
         </el-text>
         <span v-else>-</span>
       </template>
+      <template #updater="{ row }">
+        <span>{{ row.updater || '-' }}</span>
+      </template>
+      <template #updateTime="{ row }">
+        <span>{{ formatTime(row.updateTime) }}</span>
+      </template>
+      <template #correctionMark="{ row }">
+        <el-tag v-if="row.isCorrected" type="success">已修正</el-tag>
+        <el-tag v-else type="info">未修正</el-tag>
+      </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="查看"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
           <IconButton
             v-if="shouldShowHandle(row.status)"
             content="处置"
@@ -699,6 +788,11 @@ onUnmounted(() => {
             content="更新进度"
             icon-name="Edit"
             @click="handleUpdateProgress(row)"
+          />
+          <IconButton
+            content="查看"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
           />
         </div>
       </template>

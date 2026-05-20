@@ -73,37 +73,25 @@ export function getStudyUpPage(params) {
 // 选择（目标院校）
 export function selectStudyUp(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/study-up/select', convertedData).catch(err => {
-    console.warn('选择接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/study-up/select', convertedData)
 }
 
 // 规划
 export function planStudyUp(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/study-up/plan', convertedData).catch(err => {
-    console.warn('规划接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/study-up/plan', convertedData)
 }
 
 // 记录（跟踪）
 export function recordStudyUp(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/study-up/record', convertedData).catch(err => {
-    console.warn('记录接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/study-up/record', convertedData)
 }
 
 // 导出
 export function exportStudyUp(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/study-up/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/study-up/export-excel', convertedParams)
 }
 
 // 详情

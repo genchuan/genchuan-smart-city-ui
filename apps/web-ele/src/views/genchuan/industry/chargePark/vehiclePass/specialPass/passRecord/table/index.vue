@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
@@ -8,6 +8,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { formatTime } from '../../../utils/timeFormatter';
 import {
   checkPassRecord,
   exportPassRecord,
@@ -16,8 +17,10 @@ import {
 } from '#/api/genchuan/industry/chargePark/vehiclePass/specialPass/passRecord';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import IconButton from '#/components/common/IconButton.vue';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import { exportToExcel } from '#/utils/excel.js';
 import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
+import ImagePreviewDialog from '../components/ImagePreviewDialog.vue';
 
 import {
   detailFields,
@@ -58,6 +61,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 
 const detailDrawerRef = ref(null);
 const vehicleDetailDialogRef = ref(null);
+const imagePreviewRef = ref(null);
 const formData = ref();
 
 // 核查表单
@@ -125,16 +129,21 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  if (USE_REAL_API) {
-    try {
-      await exportPassRecord(dataObj.searchParams);
-      ElMessage.success('导出成功');
-    } catch (error) {
-      ElMessage.error('导出失败');
-      console.error(error);
+  const loadingInstance = ElLoading.service({
+    text: '导出中...',
+  });
+  try {
+    if (USE_REAL_API) {
+      const res = await exportPassRecord(dataObj.searchParams);
+      downloadFileFromBlobPart({ fileName: '放行记录.xlsx', source: res });
+    } else {
+      exportToExcel([], textObj.excelName, textObj.excelAllName);
     }
-  } else {
-    exportToExcel([], textObj.excelName, textObj.excelAllName);
+  } catch (error) {
+    ElMessage.error('导出失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
   }
 }
 
@@ -157,6 +166,15 @@ function handlePlateClick(row) {
   vehicleDetailDialogRef.value?.open(row.plateNo);
 }
 
+// 图片预览
+const handleImagePreview = (imageUrl) => {
+  if (!imageUrl) {
+    ElMessage.warning('暂无图片');
+    return;
+  }
+  imagePreviewRef.value?.open(imageUrl, '抓拍图片');
+};
+
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
@@ -172,6 +190,40 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+let isSearching = false;
+
+const activeFilters = computed(() => {
+  const filters = [];
+  const obj = dataObj.searchParams;
+
+  if (obj.plateNo) {
+    filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
+  }
+  if (obj.passReason) {
+    filters.push({ label: `放行原因：${obj.passReason}`, field: 'passReason' });
+  }
+  if (obj.status) {
+    filters.push({ label: `状态：${obj.status}`, field: 'status' });
+  }
+  if (obj.stationName) {
+    filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+  }
+  if (obj.operator) {
+    filters.push({ label: `操作人：${obj.operator}`, field: 'operator' });
+  }
+
+  return filters;
+});
+
+const handleClearField = (fieldName) => {
+  const next = { ...dataObj.searchParams };
+  delete next[fieldName];
+  dataObj.searchParams = next;
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -182,10 +234,17 @@ const getTableData = async (pageObj) => {
   if (USE_REAL_API) {
     try {
       const params = {
-        pageNo: page.currentPage,
+        pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
         ...dataObj.searchParams,
       };
+
+      if (isSearching) {
+        isSearching = false;
+        dataObj.currentPage = 1;
+      } else {
+        dataObj.currentPage = page.currentPage;
+      }
 
       const res = await getPassRecordPage(params);
       dataObj.total = res.total || 0;
@@ -201,7 +260,7 @@ const getTableData = async (pageObj) => {
   return dataObj;
 };
 
-const [QueryForm] = useVbenForm({
+const [SearchForm] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -224,7 +283,8 @@ const [QueryForm] = useVbenForm({
 
 function onSubmit(values) {
   dataObj.searchParams = values;
-  handleRefresh();
+  isSearching = true;
+  gridApi.query();
   drawerApi.close();
 }
 
@@ -356,12 +416,24 @@ watch(
       :fields="detailFields"
     />
     <VehicleDetailDialog ref="vehicleDetailDialogRef" />
+    <ImagePreviewDialog ref="imagePreviewRef" />
     <Drawer title="搜索">
-      <QueryForm class="query-form" />
+      <SearchForm class="query-form" />
     </Drawer>
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
+          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+            <el-tag
+              v-for="filter in activeFilters"
+              :key="filter.field"
+              type="primary"
+              closable
+              @close="handleClearField(filter.field)"
+            >
+              {{ filter.label }}
+            </el-tag>
+          </div>
           <div v-if="props.secondShow">
             <el-tabs
               v-model="activeName"
@@ -430,12 +502,14 @@ watch(
         </el-text>
       </template>
       <template #imageUrl="{ row }">
-        <el-image
+        <img
           v-if="row.imageUrl"
           :src="row.imageUrl"
-          :preview-src-list="[row.imageUrl]"
-          fit="cover"
-          style="width: 60px; height: 40px; cursor: pointer"
+          alt="抓拍图片"
+          crossorigin="anonymous"
+          referrerpolicy="no-referrer"
+          style="width: 60px; height: 40px; cursor: pointer; object-fit: cover; border-radius: 4px;"
+          @click="handleImagePreview(row.imageUrl)"
         />
         <span v-else>-</span>
       </template>
@@ -450,7 +524,7 @@ watch(
       </template>
       <template #stationName="{ row }">
         <el-text
-          @click="handleFieldClick('stationId', row.stationId)"
+          @click="handleFieldClick('stationName', row.stationName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -467,6 +541,10 @@ watch(
         >
           {{ row.operator }}
         </el-text>
+      </template>
+      <template #correctionMark="{ row }">
+        <el-tag v-if="row.isCorrected" type="success">已修正</el-tag>
+        <el-tag v-else type="info">未修正</el-tag>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

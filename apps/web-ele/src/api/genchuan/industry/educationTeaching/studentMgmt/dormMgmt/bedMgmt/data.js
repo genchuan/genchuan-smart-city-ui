@@ -55,45 +55,30 @@ export function getBedMgmtPage(params) {
 
 // 分配床位（批量，bedIds 与 studentIds 一一对应）
 export function assignBedMgmt(data) {
-  return requestClient.put('/studentmgmt/bed-mgmt/assign', data).catch(err => {
-    console.warn('分配接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/bed-mgmt/assign', data)
 }
 
 // 调整床位（单个）- 修正为 Query 参数形式
 export function adjustBedMgmt(data) {
-  return requestClient.put('/studentmgmt/bed-mgmt/adjust', null, { params: data }).catch(err => {
-    console.warn('调整接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/bed-mgmt/adjust', null, { params: data })
 }
 
 // 新增床位
 export function createBedMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/bed-mgmt/create', convertedData).catch(err => {
-    console.warn('新增接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/bed-mgmt/create', convertedData)
 }
 
 // 更新床位
 export function updateBedMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/bed-mgmt/update', convertedData).catch(err => {
-    console.warn('更新接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/bed-mgmt/update', convertedData)
 }
 
 // 导出
 export function exportBedMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/bed-mgmt/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/bed-mgmt/export-excel', convertedParams)
 }
 
 // 详情

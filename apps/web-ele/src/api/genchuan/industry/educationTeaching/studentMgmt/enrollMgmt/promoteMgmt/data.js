@@ -58,36 +58,24 @@ export function getPromoteMgmtPage(params) {
 // 发布（新增宣传任务）
 export function createPromoteMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/promote-mgmt/create', convertedData).catch(err => {
-    console.warn('发布接口失败，模拟成功', err);
-    return Promise.resolve({ id: Date.now() });
-  });
+  return requestClient.post('/studentmgmt/promote-mgmt/create', convertedData)
 }
 
 // 执行（批量）
 export function executePromoteMgmt(data) {
-  return requestClient.put('/studentmgmt/promote-mgmt/execute', data).catch(err => {
-    console.warn('执行接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/promote-mgmt/execute', data)
 }
 
 // 编辑
 export function updatePromoteMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/promote-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/promote-mgmt/update', convertedData)
 }
 
 // 导出
 export function exportPromoteMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/promote-mgmt/export-excel', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/promote-mgmt/export-excel', convertedParams)
 }
 
 // 详情

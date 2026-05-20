@@ -91,48 +91,30 @@ export function getViolateMgmtPage(params) {
 
 export function createViolateMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/violate-mgmt/create', convertedData).catch(err => {
-    console.warn('登记接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.post('/studentmgmt/violate-mgmt/create', convertedData)
 }
 
 export function updateViolateMgmt(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.put('/studentmgmt/violate-mgmt/update', convertedData).catch(err => {
-    console.warn('编辑接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/violate-mgmt/update', convertedData)
 }
 
 export function auditViolateMgmt(data) {
   const idsParam = data.ids ? data.ids.join(',') : '';
-  return requestClient.put('/studentmgmt/violate-mgmt/audit', null, { params: { ids: idsParam } }).catch(err => {
-    console.warn('审批接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/violate-mgmt/audit', null, { params: { ids: idsParam } })
 }
 
 export function pushViolateMgmt(params) {
-  return requestClient.put('/studentmgmt/violate-mgmt/push', null, { params }).catch(err => {
-    console.warn('推送接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/violate-mgmt/push', null, { params })
 }
 
 export function warnViolateMgmt(params) {
-  return requestClient.put('/studentmgmt/violate-mgmt/warn', null, { params }).catch(err => {
-    console.warn('预警接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/violate-mgmt/warn', null, { params })
 }
 
 export function exportViolateMgmt(params) {
   const convertedParams = convertZhToEn(params);
-  return requestClient.download('/studentmgmt/violate-mgmt/export', convertedParams).catch(err => {
-    console.warn('导出接口失败，模拟导出', err);
-    return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
-  });
+  return requestClient.download('/studentmgmt/violate-mgmt/export', convertedParams)
 }
 
 export function getViolateMgmtDetail(params) {

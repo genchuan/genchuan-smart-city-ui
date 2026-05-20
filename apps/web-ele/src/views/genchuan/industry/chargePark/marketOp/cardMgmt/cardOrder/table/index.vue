@@ -457,6 +457,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 // 处理支付状态点击
 const handleFilterByPayStatus = (payStatus) => {
   filterPayStatus.value = filterPayStatus.value === payStatus ? '' : payStatus;
+  gridApi.grid.setCurrentPage(1);
   gridApi.query();
 };
 
@@ -464,17 +465,20 @@ const handleFilterByPayStatus = (payStatus) => {
 const handleFilterByInvoiceStatus = (invoiceStatus) => {
   filterInvoiceStatus.value =
     filterInvoiceStatus.value === invoiceStatus ? '' : invoiceStatus;
+  gridApi.grid.setCurrentPage(1);
   gridApi.query();
 };
 
 // 取消筛选
 const handleCancelPayStatusFilter = () => {
   filterPayStatus.value = '';
+  gridApi.grid.setCurrentPage(1);
   gridApi.query();
 };
 
 const handleCancelInvoiceStatusFilter = () => {
   filterInvoiceStatus.value = '';
+  gridApi.grid.setCurrentPage(1);
   gridApi.query();
 };
 
@@ -523,18 +527,21 @@ const handleStatsFilter = (type, subType, value) => {
     }
     // No default
   }
+  gridApi.grid.setCurrentPage(1);
   gridApi.query();
 };
 
 /** 取消卡种类型筛选 */
 const handleCancelCardTypeFilter = () => {
   filterCardType.value = '';
+  gridApi.grid.setCurrentPage(1);
   gridApi.query();
 };
 
 /** 取消日期筛选 */
 const handleCancelOrderDateFilter = () => {
   filterOrderDate.value = '';
+  gridApi.grid.setCurrentPage(1);
   gridApi.query();
 };
 

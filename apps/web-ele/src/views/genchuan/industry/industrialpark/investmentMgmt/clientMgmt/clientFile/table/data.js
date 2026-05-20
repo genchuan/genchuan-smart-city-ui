@@ -1,51 +1,71 @@
-import { getDictObj, getDictOptions } from '@vben/hooks';
 import { DICT_TYPE } from '@vben/constants';
-
-import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
-import { getRangePickerDefaultProps } from '#/utils';
+import { getDictObj } from '@vben/hooks';
 
 import { getClientFilePage } from '#/api/genchuan/industry/industrialpark/investmentMgmt/clientMgmt/clientFile';
+import { getRangePickerDefaultProps } from '#/utils';
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 /** 获取需求类型标签类型（使用标准字典函数） */
 export function getClientDemandTypeTagType(demandType) {
-  const dict = getDictObj(DICT_TYPE.CLIENT_FILE_DEMAND_TYPE, String(demandType));
+  const dict = getDictObj(
+    DICT_TYPE.CLIENT_FILE_DEMAND_TYPE,
+    String(demandType),
+  );
   return getDictTagTypeFromDict(dict, 'primary');
 }
 
 /** 获取需求类型字典标签 */
 export function getClientDemandTypeLabel(demandType) {
-  const dict = getDictObj(DICT_TYPE.CLIENT_FILE_DEMAND_TYPE, String(demandType));
+  const dict = getDictObj(
+    DICT_TYPE.CLIENT_FILE_DEMAND_TYPE,
+    String(demandType),
+  );
   return dict ? dict.label : demandType;
 }
 
 /** 获取意向程度标签类型 */
 export function getClientIntentLevelTagType(intentLevel) {
-  const dict = getDictObj(DICT_TYPE.CLIENT_FILE_INTENT_LEVEL, String(intentLevel));
+  const dict = getDictObj(
+    DICT_TYPE.CLIENT_FILE_INTENT_LEVEL,
+    String(intentLevel),
+  );
   return getDictTagTypeFromDict(dict, 'primary');
 }
 
 /** 获取意向程度字典标签 */
 export function getClientIntentLevelLabel(intentLevel) {
-  const dict = getDictObj(DICT_TYPE.CLIENT_FILE_INTENT_LEVEL, String(intentLevel));
+  const dict = getDictObj(
+    DICT_TYPE.CLIENT_FILE_INTENT_LEVEL,
+    String(intentLevel),
+  );
   return dict ? dict.label : intentLevel;
 }
 
 /** 获取客户状态标签类型 */
 export function getClientStatusTagType(clientStatus) {
-  const dict = getDictObj(DICT_TYPE.CLIENT_FILE_CLIENT_STATUS, String(clientStatus));
+  const dict = getDictObj(
+    DICT_TYPE.CLIENT_FILE_CLIENT_STATUS,
+    String(clientStatus),
+  );
   return getDictTagTypeFromDict(dict, 'primary');
 }
 
 /** 获取客户状态字典标签 */
 export function getClientStatusLabel(clientStatus) {
-  const dict = getDictObj(DICT_TYPE.CLIENT_FILE_CLIENT_STATUS, String(clientStatus));
+  const dict = getDictObj(
+    DICT_TYPE.CLIENT_FILE_CLIENT_STATUS,
+    String(clientStatus),
+  );
   return dict ? dict.label : clientStatus;
 }
 
 /** 获取客户状态完整配置 */
 export function getClientStatusConfig(clientStatus) {
-  const dict = getDictObj(DICT_TYPE.CLIENT_FILE_CLIENT_STATUS, String(clientStatus));
+  const dict = getDictObj(
+    DICT_TYPE.CLIENT_FILE_CLIENT_STATUS,
+    String(clientStatus),
+  );
   return {
     label: dict ? dict.label : clientStatus,
     colorType: dict ? dict.colorType : '',
@@ -68,8 +88,8 @@ const staticDataList = [
     transformResult: null,
     handleUser: 'admin',
     creator: 'admin',
-    createTime: 1746748800000,
-    updateTime: 1746748800000,
+    createTime: 1_746_748_800_000,
+    updateTime: 1_746_748_800_000,
   },
   {
     id: 2,
@@ -84,8 +104,8 @@ const staticDataList = [
     transformResult: null,
     handleUser: 'zhangsan',
     creator: 'zhangsan',
-    createTime: 1746662100000,
-    updateTime: 1746825000000,
+    createTime: 1_746_662_100_000,
+    updateTime: 1_746_825_000_000,
   },
   {
     id: 3,
@@ -100,8 +120,8 @@ const staticDataList = [
     transformResult: null,
     handleUser: 'lisi',
     creator: 'lisi',
-    createTime: 1746576000000,
-    updateTime: 1746750000000,
+    createTime: 1_746_576_000_000,
+    updateTime: 1_746_750_000_000,
   },
   {
     id: 4,
@@ -116,8 +136,8 @@ const staticDataList = [
     transformResult: '成功签约 C 栋 2 层场地，租期 3 年',
     handleUser: 'wangwu',
     creator: 'wangwu',
-    createTime: 1746405000000,
-    updateTime: 1746826000000,
+    createTime: 1_746_405_000_000,
+    updateTime: 1_746_826_000_000,
   },
   {
     id: 5,
@@ -132,8 +152,8 @@ const staticDataList = [
     transformResult: null,
     handleUser: 'zhaoliu',
     creator: 'zhaoliu',
-    createTime: 1746319200000,
-    updateTime: 1746827000000,
+    createTime: 1_746_319_200_000,
+    updateTime: 1_746_827_000_000,
   },
   {
     id: 6,
@@ -148,8 +168,8 @@ const staticDataList = [
     transformResult: null,
     handleUser: 'sunqi',
     creator: 'sunqi',
-    createTime: 1746233400000,
-    updateTime: 1746233400000,
+    createTime: 1_746_233_400_000,
+    updateTime: 1_746_233_400_000,
   },
   {
     id: 7,
@@ -164,8 +184,8 @@ const staticDataList = [
     transformResult: null,
     handleUser: 'zhouba',
     creator: 'zhouba',
-    createTime: 1746147600000,
-    updateTime: 1746828000000,
+    createTime: 1_746_147_600_000,
+    updateTime: 1_746_828_000_000,
   },
   {
     id: 8,
@@ -180,8 +200,8 @@ const staticDataList = [
     transformResult: null,
     handleUser: 'wujiu',
     creator: 'wujiu',
-    createTime: 1746061800000,
-    updateTime: 1746061800000,
+    createTime: 1_746_061_800_000,
+    updateTime: 1_746_061_800_000,
   },
   {
     id: 9,
@@ -196,8 +216,8 @@ const staticDataList = [
     transformResult: '客户确认签约，已完成合同签订',
     handleUser: 'zhengshi',
     creator: 'zhengshi',
-    createTime: 1745976000000,
-    updateTime: 1746751000000,
+    createTime: 1_745_976_000_000,
+    updateTime: 1_746_751_000_000,
   },
   {
     id: 10,
@@ -212,8 +232,8 @@ const staticDataList = [
     transformResult: null,
     handleUser: 'admin',
     creator: 'admin',
-    createTime: 1745890200000,
-    updateTime: 1745890200000,
+    createTime: 1_745_890_200_000,
+    updateTime: 1_745_890_200_000,
   },
   {
     id: 11,
@@ -228,8 +248,8 @@ const staticDataList = [
     transformResult: null,
     handleUser: 'admin',
     creator: 'admin',
-    createTime: 1745804400000,
-    updateTime: 1746829000000,
+    createTime: 1_745_804_400_000,
+    updateTime: 1_746_829_000_000,
   },
   {
     id: 12,
@@ -244,8 +264,8 @@ const staticDataList = [
     transformResult: null,
     handleUser: 'zhangsan',
     creator: 'zhangsan',
-    createTime: 1745718000000,
-    updateTime: 1745718000000,
+    createTime: 1_745_718_000_000,
+    updateTime: 1_745_718_000_000,
   },
 ];
 
@@ -566,7 +586,7 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 200,
+      width: 100,
       fixed: 'right',
       slots: { default: 'actions' },
     },

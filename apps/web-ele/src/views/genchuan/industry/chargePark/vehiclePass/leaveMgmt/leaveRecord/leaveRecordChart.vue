@@ -23,6 +23,7 @@ const cards = reactive([
     desc: '高峰时段',
     color: '#FF9F40',
     key: 'leavePeak',
+    peakHour: '', // 存储峰值时段
   },
 ]);
 
@@ -42,7 +43,7 @@ let barChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationId: props.parkId,
+      stationName: props.parkId,
     };
 
     const res = await leaveRecordApi.getChart(params);
@@ -51,6 +52,15 @@ async function loadChartData() {
     if (res?.cardData) {
       cards[0].value = res.cardData.todayLeaveCount || 0;
       cards[1].value = res.cardData.leavePeak || 0;
+
+      // 从时段数据中找出峰值时段
+      if (res.hourLeaveCount?.length > 0) {
+        const peakData = res.hourLeaveCount.reduce((max, item) =>
+          item.count > max.count ? item : max
+        );
+        cards[1].peakHour = peakData.hour;
+        cards[1].desc = `高峰时段 ${peakData.hour}`;
+      }
     }
 
     // Check if there's chart data
@@ -111,8 +121,12 @@ function initPieChart() {
   // 添加点击事件
   pieChartInstance.on('click', (params) => {
     const clickDate = new Date(params.name);
-    const startTime = new Date(clickDate.setHours(0, 0, 0, 0)).getTime().toString();
-    const endTime = new Date(clickDate.setHours(23, 59, 59, 999)).getTime().toString();
+    const startTime = new Date(clickDate.setHours(0, 0, 0, 0))
+      .getTime()
+      .toString();
+    const endTime = new Date(clickDate.setHours(23, 59, 59, 999))
+      .getTime()
+      .toString();
     window.dispatchEvent(
       new CustomEvent('filterByChart:leaveRecord', {
         detail: { startTime, endTime },
@@ -153,8 +167,12 @@ function initBarChart() {
   // 添加点击事件
   barChartInstance.on('click', (params) => {
     const today = new Date();
-    const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
-    const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
+    const todayStart = new Date(today.setHours(0, 0, 0, 0))
+      .getTime()
+      .toString();
+    const todayEnd = new Date(today.setHours(23, 59, 59, 999))
+      .getTime()
+      .toString();
     window.dispatchEvent(
       new CustomEvent('filterByChart:leaveRecord', {
         detail: {
@@ -175,18 +193,38 @@ function initCharts() {
 function handleCardClick(key) {
   const today = new Date();
   const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999))
+    .getTime()
+    .toString();
 
-  const filterMap = {
-    todayLeaveCount: { startTime: todayStart, endTime: todayEnd },
-    leavePeak: { startTime: todayStart, endTime: todayEnd },
-  };
-
-  const filterParams = filterMap[key];
-  if (filterParams) {
+  if (key === 'todayLeaveCount') {
+    // 今日离场量：筛选今日所有记录
     window.dispatchEvent(
-      new CustomEvent('filterByChart:leaveRecord', { detail: filterParams }),
+      new CustomEvent('filterByChart:leaveRecord', {
+        detail: { startTime: todayStart, endTime: todayEnd },
+      }),
     );
+  } else if (key === 'leavePeak') {
+    // 离场峰值：筛选今日峰值时段记录
+    const peakHour = cards[1].peakHour;
+    if (peakHour) {
+      window.dispatchEvent(
+        new CustomEvent('filterByChart:leaveRecord', {
+          detail: {
+            startTime: todayStart,
+            endTime: todayEnd,
+            hour: peakHour,
+          },
+        }),
+      );
+    } else {
+      // 如果没有峰值时段数据，则筛选今日所有记录
+      window.dispatchEvent(
+        new CustomEvent('filterByChart:leaveRecord', {
+          detail: { startTime: todayStart, endTime: todayEnd },
+        }),
+      );
+    }
   }
 }
 
@@ -258,8 +296,8 @@ onUnmounted(() => {
 .chart-box {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
   gap: 15px;
+  align-items: flex-end;
   width: 100% !important;
   padding-right: 15px;
   padding-bottom: 0.5rem;
@@ -276,9 +314,8 @@ onUnmounted(() => {
 
     .left-card {
       display: flex;
+      flex: 1;
       flex-direction: column;
-      flex: 1;
-      flex: 1;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;
