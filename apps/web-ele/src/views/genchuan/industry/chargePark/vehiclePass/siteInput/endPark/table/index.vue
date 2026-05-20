@@ -30,6 +30,7 @@ import VehicleDetailDialog from '../../../components/VehicleDetailDialog.vue';
 import {
   dataList,
   detailFields,
+  getStationOptions,
   textObj,
   useSearchFormSchema,
   useCreateFormSchema,
@@ -47,6 +48,16 @@ const props = defineProps({
 
 // 是否使用真实API（默认false使用模拟数据）
 const USE_REAL_API = true;
+
+const stationOptions = ref([]);
+
+async function loadStationOptions() {
+  try {
+    stationOptions.value = await getStationOptions();
+  } catch (error) {
+    console.error('Failed to load station options:', error);
+  }
+}
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -72,7 +83,14 @@ const [CreateForm, createFormApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useCreateFormSchema(),
+  schema: computed(() => {
+    const schema = useCreateFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -486,6 +504,7 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
+  loadStationOptions();
   window.addEventListener('filterByChart:endPark', handleFilterByChart);
   // 监听图表钻取事件
   window.addEventListener('filterEndPark', handleChartFilter);

@@ -28,6 +28,7 @@ import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
+  getStationOptions,
   textObj,
   useGridColumns,
   useSearchFormSchema,
@@ -79,6 +80,16 @@ watch(
 // 是否使用真实API
 const USE_REAL_API = true;
 
+const stationOptions = ref([]);
+
+async function loadStationOptions() {
+  try {
+    stationOptions.value = await getStationOptions();
+  } catch (error) {
+    console.error('Failed to load station options:', error);
+  }
+}
+
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   appendToMain: true,
@@ -100,7 +111,14 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: computed(() => {
+    const schema = useSearchFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -710,6 +728,7 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
+  loadStationOptions();
   window.addEventListener('filterByChart:resultHandle', handleFilterByChart);
 });
 

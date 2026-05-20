@@ -1,4 +1,27 @@
+import { requestClient } from '#/api/request';
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+
+/** 获取场站列表 */
+let stationOptionsCache = null;
+export async function getStationOptions() {
+  if (stationOptionsCache) {
+    return stationOptionsCache;
+  }
+  try {
+    const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
+    if (response && response.data && Array.isArray(response.data)) {
+      stationOptionsCache = response.data.map(item => ({
+        label: item.stationName,
+        value: item.stationId,
+      }));
+      return stationOptionsCache;
+    }
+    return [];
+  } catch (error) {
+    console.error('获取场站列表失败:', error);
+    return [];
+  }
+}
 
 /** 获取报表周期Tag类型 */
 export const getReportCycleTagType = (cycle) => {
@@ -235,16 +258,12 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '场站',
       component: 'Select',
       componentProps: {
         placeholder: '请选择场站',
-        options: [
-          { label: '泉州丰泽充停场站', value: 1 },
-          { label: '龙文区碧湖公园停车场', value: 2 },
-          { label: '龙海区石码镇停车场', value: 3 },
-        ],
+        options: [],
       },
     },
     {
@@ -471,11 +490,7 @@ export function useCreateFormSchema() {
       required: true,
       componentProps: {
         placeholder: '请选择场站',
-        options: [
-          { label: '泉州丰泽充停场站', value: 1 },
-          { label: '龙文区碧湖公园停车场', value: 2 },
-          { label: '龙海区石码镇停车场', value: 3 },
-        ],
+        options: [],
       },
     },
     {
