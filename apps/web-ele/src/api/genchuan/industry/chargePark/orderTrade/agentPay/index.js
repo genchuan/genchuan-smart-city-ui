@@ -181,7 +181,7 @@ export function deleteAgentPayRecord(params) {
 }
 /** 代付记录核算 */
 export function checkAgentPayRecord(data) {
-  return requestClient.put('/ordertrade/agent-record/check', data);
+  return requestClient.post('/ordertrade/agent-record/check', data);
 }
 /** 代付记录导出 */
 export function exportAgentPayRecord(params) {

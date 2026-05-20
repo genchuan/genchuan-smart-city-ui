@@ -31,7 +31,7 @@ export function createSettleBill(data) {
 }
 /** 结算单据重新生成 */
 export function regenerateSettleBill(data) {
-  return requestClient.put('/ordertrade/settle-bill/regenerate', data);
+  return requestClient.post('/ordertrade/settle-bill/regenerate', data);
 }
 /** 结算单据结算 */
 export function settleSettleBill(data) {
