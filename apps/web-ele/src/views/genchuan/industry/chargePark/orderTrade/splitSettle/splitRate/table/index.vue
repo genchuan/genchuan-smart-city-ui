@@ -50,10 +50,6 @@ const formData = reactive({
 });
 // 表单规则
 const rules = {
-  partnerId: [
-    { required: true, message: '合作方ID不能为空', trigger: 'blur' },
-    { type: 'number', min: 0, message: '合作方ID必须为非负整数', trigger: 'blur' },
-  ],
   splitMode: [
     { required: true, message: '分账方式不能为空', trigger: 'blur' },
   ],
@@ -363,9 +359,6 @@ watch(
     <!-- 表单抽屉 -->
     <FormDrawer :title="formTitle">
       <ElForm ref="formRef" :model="formData" :rules="rules" label-width="100px" class="common-form">
-        <ElFormItem label="合作方ID" prop="partnerId">
-          <ElInputNumber v-model="formData.partnerId" :min="0" class="w-full" />
-        </ElFormItem>
         <ElFormItem label="分账方式" prop="splitMode">
           <ElSelect v-model="formData.splitMode" placeholder="请选择分账方式" class="w-full">
             <ElOption label="固定比例" value="fixed" />
