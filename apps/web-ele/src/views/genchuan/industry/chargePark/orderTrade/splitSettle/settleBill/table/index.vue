@@ -503,12 +503,16 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          <!-- 
           <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" />
+           -->
           <IconButton content="审核通过" icon-name="Check" v-if="row.status === 'pending_audit'" @click="openActionDialog('pass', row)" />
           <IconButton content="审核驳回" icon-name="Close" v-if="row.status === 'pending_audit'" @click="openActionDialog('reject', row)" />
           <IconButton content="结算" icon-name="Wallet" v-if="row.status === 'pending_settle'" @click="openActionDialog('settle', row)" />
           <IconButton content="重新生成" icon-name="Refresh" v-if="row.status === 'rejected'" @click="openActionDialog('regenerate', row)" />
+              <!-- 
           <IconButton content="删除" icon-name="Delete" @click="handleDelete(row)" />
+            -->
         </div>
       </template>
       <template #bottom>
