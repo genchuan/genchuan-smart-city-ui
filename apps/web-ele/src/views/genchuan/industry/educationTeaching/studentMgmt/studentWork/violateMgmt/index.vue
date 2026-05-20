@@ -58,54 +58,6 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
-// 核心修改：支持空值清除筛选，使用 gridApi.query()
-function handleFilterTagClick(field, value) {
-  if (!field) return;
-  if (value === '' || value === null || value === undefined) {
-    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
-  } else {
-    const existing = tagFilters.value[field];
-    if (existing !== undefined) {
-      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-        delete tagFilters.value[field];
-      } else if (!Array.isArray(existing) && existing === value) {
-        delete tagFilters.value[field];
-      } else {
-        tagFilters.value[field] = value;
-      }
-    } else {
-      tagFilters.value[field] = value;
-    }
-  }
-  gridApi.query(); // 改为 query()
-}
-
-function clearFilters() {
-  tagFilters.value = {};
-  gridApi.query();
-}
-
-function removeFilterTag(field) {
-  delete tagFilters.value[field];
-  gridApi.query();
-}
-
-function getFieldLabel(field) {
-  const map = {
-    className: '班级',
-    violateType: '违纪类型',
-    punishType: '处分类型',
-    status: '状态',
-    creator: '创建人',
-    createTime: '创建时间',
-  };
-  return map[field] || field;
-}
-function getTagDisplayText(field, value) {
-  if (Array.isArray(value)) return value.join('、');
-  return value || '-';
-}
-
 // ---------- 原有变量 ----------
 const [Drawer, drawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => drawerApi.close() });
 
@@ -162,8 +114,43 @@ const getTableData = async ({ page }) => {
   }
 };
 
-function handleRefresh() { gridApi.query(); }
-function handleReset() { searchParams.value = {}; tagFilters.value = {}; gridApi.query(); }
+// ========== 表格实例（提前定义，确保 gridApi 可用） ==========
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: gridColumns.value,
+    keepSource: true,
+    proxyConfig: { ajax: { query: getTableData } },
+    rowConfig: { keyField: 'id', isHover: true },
+    pagerConfig: dataObj,
+    toolbarConfig: { refresh: true, search: true },
+    showOverflow: true,
+  },
+  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  showSearchForm: false,
+});
+
+// ========== 核心修复：强制重置分页到第一页并刷新 ==========
+function resetPageAndQuery() {
+  if (gridApi.commitProxy) {
+    gridApi.commitProxy('reload');
+  } else if (gridApi.reload) {
+    gridApi.reload();
+  } else {
+    dataObj.currentPage = 1;
+    gridApi.query();
+  }
+  dataObj.currentPage = 1; // 确保界面分页显示第一页
+}
+
+function handleRefresh() {
+  gridApi.query(); // 手动刷新保持当前页码
+}
+
+function handleReset() {
+  searchParams.value = {};
+  tagFilters.value = {};
+  resetPageAndQuery();
+}
 
 async function handleExport() {
   const loading = ElLoading.service({ text: '正在导出...' });
@@ -241,27 +228,31 @@ async function handleWarn(row) {
 // 新增/编辑表单
 const [CreateForm, createFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: isEditMode.value ? '更新中...' : '登记中...' });
+    const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '登记中...'});
     try {
       let res;
       if (isEditMode.value) {
-        res = await updateViolateMgmt({ ...values, id: currentEditId.value });
+        res = await updateViolateMgmt({...values, id: currentEditId.value});
       } else {
-        res = await createViolateMgmt({ ...values, status: values.status || '待审批' });
+        res = await createViolateMgmt({...values, status: values.status || '待审批'});
       }
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '登记成功');
         createDrawerApi.close();
         handleRefresh();
-      } else { ElMessage.error(isEditMode.value ? '更新失败' : '登记失败'); }
-    } finally { loading.close(); }
+      } else {
+        ElMessage.error(isEditMode.value ? '更新失败' : '登记失败');
+      }
+    } finally {
+      loading.close();
+    }
   },
   layout: 'horizontal',
   schema: useCreateFormSchema(isEditMode.value),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
 });
 
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
@@ -273,7 +264,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
       await createFormApi.resetForm();
       if (isEditMode.value && currentEditId.value) {
         try {
-          const detail = await getViolateMgmtDetail({ id: currentEditId.value });
+          const detail = await getViolateMgmtDetail({id: currentEditId.value});
           await createFormApi.setValues({
             studentId: detail.studentId,
             violateType: detail.violateType,
@@ -289,64 +280,107 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
           createDrawerApi.close();
         }
       } else {
-        await createFormApi.setValues({ status: '待审批' });
+        await createFormApi.setValues({status: '待审批'});
       }
     }
   },
 });
 
 const violateDetailDrawerRef = ref(null);
+
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   violateDetailDrawerRef.value.open();
 }
 
+// 高级查询表单
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
-    gridApi.query();
+    resetPageAndQuery(); // 查询时重置页码
   },
   layout: 'horizontal',
-  schema: useFormSchema().map(v => { delete v.rules; return v; }),
+  schema: useFormSchema().map(v => {
+    delete v.rules;
+    return v;
+  }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
-const [Grid, gridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: gridColumns.value,
-    keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
-    pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
-    showOverflow: true,
-  },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
-  showSearchForm: false,
-});
+// 筛选标签相关函数（使用 resetPageAndQuery）
+function getFieldLabel(field) {
+  const map = {
+    className: '班级',
+    violateType: '违纪类型',
+    punishType: '处分类型',
+    status: '状态',
+    creator: '创建人',
+    createTime: '创建时间',
+  };
+  return map[field] || field;
+}
 
+function getTagDisplayText(field, value) {
+  if (Array.isArray(value)) return value.join('、');
+  return value || '-';
+}
+
+function handleFilterTagClick(field, value) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
+    const existing = tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
+    } else {
+      tagFilters.value[field] = value;
+    }
+  }
+  resetPageAndQuery(); // 筛选时重置页码
+}
+
+function clearFilters() {
+  tagFilters.value = {};
+  resetPageAndQuery();
+}
+
+function removeFilterTag(field) {
+  delete tagFilters.value[field];
+  resetPageAndQuery();
+}
+
+// 切换选项卡时也需要重置页码
 watch(activeName, (newVal) => {
   tagFilters.value = {};
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({ columns: gridColumns.value });
-  gridApi.query();
+  else gridApi.setGridOptions?.({columns: gridColumns.value});
+  resetPageAndQuery(); // 原为 gridApi.query()，改为重置页码
 });
 
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
 const showChart = ref(true);
-const toggleChart = () => { showChart.value = !showChart.value; };
-defineExpose({ handleFilterTagClick, clearFilters });
+const toggleChart = () => {
+  showChart.value = !showChart.value;
+};
+defineExpose({handleFilterTagClick, clearFilters});
 
 // ========== 监听图表自定义事件 ==========
 const handleChartFilter = (event) => {
-  const { type, value } = event.detail;
+  const {type, value} = event.detail;
   if (type === 'status') {
     handleFilterTagClick('status', value);
   } else if (type === 'className') {
@@ -366,9 +400,14 @@ onUnmounted(() => {
 
 <template>
   <div class="tools-table-new">
-    <ViolateDetailDrawer ref="violateDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh"/>
-    <Drawer title="搜索"><QueryForm/></Drawer>
-    <CreateDrawer :title="isEditMode ? '编辑违纪记录' : '登记违纪'"><CreateForm/></CreateDrawer>
+    <ViolateDetailDrawer ref="violateDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                         @refresh="handleRefresh"/>
+    <Drawer title="搜索">
+      <QueryForm/>
+    </Drawer>
+    <CreateDrawer :title="isEditMode ? '编辑违纪记录' : '登记违纪'">
+      <CreateForm/>
+    </CreateDrawer>
     <Grid>
       <template #table-title>
         <ElTag
@@ -389,42 +428,67 @@ onUnmounted(() => {
           <IconButton content="导出" icon-name="download" @click="handleExport"/>
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
           <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
       <template #studentId="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentId }}</el-text>
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+          {{ row.studentId }}
+        </el-text>
       </template>
       <template #violateType="{ row }">
-        <el-text @click="handleFilterTagClick('violateType', row.violateType)" type="primary" style="cursor: pointer;">{{ row.violateType }}</el-text>
+        <el-text @click="handleFilterTagClick('violateType', row.violateType)" type="primary"
+                 style="cursor: pointer;">{{ row.violateType }}
+        </el-text>
       </template>
       <template #punishType="{ row }">
-        <el-text @click="handleFilterTagClick('punishType', row.punishType)" type="primary" style="cursor: pointer;">{{ row.punishType }}</el-text>
+        <el-text @click="handleFilterTagClick('punishType', row.punishType)" type="primary"
+                 style="cursor: pointer;">{{ row.punishType }}
+        </el-text>
       </template>
-      <template #violateTime="{ row }"><el-text>{{ formatTimestamp(row.violateTime) }}</el-text></template>
-      <template #auditTime="{ row }"><el-text>{{ formatTimestamp(row.auditTime) }}</el-text></template>
-      <template #pushTime="{ row }"><el-text>{{ formatTimestamp(row.pushTime) }}</el-text></template>
-      <template #warnTime="{ row }"><el-text>{{ formatTimestamp(row.warnTime) }}</el-text></template>
+      <template #violateTime="{ row }">
+        <el-text>{{ formatTimestamp(row.violateTime) }}</el-text>
+      </template>
+      <template #auditTime="{ row }">
+        <el-text>{{ formatTimestamp(row.auditTime) }}</el-text>
+      </template>
+      <template #pushTime="{ row }">
+        <el-text>{{ formatTimestamp(row.pushTime) }}</el-text>
+      </template>
+      <template #warnTime="{ row }">
+        <el-text>{{ formatTimestamp(row.warnTime) }}</el-text>
+      </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">{{ getStatusText(row.status) }}</el-tag>
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
+          {{ getStatusText(row.status) }}
+        </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer;">{{ row.creator || '-' }}
+        </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
+        <el-text>{{ formatTimestamp(row.createTime) }}</el-text>
       </template>
-      <template #updateTime="{ row }"><el-text>{{ formatTimestamp(row.updateTime) }}</el-text></template>
+      <template #updateTime="{ row }">
+        <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
+      </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
           <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
-          <IconButton v-if="row.status === '待审批'" content="审批" icon-name="Check" @click="handleAudit(row)"/>
-          <IconButton v-if="row.status === '已执行'" content="推送" icon-name="Promotion" @click="handlePush(row)"/>
-          <IconButton v-if="row.status === '已执行'" content="预警" icon-name="Warning" @click="handleWarn(row)"/>
+          <IconButton v-if="row.status === '待审批'" content="审批" icon-name="Check"
+                      @click="handleAudit(row)"/>
+          <IconButton v-if="row.status === '已执行'" content="推送" icon-name="Promotion"
+                      @click="handlePush(row)"/>
+          <IconButton v-if="row.status === '已执行'" content="预警" icon-name="Warning"
+                      @click="handleWarn(row)"/>
         </div>
       </template>
     </Grid>

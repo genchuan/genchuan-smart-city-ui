@@ -1,5 +1,4 @@
-
-/** 获取报表周期Tag类型（用于表格状态色） */
+/** 获取报表周期Tag类型 */
 export function getReportPeriodTagType(period) {
   const map = {
     日报: 'info',
@@ -13,13 +12,12 @@ export function getReportPeriodTagType(period) {
   return map[period] || 'info';
 }
 
-/** 获取生成状态Tag类型 */
+/** 获取生成状态Tag类型（新枚举：待生成/已生成/已归档） */
 export function getGenerateStatusTagType(status) {
   const map = {
+    待生成: 'info',
     已生成: 'success',
-    生成中: 'warning',
-    生成失败: 'danger',
-    未生成: 'info',
+    已归档: 'warning',
   };
   return map[status] || 'info';
 }
@@ -28,7 +26,7 @@ export function getGenerateStatusTagType(status) {
 export function useCreateFormSchema() {
   return [
     {
-      fieldName: 'statisticalPeriod',
+      fieldName: 'statTimeRange',
       label: '统计时段',
       component: 'DatePicker',
       componentProps: {
@@ -58,23 +56,12 @@ export function useCreateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'campus',
-      label: '校区',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择校区',
-        options: [], // 动态从接口获取校区列表
-        filterable: true,
-      },
-      rules: 'required',
-    },
-    {
       fieldName: 'grade',
       label: '年级',
       component: 'Select',
       componentProps: {
         placeholder: '请选择年级',
-        options: [], // 动态获取年级列表
+        options: [],
         filterable: true,
       },
       rules: 'required',
@@ -85,7 +72,7 @@ export function useCreateFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择专业（可选）',
-        options: [], // 动态获取
+        options: [],
         filterable: true,
         clearable: true,
       },
@@ -96,7 +83,7 @@ export function useCreateFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择班级（可选）',
-        options: [], // 动态获取
+        options: [],
         filterable: true,
         clearable: true,
       },
@@ -126,7 +113,7 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'statisticalPeriod',
+      fieldName: 'statTimeRange',
       label: '统计时段',
       component: 'DatePicker',
       componentProps: {
@@ -161,17 +148,7 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择年级',
-        options: [], // 动态获取年级列表
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'campus',
-      label: '校区',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择校区',
-        options: [], // 动态获取校区列表
+        options: [],
         clearable: true,
       },
     },
@@ -182,10 +159,9 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择生成状态',
         options: [
-          { label: '未生成', value: '未生成' },
-          { label: '生成中', value: '生成中' },
+          { label: '待生成', value: '待生成' },
           { label: '已生成', value: '已生成' },
-          { label: '生成失败', value: '生成失败' },
+          { label: '已归档', value: '已归档' },
         ],
         clearable: true,
       },
@@ -205,17 +181,17 @@ export function useGridColumns() {
       slots: { default: 'reportPeriod' },
     },
     {
-      field: 'statisticalPeriod',
       title: '统计时段',
       minWidth: 280,
       sortable: true,
+      slots: { default: 'statisticalPeriod' },
     },
     {
       field: 'className',
       title: '班级名称',
       minWidth: 150,
       sortable: true,
-      slots: { default: 'className' }, // 支持钻取筛选
+      slots: { default: 'className' },
     },
     {
       field: 'majorName',
@@ -232,25 +208,18 @@ export function useGridColumns() {
       slots: { default: 'grade' },
     },
     {
-      field: 'campus',
-      title: '校区',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'campus' },
-    },
-    {
       field: 'totalAssessScore',
       title: '四项考评总分',
       minWidth: 130,
       sortable: true,
-      slots: { default: 'totalAssessScore' }, // 点击跳转班级考评明细弹窗
+      slots: { default: 'totalAssessScore' },
     },
     {
       field: 'healthScore',
       title: '卫生得分',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'healthScore' }, // 点击查看卫生考评明细
+      slots: { default: 'healthScore' },
     },
     {
       field: 'morningExerciseScore',
@@ -278,7 +247,7 @@ export function useGridColumns() {
       title: '考评排名',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'assessRank' }, // 点击筛选同排名班级
+      slots: { default: 'assessRank' },
     },
     {
       field: 'generateStatus',
@@ -298,7 +267,7 @@ export function useGridColumns() {
       title: '操作人',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'operator' }, // 点击查看操作人信息弹窗
+      slots: { default: 'operator' },
     },
     {
       field: 'exportCount',
@@ -314,9 +283,9 @@ export function useGridColumns() {
     },
     {
       title: '操作',
-      width: 100,
+      width: 160,
       fixed: 'right',
-      slots: { default: 'actions' }, // 查看、导出按钮
+      slots: { default: 'actions' },
     },
   ];
 }
@@ -324,11 +293,11 @@ export function useGridColumns() {
 // ==================== 详情抽屉字段配置 ====================
 export const detailFields = [
   { key: 'reportPeriod', label: '报表周期' },
-  { key: 'statisticalPeriod', label: '统计时段' },
+  { key: 'statStartTime', label: '统计开始时间', formatter: (val) => val ? new Date(val).toLocaleString() : '-' },
+  { key: 'statEndTime', label: '统计结束时间', formatter: (val) => val ? new Date(val).toLocaleString() : '-' },
   { key: 'className', label: '班级名称' },
   { key: 'majorName', label: '专业名称' },
   { key: 'grade', label: '年级' },
-  { key: 'campus', label: '校区' },
   { key: 'totalAssessScore', label: '四项考评总分' },
   { key: 'healthScore', label: '卫生得分' },
   { key: 'morningExerciseScore', label: '早操得分' },
@@ -341,6 +310,4 @@ export const detailFields = [
   { key: 'exportCount', label: '导出次数' },
   { key: 'dataUpdateTime', label: '数据更新时间' },
   { key: 'creator', label: '创建者' },
-  // { key: 'createTime', label: '创建时间' },
-  // { key: 'updateTime', label: '更新时间' },
 ];
