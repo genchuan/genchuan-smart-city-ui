@@ -481,12 +481,12 @@ watch(
       append-to-body
     >
       <ElForm :model="actionDialog" label-width="80px">
-        <ElFormItem label="备注">
+        <ElFormItem :label="actionDialog.type === 'reject' ? '驳回理由' : '备注'">
           <ElInput
             v-model="actionDialog.remark"
             type="textarea"
             :rows="3"
-            placeholder="请输入备注（选填）"
+            :placeholder="actionDialog.type === 'reject' ? '请输入驳回理由' : '请输入备注（选填）'"
           />
         </ElFormItem>
       </ElForm>
