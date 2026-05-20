@@ -25,6 +25,11 @@ export function updateSettleBill(data) {
 export function deleteSettleBill(params) {
   return requestClient.delete('/ordertrade/settle-bill/delete', {params});
 }
+
+/** 结算单据批量审核 */
+export function batchAuditSettleBill(data) {
+  return requestClient.post('/ordertrade/settle-bill/batch-audit', data);
+}
 /** 结算单据创建 */
 export function createSettleBill(data) {
   return requestClient.post('/ordertrade/settle-bill/create', data);

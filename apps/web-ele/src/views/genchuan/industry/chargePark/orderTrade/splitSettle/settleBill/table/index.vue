@@ -4,7 +4,7 @@ import { downloadFileFromBlobPart } from '@vben/utils';
 import { ElMessage, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElDialog } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getSettleBillPage, exportSettleBillExcel, createSettleBill, updateSettleBill, deleteSettleBill, regenerateSettleBill, settleSettleBill, rejectSettleBill, passSettleBill } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
+import { getSettleBillPage, exportSettleBillExcel, createSettleBill, updateSettleBill, deleteSettleBill, regenerateSettleBill, settleSettleBill, rejectSettleBill, passSettleBill, batchAuditSettleBill } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
 import { formatTimestamp } from '#/utils';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
@@ -236,6 +236,26 @@ async function submitAction() {
  ElMessage.error('操作失败');
  }
 }
+/** 批量审核 */
+async function handleBatchAudit() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请先选择要审核的单据');
+    return;
+  }
+  
+  await confirm(`确定要批量审核选中的 ${checkedIds.value.length} 条单据吗？`);
+  
+  try {
+    await batchAuditSettleBill(checkedIds.value);
+    ElMessage.success('批量审核成功');
+    checkedIds.value = [];
+    handleRefresh();
+  } catch (error) {
+    console.error('批量审核失败:', error);
+    ElMessage.error('批量审核失败');
+  }
+}
+
 // 结算单据状态映射 - SettleBillStatusEnum
 const statusMap = {
   pending_audit: { label: '待审核', type: 'warning' },
@@ -482,6 +502,7 @@ watch(
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="批量审核" icon-name="CircleCheck" :disabled="checkedIds.length === 0" @click="handleBatchAudit" />
           <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
           <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
