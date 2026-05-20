@@ -434,7 +434,7 @@ watch(
           <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" />
           <IconButton content="启用" icon-name="Check" v-if="row.status === 'disabled' || row.status === 'pending'" @click="handleEnable(row)" />
           <IconButton content="禁用" icon-name="Close" v-if="row.status === 'enabled'" @click="handleDisable(row)" />
-          <IconButton content="删除" icon-name="Delete" @click="handleDelete(row)" />
+          <!-- <IconButton content="删除" icon-name="Delete" @click="handleDelete(row)" /> -->
         </div>
       </template>
       <template #bottom>
