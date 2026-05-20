@@ -4,7 +4,7 @@ import { downloadFileFromBlobPart } from '@vben/utils';
 import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getInvoiceAuditPage, exportInvoiceAuditExcel, auditPass, auditReject, batchAudit } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
+import { getInvoiceAuditPage, exportInvoiceAuditExcel, auditPass, auditReject, batchAudit, batchReapply } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
 import { formatTimestamp } from '#/utils';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
@@ -39,6 +39,12 @@ const searchFormData = reactive({
   status: '',
 });
 const searchFormRef = ref(null);
+// 重新申请弹窗数据
+const reapplyDialog = reactive({
+  visible: false,
+  id: 0,
+  remark: '',
+});
 // 发票审核状态映射 - InvoiceAuditStatusEnum
 const statusMap = {
   pending: { label: '待审核', type: 'warning' },
@@ -151,6 +157,26 @@ async function handleAuditReject(row) {
   } catch (error) {
     console.error('审核拒绝失败:', error);
     ElMessage.error('审核拒绝失败');
+  }
+}
+
+/** 打开重新申请弹窗 */
+function handleReapply(row) {
+  reapplyDialog.id = row.id;
+  reapplyDialog.remark = '';
+  reapplyDialog.visible = true;
+}
+
+/** 提交重新申请 */
+async function submitReapply() {
+  try {
+    await batchReapply({ id: reapplyDialog.id, remark: reapplyDialog.remark || '' });
+    ElMessage.success('重新申请成功');
+    reapplyDialog.visible = false;
+    handleRefresh();
+  } catch (error) {
+    console.error('重新申请失败:', error);
+    ElMessage.error('重新申请失败');
   }
 }
 
@@ -284,6 +310,31 @@ watch(
         </ElFormItem>
       </ElForm>
     </Drawer>
+
+    <!-- 重新申请弹窗 -->
+    <ElDialog
+      v-model="reapplyDialog.visible"
+      title="重新申请开票"
+      width="450px"
+      append-to-body
+    >
+      <ElForm :model="reapplyDialog" label-width="80px">
+        <ElFormItem label="备注">
+          <ElInput
+            v-model="reapplyDialog.remark"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入备注（选填）"
+          />
+        </ElFormItem>
+      </ElForm>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="reapplyDialog.visible = false">取消</el-button>
+          <el-button type="primary" @click="submitReapply">确认重新申请</el-button>
+        </div>
+      </template>
+    </ElDialog>
 
     <Grid>
       <template #toolbar-tools>
