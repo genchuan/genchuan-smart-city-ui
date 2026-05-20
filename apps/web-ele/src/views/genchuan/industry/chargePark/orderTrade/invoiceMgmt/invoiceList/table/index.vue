@@ -151,14 +151,14 @@ async function handleReapply(row) {
 
 /** 确认开票 */
 async function handlePush(row) {
-  await confirm('确定确认开票此记录吗？');
+  await confirm('确定推送此记录吗？');
   try {
     await push({ id: row.id, remark: '' });
-    ElMessage.success('确认开票成功');
+    ElMessage.success('推送成功');
     handleRefresh();
   } catch (error) {
-    console.error('确认开票失败:', error);
-    ElMessage.error('确认开票失败');
+    console.error('推送失败:', error);
+    ElMessage.error('推送失败');
   }
 }
 
@@ -352,7 +352,7 @@ watch(
           <IconButton v-if="row.status === 'pending_audit'" content="审核通过" icon-name="Check" @click="handleAuditPass(row)" />
           <IconButton v-if="row.status === 'pending_audit'" content="审核拒绝" icon-name="Close" @click="handleAuditReject(row)" />
           <IconButton v-if="row.status === 'rejected'" content="重新申请" icon-name="Refresh" @click="handleReapply(row)" />
-          <!-- <IconButton v-if="row.status === 'pending_invoice'" content="确认开票" icon-name="Ticket" @click="handlePush(row)" /> -->
+            <IconButton v-if="row.status === 'invoiced'" content="推送" icon-name="Ticket" @click="handlePush(row)" /> 
           <IconButton v-if="row.status === 'pending_invoice'" content="开票" icon-name="Plus" @click="handleInvoice(row)" />
           <IconButton v-if="row.status === 'invoiced'" content="下载" icon-name="download" @click="handleDownload(row)" />
         </div>
