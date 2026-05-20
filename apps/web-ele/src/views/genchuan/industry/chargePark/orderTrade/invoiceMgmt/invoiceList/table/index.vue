@@ -352,7 +352,7 @@ watch(
           <IconButton v-if="row.status === 'pending_audit'" content="审核通过" icon-name="Check" @click="handleAuditPass(row)" />
           <IconButton v-if="row.status === 'pending_audit'" content="审核拒绝" icon-name="Close" @click="handleAuditReject(row)" />
           <IconButton v-if="row.status === 'rejected'" content="重新申请" icon-name="Refresh" @click="handleReapply(row)" />
-          <IconButton v-if="row.status === 'pending_invoice'" content="确认开票" icon-name="Ticket" @click="handlePush(row)" />
+          <!-- <IconButton v-if="row.status === 'pending_invoice'" content="确认开票" icon-name="Ticket" @click="handlePush(row)" /> -->
           <IconButton v-if="row.status === 'pending_invoice'" content="开票" icon-name="Plus" @click="handleInvoice(row)" />
           <IconButton v-if="row.status === 'invoiced'" content="下载" icon-name="download" @click="handleDownload(row)" />
         </div>
