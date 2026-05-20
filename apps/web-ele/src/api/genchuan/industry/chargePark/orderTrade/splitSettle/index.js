@@ -124,7 +124,7 @@ export function deleteSplitRateStatus(params) {
 }
 /** 分账结算状态审核 */
 export function checkSplitRateStatus(data) {
-  return requestClient.put('/ordertrade/settle-status/check', data);
+  return requestClient.post('/ordertrade/settle-status/check', data);
 }
 /** 分账结算状态图表 */
 export function getSplitRateStatusChart(params) {
