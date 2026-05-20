@@ -102,7 +102,7 @@ async function handleBatchAuditPass() {
   }
   await confirm('确定批量审核通过选中的记录吗？');
   try {
-    await batchAudit({ ids: checkedIds.value, status: 'approved' });
+    await batchAudit(checkedIds.value);
     ElMessage.success('批量审核通过成功');
     handleRefresh();
   } catch (error) {

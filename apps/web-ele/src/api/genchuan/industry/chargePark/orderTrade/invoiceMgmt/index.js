@@ -64,7 +64,7 @@ export function exportInvoiceAuditExcel() {
 }
 /** 发票列表审核批量操作 */
 export function batchAudit(data) {
-  return requestClient.put('/ordertrade/invoice-audit/batch-audit', data);
+  return requestClient.post('/ordertrade/invoice-audit/batch-audit', data);
 }
 
 
