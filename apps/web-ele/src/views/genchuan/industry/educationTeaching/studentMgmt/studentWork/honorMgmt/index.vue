@@ -285,7 +285,14 @@ const [QueryForm] = useVbenForm({
 
 // 筛选标签相关函数（使用 resetPageAndQuery）
 function getFieldLabel(field) {
-  const map = { honorType: '荣誉类型', className: '班级', status: '状态', creator: '创建人', createTime: '创建时间' };
+  const map = {
+    honorType: '荣誉类型',
+    studentName: '学生姓名',
+    className: '班级',
+    status: '状态',
+    creator: '创建人',
+    createTime: '创建时间'
+  };
   return map[field] || field;
 }
 function getTagDisplayText(field, value) {
@@ -390,26 +397,40 @@ onUnmounted(() => {
         </div>
       </template>
 
+      <!-- 学号列 -->
       <template #studentId="{ row }">
         <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentId }}</el-text>
       </template>
+      <!-- 新增学生姓名列 -->
+      <template #studentName="{ row }">
+        <el-text @click="handleFilterTagClick('studentName', row.studentName)" type="primary" style="cursor: pointer;">{{ row.studentName || '-' }}</el-text>
+      </template>
+      <!-- 荣誉类型列 -->
       <template #honorType="{ row }">
         <el-text @click="handleFilterTagClick('honorType', row.honorType)" type="primary" style="cursor: pointer;">{{ row.honorType }}</el-text>
       </template>
+      <!-- 获得时间列 -->
       <template #getTime="{ row }"><el-text>{{ formatTimestamp(row.getTime) }}</el-text></template>
+      <!-- 审核时间列 -->
       <template #auditTime="{ row }"><el-text>{{ formatTimestamp(row.auditTime) }}</el-text></template>
+      <!-- 推送时间列 -->
       <template #pushTime="{ row }"><el-text>{{ formatTimestamp(row.pushTime) }}</el-text></template>
+      <!-- 状态列 -->
       <template #status="{ row }">
         <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">{{ row.status }}</el-tag>
       </template>
+      <!-- 创建人列 -->
       <template #creator="{ row }">
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
       </template>
+      <!-- 创建时间列 -->
       <template #createTime="{ row }">
         <el-text>{{ formatTimestamp(row.createTime) }}</el-text>
       </template>
+      <!-- 更新时间列 -->
       <template #updateTime="{ row }"><el-text>{{ formatTimestamp(row.updateTime) }}</el-text></template>
 
+      <!-- 操作列 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>

@@ -86,7 +86,7 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 新增/编辑表单 schema（添加 status 字段）
+// 登记/编辑表单 schema
 export function useCreateFormSchema(isEdit = false) {
   return [
     {
