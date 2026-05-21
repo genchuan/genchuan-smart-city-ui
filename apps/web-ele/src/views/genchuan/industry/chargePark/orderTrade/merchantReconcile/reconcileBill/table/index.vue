@@ -75,6 +75,14 @@ const remarkForm = reactive({
 const remarkDrawerRef = ref(null);
 const currentRow = ref(null);
 const currentAction = ref('');
+const remarkFormRef = ref(null);
+
+// 备注表单规则（修正时必填）
+const remarkRules = {
+  remark: [
+    { required: true, message: '修正说明不能为空', trigger: 'blur' },
+  ],
+};
 
 const [Drawer, drawerApi] = useVbenDrawer({
   appendToMain: true,
@@ -181,6 +189,12 @@ async function handleFix(row) {
 async function handleRemarkConfirm() {
   if (!currentRow.value) return;
   
+  // 修正操作需要验证备注必填
+  if (currentAction.value === 'fix' && remarkFormRef.value) {
+    const valid = await remarkFormRef.value.validate();
+    if (!valid) return;
+  }
+  
   const params = {
     id: currentRow.value.id,
     remark: remarkForm.remark,
@@ -198,7 +212,7 @@ async function handleRemarkConfirm() {
         break;
       case 'fix':
         await fixReconcileBill(params);
-        ElMessage.success('修复成功');
+        ElMessage.success('修正成功');
         break;
     }
     handleRefresh();
@@ -328,10 +342,10 @@ watch(
     <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
     
     <!-- 备注弹窗 -->
-    <RemarkDrawer :title="currentAction === 'reconcile' ? '对账' : currentAction === 'confirm' ? '确认' : '修复'" ref="remarkDrawerRef">
-      <ElForm :model="remarkForm" label-width="100px" class="query-form">
-        <ElFormItem label="备注">
-          <ElInput v-model="remarkForm.remark" type="textarea" placeholder="请输入备注（可选）" :rows="4" />
+    <RemarkDrawer :title="currentAction === 'reconcile' ? '对账' : currentAction === 'confirm' ? '确认' : '修正'" ref="remarkDrawerRef">
+      <ElForm ref="remarkFormRef" :model="remarkForm" :rules="currentAction === 'fix' ? remarkRules : {}" label-width="100px" class="query-form">
+        <ElFormItem :label="currentAction === 'fix' ? '修正说明' : '备注'" :prop="currentAction === 'fix' ? 'remark' : ''">
+          <ElInput v-model="remarkForm.remark" type="textarea" :placeholder="currentAction === 'fix' ? '请输入修正说明（必填）' : '请输入备注（可选）'" :rows="4" />
         </ElFormItem>
       </ElForm>
     </RemarkDrawer>
@@ -383,10 +397,10 @@ watch(
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           <IconButton v-if="row.status === 'pending'" content="对账" icon-name="Check" @click="handleReconcile(row)" />
           <IconButton v-if="row.status === 'reconciled'" content="确认" icon-name="right" @click="handleConfirm(row)" />
-          <!-- <IconButton  content="修复" icon-name="top" @click="handleFix(row)" /> -->
+          <IconButton v-if="row.status === 'abnormal'" content="修正" icon-name="top" @click="handleFix(row)" />
+          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
         </div>
       </template>
       <template #bottom>
