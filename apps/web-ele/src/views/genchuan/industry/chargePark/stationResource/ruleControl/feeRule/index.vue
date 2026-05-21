@@ -55,6 +55,29 @@ const importUpdateSupport = ref(false);
 const chartData = ref({});
 const selectOptionsMap = ref({});
 
+function padTime(value) {
+  return String(value).padStart(2, '0');
+}
+
+function formatDateTime(value) {
+  if (value === undefined || value === null || value === '') return '--';
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return `${value.getFullYear()}-${padTime(value.getMonth() + 1)}-${padTime(value.getDate())} ${padTime(value.getHours())}:${padTime(value.getMinutes())}:${padTime(value.getSeconds())}`;
+  }
+  if (typeof value === 'number' || /^\d+$/.test(String(value))) {
+    const text = String(value);
+    const timestamp = Number(text.length === 10 ? `${text}000` : text);
+    const date = new Date(timestamp);
+    if (!Number.isNaN(date.getTime())) return formatDateTime(date);
+  }
+  const normalized = String(value)
+    .replace('T', ' ')
+    .replace(/\.\d+Z?$/, '');
+  const parsed = new Date(String(value).replaceAll('-', '/'));
+  if (!Number.isNaN(parsed.getTime())) return formatDateTime(parsed);
+  return normalized.length >= 19 ? normalized.slice(0, 19) : normalized;
+}
+
 function normalizeOptions(options = []) {
   return options.map((item) => {
     if (typeof item === 'object' && item !== null) {
@@ -84,6 +107,67 @@ function extractPageList(result) {
   return (
     result?.list || result?.rows || result?.records || result?.data?.list || []
   );
+}
+
+function firstDefined(...values) {
+  return values.find((value) => !isEmpty(value));
+}
+
+function normalizeMatchRate(value) {
+  if (isEmpty(value)) return value;
+  if (typeof value === 'string' && value.includes('%')) return value;
+  const numberValue = Number(value);
+  if (Number.isNaN(numberValue)) return value;
+  return numberValue > 0 && numberValue <= 1
+    ? Number((numberValue * 100).toFixed(2))
+    : numberValue;
+}
+
+function formatMatchRate(value) {
+  const normalizedValue = normalizeMatchRate(value);
+  if (isEmpty(normalizedValue)) return '--';
+  return `${normalizedValue}%`;
+}
+
+const columnFormatters = {
+  formatDateTime: ({ cellValue }) => formatDateTime(cellValue),
+  formatMatchRate: ({ cellValue }) => formatMatchRate(cellValue),
+};
+
+function normalizeFeeRuleRow(row = {}) {
+  return {
+    ...row,
+    matchRate: normalizeMatchRate(
+      firstDefined(
+        row.matchRate,
+        row.totalMatchRate,
+        row.orderMatchRate,
+        row.ruleMatchRate,
+        row.matchingRate,
+      ),
+    ),
+  };
+}
+
+function normalizeFeeRulePageResult(result) {
+  if (Array.isArray(result)) {
+    return result.map((item) => normalizeFeeRuleRow(item));
+  }
+  const list = extractPageList(result);
+  const nextList = list.map((item) => normalizeFeeRuleRow(item));
+  if (result?.data?.list) {
+    return {
+      ...result,
+      data: {
+        ...result.data,
+        list: nextList,
+      },
+    };
+  }
+  if (result?.list) return { ...result, list: nextList };
+  if (result?.rows) return { ...result, rows: nextList };
+  if (result?.records) return { ...result, records: nextList };
+  return result;
 }
 
 function buildOptionsBySource(source, result) {
@@ -572,7 +656,15 @@ function buildGridColumns() {
         sortable: true,
       };
       if (column.formatter) {
-        columnConfig.formatter = column.formatter;
+        columnConfig.formatter =
+          typeof column.formatter === 'string'
+            ? columnFormatters[column.formatter]
+            : column.formatter;
+      } else if (column.suffix) {
+        columnConfig.formatter = ({ cellValue }) => {
+          if (isEmpty(cellValue)) return '--';
+          return `${cellValue}${column.suffix}`;
+        };
       }
       const slotName = getCellSlotName(column);
       if (slotName) {
@@ -603,11 +695,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
             ...appliedQuery.value,
             ...formValues,
           });
-          return await pageApi[`get${apiName}Page`]({
+          const result = await pageApi[`get${apiName}Page`]({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             ...query,
           });
+          return normalizeFeeRulePageResult(result);
         },
       },
     },
@@ -697,6 +790,9 @@ async function handleOpenDetail(row) {
     ...row,
     ...detail,
   };
+  if (isEmpty(nextDetail.auditUserName) && !isEmpty(row.auditUserName)) {
+    nextDetail.auditUserName = row.auditUserName;
+  }
   if (isEmpty(nextDetail.stationName) && !isEmpty(nextDetail.stationId)) {
     nextDetail.stationName = getOptionLabel('stationId', nextDetail.stationId);
   }
@@ -1093,7 +1189,6 @@ function handleToggleOverview() {
 }
 
 async function handleOpenSearch() {
-  await syncQueryForm(appliedQuery.value);
   searchDrawerApi.open();
   await nextTick();
   await syncQueryForm(appliedQuery.value);

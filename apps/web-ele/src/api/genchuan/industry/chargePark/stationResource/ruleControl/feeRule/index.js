@@ -36,6 +36,10 @@ export function importFeeRule(file, updateSupport = false) {
   });
 }
 
+export function getFeeRuleImportTemplate() {
+  return requestClient.download(`${baseUrl}/get-import-template`);
+}
+
 export function exportFeeRule(params) {
   return requestClient.download(`${baseUrl}/export`, { params });
 }

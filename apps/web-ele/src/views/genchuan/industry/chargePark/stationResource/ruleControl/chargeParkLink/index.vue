@@ -723,6 +723,9 @@ async function handleOpenDetail(row) {
     ...row,
     ...detail,
   };
+  if (isEmpty(nextDetail.auditUserName) && !isEmpty(row.auditUserName)) {
+    nextDetail.auditUserName = row.auditUserName;
+  }
   if (isEmpty(nextDetail.stationName) && !isEmpty(nextDetail.stationId)) {
     nextDetail.stationName = getOptionLabel('stationId', nextDetail.stationId);
   }
@@ -843,13 +846,23 @@ function handleRemoveImportFile() {
 
 function normalizeImportResult(result) {
   const data = result?.data || result || {};
+  const fallbackMessage =
+    data.msg ||
+    data.message ||
+    data.errorMsg ||
+    data.error ||
+    result?.msg ||
+    result?.message ||
+    result?.errorMsg ||
+    result?.error ||
+    '';
   const rawFailureList =
     data.failureList ||
     data.failures ||
     data.errorList ||
     data.errors ||
     data.failMsgs ||
-    [];
+    (fallbackMessage ? [fallbackMessage] : []);
   const failureList = rawFailureList.map((item, index) => {
     if (typeof item === 'string') {
       return { msg: item, row: index + 1 };
@@ -863,13 +876,32 @@ function normalizeImportResult(result) {
         item.reason ||
         item.failReason ||
         item.error ||
+        fallbackMessage ||
         '导入失败',
     };
   });
   return {
-    failureCount: data.failureCount ?? failureList.length ?? 0,
+    failureCount:
+      data.failureCount ?? data.failCount ?? failureList.length ?? 0,
     failureList,
     successCount: data.successCount ?? data.success ?? 0,
+  };
+}
+
+function normalizeImportError(error) {
+  const message =
+    error?.response?.data?.msg ||
+    error?.response?.data?.message ||
+    error?.response?.data?.errorMsg ||
+    error?.data?.msg ||
+    error?.data?.message ||
+    error?.msg ||
+    error?.message ||
+    '导入失败，请检查模板内容后重试';
+  return {
+    failureCount: 1,
+    failureList: [{ msg: message, row: '-' }],
+    successCount: 0,
   };
 }
 
@@ -906,6 +938,9 @@ async function handleImportConfirm() {
     if (!importResult.value.failureCount) {
       importDialogVisible.value = false;
     }
+  } catch (error) {
+    importResult.value = normalizeImportError(error);
+    ElMessage.error(importResult.value.failureList[0]?.msg || '导入失败');
   } finally {
     importLoading.value = false;
   }

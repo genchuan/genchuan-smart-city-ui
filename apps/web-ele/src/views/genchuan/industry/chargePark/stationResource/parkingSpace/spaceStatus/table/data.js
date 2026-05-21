@@ -2,9 +2,10 @@ export const pageConfig = {
   apiName: 'ParkingSpaceStatus',
   title: '车位状态',
   exportName: '车位状态数据.xlsx',
+  importTemplateName: '车位状态导入模板.xlsx',
   nameField: 'spaceNo',
   primaryField: 'spaceNo',
-  toolbar: ['refresh', 'export'],
+  toolbar: ['import', 'export', 'refresh'],
   rowActionMap: {
     空闲: ['detail', 'locate'],
     占用: ['detail', 'locate'],

@@ -368,6 +368,18 @@ const dialogFieldCatalog = {
     { key: 'areaId', label: '所属片区ID', section: '归属信息' },
     { key: 'address', label: '地址', section: '归属信息' },
     { key: 'status', label: '状态', section: '运营信息' },
+    {
+      key: 'createTime',
+      label: '创建时间',
+      section: '运营信息',
+      formatter: 'formatDateTime',
+    },
+    {
+      key: 'updateTime',
+      label: '更新时间',
+      section: '运营信息',
+      formatter: 'formatDateTime',
+    },
   ],
   stationIds: [
     { key: 'stationIds', label: '适用场站', section: '关联信息' },
@@ -429,9 +441,19 @@ const fallbackDialogFields = [
   { key: pageConfig.nameField, label: '名称', section: '当前记录' },
   { key: 'status', label: '状态', section: '当前记录' },
   { key: 'creator', label: '创建人', section: '审计信息' },
-  { key: 'createTime', label: '创建时间', section: '审计信息' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'updater', label: '更新人', section: '审计信息' },
-  { key: 'updateTime', label: '更新时间', section: '审计信息' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
 ];
 
 function dedupeFields(fields = []) {

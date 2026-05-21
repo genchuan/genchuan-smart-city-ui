@@ -36,6 +36,10 @@ export function importBlackWhiteList(file, updateSupport = false) {
   });
 }
 
+export function getBlackWhiteListImportTemplate() {
+  return requestClient.download(`${baseUrl}/get-import-template`);
+}
+
 export function exportBlackWhiteList(params) {
   return requestClient.download(`${baseUrl}/export`, { params });
 }

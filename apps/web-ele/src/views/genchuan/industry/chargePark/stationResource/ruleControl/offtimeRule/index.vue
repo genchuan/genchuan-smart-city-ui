@@ -731,6 +731,14 @@ async function handleOpenDetail(row) {
     ...row,
     ...detail,
   };
+  const rowStationName =
+    row.stationName || getOptionLabel('stationId', row.stationId);
+  if (!isEmpty(rowStationName)) {
+    nextDetail.stationName = rowStationName;
+  }
+  if (isEmpty(nextDetail.auditUserName) && !isEmpty(row.auditUserName)) {
+    nextDetail.auditUserName = row.auditUserName;
+  }
   if (isEmpty(nextDetail.stationName) && !isEmpty(nextDetail.stationId)) {
     nextDetail.stationName = getOptionLabel('stationId', nextDetail.stationId);
   }

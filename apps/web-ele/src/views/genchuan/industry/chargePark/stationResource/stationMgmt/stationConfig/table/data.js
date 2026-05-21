@@ -2,9 +2,10 @@ export const pageConfig = {
   apiName: 'StationConfig',
   title: '场站配置',
   exportName: '场站配置数据.xlsx',
+  importTemplateName: '场站配置导入模板.xlsx',
   nameField: 'type',
   primaryField: 'id',
-  toolbar: ['create', 'save'],
+  toolbar: ['create', 'import', 'export', 'save'],
   rowActionMap: {
     未生效: ['enable', 'edit', 'detail'],
     已生效: ['disable', 'edit', 'detail'],
