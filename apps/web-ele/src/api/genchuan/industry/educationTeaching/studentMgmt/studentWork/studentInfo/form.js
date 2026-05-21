@@ -105,12 +105,18 @@ export function useCreateFormSchema(isEdit = false) {
       labelWidth: '100',
     },
     {
-      fieldName: 'grade',                     // 新增年级字段
+      fieldName: 'photo',
+      label: '学生照片地址',
+      component: 'Input',
+      componentProps: { placeholder: '请输入学生照片URL或路径' },
+      labelWidth: '100',
+    },
+    {
+      fieldName: 'grade',
       label: '年级',
       component: 'Select',
       componentProps: {
         placeholder: '请选择年级',
-        disabled: isEdit,                    // 编辑时不可修改年级（根据业务调整）
         options: [
           { label: '2021级', value: '2021级' },
           { label: '2022级', value: '2022级' },

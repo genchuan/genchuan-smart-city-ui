@@ -409,6 +409,12 @@ const activeFilters = computed(() => {
       field: 'isCorrected',
     });
   }
+  if (obj.leaveTimeHour) {
+    filters.push({
+      label: `离场时间：${obj.leaveTimeHour}`,
+      field: 'leaveTimeHour',
+    });
+  }
   if (
     obj.leaveTime &&
     Array.isArray(obj.leaveTime) &&
@@ -630,20 +636,17 @@ const handleFullShow = () => {
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
 
-  // 转换时间参数格式
-  if (filterParams.startTime && filterParams.endTime) {
+  // 如果有 leaveTimeHour 参数，只传递小时参数
+  if (filterParams.leaveTimeHour) {
+    dataObj.searchParams = {
+      ...dataObj.searchParams,
+      leaveTimeHour: filterParams.leaveTimeHour,
+    };
+    ElMessage.success(`已筛选 ${filterParams.leaveTimeHour} 时段的离场记录`);
+  } else if (filterParams.startTime && filterParams.endTime) {
+    // 如果没有小时参数，使用时间范围
     const startDate = new Date(Number(filterParams.startTime));
     const endDate = new Date(Number(filterParams.endTime));
-
-    // 如果有 hour 参数，调整时间范围到指定小时
-    if (filterParams.hour) {
-      const hourMatch = filterParams.hour.match(/(\d+)/);
-      if (hourMatch) {
-        const hour = parseInt(hourMatch[1]);
-        startDate.setHours(hour, 0, 0, 0);
-        endDate.setHours(hour, 59, 59, 999);
-      }
-    }
 
     // 格式化为 YYYY-MM-DD HH:mm:ss
     const formatDateTime = (date) => {
@@ -661,13 +664,7 @@ const handleFilterByChart = (event) => {
       ...dataObj.searchParams,
       leaveTime: leaveTimeRange,
     };
-
-    // 显示具体的筛选信息
-    if (filterParams.hour) {
-      ElMessage.success(`已筛选 ${filterParams.hour} 时段的离场记录`);
-    } else {
-      ElMessage.success('已应用图表筛选');
-    }
+    ElMessage.success('已应用图表筛选');
   } else {
     dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
     ElMessage.success('已应用图表筛选');

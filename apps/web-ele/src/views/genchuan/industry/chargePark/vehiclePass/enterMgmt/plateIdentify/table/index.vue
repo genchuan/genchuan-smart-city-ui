@@ -697,7 +697,7 @@ onUnmounted(() => {
             @close="handleClearFilter('isCorrected')"
           >
             修正标记：{{
-              dataObj.searchParams.isCorrected ? '已修正' : '未修正'
+              dataObj.searchParams.isCorrected === 2 ? '已确认' : dataObj.searchParams.isCorrected === 1 ? '已修正' : '未修正'
             }}
           </el-tag>
           <el-tag
@@ -806,15 +806,6 @@ onUnmounted(() => {
           {{ row.stationName }}
         </el-text>
       </template>
-      <template #isCorrected="{ row }">
-        <el-tag
-          :type="row.isCorrected ? 'success' : 'info'"
-          @click="handleCorrectedClick(row)"
-          style="cursor: pointer"
-        >
-          {{ row.isCorrected ? '已修正' : '未修正' }}
-        </el-tag>
-      </template>
       <template #updater="{ row }">
         <el-text>{{ row.updater || '-' }}</el-text>
       </template>
@@ -824,8 +815,10 @@ onUnmounted(() => {
         </el-text>
       </template>
       <template #correctionMark="{ row }">
-        <el-tag :type="row.isCorrected ? 'success' : 'info'">
-          {{ row.isCorrected ? '已修正' : '未修正' }}
+        <el-tag
+          :type="row.isCorrected === 2 ? 'success' : row.isCorrected === 1 ? 'warning' : 'info'"
+        >
+          {{ row.isCorrected === 2 ? '已确认' : row.isCorrected === 1 ? '已修正' : '未修正' }}
         </el-tag>
       </template>
       <template #actions="{ row }">

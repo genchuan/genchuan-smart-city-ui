@@ -57,55 +57,6 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
-// 核心修改：支持空值清除筛选，使用 gridApi.query()
-function handleFilterTagClick(field, value) {
-  if (!field) return;
-  if (value === '' || value === null || value === undefined) {
-    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
-  } else {
-    const existing = tagFilters.value[field];
-    if (existing !== undefined) {
-      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-        delete tagFilters.value[field];
-      } else if (!Array.isArray(existing) && existing === value) {
-        delete tagFilters.value[field];
-      } else {
-        tagFilters.value[field] = value;
-      }
-    } else {
-      tagFilters.value[field] = value;
-    }
-  }
-  gridApi.query(); // 改为 query()
-}
-
-function clearFilters() {
-  tagFilters.value = {};
-  gridApi.query();
-}
-
-function removeFilterTag(field) {
-  delete tagFilters.value[field];
-  gridApi.query();
-}
-
-function getFieldLabel(field) {
-  const map = {
-    status: '状态',
-    creator: '创建人',
-    createTime: '创建时间',
-    title: '消息标题',
-    msgType: '消息类型',
-    className: '班级',
-  };
-  return map[field] || field;
-}
-
-function getTagDisplayText(field, value) {
-  if (Array.isArray(value)) return value.join('、');
-  return value || '-';
-}
-
 // ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -172,14 +123,42 @@ const getTableData = async ({ page }) => {
   }
 };
 
+// ========== 表格实例（提前定义，确保 gridApi 可用） ==========
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: gridColumns.value,
+    keepSource: true,
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
+    pagerConfig: dataObj,
+    toolbarConfig: {refresh: true, search: true},
+    showOverflow: true,
+  },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
+  showSearchForm: false,
+});
+
+// ========== 核心修复：强制重置分页到第一页并刷新 ==========
+function resetPageAndQuery() {
+  if (gridApi.commitProxy) {
+    gridApi.commitProxy('reload');
+  } else if (gridApi.reload) {
+    gridApi.reload();
+  } else {
+    dataObj.currentPage = 1;
+    gridApi.query();
+  }
+  dataObj.currentPage = 1; // 确保界面分页显示第一页
+}
+
 function handleRefresh() {
-  gridApi.query();
+  gridApi.query(); // 手动刷新保持当前页码
 }
 
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.query();
+  resetPageAndQuery();
 }
 
 async function handleExport() {
@@ -390,13 +369,14 @@ function handleOpenDetail(row) {
   communicateDetailDrawerRef.value.open();
 }
 
+// 高级查询表单
 const [QueryForm] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.query();
+    resetPageAndQuery(); // 查询时重置页码
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -407,19 +387,54 @@ const [QueryForm] = useVbenForm({
   submitButtonOptions: {content: '查询'},
 });
 
-const [Grid, gridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: gridColumns.value,
-    keepSource: true,
-    proxyConfig: {ajax: {query: getTableData}},
-    rowConfig: {keyField: 'id', isHover: true},
-    pagerConfig: dataObj,
-    toolbarConfig: {refresh: true, search: true},
-    showOverflow: true,
-  },
-  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
-  showSearchForm: false,
-});
+// 筛选标签相关函数（使用 resetPageAndQuery）
+function getFieldLabel(field) {
+  const map = {
+    status: '状态',
+    creator: '创建人',
+    createTime: '创建时间',
+    title: '消息标题',
+    msgType: '消息类型',
+    className: '班级',
+  };
+  return map[field] || field;
+}
+
+function getTagDisplayText(field, value) {
+  if (Array.isArray(value)) return value.join('、');
+  return value || '-';
+}
+
+function handleFilterTagClick(field, value) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
+    const existing = tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
+    } else {
+      tagFilters.value[field] = value;
+    }
+  }
+  resetPageAndQuery(); // 筛选时重置页码
+}
+
+function clearFilters() {
+  tagFilters.value = {};
+  resetPageAndQuery();
+}
+
+function removeFilterTag(field) {
+  delete tagFilters.value[field];
+  resetPageAndQuery();
+}
 
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
@@ -506,8 +521,8 @@ onUnmounted(() => {
         </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
+        <el-text>
+          {{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
       <template #sendTime="{ row }">

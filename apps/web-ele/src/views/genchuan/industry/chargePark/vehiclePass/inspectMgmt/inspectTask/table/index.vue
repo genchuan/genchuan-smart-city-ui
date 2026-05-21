@@ -30,6 +30,7 @@ import {
   dataList,
   detailFields,
   getStationOptions,
+  getExecutorOptions,
   textObj,
   useGridColumns,
   useSearchFormSchema,
@@ -52,12 +53,21 @@ const props = defineProps({
 const USE_REAL_API = true;
 
 const stationOptions = ref([]);
+const executorOptions = ref([]);
 
 async function loadStationOptions() {
   try {
     stationOptions.value = await getStationOptions();
   } catch (error) {
     console.error('Failed to load station options:', error);
+  }
+}
+
+async function loadExecutorOptions() {
+  try {
+    executorOptions.value = await getExecutorOptions();
+  } catch (error) {
+    console.error('Failed to load executor options:', error);
   }
 }
 
@@ -550,6 +560,7 @@ const handleFilterByChart = (event) => {
 
 onMounted(() => {
   loadStationOptions();
+  loadExecutorOptions();
   window.addEventListener('filterByChart:inspectTask', handleFilterByChart);
 });
 
@@ -745,33 +756,54 @@ const [TransferDrawer, transferDrawerApi] = useVbenDrawer({
     transferDrawerApi.close();
   },
   async onConfirm() {
-    const values = transferFormApi.form.values;
-    const currentRow = dataObj.currentTransferRow;
     try {
+      // 先验证表单
+      await transferFormApi.validate();
+
+      const values = transferFormApi.form.values;
+      const currentRow = dataObj.currentTransferRow;
+
+      console.log('转派任务参数:', {
+        id: currentRow.id,
+        targetUserId: values.targetUserId,
+        transferReason: values.transferReason,
+      });
+
       await transferInspectTask({
         id: currentRow.id,
         targetUserId: values.targetUserId,
         transferReason: values.transferReason,
       });
+
       ElMessage.success('转派成功');
       handleRefresh();
       transferDrawerApi.close();
     } catch (error) {
-      ElMessage.error('转派失败');
-      console.error(error);
+      console.error('转派失败:', error);
+      if (error?.errors) {
+        ElMessage.error('请填写完整的表单信息');
+      } else {
+        ElMessage.error('转派失败');
+      }
+    }
+  },
+  async onOpenChange(isOpen) {
+    if (isOpen) {
+      // 打开时重置表单
+      transferFormApi.resetForm();
     }
   },
 });
 
 const [TransferForm, transferFormApi] = useVbenForm({
-  schema: [
+  schema: computed(() => [
     {
       fieldName: 'targetUserId',
       label: '目标执行人',
       component: 'Select',
       componentProps: {
         placeholder: '请选择目标执行人',
-        options: [],
+        options: executorOptions.value,
       },
       rules: 'required',
     },
@@ -785,7 +817,8 @@ const [TransferForm, transferFormApi] = useVbenForm({
       },
       rules: 'required',
     },
-  ],
+  ]),
+  showDefaultActions: false,
 });
 
 const handleTransfer = async (row) => {

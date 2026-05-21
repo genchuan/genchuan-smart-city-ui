@@ -1,13 +1,65 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
+import type { MemberTagChartVO } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberTag';
 
-import { CommonStatusEnum, DICT_TYPE } from '@vben/constants';
-import { getDictOptions } from '@vben/hooks';
+import { h } from 'vue';
+
+import { ElTag } from 'element-plus';
 
 import { z } from '#/adapter/form';
 import { getRangePickerDefaultProps } from '#/utils';
 
-/** 新增/修改的表单 */
+import {
+  formatDateTimeValue,
+  formatNormalStatus,
+  getNormalStatusTagType,
+  normalStatusOptions,
+  STATUS_ENABLED,
+} from '../utils';
+
+export function buildStatsDataFromApi(data?: Partial<MemberTagChartVO>) {
+  const distribution = Array.isArray(data?.tagDistribution)
+    ? data.tagDistribution
+    : [];
+
+  return {
+    cards: [
+      {
+        title: '标签数',
+        value: Number(data?.tagCount ?? 0),
+        desc: '当前会员标签总数',
+        color: '#2F80ED',
+      },
+      {
+        title: '标签用户数',
+        value: Number(data?.tagUserCount ?? 0),
+        desc: '至少绑定一个标签的会员数',
+        color: '#27AE60',
+      },
+    ],
+    charts: [
+      {
+        title: '标签分布',
+        type: 'pie',
+        data: distribution.map((item) => ({
+          name: item.type || '未命名标签',
+          value: Number(item.count ?? 0),
+        })),
+      },
+    ],
+  };
+}
+
+function renderStatus(status?: number | string) {
+  return h(
+    ElTag,
+    {
+      type: getNormalStatusTagType(status),
+    },
+    () => formatNormalStatus(status),
+  );
+}
+
 export function useFormSchema(): VbenFormSchema[] {
   return [
     {
@@ -40,14 +92,13 @@ export function useFormSchema(): VbenFormSchema[] {
       fieldName: 'status',
       label: '状态',
       componentProps: {
-        options: getDictOptions(DICT_TYPE.COMMON_STATUS, 'number'),
+        options: normalStatusOptions,
       },
-      rules: z.number().default(CommonStatusEnum.ENABLE).optional(),
+      rules: z.number().default(STATUS_ENABLED),
     },
   ];
 }
 
-/** 列表的搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
     {
@@ -64,7 +115,7 @@ export function useGridFormSchema(): VbenFormSchema[] {
       label: '状态',
       component: 'Select',
       componentProps: {
-        options: getDictOptions(DICT_TYPE.COMMON_STATUS, 'number'),
+        options: normalStatusOptions,
         placeholder: '请选择状态',
         clearable: true,
       },
@@ -81,12 +132,11 @@ export function useGridFormSchema(): VbenFormSchema[] {
   ];
 }
 
-/** 列表的字段 */
 export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
     {
       field: 'id',
-      title: '编号',
+      title: '标签编号',
       minWidth: 100,
     },
     {
@@ -99,27 +149,44 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '标签描述',
       minWidth: 220,
       showOverflow: 'tooltip',
+      formatter: ({ cellValue }) => cellValue || '-',
     },
     {
       field: 'status',
       title: '状态',
       minWidth: 100,
-      cellRender: {
-        name: 'CellDict',
-        props: { type: DICT_TYPE.COMMON_STATUS },
+      slots: {
+        default: ({ row }) => renderStatus(row.status),
       },
     },
     {
       field: 'createTime',
       title: '创建时间',
       minWidth: 180,
-      formatter: 'formatDateTime',
+      formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
     },
     {
       title: '操作',
-      width: 130,
+      width: 180,
       fixed: 'right',
       slots: { default: 'actions' },
     },
   ];
 }
+
+export const memberTagDetailFields = [
+  { key: 'id', label: '标签编号' },
+  { key: 'name', label: '标签名称' },
+  { key: 'description', label: '标签描述' },
+  {
+    key: 'status',
+    label: '状态',
+    type: 'tag',
+    tagType: getNormalStatusTagType,
+    formatter: formatNormalStatus,
+  },
+  { key: 'creator', label: '创建者' },
+  { key: 'createTime', label: '创建时间', formatter: formatDateTimeValue },
+  { key: 'updater', label: '更新者' },
+  { key: 'updateTime', label: '更新时间', formatter: formatDateTimeValue },
+];

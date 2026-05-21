@@ -15,7 +15,9 @@ import {
   exportAbnormalOrderExcel,
   getAbnormalOrderPage,
   ignoreAbnormalOrder,
-  updateAbnormalOrderProgress,batchHandleAbnormalOrder
+  updateAbnormalOrderProgress,
+  batchHandleAbnormalOrder,
+  getAllOrderPage
 } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
@@ -25,6 +27,7 @@ import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightki
 
 import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
+import OrderDetailDrawer from '#/views/genchuan/industry/chargePark/orderTrade/orderMgmt/allOrder/table/detail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -331,8 +334,28 @@ const handleFullShow = () => {
 
 const parkDetailDrawerRef = ref(null);
 const enDetailObjRef = ref(null);
+const orderDetailDrawerRef = ref(null);
+const orderDetailObj = ref({});
 const arrowChange = () => {
   emit('arrow-change');
+};
+
+const handleOpenOrderDetail = async (row) => {
+  try {
+    const res = await getAllOrderPage({ id: row.orderId });
+    const formattedData = res ? {
+      ...res,
+      payTime: formatTimestamp(res.payTime),
+      createTime: formatTimestamp(res.createTime),
+      updateTime: formatTimestamp(res.updateTime),
+    } : row;
+    orderDetailObj.value = formattedData;
+    orderDetailDrawerRef.value?.open();
+  } catch (error) {
+    console.error('获取订单详情失败:', error);
+    orderDetailObj.value = row;
+    orderDetailDrawerRef.value?.open();
+  }
 };
 const autoElmessage = () => {
   ElMessage.success($t('月报自动刷新成功'));
@@ -384,6 +407,34 @@ const abnormalTypeMap = {
 // 获取异常类型标签
 const getAbnormalTypeLabel = (abnormalType) => {
   return abnormalTypeMap[abnormalType]?.label || abnormalType;
+};
+
+// 筛选订单类型
+const handleFilterOrderType = (orderType) => {
+  dataObj.searchObj.orderType = orderType;
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+// 筛选异常类型
+const handleFilterAbnormalType = (abnormalType) => {
+  dataObj.searchObj.abnormalType = abnormalType;
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+// 筛选处置状态
+const handleFilterStatus = (status) => {
+  dataObj.searchObj.status = status;
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+// 筛选所属场站
+const handleFilterStationName = (stationName) => {
+  dataObj.searchObj.stationName = stationName;
+  dataObj.currentPage = 1;
+  gridApi.query();
 };
 
 // 检查弹窗
@@ -546,6 +597,7 @@ const alarmColumns = [
       :detail-obj="dataObj.detailObj"
     />
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
+    <OrderDetailDrawer ref="orderDetailDrawerRef" :detail-obj="orderDetailObj" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -721,15 +773,40 @@ const alarmColumns = [
         </div>
       </template>
       <template #orderType="{ row }">
-        <el-tag type="primary">{{ getOrderTypeLabel(row.orderType) }}</el-tag>
+        <el-text
+          @click="handleFilterOrderType(row.orderType)"
+          class="common-align cursor-pointer"
+          type="primary"
+        >
+          {{ getOrderTypeLabel(row.orderType) }}
+        </el-text>
       </template>
       <template #abnormalType="{ row }">
-        <el-tag type="danger">{{ getAbnormalTypeLabel(row.abnormalType) }}</el-tag>
+        <el-text
+          @click="handleFilterAbnormalType(row.abnormalType)"
+          class="common-align cursor-pointer"
+          type="danger"
+        >
+          {{ getAbnormalTypeLabel(row.abnormalType) }}
+        </el-text>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-text
+          @click="handleFilterStatus(row.status)"
+          class="common-align cursor-pointer"
+          :style="{ color: row.status === 'unhandled' ? '#F56C6C' : row.status === 'handling' ? '#E6A23C' : '#909399' }"
+        >
           {{ getStatusLabel(row.status) }}
-        </el-tag>
+        </el-text>
+      </template>
+      <template #stationName="{ row }">
+        <el-text
+          @click="handleFilterStationName(row.stationName)"
+          class="common-align cursor-pointer"
+          type="primary"
+        >
+          {{ row.stationName || '-' }}
+        </el-text>
       </template>
       <template #id="{ row }">
         <el-text
@@ -755,7 +832,7 @@ const alarmColumns = [
 
       <template #orderId="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="handleOpenOrderDetail(row)"
           class="common-align"
           type="primary"
         >

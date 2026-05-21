@@ -140,8 +140,9 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择修正状态',
         options: [
-          { label: '未修正', value: false },
-          { label: '已修正', value: true },
+          { label: '未修正', value: 0 },
+          { label: '已修正', value: 1 },
+          { label: '已确认', value: 2 },
         ],
       },
     },
@@ -375,13 +376,6 @@ export function useGridColumns() {
       minWidth: 120,
       sortable: true,
       slots: { default: 'stationName' },
-    },
-    {
-      field: 'isCorrected',
-      title: '修正标记',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'isCorrected' },
     },
     {
       field: 'updater',

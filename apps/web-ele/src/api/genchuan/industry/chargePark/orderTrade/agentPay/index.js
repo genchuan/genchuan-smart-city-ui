@@ -77,7 +77,7 @@ export function refreshAgentPayCode(data) {
 }
 /** 代理商支付代付码重新生成 */
 export function regenerateAgentPayCode(data) {
-  return requestClient.put('/ordertrade/agent-code/regenerate', null, {
+  return requestClient.post('/ordertrade/agent-code/regenerate', null, {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
     },
@@ -181,7 +181,7 @@ export function deleteAgentPayRecord(params) {
 }
 /** 代付记录核算 */
 export function checkAgentPayRecord(data) {
-  return requestClient.put('/ordertrade/agent-record/check', data);
+  return requestClient.post('/ordertrade/agent-record/check', data);
 }
 /** 代付记录导出 */
 export function exportAgentPayRecord(params) {

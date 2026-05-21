@@ -164,7 +164,7 @@ function initBarChart() {
         detail: {
           startTime: todayStart,
           endTime: todayEnd,
-          hour: params.name,
+          enterTimeHour: params.name,
         },
       }),
     );

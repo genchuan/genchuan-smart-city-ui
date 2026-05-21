@@ -1,33 +1,89 @@
 <script lang="ts" setup>
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { MemberLevelVO } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberLevel';
+import type {
+  MemberLevelPageReqVO,
+  MemberLevelVO,
+} from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberLevel';
+import type {
+  ActiveFilterTag,
+  FilterTagConfig,
+} from '#/views/genchuan/industry/chargePark/userMerchant/memberCenter/utils';
 
-import {
-  confirm,
-  DocAlert,
-  Page,
-  useVbenDrawer,
-  useVbenModal,
-} from '@vben/common-ui';
-import { CommonStatusEnum } from '@vben/constants';
+import { computed, onMounted, ref } from 'vue';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
+
+import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberLevelApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberLevel';
 import IconButton from '#/components/common/IconButton.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
-import { useGridColumns, useGridFormSchema } from './data';
+import {
+  buildActiveFilterTags,
+  cleanQueryParams,
+  formatLifecycleStatus,
+  isEnabledStatus,
+  refreshStatsLayout,
+  STATUS_ENABLED,
+} from '../utils';
+import {
+  buildStatsDataFromApi,
+  memberLevelDetailFields,
+  useGridColumns,
+  useGridFormSchema,
+} from './data';
 import Form from './modules/form.vue';
+
+import '#/genchuan-components/page/index.scss';
 
 const [FormModal, formModalApi] = useVbenModal({
   connectedComponent: Form,
   destroyOnClose: true,
 });
 
+const detailDrawerRef = ref<null | { open: () => void }>(null);
+const detailObj = ref<MemberLevelVO>();
+const drillFilters = ref<Record<string, any>>({});
 const searchParams = ref<Record<string, any>>({});
+const statsDataSource = ref(buildStatsDataFromApi());
+const showStats = ref(true);
+
+const drillFilterConfigs: Record<string, FilterTagConfig> = {
+  name: {
+    label: '等级名称',
+    type: 'primary',
+  },
+  status: {
+    formatter: formatLifecycleStatus,
+    label: '状态',
+    type: 'success',
+  },
+};
+
+const searchFilterConfigs: Record<string, FilterTagConfig> = {
+  createTime: {
+    label: '创建时间',
+    type: 'danger',
+  },
+  levelValue: {
+    label: '等级数值',
+    type: 'warning',
+  },
+  name: {
+    label: '等级名称',
+    type: 'info',
+  },
+  status: {
+    formatter: formatLifecycleStatus,
+    label: '状态',
+    type: 'success',
+  },
+};
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -36,7 +92,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  async onOpenChange() {},
 });
 
 const [QueryForm, queryFormApi] = useVbenForm({
@@ -61,73 +116,150 @@ const [QueryForm, queryFormApi] = useVbenForm({
   },
 });
 
-/** 搜索表单提交 */
+async function loadStats() {
+  try {
+    const data = await MemberLevelApi.getMemberLevelChart();
+    statsDataSource.value = buildStatsDataFromApi(data);
+  } catch (error) {
+    statsDataSource.value = buildStatsDataFromApi();
+    ElMessage.error('加载会员等级统计失败');
+    console.error('[memberLevel] load stats failed:', error);
+  }
+}
+
+const statsData = computed(() => statsDataSource.value);
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: drillFilterConfigs,
+      source: 'drill',
+      values: drillFilters.value,
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
+);
+
 async function onQuerySubmit(values: Record<string, any>) {
   searchParams.value = { ...values };
+  drillFilters.value = {};
   await handleRefresh();
   drawerApi.close();
 }
 
-/** 刷新表格 */
 function handleRefresh() {
   gridApi.reload();
+  void loadStats();
 }
 
-/** 打开搜索抽屉 */
+async function toggleStats() {
+  showStats.value = !showStats.value;
+  await refreshStatsLayout(gridApi);
+}
+
 async function handleSearchShow() {
   drawerApi.open();
   await queryFormApi.setValues(searchParams.value);
 }
 
-/** 创建等级 */
 function handleCreate() {
   formModalApi.setData(null).open();
 }
 
-/** 编辑等级 */
 function handleEdit(row: MemberLevelVO) {
   formModalApi.setData(row).open();
 }
 
-/** 启用/禁用等级 */
+async function handleDetail(row: MemberLevelVO) {
+  detailObj.value = row.id
+    ? await MemberLevelApi.getMemberLevel(Number(row.id))
+    : row;
+  detailDrawerRef.value?.open();
+}
+
 async function handleToggleStatus(row: MemberLevelVO) {
-  const isEnable = Number(row.status) === CommonStatusEnum.ENABLE;
+  const isEnable = isEnabledStatus(row.status);
 
   try {
     await confirm(
-      isEnable ? `确认禁用【${row.name}】吗？` : `确认启用【${row.name}】吗？`,
+      isEnable ? `确认禁用【${row.name}】吗？` : `确认生效【${row.name}】吗？`,
     );
   } catch {
     return;
   }
 
   const loadingInstance = ElLoading.service({
-    text: `${isEnable ? '正在禁用' : '正在启用'}${row.name}`,
+    text: `${isEnable ? '正在禁用' : '正在生效'}${row.name}`,
   });
   try {
     await (isEnable
       ? MemberLevelApi.disableMemberLevel({ ids: [row.id as number] })
       : MemberLevelApi.enableMemberLevel({ ids: [row.id as number] }));
-    ElMessage.success(`${row.name}${isEnable ? '已禁用' : '已启用'}`);
+    ElMessage.success(`${row.name}${isEnable ? '已禁用' : '已生效'}`);
     handleRefresh();
   } finally {
     loadingInstance.close();
   }
 }
 
+async function handleStatsCardClick({ index }: { index: number }) {
+  drillFilters.value =
+    index === 0
+      ? {}
+      : {
+          status: STATUS_ENABLED,
+        };
+
+  await handleRefresh();
+}
+
+async function handleStatsBarClick({ name }: { name: string }) {
+  if (!name) {
+    return;
+  }
+
+  drillFilters.value = {
+    name,
+  };
+  await handleRefresh();
+}
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'drill') {
+    const nextFilters = { ...drillFilters.value };
+    delete nextFilters[tag.key];
+    drillFilters.value = nextFilters;
+    await handleRefresh();
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
+}
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
-    height: 'auto',
     keepSource: true,
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          const queryValues = {
+          const queryValues = cleanQueryParams({
             ...searchParams.value,
             ...formValues,
-          };
+            ...drillFilters.value,
+          }) as MemberLevelPageReqVO;
 
           return await MemberLevelApi.getMemberLevelPage({
             pageNo: page.currentPage,
@@ -142,71 +274,110 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
   } as VxeTableGridOptions<MemberLevelVO>,
   showSearchForm: false,
 });
+
+onMounted(() => {
+  void loadStats();
+});
 </script>
 
 <template>
-  <Page auto-content-height>
-    <template #doc>
-      <DocAlert
-        title="会员等级、积分、签到"
-        url="https://doc.iocoder.cn/member/level/"
-      />
-    </template>
-
+  <div class="common-index">
     <FormModal @success="handleRefresh" />
-    <Drawer title="搜索">
-      <QueryForm class="query-form" />
-    </Drawer>
 
-    <Grid>
-      <template #toolbar-tools>
-        <div class="common-toolbar-tools">
-          <IconButton
-            v-access:code="['member:level:create']"
-            content="新增等级"
-            icon-name="Plus"
-            @click="handleCreate"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSearchShow"
-          />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="() => screenfull.toggle()"
-          />
-        </div>
-      </template>
-      <template #actions="{ row }">
-        <div class="table-toolbar-tools">
-          <IconButton
-            v-access:code="['member:level:update']"
-            content="编辑"
-            icon-name="Edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            v-access:code="['member:level:update']"
-            :content="
-              Number(row.status) === CommonStatusEnum.ENABLE ? '禁用' : '启用'
-            "
-            :icon-name="
-              Number(row.status) === CommonStatusEnum.ENABLE ? 'Close' : 'Check'
-            "
-            @click="handleToggleStatus(row)"
-          />
-        </div>
-      </template>
-    </Grid>
-  </Page>
+    <StatsVisualization
+      v-if="showStats"
+      :data="statsData"
+      @bar-click="handleStatsBarClick"
+      @card-click="handleStatsCardClick"
+    />
+
+    <div class="park-lot-table-new user-merchant-table-grid">
+      <Grid>
+        <template #table-title>
+          <div
+            class="tabel-tabs"
+            style="display: flex; flex-wrap: wrap; align-items: center"
+          >
+            <ElTag
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleRemoveFilterTag(tag)"
+            >
+              {{ tag.label }}：{{ tag.value }}
+            </ElTag>
+          </div>
+        </template>
+
+        <template #toolbar-tools>
+          <div class="common-toolbar-tools">
+            <IconButton
+              v-access:code="['usermerchant:member-level:create']"
+              content="新增等级"
+              icon-name="Plus"
+              @click="handleCreate"
+            />
+            <IconButton
+              content="搜索"
+              icon-name="search"
+              @click="handleSearchShow"
+            />
+            <IconButton
+              :content="showStats ? '隐藏统计' : '显示统计'"
+              :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
+              @click="toggleStats"
+            />
+            <IconButton
+              content="全屏"
+              icon-name="FullScreen"
+              @click="() => screenfull.toggle()"
+            />
+          </div>
+        </template>
+        <template #actions="{ row }">
+          <div class="table-toolbar-tools">
+            <IconButton
+              content="查看"
+              icon-name="View"
+              @click="handleDetail(row)"
+            />
+            <IconButton
+              v-access:code="['usermerchant:member-level:update']"
+              content="编辑"
+              icon-name="Edit"
+              @click="handleEdit(row)"
+            />
+            <IconButton
+              v-access:code="['usermerchant:member-level:update']"
+              :content="isEnabledStatus(row.status) ? '禁用' : '生效'"
+              :icon-name="isEnabledStatus(row.status) ? 'Close' : 'Check'"
+              @click="handleToggleStatus(row)"
+            />
+          </div>
+        </template>
+      </Grid>
+
+      <Drawer title="搜索">
+        <QueryForm class="query-form" />
+      </Drawer>
+
+      <DetailDrawer
+        ref="detailDrawerRef"
+        :data="detailObj"
+        :fields="memberLevelDetailFields"
+        :title="detailObj ? `${detailObj.name}详情` : '会员等级详情'"
+      />
+    </div>
+  </div>
 </template>
 
 <style scoped lang="scss">

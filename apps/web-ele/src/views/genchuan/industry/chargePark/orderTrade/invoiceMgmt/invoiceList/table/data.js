@@ -15,6 +15,12 @@ export function useGridColumns() {
       sortable: true,
     },
     {
+      field: 'taxNo',
+      title: '税号',
+      minWidth: 160,
+      sortable: true,
+    },
+    {
       field: 'orderNo',
       title: '关联订单编号',
       minWidth: 160,

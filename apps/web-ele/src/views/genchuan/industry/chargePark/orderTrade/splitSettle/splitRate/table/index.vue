@@ -50,10 +50,6 @@ const formData = reactive({
 });
 // 表单规则
 const rules = {
-  partnerId: [
-    { required: true, message: '合作方ID不能为空', trigger: 'blur' },
-    { type: 'number', min: 0, message: '合作方ID必须为非负整数', trigger: 'blur' },
-  ],
   splitMode: [
     { required: true, message: '分账方式不能为空', trigger: 'blur' },
   ],
@@ -363,9 +359,6 @@ watch(
     <!-- 表单抽屉 -->
     <FormDrawer :title="formTitle">
       <ElForm ref="formRef" :model="formData" :rules="rules" label-width="100px" class="common-form">
-        <ElFormItem label="合作方ID" prop="partnerId">
-          <ElInputNumber v-model="formData.partnerId" :min="0" class="w-full" />
-        </ElFormItem>
         <ElFormItem label="分账方式" prop="splitMode">
           <ElSelect v-model="formData.splitMode" placeholder="请选择分账方式" class="w-full">
             <ElOption label="固定比例" value="fixed" />
@@ -434,7 +427,7 @@ watch(
           <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" />
           <IconButton content="启用" icon-name="Check" v-if="row.status === 'disabled' || row.status === 'pending'" @click="handleEnable(row)" />
           <IconButton content="禁用" icon-name="Close" v-if="row.status === 'enabled'" @click="handleDisable(row)" />
-          <IconButton content="删除" icon-name="Delete" @click="handleDelete(row)" />
+          <!-- <IconButton content="删除" icon-name="Delete" @click="handleDelete(row)" /> -->
         </div>
       </template>
       <template #bottom>

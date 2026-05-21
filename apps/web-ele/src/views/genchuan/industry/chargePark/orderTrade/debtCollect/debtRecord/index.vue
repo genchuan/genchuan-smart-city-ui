@@ -7,30 +7,30 @@ import Table from './table/index.vue';
 import '#/components/page/index.scss';
 
 const filterParams = reactive({
-  createOrderTimeStart: null,
-  createOrderTimeEnd: null,
+  identifyTimeStart: null,
+  identifyTimeEnd: null,
   status: null,
 });
 
 const hasActiveFilters = computed(() => {
-  return filterParams.createOrderTimeStart || filterParams.status;
+  return filterParams.identifyTimeStart || filterParams.status;
 });
 
 const handleFilterChange = (params) => {
-  filterParams.createOrderTimeStart = params.createOrderTimeStart || null;
-  filterParams.createOrderTimeEnd = params.createOrderTimeEnd || null;
+  filterParams.identifyTimeStart = params.identifyTimeStart || null;
+  filterParams.identifyTimeEnd = params.identifyTimeEnd || null;
   filterParams.status = params.status || null;
 };
 
 const handleClearFilters = () => {
-  filterParams.createOrderTimeStart = null;
-  filterParams.createOrderTimeEnd = null;
+  filterParams.identifyTimeStart = null;
+  filterParams.identifyTimeEnd = null;
   filterParams.status = null;
 };
 
 const clearFilter = () => {
-  filterParams.createOrderTimeStart = null;
-  filterParams.createOrderTimeEnd = null;
+  filterParams.identifyTimeStart = null;
+  filterParams.identifyTimeEnd = null;
   filterParams.status = null;
 };
 
@@ -65,12 +65,12 @@ const secondShow = ref(false);
     <Chart @filter-change="handleFilterChange"  v-if="tabArray[0].arrowShow"/>
     <div v-if="hasActiveFilters" class="filter-tags">
       <el-tag
-        v-if="filterParams.createOrderTimeStart"
+        v-if="filterParams.identifyTimeStart"
         closable
         @close="clearFilter"
         type="info"
       >
-        日期: {{ filterParams.createOrderTimeStart?.split(' ')[0] }}
+        识别时间: {{ filterParams.identifyTimeStart?.split(' ')[0] }}
       </el-tag>
     </div>
     <div class="icon-change">

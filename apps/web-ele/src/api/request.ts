@@ -187,3 +187,67 @@ baseRequestClient.addRequestInterceptor({
     return config;
   },
 });
+
+// app-api 前缀的请求客户端（用于支付等需要使用app-api前缀的接口）
+const appApiUrl = apiURL.replace('/admin-api', '/app-api');
+export const appRequestClient = (function createAppRequestClient() {
+  const client = new RequestClient({
+    baseURL: appApiUrl,
+    responseReturn: 'data',
+  });
+
+  // 请求头处理 - 支持自定义覆盖认证和租户信息
+  client.addRequestInterceptor({
+    fulfilled: async (config) => {
+      const accessStore = useAccessStore();
+
+      // 只有当config.headers中没有自定义Authorization时才添加默认值
+      if (!config.headers.Authorization) {
+        config.headers.Authorization = formatToken(accessStore.accessToken);
+      }
+      config.headers['Accept-Language'] = preferences.app.locale;
+
+      // 支持通过headers自定义tenant-id，否则使用默认值
+      if (!config.headers['tenant-id']) {
+        config.headers['tenant-id'] = tenantEnable ? accessStore.tenantId : undefined;
+      }
+
+      // 只有登录时，才设置 visit-tenant-id 访问租户
+      config.headers['visit-tenant-id'] = tenantEnable
+        ? accessStore.visitTenantId
+        : undefined;
+
+      return config;
+    },
+  });
+
+  // API 解密响应拦截器
+  client.addResponseInterceptor({
+    fulfilled: (response) => {
+      const encryptHeader = apiEncrypt.getEncryptHeader();
+      const isEncryptResponse =
+        response.headers[encryptHeader] === 'true' ||
+        response.headers[encryptHeader.toLowerCase()] === 'true';
+      if (isEncryptResponse && typeof response.data === 'string') {
+        try {
+          response.data = apiEncrypt.decryptResponse(response.data);
+        } catch (error) {
+          console.error('响应数据解密失败:', error);
+          throw new Error(`响应数据解密失败: ${(error as Error).message}`);
+        }
+      }
+      return response;
+    },
+  });
+
+  // 处理返回的响应数据格式
+  client.addResponseInterceptor(
+    defaultResponseInterceptor({
+      codeField: 'code',
+      dataField: 'data',
+      successCode: 0,
+    }),
+  );
+
+  return client;
+})();

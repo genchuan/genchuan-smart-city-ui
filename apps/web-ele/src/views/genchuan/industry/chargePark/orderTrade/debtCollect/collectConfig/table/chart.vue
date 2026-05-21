@@ -23,15 +23,15 @@ const state = reactive({
   typeData: [],
 });
 
-// 点击卡片事件 - 查询今日数据
-const handleCardClick = () => {
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-  emit('filter-change', {
-    createTimeStart: todayStr + ' 00:00:00',
-    createTimeEnd: todayStr + ' 23:59:59',
-    collectMethod: null,
-  });
+// 点击卡片事件
+const handleCardClick = (index) => {
+  // 启用配置数(index=0)：搜索状态为已启用，不需要传递时间
+  // 追缴触发率(index=1)：不触发筛选
+  if (index === 0) {
+    emit('filter-change', {
+      status: 'active',
+    });
+  }
 };
 
 // 柱状图点击事件处理
@@ -178,10 +178,10 @@ onMounted(() => {
     <div class="chart-box-left">
       <Card
         class="left-card cursor-pointer"
-        v-for="item in state.cardList"
+        v-for="(item, index) in state.cardList"
         :key="item.title"
         v-bind="item"
-        @click="handleCardClick"
+        @click="handleCardClick(index)"
       />
     </div>
     <div ref="barChartRef" class="simple-bar-chart"></div>

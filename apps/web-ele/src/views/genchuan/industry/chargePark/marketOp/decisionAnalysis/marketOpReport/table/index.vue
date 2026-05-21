@@ -675,7 +675,7 @@ const formatRevenueDisplay = (value) => {
   if (value === null || value === undefined || value === '') return '0';
   const num = Number(value);
   // 使用 parseFloat 去掉末尾的0和小数点，然后添加千位分隔符
-  const formatted = parseFloat(num.toFixed(2)).toLocaleString();
+  const formatted = Number.parseFloat(num.toFixed(2)).toLocaleString();
   return formatted;
 };
 

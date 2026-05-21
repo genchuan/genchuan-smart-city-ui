@@ -41,6 +41,18 @@ const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
 };
 
+// 支付方式映射
+const payTypeMap = {
+  wechat: '微信支付',
+  alipay: '支付宝支付',
+  bank: '银行卡支付',
+};
+
+// 获取支付方式标签
+const getPayTypeLabel = (payType) => {
+  return payTypeMap[payType] || payType;
+};
+
 // 抽屉
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
@@ -95,7 +107,7 @@ defineExpose({
 
       <div class="detail-card-row">
         <div class="detail-row-left">支付方式:</div>
-        <div class="detail-row-right">{{ detailObj.payType || '-' }}</div>
+        <div class="detail-row-right">{{ getPayTypeLabel(detailObj.payType) || '-' }}</div>
       </div>
 
       <div class="detail-card-row">

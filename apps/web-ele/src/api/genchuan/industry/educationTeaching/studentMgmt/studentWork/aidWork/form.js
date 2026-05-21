@@ -117,21 +117,6 @@ export function useCreateFormSchema() {
       labelWidth: '100',
     },
     {
-      fieldName: 'status',
-      label: '状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择状态',
-        options: [
-          { label: '待审核', value: '待审核' },
-          { label: '已通过', value: '已通过' },
-          { label: '已完成', value: '已完成' },
-        ],
-      },
-      rules: 'required',
-      labelWidth: '100',
-    },
-    {
       fieldName: 'remark',
       label: '备注',
       component: 'Input',
