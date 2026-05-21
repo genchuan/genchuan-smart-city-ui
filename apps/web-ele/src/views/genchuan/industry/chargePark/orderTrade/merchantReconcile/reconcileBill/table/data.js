@@ -22,13 +22,13 @@ export function useGridColumns() {
     },
     {
       field: 'billDate',
-      title: '对账日期',
+      title: '对账周期',
       minWidth: 120,
       sortable: true,
     },
     {
       field: 'sysAmount',
-      title: '系统订单总金额',
+      title: '平台金额',
       minWidth: 160,
       sortable: true,
       customRender: ({ text }) => text ? `¥${text.toFixed(2)}` : '¥0.00',
@@ -63,7 +63,7 @@ export function useGridColumns() {
     },
     {
       field: 'operatorId',
-      title: '操作人ID',
+      title: '对账人ID',
       minWidth: 120,
       sortable: true,
     },
