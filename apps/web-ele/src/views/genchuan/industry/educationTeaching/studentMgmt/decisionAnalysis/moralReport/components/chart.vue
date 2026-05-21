@@ -1,200 +1,197 @@
 <script setup>
-import {ref, onMounted} from 'vue';
-import {
-  getMoralReportChart
-} from '#/api/genchuan/industry/educationTeaching/studentMgmt/decisionAnalysis/moralReport/data.js';
+import { ref, onMounted, computed } from 'vue';
+import { ElSelect, ElOption } from 'element-plus';
+import { getMoralReportChart } from '#/api/genchuan/industry/educationTeaching/studentMgmt/decisionAnalysis/moralReport/data.js';
+import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
+import Pie from '#/genchuan-components/stats/pieClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
+import LineChart from '#/genchuan-components/stats/lineChartClick.vue';
 
-const emit = defineEmits(['rankBarClick', 'campusBarClick']);
+const emit = defineEmits(['cardClick', 'pieClick', 'barClick', 'lineClick']);
 
+const cardData = ref({});
+const pieData = ref([]);
+const barXAxis = ref([]);
+const barSeriesData = ref([]);
+const lineXAxis = ref([]);
+const lineSeriesData = ref([]);
 const loading = ref(false);
 
-// 班级德育得分排名数据
-const rankBarData = ref({
-  xAxis: [],
-  series: [],
-});
-
-// 各校区文明班级数量统计数据
-const campusBarData = ref({
-  xAxis: [],
-  series: [],
-});
-
-// 默认参数（初始加载使用）
-const defaultParams = {
-  reportPeriod: '月报',
-  statisticalPeriod: getDefaultStatisticalPeriod('月报'),
-  campus: '丰泽校区',
+// 字段名中文映射
+const cardLabelMap = {
+  targetTotal: '指标总数',
+  targetEnableNum: '启用指标数',
+  targetWarnNum: '预警指标数',
+  activityJoinNum: '活动参与人数',
+  resourceLearnRate: '资源学习完成率(%)',
 };
 
-// 根据报表周期生成默认统计时段（与父组件保持一致）
-function getDefaultStatisticalPeriod(reportPeriod) {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const date = now.getDate();
-  const pad = (n) => String(n).padStart(2, '0');
+// 将 cardData 对象转为数组
+const cards = computed(() => {
+  if (!cardData.value) return [];
+  return Object.entries(cardData.value).map(([key, value]) => ({
+    key,
+    label: cardLabelMap[key] || key,
+    value,
+  }));
+});
 
-  switch (reportPeriod) {
-    case '日报':
-      const todayStr = `${year}-${pad(month)}-${pad(date)}`;
-      return `${todayStr} 至 ${todayStr}`;
-    case '周报': {
-      const dayOfWeek = now.getDay();
-      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      const monday = new Date(now);
-      monday.setDate(now.getDate() + mondayOffset);
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6);
-      const format = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      return `${format(monday)} 至 ${format(sunday)}`;
-    }
-    case '月报': {
-      const firstDay = `${year}-${pad(month)}-01`;
-      const lastDay = `${year}-${pad(month)}-${new Date(year, month, 0).getDate()}`;
-      return `${firstDay} 至 ${lastDay}`;
-    }
-    case '季报': {
-      const quarter = Math.ceil(month / 3);
-      const firstMonth = (quarter - 1) * 3 + 1;
-      const lastMonth = quarter * 3;
-      const firstDay = `${year}-${pad(firstMonth)}-01`;
-      const lastDay = `${year}-${pad(lastMonth)}-${new Date(year, lastMonth, 0).getDate()}`;
-      return `${firstDay} 至 ${lastDay}`;
-    }
-    case '半年报': {
-      const half = month <= 6 ? 1 : 2;
-      const firstMonth = half === 1 ? 1 : 7;
-      const lastMonth = half === 1 ? 6 : 12;
-      const firstDay = `${year}-${pad(firstMonth)}-01`;
-      const lastDay = `${year}-${pad(lastMonth)}-${new Date(year, lastMonth, 0).getDate()}`;
-      return `${firstDay} 至 ${lastDay}`;
-    }
-    case '年报':
-      return `${year}-01-01 至 ${year}-12-31`;
-    case '自定义报表':
-    default:
-      const end = new Date();
-      const start = new Date();
-      start.setDate(start.getDate() - 29);
-      const formatDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      return `${formatDate(start)} 至 ${formatDate(end)}`;
-  }
-}
+// ========== 图表切换相关 ==========
+const activeChart = ref('pie');
+const chartOptions = [
+  { value: 'pie', label: '德育资源类型分布' },
+  { value: 'bar', label: '班级德育得分排名' },
+  { value: 'line', label: '德育趋势分析' },
+];
 
-// 获取图表数据（支持传入自定义参数）
+// 当前图表的动态标题
+const currentChartTitle = computed(() => {
+  const found = chartOptions.find(opt => opt.value === activeChart.value);
+  return found?.label || '';
+});
+
+const handleChartChange = (val) => {
+  activeChart.value = val;
+};
+
+const defaultParams = {
+  statStartTime: new Date(new Date().setDate(1)).getTime(),
+  statEndTime: new Date().getTime(),
+};
+
 const fetchChartData = async (customParams = null) => {
   loading.value = true;
   try {
-    let params = {...defaultParams};
-    if (customParams) {
-      params = {...params, ...customParams};
-      // 如果传入了 reportPeriod 但未传入 statisticalPeriod，则自动生成
-      if (customParams.reportPeriod && !customParams.statisticalPeriod) {
-        params.statisticalPeriod = getDefaultStatisticalPeriod(customParams.reportPeriod);
-      }
-    }
-    const response = await getMoralReportChart(params);
-    const data = response?.data || response;
+    const params = customParams || defaultParams;
+    const res = await getMoralReportChart(params);
+    const data = res?.data || res;
     if (data) {
-      // 班级德育得分排名
-      if (data.classRankData) {
-        rankBarData.value.xAxis = data.classRankData.className || [];
-        rankBarData.value.series = [{name: '德育总分', data: data.classRankData.totalScore || []}];
-      } else {
-        useMockData();
+      cardData.value = data.cardData || {};
+      pieData.value = data.pieData || [];
+      if (data.barData && data.barData.length) {
+        barXAxis.value = data.barData.map(item => item.name);
+        barSeriesData.value = [{ name: '德育得分', data: data.barData.map(item => item.score) }];
       }
-      // 各校区文明班级数量
-      if (data.campusCivilizedData) {
-        campusBarData.value.xAxis = data.campusCivilizedData.campus || [];
-        campusBarData.value.series = [{
-          name: '文明班级数量',
-          data: data.campusCivilizedData.count || []
-        }];
-      } else {
-        useMockData();
+      if (data.lineData) {
+        lineXAxis.value = data.lineData.date || [];
+        lineSeriesData.value = data.lineData.series || [];
       }
-    } else {
-      useMockData();
     }
   } catch (error) {
     console.error('获取图表数据失败:', error);
-    useMockData();
   } finally {
     loading.value = false;
   }
 };
 
-// 本地应急模拟数据（仅在接口异常且返回数据无效时使用）
-const useMockData = () => {
-  rankBarData.value = {
-    xAxis: ['计算机2301班', '软件2301班', '大数据2401班', '人工智能2401班'],
-    series: [{name: '德育总分', data: [99.0, 98.0, 96.5, 95.0]}],
-  };
-  campusBarData.value = {
-    xAxis: ['丰泽校区', '洛江校区', '鲤城校区'],
-    series: [{name: '文明班级数量', data: [20, 15, 12]}],
-  };
+// 卡片点击
+const handleCardClick = (key, value) => {
+  emit('cardClick', { title: key, value, status: key });
 };
 
-// 柱状图点击事件（Bar组件传递的是柱子的名称字符串）
-const handleRankBarClick = (className) => {
-  // 根据点击的班级名称找到对应的得分
-  const seriesData = rankBarData.value.series[0]?.data || [];
-  const index = rankBarData.value.xAxis.findIndex(x => x === className);
-  const value = index !== -1 ? seriesData[index] : null;
-  emit('rankBarClick', {className, value});
-};
+const handlePieClick = (info) => emit('pieClick', info);
+const handleBarClick = (info) => emit('barClick', info);
+const handleLineClick = (info) => emit('lineClick', info);
 
-const handleCampusBarClick = (campus) => {
-  // 根据点击的校区名称找到对应的数量
-  const seriesData = campusBarData.value.series[0]?.data || [];
-  const index = campusBarData.value.xAxis.findIndex(x => x === campus);
-  const value = index !== -1 ? seriesData[index] : null;
-  emit('campusBarClick', {campus, value});
-};
+const refreshData = (params) => fetchChartData(params);
 
-// 对外暴露刷新方法，可接收参数 { reportPeriod, statisticalPeriod }
-const refreshData = (params = null) => {
-  fetchChartData(params);
-};
+defineExpose({ refreshData });
 
-defineExpose({refreshData});
-
-onMounted(() => {
-  fetchChartData();
-});
+onMounted(() => fetchChartData());
 </script>
 
 <template>
-  <div v-loading="loading" class="moral-chart-box">
-    <Bar
-      style="flex: 2 !important;"
-      title="班级德育得分排名"
-      :x-data="rankBarData.xAxis"
-      :series-data="rankBarData.series"
-      y-name="德育总分"
-      @barClick="handleRankBarClick"
-    />
-    <Bar
-      style="flex: 1 !important;"
-      title="各校区文明班级数量统计"
-      :x-data="campusBarData.xAxis"
-      :series-data="campusBarData.series"
-      y-name="文明班级数量"
-      @barClick="handleCampusBarClick"
-    />
+  <div v-loading="loading" class="chart-box">
+    <div class="box-left-m">
+      <Indicator
+        v-for="card in cards"
+        :key="card.key"
+        :title="card.label"
+        :value="card.value"
+        @click="() => handleCardClick(card.key, card.value)"
+      />
+    </div>
+
+    <!-- 图表切换区域 -->
+    <div class="chart-area">
+      <div class="chart-select-wrapper">
+        <el-select v-model="activeChart" size="small" @change="handleChartChange">
+          <el-option
+            v-for="opt in chartOptions"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+      </div>
+
+      <!-- 饼图 -->
+      <div v-if="activeChart === 'pie'">
+        <Pie
+          :data="pieData"
+          :title-text="currentChartTitle"
+          @pieClick="handlePieClick"
+        />
+      </div>
+
+      <!-- 柱状图（班级德育得分排名） -->
+      <div v-else-if="activeChart === 'bar'">
+        <Bar
+          :x-data="barXAxis"
+          :series-data="barSeriesData"
+          :title="currentChartTitle"
+          y-name="得分"
+          @barClick="handleBarClick"
+        />
+      </div>
+
+      <!-- 折线图（德育趋势分析） -->
+      <div v-else-if="activeChart === 'line'">
+        <LineChart
+          :x-data="lineXAxis"
+          :series-data="lineSeriesData"
+          :title="currentChartTitle"
+          y-name="数值"
+          @lineClick="handleLineClick"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-.moral-chart-box {
+.chart-box {
+  padding-bottom: 0.5rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  padding: 0 15px;
-  margin-bottom: 20px;
-  width: 100%;
+  padding-left: 15px;
+  padding-right: 15px;
+  width: 100% !important;
+
+  .box-left-m {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr);
+    min-width: 360px;
+    max-width: 400px;
+    margin-top: 10px !important;
+
+    .left-card {
+      height: 150px !important;
+    }
+  }
+
+  .chart-area {
+    position: relative;
+    flex: 1;
+    min-width: 280px;
+    height: 100%;
+  }
+
+  .chart-select-wrapper {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    z-index: 10;
+  }
 }
 </style>

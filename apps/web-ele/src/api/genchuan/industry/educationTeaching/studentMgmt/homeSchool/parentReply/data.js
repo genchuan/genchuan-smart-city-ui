@@ -1,12 +1,75 @@
 import { requestClient } from '#/api/request';
 
+// ==================== 映射表 ====================
+// 已读状态映射（后端数字 -> 前端中文）
+const readStatusMap = {
+  '未读': '2',
+  '已读': '1'
+};
+const readStatusReverse = {
+  'read': '已读',
+  '1': '已读',
+  '2': '未读'
+};
+
+// 回复状态映射（后端数字 -> 前端中文）
+const replyStatusMap = {
+  '未回复': '2',
+  '已回复': '1'
+};
+const replyStatusReverse = {
+  'replied': '已回复',
+  '1': '已回复',
+  '2': '未回复'
+};
+
+// 通用转换函数：后端 → 前端（将数字转为中文）
+function convertEnToZh(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.readStatus && readStatusReverse[result.readStatus]) {
+    result.readStatus = readStatusReverse[result.readStatus];
+  }
+  if (result.replyStatus && replyStatusReverse[result.replyStatus]) {
+    result.replyStatus = replyStatusReverse[result.replyStatus];
+  }
+  return result;
+}
+
+// 通用转换函数：前端 → 后端（将中文转为数字）
+function convertZhToEn(obj) {
+  if (!obj || typeof obj !== 'object') return obj;
+  const result = { ...obj };
+  if (result.readStatus && readStatusMap[result.readStatus]) {
+    result.readStatus = readStatusMap[result.readStatus];
+  }
+  if (result.replyStatus && replyStatusMap[result.replyStatus]) {
+    result.replyStatus = replyStatusMap[result.replyStatus];
+  }
+  return result;
+}
+
+// 转换列表数据
+function convertList(list) {
+  if (!Array.isArray(list)) return list;
+  return list.map(item => convertEnToZh(item));
+}
+
 // ==================== 家长回复管理接口 ====================
 export function getParentReplyPage(params) {
-  return requestClient.get('/studentmgmt/parent-reply/page', { params }).catch(err => {
-    console.warn('分页接口失败，使用模拟数据', err);
-    const mock = getMockList();
-    return { list: mock, total: mock.length };
-  });
+  const convertedParams = convertZhToEn(params);
+  return requestClient.get('/studentmgmt/parent-reply/page', { params: convertedParams })
+    .then(res => {
+      if (res && res.list) {
+        res.list = convertList(res.list);
+      }
+      return res;
+    })
+    .catch(err => {
+      console.warn('分页接口失败，使用模拟数据', err);
+      const mock = convertList(getMockList());
+      return { list: mock, total: mock.length };
+    });
 }
 
 // 标记已读（批量）
@@ -27,7 +90,8 @@ export function replyParentReply(data) {
 
 // 导出
 export function exportParentReply(params) {
-  return requestClient.download('/studentmgmt/parent-reply/export-excel', params).catch(err => {
+  const convertedParams = convertZhToEn(params);
+  return requestClient.download('/studentmgmt/parent-reply/export-excel', convertedParams).catch(err => {
     console.warn('导出接口失败，模拟导出', err);
     return Promise.resolve(new Blob(['模拟导出数据'], { type: 'application/vnd.ms-excel' }));
   });
@@ -35,12 +99,14 @@ export function exportParentReply(params) {
 
 // 详情
 export function getParentReplyDetail(params) {
-  return requestClient.get('/studentmgmt/parent-reply/get', { params }).catch(err => {
-    console.warn('详情接口失败，使用模拟数据', err);
-    const mockList = getMockList();
-    const detail = mockList.find(item => item.id === params.id) || mockList[0];
-    return Promise.resolve(detail);
-  });
+  return requestClient.get('/studentmgmt/parent-reply/get', { params })
+    .then(res => convertEnToZh(res))
+    .catch(err => {
+      console.warn('详情接口失败，使用模拟数据', err);
+      const mockList = getMockList();
+      const detail = mockList.find(item => item.id === params.id) || mockList[0];
+      return Promise.resolve(convertEnToZh(detail));
+    });
 }
 
 // 获取沟通消息列表（用于关联消息下拉/展示）
@@ -57,7 +123,8 @@ export function getCommunicateList(params) {
 
 // 家长提交回复
 export function submitParentReply(data) {
-  return requestClient.post('/studentmgmt/parent-reply/submit', data).catch(err => {
+  const convertedData = convertZhToEn(data);
+  return requestClient.post('/studentmgmt/parent-reply/submit', convertedData).catch(err => {
     console.warn('提交回复接口失败，模拟成功', err);
     return Promise.resolve(true);
   });
@@ -111,7 +178,7 @@ export function getParentReplyIndex(params) {
   });
 }
 
-// 模拟数据
+// 模拟数据（原始值使用英文/数字，通过转换函数对外提供中文）
 export const getMockList = () => {
   return [
     {
@@ -125,8 +192,8 @@ export const getMockList = () => {
       parentReplyTime: 1767225600000,
       teacherReplyContent: '感谢配合',
       teacherReplyTime: 1767312000000,
-      readStatus: '已读',
-      replyStatus: '已回复',
+      readStatus: '1',
+      replyStatus: '1',
       remark: '',
       creator: 'parent_zhangsan',
       updater: 'teacher_li',
@@ -144,8 +211,8 @@ export const getMockList = () => {
       parentReplyTime: 1769904000000,
       teacherReplyContent: null,
       teacherReplyTime: null,
-      readStatus: '未读',
-      replyStatus: '未回复',
+      readStatus: '2',
+      replyStatus: '2',
       remark: '',
       creator: 'parent_lisi',
       updater: null,
@@ -163,8 +230,8 @@ export const getMockList = () => {
       parentReplyTime: 1775088000000,
       teacherReplyContent: '孩子很努力，继续保持',
       teacherReplyTime: 1775174400000,
-      readStatus: '已读',
-      replyStatus: '已回复',
+      readStatus: '1',
+      replyStatus: '1',
       remark: '',
       creator: 'parent_wangwu',
       updater: 'teacher_wang',
@@ -182,8 +249,8 @@ export const getMockList = () => {
       parentReplyTime: 1780358400000,
       teacherReplyContent: null,
       teacherReplyTime: null,
-      readStatus: '未读',
-      replyStatus: '未回复',
+      readStatus: '2',
+      replyStatus: '2',
       remark: '',
       creator: 'parent_zhaoliu',
       updater: null,

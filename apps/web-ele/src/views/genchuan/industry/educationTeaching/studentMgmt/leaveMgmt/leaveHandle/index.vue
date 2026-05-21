@@ -397,7 +397,7 @@ onUnmounted(() => {
         <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
+        <el-text>{{ formatTimestamp(row.createTime) }}</el-text>
       </template>
       <template #leaveTime="{ row }"><el-text>{{ formatTimestamp(row.leaveTime) }}</el-text></template>
       <template #parentConfirmTime="{ row }"><el-text>{{ formatTimestamp(row.parentConfirmTime) }}</el-text></template>

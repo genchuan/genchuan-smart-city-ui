@@ -65,59 +65,68 @@ const getCurrentTableRef = () => {
     : null;
 };
 
-// 根据报表周期生成统计时段字符串（与图表组件内部逻辑保持一致）
-const getStatisticalPeriodByReportCycle = (reportPeriod) => {
+// 根据报表周期生成统计开始和结束时间戳
+const getStatTimeByReportCycle = (reportPeriod) => {
   const now = new Date();
   const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const month = now.getMonth();
   const date = now.getDate();
+
   const pad = (n) => String(n).padStart(2, '0');
+
+  let statStartTime, statEndTime;
 
   switch (reportPeriod) {
     case '日报':
-      const todayStr = `${year}-${pad(month)}-${pad(date)}`;
-      return `${todayStr} 至 ${todayStr}`;
+      statStartTime = new Date(year, month, date, 0, 0, 0).getTime();
+      statEndTime = new Date(year, month, date, 23, 59, 59).getTime();
+      break;
     case '周报': {
       const dayOfWeek = now.getDay();
       const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
       const monday = new Date(now);
       monday.setDate(now.getDate() + mondayOffset);
+      monday.setHours(0, 0, 0);
       const sunday = new Date(monday);
       sunday.setDate(monday.getDate() + 6);
-      const format = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      return `${format(monday)} 至 ${format(sunday)}`;
+      sunday.setHours(23, 59, 59);
+      statStartTime = monday.getTime();
+      statEndTime = sunday.getTime();
+      break;
     }
-    case '月报': {
-      const firstDay = `${year}-${pad(month)}-01`;
-      const lastDay = `${year}-${pad(month)}-${new Date(year, month, 0).getDate()}`;
-      return `${firstDay} 至 ${lastDay}`;
-    }
+    case '月报':
+      statStartTime = new Date(year, month, 1, 0, 0, 0).getTime();
+      statEndTime = new Date(year, month + 1, 0, 23, 59, 59).getTime();
+      break;
     case '季报': {
-      const quarter = Math.ceil(month / 3);
-      const firstMonth = (quarter - 1) * 3 + 1;
-      const lastMonth = quarter * 3;
-      const firstDay = `${year}-${pad(firstMonth)}-01`;
-      const lastDay = `${year}-${pad(lastMonth)}-${new Date(year, lastMonth, 0).getDate()}`;
-      return `${firstDay} 至 ${lastDay}`;
+      const quarter = Math.floor(month / 3);
+      const startMonth = quarter * 3;
+      statStartTime = new Date(year, startMonth, 1, 0, 0, 0).getTime();
+      statEndTime = new Date(year, startMonth + 3, 0, 23, 59, 59).getTime();
+      break;
     }
     case '半年报': {
-      const half = month <= 6 ? 1 : 2;
-      const firstMonth = half === 1 ? 1 : 7;
-      const lastMonth = half === 1 ? 6 : 12;
-      const firstDay = `${year}-${pad(firstMonth)}-01`;
-      const lastDay = `${year}-${pad(lastMonth)}-${new Date(year, lastMonth, 0).getDate()}`;
-      return `${firstDay} 至 ${lastDay}`;
+      const half = month < 6 ? 0 : 6;
+      statStartTime = new Date(year, half, 1, 0, 0, 0).getTime();
+      statEndTime = new Date(year, half + 6, 0, 23, 59, 59).getTime();
+      break;
     }
     case '年报':
-      return `${year}-01-01 至 ${year}-12-31`;
-    case '自定义报表':
-    default:
-      const end = new Date();
-      const start = new Date();
-      start.setDate(start.getDate() - 29);
-      const formatDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      return `${formatDate(start)} 至 ${formatDate(end)}`;
+      statStartTime = new Date(year, 0, 1, 0, 0, 0).getTime();
+      statEndTime = new Date(year, 11, 31, 23, 59, 59).getTime();
+      break;
+    default: {
+      const start = new Date(now);
+      start.setDate(now.getDate() - 29);
+      start.setHours(0, 0, 0);
+      const end = new Date(now);
+      end.setHours(23, 59, 59);
+      statStartTime = start.getTime();
+      statEndTime = end.getTime();
+    }
   }
+
+  return { statStartTime, statEndTime };
 };
 
 const tabChange = (tabName) => {
@@ -127,17 +136,16 @@ const tabChange = (tabName) => {
     currentTable.handleStatsFilter('reportCycle', tab.value);
   }
 
-  // 图表组件刷新：根据选中的报表周期生成统计时段并传参
   if (!tab) return;
   const reportCycleValue = tab.value;
   if (reportCycleValue === '') {
-    // “全部”标签：让图表使用内部默认参数（月报）
     chartRef.value?.refreshData();
   } else {
-    const statisticalPeriod = getStatisticalPeriodByReportCycle(reportCycleValue);
+    const { statStartTime, statEndTime } = getStatTimeByReportCycle(reportCycleValue);
     chartRef.value?.refreshData({
       reportPeriod: reportCycleValue,
-      statisticalPeriod,
+      statStartTime,
+      statEndTime,
     });
   }
 };
