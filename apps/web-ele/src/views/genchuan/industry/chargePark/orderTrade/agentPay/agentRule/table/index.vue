@@ -860,7 +860,7 @@ watch(
           />
           <IconButton
             content="禁用"
-            v-if="String(row.status) === 'enabled' || String(row.status) === 'pending'"
+            v-if="String(row.status) === 'enabled'"
             icon-name="Close"
             @click="handleDisable(row)"
           />

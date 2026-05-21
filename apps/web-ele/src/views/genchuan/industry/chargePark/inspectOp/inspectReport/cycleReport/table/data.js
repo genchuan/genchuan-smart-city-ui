@@ -382,13 +382,13 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '所属场站',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入所属场站',
+        placeholder: '请选择所属场站',
         clearable: true,
-        // options: stationOptions,
+        options: stationOptions,
       },
     },
     {

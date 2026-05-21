@@ -2,166 +2,144 @@ import { requestClient } from '#/api/request.js';
 
 // ==================== 模拟数据生成 ====================
 
-/**
- * 生成模拟德育报表数据列表
- * @param {object} filters - 筛选条件（用于模拟筛选）
- * @returns {Array} 模拟数据数组
- */
-export const generateMockReportList = (filters = {}) => {
-  const campuses = ['丰泽校区', '洛江校区', '鲤城校区'];
-  const grades = ['2022级', '2023级', '2024级'];
-  const majors = ['计算机科学与技术', '软件工程', '大数据技术', '人工智能', '网络工程'];
-  const classNames = [
-    '计算机2201班', '计算机2202班', '软件工程2301班', '软件工程2302班',
-    '大数据2401班', '人工智能2401班', '网络工程2201班', '计算机2303班',
-  ];
-  const reportPeriods = ['日报', '周报', '月报', '季报', '半年报', '年报', '自定义报表'];
-  const generateStatuses = ['已生成', '生成中', '生成失败', '未生成'];
-  const civilizedTitles = ['文明班级', '优秀班级', '先进班集体', ''];
+function getStatTimeByPeriod(reportPeriod, baseDate = null) {
+  const now = baseDate ? new Date(baseDate) : new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const date = now.getDate();
 
+  switch (reportPeriod) {
+    case '日报': {
+      const start = new Date(year, month, date, 0, 0, 0);
+      const end = new Date(year, month, date, 23, 59, 59);
+      return { statStartTime: start.getTime(), statEndTime: end.getTime() };
+    }
+    case '周报': {
+      const dayOfWeek = now.getDay();
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + mondayOffset);
+      monday.setHours(0, 0, 0);
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      sunday.setHours(23, 59, 59);
+      return { statStartTime: monday.getTime(), statEndTime: sunday.getTime() };
+    }
+    case '月报': {
+      const start = new Date(year, month, 1, 0, 0, 0);
+      const end = new Date(year, month + 1, 0, 23, 59, 59);
+      return { statStartTime: start.getTime(), statEndTime: end.getTime() };
+    }
+    case '季报': {
+      const quarter = Math.floor(month / 3);
+      const startMonth = quarter * 3;
+      const start = new Date(year, startMonth, 1, 0, 0, 0);
+      const end = new Date(year, startMonth + 3, 0, 23, 59, 59);
+      return { statStartTime: start.getTime(), statEndTime: end.getTime() };
+    }
+    case '半年报': {
+      const half = month < 6 ? 0 : 6;
+      const start = new Date(year, half, 1, 0, 0, 0);
+      const end = new Date(year, half + 6, 0, 23, 59, 59);
+      return { statStartTime: start.getTime(), statEndTime: end.getTime() };
+    }
+    case '年报': {
+      const start = new Date(year, 0, 1, 0, 0, 0);
+      const end = new Date(year, 11, 31, 23, 59, 59);
+      return { statStartTime: start.getTime(), statEndTime: end.getTime() };
+    }
+    default: {
+      const start = new Date(now);
+      start.setDate(now.getDate() - 29);
+      start.setHours(0, 0, 0);
+      const end = new Date(now);
+      end.setHours(23, 59, 59);
+      return { statStartTime: start.getTime(), statEndTime: end.getTime() };
+    }
+  }
+}
+
+// 报表列表生成
+export const generateMockReportList = (filters = {}) => {
+  const reportCycles = ['日报', '周报', '月报', '季报', '半年报', '年报', '自定义报表'];
+  const generateStatuses = ['待生成', '已生成', '已归档'];
   const list = [];
   const today = Date.now();
-  for (let i = 1; i <= 50; i++) {
-    const campus = campuses[i % campuses.length];
-    const grade = grades[i % grades.length];
-    const major = majors[i % majors.length];
-    const className = classNames[i % classNames.length];
-    const reportPeriod = reportPeriods[i % reportPeriods.length];
-    const generateStatus = generateStatuses[i % generateStatuses.length];
-    const civilizedClassTitle = civilizedTitles[i % civilizedTitles.length];
 
-    // 构造统计时段
-    let statisticalPeriod = '';
-    if (reportPeriod === '日报') {
-      const date = new Date(today - i * 86400000);
-      statisticalPeriod = `${date.toISOString().slice(0, 10)} 00:00:00 至 ${date.toISOString().slice(0, 10)} 23:59:59`;
-    } else if (reportPeriod === '周报') {
-      statisticalPeriod = `第${((i % 52) + 1)}周 (2026年)`;
-    } else if (reportPeriod === '月报') {
-      statisticalPeriod = `2026-${String((i % 12) + 1).padStart(2, '0')}`;
-    } else {
-      statisticalPeriod = `2026-Q${(i % 4) + 1}`;
-    }
+  for (let i = 1; i <= 20; i++) {
+    const reportCycle = reportCycles[i % reportCycles.length];
+    const generateStatus = generateStatuses[i % generateStatuses.length];
+    const { statStartTime, statEndTime } = getStatTimeByPeriod(reportCycle, today - i * 86400000);
 
     list.push({
       id: i,
-      reportPeriod,
-      statisticalPeriod,
-      className,
-      majorName: major,
-      grade,
-      campus,
-      totalMoralScore: (Math.random() * 40 + 60).toFixed(1),
-      goodDeedScore: (Math.random() * 50).toFixed(1),
-      civilizedBehaviorScore: (Math.random() * 50).toFixed(1),
-      assessRank: Math.floor(Math.random() * 50) + 1,
-      civilizedClassTitle,
+      reportCycle,
+      statStartTime,
+      statEndTime,
+      targetTotal: Math.floor(Math.random() * 80 + 20),
+      targetEnableNum: Math.floor(Math.random() * 60 + 15),
+      targetWarnNum: Math.floor(Math.random() * 8 + 1),
+      activityJoinNum: Math.floor(Math.random() * 500 + 100),
+      resourceLearnRate: (Math.random() * 30 + 70).toFixed(2),
       generateStatus,
-      generateTime: new Date(today - Math.random() * 30 * 86400000).toISOString().replace('T', ' ').slice(0, 19),
-      operator: ['admin', '张老师', '李老师', '王主任'][i % 4],
+      generateTime: generateStatus !== '待生成' ? today - Math.random() * 86400000 : null,
+      operatorId: generateStatus !== '待生成' ? [1, 2, 3][i % 3] : null,
       exportCount: Math.floor(Math.random() * 10),
-      dataUpdateTime: new Date(today - Math.random() * 7 * 86400000).toISOString().replace('T', ' ').slice(0, 19),
-      creator: 'system',
-      createTime: Date.now() - Math.random() * 90 * 86400000,
-      updateTime: Date.now() - Math.random() * 30 * 86400000,
+      targetTotalYoy: (Math.random() * 10 - 5).toFixed(2),
+      targetTotalQoq: (Math.random() * 8 - 4).toFixed(2),
+      targetEnableNumYoy: (Math.random() * 10 - 5).toFixed(2),
+      targetEnableNumQoq: (Math.random() * 8 - 4).toFixed(2),
+      targetWarnNumYoy: (Math.random() * 20 - 10).toFixed(2),
+      targetWarnNumQoq: (Math.random() * 15 - 7).toFixed(2),
+      creator: 'admin',
+      createTime: today - Math.random() * 86400000,
+      updateTime: today,
     });
   }
 
-  // 应用筛选（简单模拟）
   let filtered = list;
-  if (filters.reportPeriod) {
-    filtered = filtered.filter(item => item.reportPeriod === filters.reportPeriod);
-  }
-  if (filters.className) {
-    filtered = filtered.filter(item => item.className.includes(filters.className));
-  }
-  if (filters.majorName) {
-    filtered = filtered.filter(item => item.majorName.includes(filters.majorName));
-  }
-  if (filters.grade) {
-    filtered = filtered.filter(item => item.grade === filters.grade);
-  }
-  if (filters.campus) {
-    filtered = filtered.filter(item => item.campus === filters.campus);
-  }
-  if (filters.civilizedClassTitle) {
-    filtered = filtered.filter(item => item.civilizedClassTitle === filters.civilizedClassTitle);
-  }
-  if (filters.assessRank) {
-    filtered = filtered.filter(item => item.assessRank === Number(filters.assessRank));
-  }
-  if (filters.generateStatus) {
-    filtered = filtered.filter(item => item.generateStatus === filters.generateStatus);
+  if (filters.reportCycle) filtered = filtered.filter(item => item.reportCycle === filters.reportCycle);
+  if (filters.generateStatus) filtered = filtered.filter(item => item.generateStatus === filters.generateStatus);
+  if (filters.statStartTime && filters.statEndTime) {
+    filtered = filtered.filter(item => item.statStartTime >= filters.statStartTime && item.statEndTime <= filters.statEndTime);
   }
   return filtered;
 };
 
-
-// ==================== 列表页交互操作接口 ====================
-/**
- * 分页查询德育评比报表列表
- * @param {object} params - 请求参数
- * @param {string} [params.reportPeriod] - 报表周期
- * @param {string} [params.statisticalPeriod] - 统计时段
- * @param {string} [params.className] - 班级名称
- * @param {string} [params.majorName] - 专业名称
- * @param {string} [params.grade] - 年级
- * @param {string} [params.campus] - 校区
- * @param {string} [params.civilizedClassTitle] - 文明班级称号
- * @param {integer} [params.assessRank] - 评比排名
- * @param {string} [params.generateStatus] - 生成状态
- * @param {number} [params.pageNo=1] - 页码
- * @param {number} [params.pageSize=10] - 每页条数
- * @returns {Promise}
- */
+// ==================== 列表页接口 ====================
 export function getMoralReportPage(params) {
   return requestClient.get('/studentmgmt/moral-report/page', { params }).catch(err => {
     console.warn('分页接口失败，使用模拟数据', err);
     const pageNo = params?.pageNo || 1;
     const pageSize = params?.pageSize || 10;
     const filters = {
-      reportPeriod: params?.reportPeriod,
-      className: params?.className,
-      majorName: params?.majorName,
-      grade: params?.grade,
-      campus: params?.campus,
-      civilizedClassTitle: params?.civilizedClassTitle,
-      assessRank: params?.assessRank,
+      reportCycle: params?.reportCycle,
       generateStatus: params?.generateStatus,
+      statStartTime: params?.statStartTime,
+      statEndTime: params?.statEndTime,
     };
     const allData = generateMockReportList(filters);
     const total = allData.length;
     const start = (pageNo - 1) * pageSize;
     const list = allData.slice(start, start + pageSize);
-    return Promise.resolve({
-      code: 200,
-      data: { list, total, pageNo, pageSize },
-      msg: '成功',
-    });
+    return Promise.resolve({ code: 200, data: { list, total, pageNo, pageSize }, msg: '成功' });
   });
 }
 
-/**
- * 生成德育评比报表（提交生成任务）
- * @param {object} data - 请求参数
- * @returns {Promise}
- */
 export function createMoralReport(data) {
-  return requestClient.post('/studentmgmt/moral-report/create', data).catch(err => {
+  return requestClient.post('/studentmgmt/moral-report/generate', data).catch(err => {
     console.warn('生成报表接口失败，使用模拟数据', err);
-    return Promise.resolve({
-      code: 200,
-      data: { id: Math.floor(Math.random() * 10000) + 100, generateStatus: '生成中' },
-      msg: '报表生成任务已提交',
-    });
+    return Promise.resolve({ code: 200, data: true, msg: '报表生成成功' });
   });
 }
 
-/**
- * 导出德育评比报表（支持批量/单条导出）
- * @param {object} params - 请求参数
- * @returns {Promise}
- */
+export function archiveMoralReport(data) {
+  return requestClient.put('/studentmgmt/moral-report/archive', data).catch(err => {
+    console.warn('归档接口失败，使用模拟数据', err);
+    return Promise.resolve({ code: 200, data: true, msg: '归档成功' });
+  });
+}
+
 export function exportMoralReport(params) {
   return requestClient.download('/studentmgmt/moral-report/export', params).catch(err => {
     console.warn('导出接口失败，使用模拟数据', err);
@@ -170,14 +148,6 @@ export function exportMoralReport(params) {
   });
 }
 
-
-// ==================== 列表行交互操作接口 ====================
-/**
- * 获取德育评比报表详情（查看抽屉弹窗）
- * @param {object} params - 请求参数
- * @param {number} params.id - 报表主键ID
- * @returns {Promise}
- */
 export function getMoralReportDetail(params) {
   return requestClient.get('/studentmgmt/moral-report/get', { params }).catch(err => {
     console.warn('详情接口失败，使用模拟数据', err);
@@ -187,293 +157,87 @@ export function getMoralReportDetail(params) {
   });
 }
 
-/**
- * 分页查询文明行为评比明细列表
- * @param {object} params - 请求参数
- * @param {string} [params.className] - 班级名称
- * @param {string} [params.campus] - 校区
- * @param {number} [params.pageNo=1] - 页码
- * @param {number} [params.pageSize=10] - 每页条数
- * @returns {Promise}
- */
-export function getCivilizedBehaviorDetailList(params) {
-  return requestClient.get('/studentmgmt/moral-report/civilized-behavior-detail', { params }).catch(err => {
-    console.warn('文明行为评比明细接口失败，使用模拟数据', err);
-    // 生成模拟文明行为评比明细数据
-    const campuses = ['丰泽校区', '洛江校区', '鲤城校区'];
-    const classNames = [
-      '计算机2201班', '计算机2202班', '软件工程2301班', '软件工程2302班',
-      '大数据2401班', '人工智能2401班', '网络工程2201班', '计算机2303班',
-    ];
-    const inspectors = ['德育处', '学生处', '值周教师', '年段长'];
-    const itemsOptions = [
-      '文明礼仪、卫生保持、纪律遵守',
-      '语言文明、仪容仪表、课间秩序',
-      '尊师爱友、环境保洁、考勤',
-      '文明行为、公物爱护、安全规范'
-    ];
-    const remarks = ['表现优秀', '有待提升', '进步明显', '需加强文明礼仪', '整体良好'];
+// ==================== 业务明细接口（模拟数据） ====================
+const now = Date.now();
 
-    // 构建全量模拟数据（总共48条，每个班级至少6条）
-    const allMockData = [];
-    for (let i = 1; i <= 48; i++) {
-      const className = classNames[(i - 1) % classNames.length];
-      allMockData.push({
-        id: i,
-        evaluateDate: `2026-04-${String(((i - 1) % 28) + 1).padStart(2, '0')}`,
-        score: (Math.random() * 30 + 65).toFixed(1),
-        inspector: inspectors[Math.floor(Math.random() * inspectors.length)],
-        items: itemsOptions[Math.floor(Math.random() * itemsOptions.length)],
-        remark: remarks[Math.floor(Math.random() * remarks.length)],
-        className,
-        campus: campuses[(i - 1) % campuses.length],
-        createTime: Date.now() - Math.random() * 30 * 86400000,
-      });
-    }
+// 指标管理模拟数据
+const mockTargets = [
+  { id: 15, targetName: '德育积分', totalScore: 100, warnThreshold: 60, evaluatorType: 'teacher', scoreType: '累计赋分', status: 'enable', createTime: now - 86400000 },
+  { id: 16, targetName: '志愿服务时长', totalScore: 50, warnThreshold: 20, evaluatorType: 'self', scoreType: '累计赋分', status: 'enable', createTime: now - 172800000 },
+  { id: 17, targetName: '违纪扣分', totalScore: 80, warnThreshold: 30, evaluatorType: 'teacher', scoreType: '累计赋分', status: 'disable', createTime: now - 259200000 },
+];
 
-    // 应用筛选条件
-    let filtered = allMockData;
-    if (params?.className) {
-      filtered = filtered.filter(item => item.className.includes(params.className));
-    }
-    if (params?.campus) {
-      filtered = filtered.filter(item => item.campus === params.campus);
-    }
-
-    // 分页
+export function getTargetMgmtPage(params) {
+  return requestClient.get('/studentmgmt/target-mgmt/page', { params }).catch(() => {
+    let list = [...mockTargets];
+    if (params.status) list = list.filter(t => t.status === params.status);
     const pageNo = params?.pageNo || 1;
     const pageSize = params?.pageSize || 10;
-    const total = filtered.length;
+    const total = list.length;
     const start = (pageNo - 1) * pageSize;
-    const list = filtered.slice(start, start + pageSize);
-
-    return Promise.resolve({
-      code: 200,
-      data: { list, total, pageNo, pageSize },
-      msg: '成功',
-    });
+    const sliced = list.slice(start, start + pageSize);
+    return Promise.resolve({ code: 200, data: { list: sliced, total, pageNo, pageSize }, msg: '成功' });
   });
 }
 
-/**
- * 获取班级德育明细（单个班级的德育各分项得分）
- * @param {object} params - 请求参数
- * @param {string} params.className - 班级名称（必填）
- * @returns {Promise}
- */
-export function getMoralClassDetail(params) {
-  return requestClient.get('/studentmgmt/moral-report/class-detail', { params }).catch(err => {
-    console.warn('班级德育明细接口失败，使用模拟数据', err);
-    // 从已有的报表模拟数据中查找匹配班级的记录
-    const allData = generateMockReportList();
-    let target = allData.find(item => item.className === params.className);
-    // 若未找到，则生成一条默认数据
-    if (!target) {
-      target = {
-        className: params.className || '未知班级',
-        totalMoralScore: (Math.random() * 40 + 60).toFixed(1),
-        goodDeedScore: (Math.random() * 50).toFixed(1),
-        civilizedBehaviorScore: (Math.random() * 50).toFixed(1),
-        assessRank: Math.floor(Math.random() * 50) + 1,
-        civilizedClassTitle: ['文明班级', '优秀班级', '先进班集体', ''][Math.floor(Math.random() * 4)],
-      };
-    }
-    return Promise.resolve({
-      code: 200,
-      data: {
-        className: target.className,
-        totalMoralScore: target.totalMoralScore,
-        goodDeedScore: target.goodDeedScore,
-        civilizedBehaviorScore: target.civilizedBehaviorScore,
-        assessRank: target.assessRank,
-        civilizedClassTitle: target.civilizedClassTitle || '',
-      },
-      msg: '成功',
-    });
-  });
-}
+// 德育活动模拟数据
+const mockActivities = [
+  { id: 10, activityName: '学雷锋志愿服务', activityType: 'volunteer', hostDept: 1001, startTime: now - 86400000, endTime: now - 43200000, joinNum: 120, status: 'published', createTime: now - 86400000 },
+  { id: 11, activityName: '诚信主题教育', activityType: 'theme', hostDept: 1002, startTime: now - 172800000, endTime: now - 86400000, joinNum: 85, status: 'published', createTime: now - 172800000 },
+];
 
-/**
- * 分页查询好人好事记录明细列表
- * @param {object} params - 请求参数
- * @param {string} [params.className] - 班级名称
- * @param {string} [params.campus] - 校区
- * @param {number} [params.pageNo=1] - 页码
- * @param {number} [params.pageSize=10] - 每页条数
- * @returns {Promise}
- */
-export function getGoodDeedList(params) {
-  return requestClient.get('/studentmgmt/moral-report/good-deed-list', { params }).catch(err => {
-    console.warn('好人好事记录明细接口失败，使用模拟数据', err);
-    // 生成模拟好人好事记录数据
-    const campuses = ['丰泽校区', '洛江校区', '鲤城校区'];
-    const classNames = [
-      '计算机2201班', '计算机2202班', '软件工程2301班', '软件工程2302班',
-      '大数据2401班', '人工智能2401班', '网络工程2201班', '计算机2303班',
-    ];
-    const eventNames = ['拾金不昧', '助人为乐', '义务劳动', '爱心捐赠', '见义勇为', '环保卫士'];
-    const recorders = ['班主任', '德育处', '班长', '学生处', '年段长'];
-
-    // 构建全量模拟数据（总共60条）
-    const allMockData = [];
-    for (let i = 1; i <= 60; i++) {
-      const className = classNames[(i - 1) % classNames.length];
-      allMockData.push({
-        id: i,
-        eventDate: `2026-04-${String(((i - 1) % 28) + 1).padStart(2, '0')}`,
-        eventName: eventNames[Math.floor(Math.random() * eventNames.length)],
-        score: (Math.random() * 10 + 5).toFixed(1),
-        recorder: recorders[Math.floor(Math.random() * recorders.length)],
-        className,
-        campus: campuses[(i - 1) % campuses.length],
-        createTime: Date.now() - Math.random() * 30 * 86400000,
-      });
-    }
-
-    // 应用筛选条件
-    let filtered = allMockData;
-    if (params?.className) {
-      filtered = filtered.filter(item => item.className.includes(params.className));
-    }
-    if (params?.campus) {
-      filtered = filtered.filter(item => item.campus === params.campus);
-    }
-
-    // 分页
+export function getMoralActivityPage(params) {
+  return requestClient.get('/studentmgmt/moral-activity/page', { params }).catch(() => {
+    let list = [...mockActivities];
     const pageNo = params?.pageNo || 1;
     const pageSize = params?.pageSize || 10;
-    const total = filtered.length;
+    const total = list.length;
     const start = (pageNo - 1) * pageSize;
-    const list = filtered.slice(start, start + pageSize);
-
-    return Promise.resolve({
-      code: 200,
-      data: { list, total, pageNo, pageSize },
-      msg: '成功',
-    });
+    const sliced = list.slice(start, start + pageSize);
+    return Promise.resolve({ code: 200, data: { list: sliced, total, pageNo, pageSize }, msg: '成功' });
   });
 }
 
+// 用户信息
+export function getUserInfo(params) {
+  return requestClient.get('/system/user/get', { params }).catch(() => {
+    return Promise.resolve({ code: 200, data: { id: params.id, username: 'admin', nickname: '管理员', deptId: 1 }, msg: '成功' });
+  });
+}
 
-// ==================== 数据可视化图表接口 ====================
-/**
- * 德育评比统计看板（柱状图：班级德育得分排名、各校区文明班级数量）
- * @param {object} params - 请求参数
- * @param {string} params.reportPeriod - 报表周期（必填）
- * @param {string} params.statisticalPeriod - 统计时段（必填）
- * @returns {Promise}
- */
+// ==================== 图表接口 ====================
 export function getMoralReportChart(params) {
   return requestClient.get('/studentmgmt/moral-report/chart', { params }).catch(err => {
     console.warn('图表接口失败，使用模拟数据', err);
-    // 根据请求参数生成有差异的模拟数据
-    const { reportPeriod = '月报', statisticalPeriod = '' } = params;
-    console.log('[道德模拟] 周期:', reportPeriod, '时段:', statisticalPeriod);
-
-    // ------------------- 1. 班级德育得分排名 -------------------
-    let classNames = [];
-    let totalScores = [];
-
-    switch (reportPeriod) {
-      case '日报':
-        classNames = ['计算机2301班', '软件2301班', '大数据2401班', '人工智能2401班', '网络2301班'];
-        totalScores = [92.5, 90.0, 88.5, 85.0, 83.5];
-        break;
-      case '周报':
-        classNames = ['软件2301班', '计算机2301班', '人工智能2401班', '大数据2401班', '网络2301班'];
-        totalScores = [97.0, 95.5, 94.0, 92.0, 89.5];
-        break;
-      case '月报':
-        classNames = ['计算机2301班', '软件2301班', '大数据2401班', '人工智能2401班'];
-        totalScores = [99.0, 98.0, 96.5, 95.0];
-        break;
-      case '季报':
-        classNames = ['人工智能2401班', '计算机2301班', '软件2301班', '大数据2401班', '网络2301班', '物联网2401班'];
-        totalScores = [98.5, 97.0, 96.0, 94.5, 92.0, 90.0];
-        break;
-      case '半年报':
-        classNames = ['大数据2401班', '人工智能2401班', '计算机2301班', '软件2301班', '物联网2401班'];
-        totalScores = [99.5, 98.5, 97.5, 96.0, 94.0];
-        break;
-      case '年报':
-        classNames = ['计算机2301班', '大数据2401班', '人工智能2401班', '软件2301班', '物联网2401班', '网络2301班'];
-        totalScores = [100.0, 98.5, 98.0, 97.0, 95.5, 94.0];
-        break;
-      case '自定义报表':
-        classNames = ['软件2301班', '大数据2401班', '计算机2301班'];
-        totalScores = [88.0, 85.5, 84.0];
-        break;
-      default:
-        classNames = ['计算机2301班', '软件2301班', '大数据2401班', '人工智能2401班'];
-        totalScores = [95.0, 94.0, 93.0, 92.0];
-    }
-
-    // 添加小扰动
-    const perturbedScores = totalScores.map(s => {
-      let perturb = (Math.random() - 0.5) * 1.5;
-      return Math.min(100, Math.max(60, s + perturb)).toFixed(1);
-    });
-
-    const classRankData = {
-      className: classNames,
-      totalScore: perturbedScores,
-    };
-
-    // ------------------- 2. 各校区文明班级数量统计 -------------------
-    let campuses = [];
-    let counts = [];
-
-    switch (reportPeriod) {
-      case '日报':
-        campuses = ['丰泽校区', '洛江校区', '鲤城校区', '台商校区'];
-        counts = [5, 3, 2, 1];
-        break;
-      case '周报':
-        campuses = ['丰泽校区', '洛江校区', '鲤城校区'];
-        counts = [12, 10, 8];
-        break;
-      case '月报':
-        campuses = ['丰泽校区', '洛江校区', '鲤城校区'];
-        counts = [20, 15, 12];
-        break;
-      case '季报':
-        campuses = ['丰泽校区', '洛江校区', '鲤城校区', '台商校区'];
-        counts = [35, 28, 22, 10];
-        break;
-      case '半年报':
-        campuses = ['丰泽校区', '洛江校区', '鲤城校区'];
-        counts = [58, 46, 38];
-        break;
-      case '年报':
-        campuses = ['丰泽校区', '洛江校区', '鲤城校区', '台商校区', '晋江校区'];
-        counts = [110, 95, 82, 45, 30];
-        break;
-      case '自定义报表':
-        campuses = ['丰泽校区', '洛江校区'];
-        counts = [7, 5];
-        break;
-      default:
-        campuses = ['丰泽校区', '洛江校区', '鲤城校区'];
-        counts = [15, 12, 10];
-    }
-
-    // 添加小扰动
-    const perturbedCounts = counts.map(c => {
-      let perturb = Math.floor((Math.random() - 0.5) * 2);
-      return Math.max(0, c + perturb);
-    });
-
-    const campusCivilizedData = {
-      campus: campuses,
-      count: perturbedCounts,
-    };
-
-    console.log('[道德模拟] 班级排名数据:', classRankData);
-    console.log('[道德模拟] 校区文明数据:', campusCivilizedData);
-
     return Promise.resolve({
       code: 200,
-      data: { classRankData, campusCivilizedData },
+      data: {
+        cardData: {
+          targetTotal: 56,
+          targetEnableNum: 48,
+          targetWarnNum: 3,
+          activityJoinNum: 2890,
+          resourceLearnRate: 92.5,
+        },
+        pieData: [
+          { name: '德育课件', value: 22 },
+          { name: '德育视频', value: 18 },
+          { name: '德育文章', value: 16 },
+        ],
+        barData: [
+          { name: '高一1班', score: 95 },
+          { name: '高一2班', score: 92 },
+          { name: '高二1班', score: 88 },
+          { name: '高二2班', score: 90 },
+        ],
+        lineData: {
+          date: ['2025-01', '2025-02', '2025-03'],
+          series: [
+            { name: '预警触发趋势', data: [5, 4, 3] },
+            { name: '活动完成率趋势', data: [88, 90, 92] },
+          ],
+        },
+      },
       msg: '成功',
     });
   });

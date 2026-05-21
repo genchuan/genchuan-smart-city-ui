@@ -66,22 +66,14 @@ defineExpose({
         <div class="detail-row-left">主键ID:</div>
         <div class="detail-row-right">{{ detailObj.id || '-' }}</div>
       </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">关联发票ID:</div>
-        <div class="detail-row-right">{{ detailObj.applyId || '-' }}</div>
-      </div>
+ 
 
       <div class="detail-card-row">
         <div class="detail-row-left">关联发票编号:</div>
         <div class="detail-row-right">{{ detailObj.invoiceNo || '-' }}</div>
       </div>
 
-      <div class="detail-card-row">
-        <div class="detail-row-left">申请人ID:</div>
-        <div class="detail-row-right">{{ detailObj.applicantId || '-' }}</div>
-      </div>
-
+       
       <div class="detail-card-row">
         <div class="detail-row-left">申请人名称:</div>
         <div class="detail-row-right">{{ detailObj.applicantName || '-' }}</div>

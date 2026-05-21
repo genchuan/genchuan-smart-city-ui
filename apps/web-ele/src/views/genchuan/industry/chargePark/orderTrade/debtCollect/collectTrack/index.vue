@@ -7,8 +7,8 @@ import Table from './table/index.vue';
 import '#/components/page/index.scss';
 
 const filterParams = reactive({
-  createTimeStart: null,
-  createTimeEnd: null,
+  collectTimeStart: null,
+  collectTimeEnd: null,
   collectMethod: null,
   status: null,
 });
@@ -26,26 +26,26 @@ const statusMap = {
 };
 
 const hasActiveFilters = computed(() => {
-  return filterParams.createTimeStart || filterParams.collectMethod || filterParams.status;
+  return filterParams.collectTimeStart || filterParams.collectMethod || filterParams.status;
 });
 
 const handleFilterChange = (params) => {
-  filterParams.createTimeStart = params.createTimeStart || null;
-  filterParams.createTimeEnd = params.createTimeEnd || null;
+  filterParams.collectTimeStart = params.collectTimeStart || null;
+  filterParams.collectTimeEnd = params.collectTimeEnd || null;
   filterParams.collectMethod = params.collectMethod || null;
   filterParams.status = params.status || null;
 };
 
 const handleClearFilters = () => {
-  filterParams.createTimeStart = null;
-  filterParams.createTimeEnd = null;
+  filterParams.collectTimeStart = null;
+  filterParams.collectTimeEnd = null;
   filterParams.collectMethod = null;
   filterParams.status = null;
 };
 
 const clearFilter = () => {
-  filterParams.createTimeStart = null;
-  filterParams.createTimeEnd = null;
+  filterParams.collectTimeStart = null;
+  filterParams.collectTimeEnd = null;
   filterParams.collectMethod = null;
   filterParams.status = null;
 };
@@ -97,12 +97,12 @@ const secondShow = ref(false);
         状态: {{ statusMap[filterParams.status]?.label || filterParams.status }}
       </el-tag>
       <el-tag
-        v-else-if="filterParams.createTimeStart"
+        v-else-if="filterParams.collectTimeStart"
         closable
         @close="clearFilter"
         type="info"
       >
-        日期: {{ filterParams.createTimeStart?.split(' ')[0] }}
+        追缴时间: {{ filterParams.collectTimeStart?.split(' ')[0] }}
       </el-tag>
     </div>
     <div class="icon-change">

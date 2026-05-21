@@ -248,9 +248,10 @@ export function normalizeInspectUserRow(row) {
     taskRecords: Array.isArray(row.taskRecords)
       ? row.taskRecords
       : buildTaskRecords(normalized),
-    taskRecordText: `${
-      Array.isArray(row.taskRecords) ? row.taskRecords.length : 2
-    } 条任务记录`,
+    taskRecordText: normalized?.taskRecordText || '-',
+    //`${
+    //   Array.isArray(row.taskRecords) ? row.taskRecords.length : 2
+    // } 条任务记录`,
   };
 }
 

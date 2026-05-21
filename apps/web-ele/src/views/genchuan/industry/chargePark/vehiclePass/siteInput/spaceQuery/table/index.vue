@@ -25,6 +25,7 @@ import SpaceDetailDialog from '../../../components/SpaceDetailDialog.vue';
 import {
   dataList,
   detailFields,
+  getStationOptions,
   textObj,
   useSearchFormSchema,
   useGridColumns,
@@ -39,6 +40,16 @@ const props = defineProps({
 
 // 是否使用真实API（默认false使用模拟数据）
 const USE_REAL_API = true;
+
+const stationOptions = ref([]);
+
+async function loadStationOptions() {
+  try {
+    stationOptions.value = await getStationOptions();
+  } catch (error) {
+    console.error('Failed to load station options:', error);
+  }
+}
 
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
@@ -68,7 +79,14 @@ const [Form, formApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: computed(() => {
+    const schema = useSearchFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -528,6 +546,7 @@ const handleAreaClick = (row) => {
 
 // 监听图表下钻事件
 onMounted(() => {
+  loadStationOptions();
   // 监听卡片点击事件 - 下钻到列表
   handleFilterByStatus = (e) => {
     const { status } = e.detail;

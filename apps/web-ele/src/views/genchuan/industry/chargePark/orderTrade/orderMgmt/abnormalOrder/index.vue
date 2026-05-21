@@ -170,13 +170,9 @@ const secondShow = ref(false);
 .filter-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 12px 16px;
-  margin: 0 16px;
-  background-color: #f5f7fa;
+  gap: 12px; 
+  margin: 0 16px; 
   border-radius: 8px;
-  border: 1px solid #e4e7ed;
-
   .el-tag {
     cursor: pointer;
 

@@ -402,7 +402,7 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton content="审核" icon-name="Check" @click="handleCheck(row)" />
+          <IconButton content="审核" icon-name="Check" v-if="row.status !== 'normal'" @click="handleCheck(row)" />
           <!-- <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" /> 
           <IconButton content="删除" icon-name="Delete" @click="handleDelete(row)" /> -->
         </div>

@@ -25,6 +25,8 @@ const drawerTitle = computed(() => {
 
 // 状态映射
 const statusMap = {
+  normal: { label: '正常记录', type: 'success' },
+  abnormal: { label: '异常记录', type: 'danger' },
   pending: { label: '待核查', type: 'warning' },
   passed: { label: '核查通过', type: 'success' },
   rejected: { label: '核查驳回', type: 'danger' },
@@ -66,8 +68,8 @@ const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   onCancel() {
     detailDrawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
+  onConfirm() { },
+  async onOpenChange() { },
 });
 
 defineExpose({
@@ -151,22 +153,6 @@ defineExpose({
           </el-tag>
         </div>
       </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备注:</div>
-        <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段1:</div>
-        <div class="detail-row-right">{{ detailObj.reserve1 || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段2:</div>
-        <div class="detail-row-right">{{ detailObj.reserve2 || '-' }}</div>
-      </div>
-
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
@@ -190,6 +176,7 @@ defineExpose({
   .detail-row-left {
     width: 150px;
   }
+
   .detail-card {
     min-height: 600px;
     max-height: 80vh;
@@ -215,6 +202,7 @@ defineExpose({
   &:last-child {
     border-bottom: none;
   }
+
   &:hover {
     padding: 12px 8px;
     margin: 0 -8px;
@@ -242,14 +230,17 @@ defineExpose({
 .detail-card::-webkit-scrollbar {
   width: 6px;
 }
+
 .detail-card::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 3px;
 }
+
 .detail-card::-webkit-scrollbar-thumb {
   background: #dcdfe6;
   border-radius: 3px;
 }
+
 .detail-card::-webkit-scrollbar-thumb:hover {
   background: #c0c4cc;
 }

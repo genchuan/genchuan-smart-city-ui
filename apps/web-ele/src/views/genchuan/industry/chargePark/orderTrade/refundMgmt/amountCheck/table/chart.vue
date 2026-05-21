@@ -16,22 +16,17 @@ const state = reactive({
   trendData: [],
 });
 
-// 点击卡片事件 - 查询今日数据
+// 点击卡片事件 - 不需要传递时间
 const handleCardClick = () => {
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-  emit('filter-change', {
-    checkTimeStart: todayStr + ' 00:00:00',
-    checkTimeEnd: todayStr + ' 23:59:59',
-  });
+  emit('filter-change', {});
 };
 
 // 折线图点击事件处理
 const handleLineChartClick = (params) => {
   if (params && params.name) {
     emit('filter-change', {
-      checkTimeStart: params.name + ' 00:00:00',
-      checkTimeEnd: params.name + ' 23:59:59',
+      createTimeStart: params.name + ' 00:00:00',
+      createTimeEnd: params.name + ' 23:59:59',
     });
   }
 };
@@ -160,11 +155,10 @@ onMounted(() => {
   <div class="park-chart-box">
     <div class="chart-box-left">
       <Card
-        class="left-card cursor-pointer"
+        class="left-card"
         v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
-        @click="handleCardClick"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>

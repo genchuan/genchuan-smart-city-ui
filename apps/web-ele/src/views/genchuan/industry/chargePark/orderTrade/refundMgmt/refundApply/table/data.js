@@ -2,11 +2,11 @@
 export function useFormSchema() {
   return [
     {
-      fieldName: 'refundReason',
-      label: '退款原因',
+      fieldName: 'applyNo',
+      label: '申请编号',
       component: 'Input',
       componentProps: {
-        placeholder: '请输入退款原因',  
+        placeholder: '请输入申请编号',  
         maxLength: 50,
       },
       labelWidth: 120,
@@ -18,11 +18,11 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
-        options: [ 
+        options: [  
           { label: '待审核', value: 'pending_audit' },
           { label: '待执行', value: 'pending_exec' },
           { label: '已完成', value: 'completed' },
-          { label: '已标记（非逃费）', value: 'marked ' },
+          { label: '已驳回', value: 'rejected' },
         ],
       },
       labelWidth: 120,

@@ -16,22 +16,28 @@ const state = reactive({
   trendData: [],
 });
 
-// 点击卡片事件 - 查询今日数据
-const handleCardClick = () => {
+// 点击卡片事件
+const handleCardClick = (item) => {
   const today = new Date();
   const todayStr = today.toISOString().split('T')[0];
-  emit('filter-change', {
-    createTimeStart: todayStr + ' 00:00:00',
-    createTimeEnd: todayStr + ' 23:59:59',
-  });
+  if (item.title === '今日生成数') {
+    emit('filter-change', {
+      startTime: todayStr + ' 00:00:00',
+      endTime: todayStr + ' 23:59:59',
+    });
+  } else if (item.title === '使用率') {
+    emit('filter-change', {
+      status: 'used',
+    });
+  }
 };
 
 // 折线图点击事件处理
 const handleLineChartClick = (params) => {
   if (params && params.name) {
     emit('filter-change', {
-      createTimeStart: params.name + ' 00:00:00',
-      createTimeEnd: params.name + ' 23:59:59',
+      startTime: params.name + ' 00:00:00',
+      endTime: params.name + ' 23:59:59',
     });
   }
 };
@@ -164,7 +170,7 @@ onMounted(() => {
         v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
-        @click="handleCardClick"
+        @click="handleCardClick(item)"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>

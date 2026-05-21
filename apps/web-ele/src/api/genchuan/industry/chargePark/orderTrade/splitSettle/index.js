@@ -25,17 +25,22 @@ export function updateSettleBill(data) {
 export function deleteSettleBill(params) {
   return requestClient.delete('/ordertrade/settle-bill/delete', {params});
 }
+
+/** 结算单据批量审核 */
+export function batchAuditSettleBill(data) {
+  return requestClient.post('/ordertrade/settle-bill/batch-audit', data);
+}
 /** 结算单据创建 */
 export function createSettleBill(data) {
   return requestClient.post('/ordertrade/settle-bill/create', data);
 }
 /** 结算单据重新生成 */
 export function regenerateSettleBill(data) {
-  return requestClient.put('/ordertrade/settle-bill/regenerate', data);
+  return requestClient.post('/ordertrade/settle-bill/regenerate', data);
 }
 /** 结算单据结算 */
 export function settleSettleBill(data) {
-  return requestClient.put('/ordertrade/settle-bill/settle', data);
+  return requestClient.post('/ordertrade/settle-bill/settle', data);
 }
 /** 结算单据审核驳回 */
 export function rejectSettleBill(data) {
@@ -119,7 +124,7 @@ export function deleteSplitRateStatus(params) {
 }
 /** 分账结算状态审核 */
 export function checkSplitRateStatus(data) {
-  return requestClient.put('/ordertrade/settle-status/check', data);
+  return requestClient.post('/ordertrade/settle-status/check', data);
 }
 /** 分账结算状态图表 */
 export function getSplitRateStatusChart(params) {

@@ -17,14 +17,15 @@ const state = reactive({
   trendData: [],
 });
 
-// 点击卡片事件 - 查询今日数据
-const handleCardClick = () => {
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-  emit('filter-change', {
-    createTimeStart: todayStr + ' 00:00:00',
-    createTimeEnd: todayStr + ' 23:59:59',
-  });
+// 点击卡片事件
+const handleCardClick = (index) => {
+  // 欠费总额(index=0)：不触发筛选
+  // 结清率(index=1)：搜索已结清状态，不需要传递时间
+  if (index === 1) {
+    emit('filter-change', {
+      status: 'cleared',
+    });
+  }
 };
 
 // 折线图点击事件处理
@@ -173,10 +174,10 @@ onMounted(() => {
     <div class="chart-box-left">
       <Card
         class="left-card cursor-pointer"
-        v-for="item in state.cardList"
+        v-for="(item, index) in state.cardList"
         :key="item.title"
         v-bind="item"
-        @click="handleCardClick"
+        @click="handleCardClick(index)"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>
