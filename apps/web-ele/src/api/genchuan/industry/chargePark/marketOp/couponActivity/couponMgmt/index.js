@@ -117,3 +117,16 @@ export function getCouponMgmtChart() {
 export function getCouponSimpleList() {
   return requestClient.get('/marketop/coupon-mgmt/simple-list');
 }
+
+// ==================  下拉接口  ==========================
+
+/** 获取发放对象（用户）精简列表
+ * @param {object} [params] - 请求参数（可选）
+ * @param {string} [params.name] - 用户名称，支持模糊查询（非必传）
+ * @returns {Promise<Array<{id: number, name: string}>>} 返回用户列表
+ */
+export function getSendObject(params) {
+  return requestClient.get('/marketop/coupon-mgmt/user-simple-list', {
+    params,
+  });
+}
