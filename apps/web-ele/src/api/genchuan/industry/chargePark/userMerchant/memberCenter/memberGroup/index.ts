@@ -3,27 +3,28 @@ import type { PageParam, PageResult } from '@vben/request';
 import { normalizeQueryDateTimeRanges } from '#/api/genchuan/industry/chargePark/userMerchant/utils/query';
 import { requestClient } from '#/api/request';
 
-// 会员分组 VO
 export type MemberGroupVO = {
   createTime?: number | string;
   description?: string;
+  effectiveTime?: number | string;
   id?: number;
   name: string;
   remark?: string;
+  rule?: string;
   status?: number | string;
   updateTime?: number | string;
-  userCount?: number;
 };
 
 export type MemberGroupPageReqVO = PageParam & {
   createTime?: string | string[];
+  description?: string;
   effectiveTime?: string[];
   name?: string;
+  remark?: string;
+  rule?: string;
   status?: number | string;
   updateTime?: string[];
 };
-
-export type MemberGroupSaveReqVO = MemberGroupVO;
 
 export type MemberGroupOperateReqVO = {
   ids: number[];
@@ -42,29 +43,9 @@ export type MemberGroupChartVO = {
   }>;
 };
 
-function normalizeMemberGroup(data?: MemberGroupVO) {
-  if (!data) {
-    return data;
-  }
-  return {
-    ...data,
-    description: data.description ?? data.remark,
-  };
-}
-
-function buildMemberGroupPayload(data: MemberGroupVO) {
-  const { description, ...rest } = data;
-
-  return {
-    ...rest,
-    remark: description ?? data.remark,
-  };
-}
-
-// 会员分组 API
 export const MemberGroupApi = {
   getMemberGroupPage: async (params: MemberGroupPageReqVO) => {
-    const result = await requestClient.get<PageResult<MemberGroupVO>>(
+    return await requestClient.get<PageResult<MemberGroupVO>>(
       '/usermerchant/member-group/page',
       {
         params: normalizeQueryDateTimeRanges(params, [
@@ -74,43 +55,27 @@ export const MemberGroupApi = {
         ]),
       },
     );
-    return {
-      ...result,
-      list: Array.isArray(result.list)
-        ? result.list.map((item) => normalizeMemberGroup(item) as MemberGroupVO)
-        : [],
-    };
   },
 
   getMemberGroup: async (id: number) => {
-    const result = await requestClient.get<MemberGroupVO>(
+    return await requestClient.get<MemberGroupVO>(
       '/usermerchant/member-group/get',
       {
         params: { id },
       },
     );
-    return normalizeMemberGroup(result) as MemberGroupVO;
   },
 
   createMemberGroup: async (data: MemberGroupVO) => {
-    return await requestClient.post(
-      '/usermerchant/member-group/create',
-      buildMemberGroupPayload(data),
-    );
+    return await requestClient.post('/usermerchant/member-group/create', data);
   },
 
-  saveMemberGroup: async (data: MemberGroupSaveReqVO) => {
-    return await requestClient.post(
-      '/usermerchant/member-group/save',
-      buildMemberGroupPayload(data),
-    );
+  saveMemberGroup: async (data: MemberGroupVO) => {
+    return await requestClient.post('/usermerchant/member-group/save', data);
   },
 
   updateMemberGroup: async (data: MemberGroupVO) => {
-    return await requestClient.put(
-      '/usermerchant/member-group/update',
-      buildMemberGroupPayload(data),
-    );
+    return await requestClient.put('/usermerchant/member-group/update', data);
   },
 
   enableMemberGroup: async (data: MemberGroupOperateReqVO) => {

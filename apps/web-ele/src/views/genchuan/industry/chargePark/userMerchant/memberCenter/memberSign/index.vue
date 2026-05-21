@@ -4,46 +4,87 @@ import type {
   MemberSignPageReqVO,
   MemberSignVO,
 } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberSign';
+import type {
+  ActiveFilterTag,
+  FilterTagConfig,
+} from '#/views/genchuan/industry/chargePark/userMerchant/memberCenter/utils';
 
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
-import { DocAlert, Page, useVbenDrawer } from '@vben/common-ui';
+import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import { MemberLevelApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberLevel';
 import { MemberSignApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberSign';
+import { getUserPage } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
-import { useGridColumns, useGridFormSchema } from './data';
+import {
+  buildActiveFilterTags,
+  buildDateRangeByChartName,
+  buildTodayDateRange,
+  cleanQueryParams,
+  formatRecordStatus,
+  refreshStatsLayout,
+} from '../utils';
+import {
+  buildStatsDataFromApi,
+  memberSignDetailFields,
+  useGridColumns,
+  useGridFormSchema,
+} from './data';
+
+import '#/genchuan-components/page/index.scss';
 
 const detailDrawerRef = ref<null | { open: () => void }>(null);
 const detailObj = ref<MemberSignVO>();
-
-const detailFields = ref([
-  { key: 'nickname', label: '用户名称' },
-  { key: 'createTime', label: '签到时间' },
-  { key: 'point', label: '积分奖励' },
-  { key: 'day', label: '连续签到天数' },
-  { key: 'description', label: '积分发放说明' },
-]);
-
-const detailData = computed(() => {
-  if (!detailObj.value) {
-    return undefined;
-  }
-
-  return {
-    ...detailObj.value,
-    description: detailObj.value.description || '签到成功后自动发放积分',
-  };
-});
-
+const drillFilters = ref<Record<string, any>>({});
 const searchParams = ref<Record<string, any>>({});
+const statsDataSource = ref(buildStatsDataFromApi());
+const showStats = ref(true);
+
+const drillFilterConfigs: Record<string, FilterTagConfig> = {
+  createTime: {
+    label: '签到时间',
+    type: 'primary',
+  },
+  levelName: {
+    label: '会员等级',
+    type: 'warning',
+  },
+  signDate: {
+    label: '签到日期',
+    type: 'primary',
+  },
+  status: {
+    formatter: formatRecordStatus,
+    label: '记录状态',
+    type: 'success',
+  },
+};
+
+const searchFilterConfigs: Record<string, FilterTagConfig> = {
+  createTime: {
+    label: '签到时间',
+    type: 'danger',
+  },
+  status: {
+    formatter: formatRecordStatus,
+    label: '记录状态',
+    type: 'success',
+  },
+  userId: {
+    label: '用户编号',
+    type: 'info',
+  },
+};
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -52,7 +93,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  async onOpenChange() {},
 });
 
 const [QueryForm, queryFormApi] = useVbenForm({
@@ -77,31 +117,162 @@ const [QueryForm, queryFormApi] = useVbenForm({
   },
 });
 
-/** 搜索表单提交 */
+async function loadStats() {
+  try {
+    const data = await MemberSignApi.getMemberSignChart();
+    statsDataSource.value = buildStatsDataFromApi(data);
+  } catch (error) {
+    statsDataSource.value = buildStatsDataFromApi();
+    ElMessage.error('加载会员签到统计失败');
+    console.error('[memberSign] load stats failed:', error);
+  }
+}
+
+const statsData = computed(() => statsDataSource.value);
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: drillFilterConfigs,
+      source: 'drill',
+      values: drillFilters.value,
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
+);
+
 async function onQuerySubmit(values: Record<string, any>) {
   searchParams.value = { ...values };
+  drillFilters.value = {};
   await handleRefresh();
   drawerApi.close();
+}
+
+async function loadAllPages<T>(
+  getPage: (params: {
+    pageNo: number;
+    pageSize: number;
+  }) => Promise<{ list?: T[]; total?: number }>,
+) {
+  const pageSize = 200;
+  const firstPage = await getPage({ pageNo: 1, pageSize });
+  const total = Number(firstPage.total ?? firstPage.list?.length ?? 0);
+  const pageCount = Math.ceil(total / pageSize);
+  const list = [...(firstPage.list || [])];
+
+  if (pageCount > 1) {
+    const restPages = await Promise.all(
+      Array.from({ length: pageCount - 1 }, (_, index) =>
+        getPage({ pageNo: index + 2, pageSize }),
+      ),
+    );
+
+    list.push(...restPages.flatMap((page) => page.list || []));
+  }
+
+  return list;
+}
+
+async function getLevelIdByName(levelName: string) {
+  const levels = await loadAllPages((params) =>
+    MemberLevelApi.getMemberLevelPage(params),
+  );
+  const level = levels.find((item) => item.name === levelName);
+
+  return level?.id;
+}
+
+async function getUserIdsByLevelName(levelName: string) {
+  const levelId = await getLevelIdByName(levelName);
+
+  if (!levelId) {
+    return [];
+  }
+
+  const users = await loadAllPages((params) =>
+    getUserPage({
+      ...params,
+      levelId,
+    }),
+  );
+
+  return users
+    .map((item) => Number(item.id))
+    .filter((id) => Number.isFinite(id));
+}
+
+async function queryMemberSignPage(
+  params: MemberSignPageReqVO & { levelName?: string },
+) {
+  const { levelName, pageNo = 1, pageSize = 20, ...signParams } = params;
+
+  if (!levelName) {
+    return await MemberSignApi.getMemberSignPage(params);
+  }
+
+  const userIds = await getUserIdsByLevelName(levelName);
+
+  if (userIds.length === 0) {
+    return {
+      list: [],
+      total: 0,
+    };
+  }
+
+  if (signParams.userId && !userIds.includes(Number(signParams.userId))) {
+    return {
+      list: [],
+      total: 0,
+    };
+  }
+
+  if (signParams.userId) {
+    return await MemberSignApi.getMemberSignPage({
+      ...signParams,
+      pageNo,
+      pageSize,
+    });
+  }
+
+  const userIdSet = new Set(userIds);
+  const allSignList = await loadAllPages((pageParams) =>
+    MemberSignApi.getMemberSignPage({
+      ...signParams,
+      ...pageParams,
+    }),
+  );
+  const filteredList = allSignList.filter((item) =>
+    userIdSet.has(Number(item.userId)),
+  );
+  const start = (Number(pageNo) - 1) * Number(pageSize);
+  const end = start + Number(pageSize);
+
+  return {
+    list: filteredList.slice(start, end),
+    total: filteredList.length,
+  };
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
-    height: 'auto',
     keepSource: true,
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          const queryValues = {
+          const queryValues = cleanQueryParams({
             ...searchParams.value,
             ...formValues,
-          };
+            ...drillFilters.value,
+          }) as MemberSignPageReqVO & { levelName?: string };
 
-          return await MemberSignApi.getMemberSignPage({
+          return await queryMemberSignPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
-            ...(queryValues as MemberSignPageReqVO),
+            ...queryValues,
           });
         },
       },
@@ -111,6 +282,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
@@ -118,22 +290,29 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-/** 刷新表格 */
 function handleRefresh() {
   gridApi.reload();
+  void loadStats();
 }
 
-/** 打开搜索抽屉 */
+async function toggleStats() {
+  showStats.value = !showStats.value;
+  await refreshStatsLayout(gridApi);
+}
+
 async function handleSearchShow() {
   drawerApi.open();
   await queryFormApi.setValues(searchParams.value);
 }
 
-/** 导出当前列表 */
 async function handleExport() {
   try {
+    const { levelName: _levelName, ...exportParams } = cleanQueryParams({
+      ...searchParams.value,
+      ...drillFilters.value,
+    }) as MemberSignPageReqVO & { levelName?: string };
     const data = await MemberSignApi.exportMemberSign(
-      searchParams.value as MemberSignPageReqVO,
+      exportParams as MemberSignPageReqVO,
     );
     downloadFileFromBlobPart({ fileName: '会员签到.xls', source: data });
     ElMessage.success('导出成功');
@@ -142,65 +321,151 @@ async function handleExport() {
   }
 }
 
-/** 查看签到详情 */
 async function handleDetail(row: MemberSignVO) {
-  detailObj.value = await MemberSignApi.getMemberSign(Number(row.id));
+  detailObj.value = row.id
+    ? await MemberSignApi.getMemberSign(Number(row.id))
+    : row;
   detailDrawerRef.value?.open();
 }
+
+async function handleStatsCardClick({ index }: { index: number }) {
+  drillFilters.value = {
+    signDate: buildTodayDateRange(),
+    ...(index === 1 ? { status: 1 } : {}),
+  };
+
+  await handleRefresh();
+}
+
+async function handleStatsLineClick({ name }: { name: string }) {
+  const range = buildDateRangeByChartName(name);
+
+  if (!range) {
+    return;
+  }
+
+  drillFilters.value = {
+    signDate: range,
+  };
+  await handleRefresh();
+}
+
+async function handleStatsBarClick({ name }: { name: string }) {
+  if (!name) {
+    return;
+  }
+
+  drillFilters.value = {
+    levelName: name,
+  };
+  await handleRefresh();
+}
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'drill') {
+    const nextFilters = { ...drillFilters.value };
+    delete nextFilters[tag.key];
+    drillFilters.value = nextFilters;
+    await handleRefresh();
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
+}
+
+onMounted(() => {
+  void loadStats();
+});
 </script>
 
 <template>
-  <Page auto-content-height>
-    <template #doc>
-      <DocAlert
-        title="会员等级、积分、签到"
-        url="https://doc.iocoder.cn/member/level/"
-      />
-    </template>
-
-    <Drawer title="搜索">
-      <QueryForm class="query-form" />
-    </Drawer>
-
-    <Grid>
-      <template #toolbar-tools>
-        <div class="common-toolbar-tools">
-          <IconButton
-            content="导出"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSearchShow"
-          />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="() => screenfull.toggle()"
-          />
-        </div>
-      </template>
-
-      <template #actions="{ row }">
-        <div class="table-toolbar-tools">
-          <IconButton
-            content="查看"
-            icon-name="View"
-            @click="handleDetail(row)"
-          />
-        </div>
-      </template>
-    </Grid>
-
-    <DetailDrawer
-      ref="detailDrawerRef"
-      :data="detailData"
-      :fields="detailFields"
-      :title="detailObj ? `${detailObj.nickname}签到详情` : '签到详情'"
+  <div class="common-index">
+    <StatsVisualization
+      v-if="showStats"
+      :data="statsData"
+      @bar-click="handleStatsBarClick"
+      @card-click="handleStatsCardClick"
+      @line-click="handleStatsLineClick"
     />
-  </Page>
+
+    <div class="park-lot-table-new user-merchant-table-grid">
+      <Grid>
+        <template #table-title>
+          <div
+            class="tabel-tabs"
+            style="display: flex; flex-wrap: wrap; align-items: center"
+          >
+            <ElTag
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleRemoveFilterTag(tag)"
+            >
+              {{ tag.label }}：{{ tag.value }}
+            </ElTag>
+          </div>
+        </template>
+
+        <template #toolbar-tools>
+          <div class="common-toolbar-tools">
+            <IconButton
+              v-access:code="['usermerchant:member-sign:export']"
+              content="导出"
+              icon-name="download"
+              @click="handleExport"
+            />
+            <IconButton
+              content="搜索"
+              icon-name="search"
+              @click="handleSearchShow"
+            />
+            <IconButton
+              :content="showStats ? '隐藏统计' : '显示统计'"
+              :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
+              @click="toggleStats"
+            />
+            <IconButton
+              content="全屏"
+              icon-name="FullScreen"
+              @click="() => screenfull.toggle()"
+            />
+          </div>
+        </template>
+
+        <template #actions="{ row }">
+          <div class="table-toolbar-tools">
+            <IconButton
+              content="查看"
+              icon-name="View"
+              @click="handleDetail(row)"
+            />
+          </div>
+        </template>
+      </Grid>
+
+      <Drawer title="搜索">
+        <QueryForm class="query-form" />
+      </Drawer>
+
+      <DetailDrawer
+        ref="detailDrawerRef"
+        :data="detailObj"
+        :fields="memberSignDetailFields"
+        :title="detailObj ? `签到记录 ${detailObj.id}` : '签到详情'"
+      />
+    </div>
+  </div>
 </template>
 
 <style scoped lang="scss">

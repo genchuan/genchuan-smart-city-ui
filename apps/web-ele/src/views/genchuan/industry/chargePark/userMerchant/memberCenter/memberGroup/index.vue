@@ -1,35 +1,85 @@
 <script lang="ts" setup>
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { MemberGroupVO } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberGroup';
+import type {
+  MemberGroupPageReqVO,
+  MemberGroupVO,
+} from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberGroup';
+import type {
+  ActiveFilterTag,
+  FilterTagConfig,
+} from '#/views/genchuan/industry/chargePark/userMerchant/memberCenter/utils';
 
-import { ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
-import {
-  confirm,
-  DocAlert,
-  Page,
-  useVbenDrawer,
-  useVbenModal,
-} from '@vben/common-ui';
-import { CommonStatusEnum } from '@vben/constants';
+import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
-import { ElLoading, ElMessage } from 'element-plus';
+import { ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberGroupApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberGroup';
 import IconButton from '#/components/common/IconButton.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
+import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
-import { useGridColumns, useGridFormSchema } from './data';
+import {
+  buildActiveFilterTags,
+  cleanQueryParams,
+  formatLifecycleStatus,
+  isEnabledStatus,
+  refreshStatsLayout,
+  STATUS_ENABLED,
+} from '../utils';
+import {
+  buildStatsDataFromApi,
+  memberGroupDetailFields,
+  useGridColumns,
+  useGridFormSchema,
+} from './data';
 import Form from './modules/form.vue';
+
+import '#/genchuan-components/page/index.scss';
 
 const [FormModal, formModalApi] = useVbenModal({
   connectedComponent: Form,
   destroyOnClose: true,
 });
 
+const detailDrawerRef = ref<null | { open: () => void }>(null);
+const detailObj = ref<MemberGroupVO>();
+const drillFilters = ref<Record<string, any>>({});
 const searchParams = ref<Record<string, any>>({});
+const statsDataSource = ref(buildStatsDataFromApi());
+const showStats = ref(true);
+
+const drillFilterConfigs: Record<string, FilterTagConfig> = {
+  name: {
+    label: '分组名称',
+    type: 'primary',
+  },
+  status: {
+    formatter: formatLifecycleStatus,
+    label: '状态',
+    type: 'success',
+  },
+};
+
+const searchFilterConfigs: Record<string, FilterTagConfig> = {
+  createTime: {
+    label: '创建时间',
+    type: 'danger',
+  },
+  name: {
+    label: '分组名称',
+    type: 'info',
+  },
+  status: {
+    formatter: formatLifecycleStatus,
+    label: '状态',
+    type: 'success',
+  },
+};
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -38,7 +88,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  async onOpenChange() {},
 });
 
 const [QueryForm, queryFormApi] = useVbenForm({
@@ -63,37 +112,72 @@ const [QueryForm, queryFormApi] = useVbenForm({
   },
 });
 
-/** 搜索表单提交 */
+async function loadStats() {
+  try {
+    const data = await MemberGroupApi.getMemberGroupChart();
+    statsDataSource.value = buildStatsDataFromApi(data);
+  } catch (error) {
+    statsDataSource.value = buildStatsDataFromApi();
+    ElMessage.error('加载会员分组统计失败');
+    console.error('[memberGroup] load stats failed:', error);
+  }
+}
+
+const statsData = computed(() => statsDataSource.value);
+const activeFilterTags = computed<ActiveFilterTag[]>(() =>
+  buildActiveFilterTags([
+    {
+      configs: drillFilterConfigs,
+      source: 'drill',
+      values: drillFilters.value,
+    },
+    {
+      configs: searchFilterConfigs,
+      source: 'search',
+      values: searchParams.value,
+    },
+  ]),
+);
+
 async function onQuerySubmit(values: Record<string, any>) {
   searchParams.value = { ...values };
+  drillFilters.value = {};
   await handleRefresh();
   drawerApi.close();
 }
 
-/** 刷新表格 */
 function handleRefresh() {
   gridApi.reload();
+  void loadStats();
 }
 
-/** 打开搜索抽屉 */
+async function toggleStats() {
+  showStats.value = !showStats.value;
+  await refreshStatsLayout(gridApi);
+}
+
 async function handleSearchShow() {
   drawerApi.open();
   await queryFormApi.setValues(searchParams.value);
 }
 
-/** 创建会员分组 */
 function handleCreate() {
   formModalApi.setData(null).open();
 }
 
-/** 编辑会员分组 */
 function handleEdit(row: MemberGroupVO) {
   formModalApi.setData(row).open();
 }
 
-/** 生效/禁用会员分组 */
+async function handleDetail(row: MemberGroupVO) {
+  detailObj.value = row.id
+    ? await MemberGroupApi.getMemberGroup(Number(row.id))
+    : row;
+  detailDrawerRef.value?.open();
+}
+
 async function handleToggleStatus(row: MemberGroupVO) {
-  const isEnable = Number(row.status) === CommonStatusEnum.ENABLE;
+  const isEnable = isEnabledStatus(row.status);
 
   try {
     await confirm(
@@ -117,19 +201,61 @@ async function handleToggleStatus(row: MemberGroupVO) {
   }
 }
 
+async function handleStatsCardClick({ index }: { index: number }) {
+  drillFilters.value =
+    index === 0
+      ? {}
+      : {
+          status: STATUS_ENABLED,
+        };
+
+  await handleRefresh();
+}
+
+async function handleStatsPieClick({ name }: { name: string }) {
+  if (!name) {
+    return;
+  }
+
+  drillFilters.value = {
+    name,
+  };
+  await handleRefresh();
+}
+
+async function syncQueryFormValues() {
+  await queryFormApi.resetForm();
+  await queryFormApi.setValues(searchParams.value);
+}
+
+async function handleRemoveFilterTag(tag: ActiveFilterTag) {
+  if (tag.source === 'drill') {
+    const nextFilters = { ...drillFilters.value };
+    delete nextFilters[tag.key];
+    drillFilters.value = nextFilters;
+    await handleRefresh();
+    return;
+  }
+
+  const nextValues = { ...searchParams.value };
+  delete nextValues[tag.key];
+  searchParams.value = nextValues;
+  await syncQueryFormValues();
+  await handleRefresh();
+}
+
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
-    height: 'auto',
     keepSource: true,
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          const queryValues = {
+          const queryValues = cleanQueryParams({
             ...searchParams.value,
             ...formValues,
-          };
+            ...drillFilters.value,
+          }) as MemberGroupPageReqVO;
 
           return await MemberGroupApi.getMemberGroupPage({
             pageNo: page.currentPage,
@@ -144,71 +270,110 @@ const [Grid, gridApi] = useVbenVxeGrid({
       isHover: true,
     },
     toolbarConfig: {
+      'class-name': 'common-tool-bar-config',
       refresh: true,
       search: true,
     },
   } as VxeTableGridOptions<MemberGroupVO>,
   showSearchForm: false,
 });
+
+onMounted(() => {
+  void loadStats();
+});
 </script>
 
 <template>
-  <Page auto-content-height>
-    <template #doc>
-      <DocAlert
-        title="会员用户、标签、分组"
-        url="https://doc.iocoder.cn/member/user/"
-      />
-    </template>
-
+  <div class="common-index">
     <FormModal @success="handleRefresh" />
-    <Drawer title="搜索">
-      <QueryForm class="query-form" />
-    </Drawer>
 
-    <Grid>
-      <template #toolbar-tools>
-        <div class="common-toolbar-tools">
-          <IconButton
-            v-access:code="['member:group:create']"
-            content="新增会员分组"
-            icon-name="Plus"
-            @click="handleCreate"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSearchShow"
-          />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="() => screenfull.toggle()"
-          />
-        </div>
-      </template>
-      <template #actions="{ row }">
-        <div class="table-toolbar-tools">
-          <IconButton
-            v-access:code="['member:group:update']"
-            content="编辑"
-            icon-name="Edit"
-            @click="handleEdit(row)"
-          />
-          <IconButton
-            v-access:code="['member:group:update']"
-            :content="
-              Number(row.status) === CommonStatusEnum.ENABLE ? '禁用' : '生效'
-            "
-            :icon-name="
-              Number(row.status) === CommonStatusEnum.ENABLE ? 'Close' : 'Check'
-            "
-            @click="handleToggleStatus(row)"
-          />
-        </div>
-      </template>
-    </Grid>
-  </Page>
+    <StatsVisualization
+      v-if="showStats"
+      :data="statsData"
+      @card-click="handleStatsCardClick"
+      @pie-click="handleStatsPieClick"
+    />
+
+    <div class="park-lot-table-new user-merchant-table-grid">
+      <Grid>
+        <template #table-title>
+          <div
+            class="tabel-tabs"
+            style="display: flex; flex-wrap: wrap; align-items: center"
+          >
+            <ElTag
+              v-for="tag in activeFilterTags"
+              :key="`${tag.source}-${tag.key}`"
+              :type="tag.type"
+              closable
+              style="height: 32px; margin: 4px 0; line-height: 32px"
+              @close="handleRemoveFilterTag(tag)"
+            >
+              {{ tag.label }}：{{ tag.value }}
+            </ElTag>
+          </div>
+        </template>
+
+        <template #toolbar-tools>
+          <div class="common-toolbar-tools">
+            <IconButton
+              v-access:code="['usermerchant:member-group:create']"
+              content="新增会员分组"
+              icon-name="Plus"
+              @click="handleCreate"
+            />
+            <IconButton
+              content="搜索"
+              icon-name="search"
+              @click="handleSearchShow"
+            />
+            <IconButton
+              :content="showStats ? '隐藏统计' : '显示统计'"
+              :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
+              @click="toggleStats"
+            />
+            <IconButton
+              content="全屏"
+              icon-name="FullScreen"
+              @click="() => screenfull.toggle()"
+            />
+          </div>
+        </template>
+        <template #actions="{ row }">
+          <div class="table-toolbar-tools">
+            <IconButton
+              content="查看"
+              icon-name="View"
+              @click="handleDetail(row)"
+            />
+            <IconButton
+              v-access:code="['usermerchant:member-group:update']"
+              content="编辑"
+              icon-name="Edit"
+              @click="handleEdit(row)"
+            />
+            <IconButton
+              v-access:code="['usermerchant:member-group:update']"
+              :content="isEnabledStatus(row.status) ? '禁用' : '生效'"
+              :icon-name="isEnabledStatus(row.status) ? 'Close' : 'Check'"
+              @click="handleToggleStatus(row)"
+            />
+          </div>
+        </template>
+      </Grid>
+
+      <Drawer title="搜索">
+        <QueryForm class="query-form" />
+      </Drawer>
+
+      <DetailDrawer
+        ref="detailDrawerRef"
+        :data="detailObj"
+        :fields="memberGroupDetailFields"
+        :title="detailObj ? `${detailObj.name}详情` : '会员分组详情'"
+      />
+    </div>
+  </div>
 </template>
 
 <style scoped lang="scss">
