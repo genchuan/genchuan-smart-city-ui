@@ -3,23 +3,29 @@ import type { PageParam, PageResult } from '@vben/request';
 import { normalizeQueryDateTimeRanges } from '#/api/genchuan/industry/chargePark/userMerchant/utils/query';
 import { requestClient } from '#/api/request';
 
-// 会员签到 VO
 export type MemberSignVO = {
+  continuousDays?: number;
   createTime?: number | string;
-  day?: number;
-  description?: string;
+  creator?: string;
+  experience?: number;
   id?: number;
-  nickname?: string;
   point?: number;
+  signDate?: number | string;
+  status?: number | string;
+  updater?: string;
   updateTime?: number | string;
   userId?: number;
 };
 
 export type MemberSignPageReqVO = PageParam & {
+  continuousDays?: number;
   createTime?: string | string[];
-  nickname?: string;
+  experience?: number;
+  point?: number;
   signDate?: string[];
+  status?: number | string;
   updateTime?: string[];
+  userId?: number;
 };
 
 export type MemberSignChartReqVO = {
@@ -39,16 +45,20 @@ export type MemberSignChartVO = {
   todaySignCount: number;
 };
 
-// 会员签到 API
+function buildSignQuery(params: MemberSignPageReqVO) {
+  return normalizeQueryDateTimeRanges(params, [
+    'createTime',
+    'signDate',
+    'updateTime',
+  ]);
+}
+
 export const MemberSignApi = {
   getMemberSignPage: async (params: MemberSignPageReqVO) => {
     return await requestClient.get<PageResult<MemberSignVO>>(
       '/usermerchant/member-sign/page',
       {
-        params: normalizeQueryDateTimeRanges(params, [
-          'createTime',
-          'updateTime',
-        ]),
+        params: buildSignQuery(params),
       },
     );
   },
@@ -64,10 +74,7 @@ export const MemberSignApi = {
 
   exportMemberSign: async (params: MemberSignPageReqVO) => {
     return await requestClient.download('/usermerchant/member-sign/export', {
-      params: normalizeQueryDateTimeRanges(params, [
-        'createTime',
-        'updateTime',
-      ]),
+      params: buildSignQuery(params),
     });
   },
 
