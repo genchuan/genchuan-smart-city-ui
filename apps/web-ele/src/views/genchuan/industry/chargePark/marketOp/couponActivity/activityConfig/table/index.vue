@@ -631,13 +631,13 @@ defineExpose({
       <!-- 创建时间 -->
       <template #createTime="{ row }">
         <span>{{
-            row.createTime
-              ? formatDate(
+          row.createTime
+            ? formatDate(
                 new Date(Number(row.createTime)),
                 'YYYY-MM-DD HH:mm:ss',
               )
-              : ''
-          }}</span>
+            : ''
+        }}</span>
       </template>
       <!-- 审核人 - 点击跳转操作人员详情 -->
       <template #auditorName="{ row }">
@@ -655,10 +655,10 @@ defineExpose({
       <!-- 审核时间 -->
       <template #auditTime="{ row }">
         <span>{{
-            row.auditTime
-              ? formatDate(new Date(Number(row.auditTime)), 'YYYY-MM-DD HH:mm:ss')
-              : '-'
-          }}</span>
+          row.auditTime
+            ? formatDate(new Date(Number(row.auditTime)), 'YYYY-MM-DD HH:mm:ss')
+            : '-'
+        }}</span>
       </template>
       <!-- 参与人数 - 点击跳转活动参与用户明细 -->
       <template #joinCount="{ row }">
@@ -674,13 +674,13 @@ defineExpose({
       <!-- 生效时间 -->
       <template #effectTime="{ row }">
         <span>{{
-            row.effectTime
-              ? formatDate(
+          row.effectTime
+            ? formatDate(
                 new Date(Number(row.effectTime)),
                 'YYYY-MM-DD HH:mm:ss',
               )
-              : ''
-          }}</span>
+            : ''
+        }}</span>
       </template>
       <!-- 操作列 -->
       <template #actions="{ row }">

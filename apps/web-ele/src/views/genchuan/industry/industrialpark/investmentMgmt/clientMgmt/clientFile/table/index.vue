@@ -668,16 +668,16 @@ const handleFullShow = () => {
             客户状态：{{ getClientStatusLabel(filterClientStatus) }}
           </ElTag>
           <!-- 清空所有筛选按钮 -->
-<!--          <el-button-->
-<!--            v-if="filterDemandType !== null || filterIntentLevel !== null || filterClientStatus !== null"-->
-<!--            type="primary"-->
-<!--            link-->
-<!--            size="small"-->
-<!--            style="margin-left: 8px"-->
-<!--            @click="handleClearAllFilters"-->
-<!--          >-->
-<!--            清空筛选-->
-<!--          </el-button>-->
+          <!--          <el-button-->
+          <!--            v-if="filterDemandType !== null || filterIntentLevel !== null || filterClientStatus !== null"-->
+          <!--            type="primary"-->
+          <!--            link-->
+          <!--            size="small"-->
+          <!--            style="margin-left: 8px"-->
+          <!--            @click="handleClearAllFilters"-->
+          <!--          >-->
+          <!--            清空筛选-->
+          <!--          </el-button>-->
         </div>
       </template>
       <template #toolbar-tools>
@@ -808,7 +808,7 @@ const handleFullShow = () => {
   max-width: 250px;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
   vertical-align: middle;
+  white-space: nowrap;
 }
 </style>
