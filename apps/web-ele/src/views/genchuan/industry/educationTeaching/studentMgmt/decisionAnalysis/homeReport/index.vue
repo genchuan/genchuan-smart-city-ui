@@ -1,21 +1,18 @@
 <script setup>
 import { ref, nextTick, onMounted, computed } from 'vue';
-
 import Chart from './components/chart.vue';
 import Table from './table/index.vue';
-
 import '#/genchuan-components/page/index.scss';
 
 const showStats = ref(true);
 const toggleStats = () => {
   showStats.value = !showStats.value;
-  if (showStats.value) {
-    chartRef.value?.refreshData();
-  }
+  if (showStats.value) chartRef.value?.refreshData();
 };
 
-const drillDownDialogRef = ref(null);
 const chartRef = ref(null);
+const tableRef = ref(null);
+const secondShow = ref(false);
 
 const reportCycleTabs = [
   { label: '全部', value: '' },
@@ -28,55 +25,30 @@ const reportCycleTabs = [
   { label: '自定义报表', value: '自定义报表' },
 ];
 
-const tabArray = ref(
-  reportCycleTabs.map((tab) => ({
-    label: tab.label,
-    value: tab.value,
-    components: Table,
-    showSecondary: true,
-    secondShow: false,
-  })),
-);
+const tabArray = ref(reportCycleTabs.map(tab => ({
+  label: tab.label,
+  value: tab.value,
+  components: Table,
+  showSecondary: true,
+  secondShow: false,
+})));
 
 const activeName = ref(reportCycleTabs[0].label);
-const secondShow = ref(false);
-const tableRef = ref(null);
-
-const changeArrowStatus = () => {
-  secondShow.value = !secondShow.value;
-  tabArray.value.forEach((v) => {
-    v.secondShow = secondShow.value;
-  });
-};
-
 const showStatsValue = computed(() => showStats.value);
 
 const getCurrentTableRef = () => {
-  const activeIndex = reportCycleTabs.findIndex((t) => t.label === activeName.value);
+  const activeIndex = reportCycleTabs.findIndex(t => t.label === activeName.value);
   if (activeIndex === -1) return null;
-  if (Array.isArray(tableRef.value)) {
-    return tableRef.value[activeIndex] &&
-    typeof tableRef.value[activeIndex].handleStatsFilter === 'function'
-      ? tableRef.value[activeIndex]
-      : null;
-  }
-  return tableRef.value && typeof tableRef.value.handleStatsFilter === 'function'
-    ? tableRef.value
-    : null;
+  return tableRef.value?.[activeIndex] || null;
 };
 
-// 根据报表周期生成统计开始和结束时间戳
-const getStatTimeByReportCycle = (reportPeriod) => {
+const getStatTimeByReportCycle = (reportCycle) => {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
   const date = now.getDate();
-
-  const pad = (n) => String(n).padStart(2, '0');
-
   let statStartTime, statEndTime;
-
-  switch (reportPeriod) {
+  switch (reportCycle) {
     case '日报':
       statStartTime = new Date(year, month, date, 0, 0, 0).getTime();
       statEndTime = new Date(year, month, date, 23, 59, 59).getTime();
@@ -115,77 +87,44 @@ const getStatTimeByReportCycle = (reportPeriod) => {
       statStartTime = new Date(year, 0, 1, 0, 0, 0).getTime();
       statEndTime = new Date(year, 11, 31, 23, 59, 59).getTime();
       break;
-    default: {
-      const start = new Date(now);
-      start.setDate(now.getDate() - 29);
-      start.setHours(0, 0, 0);
-      const end = new Date(now);
-      end.setHours(23, 59, 59);
-      statStartTime = start.getTime();
-      statEndTime = end.getTime();
-    }
+    default:
+      statStartTime = new Date(now.setDate(now.getDate() - 29)).getTime();
+      statEndTime = new Date().getTime();
   }
-
   return { statStartTime, statEndTime };
 };
 
 const tabChange = (tabName) => {
-  const tab = reportCycleTabs.find((t) => t.label === tabName);
+  const tab = reportCycleTabs.find(t => t.label === tabName);
   const currentTable = getCurrentTableRef();
-  if (tab && currentTable) {
-    currentTable.handleStatsFilter('reportCycle', tab.value);
-  }
-
+  if (tab && currentTable) currentTable.handleStatsFilter('reportCycle', tab.value);
   if (!tab) return;
-  const reportCycleValue = tab.value;
-  if (reportCycleValue === '') {
-    chartRef.value?.refreshData();
-  } else {
-    const { statStartTime, statEndTime } = getStatTimeByReportCycle(reportCycleValue);
-    chartRef.value?.refreshData({
-      reportPeriod: reportCycleValue,
-      statStartTime,
-      statEndTime,
-    });
+  if (tab.value === '') chartRef.value?.refreshData();
+  else {
+    const { statStartTime, statEndTime } = getStatTimeByReportCycle(tab.value);
+    chartRef.value?.refreshData({ reportPeriod: tab.value, statStartTime, statEndTime });
   }
 };
 
-const openDrillDialogAndFilter = async (drillType, drillValue, drillName, reportCycle) => {
-  if (drillDownDialogRef.value) {
-    drillDownDialogRef.value.open({
-      drillType,
-      drillValue,
-      drillName,
-      reportCycle,
-    });
-  }
-  await nextTick();
+const handleCardClick = (info) => {
   const currentTable = getCurrentTableRef();
-  if (currentTable) {
-    if (drillType === 'line') {
-      currentTable.handleStatsFilter(drillType, { className: drillName, date: drillValue });
-    } else {
-      currentTable.handleStatsFilter(drillType, drillValue);
-    }
-  }
+  if (currentTable) currentTable.handleFieldDrill?.(info.title, { [info.title]: info.value });
 };
 
-const handleRadarClick = (drillInfo) => {
-  console.log('雷达图钻取:', drillInfo);
-  openDrillDialogAndFilter('radar', drillInfo.value, drillInfo.name, activeName.value);
+const handlePieClick = (info) => {
+  const currentTable = getCurrentTableRef();
+  if (currentTable) currentTable.handleStatsFilter?.('pie', info.name);
 };
 
-const handleLineClick = (drillInfo) => {
-  console.log('折线图钻取:', drillInfo);
-  openDrillDialogAndFilter('line', drillInfo.value, drillInfo.name, activeName.value);
+const handleLineClick = (info) => {
+  const currentTable = getCurrentTableRef();
+  if (currentTable) currentTable.handleStatsFilter?.('line', { date: info.categoryName });
 };
 
 onMounted(() => {
   setTimeout(() => {
     const currentTable = getCurrentTableRef();
-    if (currentTable) {
-      currentTable.handleStatsFilter('reportCycle', reportCycleTabs[0].value);
-    }
+    if (currentTable) currentTable.handleStatsFilter?.('reportCycle', reportCycleTabs[0].value);
   }, 300);
 });
 </script>
@@ -195,15 +134,14 @@ onMounted(() => {
     <Chart
       v-if="showStats"
       ref="chartRef"
-      @radar-click="handleRadarClick"
+      @card-click="handleCardClick"
+      @pie-click="handlePieClick"
       @line-click="handleLineClick"
     />
     <el-tabs v-model="activeName" class="common-tabs" type="card" @tab-change="tabChange">
       <el-tab-pane v-for="item in tabArray" :key="item.label" :name="item.label">
         <template #label>
-          <div class="table-first">
-            <span>{{ item.label }}</span>
-          </div>
+          <div class="table-first"><span>{{ item.label }}</span></div>
         </template>
         <component
           :is="item.components"
