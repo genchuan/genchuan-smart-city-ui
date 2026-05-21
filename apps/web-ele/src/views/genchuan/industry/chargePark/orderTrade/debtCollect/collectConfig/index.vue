@@ -10,6 +10,7 @@ const filterParams = reactive({
   createTimeStart: null,
   createTimeEnd: null,
   collectMethod: null,
+  status: null,
 });
 
 const methodMap = {
@@ -19,19 +20,21 @@ const methodMap = {
 };
 
 const hasActiveFilters = computed(() => {
-  return filterParams.createTimeStart || filterParams.collectMethod;
+  return filterParams.createTimeStart || filterParams.collectMethod || filterParams.status;
 });
 
 const handleFilterChange = (params) => {
   filterParams.createTimeStart = params.createTimeStart || null;
   filterParams.createTimeEnd = params.createTimeEnd || null;
   filterParams.collectMethod = params.collectMethod || null;
+  filterParams.status = params.status || null;
 };
 
 const clearFilter = () => {
   filterParams.createTimeStart = null;
   filterParams.createTimeEnd = null;
   filterParams.collectMethod = null;
+  filterParams.status = null;
 };
 
 const changeArrowStatus = () => {

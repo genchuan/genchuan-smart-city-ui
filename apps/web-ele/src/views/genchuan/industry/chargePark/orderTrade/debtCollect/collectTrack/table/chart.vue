@@ -26,35 +26,25 @@ const state = reactive({
 
 // 点击卡片事件
 const handleCardClick = (index) => {
+  // 待追缴数(index=0)：搜索状态为待追缴
+  // 追缴完成率(index=1)：搜索状态为已完成
   if (index === 0) {
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
     emit('filter-change', {
-      createTimeStart: todayStr + ' 00:00:00',
-      createTimeEnd: todayStr + ' 23:59:59',
-      collectMethod: null,
       status: 'pending',
     });
   } else {
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
-    const start = thirtyDaysAgo.toISOString().split('T')[0] + ' 00:00:00';
-    const end = today.toISOString().split('T')[0] + ' 23:59:59';
     emit('filter-change', {
-      createTimeStart: start,
-      createTimeEnd: end,
-      collectMethod: null,
-      status: null,
+      status: 'completed',
     });
   }
 };
 
 // 折线图点击事件处理
-const handleLineChartClick = (params) => {
+const handleLineChartClick = (params) => { 
   if (params && params.name) {
     emit('filter-change', {
-      createTimeStart: params.name + ' 00:00:00',
-      createTimeEnd: params.name + ' 23:59:59',
+      collectTimeStart: params.name + ' 00:00:00',
+      collectTimeEnd: params.name + ' 23:59:59',
       collectMethod: null,
       status: null,
     });
@@ -70,8 +60,8 @@ const handleBarChartClick = (params) => {
     const start = thirtyDaysAgo.toISOString().split('T')[0] + ' 00:00:00';
     const end = today.toISOString().split('T')[0] + ' 23:59:59';
     emit('filter-change', {
-      createTimeStart: start,
-      createTimeEnd: end,
+      collectTimeStart: start,
+      collectTimeEnd: end,
       collectMethod: methodKey || params.name,
       status: null,
     });

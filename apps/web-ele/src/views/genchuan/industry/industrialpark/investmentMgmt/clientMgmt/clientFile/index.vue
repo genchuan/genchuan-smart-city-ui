@@ -1,8 +1,8 @@
 <script setup>
 import { ref } from 'vue';
 
-import ClientFileStats from './components/ClientFileStats.vue';
 import ClientDetailDrawer from './components/ClientDetailDrawer.vue';
+import ClientFileStats from './components/ClientFileStats.vue';
 import Table from './table/index.vue';
 
 import '#/genchuan-components/page/index.scss';

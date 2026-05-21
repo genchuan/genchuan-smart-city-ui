@@ -1,10 +1,11 @@
 <script setup>
 import { ref } from 'vue';
 
-import { useVbenForm } from '#/adapter/form';
 import { useVbenDrawer } from '@vben/common-ui';
 
 import { ElMessage } from 'element-plus';
+
+import { useVbenForm } from '#/adapter/form';
 
 const props = defineProps({
   title: {
@@ -52,22 +53,25 @@ const [Form, formApi] = useVbenForm({
 /** 根据标题生成表单配置 */
 function getSchemaByTitle(title) {
   switch (title) {
-    case '配置':
+    case '发布': {
       return [
         {
-          fieldName: 'policyConfig',
-          label: '政策配置',
-          component: 'Input',
+          fieldName: 'publishTime',
+          label: '发布时间',
+          component: 'DatePicker',
           componentProps: {
-            placeholder: '请输入政策配置内容',
-            type: 'textarea',
-            rows: 4,
+            placeholder: '请选择发布时间',
+            type: 'datetime',
+            format: 'YYYY-MM-DD HH:mm:ss',
+            valueFormat: 'YYYY-MM-DD HH:mm:ss',
+            style: 'width: 100%',
           },
           rules: 'required',
         },
       ];
+    }
 
-    case '响应':
+    case '响应': {
       return [
         {
           fieldName: 'consultCount',
@@ -92,25 +96,9 @@ function getSchemaByTitle(title) {
           },
         },
       ];
+    }
 
-    case '发布':
-      return [
-        {
-          fieldName: 'publishTime',
-          label: '发布时间',
-          component: 'DatePicker',
-          componentProps: {
-            placeholder: '请选择发布时间',
-            type: 'datetime',
-            format: 'YYYY-MM-DD HH:mm:ss',
-            valueFormat: 'YYYY-MM-DD HH:mm:ss',
-            style: 'width: 100%',
-          },
-          rules: 'required',
-        },
-      ];
-
-    case '更新':
+    case '更新': {
       return [
         {
           fieldName: 'infoTitle',
@@ -146,9 +134,27 @@ function getSchemaByTitle(title) {
           },
         },
       ];
+    }
 
-    default:
+    case '配置': {
+      return [
+        {
+          fieldName: 'policyConfig',
+          label: '政策配置',
+          component: 'Input',
+          componentProps: {
+            placeholder: '请输入政策配置内容',
+            type: 'textarea',
+            rows: 4,
+          },
+          rules: 'required',
+        },
+      ];
+    }
+
+    default: {
       return [];
+    }
   }
 }
 

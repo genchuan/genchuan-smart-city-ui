@@ -60,10 +60,30 @@ const fetchStatsData = async () => {
 
     if (data) {
       statsData.value.cards = [
-        { title: '客户总数', value: data.totalClient || 0, color: '#4A90E2', type: 'totalClient' },
-        { title: '潜在数', value: data.potentialCount || 0, color: '#50E3C2', type: 'potentialCount' },
-        { title: '意向数', value: data.intentCount || 0, color: '#FF9F40', type: 'intentCount' },
-        { title: '签约数', value: data.signCount || 0, color: '#A17FE0', type: 'signCount' },
+        {
+          title: '客户总数',
+          value: data.totalClient || 0,
+          color: '#4A90E2',
+          type: 'totalClient',
+        },
+        {
+          title: '潜在数',
+          value: data.potentialCount || 0,
+          color: '#50E3C2',
+          type: 'potentialCount',
+        },
+        {
+          title: '意向数',
+          value: data.intentCount || 0,
+          color: '#FF9F40',
+          type: 'intentCount',
+        },
+        {
+          title: '签约数',
+          value: data.signCount || 0,
+          color: '#A17FE0',
+          type: 'signCount',
+        },
       ];
 
       // 使用API返回的图表数据或静态数据

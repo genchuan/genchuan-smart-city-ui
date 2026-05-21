@@ -1,10 +1,11 @@
 <script setup>
 import { ref } from 'vue';
 
-import { useVbenForm } from '#/adapter/form';
 import { useVbenDrawer } from '@vben/common-ui';
 
 import { ElMessage } from 'element-plus';
+
+import { useVbenForm } from '#/adapter/form';
 
 const props = defineProps({
   title: {
@@ -52,7 +53,7 @@ const [Form, formApi] = useVbenForm({
 /** 根据标题生成表单配置 */
 function getSchemaByTitle(title) {
   switch (title) {
-    case '分类':
+    case '分类': {
       return [
         {
           fieldName: 'demandType',
@@ -100,15 +101,23 @@ function getSchemaByTitle(title) {
           rules: 'required',
         },
       ];
+    }
 
-    case '维护':
-    case '跟进':
-    case '洽谈':
     case '服务':
+    case '洽谈':
+    case '维护':
+    case '跟进': {
       return [
         {
           fieldName: 'trackRecord',
-          label: title === '维护' ? '维护记录' : title === '跟进' ? '跟进记录' : title === '洽谈' ? '洽谈记录' : '服务记录',
+          label:
+            title === '维护'
+              ? '维护记录'
+              : title === '跟进'
+                ? '跟进记录'
+                : title === '洽谈'
+                  ? '洽谈记录'
+                  : '服务记录',
           component: 'Input',
           componentProps: {
             placeholder: `请输入${title === '维护' ? '维护' : title === '跟进' ? '跟进' : title === '洽谈' ? '洽谈' : '服务'}记录内容`,
@@ -119,11 +128,12 @@ function getSchemaByTitle(title) {
           rules: 'required',
         },
       ];
+    }
 
-    case '签约':
-    case '转化':
     case '确认':
+    case '签约':
     case '续费':
+    case '转化': {
       return [
         {
           fieldName: 'transformResult',
@@ -138,9 +148,11 @@ function getSchemaByTitle(title) {
           rules: 'required',
         },
       ];
+    }
 
-    default:
+    default: {
       return [];
+    }
   }
 }
 

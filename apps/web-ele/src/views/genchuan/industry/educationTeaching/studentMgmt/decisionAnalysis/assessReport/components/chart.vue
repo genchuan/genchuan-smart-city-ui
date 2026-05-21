@@ -1,5 +1,5 @@
 <script setup>
-import {ref, onMounted} from 'vue';
+import { ref, onMounted } from 'vue';
 import {
   getAssessReportChart
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/decisionAnalysis/assessReport/data.js';
@@ -8,39 +8,74 @@ import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
 
 const emit = defineEmits(['radarClick', 'lineClick']);
 
-// 雷达图配置：indicator 从接口返回的 dimensions 动态生成
 const radarIndicator = ref([
-  {name: '卫生', max: 100},
-  {name: '早操', max: 100},
-  {name: '文明班级', max: 100},
-  {name: '黑板报', max: 100},
+  { name: '卫生', max: 100 },
+  { name: '早操', max: 100 },
+  { name: '文明班级', max: 100 },
+  { name: '黑板报', max: 100 },
 ]);
-// radarSeries 为多班级数组，格式 [{ name: '班级名', value: [score1,score2,...] }]
 const radarSeries = ref([]);
 const lineXAxis = ref([]);
-// lineSeries 为多班级数组，格式 [{ name: '班级名', data: [score1,score2,...] }]
 const lineSeries = ref([]);
 const loading = ref(false);
 
 // 默认参数（初始加载使用）
 const defaultParams = {
   reportPeriod: '月报',
-  statisticalPeriod: getDefaultStatisticalPeriod('月报'),
-  campus: '丰泽校区',
+  statStartTime: getDefaultStatStartTime('月报'),
+  statEndTime: getDefaultStatEndTime('月报'),
 };
 
-// 根据报表周期生成默认统计时段（与父组件保持一致的逻辑）
-function getDefaultStatisticalPeriod(reportPeriod) {
+// 根据报表周期生成默认统计开始时间戳
+function getDefaultStatStartTime(reportPeriod) {
   const now = new Date();
   const year = now.getFullYear();
-  const month = now.getMonth() + 1;
+  const month = now.getMonth();
   const date = now.getDate();
-  const pad = (n) => String(n).padStart(2, '0');
 
   switch (reportPeriod) {
     case '日报':
-      const todayStr = `${year}-${pad(month)}-${pad(date)}`;
-      return `${todayStr} 至 ${todayStr}`;
+      return new Date(year, month, date, 0, 0, 0).getTime();
+    case '周报': {
+      const dayOfWeek = now.getDay();
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + mondayOffset);
+      monday.setHours(0, 0, 0);
+      return monday.getTime();
+    }
+    case '月报':
+      return new Date(year, month, 1, 0, 0, 0).getTime();
+    case '季报': {
+      const quarter = Math.floor(month / 3);
+      const startMonth = quarter * 3;
+      return new Date(year, startMonth, 1, 0, 0, 0).getTime();
+    }
+    case '半年报': {
+      const half = month < 6 ? 0 : 6;
+      return new Date(year, half, 1, 0, 0, 0).getTime();
+    }
+    case '年报':
+      return new Date(year, 0, 1, 0, 0, 0).getTime();
+    default: {
+      const start = new Date(now);
+      start.setDate(now.getDate() - 29);
+      start.setHours(0, 0, 0);
+      return start.getTime();
+    }
+  }
+}
+
+// 根据报表周期生成默认统计结束时间戳
+function getDefaultStatEndTime(reportPeriod) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const date = now.getDate();
+
+  switch (reportPeriod) {
+    case '日报':
+      return new Date(year, month, date, 23, 59, 59).getTime();
     case '周报': {
       const dayOfWeek = now.getDay();
       const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
@@ -48,65 +83,52 @@ function getDefaultStatisticalPeriod(reportPeriod) {
       monday.setDate(now.getDate() + mondayOffset);
       const sunday = new Date(monday);
       sunday.setDate(monday.getDate() + 6);
-      const format = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      return `${format(monday)} 至 ${format(sunday)}`;
+      sunday.setHours(23, 59, 59);
+      return sunday.getTime();
     }
-    case '月报': {
-      const firstDay = `${year}-${pad(month)}-01`;
-      const lastDay = `${year}-${pad(month)}-${new Date(year, month, 0).getDate()}`;
-      return `${firstDay} 至 ${lastDay}`;
-    }
+    case '月报':
+      return new Date(year, month + 1, 0, 23, 59, 59).getTime();
     case '季报': {
-      const quarter = Math.ceil(month / 3);
-      const firstMonth = (quarter - 1) * 3 + 1;
-      const lastMonth = quarter * 3;
-      const firstDay = `${year}-${pad(firstMonth)}-01`;
-      const lastDay = `${year}-${pad(lastMonth)}-${new Date(year, lastMonth, 0).getDate()}`;
-      return `${firstDay} 至 ${lastDay}`;
+      const quarter = Math.floor(month / 3);
+      const startMonth = quarter * 3;
+      return new Date(year, startMonth + 3, 0, 23, 59, 59).getTime();
     }
     case '半年报': {
-      const half = month <= 6 ? 1 : 2;
-      const firstMonth = half === 1 ? 1 : 7;
-      const lastMonth = half === 1 ? 6 : 12;
-      const firstDay = `${year}-${pad(firstMonth)}-01`;
-      const lastDay = `${year}-${pad(lastMonth)}-${new Date(year, lastMonth, 0).getDate()}`;
-      return `${firstDay} 至 ${lastDay}`;
+      const half = month < 6 ? 0 : 6;
+      return new Date(year, half + 6, 0, 23, 59, 59).getTime();
     }
     case '年报':
-      return `${year}-01-01 至 ${year}-12-31`;
-    case '自定义报表':
-    default:
-      const end = new Date();
-      const start = new Date();
-      start.setDate(start.getDate() - 29);
-      const formatDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      return `${formatDate(start)} 至 ${formatDate(end)}`;
+      return new Date(year, 11, 31, 23, 59, 59).getTime();
+    default: {
+      const end = new Date(now);
+      end.setHours(23, 59, 59);
+      return end.getTime();
+    }
   }
 }
 
-// 获取图表数据（支持传入自定义参数）
+// 获取图表数据
 const fetchChartData = async (customParams = null) => {
   loading.value = true;
   try {
     let params = {...defaultParams};
     if (customParams) {
       params = {...params, ...customParams};
-      if (customParams.reportPeriod && !customParams.statisticalPeriod) {
-        params.statisticalPeriod = getDefaultStatisticalPeriod(customParams.reportPeriod);
+      // 如果传入了 reportPeriod 但没有时间参数，自动生成
+      if (customParams.reportPeriod && (!customParams.statStartTime || !customParams.statEndTime)) {
+        params.statStartTime = getDefaultStatStartTime(customParams.reportPeriod);
+        params.statEndTime = getDefaultStatEndTime(customParams.reportPeriod);
       }
     }
     const response = await getAssessReportChart(params);
     const data = response?.data || response;
     if (data) {
-      // 处理雷达图数据（多班级）
       if (data.radarData) {
-        // 新结构：radarData.series = [{ name, value }]
         radarSeries.value = data.radarData.series || [];
         if (data.radarData.dimensions && data.radarData.dimensions.length === 4) {
           radarIndicator.value = data.radarData.dimensions.map(name => ({name, max: 100}));
         }
       }
-      // 处理折线图数据（多班级）
       if (data.lineData) {
         lineXAxis.value = data.lineData.date || [];
         lineSeries.value = data.lineData.series || [];
@@ -122,7 +144,6 @@ const fetchChartData = async (customParams = null) => {
   }
 };
 
-// 本地应急模拟数据（多班级格式）
 const useMockData = () => {
   radarSeries.value = [
     {name: '计算机2201班', value: [92, 88, 95, 90]},
@@ -140,7 +161,6 @@ const useMockData = () => {
 const handleRadarClick = (params) => {
   const className = params.name;
   if (!className) return;
-  // 向上传递符合父组件文件3期望的对象格式 { value: 班级名, name: 班级名 }
   emit('radarClick', {value: className, name: className});
 };
 
@@ -148,11 +168,9 @@ const handleLineClick = (params) => {
   const className = params.seriesName;
   const date = params.categoryName;
   if (!className || !date) return;
-  // 向上传递 { value: 日期, name: 班级名 }
   emit('lineClick', {value: date, name: className});
 };
 
-// 对外暴露刷新方法
 const refreshData = (params = null) => {
   fetchChartData(params);
 };
@@ -166,7 +184,6 @@ onMounted(() => {
 
 <template>
   <div v-loading="loading" class="chart-box">
-    <!-- 雷达图：多班级会自动显示多个多边形 -->
     <Radar
       style="flex: 1"
       title-text="班级多维度考评得分"
@@ -174,7 +191,6 @@ onMounted(() => {
       :series="radarSeries"
       @radarClick="handleRadarClick"
     />
-    <!-- 折线图：多班级会自动显示多条折线 -->
     <lineChart
       style="flex: 1.5"
       title="班级考评周期趋势"

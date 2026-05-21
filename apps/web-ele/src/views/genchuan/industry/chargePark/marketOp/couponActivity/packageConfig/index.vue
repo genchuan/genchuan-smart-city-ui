@@ -77,8 +77,8 @@ const assembleStatsData = (data) => {
 const fetchStatsData = async () => {
   try {
     const response = await getPackageConfigChart();
-    if (response && response.data) {
-      const data = response.data;
+    if (response) {
+      const data = response;
 
       // 检查数据是否为空
       const hasData =

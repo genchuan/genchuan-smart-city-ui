@@ -1,11 +1,10 @@
-import { getDictObj, getDictOptions } from '@vben/hooks';
 import { DICT_TYPE } from '@vben/constants';
-
-import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
-import { formatDate } from '#/utils/genchuan/formatTime';
-import { getRangePickerDefaultProps } from '#/utils';
+import { getDictObj } from '@vben/hooks';
 
 import { getInfoPublishPage } from '#/api/genchuan/industry/industrialpark/investmentMgmt/resourceMgmt/infoPublish';
+import { getRangePickerDefaultProps } from '#/utils';
+import { getDictTagTypeFromDict } from '#/utils/genchuan/dictColor';
+import { formatDate } from '#/utils/genchuan/formatTime';
 
 /** 获取信息状态标签类型（使用标准字典函数） */
 export function getInfoStatusTagType(status) {
@@ -47,7 +46,7 @@ const staticDataList = [
     id: 1,
     infoTitle: '2025 年园区招商优惠政策',
     infoType: 0,
-    publishTime: 1746748800000,
+    publishTime: 1_746_748_800_000,
     consultCount: 23,
     responseRate: 0.95,
     infoStatus: 1,
@@ -56,14 +55,14 @@ const staticDataList = [
     handleUser: 'admin',
     handleUserName: '管理员',
     creator: 'admin',
-    createTime: 1746748800000,
-    updateTime: 1746824400000,
+    createTime: 1_746_748_800_000,
+    updateTime: 1_746_824_400_000,
   },
   {
     id: 2,
     infoTitle: 'A 栋新开放场地招商信息',
     infoType: 1,
-    publishTime: 1746662100000,
+    publishTime: 1_746_662_100_000,
     consultCount: 15,
     responseRate: 0.87,
     infoStatus: 1,
@@ -72,24 +71,24 @@ const staticDataList = [
     handleUser: 'zhangsan',
     handleUserName: '张三',
     creator: 'zhangsan',
-    createTime: 1746662100000,
-    updateTime: 1746825000000,
+    createTime: 1_746_662_100_000,
+    updateTime: 1_746_825_000_000,
   },
   {
     id: 3,
     infoTitle: '园区企业服务配套介绍',
     infoType: 2,
-    publishTime: 1746576000000,
+    publishTime: 1_746_576_000_000,
     consultCount: 8,
-    responseRate: 1.0,
+    responseRate: 1,
     infoStatus: 2,
     policyConfig: '提供工商注册、财税代理、法律咨询等一站式服务',
     responseUser: 'lisi',
     handleUser: 'lisi',
     handleUserName: '李四',
     creator: 'lisi',
-    createTime: 1746576000000,
-    updateTime: 1746750000000,
+    createTime: 1_746_576_000_000,
+    updateTime: 1_746_750_000_000,
   },
   {
     id: 4,
@@ -104,14 +103,14 @@ const staticDataList = [
     handleUser: 'wangwu',
     handleUserName: '王五',
     creator: 'wangwu',
-    createTime: 1746491400000,
-    updateTime: 1746491400000,
+    createTime: 1_746_491_400_000,
+    updateTime: 1_746_491_400_000,
   },
   {
     id: 5,
     infoTitle: '高新技术企业入驻扶持政策',
     infoType: 0,
-    publishTime: 1746405000000,
+    publishTime: 1_746_405_000_000,
     consultCount: 31,
     responseRate: 0.92,
     infoStatus: 1,
@@ -120,8 +119,8 @@ const staticDataList = [
     handleUser: 'zhaoliu',
     handleUserName: '赵六',
     creator: 'zhaoliu',
-    createTime: 1746405000000,
-    updateTime: 1746826000000,
+    createTime: 1_746_405_000_000,
+    updateTime: 1_746_826_000_000,
   },
   {
     id: 6,
@@ -136,14 +135,14 @@ const staticDataList = [
     handleUser: 'sunqi',
     handleUserName: '孙七',
     creator: 'sunqi',
-    createTime: 1746319200000,
-    updateTime: 1746319200000,
+    createTime: 1_746_319_200_000,
+    updateTime: 1_746_319_200_000,
   },
   {
     id: 7,
     infoTitle: '园区物流配送服务方案',
     infoType: 2,
-    publishTime: 1746233400000,
+    publishTime: 1_746_233_400_000,
     consultCount: 12,
     responseRate: 0.83,
     infoStatus: 1,
@@ -152,14 +151,14 @@ const staticDataList = [
     handleUser: 'zhouba',
     handleUserName: '周八',
     creator: 'zhouba',
-    createTime: 1746233400000,
-    updateTime: 1746827000000,
+    createTime: 1_746_233_400_000,
+    updateTime: 1_746_827_000_000,
   },
   {
     id: 8,
     infoTitle: 'D 栋 4 层大面积场地出租',
     infoType: 1,
-    publishTime: 1746147600000,
+    publishTime: 1_746_147_600_000,
     consultCount: 19,
     responseRate: 0.89,
     infoStatus: 1,
@@ -168,8 +167,8 @@ const staticDataList = [
     handleUser: 'wujiu',
     handleUserName: '吴九',
     creator: 'wujiu',
-    createTime: 1746147600000,
-    updateTime: 1746828000000,
+    createTime: 1_746_147_600_000,
+    updateTime: 1_746_828_000_000,
   },
   {
     id: 9,
@@ -184,30 +183,30 @@ const staticDataList = [
     handleUser: 'zhengshi',
     handleUserName: '郑十',
     creator: 'zhengshi',
-    createTime: 1746061800000,
-    updateTime: 1746061800000,
+    createTime: 1_746_061_800_000,
+    updateTime: 1_746_061_800_000,
   },
   {
     id: 10,
     infoTitle: 'E 栋 2 层东侧灵活办公空间',
     infoType: 1,
-    publishTime: 1745976000000,
+    publishTime: 1_745_976_000_000,
     consultCount: 7,
-    responseRate: 1.0,
+    responseRate: 1,
     infoStatus: 2,
     policyConfig: '支持工位租赁，按月付费',
     responseUser: 'admin',
     handleUser: 'admin',
     handleUserName: '管理员',
     creator: 'admin',
-    createTime: 1745976000000,
-    updateTime: 1746751000000,
+    createTime: 1_745_976_000_000,
+    updateTime: 1_746_751_000_000,
   },
   {
     id: 11,
     infoTitle: '园区人才公寓配套说明',
     infoType: 2,
-    publishTime: 1745890200000,
+    publishTime: 1_745_890_200_000,
     consultCount: 25,
     responseRate: 0.96,
     infoStatus: 1,
@@ -216,8 +215,8 @@ const staticDataList = [
     handleUser: 'admin',
     handleUserName: '管理员',
     creator: 'admin',
-    createTime: 1745890200000,
-    updateTime: 1746829000000,
+    createTime: 1_745_890_200_000,
+    updateTime: 1_746_829_000_000,
   },
   {
     id: 12,
@@ -232,8 +231,8 @@ const staticDataList = [
     handleUser: 'zhangsan',
     handleUserName: '张三',
     creator: 'zhangsan',
-    createTime: 1745804400000,
-    updateTime: 1745804400000,
+    createTime: 1_745_804_400_000,
+    updateTime: 1_745_804_400_000,
   },
 ];
 
@@ -245,9 +244,13 @@ export const dataList = () => {
     _createTimeFormatted: formatDate(item.createTime),
     _updateTimeFormatted: formatDate(item.updateTime),
     _infoStatusConfig: getInfoStatusConfig(item.infoStatus),
-    _infoTypeConfig: item.infoType !== undefined && item.infoType !== null
-      ? { label: getInfoTypeLabel(item.infoType), tagType: getInfoTypeTagType(item.infoType) }
-      : null,
+    _infoTypeConfig:
+      item.infoType !== undefined && item.infoType !== null
+        ? {
+            label: getInfoTypeLabel(item.infoType),
+            tagType: getInfoTypeTagType(item.infoType),
+          }
+        : null,
   }));
 };
 

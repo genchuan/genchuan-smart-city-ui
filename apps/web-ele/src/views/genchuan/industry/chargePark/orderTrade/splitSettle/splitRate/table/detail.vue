@@ -72,12 +72,7 @@ defineExpose({
         <div class="detail-row-left">主键ID:</div>
         <div class="detail-row-right">{{ detailObj.id || '-' }}</div>
       </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">合作方ID:</div>
-        <div class="detail-row-right">{{ detailObj.partnerId || '-' }}</div>
-      </div>
-
+ 
       <div class="detail-card-row">
         <div class="detail-row-left">合作方名称:</div>
         <div class="detail-row-right">{{ detailObj.partnerName || '-' }}</div>
@@ -100,11 +95,6 @@ defineExpose({
             {{ getStatusLabel(detailObj.status) }}
           </el-tag>
         </div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">审核人ID:</div>
-        <div class="detail-row-right">{{ detailObj.auditorId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">

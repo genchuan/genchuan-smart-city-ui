@@ -85,7 +85,7 @@ const mapData = computed(() => {
 async function loadChartData() {
   try {
     const params = {
-      stationName: props.parkId,
+      stationId: props.parkId,
     };
 
     const res = await getInParkStatusChart(params);
@@ -200,7 +200,7 @@ function initCharts() {
 function handleCardClick(key) {
   const filterMap = {
     inParkCarCount: { showAll: true },
-    overTimeCarCount: { parkStatus: '超时在停' },
+    overTimeCarCount: { overTime: true },
   };
 
   const filterParams = filterMap[key];

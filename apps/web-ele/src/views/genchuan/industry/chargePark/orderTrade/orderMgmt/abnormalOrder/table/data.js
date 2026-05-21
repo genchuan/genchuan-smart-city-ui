@@ -205,8 +205,15 @@ export function useGridColumns() {
       field: 'id',
       title: '主键ID',
       minWidth: 100,
-      sortable: true,
+      sortable: true, 
       slots: { default: 'id' },
+    },
+    {
+      field: 'orderId',
+      title: '订单ID',
+      minWidth: 140,
+      sortable: true,
+      slots: { default: 'orderId' },
     },
     {
       field: 'orderType',
@@ -241,6 +248,7 @@ export function useGridColumns() {
       title: '所属场站',
       minWidth: 140,
       sortable: true,
+      slots: { default: 'stationName' },
     },
     {
       field: 'ignoreReason',

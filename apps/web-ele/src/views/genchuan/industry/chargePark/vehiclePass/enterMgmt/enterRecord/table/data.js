@@ -1,4 +1,27 @@
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+import { requestClient } from '#/api/request';
+
+/** 获取场站列表 */
+let stationOptionsCache = null;
+export async function getStationOptions() {
+  if (stationOptionsCache) {
+    return stationOptionsCache;
+  }
+  try {
+    const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
+    if (response && response.data && Array.isArray(response.data)) {
+      stationOptionsCache = response.data.map(item => ({
+        label: item.stationName,
+        value: item.stationId,
+      }));
+      return stationOptionsCache;
+    }
+    return [];
+  } catch (error) {
+    console.error('获取场站列表失败:', error);
+    return [];
+  }
+}
 
 /** 入场记录表格初始数据 */
 export const dataList = () => {
@@ -84,11 +107,12 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '场站',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入场站名称',
+        placeholder: '请选择场站',
+        options: [],
       },
     },
     {
@@ -177,21 +201,14 @@ export function useCreateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '场站',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入场站',
+        placeholder: '请选择场站',
+        options: [],
       },
       rules: 'required',
-    },
-    {
-      fieldName: 'stationName',
-      label: '场站名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入场站名称',
-      },
     },
     {
       fieldName: 'proofImage',
@@ -287,11 +304,12 @@ export function useUpdateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '场站',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入场站名称',
+        placeholder: '请选择场站',
+        options: [],
       },
       rules: 'required',
     },
@@ -376,11 +394,12 @@ export function useCorrectFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '场站',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入场站名称',
+        placeholder: '请选择场站',
+        options: [],
       },
       rules: 'required',
     },

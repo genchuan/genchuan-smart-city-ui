@@ -66,48 +66,6 @@ const emit = defineEmits(['arrow-change']);
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
-function handleFilterTagClick(field, value) {
-  if (!field) return;
-  if (value === '' || value === null || value === undefined) {
-    if (tagFilters.value[field] !== undefined) {
-      delete tagFilters.value[field];
-    }
-  } else {
-    const existing = tagFilters.value[field];
-    if (existing !== undefined) {
-      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-        delete tagFilters.value[field];
-      } else if (!Array.isArray(existing) && existing === value) {
-        delete tagFilters.value[field];
-      } else {
-        tagFilters.value[field] = value;
-      }
-    } else {
-      tagFilters.value[field] = value;
-    }
-  }
-  gridApi.query();
-}
-
-function clearFilters() {
-  tagFilters.value = {};
-  gridApi.query();
-}
-
-function removeFilterTag(field) {
-  delete tagFilters.value[field];
-  gridApi.query();
-}
-
-function getFieldLabel(field) {
-  const map = { aidType: '资助类型', status: '状态', creator: '创建人', createTime: '创建时间' };
-  return map[field] || field;
-}
-function getTagDisplayText(field, value) {
-  if (Array.isArray(value)) return value.join('、');
-  return value || '-';
-}
-
 // ---------- 抽屉等 ----------
 const [Drawer, drawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => drawerApi.close() });
 const [FollowDrawer, followDrawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => followDrawerApi.close() });
@@ -179,8 +137,43 @@ const getTableData = async ({ page }) => {
   }
 };
 
-function handleRefresh() { gridApi.query(); }
-function handleReset() { searchParams.value = {}; tagFilters.value = {}; gridApi.query(); }
+// ========== 表格实例（提前定义，确保 gridApi 可用） ==========
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: gridColumns.value,
+    keepSource: true,
+    proxyConfig: { ajax: { query: getTableData } },
+    rowConfig: { keyField: 'id', isHover: true },
+    pagerConfig: dataObj,
+    toolbarConfig: { refresh: true, search: true },
+    showOverflow: true,
+  },
+  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  showSearchForm: false,
+});
+
+// ========== 核心修复：强制重置分页到第一页并刷新 ==========
+function resetPageAndQuery() {
+  if (gridApi.commitProxy) {
+    gridApi.commitProxy('reload');
+  } else if (gridApi.reload) {
+    gridApi.reload();
+  } else {
+    dataObj.currentPage = 1;
+    gridApi.query();
+  }
+  dataObj.currentPage = 1; // 确保界面分页显示第一页
+}
+
+function handleRefresh() {
+  gridApi.query(); // 手动刷新保持当前页码
+}
+
+function handleReset() {
+  searchParams.value = {};
+  tagFilters.value = {};
+  resetPageAndQuery();
+}
 
 async function handleExport() {
   const loading = ElLoading.service({ text: '正在导出...' });
@@ -346,7 +339,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
           createDrawerApi.close();
         }
       } else {
-        await createFormApi.setValues({ status: '待审核' });
+        await createFormApi.setValues({status: '待审核'});
       }
     }
   },
@@ -354,81 +347,125 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
 
 const [FollowForm, followFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '提交跟进中...' });
+    const loading = ElLoading.service({text: '提交跟进中...'});
     try {
-      const res = await followAidWork({ id: currentFollowRow.value.id, processStatus: values.processStatus, remark: values.remark });
+      const res = await followAidWork({
+        id: currentFollowRow.value.id,
+        processStatus: values.processStatus,
+        remark: values.remark
+      });
       if (res && res !== false) {
         ElMessage.success('跟进成功');
         followDrawerApi.close();
         handleRefresh();
-      } else { ElMessage.error('跟进失败'); }
-    } finally { loading.close(); }
+      } else {
+        ElMessage.error('跟进失败');
+      }
+    } finally {
+      loading.close();
+    }
   },
   layout: 'horizontal',
   schema: useFollowFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '提交跟进' },
+  submitButtonOptions: {content: '提交跟进'},
 });
 
 const aidWorkDetailDrawerRef = ref(null);
+
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   aidWorkDetailDrawerRef.value.open();
 }
 
+// 高级查询表单
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
-    gridApi.query();
+    resetPageAndQuery(); // 查询时重置页码
   },
   layout: 'horizontal',
-  schema: useFormSchema().map(v => { delete v.rules; return v; }),
+  schema: useFormSchema().map(v => {
+    delete v.rules;
+    return v;
+  }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
-const [Grid, gridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: gridColumns.value,
-    keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
-    pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
-    showOverflow: true,
-  },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
-  showSearchForm: false,
-});
+// 筛选标签相关函数（使用 resetPageAndQuery）
+function getFieldLabel(field) {
+  const map = {aidType: '资助类型', status: '状态', creator: '创建人', createTime: '创建时间'};
+  return map[field] || field;
+}
 
-watch(activeName, (newVal) => {
+function getTagDisplayText(field, value) {
+  if (Array.isArray(value)) return value.join('、');
+  return value || '-';
+}
+
+function handleFilterTagClick(field, value) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) {
+      delete tagFilters.value[field];
+    }
+  } else {
+    const existing = tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
+    } else {
+      tagFilters.value[field] = value;
+    }
+  }
+  resetPageAndQuery(); // 筛选时重置页码
+}
+
+function clearFilters() {
   tagFilters.value = {};
-  gridColumns.value = getColumnsByStatus(newVal);
-  if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({ columns: gridColumns.value });
-  gridApi.query();
-});
+  resetPageAndQuery();
+}
+
+function removeFilterTag(field) {
+  delete tagFilters.value[field];
+  resetPageAndQuery();
+}
 
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 
 // ========== 监听图表自定义事件 ==========
 const handleChartFilter = (event) => {
-  const { type, value } = event.detail;
+  const {type, value} = event.detail;
   if (type === 'status') {
     handleFilterTagClick('status', value);
   } else if (type === 'aidType') {
     handleFilterTagClick('aidType', value);
   }
 };
+
+// 切换选项卡时也需要重置页码
+watch(activeName, (newVal) => {
+  tagFilters.value = {};
+  gridColumns.value = getColumnsByStatus(newVal);
+  if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
+  else gridApi.setGridOptions?.({columns: gridColumns.value});
+  resetPageAndQuery(); // 原为 gridApi.query()，改为重置页码
+});
 
 onMounted(() => {
   loadStudentOptions();
@@ -442,10 +479,17 @@ onUnmounted(() => {
 
 <template>
   <div class="tools-table-new">
-    <AidWorkDetailDrawer ref="aidWorkDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh"/>
-    <Drawer title="搜索"><QueryForm/></Drawer>
-    <CreateDrawer :title="isEditMode ? '编辑奖助申请' : '奖助申报'"><CreateForm/></CreateDrawer>
-    <FollowDrawer title="流程跟进"><FollowForm/></FollowDrawer>
+    <AidWorkDetailDrawer ref="aidWorkDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                         @refresh="handleRefresh"/>
+    <Drawer title="搜索">
+      <QueryForm/>
+    </Drawer>
+    <CreateDrawer :title="isEditMode ? '编辑奖助申请' : '奖助申报'">
+      <CreateForm/>
+    </CreateDrawer>
+    <FollowDrawer title="流程跟进">
+      <FollowForm/>
+    </FollowDrawer>
 
     <Grid>
       <template #table-title>
@@ -468,38 +512,61 @@ onUnmounted(() => {
           <IconButton content="导出" icon-name="download" @click="handleExport"/>
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
           <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
       <template #studentId="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentId }}</el-text>
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+          {{ row.studentId }}
+        </el-text>
       </template>
       <template #aidType="{ row }">
-        <el-text @click="handleFilterTagClick('aidType', row.aidType)" type="primary" style="cursor: pointer;">{{ row.aidType }}</el-text>
+        <el-text @click="handleFilterTagClick('aidType', row.aidType)" type="primary"
+                 style="cursor: pointer;">{{ row.aidType }}
+        </el-text>
       </template>
-      <template #applyAmount="{ row }"><el-text>{{ formatMoney(row.applyAmount) }}</el-text></template>
-      <template #applyTime="{ row }"><el-text>{{ formatTimestamp(row.applyTime) }}</el-text></template>
-      <template #auditTime="{ row }"><el-text>{{ formatTimestamp(row.auditTime) }}</el-text></template>
-      <template #processStatus="{ row }"><el-tag :type="getProcessStatusType(row.processStatus)">{{ row.processStatus }}</el-tag></template>
+      <template #applyAmount="{ row }">
+        <el-text>{{ formatMoney(row.applyAmount) }}</el-text>
+      </template>
+      <template #applyTime="{ row }">
+        <el-text>{{ formatTimestamp(row.applyTime) }}</el-text>
+      </template>
+      <template #auditTime="{ row }">
+        <el-text>{{ formatTimestamp(row.auditTime) }}</el-text>
+      </template>
+      <template #processStatus="{ row }">
+        <el-tag :type="getProcessStatusType(row.processStatus)">{{ row.processStatus }}</el-tag>
+      </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">{{ row.status }}</el-tag>
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
+          {{ row.status }}
+        </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer;">{{ row.creator || '-' }}
+        </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}</el-text>
+        <el-text>{{ formatTimestamp(row.createTime) }}</el-text>
       </template>
-      <template #updateTime="{ row }"><el-text>{{ formatTimestamp(row.updateTime) }}</el-text></template>
+      <template #updateTime="{ row }">
+        <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
+      </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
-          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check" @click="handleAudit(row)"/>
-          <IconButton v-if="row.status === '已通过'" content="跟进" icon-name="EditPen" @click="handleFollow(row)"/>
+          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check"
+                      @click="handleAudit(row)"/>
+          <IconButton v-if="row.status === '已通过' || row.processStatus  === '跟进中'"
+                      content="跟进" icon-name="EditPen" @click="handleFollow(row)"/>
         </div>
       </template>
     </Grid>

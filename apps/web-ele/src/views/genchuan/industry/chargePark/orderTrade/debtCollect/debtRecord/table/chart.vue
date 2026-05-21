@@ -17,22 +17,22 @@ const state = reactive({
 });
 
 // 点击卡片事件
-const handleCardClick = () => {
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-  emit('filter-change', {
-    createOrderTimeStart: todayStr + ' 00:00:00',
-    createOrderTimeEnd: todayStr + ' 23:59:59',
-    status: null,
-  });
+const handleCardClick = (index) => {
+  // 欠费总额(index=0)：不进行筛选
+  // 追缴完成率(index=1)：筛选状态为已完成，不需要传递时间
+  if (index === 1) {
+    emit('filter-change', {
+      status: 'completed',
+    });
+  }
 };
 
 // 折线图点击事件处理
 const handleLineChartClick = (params) => {
   if (params && params.name) {
     emit('filter-change', {
-      createOrderTimeStart: params.name + ' 00:00:00',
-      createOrderTimeEnd: params.name + ' 23:59:59',
+      identifyTimeStart: params.name + ' 00:00:00',
+      identifyTimeEnd: params.name + ' 23:59:59',
       status: null,
     });
   }
@@ -179,10 +179,10 @@ onMounted(() => {
     <div class="chart-box-left">
       <Card
         class="left-card cursor-pointer"
-        v-for="item in state.cardList"
+        v-for="(item, index) in state.cardList"
         :key="item.title"
         v-bind="item"
-        @click="handleCardClick"
+        @click="handleCardClick(index)"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>

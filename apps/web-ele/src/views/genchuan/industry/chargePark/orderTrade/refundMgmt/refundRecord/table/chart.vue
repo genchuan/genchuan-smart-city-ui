@@ -163,11 +163,10 @@ onMounted(() => {
   <div class="park-chart-box">
     <div class="chart-box-left">
       <Card
-        class="left-card cursor-pointer"
+        class="left-card"
         v-for="item in state.cardList"
         :key="item.title"
         v-bind="item"
-        @click="handleCardClick"
       />
     </div>
     <div ref="lineChartRef" class="simple-bar-chart"></div>

@@ -1,33 +1,29 @@
 <script setup>
 import { computed, reactive, ref } from 'vue';
 
-import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { useVbenDrawer } from '@vben/common-ui';
 import { useUserStore } from '@vben/stores';
-import { isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   confirmClientFile,
-  createClientFile,
   followClientFile,
   renewClientFile,
   serviceClientFile,
   signClientFile,
   talkClientFile,
-  updateClientFile,
   updateClientFileClassify,
   updateClientFileTrack,
 } from '#/api/genchuan/industry/industrialpark/investmentMgmt/clientMgmt/clientFile';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import ClientDetailDrawer from '../components/ClientDetailDrawer.vue';
-import ClientOperationDialog from '../components/ClientOperationDialog.vue';
-import { $t } from '#/locales';
 import { exportToExcel } from '#/utils/excel.js';
 
+import ClientDetailDrawer from '../components/ClientDetailDrawer.vue';
+import ClientOperationDialog from '../components/ClientOperationDialog.vue';
 import {
   dataList,
   detailFields,
@@ -38,9 +34,9 @@ import {
   getClientStatusLabel,
   getClientStatusTagType,
   textObj,
-  useSearchFormSchema,
   useFormSchema,
   useGridColumns,
+  useSearchFormSchema,
 } from './data';
 
 const props = defineProps({
@@ -146,7 +142,8 @@ function handleEdit(row) {
     return;
   }
 
-  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  const targetRow =
+    row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
   if (!targetRow) return;
 
   formDrawerApi
@@ -164,7 +161,8 @@ async function handleClassify(row) {
     return;
   }
 
-  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  const targetRow =
+    row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
   if (!targetRow) return;
 
   operationDialogRef.value.open({
@@ -181,7 +179,8 @@ async function handleMaintain(row) {
     return;
   }
 
-  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  const targetRow =
+    row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
   if (!targetRow) return;
 
   operationDialogRef.value.open({
@@ -198,7 +197,8 @@ async function handleSign(row) {
     return;
   }
 
-  const targetRow = row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
+  const targetRow =
+    row || dataObj.apilist.find((item) => item.id === checkedIds.value[0]);
   if (!targetRow) return;
 
   operationDialogRef.value.open({
@@ -285,7 +285,7 @@ const handleOperationConfirm = async (values) => {
 
   try {
     switch (title) {
-      case '分类':
+      case '分类': {
         await updateClientFileClassify({
           id,
           demandType: params.demandType,
@@ -294,58 +294,67 @@ const handleOperationConfirm = async (values) => {
           handleUser: getCurrentUsername(),
         });
         break;
-      case '维护':
-        await updateClientFileTrack({
-          id,
-          trackRecord: params.trackRecord,
-          handleUser: getCurrentUsername(),
-        });
-        break;
-      case '签约':
-      case '转化':
-        await signClientFile({
-          id,
-          transformResult: params.transformResult,
-          handleUser: getCurrentUsername(),
-        });
-        break;
-      case '跟进':
-        await followClientFile({
-          id,
-          trackRecord: params.trackRecord,
-          handleUser: getCurrentUsername(),
-        });
-        break;
-      case '洽谈':
-        await talkClientFile({
-          id,
-          trackRecord: params.trackRecord,
-          handleUser: getCurrentUsername(),
-        });
-        break;
-      case '确认':
-        await confirmClientFile({
-          id,
-          transformResult: params.transformResult,
-          handleUser: getCurrentUsername(),
-        });
-        break;
-      case '续费':
-        await renewClientFile({
-          id,
-          transformResult: params.transformResult,
-          handleUser: getCurrentUsername(),
-        });
-        break;
-      case '服务':
+      }
+      case '服务': {
         await serviceClientFile({
           id,
           trackRecord: params.trackRecord,
           handleUser: getCurrentUsername(),
         });
         break;
-      default:
+      }
+      case '洽谈': {
+        await talkClientFile({
+          id,
+          trackRecord: params.trackRecord,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      }
+      case '确认': {
+        await confirmClientFile({
+          id,
+          transformResult: params.transformResult,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      }
+      case '签约':
+      case '转化': {
+        await signClientFile({
+          id,
+          transformResult: params.transformResult,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      }
+      case '续费': {
+        await renewClientFile({
+          id,
+          transformResult: params.transformResult,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      }
+      case '维护': {
+        await updateClientFileTrack({
+          id,
+          trackRecord: params.trackRecord,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      }
+      case '跟进': {
+        await followClientFile({
+          id,
+          trackRecord: params.trackRecord,
+          handleUser: getCurrentUsername(),
+        });
+        break;
+      }
+      default: {
         throw new Error(`未知操作类型：${title}`);
+      }
     }
 
     ElMessage.success(`${title}成功`);
@@ -399,48 +408,24 @@ const filterDemandType = ref(null);
 const filterIntentLevel = ref(null);
 const filterClientStatus = ref(null);
 
-/** 获取当前筛选标签列表 */
-const getFilterTags = computed(() => {
-  const tags = [];
-  if (filterDemandType.value !== null) {
-    tags.push({
-      type: 'demandType',
-      label: `需求类型：${getClientDemandTypeLabel(filterDemandType.value)}`,
-      value: filterDemandType.value,
-    });
-  }
-  if (filterIntentLevel.value !== null) {
-    tags.push({
-      type: 'intentLevel',
-      label: `意向程度：${getClientIntentLevelLabel(filterIntentLevel.value)}`,
-      value: filterIntentLevel.value,
-    });
-  }
-  if (filterClientStatus.value !== null) {
-    tags.push({
-      type: 'clientStatus',
-      label: `客户状态：${getClientStatusLabel(filterClientStatus.value)}`,
-      value: filterClientStatus.value,
-    });
-  }
-  return tags;
-});
-
 /** 取消单个筛选 */
 const handleCancelFilter = (tag) => {
   switch (tag.type) {
-    case 'demandType':
-      filterDemandType.value = null;
-      delete dataObj.searchParams.demandType;
-      break;
-    case 'intentLevel':
-      filterIntentLevel.value = null;
-      delete dataObj.searchParams.intentLevel;
-      break;
-    case 'clientStatus':
+    case 'clientStatus': {
       filterClientStatus.value = null;
       delete dataObj.searchParams.clientStatus;
       break;
+    }
+    case 'demandType': {
+      filterDemandType.value = null;
+      delete dataObj.searchParams.demandType;
+      break;
+    }
+    case 'intentLevel': {
+      filterIntentLevel.value = null;
+      delete dataObj.searchParams.intentLevel;
+      break;
+    }
   }
   handleRefresh();
 };
@@ -467,11 +452,10 @@ const getTableData = (pageObj) => {
     Object.keys(dataObj.searchParams).forEach((key) => {
       const value = dataObj.searchParams[key];
       if (value !== '' && value !== null && value !== undefined) {
-        if (typeof value === 'string') {
-          searchMatch = searchMatch && v[key]?.toString().includes(value);
-        } else {
-          searchMatch = searchMatch && v[key] === value;
-        }
+        searchMatch =
+          typeof value === 'string'
+            ? searchMatch && v[key]?.toString().includes(value)
+            : searchMatch && v[key] === value;
       }
     });
 
@@ -549,29 +533,69 @@ const getRowButtons = (row) => {
   const status = Number(row.clientStatus);
 
   switch (status) {
-    case 0:
+    case 0: {
       // 潜在客户：分类、跟进、维护
       return [
-        { content: '分类', iconName: 'EditPen', handler: () => handleClassify(row) },
-        { content: '跟进', iconName: 'ChatDotRound', handler: () => handleFollow(row) },
-        { content: '维护', iconName: 'Tools', handler: () => handleMaintain(row) },
+        {
+          content: '分类',
+          iconName: 'EditPen',
+          handler: () => handleClassify(row),
+        },
+        {
+          content: '跟进',
+          iconName: 'ChatDotRound',
+          handler: () => handleFollow(row),
+        },
+        {
+          content: '维护',
+          iconName: 'Tools',
+          handler: () => handleMaintain(row),
+        },
       ];
-    case 1:
+    }
+    case 1: {
       // 意向客户：洽谈、确认、转化
       return [
-        { content: '洽谈', iconName: 'ChatLineSquare', handler: () => handleTalk(row) },
-        { content: '确认', iconName: 'CircleCheck', handler: () => handleConfirm(row) },
-        { content: '转化', iconName: 'Promotion', handler: () => handleTransform(row) },
+        {
+          content: '洽谈',
+          iconName: 'ChatLineSquare',
+          handler: () => handleTalk(row),
+        },
+        {
+          content: '确认',
+          iconName: 'CircleCheck',
+          handler: () => handleConfirm(row),
+        },
+        {
+          content: '转化',
+          iconName: 'Promotion',
+          handler: () => handleTransform(row),
+        },
       ];
-    case 2:
+    }
+    case 2: {
       // 已签约：查看、续费、服务
       return [
-        { content: '查看', iconName: 'View', handler: () => handleOpenClientDetail(row) },
-        { content: '续费', iconName: 'RefreshRight', handler: () => handleRenew(row) },
-        { content: '服务', iconName: 'Service', handler: () => handleService(row) },
+        {
+          content: '查看',
+          iconName: 'View',
+          handler: () => handleOpenClientDetail(row),
+        },
+        {
+          content: '续费',
+          iconName: 'RefreshRight',
+          handler: () => handleRenew(row),
+        },
+        {
+          content: '服务',
+          iconName: 'Service',
+          handler: () => handleService(row),
+        },
       ];
-    default:
+    }
+    default: {
       return [];
+    }
   }
 };
 
@@ -598,60 +622,113 @@ const handleFullShow = () => {
     <!--   客户完整详情抽屉（含意向场地、跟进记录） -->
     <ClientDetailDrawer ref="clientDetailDrawerRef" />
     <!--   操作对话框（分类/维护/签约/跟进/洽谈/确认/转化/续费/服务） -->
-    <ClientOperationDialog ref="operationDialogRef" @confirm="handleOperationConfirm" />
+    <ClientOperationDialog
+      ref="operationDialogRef"
+      @confirm="handleOperationConfirm"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
 
     <!-- 快捷筛选标签 -->
-    <div v-if="getFilterTags.length > 0" class="filter-tags-container">
-      <el-tag
-        v-for="(tag, index) in getFilterTags"
-        :key="index"
-        closable
-        type="info"
-        size="small"
-        @close="handleCancelFilter(tag)"
-      >
-        {{ tag.label }}
-      </el-tag>
-      <el-button
-        type="primary"
-        link
-        size="small"
-        style="margin-left: 8px;"
-        @click="handleClearAllFilters"
-      >
-        清空筛选
-      </el-button>
-    </div>
-
     <Grid>
+      <template #table-title>
+        <div
+          class="tabel-tabs"
+          style="display: flex; flex-wrap: wrap; align-items: center"
+        >
+          <!-- 需求类型筛选标签 -->
+          <ElTag
+            v-if="filterDemandType !== null"
+            type="success"
+            closable
+            @close="handleCancelFilter({ type: 'demandType' })"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            需求类型：{{ getClientDemandTypeLabel(filterDemandType) }}
+          </ElTag>
+          <!-- 意向程度筛选标签 -->
+          <ElTag
+            v-if="filterIntentLevel !== null"
+            type="warning"
+            closable
+            @close="handleCancelFilter({ type: 'intentLevel' })"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            意向程度：{{ getClientIntentLevelLabel(filterIntentLevel) }}
+          </ElTag>
+          <!-- 客户状态筛选标签 -->
+          <ElTag
+            v-if="filterClientStatus !== null"
+            type="danger"
+            closable
+            @close="handleCancelFilter({ type: 'clientStatus' })"
+            style="height: 32px; margin: 4px 0; line-height: 32px"
+          >
+            客户状态：{{ getClientStatusLabel(filterClientStatus) }}
+          </ElTag>
+          <!-- 清空所有筛选按钮 -->
+<!--          <el-button-->
+<!--            v-if="filterDemandType !== null || filterIntentLevel !== null || filterClientStatus !== null"-->
+<!--            type="primary"-->
+<!--            link-->
+<!--            size="small"-->
+<!--            style="margin-left: 8px"-->
+<!--            @click="handleClearAllFilters"-->
+<!--          >-->
+<!--            清空筛选-->
+<!--          </el-button>-->
+        </div>
+      </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="收集" icon-name="Plus" @click="handleCreate" />
           <IconButton content="建立" icon-name="Edit" @click="handleEdit()" />
-          <IconButton content="分类" icon-name="EditPen" @click="handleClassify()" />
-          <IconButton content="维护" icon-name="Tools" @click="handleMaintain()" />
-          <IconButton content="签约" icon-name="Promotion" @click="handleSign()" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton
+            content="分类"
+            icon-name="EditPen"
+            @click="handleClassify()"
+          />
+          <IconButton
+            content="维护"
+            icon-name="Tools"
+            @click="handleMaintain()"
+          />
+          <IconButton
+            content="签约"
+            icon-name="Promotion"
+            @click="handleSign()"
+          />
+          <IconButton
+            content="导出"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
         </div>
       </template>
       <template #clientName="{ row }">
-        <span
-          class="client-name-link"
-          style="color: #409eff; cursor: pointer; text-decoration: underline;"
+        <el-text
           @click="handleClientNameClick(row)"
+          class="common-align"
+          type="primary"
         >
           {{ row.clientName }}
-        </span>
+        </el-text>
       </template>
       <template #demandType="{ row }">
         <el-tag
           :type="getClientDemandTypeTagType(row.demandType)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleDemandTypeFilter(row.demandType)"
         >
           {{ getClientDemandTypeLabel(row.demandType) }}
@@ -660,7 +737,7 @@ const handleFullShow = () => {
       <template #intentLevel="{ row }">
         <el-tag
           :type="getClientIntentLevelTagType(row.intentLevel)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleIntentLevelFilter(row.intentLevel)"
         >
           {{ getClientIntentLevelLabel(row.intentLevel) }}
@@ -669,7 +746,7 @@ const handleFullShow = () => {
       <template #clientStatus="{ row }">
         <el-tag
           :type="getClientStatusTagType(row.clientStatus)"
-          style="cursor: pointer;"
+          style="cursor: pointer"
           @click="handleClientStatusFilter(row.clientStatus)"
         >
           {{ getClientStatusLabel(row.clientStatus) }}
@@ -677,10 +754,14 @@ const handleFullShow = () => {
       </template>
       <template #intentSite="{ row }">
         <span v-if="row.intentSiteName">{{ row.intentSiteName }}</span>
-        <span v-else style="color: #c0c4cc;">-</span>
+        <span v-else style="color: #c0c4cc">-</span>
       </template>
       <template #trackRecord="{ row }">
-        <el-tooltip :content="row.trackRecord" placement="top" :show-after="500">
+        <el-tooltip
+          :content="row.trackRecord"
+          placement="top"
+          :show-after="500"
+        >
           <span class="track-record-text">{{ row.trackRecord }}</span>
         </el-tooltip>
       </template>
@@ -729,16 +810,5 @@ const handleFullShow = () => {
   text-overflow: ellipsis;
   white-space: nowrap;
   vertical-align: middle;
-}
-
-.filter-tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: center;
-  padding: 8px 12px;
-  margin-bottom: 4px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
 }
 </style>

@@ -2,6 +2,17 @@
 export function useFormSchema() {
   return [
     {
+      fieldName: 'id',
+      label: 'ID',
+      component: 'Input',
+      componentProps: {
+        disabled: true,
+      },
+      labelWidth: 120,
+      isEdit: true,
+      isHidden: true,
+    },
+    {
       fieldName: 'name',
       label: '规则名称',
       component: 'Input',
@@ -10,6 +21,7 @@ export function useFormSchema() {
         maxLength: 100,
       },
       labelWidth: 120,
+      isEdit: true,
     },
     {
       fieldName: 'merchantId',
@@ -20,6 +32,7 @@ export function useFormSchema() {
         min: 0,
       },
       labelWidth: 120,
+      isEdit: true,
     },
     {
       fieldName: 'merchantName',
@@ -31,6 +44,7 @@ export function useFormSchema() {
       },
       labelWidth: 120,
       isSearch: true,
+      isEdit: true,
     },
     {
       fieldName: 'agentType',
@@ -46,6 +60,7 @@ export function useFormSchema() {
       },
       labelWidth: 120,
       isSearch: true,
+      isEdit: true,
     },
     {
       fieldName: 'singleLimit',
@@ -57,6 +72,7 @@ export function useFormSchema() {
         precision: 2,
       },
       labelWidth: 120,
+      isEdit: true,
     },
     {
       fieldName: 'dayLimit',
@@ -68,6 +84,7 @@ export function useFormSchema() {
         precision: 2,
       },
       labelWidth: 120,
+      isEdit: true,
     },
     {
       fieldName: 'scene',
@@ -78,6 +95,7 @@ export function useFormSchema() {
         maxLength: 100,
       },
       labelWidth: 120,
+      isEdit: true,
     },
     {
       fieldName: 'status',
@@ -93,7 +111,34 @@ export function useFormSchema() {
       },
       labelWidth: 120,
       isSearch: true,
+      isEdit: true,
     }, 
+    {
+      fieldName: 'startTime',
+      label: '开始时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择开始时间',
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: 120,
+      isSearch: true,
+    },
+    {
+      fieldName: 'endTime',
+      label: '结束时间',
+      component: 'DatePicker',
+      componentProps: {
+        placeholder: '请选择结束时间',
+        type: 'datetime',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      labelWidth: 120,
+      isSearch: true,
+    },
   ];
 }
 /** 代付规则表格列配置 */

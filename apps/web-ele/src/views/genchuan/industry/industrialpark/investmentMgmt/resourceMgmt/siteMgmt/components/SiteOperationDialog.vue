@@ -1,15 +1,13 @@
 <script setup>
 import { ref } from 'vue';
 
-import { useVbenForm } from '#/adapter/form';
 import { useVbenDrawer } from '@vben/common-ui';
 
 import { ElMessage } from 'element-plus';
 
-import {
-  companyList,
-  clientList,
-} from '../table/data';
+import { useVbenForm } from '#/adapter/form';
+
+import { clientList, companyList } from '../table/data';
 
 const props = defineProps({
   title: {
@@ -57,7 +55,58 @@ const [Form, formApi] = useVbenForm({
 /** 根据标题生成表单配置 */
 function getSchemaByTitle(title) {
   switch (title) {
-    case '续费':
+    case '确认': {
+      return [
+        {
+          fieldName: 'rentInfo',
+          label: '租金信息',
+          component: 'Input',
+          componentProps: {
+            placeholder: '请输入租金信息（例：32 元/㎡/月，租期3年）',
+            type: 'textarea',
+            rows: 3,
+          },
+          rules: 'required',
+        },
+        {
+          fieldName: 'signCompany',
+          label: '签约企业',
+          component: 'Select',
+          componentProps: {
+            placeholder: '请选择签约企业',
+            options: companyList.map((c) => ({ label: c.name, value: c.id })),
+          },
+        },
+      ];
+    }
+
+    case '签约': {
+      return [
+        {
+          fieldName: 'rentInfo',
+          label: '租金信息',
+          component: 'Input',
+          componentProps: {
+            placeholder: '请输入租金信息（例：32 元/㎡/月，租期3年）',
+            type: 'textarea',
+            rows: 3,
+          },
+          rules: 'required',
+        },
+        {
+          fieldName: 'signCompany',
+          label: '签约企业',
+          component: 'Select',
+          componentProps: {
+            placeholder: '请选择签约企业',
+            options: companyList.map((c) => ({ label: c.name, value: c.id })),
+          },
+          rules: 'required',
+        },
+      ];
+    }
+
+    case '续费': {
       return [
         {
           fieldName: 'rentInfo',
@@ -71,57 +120,9 @@ function getSchemaByTitle(title) {
           rules: 'required',
         },
       ];
+    }
 
-    case '确认':
-      return [
-        {
-          fieldName: 'rentInfo',
-          label: '租金信息',
-          component: 'Input',
-          componentProps: {
-            placeholder: '请输入租金信息（例：32 元/㎡/月，租期3年）',
-            type: 'textarea',
-            rows: 3,
-          },
-          rules: 'required',
-        },
-        {
-          fieldName: 'signCompany',
-          label: '签约企业',
-          component: 'Select',
-          componentProps: {
-            placeholder: '请选择签约企业',
-            options: companyList.map((c) => ({ label: c.name, value: c.id })),
-          },
-        },
-      ];
-
-    case '签约':
-      return [
-        {
-          fieldName: 'rentInfo',
-          label: '租金信息',
-          component: 'Input',
-          componentProps: {
-            placeholder: '请输入租金信息（例：32 元/㎡/月，租期3年）',
-            type: 'textarea',
-            rows: 3,
-          },
-          rules: 'required',
-        },
-        {
-          fieldName: 'signCompany',
-          label: '签约企业',
-          component: 'Select',
-          componentProps: {
-            placeholder: '请选择签约企业',
-            options: companyList.map((c) => ({ label: c.name, value: c.id })),
-          },
-          rules: 'required',
-        },
-      ];
-
-    case '预约':
+    case '预约': {
       return [
         {
           fieldName: 'orderClient',
@@ -134,9 +135,11 @@ function getSchemaByTitle(title) {
           rules: 'required',
         },
       ];
+    }
 
-    default:
+    default: {
       return [];
+    }
   }
 }
 

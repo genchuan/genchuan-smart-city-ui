@@ -41,7 +41,9 @@ export function responseInfoPublish(data) {
 
 /** 获取信息详情 */
 export function getInfoPublishDetail(id) {
-  return requestClient.get('/investmentmgmt/info-publish/get', { params: { id } });
+  return requestClient.get('/investmentmgmt/info-publish/get', {
+    params: { id },
+  });
 }
 
 /** 下架信息 */
@@ -51,7 +53,9 @@ export function offlineInfoPublish(data) {
 
 /** 删除信息（支持批量） */
 export function deleteInfoPublish(ids) {
-  return requestClient.delete('/investmentmgmt/info-publish/delete', { data: ids });
+  return requestClient.delete('/investmentmgmt/info-publish/delete', {
+    data: ids,
+  });
 }
 
 // ==================== 数据可视化图表接口 ====================
