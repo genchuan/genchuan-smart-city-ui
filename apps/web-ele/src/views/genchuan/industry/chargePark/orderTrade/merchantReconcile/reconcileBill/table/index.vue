@@ -101,7 +101,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 // 备注弹窗配置
 const [RemarkDrawer, remarkDrawerApi] = useVbenDrawer({
   appendToMain: true,
-  modal: true,
+  modal: false,
   footer: true,
   cancelText: '取消',
   confirmText: '确定',
@@ -417,3 +417,4 @@ watch(
     </Grid>
   </div>
 </template>
+ 
