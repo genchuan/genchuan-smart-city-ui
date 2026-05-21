@@ -4,7 +4,7 @@ import { downloadFileFromBlobPart } from '@vben/utils';
 import { ElMessage, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElDialog } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getSettleBillPage, exportSettleBillExcel, createSettleBill, updateSettleBill, deleteSettleBill, regenerateSettleBill, settleSettleBill, rejectSettleBill, passSettleBill } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
+import { getSettleBillPage, exportSettleBillExcel, createSettleBill, updateSettleBill, deleteSettleBill, regenerateSettleBill, settleSettleBill, rejectSettleBill, passSettleBill, batchAuditSettleBill } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
 import { formatTimestamp } from '#/utils';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
@@ -236,6 +236,26 @@ async function submitAction() {
  ElMessage.error('操作失败');
  }
 }
+/** 批量审核 */
+async function handleBatchAudit() {
+  if (checkedIds.value.length === 0) {
+    ElMessage.warning('请先选择要审核的单据');
+    return;
+  }
+  
+  await confirm(`确定要批量审核选中的 ${checkedIds.value.length} 条单据吗？`);
+  
+  try {
+    await batchAuditSettleBill(checkedIds.value);
+    ElMessage.success('批量审核成功');
+    checkedIds.value = [];
+    handleRefresh();
+  } catch (error) {
+    console.error('批量审核失败:', error);
+    ElMessage.error('批量审核失败');
+  }
+}
+
 // 结算单据状态映射 - SettleBillStatusEnum
 const statusMap = {
   pending_audit: { label: '待审核', type: 'warning' },
@@ -461,12 +481,12 @@ watch(
       append-to-body
     >
       <ElForm :model="actionDialog" label-width="80px">
-        <ElFormItem label="备注">
+        <ElFormItem :label="actionDialog.type === 'reject' ? '驳回理由' : '备注'">
           <ElInput
             v-model="actionDialog.remark"
             type="textarea"
             :rows="3"
-            placeholder="请输入备注（选填）"
+            :placeholder="actionDialog.type === 'reject' ? '请输入驳回理由' : '请输入备注（选填）'"
           />
         </ElFormItem>
       </ElForm>
@@ -482,6 +502,7 @@ watch(
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="批量审核" icon-name="CircleCheck" :disabled="checkedIds.length === 0" @click="handleBatchAudit" />
           <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
           <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
@@ -503,12 +524,16 @@ watch(
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          <!-- 
           <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" />
+           -->
           <IconButton content="审核通过" icon-name="Check" v-if="row.status === 'pending_audit'" @click="openActionDialog('pass', row)" />
           <IconButton content="审核驳回" icon-name="Close" v-if="row.status === 'pending_audit'" @click="openActionDialog('reject', row)" />
           <IconButton content="结算" icon-name="Wallet" v-if="row.status === 'pending_settle'" @click="openActionDialog('settle', row)" />
           <IconButton content="重新生成" icon-name="Refresh" v-if="row.status === 'rejected'" @click="openActionDialog('regenerate', row)" />
+              <!-- 
           <IconButton content="删除" icon-name="Delete" @click="handleDelete(row)" />
+            -->
         </div>
       </template>
       <template #bottom>

@@ -19,7 +19,7 @@ export function exportInvoiceListExcel() {
 }
 /** 发票列表批量发票 */
 export function batchInvoice(data) {
-  return requestClient.put('/ordertrade/invoice-list/batch-invoice', data);
+  return requestClient.post('/ordertrade/invoice-list/batch-invoice', data);
 }
 
 
@@ -64,7 +64,7 @@ export function exportInvoiceAuditExcel() {
 }
 /** 发票列表审核批量操作 */
 export function batchAudit(data) {
-  return requestClient.put('/ordertrade/invoice-audit/batch-audit', data);
+  return requestClient.post('/ordertrade/invoice-audit/batch-audit', data);
 }
 
 

@@ -8,12 +8,12 @@ export function useGridColumns() {
       minWidth: 100,
       sortable: true,
     },
-    {
-      field: 'partnerId',
-      title: '合作方ID',
-      minWidth: 120,
-      sortable: true,
-    },
+    // {
+    //   field: 'partnerId',
+    //   title: '合作方ID',
+    //   minWidth: 120,
+    //   sortable: true,
+    // },
     {
       field: 'partnerName',
       title: '合作方名称',
