@@ -6,12 +6,13 @@ import type {
   MemberTagPageReqVO,
   MemberTagVO,
 } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberTag';
+import type { MemberUserApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import type {
   ActiveFilterTag,
   FilterTagConfig,
 } from '#/views/genchuan/industry/chargePark/userMerchant/memberCenter/utils';
 
-import { computed, onMounted, ref } from 'vue';
+import { computed, h, nextTick, onMounted, ref } from 'vue';
 
 import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
@@ -22,14 +23,18 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberTagApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberTag';
+import { getUserPage } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { downloadFileIfValid } from '#/views/genchuan/industry/chargePark/userMerchant/utils/download';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
 import MemberStatsVisualization from '../components/MemberStatsVisualization.vue';
+import { formatMemberStatus, getMemberStatusTagType } from '../memberUser/data';
 import {
   buildActiveFilterTags,
   cleanQueryParams,
+  formatDateTimeValue,
   formatNormalStatus,
   isEnabledStatus,
   refreshStatsLayout,
@@ -58,6 +63,14 @@ const statsDataSource = ref(buildStatsDataFromApi());
 const showStats = ref(true);
 const importDialogVisible = ref(false);
 const importFileList = ref<UploadUserFile[]>([]);
+const selectedTag = ref<MemberTagVO>();
+const tagUserDialogVisible = ref(false);
+
+const tagUserDialogTitle = computed(() =>
+  selectedTag.value?.name
+    ? `${selectedTag.value.name}会员列表`
+    : '标签会员列表',
+);
 
 const drillFilterConfigs: Record<string, FilterTagConfig> = {
   name: {
@@ -282,11 +295,126 @@ async function handleStatsPieClick({ name }: { name: string }) {
     return;
   }
 
-  drillFilters.value = {
-    name,
-  };
-  await handleRefresh();
+  const tag = await getTagByName(name);
+
+  if (!tag) {
+    ElMessage.warning('未找到对应会员标签');
+    return;
+  }
+
+  await handleOpenTagUsers(tag);
 }
+
+async function getTagByName(name: string) {
+  const result = await MemberTagApi.getMemberTagPage({
+    name,
+    pageNo: 1,
+    pageSize: 100,
+  });
+
+  return result.list?.find((item) => item.name === name) || result.list?.[0];
+}
+
+async function handleOpenTagUsers(row: MemberTagVO) {
+  selectedTag.value = row;
+  tagUserDialogVisible.value = true;
+  await nextTick();
+  tagUserGridApi.reload();
+}
+
+function getMemberUserDisplay(row: MemberUserApi.User) {
+  return row.nickname || row.name || row.mobile || `会员${row.id}`;
+}
+
+function renderMemberStatus(status?: number | string) {
+  return h(
+    ElTag,
+    {
+      type: getMemberStatusTagType(status),
+    },
+    () => formatMemberStatus(status),
+  );
+}
+
+const [TagUserGrid, tagUserGridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: [
+      {
+        field: 'id',
+        title: '会员 ID',
+        minWidth: 100,
+      },
+      {
+        field: 'nickname',
+        title: '用户',
+        minWidth: 160,
+        formatter: ({ row }) => getMemberUserDisplay(row),
+      },
+      {
+        field: 'mobile',
+        title: '手机号',
+        minWidth: 130,
+        formatter: ({ cellValue }) => cellValue || '-',
+      },
+      {
+        field: 'tagNames',
+        title: '会员标签',
+        minWidth: 140,
+        formatter: ({ row }) =>
+          Array.isArray(row.tagNames)
+            ? row.tagNames.join('、') || '-'
+            : row.tagNames || row.tagIds || '-',
+      },
+      {
+        field: 'status',
+        title: '状态',
+        minWidth: 90,
+        slots: {
+          default: ({ row }) => renderMemberStatus(row.status),
+        },
+      },
+      {
+        field: 'createTime',
+        title: '开通时间',
+        minWidth: 160,
+        formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
+      },
+      {
+        field: 'expireTime',
+        title: '到期时间',
+        minWidth: 160,
+        formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
+      },
+    ],
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => {
+          if (!selectedTag.value?.id) {
+            return {
+              list: [],
+              total: 0,
+            };
+          }
+
+          return await getUserPage({
+            pageNo: page.currentPage,
+            pageSize: page.pageSize,
+            tagIds: [Number(selectedTag.value.id)],
+          });
+        },
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    toolbarConfig: {
+      refresh: true,
+    },
+  } as VxeTableGridOptions<MemberUserApi.User>,
+  showSearchForm: false,
+});
 
 async function syncQueryFormValues() {
   await queryFormApi.resetForm();
@@ -359,146 +487,163 @@ onMounted(() => {
       @pie-click="handleStatsPieClick"
     />
 
-    <div class="park-lot-table-new user-merchant-table-grid">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="display: flex; flex-wrap: wrap; align-items: center"
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
+    <PageTabsShell title="会员标签">
+      <div class="park-lot-table-new user-merchant-table-grid">
+        <Grid>
+          <template #table-title>
+            <div
+              class="tabel-tabs"
+              style="display: flex; flex-wrap: wrap; align-items: center"
             >
-              {{ tag.label }}：{{ tag.value }}
-            </ElTag>
-          </div>
-        </template>
-
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton
-              v-access:code="['usermerchant:member-tag:create']"
-              content="新增会员标签"
-              icon-name="Plus"
-              @click="handleCreate"
-            />
-            <IconButton
-              content="导入"
-              icon-name="Upload"
-              @click="() => (importDialogVisible = true)"
-            />
-            <IconButton
-              v-access:code="['usermerchant:member-tag:export']"
-              content="导出"
-              icon-name="download"
-              @click="handleExport"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSearchShow"
-            />
-            <IconButton
-              :content="showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="查看"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-            <IconButton
-              v-if="isEnabledStatus(row.status)"
-              v-access:code="['usermerchant:member-tag:update']"
-              content="编辑"
-              icon-name="Edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              v-access:code="['usermerchant:member-tag:update']"
-              :content="isEnabledStatus(row.status) ? '禁用' : '启用'"
-              :icon-name="isEnabledStatus(row.status) ? 'Close' : 'Check'"
-              @click="handleToggleStatus(row)"
-            />
-          </div>
-        </template>
-      </Grid>
-
-      <Drawer title="搜索">
-        <QueryForm class="query-form" />
-      </Drawer>
-
-      <DetailDrawer
-        ref="detailDrawerRef"
-        :data="detailObj"
-        :fields="memberTagDetailFields"
-        :title="detailObj ? `${detailObj.name}详情` : '会员标签详情'"
-      />
-
-      <ElDialog
-        v-model="importDialogVisible"
-        title="导入会员标签"
-        width="520px"
-        @closed="handleImportDialogClosed"
-      >
-        <div class="import-container">
-          <div class="template-section">
-            <div class="section-title">1. 下载导入模板</div>
-            <div class="section-content">
-              <p class="tip-text">
-                请使用系统提供的模板格式导入数据，确保数据格式正确
-              </p>
-              <ElButton type="primary" @click="handleDownloadTemplate">
-                下载导入模板
-              </ElButton>
-            </div>
-          </div>
-
-          <div class="upload-section">
-            <div class="section-title">2. 上传数据文件</div>
-            <div class="section-content">
-              <el-upload
-                v-model:file-list="importFileList"
-                drag
-                :auto-upload="false"
-                :limit="1"
-                accept=".xls,.xlsx,.csv"
+              <ElTag
+                v-for="tag in activeFilterTags"
+                :key="`${tag.source}-${tag.key}`"
+                :type="tag.type"
+                closable
+                style="height: 32px; margin: 4px 0; line-height: 32px"
+                @close="handleRemoveFilterTag(tag)"
               >
-                <div class="el-upload__text">
-                  将文件拖到此处，或 <em>点击上传</em>
-                </div>
-                <template #tip>
-                  <div class="el-upload__tip">
-                    支持 .xls、.xlsx、.csv 格式文件
+                {{ tag.label }}：{{ tag.value }}
+              </ElTag>
+            </div>
+          </template>
+
+          <template #toolbar-tools>
+            <div class="common-toolbar-tools">
+              <IconButton
+                v-access:code="['usermerchant:member-tag:create']"
+                content="新增会员标签"
+                icon-name="Plus"
+                @click="handleCreate"
+              />
+              <IconButton
+                content="导入"
+                icon-name="Upload"
+                @click="() => (importDialogVisible = true)"
+              />
+              <IconButton
+                v-access:code="['usermerchant:member-tag:export']"
+                content="导出"
+                icon-name="download"
+                @click="handleExport"
+              />
+              <IconButton
+                content="搜索"
+                icon-name="search"
+                @click="handleSearchShow"
+              />
+              <IconButton
+                :content="showStats ? '隐藏统计' : '显示统计'"
+                :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
+                @click="toggleStats"
+              />
+              <IconButton
+                content="全屏"
+                icon-name="FullScreen"
+                @click="() => screenfull.toggle()"
+              />
+            </div>
+          </template>
+          <template #actions="{ row }">
+            <div class="table-toolbar-tools">
+              <IconButton
+                content="查看"
+                icon-name="View"
+                @click="handleDetail(row)"
+              />
+              <IconButton
+                v-if="isEnabledStatus(row.status)"
+                v-access:code="['usermerchant:member-tag:update']"
+                content="编辑"
+                icon-name="Edit"
+                @click="handleEdit(row)"
+              />
+              <IconButton
+                v-access:code="['usermerchant:member-tag:update']"
+                :content="isEnabledStatus(row.status) ? '禁用' : '启用'"
+                :icon-name="isEnabledStatus(row.status) ? 'Close' : 'Check'"
+                @click="handleToggleStatus(row)"
+              />
+            </div>
+          </template>
+          <template #tagName="{ row }">
+            <ElButton link type="primary" @click="handleOpenTagUsers(row)">
+              {{ row.name || '-' }}
+            </ElButton>
+          </template>
+        </Grid>
+
+        <Drawer title="搜索">
+          <QueryForm class="query-form" />
+        </Drawer>
+
+        <DetailDrawer
+          ref="detailDrawerRef"
+          :data="detailObj"
+          :fields="memberTagDetailFields"
+          :title="detailObj ? `${detailObj.name}详情` : '会员标签详情'"
+        />
+
+        <ElDialog
+          v-model="importDialogVisible"
+          title="导入会员标签"
+          width="520px"
+          @closed="handleImportDialogClosed"
+        >
+          <div class="import-container">
+            <div class="template-section">
+              <div class="section-title">1. 下载导入模板</div>
+              <div class="section-content">
+                <p class="tip-text">
+                  请使用系统提供的模板格式导入数据，确保数据格式正确
+                </p>
+                <ElButton type="primary" @click="handleDownloadTemplate">
+                  下载导入模板
+                </ElButton>
+              </div>
+            </div>
+
+            <div class="upload-section">
+              <div class="section-title">2. 上传数据文件</div>
+              <div class="section-content">
+                <el-upload
+                  v-model:file-list="importFileList"
+                  drag
+                  :auto-upload="false"
+                  :limit="1"
+                  accept=".xls,.xlsx,.csv"
+                >
+                  <div class="el-upload__text">
+                    将文件拖到此处，或 <em>点击上传</em>
                   </div>
-                </template>
-              </el-upload>
+                  <template #tip>
+                    <div class="el-upload__tip">
+                      支持 .xls、.xlsx、.csv 格式文件
+                    </div>
+                  </template>
+                </el-upload>
+              </div>
             </div>
           </div>
-        </div>
-        <template #footer>
-          <ElButton @click="importDialogVisible = false">取消</ElButton>
-          <ElButton type="primary" @click="handleImportTags">
-            开始导入
-          </ElButton>
-        </template>
-      </ElDialog>
-    </div>
+          <template #footer>
+            <ElButton @click="importDialogVisible = false">取消</ElButton>
+            <ElButton type="primary" @click="handleImportTags">
+              开始导入
+            </ElButton>
+          </template>
+        </ElDialog>
+
+        <ElDialog
+          v-model="tagUserDialogVisible"
+          :title="tagUserDialogTitle"
+          width="960px"
+        >
+          <div class="member-tag-user-dialog">
+            <TagUserGrid />
+          </div>
+        </ElDialog>
+      </div>
+    </PageTabsShell>
   </div>
 </template>
 
@@ -579,5 +724,9 @@ onMounted(() => {
 :deep(.user-merchant-table-grid .vxe-tools--operate) {
   position: static !important;
   flex-shrink: 0;
+}
+
+.member-tag-user-dialog {
+  min-height: 420px;
 }
 </style>

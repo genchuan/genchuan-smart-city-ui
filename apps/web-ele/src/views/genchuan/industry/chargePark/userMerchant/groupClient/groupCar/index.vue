@@ -6,6 +6,7 @@ import { ElMessage } from 'element-plus';
 import { GroupCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupCar';
 import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
 import { buildStatsDataFromApi } from './data';
 import Table from './table/index.vue';
 
@@ -95,12 +96,14 @@ onMounted(() => {
           index === 0 ? handleFilterBoundCars() : handleFilterApprovedCars()
       "
     />
-    <Table
-      ref="tableRef"
-      :reload-stats="loadStats"
-      :show-stats="showStats"
-      :toggle-stats="toggleStats"
-    />
+    <PageTabsShell title="集团车辆">
+      <Table
+        ref="tableRef"
+        :reload-stats="loadStats"
+        :show-stats="showStats"
+        :toggle-stats="toggleStats"
+      />
+    </PageTabsShell>
   </div>
 </template>
 

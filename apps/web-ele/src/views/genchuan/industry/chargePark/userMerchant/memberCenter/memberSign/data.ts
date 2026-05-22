@@ -108,12 +108,12 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
     {
       field: 'id',
-      title: '签到 ID',
+      title: '签到ID',
       minWidth: 100,
     },
     {
       field: 'userName',
-      title: '用户',
+      title: '用户名称',
       minWidth: 150,
       slots: {
         default: 'user',
@@ -124,6 +124,9 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '签到时间',
       minWidth: 180,
       formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
+      slots: {
+        default: 'signTime',
+      },
     },
     {
       field: 'point',

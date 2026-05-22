@@ -27,6 +27,7 @@ import {
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
 import MemberStatsVisualization from '../components/MemberStatsVisualization.vue';
 import { formatMemberStatus, getMemberStatusTagType } from '../memberUser/data';
 import {
@@ -34,6 +35,7 @@ import {
   cleanQueryParams,
   formatDateTimeValue,
   formatLifecycleStatus,
+  getLifecycleStatusTagType,
   isEnabledStatus,
   refreshStatsLayout,
   STATUS_ENABLED,
@@ -250,6 +252,23 @@ async function handleStatsBarClick({ name }: { name: string }) {
   }
 
   await handleOpenLevelUsers(level);
+}
+
+async function handleDrillFilter(key: string, value: unknown) {
+  if (value === undefined || value === null || value === '') {
+    return;
+  }
+
+  const nextFilters = { ...drillFilters.value };
+
+  if (nextFilters[key] === value) {
+    delete nextFilters[key];
+  } else {
+    nextFilters[key] = value;
+  }
+
+  drillFilters.value = nextFilters;
+  await handleRefresh();
 }
 
 function getDirectLevelUserCount(row: MemberLevelVO) {
@@ -483,105 +502,125 @@ onMounted(() => {
       @card-click="handleStatsCardClick"
     />
 
-    <div class="park-lot-table-new user-merchant-table-grid">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="display: flex; flex-wrap: wrap; align-items: center"
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
+    <PageTabsShell title="会员等级">
+      <div class="park-lot-table-new user-merchant-table-grid">
+        <Grid>
+          <template #table-title>
+            <div
+              class="tabel-tabs"
+              style="display: flex; flex-wrap: wrap; align-items: center"
             >
-              {{ tag.label }}：{{ tag.value }}
+              <ElTag
+                v-for="tag in activeFilterTags"
+                :key="`${tag.source}-${tag.key}`"
+                :type="tag.type"
+                closable
+                style="height: 32px; margin: 4px 0; line-height: 32px"
+                @close="handleRemoveFilterTag(tag)"
+              >
+                {{ tag.label }}：{{ tag.value }}
+              </ElTag>
+            </div>
+          </template>
+
+          <template #toolbar-tools>
+            <div class="common-toolbar-tools">
+              <IconButton
+                v-access:code="['usermerchant:member-level:create']"
+                content="新增等级"
+                icon-name="Plus"
+                @click="handleCreate"
+              />
+              <IconButton
+                content="搜索"
+                icon-name="search"
+                @click="handleSearchShow"
+              />
+              <IconButton
+                :content="showStats ? '隐藏统计' : '显示统计'"
+                :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
+                @click="toggleStats"
+              />
+              <IconButton
+                content="全屏"
+                icon-name="FullScreen"
+                @click="() => screenfull.toggle()"
+              />
+            </div>
+          </template>
+          <template #actions="{ row }">
+            <div class="table-toolbar-tools">
+              <IconButton
+                content="查看"
+                icon-name="View"
+                @click="handleDetail(row)"
+              />
+              <IconButton
+                v-access:code="['usermerchant:member-level:update']"
+                content="编辑"
+                icon-name="Edit"
+                @click="handleEdit(row)"
+              />
+              <IconButton
+                v-access:code="['usermerchant:member-level:update']"
+                :content="isEnabledStatus(row.status) ? '禁用' : '生效'"
+                :icon-name="isEnabledStatus(row.status) ? 'Close' : 'Check'"
+                @click="handleToggleStatus(row)"
+              />
+            </div>
+          </template>
+          <template #levelNo="{ row }">
+            <ElButton link type="primary" @click="handleDetail(row)">
+              {{ row.id || '-' }}
+            </ElButton>
+          </template>
+          <template #levelName="{ row }">
+            <ElButton
+              link
+              type="primary"
+              @click="handleDrillFilter('name', row.name)"
+            >
+              {{ row.name || '-' }}
+            </ElButton>
+          </template>
+          <template #levelUserCount="{ row }">
+            <ElButton link type="primary" @click="handleOpenLevelUsers(row)">
+              {{ row.levelUserCount ?? 0 }}
+            </ElButton>
+          </template>
+          <template #levelStatus="{ row }">
+            <ElTag
+              :type="getLifecycleStatusTagType(row.status)"
+              style="cursor: pointer"
+              @click="handleDrillFilter('status', row.status)"
+            >
+              {{ formatLifecycleStatus(row.status) }}
             </ElTag>
+          </template>
+        </Grid>
+
+        <Drawer title="搜索">
+          <QueryForm class="query-form" />
+        </Drawer>
+
+        <DetailDrawer
+          ref="detailDrawerRef"
+          :data="detailObj"
+          :fields="memberLevelDetailFields"
+          :title="detailObj ? `${detailObj.name}详情` : '会员等级详情'"
+        />
+
+        <ElDialog
+          v-model="levelUserDialogVisible"
+          :title="levelUserDialogTitle"
+          width="960px"
+        >
+          <div class="member-level-user-dialog">
+            <LevelUserGrid />
           </div>
-        </template>
-
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton
-              v-access:code="['usermerchant:member-level:create']"
-              content="新增等级"
-              icon-name="Plus"
-              @click="handleCreate"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSearchShow"
-            />
-            <IconButton
-              :content="showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="查看"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-            <IconButton
-              v-access:code="['usermerchant:member-level:update']"
-              content="编辑"
-              icon-name="Edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              v-access:code="['usermerchant:member-level:update']"
-              :content="isEnabledStatus(row.status) ? '禁用' : '生效'"
-              :icon-name="isEnabledStatus(row.status) ? 'Close' : 'Check'"
-              @click="handleToggleStatus(row)"
-            />
-          </div>
-        </template>
-        <template #levelName="{ row }">
-          <ElButton link type="primary" @click="handleOpenLevelUsers(row)">
-            {{ row.name || '-' }}
-          </ElButton>
-        </template>
-        <template #levelUserCount="{ row }">
-          <ElButton link type="primary" @click="handleOpenLevelUsers(row)">
-            {{ row.levelUserCount ?? 0 }}
-          </ElButton>
-        </template>
-      </Grid>
-
-      <Drawer title="搜索">
-        <QueryForm class="query-form" />
-      </Drawer>
-
-      <DetailDrawer
-        ref="detailDrawerRef"
-        :data="detailObj"
-        :fields="memberLevelDetailFields"
-        :title="detailObj ? `${detailObj.name}详情` : '会员等级详情'"
-      />
-
-      <ElDialog
-        v-model="levelUserDialogVisible"
-        :title="levelUserDialogTitle"
-        width="960px"
-      >
-        <div class="member-level-user-dialog">
-          <LevelUserGrid />
-        </div>
-      </ElDialog>
-    </div>
+        </ElDialog>
+      </div>
+    </PageTabsShell>
   </div>
 </template>
 

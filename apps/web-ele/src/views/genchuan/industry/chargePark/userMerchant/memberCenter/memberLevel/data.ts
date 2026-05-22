@@ -2,10 +2,6 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { MemberLevelChartVO } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberLevel';
 
-import { h } from 'vue';
-
-import { ElTag } from 'element-plus';
-
 import { z } from '#/adapter/form';
 import { getRangePickerDefaultProps } from '#/utils';
 
@@ -48,16 +44,6 @@ export function buildStatsDataFromApi(data?: Partial<MemberLevelChartVO>) {
       },
     ],
   };
-}
-
-function renderStatus(status?: number | string) {
-  return h(
-    ElTag,
-    {
-      type: getLifecycleStatusTagType(status),
-    },
-    () => formatLifecycleStatus(status),
-  );
 }
 
 export function useFormSchema(): VbenFormSchema[] {
@@ -192,8 +178,11 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
     {
       field: 'id',
-      title: '等级 ID',
+      title: '等级编号',
       minWidth: 90,
+      slots: {
+        default: 'levelNo',
+      },
     },
     {
       field: 'name',
@@ -230,7 +219,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '状态',
       minWidth: 100,
       slots: {
-        default: ({ row }) => renderStatus(row.status),
+        default: 'levelStatus',
       },
     },
     {

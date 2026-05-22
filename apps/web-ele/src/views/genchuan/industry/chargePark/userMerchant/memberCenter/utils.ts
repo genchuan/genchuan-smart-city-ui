@@ -82,9 +82,6 @@ function parseDateTimeValue(value?: null | number | string) {
   }
 
   const text = String(value).trim();
-  if (text === '0') {
-    return null;
-  }
 
   let timestampValue: null | number = null;
 
@@ -95,6 +92,10 @@ function parseDateTimeValue(value?: null | number | string) {
   }
 
   if (timestampValue !== null && Number.isFinite(timestampValue)) {
+    if (timestampValue === 0) {
+      return dayjs(0);
+    }
+
     if (text.length === 10) {
       return dayjs(timestampValue * 1000);
     }

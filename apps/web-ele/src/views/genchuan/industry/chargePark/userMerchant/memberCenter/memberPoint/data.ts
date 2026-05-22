@@ -72,16 +72,12 @@ export function buildStatsDataFromApi(data?: Partial<MemberPointChartVO>) {
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
     {
-      fieldName: 'userId',
-      label: '用户',
-      component: 'InputNumber',
+      fieldName: 'userName',
+      label: '用户名称',
+      component: 'Input',
       componentProps: {
-        min: 1,
-        precision: 0,
-        placeholder: '请输入用户编号',
-        controlsPosition: 'right',
+        placeholder: '请输入用户名称',
         clearable: true,
-        class: '!w-full',
       },
     },
     {

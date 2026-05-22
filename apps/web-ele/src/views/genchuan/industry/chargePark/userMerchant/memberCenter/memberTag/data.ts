@@ -143,6 +143,9 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       field: 'name',
       title: '标签名称',
       minWidth: 160,
+      slots: {
+        default: 'tagName',
+      },
     },
     {
       field: 'description',

@@ -8,6 +8,7 @@ import { GroupInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/gr
 import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 import { buildDateRangeByChartName } from '#/views/genchuan/industry/chargePark/userMerchant/utils/chartDrill';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
 import { buildStatsDataFromApi } from './data';
 import Table from './table/index.vue';
 
@@ -108,12 +109,14 @@ onMounted(() => {
       "
       @line-click="({ name }) => handleFilterByMonth(name)"
     />
-    <Table
-      ref="tableRef"
-      :reload-stats="loadStats"
-      :show-stats="showStats"
-      :toggle-stats="toggleStats"
-    />
+    <PageTabsShell title="集团信息">
+      <Table
+        ref="tableRef"
+        :reload-stats="loadStats"
+        :show-stats="showStats"
+        :toggle-stats="toggleStats"
+      />
+    </PageTabsShell>
   </div>
 </template>
 

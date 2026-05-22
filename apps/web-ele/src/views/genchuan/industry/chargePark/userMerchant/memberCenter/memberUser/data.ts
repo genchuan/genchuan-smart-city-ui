@@ -2,13 +2,10 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { MemberUserApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 
-import { h } from 'vue';
-
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 
 import dayjs from 'dayjs';
-import { ElTag } from 'element-plus';
 
 import { z } from '#/adapter/form';
 import {
@@ -476,16 +473,6 @@ export function useGridFormSchema(): VbenFormSchema[] {
   ];
 }
 
-function renderStatus(status?: number | string) {
-  return h(
-    ElTag,
-    {
-      type: getMemberStatusTagType(status),
-    },
-    () => formatMemberStatus(status),
-  );
-}
-
 export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
     {
@@ -505,7 +492,9 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       field: 'levelName',
       title: '会员等级',
       minWidth: 120,
-      formatter: ({ row }) => row.levelName || row.levelId || '-',
+      slots: {
+        default: 'level',
+      },
     },
     {
       field: 'createTime',
@@ -518,7 +507,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '状态',
       minWidth: 90,
       slots: {
-        default: ({ row }) => renderStatus(row.status),
+        default: 'status',
       },
     },
     {

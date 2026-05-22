@@ -6,6 +6,7 @@ import { ElMessage } from 'element-plus';
 import { CreditConfigApi } from '#/api/genchuan/industry/chargePark/userMerchant/creditMgmt/creditConfig';
 import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
 import { buildStatsDataFromApi } from './data';
 import Table from './table/index.vue';
 
@@ -95,12 +96,14 @@ onMounted(() => {
       @card-click="({ index }) => index === 0 && handleFilterEffectConfigs()"
       @pie-click="({ name }) => handleFilterByConfigType(name)"
     />
-    <Table
-      ref="tableRef"
-      :reload-stats="loadStats"
-      :show-stats="showStats"
-      :toggle-stats="toggleStats"
-    />
+    <PageTabsShell title="信用配置">
+      <Table
+        ref="tableRef"
+        :reload-stats="loadStats"
+        :show-stats="showStats"
+        :toggle-stats="toggleStats"
+      />
+    </PageTabsShell>
   </div>
 </template>
 

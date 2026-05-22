@@ -2,10 +2,6 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { MemberConfigChartVO } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberConfig';
 
-import { h } from 'vue';
-
-import { ElTag } from 'element-plus';
-
 import { z } from '#/adapter/form';
 import { getRangePickerDefaultProps } from '#/utils';
 
@@ -50,16 +46,6 @@ export function buildStatsDataFromApi(data?: Partial<MemberConfigChartVO>) {
       },
     ],
   };
-}
-
-function renderStatus(status?: number | string) {
-  return h(
-    ElTag,
-    {
-      type: getLifecycleStatusTagType(status),
-    },
-    () => formatLifecycleStatus(status),
-  );
 }
 
 export function useFormSchema(): VbenFormSchema[] {
@@ -175,6 +161,9 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       field: 'configType',
       title: '配置类型',
       minWidth: 140,
+      slots: {
+        default: 'configType',
+      },
     },
     {
       field: 'content',
@@ -188,7 +177,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '状态',
       minWidth: 100,
       slots: {
-        default: ({ row }) => renderStatus(row.status),
+        default: 'status',
       },
     },
     {

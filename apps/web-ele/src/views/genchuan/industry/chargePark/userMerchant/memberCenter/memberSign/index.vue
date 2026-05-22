@@ -15,6 +15,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
+import dayjs from 'dayjs';
 import { ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
@@ -29,13 +30,13 @@ import {
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
 import MemberStatsVisualization from '../components/MemberStatsVisualization.vue';
 import { memberUserDetailFields } from '../memberUser/data';
 import {
   buildActiveFilterTags,
-  buildDateRangeByChartName,
-  buildTodayDateRange,
   cleanQueryParams,
+  formatDateTimeValue,
   formatRecordStatus,
   getRecordStatusTagType,
   refreshStatsLayout,
@@ -58,6 +59,8 @@ const searchParams = ref<Record<string, any>>({});
 const statsDataSource = ref(buildStatsDataFromApi());
 const showStats = ref(true);
 const userNameCache = new Map<number, string>();
+const QUERY_DATE_FORMAT = 'YYYY-MM-DD';
+const QUERY_DATE_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
 const drillFilterConfigs: Record<string, FilterTagConfig> = {
   createTime: {
@@ -444,9 +447,26 @@ async function handleDrillFilter(key: string, value: unknown) {
   await handleRefresh();
 }
 
+async function handleSignTimeDrill(value?: number | string) {
+  const parsed = dayjs(value);
+
+  if (!parsed.isValid()) {
+    return;
+  }
+
+  drillFilters.value = {
+    ...drillFilters.value,
+    createTime: [
+      parsed.startOf('second').format(QUERY_DATE_TIME_FORMAT),
+      parsed.endOf('second').format(QUERY_DATE_TIME_FORMAT),
+    ],
+  };
+  await handleRefresh();
+}
+
 async function handleStatsCardClick({ index }: { index: number }) {
   drillFilters.value = {
-    signDate: buildTodayDateRange(),
+    signDate: buildTodaySignDateRange(),
     ...(index === 1 ? { status: 1 } : {}),
   };
 
@@ -454,7 +474,7 @@ async function handleStatsCardClick({ index }: { index: number }) {
 }
 
 async function handleStatsLineClick({ name }: { name: string }) {
-  const range = buildDateRangeByChartName(name);
+  const range = buildSignDateRangeByChartName(name);
 
   if (!range) {
     return;
@@ -464,6 +484,28 @@ async function handleStatsLineClick({ name }: { name: string }) {
     signDate: range,
   };
   await handleRefresh();
+}
+
+function buildSignDateRangeByChartName(dateText: string) {
+  const date = dayjs(dateText);
+
+  if (!date.isValid()) {
+    return null;
+  }
+
+  const isDayValue = /^\d{4}-\d{2}-\d{2}$/.test(dateText);
+
+  return [
+    date.startOf(isDayValue ? 'day' : 'month').format(QUERY_DATE_FORMAT),
+    date.endOf(isDayValue ? 'day' : 'month').format(QUERY_DATE_FORMAT),
+  ];
+}
+
+function buildTodaySignDateRange() {
+  return [
+    dayjs().startOf('day').format(QUERY_DATE_FORMAT),
+    dayjs().endOf('day').format(QUERY_DATE_FORMAT),
+  ];
 }
 
 async function handleStatsBarClick({ name }: { name: string }) {
@@ -513,106 +555,119 @@ onMounted(() => {
       @line-click="handleStatsLineClick"
     />
 
-    <div class="park-lot-table-new user-merchant-table-grid">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="display: flex; flex-wrap: wrap; align-items: center"
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
+    <PageTabsShell title="会员签到">
+      <div class="park-lot-table-new user-merchant-table-grid">
+        <Grid>
+          <template #table-title>
+            <div
+              class="tabel-tabs"
+              style="display: flex; flex-wrap: wrap; align-items: center"
             >
-              {{ tag.label }}：{{ tag.value }}
+              <ElTag
+                v-for="tag in activeFilterTags"
+                :key="`${tag.source}-${tag.key}`"
+                :type="tag.type"
+                closable
+                style="height: 32px; margin: 4px 0; line-height: 32px"
+                @close="handleRemoveFilterTag(tag)"
+              >
+                {{ tag.label }}：{{ tag.value }}
+              </ElTag>
+            </div>
+          </template>
+
+          <template #toolbar-tools>
+            <div class="common-toolbar-tools">
+              <IconButton
+                v-access:code="['usermerchant:member-sign:export']"
+                content="导出"
+                icon-name="download"
+                @click="handleExport"
+              />
+              <IconButton
+                content="搜索"
+                icon-name="search"
+                @click="handleSearchShow"
+              />
+              <IconButton
+                :content="showStats ? '隐藏统计' : '显示统计'"
+                :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
+                @click="toggleStats"
+              />
+              <IconButton
+                content="全屏"
+                icon-name="FullScreen"
+                @click="() => screenfull.toggle()"
+              />
+            </div>
+          </template>
+
+          <template #user="{ row }">
+            <el-text
+              class="common-align"
+              type="primary"
+              style="cursor: pointer"
+              @click="handleUserDetail(row)"
+            >
+              {{ getSignUserDisplay(row) }}
+            </el-text>
+          </template>
+
+          <template #signTime="{ row }">
+            <el-text
+              class="common-align"
+              type="primary"
+              style="cursor: pointer"
+              @click="handleSignTimeDrill(row.createTime)"
+            >
+              {{ formatDateTimeValue(row.createTime) }}
+            </el-text>
+          </template>
+
+          <template #status="{ row }">
+            <ElTag
+              :type="getRecordStatusTagType(row.status)"
+              style="cursor: pointer"
+              @click="handleDrillFilter('status', row.status)"
+            >
+              {{ formatRecordStatus(row.status) }}
             </ElTag>
-          </div>
-        </template>
+          </template>
 
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton
-              v-access:code="['usermerchant:member-sign:export']"
-              content="导出"
-              icon-name="download"
-              @click="handleExport"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSearchShow"
-            />
-            <IconButton
-              :content="showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
+          <template #actions="{ row }">
+            <div class="table-toolbar-tools">
+              <IconButton
+                content="查看"
+                icon-name="View"
+                @click="handleDetail(row)"
+              />
+            </div>
+          </template>
+        </Grid>
 
-        <template #user="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleUserDetail(row)"
-          >
-            {{ getSignUserDisplay(row) }}
-          </el-text>
-        </template>
+        <Drawer title="搜索">
+          <QueryForm class="query-form" />
+        </Drawer>
 
-        <template #status="{ row }">
-          <ElTag
-            :type="getRecordStatusTagType(row.status)"
-            style="cursor: pointer"
-            @click="handleDrillFilter('status', row.status)"
-          >
-            {{ formatRecordStatus(row.status) }}
-          </ElTag>
-        </template>
+        <DetailDrawer
+          ref="detailDrawerRef"
+          :data="detailObj"
+          :fields="memberSignDetailFields"
+          :title="detailObj ? `签到记录 ${detailObj.id}` : '签到详情'"
+        />
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="查看"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-          </div>
-        </template>
-      </Grid>
-
-      <Drawer title="搜索">
-        <QueryForm class="query-form" />
-      </Drawer>
-
-      <DetailDrawer
-        ref="detailDrawerRef"
-        :data="detailObj"
-        :fields="memberSignDetailFields"
-        :title="detailObj ? `签到记录 ${detailObj.id}` : '签到详情'"
-      />
-
-      <DetailDrawer
-        ref="userDetailDrawerRef"
-        :data="userDetailObj"
-        :fields="memberUserDetailFields"
-        :title="
-          userDetailObj
-            ? `${userDetailObj.nickname || userDetailObj.mobile}详情`
-            : '会员详情'
-        "
-      />
-    </div>
+        <DetailDrawer
+          ref="userDetailDrawerRef"
+          :data="userDetailObj"
+          :fields="memberUserDetailFields"
+          :title="
+            userDetailObj
+              ? `${userDetailObj.nickname || userDetailObj.mobile}详情`
+              : '会员详情'
+          "
+        />
+      </div>
+    </PageTabsShell>
   </div>
 </template>
 

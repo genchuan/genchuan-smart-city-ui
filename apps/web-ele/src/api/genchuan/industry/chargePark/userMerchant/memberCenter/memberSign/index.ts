@@ -1,5 +1,7 @@
 import type { PageParam, PageResult } from '@vben/request';
 
+import dayjs from 'dayjs';
+
 import { normalizeQueryDateTimeRanges } from '#/api/genchuan/industry/chargePark/userMerchant/utils/query';
 import { requestClient } from '#/api/request';
 
@@ -48,12 +50,34 @@ export type MemberSignChartVO = {
   todaySignCount: number;
 };
 
+const QUERY_DATE_FORMAT = 'YYYY-MM-DD';
+
+function formatQueryDateRange(value?: unknown) {
+  if (!Array.isArray(value) || value.length !== 2) {
+    return undefined;
+  }
+
+  const range = value.map((item) => dayjs(item));
+
+  if (range.some((item) => !item.isValid())) {
+    return undefined;
+  }
+
+  return range.map((item) => item.format(QUERY_DATE_FORMAT));
+}
+
 function buildSignQuery(params: MemberSignPageReqVO) {
-  return normalizeQueryDateTimeRanges(params, [
+  const nextParams = normalizeQueryDateTimeRanges(params, [
     'createTime',
-    'signDate',
     'updateTime',
   ]);
+  const signDate = formatQueryDateRange(nextParams.signDate);
+
+  if (signDate) {
+    nextParams.signDate = signDate;
+  }
+
+  return nextParams;
 }
 
 export const MemberSignApi = {

@@ -4,32 +4,39 @@ import type {
   MemberGroupPageReqVO,
   MemberGroupVO,
 } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberGroup';
+import type { MemberUserApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import type {
   ActiveFilterTag,
   FilterTagConfig,
 } from '#/views/genchuan/industry/chargePark/userMerchant/memberCenter/utils';
 
-import { computed, onMounted, ref } from 'vue';
+import { computed, h, nextTick, onMounted, ref } from 'vue';
 
 import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
-import { ElLoading, ElMessage, ElTag } from 'element-plus';
+import { ElButton, ElDialog, ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberGroupApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberGroup';
+import {
+  getUserCount,
+  getUserPage,
+} from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
 import MemberStatsVisualization from '../components/MemberStatsVisualization.vue';
+import { formatMemberStatus, getMemberStatusTagType } from '../memberUser/data';
 import {
   buildActiveFilterTags,
   cleanQueryParams,
+  formatDateTimeValue,
   formatLifecycleStatus,
   isEnabledStatus,
   refreshStatsLayout,
-  STATUS_ENABLED,
 } from '../utils';
 import {
   buildStatsDataFromApi,
@@ -52,6 +59,15 @@ const drillFilters = ref<Record<string, any>>({});
 const searchParams = ref<Record<string, any>>({});
 const statsDataSource = ref(buildStatsDataFromApi());
 const showStats = ref(true);
+const groupUserCountCache = new Map<number, number>();
+const groupUserDialogVisible = ref(false);
+const selectedGroup = ref<MemberGroupVO>();
+
+const groupUserDialogTitle = computed(() =>
+  selectedGroup.value?.name
+    ? `${selectedGroup.value.name}会员列表`
+    : '分组会员列表',
+);
 
 const drillFilterConfigs: Record<string, FilterTagConfig> = {
   name: {
@@ -147,6 +163,7 @@ async function onQuerySubmit(values: Record<string, any>) {
 }
 
 function handleRefresh() {
+  groupUserCountCache.clear();
   gridApi.reload();
   void loadStats();
 }
@@ -170,9 +187,13 @@ function handleEdit(row: MemberGroupVO) {
 }
 
 async function handleDetail(row: MemberGroupVO) {
-  detailObj.value = row.id
+  const detail = row.id
     ? await MemberGroupApi.getMemberGroup(Number(row.id))
     : row;
+  detailObj.value = {
+    ...detail,
+    groupUserCount: await getGroupUserCount(detail),
+  };
   detailDrawerRef.value?.open();
 }
 
@@ -202,14 +223,16 @@ async function handleToggleStatus(row: MemberGroupVO) {
 }
 
 async function handleStatsCardClick({ index }: { index: number }) {
-  drillFilters.value =
-    index === 0
-      ? {}
-      : {
-          status: STATUS_ENABLED,
-        };
+  if (index === 0) {
+    drillFilters.value = {};
+    await handleRefresh();
+    return;
+  }
 
-  await handleRefresh();
+  selectedGroup.value = undefined;
+  groupUserDialogVisible.value = true;
+  await nextTick();
+  groupUserGridApi.reload();
 }
 
 async function handleStatsPieClick({ name }: { name: string }) {
@@ -217,11 +240,167 @@ async function handleStatsPieClick({ name }: { name: string }) {
     return;
   }
 
-  drillFilters.value = {
-    name,
-  };
-  await handleRefresh();
+  const group = await getGroupByName(name);
+
+  if (!group) {
+    ElMessage.warning('未找到对应会员分组');
+    return;
+  }
+
+  await handleOpenGroupUsers(group);
 }
+
+function getDirectGroupUserCount(row: MemberGroupVO) {
+  const value =
+    row.groupUserCount ??
+    row.userCount ??
+    row.memberUserCount ??
+    row.memberCount;
+  const count = Number(value);
+
+  return Number.isFinite(count) ? count : undefined;
+}
+
+async function getGroupUserCount(row: MemberGroupVO) {
+  const directCount = getDirectGroupUserCount(row);
+
+  if (directCount !== undefined) {
+    return directCount;
+  }
+
+  if (!row.id) {
+    return 0;
+  }
+
+  const groupId = Number(row.id);
+  const cachedCount = groupUserCountCache.get(groupId);
+
+  if (cachedCount !== undefined) {
+    return cachedCount;
+  }
+
+  const count = await getUserCount({ groupId });
+  groupUserCountCache.set(groupId, count);
+
+  return count;
+}
+
+async function appendGroupUserCounts(list: MemberGroupVO[] = []) {
+  return await Promise.all(
+    list.map(async (item) => ({
+      ...item,
+      groupUserCount: await getGroupUserCount(item),
+    })),
+  );
+}
+
+async function getGroupByName(name: string) {
+  const result = await MemberGroupApi.getMemberGroupPage({
+    name,
+    pageNo: 1,
+    pageSize: 100,
+  });
+
+  return result.list?.find((item) => item.name === name) || result.list?.[0];
+}
+
+async function handleOpenGroupUsers(row: MemberGroupVO) {
+  selectedGroup.value = {
+    ...row,
+    groupUserCount: await getGroupUserCount(row),
+  };
+  groupUserDialogVisible.value = true;
+  await nextTick();
+  groupUserGridApi.reload();
+}
+
+function getMemberUserDisplay(row: MemberUserApi.User) {
+  return row.nickname || row.name || row.mobile || `会员${row.id}`;
+}
+
+function renderMemberStatus(status?: number | string) {
+  return h(
+    ElTag,
+    {
+      type: getMemberStatusTagType(status),
+    },
+    () => formatMemberStatus(status),
+  );
+}
+
+const [GroupUserGrid, groupUserGridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: [
+      {
+        field: 'id',
+        title: '会员 ID',
+        minWidth: 100,
+      },
+      {
+        field: 'nickname',
+        title: '用户',
+        minWidth: 160,
+        formatter: ({ row }) => getMemberUserDisplay(row),
+      },
+      {
+        field: 'mobile',
+        title: '手机号',
+        minWidth: 130,
+        formatter: ({ cellValue }) => cellValue || '-',
+      },
+      {
+        field: 'groupName',
+        title: '会员分组',
+        minWidth: 120,
+        formatter: ({ row }) => row.groupName || row.groupId || '-',
+      },
+      {
+        field: 'status',
+        title: '状态',
+        minWidth: 90,
+        slots: {
+          default: ({ row }) => renderMemberStatus(row.status),
+        },
+      },
+      {
+        field: 'createTime',
+        title: '开通时间',
+        minWidth: 160,
+        formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
+      },
+      {
+        field: 'expireTime',
+        title: '到期时间',
+        minWidth: 160,
+        formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
+      },
+    ],
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => {
+          const queryValues = selectedGroup.value?.id
+            ? { groupId: Number(selectedGroup.value.id) }
+            : {};
+
+          return await getUserPage({
+            pageNo: page.currentPage,
+            pageSize: page.pageSize,
+            ...queryValues,
+          });
+        },
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    toolbarConfig: {
+      refresh: true,
+    },
+  } as VxeTableGridOptions<MemberUserApi.User>,
+  showSearchForm: false,
+});
 
 async function syncQueryFormValues() {
   await queryFormApi.resetForm();
@@ -257,11 +436,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
             ...drillFilters.value,
           }) as MemberGroupPageReqVO;
 
-          return await MemberGroupApi.getMemberGroupPage({
+          const result = await MemberGroupApi.getMemberGroupPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             ...queryValues,
           });
+
+          return {
+            ...result,
+            list: await appendGroupUserCounts(result.list || []),
+          };
         },
       },
     },
@@ -294,85 +478,107 @@ onMounted(() => {
       @pie-click="handleStatsPieClick"
     />
 
-    <div class="park-lot-table-new user-merchant-table-grid">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="display: flex; flex-wrap: wrap; align-items: center"
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
+    <PageTabsShell title="会员分组">
+      <div class="park-lot-table-new user-merchant-table-grid">
+        <Grid>
+          <template #table-title>
+            <div
+              class="tabel-tabs"
+              style="display: flex; flex-wrap: wrap; align-items: center"
             >
-              {{ tag.label }}：{{ tag.value }}
-            </ElTag>
-          </div>
-        </template>
+              <ElTag
+                v-for="tag in activeFilterTags"
+                :key="`${tag.source}-${tag.key}`"
+                :type="tag.type"
+                closable
+                style="height: 32px; margin: 4px 0; line-height: 32px"
+                @close="handleRemoveFilterTag(tag)"
+              >
+                {{ tag.label }}：{{ tag.value }}
+              </ElTag>
+            </div>
+          </template>
 
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton
-              v-access:code="['usermerchant:member-group:create']"
-              content="新增会员分组"
-              icon-name="Plus"
-              @click="handleCreate"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSearchShow"
-            />
-            <IconButton
-              :content="showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="查看"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-            <IconButton
-              v-access:code="['usermerchant:member-group:update']"
-              content="编辑"
-              icon-name="Edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              v-access:code="['usermerchant:member-group:update']"
-              :content="isEnabledStatus(row.status) ? '禁用' : '生效'"
-              :icon-name="isEnabledStatus(row.status) ? 'Close' : 'Check'"
-              @click="handleToggleStatus(row)"
-            />
-          </div>
-        </template>
-      </Grid>
+          <template #toolbar-tools>
+            <div class="common-toolbar-tools">
+              <IconButton
+                v-access:code="['usermerchant:member-group:create']"
+                content="新增会员分组"
+                icon-name="Plus"
+                @click="handleCreate"
+              />
+              <IconButton
+                content="搜索"
+                icon-name="search"
+                @click="handleSearchShow"
+              />
+              <IconButton
+                :content="showStats ? '隐藏统计' : '显示统计'"
+                :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
+                @click="toggleStats"
+              />
+              <IconButton
+                content="全屏"
+                icon-name="FullScreen"
+                @click="() => screenfull.toggle()"
+              />
+            </div>
+          </template>
+          <template #actions="{ row }">
+            <div class="table-toolbar-tools">
+              <IconButton
+                content="查看"
+                icon-name="View"
+                @click="handleDetail(row)"
+              />
+              <IconButton
+                v-access:code="['usermerchant:member-group:update']"
+                content="编辑"
+                icon-name="Edit"
+                @click="handleEdit(row)"
+              />
+              <IconButton
+                v-access:code="['usermerchant:member-group:update']"
+                :content="isEnabledStatus(row.status) ? '禁用' : '生效'"
+                :icon-name="isEnabledStatus(row.status) ? 'Close' : 'Check'"
+                @click="handleToggleStatus(row)"
+              />
+            </div>
+          </template>
+          <template #groupName="{ row }">
+            <ElButton link type="primary" @click="handleOpenGroupUsers(row)">
+              {{ row.name || '-' }}
+            </ElButton>
+          </template>
+          <template #groupUserCount="{ row }">
+            <ElButton link type="primary" @click="handleOpenGroupUsers(row)">
+              {{ row.groupUserCount ?? 0 }}
+            </ElButton>
+          </template>
+        </Grid>
 
-      <Drawer title="搜索">
-        <QueryForm class="query-form" />
-      </Drawer>
+        <Drawer title="搜索">
+          <QueryForm class="query-form" />
+        </Drawer>
 
-      <DetailDrawer
-        ref="detailDrawerRef"
-        :data="detailObj"
-        :fields="memberGroupDetailFields"
-        :title="detailObj ? `${detailObj.name}详情` : '会员分组详情'"
-      />
-    </div>
+        <DetailDrawer
+          ref="detailDrawerRef"
+          :data="detailObj"
+          :fields="memberGroupDetailFields"
+          :title="detailObj ? `${detailObj.name}详情` : '会员分组详情'"
+        />
+
+        <ElDialog
+          v-model="groupUserDialogVisible"
+          :title="groupUserDialogTitle"
+          width="960px"
+        >
+          <div class="member-group-user-dialog">
+            <GroupUserGrid />
+          </div>
+        </ElDialog>
+      </div>
+    </PageTabsShell>
   </div>
 </template>
 
@@ -419,5 +625,9 @@ onMounted(() => {
 :deep(.user-merchant-table-grid .vxe-tools--operate) {
   position: static !important;
   flex-shrink: 0;
+}
+
+.member-group-user-dialog {
+  min-height: 420px;
 }
 </style>

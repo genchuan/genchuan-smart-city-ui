@@ -5,14 +5,20 @@ import { requestClient } from '#/api/request';
 
 export type MemberGroupVO = {
   createTime?: number | string;
+  creator?: string;
   description?: string;
   effectiveTime?: number | string;
+  groupUserCount?: number;
   id?: number;
+  memberCount?: number;
+  memberUserCount?: number;
   name: string;
   remark?: string;
   rule?: string;
   status?: number | string;
+  updater?: string;
   updateTime?: number | string;
+  userCount?: number;
 };
 
 export type MemberGroupPageReqVO = PageParam & {

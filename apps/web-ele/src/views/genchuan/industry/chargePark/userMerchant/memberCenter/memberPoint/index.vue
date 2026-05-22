@@ -22,10 +22,14 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberPointApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberPoint';
-import { getUser } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
+import {
+  getUser,
+  getUserPage,
+} from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
 import MemberStatsVisualization from '../components/MemberStatsVisualization.vue';
 import { memberUserDetailFields } from '../memberUser/data';
 import {
@@ -59,6 +63,7 @@ const searchParams = ref<Record<string, any>>({});
 const statsDataSource = ref(buildStatsDataFromApi());
 const showStats = ref(true);
 const userNameCache = new Map<number, string>();
+let memberUserListCache: Promise<MemberUserApi.User[]> | undefined;
 
 const drillFilterConfigs: Record<string, FilterTagConfig> = {
   changeAmount: {
@@ -100,8 +105,8 @@ const searchFilterConfigs: Record<string, FilterTagConfig> = {
     label: '状态',
     type: 'success',
   },
-  userId: {
-    label: '用户',
+  userName: {
+    label: '用户名称',
     type: 'info',
   },
 };
@@ -177,6 +182,39 @@ function getMemberUserDisplay(user: MemberUserApi.User, userId: number) {
   return user.nickname || user.name || user.mobile || `用户 ${userId}`;
 }
 
+async function loadMemberUserList() {
+  memberUserListCache ||= (async () => {
+    const pageSize = 200;
+    const firstPage = await getUserPage({
+      pageNo: 1,
+      pageSize,
+    });
+    const total = Number(firstPage.total ?? firstPage.list?.length ?? 0);
+    const pageCount = Math.ceil(total / pageSize);
+    const list = [...(firstPage.list || [])];
+
+    if (pageCount > 1) {
+      const restPages = await Promise.all(
+        Array.from({ length: pageCount - 1 }, (_, index) =>
+          getUserPage({
+            pageNo: index + 2,
+            pageSize,
+          }),
+        ),
+      );
+
+      list.push(...restPages.flatMap((page) => page.list || []));
+    }
+
+    return list;
+  })().catch((error) => {
+    memberUserListCache = undefined;
+    throw error;
+  });
+
+  return await memberUserListCache;
+}
+
 async function getPointUserName(userId?: number) {
   if (!userId) {
     return '';
@@ -188,12 +226,16 @@ async function getPointUserName(userId?: number) {
   }
 
   try {
-    const user = await getUser(userId);
-    const userName = getMemberUserDisplay(user, userId);
+    const users = await loadMemberUserList();
+    const user = users.find((item) => Number(item.id) === userId);
+    const userName = user
+      ? getMemberUserDisplay(user, userId)
+      : `用户 ${userId}`;
+
     userNameCache.set(userId, userName);
     return userName;
   } catch (error) {
-    console.warn('[memberPoint] load user name failed:', error);
+    console.warn('[memberPoint] load member user names failed:', error);
     return `用户 ${userId}`;
   }
 }
@@ -229,6 +271,59 @@ async function appendPointUserNames<T extends MemberPointVO>(list: T[] = []) {
   }));
 }
 
+async function getUserIdByName(userName?: string) {
+  const keyword = String(userName ?? '').trim();
+
+  if (!keyword) {
+    return undefined;
+  }
+
+  const users = await loadMemberUserList();
+  const user =
+    users.find(
+      (item) =>
+        item.nickname === keyword ||
+        item.name === keyword ||
+        item.mobile === keyword,
+    ) ||
+    users.find((item) =>
+      [item.nickname, item.name, item.mobile].some((value) =>
+        String(value ?? '').includes(keyword),
+      ),
+    );
+
+  if (!user?.id) {
+    return undefined;
+  }
+
+  const userId = Number(user.id);
+  userNameCache.set(userId, getMemberUserDisplay(user, userId));
+
+  return userId;
+}
+
+async function buildPointQueryValues(
+  values: MemberPointPageReqVO,
+): Promise<MemberPointPageReqVO | undefined> {
+  const { userName, ...queryValues } = values;
+
+  if (!userName) {
+    return queryValues;
+  }
+
+  const userId = await getUserIdByName(userName);
+
+  if (!userId) {
+    ElMessage.warning('未找到对应用户');
+    return undefined;
+  }
+
+  return {
+    ...queryValues,
+    userId,
+  };
+}
+
 async function onQuerySubmit(values: Record<string, any>) {
   searchParams.value = { ...values };
   drillFilters.value = {};
@@ -243,11 +338,20 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          const queryValues = cleanQueryParams({
-            ...searchParams.value,
-            ...formValues,
-            ...drillFilters.value,
-          }) as MemberPointPageReqVO;
+          const queryValues = await buildPointQueryValues(
+            cleanQueryParams({
+              ...searchParams.value,
+              ...formValues,
+              ...drillFilters.value,
+            }) as MemberPointPageReqVO,
+          );
+
+          if (!queryValues) {
+            return {
+              list: [],
+              total: 0,
+            };
+          }
 
           const result = await MemberPointApi.getMemberPointPage({
             pageNo: page.currentPage,
@@ -292,11 +396,19 @@ async function handleSearchShow() {
 
 async function handleExport() {
   try {
-    const data = await MemberPointApi.exportMemberPoint(
+    const queryValues = await buildPointQueryValues(
       cleanQueryParams({
         ...searchParams.value,
         ...drillFilters.value,
       }) as MemberPointPageReqVO,
+    );
+
+    if (!queryValues) {
+      return;
+    }
+
+    const data = await MemberPointApi.exportMemberPoint(
+      queryValues as MemberPointPageReqVO,
     );
     downloadFileFromBlobPart({ fileName: '会员积分.xls', source: data });
     ElMessage.success('导出成功');
@@ -425,135 +537,137 @@ onMounted(() => {
       @line-click="handleStatsLineClick"
     />
 
-    <div class="park-lot-table-new user-merchant-table-grid">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="display: flex; flex-wrap: wrap; align-items: center"
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
+    <PageTabsShell title="会员积分">
+      <div class="park-lot-table-new user-merchant-table-grid">
+        <Grid>
+          <template #table-title>
+            <div
+              class="tabel-tabs"
+              style="display: flex; flex-wrap: wrap; align-items: center"
             >
-              {{ tag.label }}：{{ tag.value }}
+              <ElTag
+                v-for="tag in activeFilterTags"
+                :key="`${tag.source}-${tag.key}`"
+                :type="tag.type"
+                closable
+                style="height: 32px; margin: 4px 0; line-height: 32px"
+                @close="handleRemoveFilterTag(tag)"
+              >
+                {{ tag.label }}：{{ tag.value }}
+              </ElTag>
+            </div>
+          </template>
+
+          <template #toolbar-tools>
+            <div class="common-toolbar-tools">
+              <IconButton
+                v-access:code="['usermerchant:member-point:export']"
+                content="导出"
+                icon-name="download"
+                @click="handleExport"
+              />
+              <IconButton
+                content="搜索"
+                icon-name="search"
+                @click="handleSearchShow"
+              />
+              <IconButton
+                :content="showStats ? '隐藏统计' : '显示统计'"
+                :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
+                @click="toggleStats"
+              />
+              <IconButton
+                content="全屏"
+                icon-name="FullScreen"
+                @click="() => screenfull.toggle()"
+              />
+            </div>
+          </template>
+
+          <template #user="{ row }">
+            <el-text
+              class="common-align"
+              type="primary"
+              style="cursor: pointer"
+              @click="handleUserDetail(row)"
+            >
+              {{ getPointUserDisplay(row) }}
+            </el-text>
+          </template>
+
+          <template #changeAmount="{ row }">
+            <ElTag
+              :type="getChangeAmountTagType(row.changeAmount)"
+              style="cursor: pointer"
+              @click="handleDrillFilter('changeAmount', row.changeAmount)"
+            >
+              {{ formatChangeAmount(row.changeAmount) }}
             </ElTag>
-          </div>
-        </template>
+          </template>
 
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton
-              v-access:code="['usermerchant:member-point:export']"
-              content="导出"
-              icon-name="download"
-              @click="handleExport"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSearchShow"
-            />
-            <IconButton
-              :content="showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
+          <template #changeType="{ row }">
+            <el-text
+              class="common-align"
+              type="primary"
+              style="cursor: pointer"
+              @click="handleDrillFilter('changeType', row.changeType)"
+            >
+              {{ formatChangeType(row.changeType) }}
+            </el-text>
+          </template>
 
-        <template #user="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleUserDetail(row)"
-          >
-            {{ getPointUserDisplay(row) }}
-          </el-text>
-        </template>
+          <template #status="{ row }">
+            <ElTag
+              :type="getRecordStatusTagType(row.status)"
+              style="cursor: pointer"
+              @click="handleDrillFilter('status', row.status)"
+            >
+              {{ formatRecordStatus(row.status) }}
+            </ElTag>
+          </template>
 
-        <template #changeAmount="{ row }">
-          <ElTag
-            :type="getChangeAmountTagType(row.changeAmount)"
-            style="cursor: pointer"
-            @click="handleDrillFilter('changeAmount', row.changeAmount)"
-          >
-            {{ formatChangeAmount(row.changeAmount) }}
-          </ElTag>
-        </template>
+          <template #actions="{ row }">
+            <div class="table-toolbar-tools">
+              <IconButton
+                content="查看"
+                icon-name="View"
+                @click="handleDetail(row)"
+              />
+              <IconButton
+                v-if="isAbnormalRecord(row.status)"
+                v-access:code="['usermerchant:member-point:update']"
+                content="核查"
+                icon-name="DocumentChecked"
+                color="#F56C6C"
+                @click="handleCheck(row)"
+              />
+            </div>
+          </template>
+        </Grid>
 
-        <template #changeType="{ row }">
-          <el-text
-            class="common-align"
-            type="primary"
-            style="cursor: pointer"
-            @click="handleDrillFilter('changeType', row.changeType)"
-          >
-            {{ formatChangeType(row.changeType) }}
-          </el-text>
-        </template>
+        <Drawer title="搜索">
+          <QueryForm class="query-form" />
+        </Drawer>
 
-        <template #status="{ row }">
-          <ElTag
-            :type="getRecordStatusTagType(row.status)"
-            style="cursor: pointer"
-            @click="handleDrillFilter('status', row.status)"
-          >
-            {{ formatRecordStatus(row.status) }}
-          </ElTag>
-        </template>
+        <DetailDrawer
+          ref="detailDrawerRef"
+          :data="detailObj"
+          :fields="memberPointDetailFields"
+          :title="detailObj ? `积分记录 ${detailObj.id}` : '积分记录详情'"
+        />
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="查看"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-            <IconButton
-              v-if="isAbnormalRecord(row.status)"
-              v-access:code="['usermerchant:member-point:update']"
-              content="核查"
-              icon-name="DocumentChecked"
-              color="#F56C6C"
-              @click="handleCheck(row)"
-            />
-          </div>
-        </template>
-      </Grid>
-
-      <Drawer title="搜索">
-        <QueryForm class="query-form" />
-      </Drawer>
-
-      <DetailDrawer
-        ref="detailDrawerRef"
-        :data="detailObj"
-        :fields="memberPointDetailFields"
-        :title="detailObj ? `积分记录 ${detailObj.id}` : '积分记录详情'"
-      />
-
-      <DetailDrawer
-        ref="userDetailDrawerRef"
-        :data="userDetailObj"
-        :fields="memberUserDetailFields"
-        :title="
-          userDetailObj
-            ? `${userDetailObj.nickname || userDetailObj.mobile}详情`
-            : '会员详情'
-        "
-      />
-    </div>
+        <DetailDrawer
+          ref="userDetailDrawerRef"
+          :data="userDetailObj"
+          :fields="memberUserDetailFields"
+          :title="
+            userDetailObj
+              ? `${userDetailObj.nickname || userDetailObj.mobile}详情`
+              : '会员详情'
+          "
+        />
+      </div>
+    </PageTabsShell>
   </div>
 </template>
 

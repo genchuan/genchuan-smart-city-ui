@@ -173,6 +173,17 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       field: 'name',
       title: '分组名称',
       minWidth: 160,
+      slots: {
+        default: 'groupName',
+      },
+    },
+    {
+      field: 'groupUserCount',
+      title: '分组用户数',
+      minWidth: 120,
+      slots: {
+        default: 'groupUserCount',
+      },
     },
     {
       field: 'description',
@@ -209,6 +220,7 @@ export const memberGroupDetailFields = [
   { key: 'name', label: '分组名称' },
   { key: 'description', label: '分组描述' },
   { key: 'rule', label: '分组规则' },
+  { key: 'groupUserCount', label: '分组用户数' },
   {
     key: 'status',
     label: '状态',
