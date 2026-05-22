@@ -155,7 +155,9 @@ export const GroupCarApi = {
   },
 
   importGroupCarTemplate: async () => {
-    return await requestClient.download('/usermerchant/group-car/template');
+    return await requestClient.download('/usermerchant/group-car/template', {
+      responseReturn: 'raw',
+    });
   },
 
   exportGroupCar: async (params: GroupCarPageReqVO) => {

@@ -364,6 +364,7 @@ export function buildStatsDataFromApi(data?: Partial<UserCreditChartVO>) {
 export function buildUserCreditQueryParams(
   formValues: Record<string, any>,
   drillFilters?: {
+    creditLevel?: string;
     creditScore?: number | string;
   },
 ) {
@@ -377,7 +378,8 @@ export function buildUserCreditQueryParams(
   const userId = Number(formValues.userId || 0);
 
   return {
-    creditLevel: formValues.creditLevel || undefined,
+    creditLevel:
+      drillFilters?.creditLevel || formValues.creditLevel || undefined,
     creditScore: drillFilters?.creditScore || undefined,
     nickname: formValues.nickname || undefined,
     remark: formValues.remark || undefined,

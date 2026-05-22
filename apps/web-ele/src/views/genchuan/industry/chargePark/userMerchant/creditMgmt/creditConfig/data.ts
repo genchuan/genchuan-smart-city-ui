@@ -295,6 +295,7 @@ export function buildCreditConfigQueryParams(formValues: Record<string, any>) {
       : undefined;
 
   return {
+    configType: formValues.configType || undefined,
     effectTime,
     levelThreshold: formValues.levelThreshold || undefined,
     remark: formValues.remark || undefined,

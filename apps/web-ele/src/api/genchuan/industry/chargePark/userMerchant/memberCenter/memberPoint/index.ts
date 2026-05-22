@@ -16,12 +16,15 @@ export type MemberPointVO = {
   creator?: string;
   description?: string;
   id?: number;
+  mobile?: string;
+  nickname?: string;
   status?: number | string;
   title?: string;
   totalPoint?: number;
   updater?: string;
   updateTime?: number | string;
   userId?: number;
+  userName?: string;
 };
 
 export type MemberPointPageReqVO = PageParam & {

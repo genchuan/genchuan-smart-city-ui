@@ -21,8 +21,8 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberConfigApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberConfig';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
+import MemberStatsVisualization from '../components/MemberStatsVisualization.vue';
 import {
   buildActiveFilterTags,
   cleanQueryParams,
@@ -292,7 +292,7 @@ onMounted(() => {
   <div class="common-index">
     <FormModal @success="handleRefresh" />
 
-    <StatsVisualization
+    <MemberStatsVisualization
       v-if="showStats"
       :data="statsData"
       @card-click="handleStatsCardClick"
@@ -425,31 +425,5 @@ onMounted(() => {
 :deep(.user-merchant-table-grid .vxe-tools--operate) {
   position: static !important;
   flex-shrink: 0;
-}
-
-:deep(.park-chart-box) {
-  height: 300px;
-}
-
-:deep(.park-chart-box .chart-box-left) {
-  height: 100%;
-}
-
-:deep(.park-chart-box .stat-card) {
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-:deep(.park-chart-box .map-wrapper),
-:deep(.park-chart-box .park-type-chart),
-:deep(.park-chart-box .simple-bar-chart) {
-  height: 100%;
-}
-
-:deep(.rule-chart-box),
-:deep(.rule-chart-box .chart-box-left),
-:deep(.rule-chart-box .charts-wrapper),
-:deep(.rule-chart-box .chart-area) {
-  height: 300px;
 }
 </style>

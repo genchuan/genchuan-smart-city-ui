@@ -5,6 +5,7 @@ import type {
   MemberPointPageReqVO,
   MemberPointVO,
 } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberPoint';
+import type { MemberUserApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import type {
   ActiveFilterTag,
   FilterTagConfig,
@@ -21,21 +22,26 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberPointApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberPoint';
+import { getUser } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
+import MemberStatsVisualization from '../components/MemberStatsVisualization.vue';
+import { memberUserDetailFields } from '../memberUser/data';
 import {
   buildActiveFilterTags,
   buildDateRangeByChartName,
   buildRecentDateRange,
   cleanQueryParams,
   formatRecordStatus,
+  getRecordStatusTagType,
   refreshStatsLayout,
 } from '../utils';
 import {
   buildStatsDataFromApi,
+  formatChangeAmount,
   formatChangeType,
+  getChangeAmountTagType,
   isAbnormalRecord,
   memberPointDetailFields,
   useGridColumns,
@@ -46,21 +52,38 @@ import '#/genchuan-components/page/index.scss';
 
 const detailDrawerRef = ref<null | { open: () => void }>(null);
 const detailObj = ref<MemberPointVO>();
+const userDetailDrawerRef = ref<null | { open: () => void }>(null);
+const userDetailObj = ref<MemberUserApi.User>();
 const drillFilters = ref<Record<string, any>>({});
 const searchParams = ref<Record<string, any>>({});
 const statsDataSource = ref(buildStatsDataFromApi());
 const showStats = ref(true);
+const userNameCache = new Map<number, string>();
 
 const drillFilterConfigs: Record<string, FilterTagConfig> = {
+  changeAmount: {
+    label: '变动金额',
+    type: 'warning',
+  },
+  changeType: {
+    formatter: formatChangeType,
+    label: '变动类型',
+    type: 'warning',
+  },
   createTime: {
     label: '变动时间',
     type: 'primary',
+  },
+  status: {
+    formatter: formatRecordStatus,
+    label: '状态',
+    type: 'success',
   },
 };
 
 const searchFilterConfigs: Record<string, FilterTagConfig> = {
   changeAmount: {
-    label: '变动积分',
+    label: '变动金额',
     type: 'warning',
   },
   changeType: {
@@ -74,11 +97,11 @@ const searchFilterConfigs: Record<string, FilterTagConfig> = {
   },
   status: {
     formatter: formatRecordStatus,
-    label: '记录状态',
+    label: '状态',
     type: 'success',
   },
   userId: {
-    label: '用户编号',
+    label: '用户',
     type: 'info',
   },
 };
@@ -141,6 +164,71 @@ const activeFilterTags = computed<ActiveFilterTag[]>(() =>
   ]),
 );
 
+function getPointUserDisplay(row: MemberPointVO) {
+  return (
+    row.userName ||
+    row.nickname ||
+    row.mobile ||
+    (row.userId ? `用户 ${row.userId}` : '-')
+  );
+}
+
+function getMemberUserDisplay(user: MemberUserApi.User, userId: number) {
+  return user.nickname || user.name || user.mobile || `用户 ${userId}`;
+}
+
+async function getPointUserName(userId?: number) {
+  if (!userId) {
+    return '';
+  }
+
+  const cachedName = userNameCache.get(userId);
+  if (cachedName) {
+    return cachedName;
+  }
+
+  try {
+    const user = await getUser(userId);
+    const userName = getMemberUserDisplay(user, userId);
+    userNameCache.set(userId, userName);
+    return userName;
+  } catch (error) {
+    console.warn('[memberPoint] load user name failed:', error);
+    return `用户 ${userId}`;
+  }
+}
+
+async function appendPointUserName<T extends MemberPointVO>(row: T) {
+  if (!row.userId) {
+    return row;
+  }
+
+  return {
+    ...row,
+    userName: await getPointUserName(Number(row.userId)),
+  };
+}
+
+async function appendPointUserNames<T extends MemberPointVO>(list: T[] = []) {
+  const userIds = [
+    ...new Set(
+      list
+        .map((item) => item.userId)
+        .filter((item): item is number => item !== undefined && item !== null)
+        .map(Number),
+    ),
+  ];
+
+  await Promise.all(userIds.map((userId) => getPointUserName(userId)));
+
+  return list.map((item) => ({
+    ...item,
+    userName: item.userId
+      ? userNameCache.get(Number(item.userId)) || getPointUserDisplay(item)
+      : getPointUserDisplay(item),
+  }));
+}
+
 async function onQuerySubmit(values: Record<string, any>) {
   searchParams.value = { ...values };
   drillFilters.value = {};
@@ -161,11 +249,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
             ...drillFilters.value,
           }) as MemberPointPageReqVO;
 
-          return await MemberPointApi.getMemberPointPage({
+          const result = await MemberPointApi.getMemberPointPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             ...queryValues,
           });
+
+          return {
+            ...result,
+            list: await appendPointUserNames(result.list || []),
+          };
         },
       },
     },
@@ -213,10 +306,42 @@ async function handleExport() {
 }
 
 async function handleDetail(row: MemberPointVO) {
-  detailObj.value = row.id
+  const detail = row.id
     ? await MemberPointApi.getMemberPoint(Number(row.id))
     : row;
+  detailObj.value = await appendPointUserName(detail);
   detailDrawerRef.value?.open();
+}
+
+async function handleUserDetail(row: MemberPointVO) {
+  if (!row.userId) {
+    return;
+  }
+
+  try {
+    userDetailObj.value = await getUser(Number(row.userId));
+    userDetailDrawerRef.value?.open();
+  } catch (error) {
+    ElMessage.error('加载会员详情失败');
+    console.error('[memberPoint] load user detail failed:', error);
+  }
+}
+
+async function handleDrillFilter(key: string, value: unknown) {
+  if (value === undefined || value === null || value === '') {
+    return;
+  }
+
+  const nextFilters = { ...drillFilters.value };
+
+  if (nextFilters[key] === value) {
+    delete nextFilters[key];
+  } else {
+    nextFilters[key] = value;
+  }
+
+  drillFilters.value = nextFilters;
+  await handleRefresh();
 }
 
 async function handleCheck(row: MemberPointVO) {
@@ -293,7 +418,7 @@ onMounted(() => {
 
 <template>
   <div class="common-index">
-    <StatsVisualization
+    <MemberStatsVisualization
       v-if="showStats"
       :data="statsData"
       @card-click="handleStatsCardClick"
@@ -346,6 +471,48 @@ onMounted(() => {
           </div>
         </template>
 
+        <template #user="{ row }">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleUserDetail(row)"
+          >
+            {{ getPointUserDisplay(row) }}
+          </el-text>
+        </template>
+
+        <template #changeAmount="{ row }">
+          <ElTag
+            :type="getChangeAmountTagType(row.changeAmount)"
+            style="cursor: pointer"
+            @click="handleDrillFilter('changeAmount', row.changeAmount)"
+          >
+            {{ formatChangeAmount(row.changeAmount) }}
+          </ElTag>
+        </template>
+
+        <template #changeType="{ row }">
+          <el-text
+            class="common-align"
+            type="primary"
+            style="cursor: pointer"
+            @click="handleDrillFilter('changeType', row.changeType)"
+          >
+            {{ formatChangeType(row.changeType) }}
+          </el-text>
+        </template>
+
+        <template #status="{ row }">
+          <ElTag
+            :type="getRecordStatusTagType(row.status)"
+            style="cursor: pointer"
+            @click="handleDrillFilter('status', row.status)"
+          >
+            {{ formatRecordStatus(row.status) }}
+          </ElTag>
+        </template>
+
         <template #actions="{ row }">
           <div class="table-toolbar-tools">
             <IconButton
@@ -374,6 +541,17 @@ onMounted(() => {
         :data="detailObj"
         :fields="memberPointDetailFields"
         :title="detailObj ? `积分记录 ${detailObj.id}` : '积分记录详情'"
+      />
+
+      <DetailDrawer
+        ref="userDetailDrawerRef"
+        :data="userDetailObj"
+        :fields="memberUserDetailFields"
+        :title="
+          userDetailObj
+            ? `${userDetailObj.nickname || userDetailObj.mobile}详情`
+            : '会员详情'
+        "
       />
     </div>
   </div>
@@ -422,31 +600,5 @@ onMounted(() => {
 :deep(.user-merchant-table-grid .vxe-tools--operate) {
   position: static !important;
   flex-shrink: 0;
-}
-
-:deep(.park-chart-box) {
-  height: 300px;
-}
-
-:deep(.park-chart-box .chart-box-left) {
-  height: 100%;
-}
-
-:deep(.park-chart-box .stat-card) {
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-:deep(.park-chart-box .map-wrapper),
-:deep(.park-chart-box .park-type-chart),
-:deep(.park-chart-box .simple-bar-chart) {
-  height: 100%;
-}
-
-:deep(.rule-chart-box),
-:deep(.rule-chart-box .chart-box-left),
-:deep(.rule-chart-box .charts-wrapper),
-:deep(.rule-chart-box .chart-area) {
-  height: 300px;
 }
 </style>

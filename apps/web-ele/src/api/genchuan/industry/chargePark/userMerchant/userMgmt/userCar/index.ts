@@ -13,6 +13,7 @@ export type UserCarVO = {
   createTime?: string;
   creator?: string;
   id?: number;
+  nickname?: string;
   phone?: string;
   plateColor: string;
   plateNo: string;
@@ -22,7 +23,6 @@ export type UserCarVO = {
   status: string;
   updateTime?: string;
   userId: number;
-  nickname?: string;
 };
 
 export type UserCarCreateReqVO = {
@@ -50,12 +50,12 @@ export type UserCarPageReqVO = PageParam & {
   auditTime?: string[];
   bindTime?: string[];
   carType?: string;
+  nickname?: string;
   plateColor?: string;
   plateNo?: string;
   remark?: string;
   status?: string;
   userId?: number;
-  nickname?: string;
 };
 
 export type UserCarAuditReqVO = {
@@ -152,7 +152,9 @@ export const UserCarApi = {
   },
 
   importUserCarTemplate: async () => {
-    return await requestClient.download('/usermerchant/user-car/template');
+    return await requestClient.download('/usermerchant/user-car/template', {
+      responseReturn: 'raw',
+    });
   },
 
   exportUserCar: async (params: UserCarPageReqVO) => {

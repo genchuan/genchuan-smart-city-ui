@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { UploadUserFile } from 'element-plus';
+
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type {
   MemberTagPageReqVO,
@@ -14,7 +16,7 @@ import { computed, onMounted, ref } from 'vue';
 import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
-import { ElLoading, ElMessage, ElTag } from 'element-plus';
+import { ElButton, ElDialog, ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -22,8 +24,9 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberTagApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberTag';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
+import { downloadFileIfValid } from '#/views/genchuan/industry/chargePark/userMerchant/utils/download';
 
+import MemberStatsVisualization from '../components/MemberStatsVisualization.vue';
 import {
   buildActiveFilterTags,
   cleanQueryParams,
@@ -53,6 +56,8 @@ const drillFilters = ref<Record<string, any>>({});
 const searchParams = ref<Record<string, any>>({});
 const statsDataSource = ref(buildStatsDataFromApi());
 const showStats = ref(true);
+const importDialogVisible = ref(false);
+const importFileList = ref<UploadUserFile[]>([]);
 
 const drillFilterConfigs: Record<string, FilterTagConfig> = {
   name: {
@@ -217,6 +222,50 @@ async function handleExport() {
   }
 }
 
+async function handleImportTags() {
+  const file = importFileList.value[0]?.raw;
+
+  if (!file) {
+    ElMessage.warning('请先上传导入文件');
+    return;
+  }
+
+  const loadingInstance = ElLoading.service({
+    text: '会员标签导入中...',
+  });
+
+  try {
+    await MemberTagApi.importMemberTag(file);
+    importDialogVisible.value = false;
+    importFileList.value = [];
+    ElMessage.success('导入成功');
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error('导入失败');
+    console.error('[memberTag] import failed:', error);
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+async function handleDownloadTemplate() {
+  try {
+    const data = await MemberTagApi.importMemberTagTemplate();
+    await downloadFileIfValid({
+      fileName: '会员标签导入模板.xlsx',
+      source: data,
+    });
+    ElMessage.success('模板下载成功');
+  } catch (error) {
+    ElMessage.error('模板下载失败');
+    console.error('[memberTag] download template failed:', error);
+  }
+}
+
+function handleImportDialogClosed() {
+  importFileList.value = [];
+}
+
 async function handleStatsCardClick({ index }: { index: number }) {
   drillFilters.value =
     index === 0
@@ -303,7 +352,7 @@ onMounted(() => {
   <div class="common-index">
     <FormModal @success="handleRefresh" />
 
-    <StatsVisualization
+    <MemberStatsVisualization
       v-if="showStats"
       :data="statsData"
       @card-click="handleStatsCardClick"
@@ -339,6 +388,11 @@ onMounted(() => {
               @click="handleCreate"
             />
             <IconButton
+              content="导入"
+              icon-name="Upload"
+              @click="() => (importDialogVisible = true)"
+            />
+            <IconButton
               v-access:code="['usermerchant:member-tag:export']"
               content="导出"
               icon-name="download"
@@ -369,6 +423,7 @@ onMounted(() => {
               @click="handleDetail(row)"
             />
             <IconButton
+              v-if="isEnabledStatus(row.status)"
               v-access:code="['usermerchant:member-tag:update']"
               content="编辑"
               icon-name="Edit"
@@ -394,11 +449,94 @@ onMounted(() => {
         :fields="memberTagDetailFields"
         :title="detailObj ? `${detailObj.name}详情` : '会员标签详情'"
       />
+
+      <ElDialog
+        v-model="importDialogVisible"
+        title="导入会员标签"
+        width="520px"
+        @closed="handleImportDialogClosed"
+      >
+        <div class="import-container">
+          <div class="template-section">
+            <div class="section-title">1. 下载导入模板</div>
+            <div class="section-content">
+              <p class="tip-text">
+                请使用系统提供的模板格式导入数据，确保数据格式正确
+              </p>
+              <ElButton type="primary" @click="handleDownloadTemplate">
+                下载导入模板
+              </ElButton>
+            </div>
+          </div>
+
+          <div class="upload-section">
+            <div class="section-title">2. 上传数据文件</div>
+            <div class="section-content">
+              <el-upload
+                v-model:file-list="importFileList"
+                drag
+                :auto-upload="false"
+                :limit="1"
+                accept=".xls,.xlsx,.csv"
+              >
+                <div class="el-upload__text">
+                  将文件拖到此处，或 <em>点击上传</em>
+                </div>
+                <template #tip>
+                  <div class="el-upload__tip">
+                    支持 .xls、.xlsx、.csv 格式文件
+                  </div>
+                </template>
+              </el-upload>
+            </div>
+          </div>
+        </div>
+        <template #footer>
+          <ElButton @click="importDialogVisible = false">取消</ElButton>
+          <ElButton type="primary" @click="handleImportTags">
+            开始导入
+          </ElButton>
+        </template>
+      </ElDialog>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+.import-container {
+  padding: 20px;
+}
+
+.template-section,
+.upload-section {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.section-content {
+  padding-left: 16px;
+}
+
+.tip-text {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+:deep(.el-upload) {
+  width: 100%;
+}
+
+:deep(.el-upload-dragger) {
+  width: 100%;
+}
+
 :deep(.vxe-pager--wrapper) {
   justify-content: center;
 }
@@ -441,31 +579,5 @@ onMounted(() => {
 :deep(.user-merchant-table-grid .vxe-tools--operate) {
   position: static !important;
   flex-shrink: 0;
-}
-
-:deep(.park-chart-box) {
-  height: 300px;
-}
-
-:deep(.park-chart-box .chart-box-left) {
-  height: 100%;
-}
-
-:deep(.park-chart-box .stat-card) {
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-:deep(.park-chart-box .map-wrapper),
-:deep(.park-chart-box .park-type-chart),
-:deep(.park-chart-box .simple-bar-chart) {
-  height: 100%;
-}
-
-:deep(.rule-chart-box),
-:deep(.rule-chart-box .chart-box-left),
-:deep(.rule-chart-box .charts-wrapper),
-:deep(.rule-chart-box .chart-area) {
-  height: 300px;
 }
 </style>

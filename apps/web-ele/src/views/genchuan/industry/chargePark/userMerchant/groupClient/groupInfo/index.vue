@@ -16,6 +16,7 @@ import '#/genchuan-components/page/index.scss';
 type TableInstance = {
   recalculateLayout: () => Promise<void> | void;
   resetSearch: () => Promise<void> | void;
+  setDrillValues: (values: Record<string, any>) => Promise<void> | void;
   setSearchValues: (values: Record<string, any>) => Promise<void> | void;
 };
 
@@ -72,10 +73,10 @@ async function handleFilterAllGroups() {
 
 /** 钻取近 30 天新增集团 */
 async function handleFilterRecentGroups() {
-  await tableRef.value?.setSearchValues({
+  await tableRef.value?.setDrillValues({
     registerTime: [
-      dayjs().subtract(30, 'day').startOf('day').format('YYYY-MM-DD HH:mm:ss'),
-      dayjs().endOf('day').format('YYYY-MM-DD HH:mm:ss'),
+      dayjs().subtract(30, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss'),
+      dayjs().endOf('day').format('YYYY-MM-DDTHH:mm:ss'),
     ],
   });
 }
@@ -88,7 +89,7 @@ async function handleFilterByMonth(month: string) {
     return;
   }
 
-  await tableRef.value?.setSearchValues({ registerTime: range });
+  await tableRef.value?.setDrillValues({ registerTime: range });
 }
 
 onMounted(() => {

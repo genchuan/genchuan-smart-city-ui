@@ -79,6 +79,12 @@ export const MemberTagApi = {
     });
   },
 
+  importMemberTagTemplate: async () => {
+    return await requestClient.download('/usermerchant/member-tag/template', {
+      responseReturn: 'raw',
+    });
+  },
+
   exportMemberTag: async (params: MemberTagPageReqVO) => {
     return await requestClient.download('/usermerchant/member-tag/export', {
       params: normalizeQueryDateTimeRanges(params, [

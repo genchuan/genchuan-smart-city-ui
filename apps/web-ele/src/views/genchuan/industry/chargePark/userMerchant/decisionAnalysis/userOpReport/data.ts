@@ -9,7 +9,7 @@ import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
 
-const QUERY_TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
+export const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
 export type ReportType =
   | '半年报'
@@ -114,6 +114,8 @@ export interface UserOpReportRow {
   remark: string;
   reportType: ReportType;
   sendCouponCount: number;
+  statEndTime: string;
+  statStartTime: string;
   statTime: string;
   status: string;
   summary: string;
@@ -196,6 +198,23 @@ export function formatApiTime(value?: null | number | string) {
   const parsedTime = dayjs(normalizedTimeValue);
 
   return parsedTime.isValid() ? parsedTime.format('YYYY-MM-DD HH:mm:ss') : '-';
+}
+
+export function formatQueryTime(value?: null | number | string) {
+  if (value === null || value === undefined || value === '' || value === '-') {
+    return '';
+  }
+
+  const timeValue = String(value);
+  const parsedTime = /^\d+$/.test(timeValue)
+    ? dayjs(
+        timeValue.length === 10 ? Number(timeValue) * 1000 : Number(timeValue),
+      )
+    : dayjs(
+        timeValue.includes('T') ? timeValue : timeValue.replaceAll('-', '/'),
+      );
+
+  return parsedTime.isValid() ? parsedTime.format(QUERY_TIME_FORMAT) : '';
 }
 
 export function formatAmount(value?: null | number | string) {
@@ -546,6 +565,10 @@ export function buildUserOpReportRowFromApi(
       data?.reportType ||
       fallback?.reportType ||
       '日报') as ReportType,
+    statEndTime: formatQueryTime(data?.statEndTime ?? fallback?.statEndTime),
+    statStartTime: formatQueryTime(
+      data?.statStartTime ?? fallback?.statStartTime,
+    ),
     statTime:
       data?.statTime ||
       (data?.statStartTime && data?.statEndTime

@@ -4,28 +4,35 @@ import type {
   MemberLevelPageReqVO,
   MemberLevelVO,
 } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberLevel';
+import type { MemberUserApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import type {
   ActiveFilterTag,
   FilterTagConfig,
 } from '#/views/genchuan/industry/chargePark/userMerchant/memberCenter/utils';
 
-import { computed, onMounted, ref } from 'vue';
+import { computed, h, nextTick, onMounted, ref } from 'vue';
 
 import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
-import { ElLoading, ElMessage, ElTag } from 'element-plus';
+import { ElButton, ElDialog, ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberLevelApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberLevel';
+import {
+  getUserCount,
+  getUserPage,
+} from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
+import MemberStatsVisualization from '../components/MemberStatsVisualization.vue';
+import { formatMemberStatus, getMemberStatusTagType } from '../memberUser/data';
 import {
   buildActiveFilterTags,
   cleanQueryParams,
+  formatDateTimeValue,
   formatLifecycleStatus,
   isEnabledStatus,
   refreshStatsLayout,
@@ -52,6 +59,15 @@ const drillFilters = ref<Record<string, any>>({});
 const searchParams = ref<Record<string, any>>({});
 const statsDataSource = ref(buildStatsDataFromApi());
 const showStats = ref(true);
+const levelUserCountCache = new Map<number, number>();
+const levelUserDialogVisible = ref(false);
+const selectedLevel = ref<MemberLevelVO>();
+
+const levelUserDialogTitle = computed(() =>
+  selectedLevel.value?.name
+    ? `${selectedLevel.value.name}会员列表`
+    : '等级会员列表',
+);
 
 const drillFilterConfigs: Record<string, FilterTagConfig> = {
   name: {
@@ -151,6 +167,7 @@ async function onQuerySubmit(values: Record<string, any>) {
 }
 
 function handleRefresh() {
+  levelUserCountCache.clear();
   gridApi.reload();
   void loadStats();
 }
@@ -174,9 +191,13 @@ function handleEdit(row: MemberLevelVO) {
 }
 
 async function handleDetail(row: MemberLevelVO) {
-  detailObj.value = row.id
+  const detail = row.id
     ? await MemberLevelApi.getMemberLevel(Number(row.id))
     : row;
+  detailObj.value = {
+    ...detail,
+    levelUserCount: await getLevelUserCount(detail),
+  };
   detailDrawerRef.value?.open();
 }
 
@@ -221,11 +242,170 @@ async function handleStatsBarClick({ name }: { name: string }) {
     return;
   }
 
-  drillFilters.value = {
-    name,
-  };
-  await handleRefresh();
+  const level = await getLevelByName(name);
+
+  if (!level) {
+    ElMessage.warning('未找到对应会员等级');
+    return;
+  }
+
+  await handleOpenLevelUsers(level);
 }
+
+function getDirectLevelUserCount(row: MemberLevelVO) {
+  const value =
+    row.levelUserCount ??
+    row.userCount ??
+    row.memberUserCount ??
+    row.memberCount;
+  const count = Number(value);
+
+  return Number.isFinite(count) ? count : undefined;
+}
+
+async function getLevelUserCount(row: MemberLevelVO) {
+  const directCount = getDirectLevelUserCount(row);
+
+  if (directCount !== undefined) {
+    return directCount;
+  }
+
+  if (!row.id) {
+    return 0;
+  }
+
+  const levelId = Number(row.id);
+  const cachedCount = levelUserCountCache.get(levelId);
+
+  if (cachedCount !== undefined) {
+    return cachedCount;
+  }
+
+  const count = await getUserCount({ levelId });
+  levelUserCountCache.set(levelId, count);
+
+  return count;
+}
+
+async function appendLevelUserCounts(list: MemberLevelVO[] = []) {
+  return await Promise.all(
+    list.map(async (item) => ({
+      ...item,
+      levelUserCount: await getLevelUserCount(item),
+    })),
+  );
+}
+
+async function getLevelByName(name: string) {
+  const result = await MemberLevelApi.getMemberLevelPage({
+    name,
+    pageNo: 1,
+    pageSize: 100,
+  });
+
+  return result.list?.find((item) => item.name === name) || result.list?.[0];
+}
+
+async function handleOpenLevelUsers(row: MemberLevelVO) {
+  selectedLevel.value = {
+    ...row,
+    levelUserCount: await getLevelUserCount(row),
+  };
+  levelUserDialogVisible.value = true;
+  await nextTick();
+  levelUserGridApi.reload();
+}
+
+function getMemberUserDisplay(row: MemberUserApi.User) {
+  return row.nickname || row.name || row.mobile || `会员${row.id}`;
+}
+
+function renderMemberStatus(status?: number | string) {
+  return h(
+    ElTag,
+    {
+      type: getMemberStatusTagType(status),
+    },
+    () => formatMemberStatus(status),
+  );
+}
+
+const [LevelUserGrid, levelUserGridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: [
+      {
+        field: 'id',
+        title: '会员 ID',
+        minWidth: 100,
+      },
+      {
+        field: 'nickname',
+        title: '用户',
+        minWidth: 160,
+        formatter: ({ row }) => getMemberUserDisplay(row),
+      },
+      {
+        field: 'mobile',
+        title: '手机号',
+        minWidth: 130,
+        formatter: ({ cellValue }) => cellValue || '-',
+      },
+      {
+        field: 'levelName',
+        title: '会员等级',
+        minWidth: 120,
+        formatter: ({ row }) => row.levelName || row.levelId || '-',
+      },
+      {
+        field: 'status',
+        title: '状态',
+        minWidth: 90,
+        slots: {
+          default: ({ row }) => renderMemberStatus(row.status),
+        },
+      },
+      {
+        field: 'createTime',
+        title: '开通时间',
+        minWidth: 160,
+        formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
+      },
+      {
+        field: 'expireTime',
+        title: '到期时间',
+        minWidth: 160,
+        formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
+      },
+    ],
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => {
+          if (!selectedLevel.value?.id) {
+            return {
+              list: [],
+              total: 0,
+            };
+          }
+
+          return await getUserPage({
+            levelId: Number(selectedLevel.value.id),
+            pageNo: page.currentPage,
+            pageSize: page.pageSize,
+          });
+        },
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    toolbarConfig: {
+      refresh: true,
+    },
+  } as VxeTableGridOptions<MemberUserApi.User>,
+  showSearchForm: false,
+});
 
 async function syncQueryFormValues() {
   await queryFormApi.resetForm();
@@ -261,11 +441,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
             ...drillFilters.value,
           }) as MemberLevelPageReqVO;
 
-          return await MemberLevelApi.getMemberLevelPage({
+          const result = await MemberLevelApi.getMemberLevelPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             ...queryValues,
           });
+
+          return {
+            ...result,
+            list: await appendLevelUserCounts(result.list || []),
+          };
         },
       },
     },
@@ -291,7 +476,7 @@ onMounted(() => {
   <div class="common-index">
     <FormModal @success="handleRefresh" />
 
-    <StatsVisualization
+    <MemberStatsVisualization
       v-if="showStats"
       :data="statsData"
       @bar-click="handleStatsBarClick"
@@ -364,6 +549,16 @@ onMounted(() => {
             />
           </div>
         </template>
+        <template #levelName="{ row }">
+          <ElButton link type="primary" @click="handleOpenLevelUsers(row)">
+            {{ row.name || '-' }}
+          </ElButton>
+        </template>
+        <template #levelUserCount="{ row }">
+          <ElButton link type="primary" @click="handleOpenLevelUsers(row)">
+            {{ row.levelUserCount ?? 0 }}
+          </ElButton>
+        </template>
       </Grid>
 
       <Drawer title="搜索">
@@ -376,6 +571,16 @@ onMounted(() => {
         :fields="memberLevelDetailFields"
         :title="detailObj ? `${detailObj.name}详情` : '会员等级详情'"
       />
+
+      <ElDialog
+        v-model="levelUserDialogVisible"
+        :title="levelUserDialogTitle"
+        width="960px"
+      >
+        <div class="member-level-user-dialog">
+          <LevelUserGrid />
+        </div>
+      </ElDialog>
     </div>
   </div>
 </template>
@@ -425,29 +630,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-:deep(.park-chart-box) {
-  height: 300px;
-}
-
-:deep(.park-chart-box .chart-box-left) {
-  height: 100%;
-}
-
-:deep(.park-chart-box .stat-card) {
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-:deep(.park-chart-box .map-wrapper),
-:deep(.park-chart-box .park-type-chart),
-:deep(.park-chart-box .simple-bar-chart) {
-  height: 100%;
-}
-
-:deep(.rule-chart-box),
-:deep(.rule-chart-box .chart-box-left),
-:deep(.rule-chart-box .charts-wrapper),
-:deep(.rule-chart-box .chart-area) {
-  height: 300px;
+.member-level-user-dialog {
+  min-height: 420px;
 }
 </style>

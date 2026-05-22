@@ -67,21 +67,11 @@ function renderPoint(value?: number | string) {
   );
 }
 
-function renderStatus(status?: number | string) {
-  return h(
-    ElTag,
-    {
-      type: getRecordStatusTagType(status),
-    },
-    () => formatRecordStatus(status),
-  );
-}
-
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
     {
       fieldName: 'userId',
-      label: '用户编号',
+      label: '用户',
       component: 'InputNumber',
       componentProps: {
         min: 1,
@@ -94,10 +84,10 @@ export function useGridFormSchema(): VbenFormSchema[] {
     },
     {
       fieldName: 'status',
-      label: '记录状态',
+      label: '状态',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择记录状态',
+        placeholder: '请选择状态',
         clearable: true,
         options: recordStatusOptions,
       },
@@ -118,19 +108,16 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
     {
       field: 'id',
-      title: '签到编号',
+      title: '签到 ID',
       minWidth: 100,
     },
     {
-      field: 'userId',
-      title: '用户编号',
-      minWidth: 100,
-    },
-    {
-      field: 'signDate',
-      title: '签到日期',
-      minWidth: 120,
-      formatter: ({ cellValue }) => formatDateValue(cellValue),
+      field: 'userName',
+      title: '用户',
+      minWidth: 150,
+      slots: {
+        default: 'user',
+      },
     },
     {
       field: 'createTime',
@@ -147,12 +134,6 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       },
     },
     {
-      field: 'experience',
-      title: '经验奖励',
-      minWidth: 110,
-      formatter: ({ cellValue }) => Number(cellValue ?? 0),
-    },
-    {
       field: 'continuousDays',
       title: '连续签到天数',
       minWidth: 130,
@@ -160,10 +141,10 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       field: 'status',
-      title: '记录状态',
-      minWidth: 110,
+      title: '状态',
+      minWidth: 100,
       slots: {
-        default: ({ row }) => renderStatus(row.status),
+        default: 'status',
       },
     },
     {

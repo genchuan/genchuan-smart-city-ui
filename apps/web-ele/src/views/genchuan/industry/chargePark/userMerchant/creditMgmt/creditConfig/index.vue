@@ -14,6 +14,7 @@ import '#/genchuan-components/page/index.scss';
 type TableInstance = {
   recalculateLayout: () => Promise<void> | void;
   resetSearch: () => Promise<void> | void;
+  setDrillValues: (values: Record<string, any>) => Promise<void> | void;
   setSearchValues: (values: Record<string, any>) => Promise<void> | void;
 };
 
@@ -65,7 +66,7 @@ const statsData = computed(() => statsDataSource.value);
 
 /** 钻取已生效配置 */
 async function handleFilterEffectConfigs() {
-  await tableRef.value?.setSearchValues({
+  await tableRef.value?.setDrillValues({
     status: '已生效',
   });
 }
@@ -76,7 +77,7 @@ async function handleFilterByConfigType(configType: string) {
     return;
   }
 
-  await tableRef.value?.setSearchValues({
+  await tableRef.value?.setDrillValues({
     configType,
   });
 }
@@ -87,7 +88,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="common-index">
+  <div class="common-index credit-config-index">
     <StatsVisualization
       v-if="showStats"
       :data="statsData"
@@ -149,10 +150,18 @@ onMounted(() => {
 }
 
 :deep(.park-chart-box) {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 20px;
+  align-items: stretch;
   height: 300px;
 }
 
 :deep(.park-chart-box .chart-box-left) {
+  flex: 0 0 280px;
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
   height: 100%;
 }
 
@@ -165,6 +174,20 @@ onMounted(() => {
 :deep(.park-chart-box .park-type-chart),
 :deep(.park-chart-box .simple-bar-chart) {
   height: 100%;
+}
+
+:deep(.park-chart-box .charts-wrapper) {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+:deep(.park-chart-box .park-type-chart) {
+  flex: 1 1 auto !important;
+  width: 100%;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-left: 0 !important;
 }
 
 :deep(.rule-chart-box),

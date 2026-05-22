@@ -14,6 +14,7 @@ import '#/genchuan-components/page/index.scss';
 type TableInstance = {
   recalculateLayout: () => Promise<void> | void;
   resetSearch: () => Promise<void> | void;
+  setDrillValues: (values: Record<string, any>) => Promise<void> | void;
   setSearchValues: (values: Record<string, any>) => Promise<void> | void;
 };
 
@@ -70,14 +71,14 @@ async function handleFilterAllCredits() {
 
 /** 钻取低信用用户列表 */
 async function handleFilterLowCredits() {
-  await tableRef.value?.setSearchValues({
-    creditScore: '0,69',
+  await tableRef.value?.setDrillValues({
+    lowCreditLevels: '较差 / 极差',
   });
 }
 
 /** 按信用等级钻取列表 */
 async function handleFilterByLevel(level: string) {
-  await tableRef.value?.setSearchValues({
+  await tableRef.value?.setDrillValues({
     creditLevel: level,
   });
 }
@@ -88,7 +89,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="common-index">
+  <div class="common-index user-credit-index">
     <StatsVisualization
       v-if="showStats"
       :data="statsData"
@@ -153,22 +154,45 @@ onMounted(() => {
 }
 
 :deep(.park-chart-box) {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 20px;
+  align-items: stretch;
   height: 300px;
 }
 
 :deep(.park-chart-box .chart-box-left) {
+  flex: 0 0 280px;
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
   height: 100%;
 }
 
 :deep(.park-chart-box .stat-card) {
   flex: 1 1 0;
   min-height: 0;
+  cursor: pointer;
 }
 
 :deep(.park-chart-box .map-wrapper),
 :deep(.park-chart-box .park-type-chart),
 :deep(.park-chart-box .simple-bar-chart) {
   height: 100%;
+}
+
+:deep(.park-chart-box .charts-wrapper) {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+:deep(.park-chart-box .park-type-chart) {
+  flex: 1 1 auto !important;
+  width: 100%;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-left: 0 !important;
 }
 
 :deep(.rule-chart-box),

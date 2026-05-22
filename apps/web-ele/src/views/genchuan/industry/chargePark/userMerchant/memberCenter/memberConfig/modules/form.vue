@@ -11,7 +11,14 @@ import { useVbenForm } from '#/adapter/form';
 import { MemberConfigApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberConfig';
 import { $t } from '#/locales';
 
+import { normalizeDateTimeFormValue } from '../../utils';
 import { useFormSchema } from '../data';
+
+type MemberConfigFormDetail = MemberConfigVO & {
+  effectiveTimeStr?: number | string;
+  effectTime?: number | string;
+  effectTimeStr?: number | string;
+};
 
 const emit = defineEmits(['success']);
 const formData = ref<MemberConfigVO>();
@@ -68,7 +75,19 @@ const [Modal, modalApi] = useVbenModal({
 
     modalApi.lock();
     try {
-      formData.value = await MemberConfigApi.getMemberConfig(data.id);
+      const detail = (await MemberConfigApi.getMemberConfig(
+        data.id,
+      )) as MemberConfigFormDetail;
+      const effectiveTime =
+        detail.effectiveTime ??
+        detail.effectiveTimeStr ??
+        detail.effectTime ??
+        detail.effectTimeStr;
+
+      formData.value = {
+        ...detail,
+        effectiveTime: normalizeDateTimeFormValue(effectiveTime),
+      };
       await formApi.setValues(formData.value);
     } finally {
       modalApi.unlock();

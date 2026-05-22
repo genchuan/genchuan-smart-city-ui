@@ -9,12 +9,15 @@ export type MemberSignVO = {
   creator?: string;
   experience?: number;
   id?: number;
+  mobile?: string;
+  nickname?: string;
   point?: number;
   signDate?: number | string;
   status?: number | string;
   updater?: string;
   updateTime?: number | string;
   userId?: number;
+  userName?: string;
 };
 
 export type MemberSignPageReqVO = PageParam & {

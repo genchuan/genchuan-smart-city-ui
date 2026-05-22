@@ -10,11 +10,11 @@ import { z } from '#/adapter/form';
 import { getRangePickerDefaultProps } from '#/utils';
 
 import {
+  FORM_TIME_FORMAT,
   formatDateTimeValue,
   formatLifecycleStatus,
   getLifecycleStatusTagType,
   lifecycleStatusOptions,
-  QUERY_TIME_FORMAT,
   STATUS_ENABLED,
 } from '../utils';
 
@@ -112,7 +112,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'DatePicker',
       componentProps: {
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: QUERY_TIME_FORMAT,
+        valueFormat: FORM_TIME_FORMAT,
         type: 'datetime',
         placeholder: '请选择生效时间',
         class: '!w-full',
@@ -166,7 +166,7 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
     {
       field: 'id',
-      title: '分组编号',
+      title: '分组 ID',
       minWidth: 100,
     },
     {
@@ -182,13 +182,6 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       formatter: ({ cellValue }) => cellValue || '-',
     },
     {
-      field: 'rule',
-      title: '分组规则',
-      minWidth: 220,
-      showOverflow: 'tooltip',
-      formatter: ({ cellValue }) => cellValue || '-',
-    },
-    {
       field: 'status',
       title: '状态',
       minWidth: 100,
@@ -199,12 +192,6 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     {
       field: 'effectiveTime',
       title: '生效时间',
-      minWidth: 180,
-      formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
-    },
-    {
-      field: 'createTime',
-      title: '创建时间',
       minWidth: 180,
       formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
     },

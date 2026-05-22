@@ -31,7 +31,6 @@ import { UserCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/user
 import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import { $t } from '#/locales';
 import { downloadFileIfValid } from '#/views/genchuan/industry/chargePark/userMerchant/utils/download';
 import { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
@@ -85,6 +84,21 @@ const filterStatus = ref('');
 const filterUserType = ref('');
 const filterPhone = ref('');
 
+function buildWalletDisplayRows(row: UserRow): UserRow['walletLogs'] {
+  if (row.walletLogs.length > 0) {
+    return row.walletLogs;
+  }
+
+  return [
+    {
+      afterBalance: row.walletBalance,
+      amount: 0,
+      time: row.updateTime || row.createTime || row.registerTime || '-',
+      type: '当前余额',
+    },
+  ];
+}
+
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
 });
@@ -120,7 +134,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
           walletBalance: 0,
           carCount: 0,
         });
-        ElMessage.success($t('ui.actionMessage.addSuccess'));
+        ElMessage.success('新增成功');
       } else if (formData.value) {
         await UserInfoApi.updateUserInfo({
           id: formData.value.id,
@@ -140,7 +154,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
           reserve1: formSource.value?.reserve1,
           reserve2: formSource.value?.reserve2,
         });
-        ElMessage.success($t('ui.actionMessage.editSuccess'));
+        ElMessage.success('编辑成功');
       }
 
       await handleReloadPage();
@@ -605,7 +619,7 @@ async function handleOpenWallet(row: UserRow) {
     return;
   }
 
-  currentWalletLogs.value = detail.row.walletLogs;
+  currentWalletLogs.value = buildWalletDisplayRows(detail.row);
   walletDialogVisible.value = true;
 }
 
@@ -670,8 +684,8 @@ function handleRowCheckboxChange({ records }: { records: UserRow[] }) {
 async function handleDownloadTemplate() {
   try {
     const data = await UserInfoApi.importUserInfoTemplate();
-    downloadFileIfValid({
-      fileName: 'user-info-import-template.xls',
+    await downloadFileIfValid({
+      fileName: '用户信息导入模板.xlsx',
       source: data,
     });
     ElMessage.success('模板下载成功');
@@ -1095,8 +1109,16 @@ const handleOpenDetail = (row: UserRow) => {
       <ElTable :data="currentWalletLogs" border>
         <ElTableColumn prop="time" label="时间" min-width="170" />
         <ElTableColumn prop="type" label="类型" min-width="100" />
-        <ElTableColumn prop="amount" label="金额" min-width="100" />
-        <ElTableColumn prop="afterBalance" label="变更后余额" min-width="120" />
+        <ElTableColumn label="金额" min-width="100">
+          <template #default="{ row }">
+            {{ Number(row.amount || 0).toFixed(2) }}
+          </template>
+        </ElTableColumn>
+        <ElTableColumn label="变更后余额" min-width="120">
+          <template #default="{ row }">
+            {{ Number(row.afterBalance || 0).toFixed(2) }}
+          </template>
+        </ElTableColumn>
       </ElTable>
     </ElDialog>
 

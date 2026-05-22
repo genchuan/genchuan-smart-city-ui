@@ -10,12 +10,12 @@ import { z } from '#/adapter/form';
 import { getRangePickerDefaultProps } from '#/utils';
 
 import {
+  FORM_TIME_FORMAT,
   formatDateTimeValue,
   formatLifecycleStatus,
   formatPercentValue,
   getLifecycleStatusTagType,
   lifecycleStatusOptions,
-  QUERY_TIME_FORMAT,
   STATUS_ENABLED,
 } from '../utils';
 
@@ -125,7 +125,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'DatePicker',
       componentProps: {
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: QUERY_TIME_FORMAT,
+        valueFormat: FORM_TIME_FORMAT,
         type: 'datetime',
         placeholder: '请选择生效时间',
         class: '!w-full',
@@ -192,18 +192,24 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
     {
       field: 'id',
-      title: '等级编号',
+      title: '等级 ID',
       minWidth: 90,
     },
     {
       field: 'name',
       title: '等级名称',
       minWidth: 140,
+      slots: {
+        default: 'levelName',
+      },
     },
     {
-      field: 'levelValue',
-      title: '等级数值',
-      minWidth: 100,
+      field: 'levelUserCount',
+      title: '等级用户数',
+      minWidth: 120,
+      slots: {
+        default: 'levelUserCount',
+      },
     },
     {
       field: 'upgradeCondition',
@@ -234,12 +240,6 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
     },
     {
-      field: 'createTime',
-      title: '创建时间',
-      minWidth: 180,
-      formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
-    },
-    {
       title: '操作',
       width: 190,
       fixed: 'right',
@@ -254,6 +254,7 @@ export const memberLevelDetailFields = [
   { key: 'levelValue', label: '等级数值' },
   { key: 'upgradeCondition', label: '升级条件' },
   { key: 'benefits', label: '权益内容' },
+  { key: 'levelUserCount', label: '等级用户数' },
   {
     key: 'status',
     label: '状态',

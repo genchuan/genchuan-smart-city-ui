@@ -294,6 +294,21 @@ export async function getUserPage(params: MemberUserApi.UserPageReqVO) {
   };
 }
 
+export async function getUserCount(params: MemberUserApi.UserPageReqVO) {
+  const result = await requestClient.get<PageResult<MemberUserApi.User>>(
+    '/usermerchant/member-user/page',
+    {
+      params: buildUserQuery({
+        ...params,
+        pageNo: 1,
+        pageSize: 1,
+      }),
+    },
+  );
+
+  return Number(result.total ?? result.list?.length ?? 0);
+}
+
 export async function getUser(id: number) {
   const [result, nameMaps] = await Promise.all([
     requestClient.get<MemberUserApi.User>('/usermerchant/member-user/get', {
@@ -322,6 +337,12 @@ export function updateUser(data: MemberUserApi.User) {
 export function importUser(file: File) {
   return requestClient.upload('/usermerchant/member-user/import', {
     file,
+  });
+}
+
+export function importUserTemplate() {
+  return requestClient.download('/usermerchant/member-user/template', {
+    responseReturn: 'raw',
   });
 }
 

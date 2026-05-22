@@ -8,12 +8,16 @@ export type MemberLevelVO = {
   createTime?: number | string;
   effectiveTime?: number | string;
   id?: number;
+  levelUserCount?: number;
   levelValue?: number;
+  memberCount?: number;
+  memberUserCount?: number;
   name: string;
   remark?: string;
   status?: number | string;
   updateTime?: number | string;
   upgradeCondition?: string;
+  userCount?: number;
 };
 
 export type MemberLevelPageReqVO = PageParam & {
