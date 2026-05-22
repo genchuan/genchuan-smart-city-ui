@@ -627,12 +627,12 @@ watch(
             icon-name="download"
             @click="handleExport"
           />
-          <IconButton
+          <!-- <IconButton
             content="批量核算"
             icon-name="check"
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchCalculate"
-          />
+          /> -->
           <IconButton
             content="搜索"
             icon-name="search"
