@@ -20,6 +20,7 @@ import {
   deleteAgentPayRule,
   enableAgentPayRule,
   disableAgentPayRule,
+  getMerchantInfoPage,
 } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
@@ -69,6 +70,21 @@ const [Drawer, drawerApi] = useVbenDrawer({
 });
 
 const formData = ref();
+const merchantOptions = ref([]);
+
+// 加载商户列表
+const loadMerchantOptions = async () => {
+  try {
+    const res = await getMerchantInfoPage({ pageNo: 1, pageSize: 100 });
+    merchantOptions.value = res.list.map(item => ({
+      label: item.name,
+      value: item.id,
+    }));
+  } catch (error) {
+    console.error('加载商户列表失败:', error);
+  }
+};
+
 const [Form, formApi] = useVbenForm({
   commonConfig: {
     componentProps: {
@@ -112,7 +128,14 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
+      await loadMerchantOptions();
       formData.value = formDrawerApi.getData();
+      formApi.updateSchema([{
+        fieldName: 'merchantId',
+        componentProps: {
+          options: merchantOptions.value,
+        },
+      }]);
       if (formData.value?.id) {
         await formApi.setValues(formData.value);
       } else {

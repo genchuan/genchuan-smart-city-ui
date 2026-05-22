@@ -25,25 +25,12 @@ export function useFormSchema() {
     },
     {
       fieldName: 'merchantId',
-      label: '商户ID',
-      component: 'InputNumber',
+      label: '商户名称',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入商户ID',
-        min: 0,
+        placeholder: '请选择商户',
       },
       labelWidth: 120,
-      isEdit: true,
-    },
-    {
-      fieldName: 'merchantName',
-      label: '所属商户',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入商户名称',
-        maxLength: 50,
-      },
-      labelWidth: 120,
-      isSearch: true,
       isEdit: true,
     },
     {
