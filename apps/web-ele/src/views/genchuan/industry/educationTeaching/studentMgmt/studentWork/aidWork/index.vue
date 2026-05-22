@@ -102,7 +102,88 @@ const isEditMode = ref(false);
 const currentEditId = ref(null);
 const currentFollowRow = ref(null);
 
-// 直接使用原始 schema，不再注入 options（学号字段已为 Input）
+// ---------- 审核弹窗相关（支持单个/批量） ----------
+const auditDialogVisible = ref(false);
+const currentAuditRow = ref(null);     // 单个审核时使用
+const isBatchAudit = ref(false);       // 是否为批量审核模式
+const batchIds = ref([]);              // 批量审核时存储的 ids
+const auditForm = reactive({
+  result: '1',     // '1' 通过，'0' 驳回
+  remark: ''
+});
+
+function openAuditDialog(row) {
+  if (row.status !== '待审核') {
+    ElMessage.warning('只有待审核状态的奖助申请可以审核');
+    return;
+  }
+  // 单个审核模式
+  isBatchAudit.value = false;
+  currentAuditRow.value = row;
+  batchIds.value = [];
+  auditForm.result = '1';
+  auditForm.remark = '';
+  auditDialogVisible.value = true;
+}
+
+async function handleBatchAudit() {
+  // 过滤出状态为“待审核”的行
+  const pendingRows = checkedRows.value.filter(row => row.status === '待审核');
+  if (pendingRows.length === 0) {
+    ElMessage.warning('请选择状态为【待审核】的奖助申请');
+    return;
+  }
+  if (pendingRows.length < checkedRows.value.length) {
+    ElMessage.warning(`已自动过滤非待审核条目，将对 ${pendingRows.length} 条待审核申请进行批量审核`);
+  }
+  // 批量审核模式
+  isBatchAudit.value = true;
+  batchIds.value = pendingRows.map(row => row.id);
+  currentAuditRow.value = null;
+  auditForm.result = '1';
+  auditForm.remark = '';
+  auditDialogVisible.value = true;
+}
+
+async function submitAudit() {
+  const loading = ElLoading.service({ text: '审核中...' });
+  try {
+    let res;
+    if (isBatchAudit.value) {
+      // 批量审核
+      res = await auditAidWork({
+        ids: batchIds.value,
+        auditResult: auditForm.result,
+        remark: auditForm.remark
+      });
+    } else {
+      // 单个审核
+      if (!currentAuditRow.value) return;
+      res = await auditAidWork({
+        ids: [currentAuditRow.value.id],
+        auditResult: auditForm.result,
+        remark: auditForm.remark
+      });
+    }
+    if (res && res !== false) {
+      ElMessage.success(auditForm.result === '1' ? '审核通过' : '已驳回');
+      auditDialogVisible.value = false;
+      // 清空选中状态
+      checkedIds.value = [];
+      checkedRows.value = [];
+      handleRefresh();
+    } else {
+      ElMessage.error('审核失败');
+    }
+  } catch (error) {
+    console.error('审核失败', error);
+    ElMessage.error('审核失败');
+  } finally {
+    loading.close();
+  }
+}
+
+// 直接使用原始 schema
 const createFormSchema = useCreateFormSchema();
 
 const getTableData = async ({page}) => {
@@ -134,7 +215,7 @@ const getTableData = async ({page}) => {
   }
 };
 
-// ========== 表格实例（提前定义，确保 gridApi 可用） ==========
+// ========== 表格实例 ==========
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
@@ -149,7 +230,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-// ========== 核心修复：强制重置分页到第一页并刷新 ==========
 function resetPageAndQuery() {
   if (gridApi.commitProxy) {
     gridApi.commitProxy('reload');
@@ -159,11 +239,11 @@ function resetPageAndQuery() {
     dataObj.currentPage = 1;
     gridApi.query();
   }
-  dataObj.currentPage = 1; // 确保界面分页显示第一页
+  dataObj.currentPage = 1;
 }
 
 function handleRefresh() {
-  gridApi.query(); // 手动刷新保持当前页码
+  gridApi.query();
 }
 
 function handleReset() {
@@ -183,89 +263,6 @@ async function handleExport() {
     ElMessage.error('导出失败');
   } finally {
     loading.close();
-  }
-}
-
-// ---------- 单个审核 ----------
-async function handleAudit(row) {
-  if (row.status !== '待审核') {
-    ElMessage.warning('只有待审核状态的奖助申请可以审核');
-    return;
-  }
-  try {
-    await ElMessageBox.confirm('确定要通过该奖助申请吗？', '审核确认', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'info',
-    });
-    const loading = ElLoading.service({text: '审核中...'});
-    try {
-      const res = await auditAidWork({
-        ids: [row.id],
-        auditResult: '2',
-        remark: '',
-      });
-      if (res && res !== false) {
-        ElMessage.success('审核成功');
-        handleRefresh();
-      } else {
-        ElMessage.error('审核失败');
-      }
-    } finally {
-      loading.close();
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('审核失败', error);
-      ElMessage.error('审核失败');
-    }
-  }
-}
-
-// ---------- 批量审核 ----------
-async function handleBatchAudit() {
-  if (checkedIds.value.length === 0) {
-    ElMessage.warning('请至少选择一条奖助申请');
-    return;
-  }
-  const selectedRows = checkedRows.value.filter(row => row.status === '待审核');
-  if (selectedRows.length === 0) {
-    ElMessage.warning('请选择状态为【待审核】的奖助申请');
-    return;
-  }
-  if (selectedRows.length < checkedRows.value.length) {
-    ElMessage.warning(`已自动过滤非待审核条目，将对 ${selectedRows.length} 条待审核申请进行批量通过`);
-  }
-  try {
-    await ElMessageBox.confirm(`确定要通过选中的 ${selectedRows.length} 条奖助申请吗？`, '批量审核确认', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'info',
-    });
-    const loading = ElLoading.service({text: '批量审核中...'});
-    try {
-      const ids = selectedRows.map(row => row.id);
-      const res = await auditAidWork({
-        ids: ids,
-        auditResult: '已通过',
-        remark: '',
-      });
-      if (res && res !== false) {
-        ElMessage.success('批量审核成功');
-        checkedIds.value = [];
-        checkedRows.value = [];
-        handleRefresh();
-      } else {
-        ElMessage.error('批量审核失败');
-      }
-    } finally {
-      loading.close();
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('批量审核失败', error);
-      ElMessage.error('批量审核失败');
-    }
   }
 }
 
@@ -390,7 +387,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    resetPageAndQuery(); // 查询时重置页码
+    resetPageAndQuery();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -401,7 +398,7 @@ const [QueryForm] = useVbenForm({
   submitButtonOptions: {content: '查询'},
 });
 
-// 筛选标签相关函数（使用 resetPageAndQuery）
+// 筛选标签相关函数
 function getFieldLabel(field) {
   const map = {aidType: '资助类型', status: '状态', creator: '创建人', createTime: '创建时间'};
   return map[field] || field;
@@ -432,7 +429,7 @@ function handleFilterTagClick(field, value) {
       tagFilters.value[field] = value;
     }
   }
-  resetPageAndQuery(); // 筛选时重置页码
+  resetPageAndQuery();
 }
 
 function clearFilters() {
@@ -451,7 +448,7 @@ const arrowChange = () => emit('arrow-change');
 
 defineExpose({handleFilterTagClick, clearFilters});
 
-// ========== 监听图表自定义事件 ==========
+// 监听图表自定义事件
 const handleChartFilter = (event) => {
   const {type, value} = event.detail;
   if (type === 'status') {
@@ -461,13 +458,12 @@ const handleChartFilter = (event) => {
   }
 };
 
-// 切换选项卡时也需要重置页码
 watch(activeName, (newVal) => {
   tagFilters.value = {};
   gridColumns.value = getColumnsByStatus(newVal);
   if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
   else gridApi.setGridOptions?.({columns: gridColumns.value});
-  resetPageAndQuery(); // 原为 gridApi.query()，改为重置页码
+  resetPageAndQuery();
 });
 
 onMounted(() => {
@@ -492,6 +488,38 @@ onUnmounted(() => {
     <FollowDrawer title="流程跟进">
       <FollowForm/>
     </FollowDrawer>
+
+    <!-- 审核弹窗（支持单个/批量） -->
+    <el-dialog
+      v-model="auditDialogVisible"
+      :title="isBatchAudit ? '批量审核奖助申请' : '审核奖助申请'"
+      width="20%"
+      :close-on-click-modal="false"
+      @close="auditDialogVisible = false"
+    >
+      <el-form :model="auditForm" label-width="80px">
+        <el-form-item label="审核结果" required>
+          <el-radio-group v-model="auditForm.result">
+            <el-radio label="1">通过</el-radio>
+            <el-radio label="0">驳回</el-radio>
+          </el-radio-group>
+        </el-form-item>
+<!--        <el-form-item label="备注">-->
+<!--          <el-input-->
+<!--            v-model="auditForm.remark"-->
+<!--            type="textarea"-->
+<!--            :rows="3"-->
+<!--            placeholder="请输入备注（驳回时建议填写原因）"-->
+<!--          />-->
+<!--        </el-form-item>-->
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="auditDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitAudit">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
 
     <Grid>
       <template #table-title>
@@ -566,7 +594,7 @@ onUnmounted(() => {
           <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit"
                       @click="handleEdit(row)"/>
           <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check"
-                      @click="handleAudit(row)"/>
+                      @click="openAuditDialog(row)"/>
           <IconButton v-if="row.status === '已通过' || row.processStatus  === '跟进中'"
                       content="跟进" icon-name="EditPen" @click="handleFollow(row)"/>
         </div>
