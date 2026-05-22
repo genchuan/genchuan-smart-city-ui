@@ -177,17 +177,63 @@ function pickMapList(source = chartData.value) {
 
 function pickValue(item, keys, fallback = 0) {
   for (const key of keys) {
-    if (item?.[key] !== undefined && item?.[key] !== null) return item[key];
+    const value = getFieldValue(item, key);
+    if (value !== undefined && value !== null) return value;
   }
   return fallback;
 }
 
-function pickText(item, keys, fallback = '') {
-  for (const key of keys) {
-    const value = item?.[key];
-    if (value !== undefined && value !== null && value !== '') return value;
+function getFieldValue(item, key) {
+  if (!item || !key) return undefined;
+  if (!String(key).includes('.')) return item[key];
+  let result = item;
+  for (const part of String(key).split('.')) {
+    result = result?.[part];
+  }
+  return result;
+}
+
+function pickText(item, keys, fallback = '', extraSources = []) {
+  const sources = [
+    item,
+    ...extraSources.filter(
+      (source) =>
+        source && typeof source === 'object' && !Array.isArray(source),
+    ),
+  ];
+  for (const source of sources) {
+    for (const key of keys) {
+      const value = getFieldValue(source, key);
+      if (value !== undefined && value !== null && value !== '') return value;
+    }
   }
   return fallback;
+}
+
+function pickSourceObjects(item, keys) {
+  return keys
+    .flatMap((key) => {
+      const value = getFieldValue(item, key);
+      return Array.isArray(value) ? value : [value];
+    })
+    .filter(
+      (value) => value && typeof value === 'object' && !Array.isArray(value),
+    );
+}
+
+function getMapSourceObjects(item) {
+  return pickSourceObjects(item, [
+    'stationInfo',
+    'station',
+    'stationVO',
+    'stationData',
+    'stationDetail',
+    'siteInfo',
+    'parkInfo',
+    'areaInfo',
+    'area',
+    'region',
+  ]);
 }
 
 function normalizeCoordinateValue(value) {
@@ -196,8 +242,29 @@ function normalizeCoordinateValue(value) {
   }
 
   if (value && typeof value === 'object') {
-    const lng = pickText(value, ['longitude', 'lng', 'lon', 'x']);
-    const lat = pickText(value, ['latitude', 'lat', 'y']);
+    const lng = pickText(value, [
+      'longitude',
+      'lng',
+      'lon',
+      'x',
+      'mapLongitude',
+      'mapLng',
+      'stationLongitude',
+      'stationLng',
+      'gcj02Lng',
+      'bdLng',
+    ]);
+    const lat = pickText(value, [
+      'latitude',
+      'lat',
+      'y',
+      'mapLatitude',
+      'mapLat',
+      'stationLatitude',
+      'stationLat',
+      'gcj02Lat',
+      'bdLat',
+    ]);
     return lng !== '' && lat !== '' ? `${lng},${lat}` : '';
   }
 
@@ -209,18 +276,63 @@ function normalizeCoordinateValue(value) {
 }
 
 function getCoordinate(item) {
-  const direct = pickText(item, [
+  const sources = [item, ...getMapSourceObjects(item)];
+  const directKeys = [
     'coordinate',
     'coordinateInfo',
     'coordinates',
+    'mapCoordinate',
+    'mapCoordinates',
+    'lngLat',
+    'latLng',
+    'longitudeLatitude',
     'location',
     'position',
-  ]);
-  const directCoordinate = normalizeCoordinateValue(direct);
-  if (directCoordinate) return directCoordinate;
+    'point',
+    'geoPoint',
+    'center',
+    'centerPoint',
+  ];
+  for (const source of sources) {
+    const directCoordinate = normalizeCoordinateValue(
+      pickText(source, directKeys),
+    );
+    if (directCoordinate) return directCoordinate;
+  }
 
-  const lng = pickText(item, ['longitude', 'lng', 'lon', 'x']);
-  const lat = pickText(item, ['latitude', 'lat', 'y']);
+  const lng = pickText(
+    item,
+    [
+      'longitude',
+      'lng',
+      'lon',
+      'x',
+      'mapLongitude',
+      'mapLng',
+      'stationLongitude',
+      'stationLng',
+      'gcj02Lng',
+      'bdLng',
+    ],
+    '',
+    sources.slice(1),
+  );
+  const lat = pickText(
+    item,
+    [
+      'latitude',
+      'lat',
+      'y',
+      'mapLatitude',
+      'mapLat',
+      'stationLatitude',
+      'stationLat',
+      'gcj02Lat',
+      'bdLat',
+    ],
+    '',
+    sources.slice(1),
+  );
   return lng !== '' && lat !== '' ? `${lng},${lat}` : '';
 }
 
@@ -242,62 +354,155 @@ const chartCards = computed(() => {
 const mapData = computed(() =>
   pickMapList()
     .map((item, index) => {
+      const sourceObjects = getMapSourceObjects(item);
       const coordinate = getCoordinate(item);
-      const stationNo = pickText(item, [
-        'stationNo',
-        'stationCode',
-        'geoCode',
-        'code',
-      ]);
-      const stationId = pickText(item, ['stationId', 'id']);
-      const stationName = pickText(item, [
-        'stationName',
-        'station_name',
-        'name',
-        'station',
-        'locationName',
-        'pointName',
-      ]);
+      const stationNo = pickText(
+        item,
+        [
+          'stationNo',
+          'stationCode',
+          'station_code',
+          'siteNo',
+          'siteCode',
+          'parkNo',
+          'parkCode',
+          'geoCode',
+          'code',
+        ],
+        '',
+        sourceObjects,
+      );
+      const stationId = pickText(
+        item,
+        ['stationId', 'station_id', 'siteId', 'parkId', 'id'],
+        '',
+        sourceObjects,
+      );
+      const stationName = pickText(
+        item,
+        [
+          'stationName',
+          'station_name',
+          'siteName',
+          'parkName',
+          'name',
+          'station',
+          'locationName',
+          'pointName',
+        ],
+        '',
+        sourceObjects,
+      );
       const locationName = pickText(
         item,
-        ['locationName', 'stationName', 'name', 'areaName'],
+        [
+          'locationName',
+          'stationName',
+          'station_name',
+          'siteName',
+          'parkName',
+          'name',
+          'areaName',
+        ],
         '场站资源',
+        sourceObjects,
       );
-      const stationCount = pickText(item, [
-        'stationCount',
-        'totalStationCount',
-        'coverStationCount',
-      ]);
-      const spaceCount = pickText(item, [
-        'spaceCount',
-        'totalSpaceCount',
-        'availableSpaceCount',
-      ]);
+      const stationCount = pickText(
+        item,
+        [
+          'stationCount',
+          'totalStationCount',
+          'coverStationCount',
+          'count',
+          'value',
+        ],
+        '',
+        sourceObjects,
+      );
+      const spaceCount = pickText(
+        item,
+        [
+          'spaceCount',
+          'parkingSpaceCount',
+          'parkingCount',
+          'spaceTotal',
+          'totalSpace',
+          'totalSpaceCount',
+          'availableSpaceCount',
+        ],
+        '',
+        sourceObjects,
+      );
       const statusName = pickText(
         item,
-        ['statusName', 'stationStatus', 'status'],
+        [
+          'statusName',
+          'stationStatus',
+          'operateStatus',
+          'operationStatus',
+          'status',
+        ],
         '正常',
+        sourceObjects,
       );
 
       return {
         ...item,
-        areaName: pickText(item, ['areaName', 'regionName']),
+        areaName: pickText(
+          item,
+          [
+            'areaName',
+            'regionName',
+            'districtName',
+            'area.name',
+            'region.name',
+          ],
+          '',
+          sourceObjects,
+        ),
         coordinate,
         geoCode: pickText(
           item,
-          ['geoCode', 'stationNo', 'stationCode', 'stationId', 'id', 'code'],
+          [
+            'geoCode',
+            'stationNo',
+            'stationCode',
+            'stationId',
+            'siteNo',
+            'siteCode',
+            'parkNo',
+            'parkCode',
+            'id',
+            'code',
+          ],
           `station-report-map-${index}`,
+          sourceObjects,
         ),
         locationName,
-        orderCount: pickText(item, ['orderCount', 'totalOrderCount']),
-        revenue: pickText(item, ['revenue', 'totalRevenue', 'amount']),
+        orderCount: pickText(
+          item,
+          ['orderCount', 'totalOrderCount'],
+          '',
+          sourceObjects,
+        ),
+        revenue: pickText(
+          item,
+          ['revenue', 'totalRevenue', 'amount'],
+          '',
+          sourceObjects,
+        ),
         spaceCount,
         stationCount,
         stationId,
         stationName,
         stationNo,
         stationStatus: statusName,
-        stationType: pickText(item, ['stationType', 'typeName', 'type']),
+        stationType: pickText(
+          item,
+          ['stationType', 'typeName', 'type', 'stationTypeName'],
+          '',
+          sourceObjects,
+        ),
         statusName,
       };
     })

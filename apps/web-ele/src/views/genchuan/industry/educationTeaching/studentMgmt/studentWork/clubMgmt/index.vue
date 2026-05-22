@@ -56,61 +56,23 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
-function handleFilterTagClick(field, value) {
-  if (!field) return;
-  if (value === '' || value === null || value === undefined) {
-    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
-  } else {
-    const existing = tagFilters.value[field];
-    if (existing !== undefined) {
-      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-        delete tagFilters.value[field];
-      } else if (!Array.isArray(existing) && existing === value) {
-        delete tagFilters.value[field];
-      } else {
-        tagFilters.value[field] = value;
-      }
-    } else {
-      tagFilters.value[field] = value;
-    }
-  }
-  gridApi.query();
-}
-
-function clearFilters() {
-  tagFilters.value = {};
-  gridApi.query();
-}
-
-function removeFilterTag(field) {
-  delete tagFilters.value[field];
-  gridApi.query();
-}
-
-function getFieldLabel(field) {
-  const map = {
-    clubName: '社团名称',
-    clubType: '社团类型',
-    status: '状态',
-    creator: '创建人',
-    createTime: '创建时间',
-  };
-  return map[field] || field;
-}
-function getTagDisplayText(field, value) {
-  if (Array.isArray(value)) return value.join('、');
-  return value || '-';
-}
-
 // ---------- 原有变量 ----------
-const [Drawer, drawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => drawerApi.close() });
-const [VenueDrawer, venueDrawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => venueDrawerApi.close() });
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => drawerApi.close()
+});
+const [VenueDrawer, venueDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => venueDrawerApi.close()
+});
 
 const dataObj = reactive({
   totalShow: false,
@@ -127,7 +89,7 @@ const gridColumns = ref(getColumnsByStatus(activeName.value));
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -140,7 +102,7 @@ const currentVenueRow = ref(null);
 // 静态表单 schema
 const createFormSchemaStatic = useCreateFormSchema();
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -169,17 +131,56 @@ const getTableData = async ({ page }) => {
   }
 };
 
-function handleRefresh() { gridApi.query(); }
-function handleReset() { searchParams.value = {}; tagFilters.value = {}; gridApi.query(); }
+// ========== 表格实例（提前定义，确保 gridApi 可用） ==========
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: gridColumns.value,
+    keepSource: true,
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
+    pagerConfig: dataObj,
+    toolbarConfig: {refresh: true, search: true},
+    showOverflow: true,
+  },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
+  showSearchForm: false,
+});
+
+// ========== 核心修复：强制重置分页到第一页并刷新 ==========
+function resetPageAndQuery() {
+  if (gridApi.commitProxy) {
+    gridApi.commitProxy('reload');
+  } else if (gridApi.reload) {
+    gridApi.reload();
+  } else {
+    dataObj.currentPage = 1;
+    gridApi.query();
+  }
+  dataObj.currentPage = 1; // 确保界面分页显示第一页
+}
+
+function handleRefresh() {
+  gridApi.query(); // 手动刷新保持当前页码
+}
+
+function handleReset() {
+  searchParams.value = {};
+  tagFilters.value = {};
+  resetPageAndQuery();
+}
 
 async function handleExport() {
-  const loading = ElLoading.service({ text: '正在导出...' });
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
     const data = await exportClubMgmt(searchParams.value);
-    downloadFileFromBlobPart({ fileName: '社团管理列表.xls', source: data });
+    downloadFileFromBlobPart({fileName: '社团管理列表.xls', source: data});
     ElMessage.success('导出成功');
-  } catch (error) { console.error('导出失败:', error); ElMessage.error('导出失败'); }
-  finally { loading.close(); }
+  } catch (error) {
+    console.error('导出失败:', error);
+    ElMessage.error('导出失败');
+  } finally {
+    loading.close();
+  }
 }
 
 // 批量审核
@@ -188,15 +189,26 @@ async function handleBatchAudit() {
   const selectedRows = checkedRows.value.filter(row => row.status === '待审核');
   if (selectedRows.length === 0) return ElMessage.warning('请选择状态为【待审核】的入团申请');
   try {
-    await ElMessageBox.confirm(`确认审核选中的 ${selectedRows.length} 条入团申请？审核后状态将变为"已通过"。`, '批量审核确认', { confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning' });
-    const loading = ElLoading.service({ text: '审核中...' });
+    await ElMessageBox.confirm(`确认审核选中的 ${selectedRows.length} 条入团申请？审核后状态将变为"已通过"。`, '批量审核确认', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+    const loading = ElLoading.service({text: '审核中...'});
     try {
       const ids = selectedRows.map(row => row.id);
-      const res = await auditClubMgmt({ ids, status: '已通过' });
-      if (res && res !== false) { ElMessage.success('批量审核成功'); handleRefresh(); }
-      else { ElMessage.error('批量审核失败'); }
-    } finally { loading.close(); }
-  } catch { }
+      const res = await auditClubMgmt({ids, status: '已通过'});
+      if (res && res !== false) {
+        ElMessage.success('批量审核成功');
+        handleRefresh();
+      } else {
+        ElMessage.error('批量审核失败');
+      }
+    } finally {
+      loading.close();
+    }
+  } catch {
+  }
 }
 
 // 批量建档
@@ -205,15 +217,26 @@ async function handleBatchArchive() {
   const selectedRows = checkedRows.value.filter(row => row.status === '已通过');
   if (selectedRows.length === 0) return ElMessage.warning('请选择状态为【已通过】的入团申请');
   try {
-    await ElMessageBox.confirm(`确认对选中的 ${selectedRows.length} 条入团申请进行建档？建档后状态将变为"已建档"。`, '批量建档确认', { confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning' });
-    const loading = ElLoading.service({ text: '建档中...' });
+    await ElMessageBox.confirm(`确认对选中的 ${selectedRows.length} 条入团申请进行建档？建档后状态将变为"已建档"。`, '批量建档确认', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+    const loading = ElLoading.service({text: '建档中...'});
     try {
       const ids = selectedRows.map(row => row.id);
-      const res = await archiveClubMgmt({ ids });
-      if (res && res !== false) { ElMessage.success('批量建档成功'); handleRefresh(); }
-      else { ElMessage.error('批量建档失败'); }
-    } finally { loading.close(); }
-  } catch { }
+      const res = await archiveClubMgmt({ids});
+      if (res && res !== false) {
+        ElMessage.success('批量建档成功');
+        handleRefresh();
+      } else {
+        ElMessage.error('批量建档失败');
+      }
+    } finally {
+      loading.close();
+    }
+  } catch {
+  }
 }
 
 function handleCreate() {
@@ -221,36 +244,62 @@ function handleCreate() {
   currentEditId.value = null;
   createDrawerApi.open();
 }
+
 function handleEdit(row) {
   if (row.status !== '待审核') return ElMessage.warning('只有待审核状态的入团申请可以编辑');
   isEditMode.value = true;
   currentEditId.value = row.id;
   createDrawerApi.open();
 }
+
 async function handleAudit(row) {
   if (row.status !== '待审核') return ElMessage.warning('只有待审核状态的入团申请可以审核');
   try {
-    await ElMessageBox.confirm(`确认审核入团申请（学号：${row.studentId}，社团：${row.clubName}）？审核后状态将变为"已通过"。`, '审核确认', { confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning' });
-    const loading = ElLoading.service({ text: '审核中...' });
+    await ElMessageBox.confirm(`确认审核入团申请（学号：${row.studentId}，社团：${row.clubName}）？审核后状态将变为"已通过"。`, '审核确认', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+    const loading = ElLoading.service({text: '审核中...'});
     try {
-      const res = await auditClubMgmt({ ids: [row.id], status: '已通过' });
-      if (res && res !== false) { ElMessage.success('审核成功'); handleRefresh(); }
-      else { ElMessage.error('审核失败'); }
-    } finally { loading.close(); }
-  } catch { }
+      const res = await auditClubMgmt({ids: [row.id], status: '已通过'});
+      if (res && res !== false) {
+        ElMessage.success('审核成功');
+        handleRefresh();
+      } else {
+        ElMessage.error('审核失败');
+      }
+    } finally {
+      loading.close();
+    }
+  } catch {
+  }
 }
+
 async function handleArchive(row) {
   if (row.status !== '已通过') return ElMessage.warning('只有已通过状态的入团申请可以建档');
   try {
-    await ElMessageBox.confirm(`确认对入团申请（学号：${row.studentId}，社团：${row.clubName}）进行建档？建档后状态将变为"已建档"。`, '建档确认', { confirmButtonText: '确认', cancelButtonText: '取消', type: 'warning' });
-    const loading = ElLoading.service({ text: '建档中...' });
+    await ElMessageBox.confirm(`确认对入团申请（学号：${row.studentId}，社团：${row.clubName}）进行建档？建档后状态将变为"已建档"。`, '建档确认', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning'
+    });
+    const loading = ElLoading.service({text: '建档中...'});
     try {
-      const res = await archiveClubMgmt({ ids: [row.id] });
-      if (res && res !== false) { ElMessage.success('建档成功'); handleRefresh(); }
-      else { ElMessage.error('建档失败'); }
-    } finally { loading.close(); }
-  } catch { }
+      const res = await archiveClubMgmt({ids: [row.id]});
+      if (res && res !== false) {
+        ElMessage.success('建档成功');
+        handleRefresh();
+      } else {
+        ElMessage.error('建档失败');
+      }
+    } finally {
+      loading.close();
+    }
+  } catch {
+  }
 }
+
 function handleVenueApply(row) {
   if (row.status !== '已通过' && row.status !== '已建档') return ElMessage.warning('只有已通过或已建档状态的申请可以申请场馆');
   currentVenueRow.value = row;
@@ -261,14 +310,14 @@ function handleVenueApply(row) {
 // 申请/编辑表单
 const [CreateForm, createFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: isEditMode.value ? '更新中...' : '申请中...' });
+    const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '申请中...'});
     try {
       let res;
-      const submitData = { ...values, status: values.status || '待审核' };
+      const submitData = {...values, status: values.status || '待审核'};
       if (isEditMode.value) {
-        res = await updateClubMgmt({ ...submitData, id: currentEditId.value });
+        res = await updateClubMgmt({...submitData, id: currentEditId.value});
       } else {
         res = await createClubMgmt(submitData);
       }
@@ -276,13 +325,17 @@ const [CreateForm, createFormApi] = useVbenForm({
         ElMessage.success(isEditMode.value ? '更新成功' : '申请成功');
         createDrawerApi.close();
         handleRefresh();
-      } else { ElMessage.error(isEditMode.value ? '更新失败' : '申请失败'); }
-    } finally { loading.close(); }
+      } else {
+        ElMessage.error(isEditMode.value ? '更新失败' : '申请失败');
+      }
+    } finally {
+      loading.close();
+    }
   },
   layout: 'horizontal',
   schema: createFormSchemaStatic,
   showCollapseButton: false,
-  submitButtonOptions: { content: computed(() => isEditMode.value ? '保存' : '申请') },
+  submitButtonOptions: {content: computed(() => isEditMode.value ? '保存' : '申请')},
 });
 
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
@@ -294,7 +347,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
       await createFormApi.resetForm();
       if (isEditMode.value && currentEditId.value) {
         try {
-          const detail = await getClubMgmtDetail({ id: currentEditId.value });
+          const detail = await getClubMgmtDetail({id: currentEditId.value});
           await createFormApi.setValues({
             clubName: detail.clubName,
             clubType: detail.clubType,
@@ -309,7 +362,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
           createDrawerApi.close();
         }
       } else {
-        await createFormApi.setValues({ status: '待审核' });
+        await createFormApi.setValues({status: '待审核'});
       }
     }
   },
@@ -318,17 +371,17 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
 // 场馆申请表单
 const [VenueForm, venueFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '提交场馆申请中...' });
+    const loading = ElLoading.service({text: '提交场馆申请中...'});
     try {
       let applyTimeStr = values.applyTime;
       if (typeof applyTimeStr === 'number') {
         const date = new Date(applyTimeStr);
-        applyTimeStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}:${String(date.getSeconds()).padStart(2,'0')}`;
+        applyTimeStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
       } else if (typeof applyTimeStr === 'string' && applyTimeStr.includes('T')) {
         const date = new Date(applyTimeStr);
-        applyTimeStr = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}:${String(date.getSeconds()).padStart(2,'0')}`;
+        applyTimeStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
       }
       const res = await venueApplyClubMgmt({
         id: currentVenueRow.value.id,
@@ -336,70 +389,112 @@ const [VenueForm, venueFormApi] = useVbenForm({
         applyTime: applyTimeStr,
         applyReason: values.applyReason,
       });
-      if (res && res !== false) { ElMessage.success('场馆申请提交成功'); venueDrawerApi.close(); handleRefresh(); }
-      else { ElMessage.error('提交失败'); }
-    } catch (error) { console.error('场馆申请失败:', error); ElMessage.error(error?.message || '提交失败'); }
-    finally { loading.close(); }
+      if (res && res !== false) {
+        ElMessage.success('场馆申请提交成功');
+        venueDrawerApi.close();
+        handleRefresh();
+      } else {
+        ElMessage.error('提交失败');
+      }
+    } catch (error) {
+      console.error('场馆申请失败:', error);
+      ElMessage.error(error?.message || '提交失败');
+    } finally {
+      loading.close();
+    }
   },
   layout: 'horizontal',
   schema: useVenueApplyFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '提交申请' },
+  submitButtonOptions: {content: '提交申请'},
 });
 
 const clubDetailDrawerRef = ref(null);
+
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   clubDetailDrawerRef.value.open();
 }
 
+// 高级查询表单
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
-    gridApi.query();
+    resetPageAndQuery(); // 查询时重置页码
   },
   layout: 'horizontal',
-  schema: useFormSchema().map(v => { delete v.rules; return v; }),
+  schema: useFormSchema().map(v => {
+    delete v.rules;
+    return v;
+  }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
-const [Grid, gridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: gridColumns.value,
-    keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
-    pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
-    showOverflow: true,
-  },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
-  showSearchForm: false,
-});
+// 筛选标签相关函数（使用 resetPageAndQuery）
+function getFieldLabel(field) {
+  const map = {
+    clubName: '社团名称',
+    clubType: '社团类型',
+    status: '状态',
+    creator: '创建人',
+    createTime: '创建时间',
+  };
+  return map[field] || field;
+}
 
-watch(activeName, (newVal) => {
+function getTagDisplayText(field, value) {
+  if (Array.isArray(value)) return value.join('、');
+  return value || '-';
+}
+
+function handleFilterTagClick(field, value) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
+    const existing = tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
+    } else {
+      tagFilters.value[field] = value;
+    }
+  }
+  resetPageAndQuery(); // 筛选时重置页码
+}
+
+function clearFilters() {
   tagFilters.value = {};
-  gridColumns.value = getColumnsByStatus(newVal);
-  if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
-  else gridApi.setGridOptions?.({ columns: gridColumns.value });
-  gridApi.query();
-});
+  resetPageAndQuery();
+}
+
+function removeFilterTag(field) {
+  delete tagFilters.value[field];
+  resetPageAndQuery();
+}
 
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
 const showChart = ref(true);
-const toggleChart = () => { showChart.value = !showChart.value; };
+const toggleChart = () => {
+  showChart.value = !showChart.value;
+};
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 
 // ========== 监听图表自定义事件 ==========
 const handleChartFilter = (event) => {
-  const { type, value } = event.detail;
+  const {type, value} = event.detail;
   if (type === 'status') {
     handleFilterTagClick('status', value);
   } else if (type === 'clubName') {
@@ -408,6 +503,15 @@ const handleChartFilter = (event) => {
     handleFilterTagClick('clubType', value);
   }
 };
+
+// 切换选项卡时也需要重置页码
+watch(activeName, (newVal) => {
+  tagFilters.value = {};
+  gridColumns.value = getColumnsByStatus(newVal);
+  if (gridApi && gridApi.xGrid) gridApi.xGrid.refreshColumn();
+  else gridApi.setGridOptions?.({columns: gridColumns.value});
+  resetPageAndQuery(); // 原为 gridApi.query()，改为重置页码
+});
 
 onMounted(() => {
   window.addEventListener('club-chart-filter', handleChartFilter);
@@ -419,10 +523,17 @@ onUnmounted(() => {
 
 <template>
   <div class="tools-table-new">
-    <ClubDetailDrawer ref="clubDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh"/>
-    <Drawer title="搜索"><QueryForm/></Drawer>
-    <CreateDrawer :title="isEditMode ? '编辑入团申请' : '入团申请'"><CreateForm/></CreateDrawer>
-    <VenueDrawer title="场馆申请"><VenueForm/></VenueDrawer>
+    <ClubDetailDrawer ref="clubDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                      @refresh="handleRefresh"/>
+    <Drawer title="搜索">
+      <QueryForm/>
+    </Drawer>
+    <CreateDrawer :title="isEditMode ? '编辑入团申请' : '入团申请'">
+      <CreateForm/>
+    </CreateDrawer>
+    <VenueDrawer title="场馆申请">
+      <VenueForm/>
+    </VenueDrawer>
     <Grid>
       <template #table-title>
         <ElTag
@@ -444,42 +555,68 @@ onUnmounted(() => {
           <IconButton content="导出" icon-name="download" @click="handleExport"/>
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
           <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
       <template #clubName="{ row }">
-        <el-text @click="handleFilterTagClick('clubName', row.clubName)" type="primary" style="cursor: pointer;">{{ row.clubName }}</el-text>
+        <el-text @click="handleFilterTagClick('clubName', row.clubName)" type="primary"
+                 style="cursor: pointer;">{{ row.clubName }}
+        </el-text>
       </template>
       <template #clubType="{ row }">
-        <el-text @click="handleFilterTagClick('clubType', row.clubType)" type="primary" style="cursor: pointer;">{{ row.clubType }}</el-text>
+        <el-text @click="handleFilterTagClick('clubType', row.clubType)" type="primary"
+                 style="cursor: pointer;">{{ row.clubType }}
+        </el-text>
       </template>
       <template #studentId="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentId }}</el-text>
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+          {{ row.studentId }}
+        </el-text>
       </template>
-      <template #applyTime="{ row }"><el-text>{{ formatTimestamp(row.applyTime) }}</el-text></template>
-      <template #auditTime="{ row }"><el-text>{{ formatTimestamp(row.auditTime) }}</el-text></template>
-      <template #archiveTime="{ row }"><el-text>{{ formatTimestamp(row.archiveTime) }}</el-text></template>
-      <template #venueApplyStatus="{ row }"><el-tag :type="getVenueStatusType(row.venueApplyStatus)">{{ row.venueApplyStatus }}</el-tag></template>
+      <template #applyTime="{ row }">
+        <el-text>{{ formatTimestamp(row.applyTime) }}</el-text>
+      </template>
+      <template #auditTime="{ row }">
+        <el-text>{{ formatTimestamp(row.auditTime) }}</el-text>
+      </template>
+      <template #archiveTime="{ row }">
+        <el-text>{{ formatTimestamp(row.archiveTime) }}</el-text>
+      </template>
+      <template #venueApplyStatus="{ row }">
+        <el-tag :type="getVenueStatusType(row.venueApplyStatus)">{{ row.venueApplyStatus }}</el-tag>
+      </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">{{ row.status }}</el-tag>
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
+          {{ row.status }}
+        </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer;">{{ row.creator || '-' }}
+        </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text>{{ formatTimestamp(row.createTime) }}</el-text>
       </template>
-      <template #updateTime="{ row }"><el-text>{{ formatTimestamp(row.updateTime) }}</el-text></template>
+      <template #updateTime="{ row }">
+        <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
+      </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit" @click="handleEdit(row)"/>
-          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check" @click="handleAudit(row)"/>
-          <IconButton v-if="row.status === '已通过'" content="建档" icon-name="FolderOpened" @click="handleArchive(row)"/>
-          <IconButton v-if="row.status === '已通过' || row.status === '已建档'" content="场馆申请" icon-name="Location" @click="handleVenueApply(row)"/>
+          <IconButton v-if="row.status === '待审核'" content="编辑" icon-name="Edit"
+                      @click="handleEdit(row)"/>
+          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Check"
+                      @click="handleAudit(row)"/>
+          <IconButton v-if="row.status === '已通过'" content="建档" icon-name="FolderOpened"
+                      @click="handleArchive(row)"/>
+          <IconButton v-if="row.status === '已通过' || row.status === '已建档'" content="场馆申请"
+                      icon-name="Location" @click="handleVenueApply(row)"/>
         </div>
       </template>
     </Grid>

@@ -36,6 +36,10 @@ export function importChargeParkLink(file, updateSupport = false) {
   });
 }
 
+export function getChargeParkLinkImportTemplate() {
+  return requestClient.download(`${baseUrl}/get-import-template`);
+}
+
 export function exportChargeParkLink(params) {
   return requestClient.download(`${baseUrl}/export`, { params });
 }

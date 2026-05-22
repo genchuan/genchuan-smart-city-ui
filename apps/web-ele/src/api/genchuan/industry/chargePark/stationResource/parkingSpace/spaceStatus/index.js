@@ -11,6 +11,19 @@ export function getParkingSpaceStatusDetail(id) {
   return requestClient.get(`${baseUrl}/get`, { params: { id } });
 }
 
+export function importParkingSpaceStatus(file, updateSupport = false) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('updateSupport', updateSupport);
+  return requestClient.post(`${baseUrl}/import`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}
+
+export function getParkingSpaceStatusImportTemplate() {
+  return requestClient.download(`${baseUrl}/get-import-template`);
+}
+
 export function exportParkingSpaceStatus(params) {
   return requestClient.download(`${baseUrl}/export`, { params });
 }

@@ -11,8 +11,6 @@ const props = defineProps({
 
 const cards = reactive([
   { title: '今日入场量', value: 0, color: '#4A90E2', key: 'todayEnterCount' },
-  { title: '正常入场', value: 0, color: '#50E3C2', key: 'normal' },
-  { title: '异常入场', value: 0, color: '#FF6B8B', key: 'abnormal' },
   { title: '入场峰值', value: 0, color: '#FF9F40', key: 'enterPeak' },
 ]);
 
@@ -32,7 +30,7 @@ let barChartInstance = null;
 async function loadChartData() {
   try {
     const params = {
-      stationName: props.parkId,
+      stationId: props.parkId,
     };
 
     const res = await getEnterRecordChart(params);
@@ -40,7 +38,7 @@ async function loadChartData() {
     // Always update card values
     if (res?.cardData) {
       cards[0].value = res.cardData.todayEnterCount || 0;
-      cards[3].value = res.cardData.enterPeak || 0;
+      cards[1].value = res.cardData.enterPeak || 0;
     }
 
     // Check if there's chart data
@@ -166,7 +164,7 @@ function initBarChart() {
         detail: {
           startTime: todayStart,
           endTime: todayEnd,
-          hour: params.name,
+          enterTimeHour: params.name,
         },
       }),
     );
@@ -187,9 +185,7 @@ function handleCardClick(key) {
 
   const filterMap = {
     todayEnterCount: { startTime: todayStart, endTime: todayEnd },
-    normal: { status: '正常记录' },
-    abnormal: { status: '异常记录' },
-    enterPeak: { startTime: todayStart, endTime: todayEnd },
+    enterPeak: { startTime: todayStart, endTime: todayEnd, overTime: true },
   };
 
   const filterParams = filterMap[key];
@@ -276,17 +272,18 @@ onUnmounted(() => {
   padding-left: 15px;
 
   .box-left {
-    display: grid !important;
+    display: flex !important;
     flex: 0 0 auto !important;
-    grid-template-columns: repeat(2, 1fr);
+    flex-direction: column;
     gap: 12px;
     min-width: 280px !important;
     max-width: 320px !important;
+    height: 330px;
 
     .left-card {
       display: flex;
+      flex: 1;
       flex-direction: column;
-      height: 150px;
       padding: 16px 14px;
       overflow: hidden;
       cursor: pointer;

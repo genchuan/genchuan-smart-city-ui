@@ -1,31 +1,32 @@
 <script setup>
-import {reactive, ref, watch} from 'vue';
-import {ElLoading, ElMessage, ElTag, ElMessageBox} from 'element-plus';
+import { reactive, ref, watch } from 'vue';
+import { ElLoading, ElMessage, ElTag, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
-import {useVbenDrawer} from '@vben/common-ui';
-import {useVbenForm} from '#/adapter/form';
-import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import { useVbenDrawer } from '@vben/common-ui';
+import { useVbenForm } from '#/adapter/form';
+import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   getMoralReportPage,
   createMoralReport,
+  archiveMoralReport,
   exportMoralReport,
   getMoralReportDetail,
+  getTargetMgmtPage,
+  getMoralActivityPage,
+  getUserInfo,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/decisionAnalysis/moralReport/data.js';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import {downloadFileFromBlobPart} from '@vben/utils';
+import { downloadFileFromBlobPart } from '@vben/utils';
 import {
   detailFields,
   getGenerateStatusTagType,
-  getReportPeriodTagType,
+  getReportCycleTagType,
   useCreateFormSchema,
   useGridColumns,
   useSearchFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/decisionAnalysis/moralReport/form.js';
-
-// 明细弹窗组件（德育报表专用）
-import ClassMoralDetailDialog from '../components/ClassMoralDetailDialog.vue';      // 班级德育明细
-import GoodDeedDetailDialog from '../components/GoodDeedDetailDialog.vue';          // 好人好事记录明细
-import CivilizedBehaviorDetailDialog from '../components/CivilizedBehaviorDetailDialog.vue'; // 文明行为评比明细
+import TargetDetailDialog from '../components/TargetDetailDialog.vue';
+import ActivityDetailDialog from '../components/ActivityDetailDialog.vue';
 
 const props = defineProps({
   secondShow: Boolean,
@@ -34,27 +35,15 @@ const props = defineProps({
   activeReportCycle: String,
 });
 
-// 搜索参数
 const searchParams = reactive({
-  reportPeriod: '',
-  statisticalPeriod: '',
-  className: '',
-  majorName: '',
-  grade: '',
-  campus: '',
-  civilizedClassTitle: '',
-  assessRank: null,
+  reportCycle: '',
+  statStartTime: null,
+  statEndTime: null,
   generateStatus: '',
 });
 
 const activeFilterTags = reactive({
-  reportPeriod: '',
-  className: '',
-  majorName: '',
-  grade: '',
-  campus: '',
-  civilizedClassTitle: '',
-  assessRank: '',
+  reportCycle: '',
   generateStatus: '',
 });
 
@@ -68,43 +57,26 @@ const dataObj = reactive({
   loading: false,
 });
 
-// 移除筛选标签
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+};
+
 const removeFilterTag = (type) => {
-  const map = {
-    reportPeriod: () => {
-      searchParams.reportPeriod = '';
-      activeFilterTags.reportPeriod = '';
-    },
-    className: () => {
-      searchParams.className = '';
-      activeFilterTags.className = '';
-    },
-    majorName: () => {
-      searchParams.majorName = '';
-      activeFilterTags.majorName = '';
-    },
-    grade: () => {
-      searchParams.grade = '';
-      activeFilterTags.grade = '';
-    },
-    campus: () => {
-      searchParams.campus = '';
-      activeFilterTags.campus = '';
-    },
-    civilizedClassTitle: () => {
-      searchParams.civilizedClassTitle = '';
-      activeFilterTags.civilizedClassTitle = '';
-    },
-    assessRank: () => {
-      searchParams.assessRank = null;
-      activeFilterTags.assessRank = '';
-    },
-    generateStatus: () => {
-      searchParams.generateStatus = '';
-      activeFilterTags.generateStatus = '';
-    },
-  };
-  map[type]?.();
+  if (type === 'reportCycle') {
+    searchParams.reportCycle = '';
+    activeFilterTags.reportCycle = '';
+  } else if (type === 'generateStatus') {
+    searchParams.generateStatus = '';
+    activeFilterTags.generateStatus = '';
+  }
   handleRefresh();
 };
 
@@ -115,15 +87,14 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   onCancel: () => formDrawerApi.close(),
   async onConfirm() {
     const obj = formApi.form.values;
-    const loadingInstance = ElLoading.service({text: '正在生成报表...'});
+    const loadingInstance = ElLoading.service({ text: '正在生成报表...' });
     try {
       const statStart = obj.statTimeRange?.[0];
       const statEnd = obj.statTimeRange?.[1];
-      const statisticalPeriod = statStart && statEnd ? `${statStart} 至 ${statEnd}` : '';
       const params = {
-        statisticalPeriod,
-        reportPeriod: obj.reportPeriod,
-        campus: obj.campus,
+        statStartTime: statStart ? new Date(statStart).getTime() : null,
+        statEndTime: statEnd ? new Date(statEnd).getTime() : null,
+        reportCycle: obj.reportCycle,
         grade: obj.grade,
         majorName: obj.majorName || '',
         className: obj.className || '',
@@ -146,32 +117,31 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 });
 
 const [Form, formApi] = useVbenForm({
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   layout: 'horizontal',
   schema: useCreateFormSchema(),
   showDefaultActions: false,
 });
 
 // 搜索抽屉
-const [Drawer, drawerApi] = useVbenDrawer({modal: false, appendToMain: true, footer: false});
+const [Drawer, drawerApi] = useVbenDrawer({ modal: false, appendToMain: true, footer: false });
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: onSubmit,
   layout: 'horizontal',
   schema: useSearchFormSchema(),
   showCollapseButton: true,
-  submitButtonOptions: {content: '查询'},
+  submitButtonOptions: { content: '查询' },
 });
 
 // 详情抽屉
 const detailDrawerRef = ref(null);
 const detailData = ref({});
 
-// 明细弹窗引用（已移除 drillDownDetailDialogRef）
-const classMoralDetailRef = ref(null);      // 班级德育明细
-const goodDeedDetailRef = ref(null);        // 好人好事记录
-const civilizedBehaviorDetailRef = ref(null); // 文明行为评比
+// 明细弹窗引用
+const targetDetailRef = ref(null);
+const activityDetailRef = ref(null);
 
 // 表格数据获取
 const getTableData = async (pageObj) => {
@@ -187,14 +157,14 @@ const getTableData = async (pageObj) => {
     });
     const response = await getMoralReportPage(params);
     if (response?.code === 200) {
-      const {list, total} = response.data;
-      return {list: list || [], total: total || 0};
+      const { list, total } = response.data;
+      return { list: list || [], total: total || 0 };
     }
-    return {list: [], total: 0};
+    return { list: [], total: 0 };
   } catch (error) {
     console.error('获取表格数据失败:', error);
     ElMessage.error('获取数据失败');
-    return {list: [], total: 0};
+    return { list: [], total: 0 };
   }
 };
 
@@ -202,10 +172,10 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
     keepSource: true,
-    proxyConfig: {ajax: {query: async ({page}) => await getTableData({page})}},
-    rowConfig: {keyField: 'id', isHover: true},
+    proxyConfig: { ajax: { query: async ({ page }) => await getTableData({ page }) } },
+    rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
-    toolbarConfig: {refresh: true, search: true},
+    toolbarConfig: { refresh: true, search: true },
     showOverflow: true,
   },
   showSearchForm: false,
@@ -221,13 +191,13 @@ const handleExport = async () => {
       cancelButtonText: '取消',
       type: 'info',
     });
-    const loadingInstance = ElLoading.service({text: '正在导出...'});
-    const params = {...searchParams};
+    const loadingInstance = ElLoading.service({ text: '正在导出...' });
+    const params = { ...searchParams };
     Object.keys(params).forEach(key => {
       if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
     });
     const blob = await exportMoralReport(params);
-    downloadFileFromBlobPart({fileName: '德育评比报表数据.xlsx', source: blob});
+    downloadFileFromBlobPart({ fileName: '德育报表数据.xlsx', source: blob });
     ElMessage.success('导出成功');
     loadingInstance.close();
   } catch (error) {
@@ -241,17 +211,14 @@ const handleExport = async () => {
 // 单行导出
 const handleExportRow = async (row) => {
   try {
-    await ElMessageBox.confirm(`确认导出报表“${row.reportPeriod}”的数据吗？`, '导出确认', {
+    await ElMessageBox.confirm(`确认导出报表“${row.reportCycle}”的数据吗？`, '导出确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'info',
     });
-    const loadingInstance = ElLoading.service({text: '正在导出...'});
-    const blob = await exportMoralReport({id: row.id});
-    downloadFileFromBlobPart({
-      fileName: `德育报表_${row.reportPeriod}_${row.className}.xlsx`,
-      source: blob
-    });
+    const loadingInstance = ElLoading.service({ text: '正在导出...' });
+    const blob = await exportMoralReport({ id: row.id });
+    downloadFileFromBlobPart({ fileName: `德育报表_${row.reportCycle}.xlsx`, source: blob });
     ElMessage.success('导出成功');
     loadingInstance.close();
   } catch (error) {
@@ -264,9 +231,9 @@ const handleExportRow = async (row) => {
 
 // 查看详情
 const handleOpenDetail = async (row) => {
-  const loadingInstance = ElLoading.service({text: '正在加载详情...'});
+  const loadingInstance = ElLoading.service({ text: '正在加载详情...' });
   try {
-    const response = await getMoralReportDetail({id: row.id});
+    const response = await getMoralReportDetail({ id: row.id });
     detailData.value = response?.code === 200 ? response.data : row;
     detailDrawerRef.value.open();
   } catch (error) {
@@ -277,95 +244,173 @@ const handleOpenDetail = async (row) => {
   }
 };
 
+// 生成按钮
+const handleGenerate = async (row) => {
+  try {
+    await ElMessageBox.confirm(`确认生成“${row.reportCycle}”报表吗？`, '生成确认', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'info',
+    });
+    const loadingInstance = ElLoading.service({ text: '正在生成报表...' });
+    const response = await createMoralReport({ id: row.id });
+    if (response?.code === 200) {
+      ElMessage.success('报表生成成功');
+      handleRefresh();
+    } else {
+      ElMessage.error(response?.msg || '生成失败');
+    }
+    loadingInstance.close();
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('生成失败:', error);
+      ElMessage.error('生成失败');
+    }
+  }
+};
+
+// 归档
+const handleArchive = async (row) => {
+  try {
+    await ElMessageBox.confirm(`确认归档“${row.reportCycle}”报表吗？归档后将不可再修改。`, '归档确认', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning',
+    });
+    const loadingInstance = ElLoading.service({ text: '正在归档...' });
+    const response = await archiveMoralReport({ ids: [row.id] });
+    if (response?.code === 200) {
+      ElMessage.success('归档成功');
+      handleRefresh();
+    } else {
+      ElMessage.error(response?.msg || '归档失败');
+    }
+    loadingInstance.close();
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('归档失败:', error);
+      ElMessage.error('归档失败');
+    }
+  }
+};
+
+// 打印（年报）
+const handlePrint = (row) => {
+  window.print();
+  ElMessage.info('打印功能已触发');
+};
+
+const getActionButtons = (row) => {
+  const { reportCycle, generateStatus } = row;
+  if (generateStatus === '待生成') {
+    return [{ label: '生成', onClick: () => handleGenerate(row), type: 'primary' }];
+  }
+  if (generateStatus === '已生成') {
+    const base = [
+      { label: '查看', onClick: () => handleOpenDetail(row) },
+      { label: '导出', onClick: () => handleExportRow(row) },
+    ];
+    if (reportCycle !== '年报') base.push({ label: '归档', onClick: () => handleArchive(row) });
+    else base.push({ label: '归档', onClick: () => handleArchive(row) }, { label: '打印', onClick: () => handlePrint(row) });
+    return base;
+  }
+  if (generateStatus === '已归档') {
+    const base = [
+      { label: '查看', onClick: () => handleOpenDetail(row) },
+      { label: '导出', onClick: () => handleExportRow(row) },
+    ];
+    if (reportCycle === '年报') base.push({ label: '打印', onClick: () => handlePrint(row) });
+    return base;
+  }
+  return [];
+};
+
 const handleCreate = () => formDrawerApi.setData({}).open();
 const handleSearch = () => drawerApi.open();
 
 const handleReset = () => {
-  Object.keys(searchParams).forEach(key => {
-    if (key === 'assessRank') searchParams[key] = null;
-    else searchParams[key] = '';
-  });
-  Object.keys(activeFilterTags).forEach(key => activeFilterTags[key] = '');
+  searchParams.reportCycle = '';
+  searchParams.generateStatus = '';
+  searchParams.statStartTime = null;
+  searchParams.statEndTime = null;
+  activeFilterTags.reportCycle = '';
+  activeFilterTags.generateStatus = '';
   handleRefresh();
 };
 
 function onSubmit(values) {
-  Object.assign(searchParams, values);
-  activeFilterTags.reportPeriod = searchParams.reportPeriod || '';
-  activeFilterTags.className = searchParams.className || '';
-  activeFilterTags.majorName = searchParams.majorName || '';
-  activeFilterTags.grade = searchParams.grade || '';
-  activeFilterTags.campus = searchParams.campus || '';
-  activeFilterTags.civilizedClassTitle = searchParams.civilizedClassTitle || '';
-  activeFilterTags.assessRank = searchParams.assessRank ? String(searchParams.assessRank) : '';
-  activeFilterTags.generateStatus = searchParams.generateStatus || '';
+  searchParams.reportCycle = values.reportCycle || '';
+  searchParams.generateStatus = values.generateStatus || '';
+  if (values.statTimeRange && values.statTimeRange.length === 2) {
+    searchParams.statStartTime = new Date(values.statTimeRange[0]).getTime();
+    searchParams.statEndTime = new Date(values.statTimeRange[1]).getTime();
+  } else {
+    searchParams.statStartTime = null;
+    searchParams.statEndTime = null;
+  }
+  activeFilterTags.reportCycle = searchParams.reportCycle;
+  activeFilterTags.generateStatus = searchParams.generateStatus;
   handleRefresh();
   drawerApi.close();
 }
 
-// 字段钻取（已移除 operator 分支）
+// 字段钻取
 const handleFieldDrill = (type, row) => {
-  const drillMap = {
-    reportPeriod: () => {
-      searchParams.reportPeriod = row.reportPeriod;
-      activeFilterTags.reportPeriod = row.reportPeriod;
+  switch (type) {
+    case 'targetTotal':
+      targetDetailRef.value?.open({ status: 'all' });
+      break;
+    case 'targetEnableNum':
+      targetDetailRef.value?.open({ status: 'enable' });
+      break;
+    case 'targetWarnNum':
+      targetDetailRef.value?.open({ status: 'warn' });
+      break;
+    case 'activityJoinNum':
+      activityDetailRef.value?.open();
+      break;
+    case 'reportCycle':
+      searchParams.reportCycle = row.reportCycle;
+      activeFilterTags.reportCycle = row.reportCycle;
       handleRefresh();
-    },
-    className: () => {
-      searchParams.className = row.className;
-      activeFilterTags.className = row.className;
-      handleRefresh();
-    },
-    majorName: () => {
-      searchParams.majorName = row.majorName;
-      activeFilterTags.majorName = row.majorName;
-      handleRefresh();
-    },
-    grade: () => {
-      searchParams.grade = row.grade;
-      activeFilterTags.grade = row.grade;
-      handleRefresh();
-    },
-    campus: () => {
-      searchParams.campus = row.campus;
-      activeFilterTags.campus = row.campus;
-      handleRefresh();
-    },
-    assessRank: () => {
-      searchParams.assessRank = row.assessRank;
-      activeFilterTags.assessRank = String(row.assessRank);
-      handleRefresh();
-    },
-    civilizedClassTitle: () => {
-      searchParams.civilizedClassTitle = row.civilizedClassTitle;
-      activeFilterTags.civilizedClassTitle = row.civilizedClassTitle;
-      handleRefresh();
-    },
-    generateStatus: () => {
+      break;
+    case 'generateStatus':
       searchParams.generateStatus = row.generateStatus;
       activeFilterTags.generateStatus = row.generateStatus;
       handleRefresh();
-    },
-    totalMoralScore: () => classMoralDetailRef.value?.open(row),
-    goodDeedScore: () => goodDeedDetailRef.value?.open(row),
-    civilizedBehaviorScore: () => civilizedBehaviorDetailRef.value?.open(row),
-  };
-  drillMap[type]?.();
+      break;
+    default:
+      break;
+  }
 };
 
-// 处理图表钻取（来自父组件或图表点击）
+// 操作人信息
+const handleOperatorClick = async (operatorId) => {
+  const loadingInstance = ElLoading.service({ text: '加载中...' });
+  try {
+    const res = await getUserInfo({ id: operatorId });
+    if (res.code === 200) {
+      const user = res.data;
+      ElMessageBox.alert(`账号：${user.username}\n姓名：${user.nickname}\n部门ID：${user.deptId}`, '操作人信息', {
+        confirmButtonText: '关闭',
+      });
+    }
+  } catch (error) {
+    ElMessage.error('获取操作人信息失败');
+  } finally {
+    loadingInstance.close();
+  }
+};
+
+// 图表钻取回调
 const handleStatsFilter = (type, value) => {
-  if (type === 'classRankBar') {
-    // 点击班级排名柱状图 -> 打开该班级德育明细弹窗
-    classMoralDetailRef.value?.open({className: value});
-  } else if (type === 'campusBar') {
-    // 点击校区文明班级柱状图 -> 筛选该校区文明班级列表
-    searchParams.campus = value;
-    activeFilterTags.campus = value;
-    handleRefresh();
+  if (type === 'radar') {
+    // 德育报表无雷达图，忽略
+  } else if (type === 'line') {
+    // 根据需要实现钻取
   } else if (type === 'reportCycle') {
-    searchParams.reportPeriod = value || '';
-    activeFilterTags.reportPeriod = value || '';
+    searchParams.reportCycle = value || '';
+    activeFilterTags.reportCycle = value || '';
     handleRefresh();
   }
 };
@@ -374,128 +419,98 @@ watch(
   () => props.activeReportCycle,
   (newVal) => {
     if (newVal !== undefined) {
-      searchParams.reportPeriod = newVal || '';
-      activeFilterTags.reportPeriod = newVal || '';
+      searchParams.reportCycle = newVal || '';
+      activeFilterTags.reportCycle = newVal || '';
       handleRefresh();
     }
   },
-  {immediate: false}
+  { immediate: false }
 );
 
 const handleFullShow = () => screenfull.toggle();
 
-defineExpose({handleStatsFilter});
+defineExpose({ handleStatsFilter });
 </script>
 
 <template>
   <div class="park-lot-table-new">
     <FormDrawer title="生成报表">
-      <Form/>
+      <Form />
     </FormDrawer>
-    <DetailDrawer ref="detailDrawerRef" :title="`${detailData.reportPeriod || '德育报表'}详情`"
-                  :data="detailData" :fields="detailFields"/>
+    <DetailDrawer ref="detailDrawerRef" :title="`${detailData.reportCycle || '德育报表'}详情`"
+                  :data="detailData" :fields="detailFields" />
     <Drawer title="筛选">
-      <QueryForm class="query-form"/>
+      <QueryForm class="query-form" />
     </Drawer>
 
-    <ClassMoralDetailDialog ref="classMoralDetailRef"/>
-    <GoodDeedDetailDialog ref="goodDeedDetailRef"/>
-    <CivilizedBehaviorDetailDialog ref="civilizedBehaviorDetailRef"/>
+    <!-- 明细弹窗 -->
+    <TargetDetailDialog ref="targetDetailRef" />
+    <ActivityDetailDialog ref="activityDetailRef" />
 
     <Grid>
       <template #table-title>
-        <div class="tabel-tabs"
-             style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
-          <ElTag v-if="activeFilterTags.className" type="primary" closable
-                 @close="removeFilterTag('className')">班级：{{ activeFilterTags.className }}
-          </ElTag>
-          <ElTag v-if="activeFilterTags.majorName" type="primary" closable
-                 @close="removeFilterTag('majorName')">专业：{{ activeFilterTags.majorName }}
-          </ElTag>
-          <ElTag v-if="activeFilterTags.grade" type="primary" closable
-                 @close="removeFilterTag('grade')">年级：{{ activeFilterTags.grade }}
-          </ElTag>
-          <ElTag v-if="activeFilterTags.campus" type="primary" closable
-                 @close="removeFilterTag('campus')">校区：{{ activeFilterTags.campus }}
-          </ElTag>
-          <ElTag v-if="activeFilterTags.civilizedClassTitle" type="primary" closable
-                 @close="removeFilterTag('civilizedClassTitle')">
-            文明班级称号：{{ activeFilterTags.civilizedClassTitle }}
-          </ElTag>
+        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+          <ElTag v-if="activeFilterTags.reportCycle" type="primary" closable
+                 @close="removeFilterTag('reportCycle')">报表周期：{{ activeFilterTags.reportCycle }}</ElTag>
           <ElTag v-if="activeFilterTags.generateStatus" type="primary" closable
-                 @close="removeFilterTag('generateStatus')">
-            生成状态：{{ activeFilterTags.generateStatus }}
-          </ElTag>
+                 @close="removeFilterTag('generateStatus')">生成状态：{{ activeFilterTags.generateStatus }}</ElTag>
         </div>
       </template>
 
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="生成报表" icon-name="Plus" @click="handleCreate"/>
-          <IconButton content="导出" icon-name="download" @click="handleExport"/>
-          <IconButton content="筛选" icon-name="search" @click="handleSearch"/>
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
+          <IconButton content="生成报表" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="筛选" icon-name="search" @click="handleSearch" />
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
           <IconButton :content="props.showStats ? '隐藏统计' : '显示统计'"
                       :icon-name="props.showStats ? 'ArrowUp' : 'ArrowDown'"
-                      @click="props.toggleStats"/>
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow"/>
+                      @click="props.toggleStats" />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
 
+      <!-- 统计时段 -->
+      <template #statisticalPeriod="{ row }">
+        <span>{{ formatTimestamp(row.statStartTime) }} - {{ formatTimestamp(row.statEndTime) }}</span>
+      </template>
+
       <!-- 报表周期 -->
-      <template #reportPeriod="{ row }">
-        <ElTag :type="getReportPeriodTagType(row.reportPeriod)">
-          {{ row.reportPeriod }}
+      <template #reportCycle="{ row }">
+        <ElTag :type="getReportCycleTagType(row.reportCycle)" style="cursor: pointer"
+               @click="handleFieldDrill('reportCycle', row)">
+          {{ row.reportCycle }}
         </ElTag>
       </template>
-      <!-- 班级名称 -->
-      <template #className="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('className', row)">{{ row.className }}</span>
+
+      <!-- 指标总数 -->
+      <template #targetTotal="{ row }">
+        <span style="color: #409eff; cursor: pointer" @click="handleFieldDrill('targetTotal', row)">
+          {{ row.targetTotal }}
+        </span>
       </template>
-      <!-- 专业名称 -->
-      <template #majorName="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('majorName', row)">{{ row.majorName }}</span>
+
+      <!-- 启用指标数 -->
+      <template #targetEnableNum="{ row }">
+        <span style="color: #409eff; cursor: pointer" @click="handleFieldDrill('targetEnableNum', row)">
+          {{ row.targetEnableNum }}
+        </span>
       </template>
-      <!-- 年级 -->
-      <template #grade="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('grade', row)">{{ row.grade }}</span>
+
+      <!-- 预警指标数 -->
+      <template #targetWarnNum="{ row }">
+        <span style="color: #409eff; cursor: pointer" @click="handleFieldDrill('targetWarnNum', row)">
+          {{ row.targetWarnNum }}
+        </span>
       </template>
-      <!-- 校区 -->
-      <template #campus="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('campus', row)">{{ row.campus }}</span>
+
+      <!-- 活动参与人数 -->
+      <template #activityJoinNum="{ row }">
+        <span style="color: #409eff; cursor: pointer" @click="handleFieldDrill('activityJoinNum', row)">
+          {{ row.activityJoinNum }}
+        </span>
       </template>
-      <!-- 德育总分 -->
-      <template #totalMoralScore="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('totalMoralScore', row)">{{ row.totalMoralScore }}</span>
-      </template>
-      <!-- 好人好事得分 -->
-      <template #goodDeedScore="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('goodDeedScore', row)">{{ row.goodDeedScore }}</span>
-      </template>
-      <!-- 文明行为得分 -->
-      <template #civilizedBehaviorScore="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('civilizedBehaviorScore', row)">{{
-            row.civilizedBehaviorScore
-          }}</span>
-      </template>
-      <!-- 评比排名 -->
-      <template #assessRank="{ row }">
-        <span>{{ row.assessRank }}</span>
-      </template>
-      <!-- 文明班级称号 -->
-      <template #civilizedClassTitle="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('civilizedClassTitle', row)">{{
-            row.civilizedClassTitle || '-'
-          }}</span>
-      </template>
+
       <!-- 生成状态 -->
       <template #generateStatus="{ row }">
         <ElTag :type="getGenerateStatusTagType(row.generateStatus)" style="cursor: pointer"
@@ -503,15 +518,20 @@ defineExpose({handleStatsFilter});
           {{ row.generateStatus }}
         </ElTag>
       </template>
+
       <!-- 操作人 -->
-      <template #operator="{ row }">
-        <span>{{ row.operator }}</span>
+      <template #operatorId="{ row }">
+        <span style="color: #409eff; cursor: pointer" @click="handleOperatorClick(row.operatorId)">
+          {{ row.operatorId }}
+        </span>
       </template>
+
       <!-- 操作按钮 -->
       <template #actions="{ row }">
-        <div class="table-toolbar-tools">
-          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton content="导出" icon-name="download" @click="handleExportRow(row)"/>
+        <div class="table-toolbar-tools" style="gap: 8px;">
+          <template v-for="btn in getActionButtons(row)" :key="btn.label">
+            <IconButton :content="btn.label" :icon-name="btn.label === '生成' ? 'Plus' : (btn.label === '查看' ? 'View' : (btn.label === '导出' ? 'download' : (btn.label === '归档' ? 'FolderAdd' : 'Printer')))" @click="btn.onClick" />
+          </template>
         </div>
       </template>
     </Grid>

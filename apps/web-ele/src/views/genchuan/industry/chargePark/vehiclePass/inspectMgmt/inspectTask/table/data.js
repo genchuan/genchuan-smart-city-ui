@@ -1,4 +1,52 @@
+import { requestClient } from '#/api/request';
+import { getSimpleUserList } from '#/api/system/user';
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+
+/** 获取场站列表 */
+let stationOptionsCache = null;
+export async function getStationOptions() {
+  if (stationOptionsCache) {
+    return stationOptionsCache;
+  }
+  try {
+    const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
+    if (response && Array.isArray(response)) {
+      stationOptionsCache = response.map(item => ({
+        label: item.stationName,
+        value: item.stationId,
+      }));
+      return stationOptionsCache;
+    }
+    return [];
+  } catch (error) {
+    console.error('获取场站列表失败:', error);
+    return [];
+  }
+}
+
+/** 获取执行人列表 */
+let executorOptionsCache = null;
+export async function getExecutorOptions() {
+  if (executorOptionsCache) {
+    return executorOptionsCache;
+  }
+  try {
+    console.log('正在调用执行人列表接口...');
+    const response = await getSimpleUserList();
+    console.log('执行人列表接口响应:', response);
+    if (response && Array.isArray(response)) {
+      executorOptionsCache = response.map(item => ({
+        label: item.nickname || item.username,
+        value: item.id,
+      }));
+      return executorOptionsCache;
+    }
+    return [];
+  } catch (error) {
+    console.error('获取执行人列表失败:', error);
+    return [];
+  }
+}
 
 /** 状态类型映射 */
 export const statusTypeMap = {

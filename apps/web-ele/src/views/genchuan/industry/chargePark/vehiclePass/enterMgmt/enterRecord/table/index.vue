@@ -28,11 +28,11 @@ import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
+  getStationOptions,
   plateColorTypeMap,
   recordTypeMap,
   statusTypeMap,
   textObj,
-  useAuditFormSchema,
   useCorrectFormSchema,
   useCreateFormSchema,
   useGridColumns,
@@ -49,6 +49,16 @@ const props = defineProps({
 
 // 是否使用真实API（默认false使用模拟数据）
 const USE_REAL_API = true;
+
+const stationOptions = ref([]);
+
+async function loadStationOptions() {
+  try {
+    stationOptions.value = await getStationOptions();
+  } catch (error) {
+    console.error('Failed to load station options:', error);
+  }
+}
 
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
@@ -82,7 +92,14 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: computed(() => {
+    const schema = useSearchFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -99,7 +116,14 @@ const [CreateForm, createFormApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useCreateFormSchema(),
+  schema: computed(() => {
+    const schema = useCreateFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -113,7 +137,14 @@ const [UpdateForm, updateFormApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useUpdateFormSchema(),
+  schema: computed(() => {
+    const schema = useUpdateFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -127,7 +158,14 @@ const [CorrectForm, correctFormApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useCorrectFormSchema(),
+  schema: computed(() => {
+    const schema = useCorrectFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -197,46 +235,6 @@ const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
           formValues.enterTime = formatTime(formValues.enterTime);
         }
         await correctFormApi.setValues(formValues);
-      }
-    }
-  },
-});
-
-// 审核表单
-const [AuditForm, auditFormApi] = useVbenForm({
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 80,
-  },
-  layout: 'horizontal',
-  schema: useAuditFormSchema(),
-  showDefaultActions: false,
-});
-
-// 审核Drawer
-const [AuditFormDrawer, auditFormDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  onCancel() {
-    auditFormDrawerApi.close();
-  },
-  onConfirm() {
-    const obj = auditFormApi.form.values;
-    handleAuditSubmit(obj);
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      formData.value = auditFormDrawerApi.getData();
-      if (formData.value?.id) {
-        const formValues = {
-          id: formData.value.id,
-          plateNo: formData.value.plateNo,
-          spaceNo: formData.value.spaceNo,
-        };
-        await auditFormApi.setValues(formValues);
       }
     }
   },
@@ -378,50 +376,6 @@ async function handleCorrectSubmit(data) {
   }
 }
 
-function handleAudit(row) {
-  auditFormDrawerApi
-    .setData({
-      title: '审核入场记录',
-      id: row.id,
-      plateNo: row.plateNo,
-      spaceNo: row.spaceNo,
-    })
-    .open();
-}
-
-async function handleAuditSubmit(data) {
-  if (USE_REAL_API) {
-    const loadingInstance = ElLoading.service({
-      text: '正在审核...',
-    });
-    try {
-      // TODO: 调用审核API
-      ElMessage.success('审核成功');
-      handleRefresh();
-      auditFormDrawerApi.close();
-    } catch (error) {
-      ElMessage.error('审核失败');
-      console.error(error);
-    } finally {
-      loadingInstance.close();
-    }
-  } else {
-    const auditStatus = data.auditResult === 'pass' ? '正常记录' : '异常记录';
-    dataObj.apilist.forEach((v, i) => {
-      if (v.id === formData.value?.id) {
-        dataObj.apilist[i] = {
-          ...v,
-          status: auditStatus,
-          updater: 'admin',
-          updateTime: Date.now(),
-        };
-      }
-    });
-    handleRefresh();
-    auditFormDrawerApi.close();
-  }
-}
-
 async function handleDelete(row) {
   const loadingInstance = ElLoading.service({
     text: $t('ui.actionMessage.deleting', [row.plateNo]),
@@ -494,8 +448,8 @@ const activeFilters = computed(() => {
     const statusLabel = labels.status || obj.status;
     filters.push({ label: `记录状态：${statusLabel}`, field: 'status' });
   }
-  if (obj.stationName) {
-    filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+  if (obj.stationId) {
+    filters.push({ label: `场站：${obj.stationName}`, field: 'stationId' });
   }
   if (obj.isCorrected !== undefined && obj.isCorrected !== null) {
     filters.push({
@@ -774,6 +728,7 @@ const handleStatusClick = (row) => {
 const handleStationClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
+    stationId: row.stationId,
     stationName: row.stationName,
   };
   handleRefresh();
@@ -809,19 +764,19 @@ const shouldShowCorrect = (status) => {
   return status === '异常记录';
 };
 
-const shouldShowAudit = (status) => {
-  return status === '异常记录';
-};
-
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
+  console.log('[enterRecord] Received filter params:', filterParams);
   dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
-  handleRefresh();
+  console.log('[enterRecord] Updated searchParams:', dataObj.searchParams);
+  dataObj.currentPage = 1;
+  gridApi.query();
   ElMessage.success('已应用图表筛选');
 };
 
 onMounted(() => {
+  loadStationOptions();
   window.addEventListener('filterByChart:enterRecord', handleFilterByChart);
 });
 
@@ -841,9 +796,6 @@ onUnmounted(() => {
     <CorrectFormDrawer title="修正入场记录">
       <CorrectForm />
     </CorrectFormDrawer>
-    <AuditFormDrawer title="审核入场记录">
-      <AuditForm />
-    </AuditFormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.plateNo}详情`"
@@ -1035,12 +987,6 @@ onUnmounted(() => {
             content="修正"
             icon-name="Edit"
             @click="handleCorrect(row)"
-          />
-          <IconButton
-            v-if="shouldShowAudit(row.status)"
-            content="审核"
-            icon-name="Check"
-            @click="handleAudit(row)"
           />
         </div>
       </template>

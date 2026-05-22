@@ -1,5 +1,28 @@
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
 import { getStationInfoPage } from '#/api/genchuan/industry/chargePark/stationResource/stationMgmt/stationInfo';
+import { requestClient } from '#/api/request';
+
+/** 获取场站列表 */
+let stationOptionsCache = null;
+export async function getStationOptions() {
+  if (stationOptionsCache) {
+    return stationOptionsCache;
+  }
+  try {
+    const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
+    if (response && Array.isArray(response)) {
+      stationOptionsCache = response.map(item => ({
+        label: item.stationName,
+        value: item.stationId,
+      }));
+      return stationOptionsCache;
+    }
+    return [];
+  } catch (error) {
+    console.error('获取场站列表失败:', error);
+    return [];
+  }
+}
 
 /** 车牌识别表格初始数据 */
 export const dataList = () => {
@@ -102,11 +125,12 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '场站',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入场站',
+        placeholder: '请选择场站',
+        options: [],
       },
     },
     {
@@ -116,8 +140,9 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择修正状态',
         options: [
-          { label: '未修正', value: false },
-          { label: '已修正', value: true },
+          { label: '未修正', value: 0 },
+          { label: '已修正', value: 1 },
+          { label: '已确认', value: 2 },
         ],
       },
     },
@@ -351,13 +376,6 @@ export function useGridColumns() {
       minWidth: 120,
       sortable: true,
       slots: { default: 'stationName' },
-    },
-    {
-      field: 'isCorrected',
-      title: '修正标记',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'isCorrected' },
     },
     {
       field: 'updater',

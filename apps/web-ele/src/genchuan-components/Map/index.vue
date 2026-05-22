@@ -172,16 +172,16 @@ const generateInfoWindowContent = (properties) => {
       const style = field.bold ? 'font-weight:bold;' : '';
       fieldsHtml += `
         <tr>
-          <td style="width:96px;padding:3px 10px 3px 0;text-align:right;color:#606266;white-space:nowrap;vertical-align:top;">${field.label}：</td>
-          <td style="${style}padding:3px 0;color:#303133;word-break:break-all;white-space:normal;vertical-align:top;">${value}</td>
+          <td style="width:78px;padding:2px 8px 2px 0;text-align:right;color:#606266;white-space:nowrap;vertical-align:top;">${field.label}：</td>
+          <td style="${style}padding:2px 0;color:#303133;word-break:break-all;white-space:normal;vertical-align:top;">${value}</td>
         </tr>
       `;
     });
   }
 
   return `
-    <div style="box-sizing:border-box;max-width:420px;min-width:300px;padding:12px 14px;">
-      <h3 style="margin:0 0 10px;font-size:15px;line-height:20px;color:#303133;word-break:break-all;">${title}</h3>
+    <div style="box-sizing:border-box;max-width:320px;min-width:220px;padding:8px 10px;">
+      <h3 style="margin:0 0 6px;font-size:14px;line-height:18px;color:#303133;word-break:break-all;">${title}</h3>
       <table style="width:100%;border-collapse:collapse;">
         ${fieldsHtml}
       </table>

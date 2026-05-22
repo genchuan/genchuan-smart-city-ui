@@ -7,7 +7,7 @@ import { getDictObj } from '@vben/hooks';
 
 import { ElMessage } from 'element-plus';
 
-import { sendCouponMgmt } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
+import { sendCouponMgmt, getSendObject } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 
 const emit = defineEmits(['success']);
 
@@ -37,20 +37,50 @@ const receiverId = ref(null);
 const receiverName = ref('');
 const loading = ref(false);
 
-// 模拟用户列表（实际应从用户接口获取）
-const userOptions = [
-  { label: '张三', value: 1001 },
-  { label: '李四', value: 1002 },
-  { label: '王五', value: 1003 },
-  { label: '赵六', value: 1004 },
-  { label: '孙七', value: 1005 },
-];
+// 用户列表（从接口获取）
+const userOptions = ref([]);
+// 远程搜索加载状态
+const userLoading = ref(false);
+
+/** 获取用户列表（支持 name 模糊查询） */
+const fetchUserList = async (query = '') => {
+  try {
+    userLoading.value = true;
+    const response = await getSendObject({ name: query });
+    // eslint-disable-next-line unicorn/prefer-ternary
+    if (response.length > 0) {
+      // 将接口返回数据转换为 el-option 需要的格式
+      userOptions.value = response.map((user) => ({
+        label: user.name,
+        value: user.id,
+      }));
+    } else {
+      userOptions.value = [];
+    }
+  } catch (error) {
+    console.error('获取用户列表失败:', error);
+    userOptions.value = [];
+  } finally {
+    userLoading.value = false;
+  }
+};
+
+/** 远程搜索方法 */
+const handleUserRemoteMethod = (query) => {
+  if (query !== '') {
+    fetchUserList(query);
+  } else {
+    fetchUserList();
+  }
+};
 
 // 打开弹窗
 const open = (row) => {
   rowData.value = row;
   receiverId.value = null;
   receiverName.value = '';
+  // 加载用户列表（不带搜索条件，获取全部数据）
+  fetchUserList();
   modalApi.open();
 };
 
@@ -118,9 +148,13 @@ defineExpose({
         <div class="section-title">选择发放对象</div>
         <el-select
           v-model="receiverId"
-          placeholder="请选择用户"
+          placeholder="请选择发放用户"
           style="width: 100%"
           filterable
+          clearable
+          remote
+          :remote-method="handleUserRemoteMethod"
+          :loading="userLoading"
         >
           <el-option
             v-for="user in userOptions"

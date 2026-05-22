@@ -1,4 +1,27 @@
+import { requestClient } from '#/api/request';
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+
+/** 获取场站列表 */
+let stationOptionsCache = null;
+export async function getStationOptions() {
+  if (stationOptionsCache) {
+    return stationOptionsCache;
+  }
+  try {
+    const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
+    if (response && Array.isArray(response)) {
+      stationOptionsCache = response.map(item => ({
+        label: item.stationName,
+        value: item.stationId,
+      }));
+      return stationOptionsCache;
+    }
+    return [];
+  } catch (error) {
+    console.error('获取场站列表失败:', error);
+    return [];
+  }
+}
 
 /** 套牌管控表格初始数据 */
 export const dataList = () => {
@@ -91,11 +114,12 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '场站',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入场站',
+        placeholder: '请选择场站',
+        options: [],
       },
     },
     {

@@ -486,12 +486,12 @@ export function useGridColumns() {
       minWidth: 180,
       sortable: true,
     },
-    {
-      field: 'completeTimeStr',
-      title: '完成时间',
-      minWidth: 180,
-      sortable: true,
-    },
+    // {
+    //   field: 'completeTimeStr',
+    //   title: '完成时间',
+    //   minWidth: 180,
+    //   sortable: true,
+    // },
     {
       field: 'archiveText',
       title: '归档状态',
@@ -515,7 +515,9 @@ export const detailFields = [
     key: 'taskType',
     label: '任务类型',
     type: 'tag',
-    tagType: getTaskTypeTagType,
+    // tagType: getTaskTypeTagType,
+    tagType: getPlanTypeTagType,
+    formatter: getPlanTypeLabel,
   },
   { key: 'userName', label: '巡检人员' },
   {
@@ -528,7 +530,7 @@ export const detailFields = [
   { key: 'progressText', label: '执行进度' },
   { key: 'dispatchTimeStr', label: '派发时间' },
   { key: 'claimTimeStr', label: '认领时间' },
-  { key: 'completeTimeStr', label: '完成时间' },
+  // { key: 'completeTimeStr', label: '完成时间' },
   {
     key: 'archiveText',
     label: '归档状态',

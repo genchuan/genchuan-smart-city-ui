@@ -42,12 +42,13 @@ export function useFormSchema() {
   ];
 }
 
-// 表格列定义（不变）
+// 表格列定义（新增 studentName 列）
 export function getColumnsByStatus(status) {
   const baseColumns = [{ type: 'checkbox', width: 40 }];
 
   const columns = [
     { field: 'studentId', title: '学号', minWidth: 100, sortable: true, slots: { default: 'studentId' } },
+    { field: 'studentName', title: '学生姓名', minWidth: 100, sortable: true, slots: { default: 'studentName' } }, // 新增
     { field: 'className', title: '班级', minWidth: 150, sortable: true, },
     { field: 'honorType', title: '荣誉类型', minWidth: 120, sortable: true, slots: { default: 'honorType' } },
     { field: 'honorName', title: '荣誉名称', minWidth: 180, sortable: true, },
@@ -128,7 +129,7 @@ export function useCreateFormSchema(isEdit = false) {
   ];
 }
 
-// 文本常量（不变）
+// 文本常量
 export const textObj = {
   editText: '编辑荣誉信息',
   addText: '新增荣誉',

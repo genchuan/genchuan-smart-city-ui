@@ -67,6 +67,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "pinia": "catalog:",
+    "qrcode": "catalog:",
     "screenfull": "^6.0.2",
     "steady-xml": "catalog:",
     "tinymce": "catalog:",

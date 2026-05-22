@@ -1,35 +1,27 @@
 import type { PageParam, PageResult } from '@vben/request';
 
+import { normalizeQueryDateTimeRanges } from '#/api/genchuan/industry/chargePark/userMerchant/utils/query';
 import { requestClient } from '#/api/request';
 
-// 会员配置 VO
 export type MemberConfigVO = {
-  createTime?: string;
+  configType?: string;
+  content?: string;
+  createTime?: number | string;
+  effectiveTime?: number | string;
   id?: number;
-  pointTradeDeductEnable: boolean | number;
-  pointTradeDeductMaxPrice: number;
-  pointTradeDeductUnitPrice: number;
-  pointTradeGivePoint: number;
-  status?: string;
-  updateTime?: string;
-};
-
-export type MemberConfigCreateReqVO = MemberConfigVO;
-
-export type MemberConfigUpdateReqVO = MemberConfigVO & {
-  id: number;
+  remark?: string;
+  status?: number | string;
+  updateTime?: number | string;
 };
 
 export type MemberConfigPageReqVO = PageParam & {
-  status?: string;
-};
-
-export type MemberConfigSaveReqVO = {
-  id?: number;
-  pointTradeDeductEnable: boolean | number;
-  pointTradeDeductMaxPrice: number;
-  pointTradeDeductUnitPrice: number;
-  pointTradeGivePoint: number;
+  configType?: string;
+  content?: string;
+  createTime?: string | string[];
+  effectiveTime?: string[];
+  remark?: string;
+  status?: number | string;
+  updateTime?: string[];
 };
 
 export type MemberConfigOperateReqVO = {
@@ -49,13 +41,16 @@ export type MemberConfigChartVO = {
   memberMatchRate: number;
 };
 
-// 会员配置 API
 export const MemberConfigApi = {
   getMemberConfigPage: async (params: MemberConfigPageReqVO) => {
     return await requestClient.get<PageResult<MemberConfigVO>>(
       '/usermerchant/member-config/page',
       {
-        params,
+        params: normalizeQueryDateTimeRanges(params, [
+          'createTime',
+          'effectiveTime',
+          'updateTime',
+        ]),
       },
     );
   },
@@ -69,15 +64,15 @@ export const MemberConfigApi = {
     );
   },
 
-  createMemberConfig: async (data: MemberConfigCreateReqVO) => {
+  createMemberConfig: async (data: MemberConfigVO) => {
     return await requestClient.post('/usermerchant/member-config/create', data);
   },
 
-  saveMemberConfig: async (data: MemberConfigSaveReqVO) => {
+  saveMemberConfig: async (data: MemberConfigVO) => {
     return await requestClient.post('/usermerchant/member-config/save', data);
   },
 
-  updateMemberConfig: async (data: MemberConfigUpdateReqVO) => {
+  updateMemberConfig: async (data: MemberConfigVO) => {
     return await requestClient.put('/usermerchant/member-config/update', data);
   },
 

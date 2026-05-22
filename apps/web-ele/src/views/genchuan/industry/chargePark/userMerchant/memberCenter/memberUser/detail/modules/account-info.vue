@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import type { MemberUserApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
-import type { PayWalletApi } from '#/api/pay/wallet/balance';
 
-import { fenToYuan } from '@vben/utils';
+import { formatDate } from '@vben/utils';
 
 import { ElCard } from 'element-plus';
 
@@ -12,7 +11,6 @@ const props = withDefaults(
   defineProps<{
     mode?: 'kefu' | 'member';
     user: MemberUserApi.User;
-    wallet: PayWalletApi.Wallet;
   }>(),
   {
     mode: 'member',
@@ -25,12 +23,28 @@ const [Descriptions] = useDescription({
   schema: [
     {
       field: 'levelName',
-      label: '等级',
+      label: '会员等级',
       render: (val) => val || '-',
     },
     {
+      field: 'groupName',
+      label: '会员分组',
+      render: (val) => val || '-',
+    },
+    {
+      field: 'tagNames',
+      label: '会员标签',
+      render: (val) => {
+        if (Array.isArray(val)) {
+          return val[0] || '-';
+        }
+
+        return val || '-';
+      },
+    },
+    {
       field: 'experience',
-      label: '成长值',
+      label: '经验值',
       render: (val) => val || 0,
     },
     {
@@ -39,24 +53,14 @@ const [Descriptions] = useDescription({
       render: (val) => val || 0,
     },
     {
-      field: 'totalPoint',
-      label: '总积分',
-      render: (val) => val || 0,
+      field: 'expireTime',
+      label: '会员到期时间',
+      render: (val) => formatDate(val)?.toString() || '-',
     },
     {
-      field: 'balance',
-      label: '当前余额',
-      render: (val) => fenToYuan(val || 0),
-    },
-    {
-      field: 'totalExpense',
-      label: '支出金额',
-      render: (val) => fenToYuan(val || 0),
-    },
-    {
-      field: 'totalRecharge',
-      label: '充值金额',
-      render: (val) => fenToYuan(val || 0),
+      field: 'autoRenew',
+      label: '自动续费',
+      render: (val) => (Number(val) === 1 ? '是' : '否'),
     },
   ],
 });
@@ -69,11 +73,6 @@ const [Descriptions] = useDescription({
         <slot name="title"></slot>
       </span>
     </template>
-    <Descriptions
-      :data="{
-        ...user,
-        ...wallet,
-      }"
-    />
+    <Descriptions :data="user" />
   </ElCard>
 </template>

@@ -158,8 +158,6 @@ export const tableColumns = [
   },
   { field: 'recoveryRate', label: '可追缴完成率', minWidth: 130, suffix: '%' },
   { field: 'remark', label: '备注', minWidth: 150 },
-  { field: 'reserve1', label: '备用字段1', minWidth: 140 },
-  { field: 'reserve2', label: '备用字段2', minWidth: 140 },
   { field: 'creator', label: '创建者', minWidth: 120, drillType: 'filter' },
   {
     field: 'createTime',

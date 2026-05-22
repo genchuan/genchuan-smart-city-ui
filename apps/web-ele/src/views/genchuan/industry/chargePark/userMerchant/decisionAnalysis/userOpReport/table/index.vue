@@ -3,20 +3,21 @@ import type { UserOpReportRow } from '../data';
 
 import type { UserOpReportDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/decisionAnalysis/userOpReport';
 
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
+import dayjs from 'dayjs';
 import {
   ElButton,
-  ElDescriptions,
-  ElDescriptionsItem,
+  ElDatePicker,
   ElDialog,
-  ElDrawer,
   ElInput,
   ElLoading,
   ElMessage,
+  ElOption,
+  ElSelect,
   ElTag,
 } from 'element-plus';
 import screenfull from 'screenfull';
@@ -25,13 +26,16 @@ import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { UserOpReportApi } from '#/api/genchuan/industry/chargePark/userMerchant/decisionAnalysis/userOpReport';
 import IconButton from '#/components/common/IconButton.vue';
-import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
+import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
 import DrillDownDetailDialog from '../components/DrillDownDetailDialog.vue';
 import {
-  buildDetailStatsData,
   buildUserOpReportQueryParams,
   buildUserOpReportRowFromApi,
+  detailFields,
+  formatAmount,
+  getReportCycleTagType,
+  getStatusTagType,
   useGridColumns,
   useSearchSchema,
 } from '../data';
@@ -50,25 +54,41 @@ const props = withDefaults(
 );
 
 const detailCache = new Map<number, UserOpReportDetailVO>();
-const detailDrawerVisible = ref(false);
 const detailReport = ref<UserOpReportRow>();
+const detailDrawerRef = ref<InstanceType<typeof DetailDrawer>>();
 const drillDownDialogRef = ref<InstanceType<typeof DrillDownDetailDialog>>();
 const generateDialogVisible = ref(false);
-const generateFilterPlaceholder =
-  '例如：{"userType":"个人用户","statTime":"2026-04-01,2026-04-20"}';
 const generateForm = ref({
-  filterCondition: '',
+  reportName: '',
   remark: '',
   reportCycle: '自定义报表',
-  statEndTime: '',
-  statStartTime: '',
 });
-const filterReportType = ref('');
+const generateRange = ref<[] | [Date | string, Date | string]>([]);
+const filterReportCycle = ref('');
 const searchParams = ref<Record<string, any>>({});
 
-const detailStatsData = computed(() =>
-  buildDetailStatsData(detailReport.value),
-);
+const reportCycleOptions = [
+  '日报',
+  '周报',
+  '月报',
+  '季报',
+  '半年报',
+  '年报',
+  '自定义报表',
+];
+
+function formatGenerateTime(value: Date | string) {
+  return dayjs(value).format('YYYY-MM-DD HH:mm:ss');
+}
+
+function resetGenerateForm() {
+  generateForm.value = {
+    reportName: '',
+    remark: '',
+    reportCycle: '自定义报表',
+  };
+  generateRange.value = [];
+}
 
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
@@ -103,16 +123,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
 });
 
 function getGridColumns() {
-  return useGridColumns()?.map((column) => {
-    if (column.field === 'timeScale' || column.field === 'statTime') {
-      return {
-        ...column,
-        slots: { default: column.field },
-      };
-    }
-
-    return column;
-  });
+  return useGridColumns();
 }
 
 /** 搜索表单提交 */
@@ -120,11 +131,6 @@ async function onQuerySubmit(values: Record<string, any>) {
   searchParams.value = { ...values };
   await handleRefresh();
   drawerApi.close();
-}
-
-/** 获取状态标签颜色 */
-function getStatusTagType(status: string) {
-  return status === '已生成' ? 'success' : 'warning';
 }
 
 /** 获取报表详情 */
@@ -140,17 +146,14 @@ async function fetchUserOpReportDetail(
 
   try {
     const detail =
-      cachedDetail || (await UserOpReportApi.getUserOpReport(row.id));
+      cachedDetail ||
+      (await UserOpReportApi.getUserOpReport({ id: row.id, tenantId: 1 }));
 
     if (!cachedDetail) {
       detailCache.set(row.id, detail);
     }
 
-    const chartData = await UserOpReportApi.getUserOpReportChart({
-      reportId: row.id,
-    });
-
-    return buildUserOpReportRowFromApi(detail, row, chartData);
+    return buildUserOpReportRowFromApi(detail, row);
   } catch (error) {
     ElMessage.error(errorMessage);
     console.error('[userOpReport] load detail failed:', error);
@@ -170,8 +173,8 @@ async function queryUserOpReportPage({
     ...searchParams.value,
   };
 
-  if (filterReportType.value) {
-    queryValues.reportType = filterReportType.value;
+  if (filterReportCycle.value) {
+    queryValues.reportCycle = filterReportCycle.value;
   }
 
   const result = await UserOpReportApi.getUserOpReportPage({
@@ -211,7 +214,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 /** 刷新表格 - 同时清除所有快捷筛选 */
 function handleRefresh() {
-  filterReportType.value = '';
+  filterReportCycle.value = '';
   return gridApi.reload();
 }
 
@@ -225,7 +228,7 @@ async function handleReloadPage() {
 /** 重置筛选条件 */
 async function resetSearch() {
   searchParams.value = {};
-  filterReportType.value = '';
+  filterReportCycle.value = '';
   await queryFormApi.resetForm();
   return gridApi.reload();
 }
@@ -236,7 +239,7 @@ async function setSearchValues(values: Record<string, any>) {
     ...searchParams.value,
     ...values,
   };
-  filterReportType.value = '';
+  filterReportCycle.value = '';
   void syncQueryFormValues();
   return gridApi.reload();
 }
@@ -255,8 +258,19 @@ defineExpose({
 });
 
 async function handleStatsFilter(type: string, value?: string) {
-  if (type === 'reportType') {
-    filterReportType.value = value || '';
+  if (type === 'reportCycle') {
+    filterReportCycle.value = value || '';
+    if (value) {
+      searchParams.value = {
+        ...searchParams.value,
+        reportCycle: value,
+      };
+    } else {
+      const restParams = { ...searchParams.value };
+      delete restParams.reportCycle;
+      searchParams.value = restParams;
+    }
+    void syncQueryFormValues();
     await gridApi.reload();
   }
 }
@@ -270,17 +284,23 @@ async function handleOpenDetail(row: UserOpReportRow) {
   }
 
   detailReport.value = detail;
-  detailDrawerVisible.value = true;
+  detailDrawerRef.value?.open();
 }
 
 /** 导出当前列表 */
 async function handleExport() {
+  try {
+    await confirm('确认导出当前筛选后的用户商户周期报表吗？');
+  } catch {
+    return;
+  }
+
   const exportValues = {
     ...searchParams.value,
   };
 
-  if (filterReportType.value) {
-    exportValues.reportType = filterReportType.value;
+  if (filterReportCycle.value) {
+    exportValues.reportCycle = filterReportCycle.value;
   }
 
   try {
@@ -298,11 +318,16 @@ async function handleExport() {
 /** 导出单条报表 */
 async function handleExportRow(row: UserOpReportRow) {
   try {
+    await confirm(`确认导出${row.reportType || '当前'}报表明细吗？`);
+  } catch {
+    return;
+  }
+
+  try {
     const data = await UserOpReportApi.exportUserOpReport({
-      createTime: row.createTime,
-      reportType: row.reportType,
-      statTime: row.statTime,
-      timeScale: row.timeScale,
+      id: row.id,
+      reportCycle: row.reportType,
+      tenantId: 1,
     });
     downloadFileFromBlobPart({
       fileName: `用户运营报表_${row.reportType || row.id}.xls`,
@@ -351,8 +376,26 @@ function handleReportFieldDrill(
 
 /** 确认生成自定义报表 */
 async function handleConfirmGenerate() {
-  if (!generateForm.value.filterCondition.trim()) {
-    ElMessage.warning('请输入自定义筛选条件');
+  const [statStartTime, statEndTime] = generateRange.value;
+  const reportName = generateForm.value.reportName.trim();
+
+  if (!generateForm.value.reportCycle) {
+    ElMessage.warning('请选择报表周期');
+    return;
+  }
+
+  if (!statStartTime || !statEndTime) {
+    ElMessage.warning('请选择统计时间范围');
+    return;
+  }
+
+  if (dayjs(statStartTime).isAfter(dayjs(statEndTime))) {
+    ElMessage.warning('统计开始时间不能晚于结束时间');
+    return;
+  }
+
+  if (!reportName) {
+    ElMessage.warning('请输入报表名称');
     return;
   }
 
@@ -362,22 +405,17 @@ async function handleConfirmGenerate() {
   });
 
   try {
-    await UserOpReportApi.generateUserOpReport({
-      filterCondition: generateForm.value.filterCondition.trim(),
+    await UserOpReportApi.createUserOpReport({
+      reportName,
       remark: generateForm.value.remark.trim(),
       reportCycle: generateForm.value.reportCycle,
-      statEndTime: generateForm.value.statEndTime || undefined,
-      statStartTime: generateForm.value.statStartTime || undefined,
+      statEndTime: formatGenerateTime(statEndTime),
+      statStartTime: formatGenerateTime(statStartTime),
+      tenantId: 1,
     });
     generateDialogVisible.value = false;
-    generateForm.value = {
-      filterCondition: '',
-      remark: '',
-      reportCycle: '自定义报表',
-      statEndTime: '',
-      statStartTime: '',
-    };
-    ElMessage.success('自定义报表已生成');
+    resetGenerateForm();
+    ElMessage.success('报表已生成');
     await handleReloadPage();
   } catch (error) {
     ElMessage.error('生成失败');
@@ -394,7 +432,7 @@ async function handleConfirmGenerate() {
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
           <IconButton
-            content="生成自定义报表"
+            content="生成报表"
             icon-name="Plus"
             @click="() => (generateDialogVisible = true)"
           />
@@ -422,36 +460,109 @@ async function handleConfirmGenerate() {
       </template>
 
       <template #reportType="{ row }">
-        <el-text
-          class="common-align"
-          type="primary"
+        <ElTag
+          :type="getReportCycleTagType(row.reportType)"
           style="cursor: pointer"
-          @click="handleReportFieldDrill('reportType', row.reportType)"
+          @click="setSearchValues({ reportCycle: row.reportType })"
         >
           {{ row.reportType }}
-        </el-text>
+        </ElTag>
       </template>
 
-      <template #timeScale="{ row }">
-        <el-text
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-          @click="handleReportFieldDrill('reportTimeScale', row.timeScale)"
+      <template #newUserCount="{ row }">
+        <span
+          class="drill-cell"
+          @click="handleReportFieldDrill('newUserCount', row.newUserCount)"
         >
-          {{ row.timeScale }}
-        </el-text>
+          {{ row.newUserCount }}
+        </span>
       </template>
 
-      <template #statTime="{ row }">
-        <el-text
-          class="common-align"
-          type="primary"
-          style="cursor: pointer"
-          @click="handleReportFieldDrill('statTime', row.statTime)"
+      <template #bindCarCount="{ row }">
+        <span
+          class="drill-cell"
+          @click="handleReportFieldDrill('bindCarCount', row.bindCarCount)"
         >
-          {{ row.statTime }}
-        </el-text>
+          {{ row.bindCarCount }}
+        </span>
+      </template>
+
+      <template #plateAuthCount="{ row }">
+        <span
+          class="drill-cell"
+          @click="handleReportFieldDrill('plateAuthCount', row.plateAuthCount)"
+        >
+          {{ row.plateAuthCount }}
+        </span>
+      </template>
+
+      <template #newMerchantCount="{ row }">
+        <span
+          class="drill-cell"
+          @click="
+            handleReportFieldDrill('newMerchantCount', row.newMerchantCount)
+          "
+        >
+          {{ row.newMerchantCount }}
+        </span>
+      </template>
+
+      <template #linkMerchantCount="{ row }">
+        <span
+          class="drill-cell"
+          @click="
+            handleReportFieldDrill('linkMerchantCount', row.linkMerchantCount)
+          "
+        >
+          {{ row.linkMerchantCount }}
+        </span>
+      </template>
+
+      <template #rechargeAmount="{ row }">
+        <span
+          class="drill-cell"
+          @click="handleReportFieldDrill('rechargeAmount', row.rechargeAmount)"
+        >
+          {{ formatAmount(row.rechargeAmount) }}
+        </span>
+      </template>
+
+      <template #sendCouponCount="{ row }">
+        <span
+          class="drill-cell"
+          @click="
+            handleReportFieldDrill('sendCouponCount', row.sendCouponCount)
+          "
+        >
+          {{ row.sendCouponCount }}
+        </span>
+      </template>
+
+      <template #newGroupCount="{ row }">
+        <span
+          class="drill-cell"
+          @click="handleReportFieldDrill('newGroupCount', row.newGroupCount)"
+        >
+          {{ row.newGroupCount }}
+        </span>
+      </template>
+
+      <template #newMemberCount="{ row }">
+        <span
+          class="drill-cell"
+          @click="handleReportFieldDrill('newMemberCount', row.newMemberCount)"
+        >
+          {{ row.newMemberCount }}
+        </span>
+      </template>
+
+      <template #avgCreditScore="{ row }">
+        <span
+          class="drill-cell"
+          @click="handleReportFieldDrill('avgCreditScore', row.avgCreditScore)"
+        >
+          {{ row.avgCreditScore }}
+        </span>
       </template>
 
       <template #filterCondition="{ row }">
@@ -462,7 +573,7 @@ async function handleConfirmGenerate() {
         <ElTag
           :type="getStatusTagType(row.status)"
           style="cursor: pointer"
-          @click="handleReportFieldDrill('reportStatus', row.status)"
+          @click="setSearchValues({ reportStatus: row.status })"
         >
           {{ row.status }}
         </ElTag>
@@ -484,80 +595,58 @@ async function handleConfirmGenerate() {
       </template>
     </Grid>
 
+    <DetailDrawer
+      ref="detailDrawerRef"
+      :data="detailReport"
+      :fields="detailFields"
+      :title="detailReport ? `${detailReport.reportType}详情` : '报表详情'"
+      width="56%"
+    />
+
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
 
-    <ElDrawer
-      v-model="detailDrawerVisible"
-      :title="detailReport ? `${detailReport.reportType}详情` : '报表详情'"
-      direction="rtl"
-      size="56%"
-    >
-      <div v-if="detailReport" class="report-detail-body">
-        <ElDescriptions :column="1" border>
-          <ElDescriptionsItem label="报表类型">
-            {{ detailReport.reportType }}
-          </ElDescriptionsItem>
-          <ElDescriptionsItem label="时间尺度">
-            {{ detailReport.timeScale }}
-          </ElDescriptionsItem>
-          <ElDescriptionsItem label="统计时间">
-            {{ detailReport.statTime }}
-          </ElDescriptionsItem>
-          <ElDescriptionsItem label="生成时间">
-            {{ detailReport.createTime }}
-          </ElDescriptionsItem>
-          <ElDescriptionsItem label="筛选条件">
-            {{ detailReport.filterCondition || '-' }}
-          </ElDescriptionsItem>
-          <ElDescriptionsItem label="分析摘要">
-            {{ detailReport.summary }}
-          </ElDescriptionsItem>
-          <ElDescriptionsItem label="同比环比分析">
-            {{ detailReport.compareSummary }}
-          </ElDescriptionsItem>
-          <ElDescriptionsItem label="备注">
-            {{ detailReport.remark || '-' }}
-          </ElDescriptionsItem>
-        </ElDescriptions>
-
-        <div class="report-detail-stats">
-          <StatsVisualization :data="detailStatsData" />
-        </div>
-      </div>
-
-      <template #footer>
-        <div class="report-detail-footer">
-          <ElButton @click="detailDrawerVisible = false">关闭</ElButton>
-          <ElButton
-            v-if="detailReport"
-            type="primary"
-            @click="handleExportRow(detailReport)"
-          >
-            导出
-          </ElButton>
-        </div>
-      </template>
-    </ElDrawer>
-
-    <ElDialog
-      v-model="generateDialogVisible"
-      title="生成自定义报表"
-      width="560px"
-    >
+    <ElDialog v-model="generateDialogVisible" title="生成报表" width="560px">
       <div class="generate-form">
         <div class="generate-label">
-          筛选条件
+          报表周期
+          <span class="generate-required">*</span>
+        </div>
+        <ElSelect
+          v-model="generateForm.reportCycle"
+          class="w-full"
+          placeholder="请选择报表周期"
+        >
+          <ElOption
+            v-for="item in reportCycleOptions"
+            :key="item"
+            :label="item"
+            :value="item"
+          />
+        </ElSelect>
+        <div class="generate-label">
+          统计时间范围
+          <span class="generate-required">*</span>
+        </div>
+        <ElDatePicker
+          v-model="generateRange"
+          class="w-full"
+          end-placeholder="统计结束时间"
+          format="YYYY-MM-DD HH:mm:ss"
+          range-separator="至"
+          start-placeholder="统计开始时间"
+          type="datetimerange"
+          value-format="YYYY-MM-DD HH:mm:ss"
+        />
+        <div class="generate-label">
+          报表名称
           <span class="generate-required">*</span>
         </div>
         <ElInput
-          v-model="generateForm.filterCondition"
-          :rows="4"
-          maxlength="500"
-          :placeholder="generateFilterPlaceholder"
-          show-word-limit
-          type="textarea"
+          v-model="generateForm.reportName"
+          maxlength="100"
+          placeholder="请输入报表名称"
         />
         <div class="generate-label">备注</div>
         <ElInput
@@ -567,7 +656,14 @@ async function handleConfirmGenerate() {
         />
       </div>
       <template #footer>
-        <ElButton @click="generateDialogVisible = false">取消</ElButton>
+        <ElButton
+          @click="
+            generateDialogVisible = false;
+            resetGenerateForm();
+          "
+        >
+          取消
+        </ElButton>
         <ElButton type="primary" @click="handleConfirmGenerate">
           生成
         </ElButton>
@@ -578,29 +674,20 @@ async function handleConfirmGenerate() {
 </template>
 
 <style scoped lang="scss">
-.report-detail-body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  height: 100%;
-  padding-right: 12px;
-  overflow: auto;
-}
-
-.report-detail-footer {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-.report-detail-stats {
-  flex-shrink: 0;
+.drill-cell {
+  color: #409eff;
+  cursor: pointer;
 }
 
 .generate-form {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.generate-form :deep(.el-date-editor),
+.generate-form :deep(.el-select) {
+  width: 100%;
 }
 
 .generate-label {

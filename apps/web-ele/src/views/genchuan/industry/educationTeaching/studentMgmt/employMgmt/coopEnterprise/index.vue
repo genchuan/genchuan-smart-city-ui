@@ -69,56 +69,7 @@ const getDeptNameById = (deptId) => {
 // 标签筛选
 const tagFilters = ref({});
 
-function handleFilterTagClick(field, value) {
-  if (!field) return;
-  if (value === '' || value === null || value === undefined) {
-    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
-  } else {
-    const existing = tagFilters.value[field];
-    if (existing !== undefined) {
-      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
-        delete tagFilters.value[field];
-      } else if (!Array.isArray(existing) && existing === value) {
-        delete tagFilters.value[field];
-      } else {
-        tagFilters.value[field] = value;
-      }
-    } else {
-      tagFilters.value[field] = value;
-    }
-  }
-  gridApi.query();
-}
-
-function clearFilters() {
-  tagFilters.value = {};
-  gridApi.query();
-}
-
-function removeFilterTag(field) {
-  delete tagFilters.value[field];
-  gridApi.query();
-}
-
-function getFieldLabel(field) {
-  const map = {
-    enterpriseType: '企业类型',
-    deptId: '负责系部',
-    status: '状态',
-    creator: '创建人',
-    createTime: '创建时间',
-    enterpriseName: '企业名称',
-  };
-  return map[field] || field;
-}
-
-function getTagDisplayText(field, value) {
-  if (Array.isArray(value)) return value.join('、');
-  if (field === 'deptId') return getDeptNameById(value);
-  return value || '-';
-}
-
-// 抽屉
+// ---------- 抽屉 ----------
 const [Drawer, drawerApi] = useVbenDrawer({
   modal: false,
   footer: false,
@@ -152,7 +103,8 @@ function handleRowCheckboxChange({records}) {
 const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
-const maintainId = ref(null); // 仅存储单个ID，不再需要 maintainRow
+// 改为数组，存放要维护的企业ID（支持批量）
+const maintainIds = ref([]);
 
 const getTableData = async ({page}) => {
   dataObj.loading = true;
@@ -195,6 +147,33 @@ const getTableData = async ({page}) => {
   }
 };
 
+// ========== 表格实例 ==========
+const [Grid, gridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: gridColumns.value,
+    keepSource: true,
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
+    pagerConfig: dataObj,
+    toolbarConfig: {refresh: true, search: true},
+    showOverflow: true,
+  },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
+  showSearchForm: false,
+});
+
+function resetPageAndQuery() {
+  if (gridApi.commitProxy) {
+    gridApi.commitProxy('reload');
+  } else if (gridApi.reload) {
+    gridApi.reload();
+  } else {
+    dataObj.currentPage = 1;
+    gridApi.query();
+  }
+  dataObj.currentPage = 1;
+}
+
 function handleRefresh() {
   gridApi.query();
 }
@@ -202,7 +181,7 @@ function handleRefresh() {
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
-  gridApi.query();
+  resetPageAndQuery();
 }
 
 async function handleExport() {
@@ -219,22 +198,19 @@ async function handleExport() {
   }
 }
 
-// 批量维护（仅支持单选）
+// 批量维护（支持多选）
 async function handleBatchMaintain() {
   if (checkedIds.value.length === 0) {
     ElMessage.warning('请至少选择一个合作企业');
     return;
   }
-  if (checkedIds.value.length > 1) {
-    ElMessage.warning('维护操作仅支持选择一个企业，请取消多选后重试');
+  // 检查所有选中企业的状态是否为“合作中”
+  const invalidRows = checkedRows.value.filter(row => row.status !== '合作中');
+  if (invalidRows.length > 0) {
+    ElMessage.warning(`选中的企业中包含状态为“${invalidRows[0].status}”的，只有“合作中”的企业可以维护`);
     return;
   }
-  const selectedRow = checkedRows.value[0];
-  if (selectedRow.status !== '合作中') {
-    ElMessage.warning('只有合作中的企业可以维护');
-    return;
-  }
-  maintainId.value = selectedRow.id;
+  maintainIds.value = [...checkedIds.value];
   maintainFormApi.resetForm();
   maintainDrawerApi.open();
 }
@@ -251,13 +227,13 @@ function handleEdit(row) {
   createDrawerApi.open();
 }
 
-// 行内维护
+// 行内维护（单条）
 async function handleMaintain(row) {
   if (row.status !== '合作中') {
     ElMessage.warning('只有合作中的企业可以维护');
     return;
   }
-  maintainId.value = row.id;
+  maintainIds.value = [row.id];
   maintainFormApi.resetForm();
   maintainDrawerApi.open();
 }
@@ -321,6 +297,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   },
 });
 
+// 维护表单（支持批量）
 const [MaintainForm, maintainFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
@@ -344,15 +321,16 @@ const [MaintainForm, maintainFormApi] = useVbenForm({
         return;
       }
 
+      // 批量维护：直接使用 maintainIds 数组
       const params = {
-        id: maintainId.value,
+        ids: maintainIds.value,
         coopStartTime,
         coopEndTime,
         remark: values.remark || '',
       };
       const res = await maintainCoopEnterprise(params);
       if (res && res !== false) {
-        ElMessage.success('维护成功');
+        ElMessage.success(`成功维护 ${maintainIds.value.length} 个企业`);
         maintainDrawerApi.close();
         handleRefresh();
       } else {
@@ -378,13 +356,14 @@ function handleOpenDetail(row) {
   enterpriseDetailDrawerRef.value.open();
 }
 
+// 高级查询表单
 const [QueryForm, queryFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    gridApi.query();
+    resetPageAndQuery();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -395,19 +374,54 @@ const [QueryForm, queryFormApi] = useVbenForm({
   submitButtonOptions: {content: '查询'},
 });
 
-const [Grid, gridApi] = useVbenVxeGrid({
-  gridOptions: {
-    columns: gridColumns.value,
-    keepSource: true,
-    proxyConfig: {ajax: {query: getTableData}},
-    rowConfig: {keyField: 'id', isHover: true},
-    pagerConfig: dataObj,
-    toolbarConfig: {refresh: true, search: true},
-    showOverflow: true,
-  },
-  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
-  showSearchForm: false,
-});
+function getFieldLabel(field) {
+  const map = {
+    enterpriseType: '企业类型',
+    deptId: '负责系部',
+    status: '状态',
+    creator: '创建人',
+    createTime: '创建时间',
+    enterpriseName: '企业名称',
+  };
+  return map[field] || field;
+}
+
+function getTagDisplayText(field, value) {
+  if (Array.isArray(value)) return value.join('、');
+  if (field === 'deptId') return getDeptNameById(value);
+  return value || '-';
+}
+
+function handleFilterTagClick(field, value) {
+  if (!field) return;
+  if (value === '' || value === null || value === undefined) {
+    if (tagFilters.value[field] !== undefined) delete tagFilters.value[field];
+  } else {
+    const existing = tagFilters.value[field];
+    if (existing !== undefined) {
+      if (Array.isArray(existing) && existing.length === 1 && existing[0] === value) {
+        delete tagFilters.value[field];
+      } else if (!Array.isArray(existing) && existing === value) {
+        delete tagFilters.value[field];
+      } else {
+        tagFilters.value[field] = value;
+      }
+    } else {
+      tagFilters.value[field] = value;
+    }
+  }
+  resetPageAndQuery();
+}
+
+function clearFilters() {
+  tagFilters.value = {};
+  resetPageAndQuery();
+}
+
+function removeFilterTag(field) {
+  delete tagFilters.value[field];
+  resetPageAndQuery();
+}
 
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
@@ -510,8 +524,8 @@ onUnmounted(() => {
         </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))"
-                 type="primary" style="cursor: pointer;">{{ formatTimestamp(row.createTime) }}
+        <el-text>
+          {{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
       <template #coopStartTime="{ row }">

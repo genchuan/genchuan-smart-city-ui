@@ -58,6 +58,17 @@ defineExpose({open: () => detailDrawerApi.open(), close: () => detailDrawerApi.c
         <div class="detail-row-right">{{ detailObj.idCard || '-' }}</div>
       </div>
       <div class="detail-card-row">
+        <div class="detail-row-left">学生照片地址：</div>
+        <div class="detail-row-right">
+          <template v-if="detailObj.photo">
+            <a :href="detailObj.photo" target="_blank" style="color: #1890ff; text-decoration: underline;">
+              {{ detailObj.photo }}
+            </a>
+          </template>
+          <template v-else>-</template>
+        </div>
+      </div>
+      <div class="detail-card-row">
         <div class="detail-row-left">年级：</div>
         <div class="detail-row-right">{{ detailObj.grade || '-' }}</div>
       </div>

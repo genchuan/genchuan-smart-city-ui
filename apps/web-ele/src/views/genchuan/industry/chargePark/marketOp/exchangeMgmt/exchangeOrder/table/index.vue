@@ -148,12 +148,12 @@ function handleRefresh() {
   gridApi.query();
 }
 
-/** 导出表格 */
+/** 导出表格  */
 async function handleExport() {
   try {
     const data = await exportExchangeOrder();
     downloadFileFromBlobPart({
-      fileName: textObj.excelAllName,
+      fileName: `${textObj.excelAllName}.xlsx`,
       source: data,
     });
     ElMessage.success('导出成功');

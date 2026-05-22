@@ -425,7 +425,7 @@ onMounted(() => {
             type="danger"
             @close="cancelFilter('trendTime')"
           >
-            趋势时间：{{ filterTrendTime }}
+            交接日期：{{ dayjs(filterTrendTime).format('YYYY-MM-DD') }}
           </ElTag>
         </div>
       </template>

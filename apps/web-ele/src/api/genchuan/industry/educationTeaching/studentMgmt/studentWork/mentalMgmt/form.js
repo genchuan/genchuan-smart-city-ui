@@ -83,13 +83,13 @@ export function getColumnsByStatus(status) {
   return allColumns;
 }
 
-// 建档表单 schema（学生改为学号输入框）
+// 建档表单 schema
 export function useCreateFormSchema() {
   return [
     {
       fieldName: 'studentId',
-      label: '学号',                     // 改为学号
-      component: 'Input',               // 改为输入框
+      label: '学号',
+      component: 'Input',
       componentProps: { placeholder: '请输入学号' },
       rules: 'required',
       labelWidth: '100',

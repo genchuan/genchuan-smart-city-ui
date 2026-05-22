@@ -27,6 +27,7 @@ const punishTypeReverse = {
 
 const statusReverse = {
   'pending': '待审批',
+  'approve': '已执行',
   'executed': '已执行',
   'warned': '已预警',
 };

@@ -1,6 +1,5 @@
-
-/** 获取报表周期Tag类型（用于表格状态色） */
-export function getReportPeriodTagType(period) {
+/** 获取报表周期Tag类型 */
+export function getReportCycleTagType(cycle) {
   const map = {
     日报: 'info',
     周报: 'success',
@@ -10,25 +9,24 @@ export function getReportPeriodTagType(period) {
     年报: 'danger',
     自定义报表: 'info',
   };
-  return map[period] || 'info';
+  return map[cycle] || 'info';
 }
 
 /** 获取生成状态Tag类型 */
 export function getGenerateStatusTagType(status) {
   const map = {
+    待生成: 'info',
     已生成: 'success',
-    生成中: 'warning',
-    生成失败: 'danger',
-    未生成: 'info',
+    已归档: 'warning',
   };
   return map[status] || 'info';
 }
 
-// ==================== 生成报表表单配置（右侧抽屉） ====================
+// ==================== 生成报表表单配置 ====================
 export function useCreateFormSchema() {
   return [
     {
-      fieldName: 'statisticalPeriod',
+      fieldName: 'statTimeRange',
       label: '统计时段',
       component: 'DatePicker',
       componentProps: {
@@ -40,7 +38,7 @@ export function useCreateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'reportPeriod',
+      fieldName: 'reportCycle',
       label: '报表周期',
       component: 'Select',
       componentProps: {
@@ -58,23 +56,12 @@ export function useCreateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'campus',
-      label: '校区',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择校区',
-        options: [], // 动态获取
-        filterable: true,
-      },
-      rules: 'required',
-    },
-    {
       fieldName: 'grade',
       label: '年级',
       component: 'Select',
       componentProps: {
         placeholder: '请选择年级',
-        options: [], // 动态获取
+        options: [],
         filterable: true,
       },
       rules: 'required',
@@ -108,7 +95,7 @@ export function useCreateFormSchema() {
 export function useSearchFormSchema() {
   return [
     {
-      fieldName: 'reportPeriod',
+      fieldName: 'reportCycle',
       label: '报表周期',
       component: 'Select',
       componentProps: {
@@ -126,7 +113,7 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'statisticalPeriod',
+      fieldName: 'statTimeRange',
       label: '统计时段',
       component: 'DatePicker',
       componentProps: {
@@ -138,68 +125,15 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'className',
-      label: '班级名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入班级名称',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'majorName',
-      label: '专业名称',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入专业名称',
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'grade',
-      label: '年级',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择年级',
-        options: [], // 动态获取
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'campus',
-      label: '校区',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择校区',
-        options: [], // 动态获取
-        clearable: true,
-      },
-    },
-    {
-      fieldName: 'civilizedClassTitle',
-      label: '文明班级称号',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择称号',
-        options: [
-          { label: '文明班级', value: '文明班级' },
-          { label: '优秀班级', value: '优秀班级' },
-          { label: '先进班集体', value: '先进班集体' },
-        ],
-        clearable: true,
-      },
-    },
-    {
       fieldName: 'generateStatus',
       label: '生成状态',
       component: 'Select',
       componentProps: {
         placeholder: '请选择生成状态',
         options: [
-          { label: '未生成', value: '未生成' },
-          { label: '生成中', value: '生成中' },
+          { label: '待生成', value: '待生成' },
           { label: '已生成', value: '已生成' },
-          { label: '生成失败', value: '生成失败' },
+          { label: '已归档', value: '已归档' },
         ],
         clearable: true,
       },
@@ -211,142 +145,46 @@ export function useSearchFormSchema() {
 export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
-    {
-      field: 'reportPeriod',
-      title: '报表周期',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'reportPeriod' },
-    },
-    {
-      field: 'statisticalPeriod',
-      title: '统计时段',
-      minWidth: 280,
-      sortable: true,
-    },
-    {
-      field: 'className',
-      title: '班级名称',
-      minWidth: 150,
-      sortable: true,
-      slots: { default: 'className' },
-    },
-    {
-      field: 'majorName',
-      title: '专业名称',
-      minWidth: 150,
-      sortable: true,
-      slots: { default: 'majorName' },
-    },
-    {
-      field: 'grade',
-      title: '年级',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'grade' },
-    },
-    {
-      field: 'campus',
-      title: '校区',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'campus' },
-    },
-    {
-      field: 'totalMoralScore',
-      title: '德育总分',
-      minWidth: 110,
-      sortable: true,
-      slots: { default: 'totalMoralScore' },
-    },
-    {
-      field: 'goodDeedScore',
-      title: '好人好事得分',
-      minWidth: 130,
-      sortable: true,
-      slots: { default: 'goodDeedScore' },
-    },
-    {
-      field: 'civilizedBehaviorScore',
-      title: '文明行为得分',
-      minWidth: 130,
-      sortable: true,
-      slots: { default: 'civilizedBehaviorScore' },
-    },
-    {
-      field: 'assessRank',
-      title: '评比排名',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'assessRank' },
-    },
-    {
-      field: 'civilizedClassTitle',
-      title: '文明班级称号',
-      minWidth: 140,
-      sortable: true,
-      slots: { default: 'civilizedClassTitle' },
-    },
-    {
-      field: 'generateStatus',
-      title: '生成状态',
-      minWidth: 110,
-      sortable: true,
-      slots: { default: 'generateStatus' },
-    },
-    {
-      field: 'generateTime',
-      title: '生成时间',
-      minWidth: 180,
-      sortable: true,
-    },
-    {
-      field: 'operator',
-      title: '操作人',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'operator' },
-    },
-    {
-      field: 'exportCount',
-      title: '导出次数',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'dataUpdateTime',
-      title: '数据更新时间',
-      minWidth: 180,
-      sortable: true,
-    },
-    {
-      title: '操作',
-      width: 100,
-      fixed: 'right',
-      slots: { default: 'actions' },
-    },
+    { field: 'reportCycle', title: '报表周期', minWidth: 120, sortable: true, slots: { default: 'reportCycle' } },
+    { title: '统计时段', minWidth: 280, sortable: true, slots: { default: 'statisticalPeriod' } },
+    { field: 'targetTotal', title: '指标总数', minWidth: 120, sortable: true, slots: { default: 'targetTotal' } },
+    { field: 'targetEnableNum', title: '启用指标数', minWidth: 130, sortable: true, slots: { default: 'targetEnableNum' } },
+    { field: 'targetWarnNum', title: '预警指标数', minWidth: 130, sortable: true, slots: { default: 'targetWarnNum' } },
+    { field: 'activityJoinNum', title: '活动参与人数', minWidth: 140, sortable: true, slots: { default: 'activityJoinNum' } },
+    { field: 'resourceLearnRate', title: '资源学习完成率(%)', minWidth: 160, sortable: true },
+    { field: 'generateStatus', title: '生成状态', minWidth: 110, sortable: true, slots: { default: 'generateStatus' } },
+    { field: 'generateTime', title: '生成时间', minWidth: 180, sortable: true, formatter: ({ cellValue }) => cellValue ? new Date(cellValue).toLocaleString() : '-' },
+    { field: 'operatorId', title: '操作人', minWidth: 100, sortable: true, slots: { default: 'operatorId' } },
+    { field: 'exportCount', title: '导出次数', minWidth: 100, sortable: true },
+    { field: 'targetTotalYoy', title: '指标总数同比(%)', minWidth: 150, sortable: true },
+    { field: 'targetTotalQoq', title: '指标总数环比(%)', minWidth: 150, sortable: true },
+    { field: 'targetEnableNumYoy', title: '启用指标数同比(%)', minWidth: 160, sortable: true },
+    { field: 'targetEnableNumQoq', title: '启用指标数环比(%)', minWidth: 160, sortable: true },
+    { field: 'targetWarnNumYoy', title: '预警指标数同比(%)', minWidth: 150, sortable: true },
+    { field: 'targetWarnNumQoq', title: '预警指标数环比(%)', minWidth: 150, sortable: true },
+    { title: '操作', width: 180, fixed: 'right', slots: { default: 'actions' } },
   ];
 }
 
 // ==================== 详情抽屉字段配置 ====================
 export const detailFields = [
-  { key: 'reportPeriod', label: '报表周期' },
-  { key: 'statisticalPeriod', label: '统计时段' },
-  { key: 'className', label: '班级名称' },
-  { key: 'majorName', label: '专业名称' },
-  { key: 'grade', label: '年级' },
-  { key: 'campus', label: '校区' },
-  { key: 'totalMoralScore', label: '德育总分' },
-  { key: 'goodDeedScore', label: '好人好事得分' },
-  { key: 'civilizedBehaviorScore', label: '文明行为得分' },
-  { key: 'assessRank', label: '评比排名' },
-  { key: 'civilizedClassTitle', label: '文明班级称号' },
+  { key: 'reportCycle', label: '报表周期' },
+  { key: 'statStartTime', label: '统计开始时间', formatter: (val) => val ? new Date(val).toLocaleString() : '-' },
+  { key: 'statEndTime', label: '统计结束时间', formatter: (val) => val ? new Date(val).toLocaleString() : '-' },
+  { key: 'targetTotal', label: '指标总数' },
+  { key: 'targetEnableNum', label: '启用指标数' },
+  { key: 'targetWarnNum', label: '预警指标数' },
+  { key: 'activityJoinNum', label: '活动参与人数' },
+  { key: 'resourceLearnRate', label: '资源学习完成率(%)' },
   { key: 'generateStatus', label: '生成状态' },
-  { key: 'generateTime', label: '生成时间' },
-  { key: 'operator', label: '操作人' },
+  { key: 'generateTime', label: '生成时间', formatter: (val) => val ? new Date(val).toLocaleString() : '-' },
+  { key: 'operatorId', label: '操作人ID' },
   { key: 'exportCount', label: '导出次数' },
-  { key: 'dataUpdateTime', label: '数据更新时间' },
+  { key: 'targetTotalYoy', label: '指标总数同比(%)' },
+  { key: 'targetTotalQoq', label: '指标总数环比(%)' },
+  { key: 'targetEnableNumYoy', label: '启用指标数同比(%)' },
+  { key: 'targetEnableNumQoq', label: '启用指标数环比(%)' },
+  { key: 'targetWarnNumYoy', label: '预警指标数同比(%)' },
+  { key: 'targetWarnNumQoq', label: '预警指标数环比(%)' },
   { key: 'creator', label: '创建者' },
-  // { key: 'createTime', label: '创建时间' },
-  // { key: 'updateTime', label: '更新时间' },
 ];
