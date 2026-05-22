@@ -17,6 +17,7 @@ import IconButton from '#/genchuan-components/IconButton.vue';
 
 import ChartDrillDrawer from '../../components/ChartDrillDrawer.vue';
 import { detailFields as stationDetailFields } from '../../stationMgmt/stationInfo/table/data.js';
+import { downloadImportTemplateFallback } from '../../utils/importTemplate.js';
 import DetailDrawer from './detail.vue';
 import gateChart from './gateChart.vue';
 import gateMap from './gateMap.vue';
@@ -637,7 +638,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
     filterConfig: {
       remote: true,
     },
-    height: 'auto',
     keepSource: true,
     pagerConfig: {
       pageSize: 10,
@@ -913,15 +913,20 @@ function normalizeImportResult(result) {
 
 async function handleDownloadImportTemplate() {
   const templateApi = pageApi[`get${apiName}ImportTemplate`];
+  const fileName = pageConfig.importTemplateName || '片区信息导入模板.xlsx';
   if (typeof templateApi !== 'function') {
-    ElMessage.warning('接口文档未提供片区信息导入模板下载接口');
+    downloadImportTemplateFallback({ fields: formFields, fileName });
     return;
   }
-  const blob = await templateApi();
-  downloadFileFromBlobPart({
-    fileName: pageConfig.importTemplateName || '片区信息导入模板.xlsx',
-    source: blob,
-  });
+  try {
+    const blob = await templateApi();
+    downloadFileFromBlobPart({
+      fileName,
+      source: blob,
+    });
+  } catch {
+    downloadImportTemplateFallback({ fields: formFields, fileName });
+  }
 }
 
 async function handleImportConfirm() {
@@ -1571,21 +1576,6 @@ onMounted(() => {
     width: 100%;
     height: 100%;
     min-height: 340px;
-  }
-
-  .park-lot-table-new {
-    height: auto;
-    min-height: 0;
-    overflow-y: visible;
-  }
-
-  .park-lot-table-new :deep(.vxe-grid--table-wrapper) {
-    max-height: none;
-  }
-
-  .park-lot-table-new :deep(.vxe-grid--pager-wrapper .vxe-pager) {
-    height: auto;
-    min-height: 40px;
   }
 }
 

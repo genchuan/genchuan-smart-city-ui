@@ -57,6 +57,36 @@ const statusTypeMap = {
   生成失败: 'danger',
 };
 
+const mapFieldLabelMap = {
+  address: '地址',
+  areaName: '所属片区',
+  availableSpaceCount: '可用车位数',
+  code: '编码',
+  coordinate: '地图坐标',
+  geoCode: '场站编码',
+  id: 'ID',
+  locationName: '位置名称',
+  name: '名称',
+  orderCount: '订单量',
+  revenue: '营收',
+  spaceCount: '车位数',
+  spaceTotal: '泊位总数',
+  stationCount: '场站数',
+  stationId: '场站ID',
+  stationName: '场站名称',
+  stationNo: '场站编号',
+  stationStatus: '运营状态',
+  stationType: '场站类型',
+  status: '状态',
+  statusName: '状态',
+  totalOrderCount: '总订单量',
+  totalRevenue: '总营收',
+  totalSpace: '总车位数',
+  totalSpaceCount: '总车位数',
+  type: '类型',
+  typeName: '类型',
+};
+
 const drawerTitle = computed(() => {
   const label = getMetricLabel();
   const name = drillInfo.drillName || drillInfo.reportCycle || '';
@@ -99,7 +129,55 @@ function withCommon(columns) {
   ];
 }
 
+function isPlainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function formatMapCellValue(value) {
+  if (value === undefined || value === null || value === '') return '';
+  if (Array.isArray(value)) return value.join('、');
+  if (isPlainObject(value)) return JSON.stringify(value);
+  return value;
+}
+
+function normalizeMapRow(row = {}) {
+  return Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [key, formatMapCellValue(value)]),
+  );
+}
+
+function createMapColumns(row = {}) {
+  const keys = Object.keys(row).filter((key) => row[key] !== undefined);
+  const priorityKeys = [
+    'stationNo',
+    'geoCode',
+    'stationName',
+    'locationName',
+    'areaName',
+    'stationType',
+    'stationStatus',
+    'statusName',
+    'coordinate',
+    'stationCount',
+    'spaceCount',
+    'orderCount',
+    'revenue',
+  ];
+  const orderedKeys = [
+    ...priorityKeys.filter((key) => keys.includes(key)),
+    ...keys.filter((key) => !priorityKeys.includes(key)),
+  ];
+  return orderedKeys.map((key) => ({
+    field: key,
+    minWidth: key === 'coordinate' ? 180 : 140,
+    title: mapFieldLabelMap[key] || key,
+  }));
+}
+
 function getGridColumns() {
+  if (drillInfo.source === 'map') {
+    return withCommon(createMapColumns(drillInfo.row));
+  }
   const category = getMetricMeta().category;
   const columnsMap = {
     area: [
@@ -214,6 +292,14 @@ function getDrillRowCount(sourceRow) {
 function createRows() {
   const category = getMetricMeta().category;
   const sourceRow = drillInfo.row || {};
+  if (drillInfo.source === 'map') {
+    return [
+      {
+        id: sourceRow.id || sourceRow.stationId || sourceRow.geoCode || 'map-1',
+        ...normalizeMapRow(sourceRow),
+      },
+    ];
+  }
   const name = drillInfo.drillName || drillInfo.drillValue || getMetricLabel();
   const baseTime = sourceRow.generateTime || Date.now();
   const rowCount = getDrillRowCount(sourceRow);
@@ -440,7 +526,7 @@ defineExpose({
   flex-direction: column;
   gap: 12px;
   width: 100%;
-  height: 100%;
+  height: auto;
 }
 
 .drill-summary {
@@ -453,7 +539,25 @@ defineExpose({
 }
 
 :deep(.vxe-grid) {
-  flex: 1;
-  min-height: 520px;
+  min-height: 0;
+}
+
+:deep(.vxe-grid--table-wrapper) {
+  max-height: calc(100vh - 260px);
+  overflow: auto;
+}
+
+:deep(.vxe-pager--wrapper) {
+  justify-content: center;
+}
+
+:deep(.vxe-grid--pager-wrapper) {
+  flex: 0 0 auto;
+}
+
+:deep(.vxe-grid--pager-wrapper .vxe-pager) {
+  position: relative;
+  height: 65px;
+  margin-top: 0;
 }
 </style>

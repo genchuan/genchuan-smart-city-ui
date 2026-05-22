@@ -27,6 +27,23 @@ export function disableStationConfig(data) {
   return requestClient.put(`${baseUrl}/disable`, data);
 }
 
+export function importStationConfig(file, updateSupport = false) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('updateSupport', updateSupport);
+  return requestClient.post(`${baseUrl}/import`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}
+
+export function getStationConfigImportTemplate() {
+  return requestClient.download(`${baseUrl}/get-import-template`);
+}
+
+export function exportStationConfig(params) {
+  return requestClient.download(`${baseUrl}/export`, { params });
+}
+
 function firstDefined(...values) {
   return values.find((value) => value !== undefined && value !== null);
 }

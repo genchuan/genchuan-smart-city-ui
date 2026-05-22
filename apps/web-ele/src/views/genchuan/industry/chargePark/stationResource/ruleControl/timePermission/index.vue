@@ -723,6 +723,9 @@ async function handleOpenDetail(row) {
     ...row,
     ...detail,
   };
+  if (isEmpty(nextDetail.auditUserName) && !isEmpty(row.auditUserName)) {
+    nextDetail.auditUserName = row.auditUserName;
+  }
   if (isEmpty(nextDetail.stationName) && !isEmpty(nextDetail.stationId)) {
     nextDetail.stationName = getOptionLabel('stationId', nextDetail.stationId);
   }

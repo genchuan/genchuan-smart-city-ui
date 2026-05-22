@@ -36,6 +36,10 @@ export function importOfftimeRule(file, updateSupport = false) {
   });
 }
 
+export function getOfftimeRuleImportTemplate() {
+  return requestClient.download(`${baseUrl}/get-import-template`);
+}
+
 export function exportOfftimeRule(params) {
   return requestClient.download(`${baseUrl}/export`, { params });
 }
