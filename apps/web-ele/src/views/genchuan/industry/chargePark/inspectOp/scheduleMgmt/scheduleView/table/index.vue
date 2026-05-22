@@ -157,11 +157,12 @@ const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
 });
 
 function buildQueryParams(page) {
+  console.log(filterUserName.value);
   return {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchParams,
-    userName: filterUserName.value,
+    userId: filterUserName.value?.value,
     scheduleDate: filterScheduleDate.value || dataObj.searchParams.scheduleDate,
     shiftType: filterShiftType.value || dataObj.searchParams.shiftType,
     positionName: filterPositionName.value || dataObj.searchParams.positionName,
@@ -421,7 +422,7 @@ onMounted(() => {
             type="success"
             @close="cancelFilter('userName')"
           >
-            关联人员：{{ filterUserName }}
+            关联人员：{{ filterUserName?.label }}
           </ElTag>
           <ElTag
             v-if="filterScheduleDate"

@@ -188,9 +188,9 @@ function handleBarLineClick(payload) {
     emit('stationFilter', { stationName: name, barChartKey: chartKey });
     return;
   }
-  if (slot === 'line' || (!slot && payload.chartType === 'line')) {
-    emit('trendFilter', { trendDate: name, lineChartKey: chartKey });
-  }
+  // if (slot === 'line' || (!slot && payload.chartType === 'line')) {
+  //   emit('trendFilter', { trendDate: name, lineChartKey: chartKey });
+  // }
 }
 
 onMounted(fetchChartData);

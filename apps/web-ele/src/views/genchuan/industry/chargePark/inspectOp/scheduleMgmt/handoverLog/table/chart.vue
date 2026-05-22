@@ -74,8 +74,8 @@ function handleCardClick(card) {
 
 function handleTrendClick(payload) {
   if (payload?.categoryName) {
-    const time = new Date(`${payload.categoryName} 00:00:00`)?.getTime();
-    emit('trendFilter', time);
+    // const time = new Date(`${payload.categoryName} 00:00:00`)?.getTime();
+    emit('trendFilter', payload.categoryName);
   }
 }
 
