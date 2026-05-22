@@ -454,6 +454,10 @@ const invoiceForm = reactive({
 
 // 打开开票弹窗
 const handleInvoice = (row) => {
+  if (row.invoiceStatus === 'invoiced') {
+    ElMessage.info('该订单已开票');
+    return;
+  }
   invoiceForm.id = row.id;
   invoiceForm.orderNo = row.orderNo;
   invoiceForm.remark = '';
@@ -830,42 +834,12 @@ const alarmColumns = [
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="查看"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="归还"
-            v-if="row.status === 'lending'"
-            icon-name="video-pause"
-            @click="handleReturn(row)"
-          />
-          <IconButton
-            content="支付"
-            v-if="row.status === 'pending_pay'"
-            icon-name="Money"
-            @click="handlePay(row)"
-          />
-          <IconButton
-            content="退款"
-            icon-name="back"
-            v-if="row.status === 'paid'"
-            @click="handleRefund(row)"
-          />
-          <IconButton
-            content="取消"
-            v-if="row.status === 'pending_pay'"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleCancel(row)"
-          />
-          <IconButton
-            content="开票"
-            v-if="row.status === 'completed'"
-            icon-name="Document"
-            @click="handleInvoice(row)"
-          />
+          <IconButton v-if="row.status === 'lending'" content="归还" icon-name="video-pause" @click="handleReturn(row)" />
+          <IconButton v-if="row.status === 'pending_pay'" content="支付" icon-name="Money" @click="handlePay(row)" />
+          <IconButton v-if="row.status === 'paid'" content="退款" icon-name="back" @click="handleRefund(row)" />
+          <IconButton v-if="row.status === 'pending_pay'" content="取消" icon-name="delete" color="#F56C6C" @click="handleCancel(row)" />
+          <IconButton v-if="row.status === 'paid' || row.status === 'completed'" content="开票" icon-name="Document" @click="handleInvoice(row)" />
+          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
         </div>
       </template>
       <template #bottom>
