@@ -2,9 +2,14 @@
 import { ref } from 'vue';
 
 import { createIconifyIcon } from '@vben/icons';
-import { createMemberOrder, submitMemberOrder } from '#/api/genchuan/pay/memberPay';
+
 import { ElMessage } from 'element-plus';
 import QRCode from 'qrcode';
+
+import {
+  createMemberOrder,
+  submitMemberOrder,
+} from '#/api/genchuan/pay/memberPay';
 
 // 使用 Iconify 图标创建组件
 const CheckIcon = createIconifyIcon('carbon:checkmark');
@@ -656,9 +661,9 @@ const faqList = ref([
             <span class="info-value">1年</span>
           </div>
         </div>
-<!--        <p class="payment-notice">-->
-<!--          ⚠️ 提示：此为前端模拟演示，实际支付需要后端集成微信SDK生成真实二维码-->
-<!--        </p>-->
+        <!--        <p class="payment-notice">-->
+        <!--          ⚠️ 提示：此为前端模拟演示，实际支付需要后端集成微信SDK生成真实二维码-->
+        <!--        </p>-->
       </div>
     </div>
 

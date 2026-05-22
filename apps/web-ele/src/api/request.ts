@@ -209,7 +209,9 @@ export const appRequestClient = (function createAppRequestClient() {
 
       // 支持通过headers自定义tenant-id，否则使用默认值
       if (!config.headers['tenant-id']) {
-        config.headers['tenant-id'] = tenantEnable ? accessStore.tenantId : undefined;
+        config.headers['tenant-id'] = tenantEnable
+          ? accessStore.tenantId
+          : undefined;
       }
 
       // 只有登录时，才设置 visit-tenant-id 访问租户
