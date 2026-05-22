@@ -530,7 +530,7 @@ export const detailFields = [
   { key: 'progressText', label: '执行进度' },
   { key: 'dispatchTimeStr', label: '派发时间' },
   { key: 'claimTimeStr', label: '认领时间' },
-  { key: 'completeTimeStr', label: '完成时间' },
+  // { key: 'completeTimeStr', label: '完成时间' },
   {
     key: 'archiveText',
     label: '归档状态',

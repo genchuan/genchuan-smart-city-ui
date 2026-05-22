@@ -36,6 +36,10 @@ export function importDepositPlan(file, updateSupport = false) {
   });
 }
 
+export function getDepositPlanImportTemplate() {
+  return requestClient.download(`${baseUrl}/get-import-template`);
+}
+
 export function exportDepositPlan(params) {
   return requestClient.download(`${baseUrl}/export`, { params });
 }

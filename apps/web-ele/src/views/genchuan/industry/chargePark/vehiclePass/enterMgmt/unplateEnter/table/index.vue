@@ -148,7 +148,14 @@ const [CorrectForm, correctFormApi] = useVbenForm({
     labelWidth: 80,
   },
   layout: 'horizontal',
-  schema: useCorrectFormSchema(),
+  schema: computed(() => {
+    const schema = useCorrectFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showDefaultActions: false,
 });
 
@@ -196,7 +203,17 @@ const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
     if (isOpen) {
       const formData = correctFormDrawerApi.getData();
       if (formData?.id) {
-        await correctFormApi.setValues(formData);
+        // 将 stationName 映射为 stationId
+        const mappedData = { ...formData };
+        if (formData.stationName && !formData.stationId) {
+          const station = stationOptions.value.find(
+            (opt) => opt.label === formData.stationName,
+          );
+          if (station) {
+            mappedData.stationId = station.value;
+          }
+        }
+        await correctFormApi.setValues(mappedData);
       }
     }
   },
@@ -676,21 +693,24 @@ onUnmounted(() => {
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton
-            content="详情"
+            content="查看"
             icon-name="View"
             @click="handleOpenDetail(row)"
           />
           <IconButton
+            v-if="row.status === '待审核'"
             content="审核"
             icon-name="CircleCheck"
             @click="handleAudit(row)"
           />
           <IconButton
+            v-if="row.status === '已通过'"
             content="确认"
             icon-name="Select"
             @click="handleConfirm(row)"
           />
           <IconButton
+            v-if="row.status === '已驳回'"
             content="修正"
             icon-name="edit"
             @click="handleEdit(row)"

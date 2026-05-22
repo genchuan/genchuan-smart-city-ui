@@ -6,28 +6,25 @@ import { useVbenDrawer } from '@vben/common-ui';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
-  getAssessReportPage,
-  createAssessReport,
-  archiveAssessReport,
-  exportAssessReport,
-  getAssessReportDetail,
-} from '#/api/genchuan/industry/educationTeaching/studentMgmt/decisionAnalysis/assessReport/data.js';
+  getLeaveReportPage,
+  createLeaveReport,
+  archiveLeaveReport,
+  exportLeaveReport,
+  getLeaveReportDetail,
+  getLeaveHandlePage,
+  getUserInfo,
+} from '#/api/genchuan/industry/educationTeaching/studentMgmt/decisionAnalysis/leaveReport/data.js';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { downloadFileFromBlobPart } from '@vben/utils';
 import {
   detailFields,
   getGenerateStatusTagType,
-  getReportPeriodTagType,
+  getReportCycleTagType,
   useCreateFormSchema,
   useGridColumns,
   useSearchFormSchema,
-} from '#/api/genchuan/industry/educationTeaching/studentMgmt/decisionAnalysis/assessReport/form.js';
-
-import ClassAssessDetailDialog from '../components/ClassAssessDetailDialog.vue';
-import HealthDetailDialog from '../components/HealthDetailDialog.vue';
-import MorningExerciseDetailDialog from '../components/MorningExerciseDetailDialog.vue';
-import CivilizedClassDetailDialog from '../components/CivilizedClassDetailDialog.vue';
-import BlackboardDetailDialog from '../components/BlackboardDetailDialog.vue';
+} from '#/api/genchuan/industry/educationTeaching/studentMgmt/decisionAnalysis/leaveReport/form.js';
+import LeaveStudentDetailDialog from '../components/LeaveStudentDetailDialog.vue';
 
 const props = defineProps({
   secondShow: Boolean,
@@ -36,24 +33,15 @@ const props = defineProps({
   activeReportCycle: String,
 });
 
-// 搜索参数
 const searchParams = reactive({
-  reportPeriod: '',
+  reportCycle: '',
   statStartTime: null,
   statEndTime: null,
-  className: '',
-  majorName: '',
-  grade: '',
-  assessRank: null,
   generateStatus: '',
 });
 
 const activeFilterTags = reactive({
-  reportPeriod: '',
-  className: '',
-  majorName: '',
-  grade: '',
-  assessRank: '',
+  reportCycle: '',
   generateStatus: '',
 });
 
@@ -80,33 +68,13 @@ const formatTimestamp = (timestamp) => {
 };
 
 const removeFilterTag = (type) => {
-  const map = {
-    reportPeriod: () => {
-      searchParams.reportPeriod = '';
-      activeFilterTags.reportPeriod = '';
-    },
-    className: () => {
-      searchParams.className = '';
-      activeFilterTags.className = '';
-    },
-    majorName: () => {
-      searchParams.majorName = '';
-      activeFilterTags.majorName = '';
-    },
-    grade: () => {
-      searchParams.grade = '';
-      activeFilterTags.grade = '';
-    },
-    assessRank: () => {
-      searchParams.assessRank = null;
-      activeFilterTags.assessRank = '';
-    },
-    generateStatus: () => {
-      searchParams.generateStatus = '';
-      activeFilterTags.generateStatus = '';
-    },
-  };
-  map[type]?.();
+  if (type === 'reportCycle') {
+    searchParams.reportCycle = '';
+    activeFilterTags.reportCycle = '';
+  } else if (type === 'generateStatus') {
+    searchParams.generateStatus = '';
+    activeFilterTags.generateStatus = '';
+  }
   handleRefresh();
 };
 
@@ -124,12 +92,12 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
       const params = {
         statStartTime: statStart ? new Date(statStart).getTime() : null,
         statEndTime: statEnd ? new Date(statEnd).getTime() : null,
-        reportPeriod: obj.reportPeriod,
-        grade: obj.grade,
+        reportCycle: obj.reportCycle,
+        deptName: obj.deptName || '',
         majorName: obj.majorName || '',
         className: obj.className || '',
       };
-      const response = await createAssessReport(params);
+      const response = await createLeaveReport(params);
       if (response?.code === 200) {
         ElMessage.success('报表生成任务已提交');
         handleRefresh();
@@ -170,11 +138,7 @@ const detailDrawerRef = ref(null);
 const detailData = ref({});
 
 // 明细弹窗引用
-const classAssessDetailRef = ref(null);
-const healthDetailRef = ref(null);
-const morningExerciseDetailRef = ref(null);
-const civilizedClassDetailRef = ref(null);
-const blackboardDetailRef = ref(null);
+const leaveStudentDetailRef = ref(null);
 
 // 表格数据获取
 const getTableData = async (pageObj) => {
@@ -188,7 +152,7 @@ const getTableData = async (pageObj) => {
     Object.keys(params).forEach(key => {
       if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
     });
-    const response = await getAssessReportPage(params);
+    const response = await getLeaveReportPage(params);
     if (response?.code === 200) {
       const { list, total } = response.data;
       return { list: list || [], total: total || 0 };
@@ -229,8 +193,8 @@ const handleExport = async () => {
     Object.keys(params).forEach(key => {
       if (params[key] === '' || params[key] === null || params[key] === undefined) delete params[key];
     });
-    const blob = await exportAssessReport(params);
-    downloadFileFromBlobPart({ fileName: '考评统计报表数据.xlsx', source: blob });
+    const blob = await exportLeaveReport(params);
+    downloadFileFromBlobPart({ fileName: '离校报表数据.xlsx', source: blob });
     ElMessage.success('导出成功');
     loadingInstance.close();
   } catch (error) {
@@ -244,17 +208,14 @@ const handleExport = async () => {
 // 单行导出
 const handleExportRow = async (row) => {
   try {
-    await ElMessageBox.confirm(`确认导出报表“${row.reportPeriod}”的数据吗？`, '导出确认', {
+    await ElMessageBox.confirm(`确认导出报表“${row.reportCycle}”的数据吗？`, '导出确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'info',
     });
     const loadingInstance = ElLoading.service({ text: '正在导出...' });
-    const blob = await exportAssessReport({ id: row.id });
-    downloadFileFromBlobPart({
-      fileName: `考评报表_${row.reportPeriod}_${row.className}.xlsx`,
-      source: blob
-    });
+    const blob = await exportLeaveReport({ id: row.id });
+    downloadFileFromBlobPart({ fileName: `离校报表_${row.reportCycle}.xlsx`, source: blob });
     ElMessage.success('导出成功');
     loadingInstance.close();
   } catch (error) {
@@ -269,7 +230,7 @@ const handleExportRow = async (row) => {
 const handleOpenDetail = async (row) => {
   const loadingInstance = ElLoading.service({ text: '正在加载详情...' });
   try {
-    const response = await getAssessReportDetail({ id: row.id });
+    const response = await getLeaveReportDetail({ id: row.id });
     detailData.value = response?.code === 200 ? response.data : row;
     detailDrawerRef.value.open();
   } catch (error) {
@@ -280,19 +241,19 @@ const handleOpenDetail = async (row) => {
   }
 };
 
-// 生成按钮（针对待生成状态）
+// 生成按钮
 const handleGenerate = async (row) => {
   try {
-    await ElMessageBox.confirm(`确认生成“${row.reportPeriod} - ${row.className}”报表吗？`, '生成确认', {
+    await ElMessageBox.confirm(`确认生成“${row.reportCycle}”报表吗？`, '生成确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'info',
     });
     const loadingInstance = ElLoading.service({ text: '正在生成报表...' });
-    const response = await createAssessReport({ id: row.id });
+    const response = await createLeaveReport({ id: row.id });
     if (response?.code === 200) {
       ElMessage.success('报表生成成功');
-      handleRefresh(); // 刷新列表，状态变为“已生成”
+      handleRefresh();
     } else {
       ElMessage.error(response?.msg || '生成失败');
     }
@@ -305,19 +266,19 @@ const handleGenerate = async (row) => {
   }
 };
 
-// 归档按钮
+// 归档
 const handleArchive = async (row) => {
   try {
-    await ElMessageBox.confirm(`确认归档“${row.reportPeriod} - ${row.className}”报表吗？归档后将不可再修改。`, '归档确认', {
+    await ElMessageBox.confirm(`确认归档“${row.reportCycle}”报表吗？归档后将不可再修改。`, '归档确认', {
       confirmButtonText: '确认',
       cancelButtonText: '取消',
       type: 'warning',
     });
     const loadingInstance = ElLoading.service({ text: '正在归档...' });
-    const response = await archiveAssessReport({ id: row.id });
+    const response = await archiveLeaveReport({ ids: [row.id] });
     if (response?.code === 200) {
       ElMessage.success('归档成功');
-      handleRefresh(); // 刷新列表，状态变为“已归档”
+      handleRefresh();
     } else {
       ElMessage.error(response?.msg || '归档失败');
     }
@@ -330,46 +291,33 @@ const handleArchive = async (row) => {
   }
 };
 
-// 打印按钮（仅年报）
+// 打印（年报）
 const handlePrint = (row) => {
-  // 简单模拟打印：打开一个新窗口打印当前详情（或调用浏览器打印）
-  window.print(); // 实际项目中可能需要更复杂的逻辑
-  ElMessage.info('打印功能已触发（模拟）');
+  window.print();
+  ElMessage.info('打印功能已触发');
 };
 
-// 根据报表周期和生成状态动态获取操作按钮列表
 const getActionButtons = (row) => {
-  const { reportPeriod, generateStatus } = row;
-  // 待生成：只有生成按钮
+  const { reportCycle, generateStatus } = row;
   if (generateStatus === '待生成') {
     return [{ label: '生成', onClick: () => handleGenerate(row), type: 'primary' }];
   }
-  // 已生成状态
   if (generateStatus === '已生成') {
-    const baseButtons = [
+    const base = [
       { label: '查看', onClick: () => handleOpenDetail(row) },
       { label: '导出', onClick: () => handleExportRow(row) },
     ];
-    // 归档按钮（除了年报，年报已生成也有归档按钮？根据需求：年报已生成也有归档）
-    if (reportPeriod !== '年报') {
-      baseButtons.push({ label: '归档', onClick: () => handleArchive(row) });
-    } else {
-      // 年报已生成：归档 + 打印
-      baseButtons.push({ label: '归档', onClick: () => handleArchive(row) });
-      baseButtons.push({ label: '打印', onClick: () => handlePrint(row) });
-    }
-    return baseButtons;
+    if (reportCycle !== '年报') base.push({ label: '归档', onClick: () => handleArchive(row) });
+    else base.push({ label: '归档', onClick: () => handleArchive(row) }, { label: '打印', onClick: () => handlePrint(row) });
+    return base;
   }
-  // 已归档状态
   if (generateStatus === '已归档') {
-    const baseButtons = [
+    const base = [
       { label: '查看', onClick: () => handleOpenDetail(row) },
       { label: '导出', onClick: () => handleExportRow(row) },
     ];
-    if (reportPeriod === '年报') {
-      baseButtons.push({ label: '打印', onClick: () => handlePrint(row) });
-    }
-    return baseButtons;
+    if (reportCycle === '年报') base.push({ label: '打印', onClick: () => handlePrint(row) });
+    return base;
   }
   return [];
 };
@@ -378,22 +326,18 @@ const handleCreate = () => formDrawerApi.setData({}).open();
 const handleSearch = () => drawerApi.open();
 
 const handleReset = () => {
-  Object.keys(searchParams).forEach(key => {
-    if (key === 'assessRank') searchParams[key] = null;
-    else if (key === 'statStartTime' || key === 'statEndTime') searchParams[key] = null;
-    else searchParams[key] = '';
-  });
-  Object.keys(activeFilterTags).forEach(key => activeFilterTags[key] = '');
+  searchParams.reportCycle = '';
+  searchParams.generateStatus = '';
+  searchParams.statStartTime = null;
+  searchParams.statEndTime = null;
+  activeFilterTags.reportCycle = '';
+  activeFilterTags.generateStatus = '';
   handleRefresh();
 };
 
 function onSubmit(values) {
-  searchParams.reportPeriod = values.reportPeriod || '';
-  searchParams.className = values.className || '';
-  searchParams.majorName = values.majorName || '';
-  searchParams.grade = values.grade || '';
+  searchParams.reportCycle = values.reportCycle || '';
   searchParams.generateStatus = values.generateStatus || '';
-
   if (values.statTimeRange && values.statTimeRange.length === 2) {
     searchParams.statStartTime = new Date(values.statTimeRange[0]).getTime();
     searchParams.statEndTime = new Date(values.statTimeRange[1]).getTime();
@@ -401,70 +345,61 @@ function onSubmit(values) {
     searchParams.statStartTime = null;
     searchParams.statEndTime = null;
   }
-
-  activeFilterTags.reportPeriod = searchParams.reportPeriod || '';
-  activeFilterTags.className = searchParams.className || '';
-  activeFilterTags.majorName = searchParams.majorName || '';
-  activeFilterTags.grade = searchParams.grade || '';
-  activeFilterTags.assessRank = searchParams.assessRank ? String(searchParams.assessRank) : '';
-  activeFilterTags.generateStatus = searchParams.generateStatus || '';
+  activeFilterTags.reportCycle = searchParams.reportCycle;
+  activeFilterTags.generateStatus = searchParams.generateStatus;
   handleRefresh();
   drawerApi.close();
 }
 
 // 字段钻取
 const handleFieldDrill = (type, row) => {
-  const drillMap = {
-    reportPeriod: () => {
-      searchParams.reportPeriod = row.reportPeriod;
-      activeFilterTags.reportPeriod = row.reportPeriod;
+  switch (type) {
+    case 'leaveTotal':
+      leaveStudentDetailRef.value?.open();
+      break;
+    case 'reportCycle':
+      searchParams.reportCycle = row.reportCycle;
+      activeFilterTags.reportCycle = row.reportCycle;
       handleRefresh();
-    },
-    className: () => {
-      searchParams.className = row.className;
-      activeFilterTags.className = row.className;
-      handleRefresh();
-    },
-    majorName: () => {
-      searchParams.majorName = row.majorName;
-      activeFilterTags.majorName = row.majorName;
-      handleRefresh();
-    },
-    grade: () => {
-      searchParams.grade = row.grade;
-      activeFilterTags.grade = row.grade;
-      handleRefresh();
-    },
-    assessRank: () => {
-      searchParams.assessRank = row.assessRank;
-      activeFilterTags.assessRank = String(row.assessRank);
-      handleRefresh();
-    },
-    generateStatus: () => {
+      break;
+    case 'generateStatus':
       searchParams.generateStatus = row.generateStatus;
       activeFilterTags.generateStatus = row.generateStatus;
       handleRefresh();
-    },
-    totalAssessScore: () => classAssessDetailRef.value?.open(row),
-    healthScore: () => healthDetailRef.value?.open(row),
-    morningExerciseScore: () => morningExerciseDetailRef.value?.open(row),
-    civilizedClassScore: () => civilizedClassDetailRef.value?.open(row),
-    blackboardNewsScore: () => blackboardDetailRef.value?.open(row),
-  };
-  drillMap[type]?.();
+      break;
+    default:
+      break;
+  }
 };
 
+// 操作人信息
+const handleOperatorClick = async (operatorId) => {
+  const loadingInstance = ElLoading.service({ text: '加载中...' });
+  try {
+    const res = await getUserInfo({ id: operatorId });
+    if (res.code === 200) {
+      const user = res.data;
+      ElMessageBox.alert(`账号：${user.username}\n姓名：${user.nickname}\n部门ID：${user.deptId}`, '操作人信息', {
+        confirmButtonText: '关闭',
+      });
+    }
+  } catch (error) {
+    ElMessage.error('获取操作人信息失败');
+  } finally {
+    loadingInstance.close();
+  }
+};
+
+// 图表钻取回调
 const handleStatsFilter = (type, value) => {
-  if (type === 'radar') {
-    classAssessDetailRef.value?.open({ className: value });
+  if (type === 'pie') {
+    // 饼图钻取：离校去向分布 -> 筛选该去向的离校学生
+    leaveStudentDetailRef.value?.open({ leaveReason: value });
   } else if (type === 'line') {
-    classAssessDetailRef.value?.open({
-      className: value.className,
-      statisticalDate: value.date,
-    });
+    // 折线图钻取
   } else if (type === 'reportCycle') {
-    searchParams.reportPeriod = value || '';
-    activeFilterTags.reportPeriod = value || '';
+    searchParams.reportCycle = value || '';
+    activeFilterTags.reportCycle = value || '';
     handleRefresh();
   }
 };
@@ -473,8 +408,8 @@ watch(
   () => props.activeReportCycle,
   (newVal) => {
     if (newVal !== undefined) {
-      searchParams.reportPeriod = newVal || '';
-      activeFilterTags.reportPeriod = newVal || '';
+      searchParams.reportCycle = newVal || '';
+      activeFilterTags.reportCycle = newVal || '';
       handleRefresh();
     }
   },
@@ -491,35 +426,22 @@ defineExpose({ handleStatsFilter });
     <FormDrawer title="生成报表">
       <Form />
     </FormDrawer>
-    <DetailDrawer ref="detailDrawerRef" :title="`${detailData.reportPeriod || '考评报表'}详情`"
+    <DetailDrawer ref="detailDrawerRef" :title="`${detailData.reportCycle || '离校报表'}详情`"
                   :data="detailData" :fields="detailFields" />
     <Drawer title="筛选">
       <QueryForm class="query-form" />
     </Drawer>
 
-    <ClassAssessDetailDialog ref="classAssessDetailRef" />
-    <HealthDetailDialog ref="healthDetailRef" />
-    <MorningExerciseDetailDialog ref="morningExerciseDetailRef" />
-    <CivilizedClassDetailDialog ref="civilizedClassDetailRef" />
-    <BlackboardDetailDialog ref="blackboardDetailRef" />
+    <!-- 明细弹窗 -->
+    <LeaveStudentDetailDialog ref="leaveStudentDetailRef" />
 
     <Grid>
       <template #table-title>
-        <div class="tabel-tabs"
-             style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
-          <ElTag v-if="activeFilterTags.className" type="primary" closable
-                 @close="removeFilterTag('className')">班级：{{ activeFilterTags.className }}
-          </ElTag>
-          <ElTag v-if="activeFilterTags.majorName" type="primary" closable
-                 @close="removeFilterTag('majorName')">专业：{{ activeFilterTags.majorName }}
-          </ElTag>
-          <ElTag v-if="activeFilterTags.grade" type="primary" closable
-                 @close="removeFilterTag('grade')">年级：{{ activeFilterTags.grade }}
-          </ElTag>
+        <div class="tabel-tabs" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: center">
+          <ElTag v-if="activeFilterTags.reportCycle" type="primary" closable
+                 @close="removeFilterTag('reportCycle')">报表周期：{{ activeFilterTags.reportCycle }}</ElTag>
           <ElTag v-if="activeFilterTags.generateStatus" type="primary" closable
-                 @close="removeFilterTag('generateStatus')">
-            生成状态：{{ activeFilterTags.generateStatus }}
-          </ElTag>
+                 @close="removeFilterTag('generateStatus')">生成状态：{{ activeFilterTags.generateStatus }}</ElTag>
         </div>
       </template>
 
@@ -536,68 +458,26 @@ defineExpose({ handleStatsFilter });
         </div>
       </template>
 
-      <!-- 统计时段列 -->
+      <!-- 统计时段 -->
       <template #statisticalPeriod="{ row }">
         <span>{{ formatTimestamp(row.statStartTime) }} - {{ formatTimestamp(row.statEndTime) }}</span>
       </template>
 
       <!-- 报表周期 -->
-      <template #reportPeriod="{ row }">
-        <ElTag :type="getReportPeriodTagType(row.reportPeriod)">
-          {{ row.reportPeriod }}
+      <template #reportCycle="{ row }">
+        <ElTag :type="getReportCycleTagType(row.reportCycle)" style="cursor: pointer"
+               @click="handleFieldDrill('reportCycle', row)">
+          {{ row.reportCycle }}
         </ElTag>
       </template>
-      <!-- 班级名称 -->
-      <template #className="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('className', row)">{{ row.className }}</span>
+
+      <!-- 离校总人数 -->
+      <template #leaveTotal="{ row }">
+        <span style="color: #409eff; cursor: pointer" @click="handleFieldDrill('leaveTotal', row)">
+          {{ row.leaveTotal }}
+        </span>
       </template>
-      <!-- 专业名称 -->
-      <template #majorName="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('majorName', row)">{{ row.majorName }}</span>
-      </template>
-      <!-- 年级 -->
-      <template #grade="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('grade', row)">{{ row.grade }}</span>
-      </template>
-      <!-- 四项考评总分 -->
-      <template #totalAssessScore="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('totalAssessScore', row)">{{ row.totalAssessScore }}</span>
-      </template>
-      <!-- 卫生得分 -->
-      <template #healthScore="{ row }">
-        <span style="color: #409eff; cursor: pointer" @click="handleFieldDrill('healthScore', row)">{{
-            row.healthScore
-          }}</span>
-      </template>
-      <!-- 早操得分 -->
-      <template #morningExerciseScore="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('morningExerciseScore', row)">{{
-            row.morningExerciseScore
-          }}</span>
-      </template>
-      <!-- 文明班级得分 -->
-      <template #civilizedClassScore="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('civilizedClassScore', row)">{{
-            row.civilizedClassScore
-          }}</span>
-      </template>
-      <!-- 黑板报得分 -->
-      <template #blackboardNewsScore="{ row }">
-        <span style="color: #409eff; cursor: pointer"
-              @click="handleFieldDrill('blackboardNewsScore', row)">{{
-            row.blackboardNewsScore
-          }}</span>
-      </template>
-      <!-- 考评排名 -->
-      <template #assessRank="{ row }">
-        <span>{{ row.assessRank }}</span>
-      </template>
+
       <!-- 生成状态 -->
       <template #generateStatus="{ row }">
         <ElTag :type="getGenerateStatusTagType(row.generateStatus)" style="cursor: pointer"
@@ -605,11 +485,15 @@ defineExpose({ handleStatsFilter });
           {{ row.generateStatus }}
         </ElTag>
       </template>
+
       <!-- 操作人 -->
-      <template #operator="{ row }">
-        <span>{{ row.operator }}</span>
+      <template #operatorId="{ row }">
+        <span style="color: #409eff; cursor: pointer" @click="handleOperatorClick(row.operatorId)">
+          {{ row.operatorId }}
+        </span>
       </template>
-      <!-- 操作按钮（动态） -->
+
+      <!-- 操作按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools" style="gap: 8px;">
           <template v-for="btn in getActionButtons(row)" :key="btn.label">

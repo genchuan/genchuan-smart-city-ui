@@ -2,6 +2,7 @@ export const pageConfig = {
   apiName: 'ChargeParkLink',
   title: '充停联动',
   exportName: '充停联动数据.xlsx',
+  importTemplateName: '充停联动导入模板.xlsx',
   nameField: 'discountType',
   primaryField: 'id',
   toolbar: ['create', 'import', 'export'],

@@ -33,7 +33,6 @@ import {
   recordTypeMap,
   statusTypeMap,
   textObj,
-  useAuditFormSchema,
   useCorrectFormSchema,
   useCreateFormSchema,
   useGridColumns,
@@ -241,46 +240,6 @@ const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
   },
 });
 
-// 审核表单
-const [AuditForm, auditFormApi] = useVbenForm({
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 80,
-  },
-  layout: 'horizontal',
-  schema: useAuditFormSchema(),
-  showDefaultActions: false,
-});
-
-// 审核Drawer
-const [AuditFormDrawer, auditFormDrawerApi] = useVbenDrawer({
-  appendToMain: true,
-  modal: false,
-  onCancel() {
-    auditFormDrawerApi.close();
-  },
-  onConfirm() {
-    const obj = auditFormApi.form.values;
-    handleAuditSubmit(obj);
-  },
-  async onOpenChange(isOpen) {
-    if (isOpen) {
-      formData.value = auditFormDrawerApi.getData();
-      if (formData.value?.id) {
-        const formValues = {
-          id: formData.value.id,
-          plateNo: formData.value.plateNo,
-          spaceNo: formData.value.spaceNo,
-        };
-        await auditFormApi.setValues(formValues);
-      }
-    }
-  },
-});
-
 function handleRefresh() {
   gridApi.query();
 }
@@ -414,50 +373,6 @@ async function handleCorrectSubmit(data) {
     });
     handleRefresh();
     correctFormDrawerApi.close();
-  }
-}
-
-function handleAudit(row) {
-  auditFormDrawerApi
-    .setData({
-      title: '审核入场记录',
-      id: row.id,
-      plateNo: row.plateNo,
-      spaceNo: row.spaceNo,
-    })
-    .open();
-}
-
-async function handleAuditSubmit(data) {
-  if (USE_REAL_API) {
-    const loadingInstance = ElLoading.service({
-      text: '正在审核...',
-    });
-    try {
-      // TODO: 调用审核API
-      ElMessage.success('审核成功');
-      handleRefresh();
-      auditFormDrawerApi.close();
-    } catch (error) {
-      ElMessage.error('审核失败');
-      console.error(error);
-    } finally {
-      loadingInstance.close();
-    }
-  } else {
-    const auditStatus = data.auditResult === 'pass' ? '正常记录' : '异常记录';
-    dataObj.apilist.forEach((v, i) => {
-      if (v.id === formData.value?.id) {
-        dataObj.apilist[i] = {
-          ...v,
-          status: auditStatus,
-          updater: 'admin',
-          updateTime: Date.now(),
-        };
-      }
-    });
-    handleRefresh();
-    auditFormDrawerApi.close();
   }
 }
 
@@ -849,10 +764,6 @@ const shouldShowCorrect = (status) => {
   return status === '异常记录';
 };
 
-const shouldShowAudit = (status) => {
-  return status === '异常记录';
-};
-
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
@@ -885,9 +796,6 @@ onUnmounted(() => {
     <CorrectFormDrawer title="修正入场记录">
       <CorrectForm />
     </CorrectFormDrawer>
-    <AuditFormDrawer title="审核入场记录">
-      <AuditForm />
-    </AuditFormDrawer>
     <DetailDrawer
       ref="detailDrawerRef"
       :title="`${dataObj.detailObj.plateNo}详情`"
@@ -1079,12 +987,6 @@ onUnmounted(() => {
             content="修正"
             icon-name="Edit"
             @click="handleCorrect(row)"
-          />
-          <IconButton
-            v-if="shouldShowAudit(row.status)"
-            content="审核"
-            icon-name="Check"
-            @click="handleAudit(row)"
           />
         </div>
       </template>

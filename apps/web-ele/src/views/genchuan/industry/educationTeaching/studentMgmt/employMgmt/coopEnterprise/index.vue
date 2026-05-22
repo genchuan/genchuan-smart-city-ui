@@ -103,7 +103,8 @@ function handleRowCheckboxChange({records}) {
 const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
-const maintainId = ref(null);
+// 改为数组，存放要维护的企业ID（支持批量）
+const maintainIds = ref([]);
 
 const getTableData = async ({page}) => {
   dataObj.loading = true;
@@ -146,7 +147,7 @@ const getTableData = async ({page}) => {
   }
 };
 
-// ========== 表格实例（提前定义，确保 gridApi 可用） ==========
+// ========== 表格实例 ==========
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
@@ -161,7 +162,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
   showSearchForm: false,
 });
 
-// ========== 核心修复：强制重置分页到第一页并刷新 ==========
 function resetPageAndQuery() {
   if (gridApi.commitProxy) {
     gridApi.commitProxy('reload');
@@ -171,11 +171,11 @@ function resetPageAndQuery() {
     dataObj.currentPage = 1;
     gridApi.query();
   }
-  dataObj.currentPage = 1; // 确保界面分页显示第一页
+  dataObj.currentPage = 1;
 }
 
 function handleRefresh() {
-  gridApi.query(); // 手动刷新保持当前页码
+  gridApi.query();
 }
 
 function handleReset() {
@@ -198,22 +198,19 @@ async function handleExport() {
   }
 }
 
-// 批量维护（仅支持单选）
+// 批量维护（支持多选）
 async function handleBatchMaintain() {
   if (checkedIds.value.length === 0) {
     ElMessage.warning('请至少选择一个合作企业');
     return;
   }
-  if (checkedIds.value.length > 1) {
-    ElMessage.warning('维护操作仅支持选择一个企业，请取消多选后重试');
+  // 检查所有选中企业的状态是否为“合作中”
+  const invalidRows = checkedRows.value.filter(row => row.status !== '合作中');
+  if (invalidRows.length > 0) {
+    ElMessage.warning(`选中的企业中包含状态为“${invalidRows[0].status}”的，只有“合作中”的企业可以维护`);
     return;
   }
-  const selectedRow = checkedRows.value[0];
-  if (selectedRow.status !== '合作中') {
-    ElMessage.warning('只有合作中的企业可以维护');
-    return;
-  }
-  maintainId.value = selectedRow.id;
+  maintainIds.value = [...checkedIds.value];
   maintainFormApi.resetForm();
   maintainDrawerApi.open();
 }
@@ -230,13 +227,13 @@ function handleEdit(row) {
   createDrawerApi.open();
 }
 
-// 行内维护
+// 行内维护（单条）
 async function handleMaintain(row) {
   if (row.status !== '合作中') {
     ElMessage.warning('只有合作中的企业可以维护');
     return;
   }
-  maintainId.value = row.id;
+  maintainIds.value = [row.id];
   maintainFormApi.resetForm();
   maintainDrawerApi.open();
 }
@@ -300,6 +297,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
   },
 });
 
+// 维护表单（支持批量）
 const [MaintainForm, maintainFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
@@ -323,15 +321,16 @@ const [MaintainForm, maintainFormApi] = useVbenForm({
         return;
       }
 
+      // 批量维护：直接使用 maintainIds 数组
       const params = {
-        id: maintainId.value,
+        ids: maintainIds.value,
         coopStartTime,
         coopEndTime,
         remark: values.remark || '',
       };
       const res = await maintainCoopEnterprise(params);
       if (res && res !== false) {
-        ElMessage.success('维护成功');
+        ElMessage.success(`成功维护 ${maintainIds.value.length} 个企业`);
         maintainDrawerApi.close();
         handleRefresh();
       } else {
@@ -364,7 +363,7 @@ const [QueryForm, queryFormApi] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    resetPageAndQuery(); // 查询时重置页码
+    resetPageAndQuery();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -375,7 +374,6 @@ const [QueryForm, queryFormApi] = useVbenForm({
   submitButtonOptions: {content: '查询'},
 });
 
-// 筛选标签相关函数（使用 resetPageAndQuery）
 function getFieldLabel(field) {
   const map = {
     enterpriseType: '企业类型',
@@ -412,7 +410,7 @@ function handleFilterTagClick(field, value) {
       tagFilters.value[field] = value;
     }
   }
-  resetPageAndQuery(); // 筛选时重置页码
+  resetPageAndQuery();
 }
 
 function clearFilters() {

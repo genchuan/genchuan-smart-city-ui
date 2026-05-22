@@ -173,8 +173,29 @@ function getDateTimestamp(value) {
   if (value instanceof Date) {
     return Number.isNaN(value.getTime()) ? null : value.getTime();
   }
+  if (typeof value === 'number' || /^\d+$/.test(String(value))) {
+    const text = String(value);
+    const timestamp = Number(text.length === 10 ? `${text}000` : text);
+    return Number.isNaN(timestamp) ? null : timestamp;
+  }
   const parsed = new Date(String(value).replaceAll('-', '/'));
   return Number.isNaN(parsed.getTime()) ? null : parsed.getTime();
+}
+
+function formatDateValue(value) {
+  const timestamp = getDateTimestamp(value);
+  if (timestamp === null) return undefined;
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return `${date.getFullYear()}-${padTime(date.getMonth() + 1)}-${padTime(date.getDate())}`;
+}
+
+function normalizeFormValues(values = {}) {
+  return {
+    ...values,
+    endTime: formatDateValue(values.endTime),
+    startTime: formatDateValue(values.startTime),
+  };
 }
 
 function getPlaceholder(field) {
@@ -315,6 +336,9 @@ const lineSeriesData = computed(() => {
 });
 
 function getCellSlotName(column) {
+  if (column.field === 'certInfo') {
+    return '';
+  }
   if (column.drillType || column.field === primaryField) {
     return `cell_${column.field}`;
   }
@@ -543,12 +567,17 @@ async function handleFormConfirm() {
     ElMessage.warning('生效时间不能晚于失效时间');
     return;
   }
+  const payload = sanitizeParams({
+    ...values,
+    endTime: endTimestamp,
+    startTime: startTimestamp,
+  });
 
   if (formMode.value === 'edit' && values.id) {
-    await pageApi[`update${apiName}`](values);
+    await pageApi[`update${apiName}`](payload);
     ElMessage.success('编辑成功');
   } else {
-    await pageApi[`create${apiName}`](values);
+    await pageApi[`create${apiName}`](payload);
     ElMessage.success('新增成功');
   }
 
@@ -568,7 +597,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     await loadSelectOptions();
     formData.value = formDrawerApi.getData() || null;
     if (formMode.value === 'edit' && formData.value) {
-      await formApi.setValues(formData.value);
+      await formApi.setValues(normalizeFormValues(formData.value));
     } else {
       formApi.resetForm();
     }
@@ -712,10 +741,14 @@ async function handleOpenDetail(row) {
   const detailApi = pageApi[`get${apiName}Detail`];
   const detail =
     typeof detailApi === 'function' ? (await detailApi(row.id)) || row : row;
-  detailObj.value = normalizeListStatusTime({
+  const nextDetail = normalizeListStatusTime({
     ...row,
     ...detail,
   });
+  if (isEmpty(nextDetail.auditUserName) && !isEmpty(row.auditUserName)) {
+    nextDetail.auditUserName = row.auditUserName;
+  }
+  detailObj.value = nextDetail;
   await nextTick();
   detailDrawerRef.value?.open();
 }

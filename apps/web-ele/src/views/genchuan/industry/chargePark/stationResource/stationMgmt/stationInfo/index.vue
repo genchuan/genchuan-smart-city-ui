@@ -12,6 +12,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import * as areaApi from '#/api/genchuan/industry/chargePark/stationResource/areaMgmt/areaInfo/index.js';
 import * as spaceApi from '#/api/genchuan/industry/chargePark/stationResource/parkingSpace/spaceInfo/index.js';
 import * as pageApi from '#/api/genchuan/industry/chargePark/stationResource/stationMgmt/stationInfo/index.js';
+import { getSimpleUserList } from '#/api/system/user';
 import CommonDetailDrawer from '#/components/common/DetailDrawer.vue';
 import IconButton from '#/genchuan-components/IconButton.vue';
 
@@ -54,6 +55,7 @@ const drillDrawerTitle = ref('关联信息');
 const chartData = ref({});
 const chartDrillDrawerRef = ref(null);
 const areaOptions = ref([]);
+const userOptions = ref([]);
 const importDialogVisible = ref(false);
 const importFile = ref(null);
 const importLoading = ref(false);
@@ -128,6 +130,16 @@ function normalizeOptions(options = []) {
   });
 }
 
+function getSelectOptions(field) {
+  if (field.apiSource === 'AreaInfo') {
+    return areaOptions.value;
+  }
+  if (field.apiSource === 'SystemUser') {
+    return userOptions.value;
+  }
+  return normalizeOptions(field.options || []);
+}
+
 function extractPageList(result) {
   if (Array.isArray(result)) {
     return result;
@@ -183,17 +195,11 @@ function createSchema(fields, isSearch = false) {
     };
 
     if (field.type === 'select') {
-      // 动态加载片区选项
-      const options =
-        field.field === 'areaId'
-          ? areaOptions.value
-          : normalizeOptions(field.options || []);
-
       Object.assign(componentProps, {
         allowClear: true,
         clearable: true,
         filterOption: true,
-        options,
+        options: getSelectOptions(field),
         showSearch: true,
       });
     }
@@ -520,8 +526,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (!isOpen) return;
 
-    // 加载片区选项
-    await loadAreaOptions();
+    await Promise.all([loadAreaOptions(), loadUserOptions()]);
 
     formData.value = formDrawerApi.getData() || null;
     if (formMode.value === 'edit' && formData.value) {
@@ -726,6 +731,9 @@ async function handleOpenDetail(row) {
   if (isEmpty(detailObj.value.areaName)) {
     detailObj.value.areaName = getOptionLabel('areaId', detailObj.value.areaId);
   }
+  if (!isEmpty(detailObj.value.userId)) {
+    detailObj.value.userId = getOptionLabel('userId', detailObj.value.userId);
+  }
   await nextTick();
   detailDrawerRef.value?.open();
 }
@@ -744,6 +752,8 @@ async function handleStatusChange(action, row) {
     `确认${label}当前${pageConfig.title}吗？`,
     '操作提示',
     {
+      cancelButtonText: '取消',
+      confirmButtonText: '确定',
       type: 'warning',
     },
   );
@@ -1016,10 +1026,13 @@ function getOptionLabel(field, value) {
   const fieldConfig =
     tableColumns.find((c) => c.field === field) ||
     searchFields.find((f) => f.field === field);
-  const options =
-    field === 'areaId'
-      ? areaOptions.value
-      : normalizeOptions(fieldConfig?.options || []);
+  let options = normalizeOptions(fieldConfig?.options || []);
+  if (field === 'areaId') {
+    options = areaOptions.value;
+  }
+  if (field === 'userId') {
+    options = userOptions.value;
+  }
   const option = options.find(
     (item) => item.value === value || String(item.value) === String(value),
   );
@@ -1059,6 +1072,9 @@ function getCellDisplayText(column, row) {
   }
   if (column.displayField && column.field === 'areaId') {
     value = row?.[column.displayField] || getOptionLabel('areaId', value);
+  }
+  if (column.field === 'userId') {
+    value = getOptionLabel('userId', value);
   }
   if (!isEmpty(value)) {
     const nextValue = Array.isArray(value) ? value.join('、') : value;
@@ -1273,9 +1289,26 @@ async function loadAreaOptions() {
   }
 }
 
+// 加载负责人选项
+async function loadUserOptions() {
+  try {
+    const result = await getSimpleUserList();
+    userOptions.value = extractPageList(result).map((item) => ({
+      label: item.nickname
+        ? `${item.nickname}${item.username ? ` (${item.username})` : ''}`
+        : item.username || item.name || item.id || item.userId,
+      value: item.id ?? item.userId,
+    }));
+    await refreshSelectSchemas();
+  } catch (error) {
+    console.error('加载负责人选项失败:', error);
+  }
+}
+
 onMounted(() => {
   loadChart();
   loadAreaOptions();
+  loadUserOptions();
 });
 // 暴露方法给父组件，支持同名称片区筛选展示
 defineExpose({

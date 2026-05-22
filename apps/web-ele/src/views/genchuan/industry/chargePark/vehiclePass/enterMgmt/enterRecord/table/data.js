@@ -9,8 +9,8 @@ export async function getStationOptions() {
   }
   try {
     const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
-    if (response && response.data && Array.isArray(response.data)) {
-      stationOptionsCache = response.data.map(item => ({
+    if (response && Array.isArray(response)) {
+      stationOptionsCache = response.map(item => ({
         label: item.stationName,
         value: item.stationId,
       }));
@@ -381,6 +381,19 @@ export function useCorrectFormSchema() {
       rules: 'required',
     },
     {
+      fieldName: 'recordType',
+      label: '记录类型',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择记录类型',
+        options: [
+          { label: '自动识别', value: '自动识别' },
+          { label: '人工补录', value: '人工补录' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
       fieldName: 'status',
       label: '记录状态',
       component: 'Select',
@@ -419,56 +432,6 @@ export function useCorrectFormSchema() {
         placeholder: '请输入修正备注',
         rows: 3,
       },
-    },
-  ];
-}
-
-/** 审核表单配置 */
-export function useAuditFormSchema() {
-  return [
-    {
-      fieldName: 'id',
-      label: '记录ID',
-      component: 'Input',
-      componentProps: { disabled: true },
-    },
-    {
-      fieldName: 'plateNo',
-      label: '车牌号码',
-      component: 'Input',
-      componentProps: { disabled: true },
-    },
-    {
-      fieldName: 'spaceNo',
-      label: '车位编号',
-      component: 'Input',
-      componentProps: { disabled: true },
-    },
-    {
-      fieldName: 'auditResult',
-      label: '审核结果',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择审核结果',
-        options: [
-          { label: '通过', value: 'pass' },
-          { label: '驳回', value: 'reject' },
-        ],
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'auditOpinion',
-      label: '审核意见',
-      component: 'Textarea',
-      componentProps: {
-        rows: 4,
-        placeholder: '请输入审核意见（必填）',
-      },
-      rules: [
-        { required: true, message: '审核意见必填' },
-        { min: 1, message: '审核意见不能为空' },
-      ],
     },
   ];
 }

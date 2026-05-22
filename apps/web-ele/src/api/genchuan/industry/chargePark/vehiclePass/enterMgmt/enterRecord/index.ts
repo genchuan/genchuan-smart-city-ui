@@ -71,6 +71,7 @@ export namespace EnterRecordApi {
     plateColor: string;
     spaceNo?: string;
     enterTime: string;
+    recordType: string;
     status: string;
     stationId: number;
     remark?: string;
