@@ -7,7 +7,10 @@ import { getDictObj } from '@vben/hooks';
 
 import { ElMessage } from 'element-plus';
 
-import { sendCouponMgmt, getSendObject } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
+import {
+  getSendObject,
+  sendCouponMgmt,
+} from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 
 const emit = defineEmits(['success']);
 
@@ -67,10 +70,10 @@ const fetchUserList = async (query = '') => {
 
 /** 远程搜索方法 */
 const handleUserRemoteMethod = (query) => {
-  if (query !== '') {
-    fetchUserList(query);
-  } else {
+  if (query === '') {
     fetchUserList();
+  } else {
+    fetchUserList(query);
   }
 };
 
