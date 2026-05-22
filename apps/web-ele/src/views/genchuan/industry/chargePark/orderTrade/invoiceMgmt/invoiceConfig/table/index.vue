@@ -1,7 +1,7 @@
 <script setup>import { reactive, ref, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
-import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption } from 'element-plus';
+import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getInvoiceConfigPage, exportInvoiceConfigExcel, batchEnable, batchDisable, batchDelete, create, update } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
@@ -34,8 +34,10 @@ const props = defineProps({
 const emit = defineEmits(['arrow-change', 'clear-filters']);
 // 搜索表单数据
 const searchFormData = reactive({
-  category: '',
   status: '',
+  applicantName: '',
+  createTimeStart: '',
+  createTimeEnd: '',
 });
 const searchFormRef = ref(null);
 // 发票配置状态映射 - InvoiceConfigStatusEnum
@@ -295,15 +297,7 @@ watch(
     <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
     <EditDrawer ref="editDrawerRef" />
     <Drawer title="搜索">
-      <ElForm
-        ref="searchFormRef"
-        :model="searchFormData"
-        label-width="100px"
-        class="query-form"
-      >
-        <ElFormItem label="开票类目">
-          <ElInput v-model="searchFormData.category" placeholder="请输入开票类目" />
-        </ElFormItem>
+      <ElForm ref="searchFormRef" :model="searchFormData" label-width="100px" class="query-form">
         <ElFormItem label="状态">
           <ElSelect v-model="searchFormData.status" placeholder="请选择状态">
             <ElOption label="未生效" value="pending" />
@@ -311,13 +305,24 @@ watch(
             <ElOption label="已禁用" value="disabled" />
           </ElSelect>
         </ElFormItem>
+        <ElFormItem label="申请人">
+          <ElInput v-model="searchFormData.applicantName" placeholder="请输入申请人" />
+        </ElFormItem>
+        <ElFormItem label="审核开始时间">
+          <ElDatePicker v-model="searchFormData.createTimeStart" type="datetime" value-format="YYYY-MM-DD HH:mm:ss"
+            format="YYYY-MM-DD HH:mm:ss" />
+        </ElFormItem>
+        <ElFormItem label="审核结束时间">
+          <ElDatePicker v-model="searchFormData.createTimeEnd" type="datetime" value-format="YYYY-MM-DD HH:mm:ss"
+            format="YYYY-MM-DD HH:mm:ss" />
+        </ElFormItem>
       </ElForm>
     </Drawer>
 
     <Grid>
       <template #toolbar-tools>
-        <div class="common-toolbar-tools"> 
-          <IconButton content="新增" icon-name="Plus" @click="handleAdd" /> 
+        <div class="common-toolbar-tools">
+          <IconButton content="新增" icon-name="Plus" @click="handleAdd" />
           <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
           <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
@@ -338,9 +343,10 @@ watch(
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" />
-          <IconButton v-if="row.status === 'disabled' || row.status === 'pending'" content="生效" icon-name="Check" @click="handleEnable(row)" />
+          <IconButton v-if="row.status === 'disabled' || row.status === 'pending'" content="生效" icon-name="Check"
+            @click="handleEnable(row)" />
           <IconButton v-if="row.status === 'enabled'" content="禁用" icon-name="Close" @click="handleDisable(row)" />
         </div>
       </template>

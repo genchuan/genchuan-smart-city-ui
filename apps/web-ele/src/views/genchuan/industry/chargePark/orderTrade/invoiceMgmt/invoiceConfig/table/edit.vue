@@ -16,6 +16,21 @@ const formData = reactive({
   reserve2: '',
 });
 
+// 表单规则
+const rules = {
+  category: [
+    { required: true, message: '开票类目不能为空', trigger: 'blur' },
+  ],
+  taxBody: [
+    { required: true, message: '开票主体不能为空', trigger: 'blur' },
+  ],
+  status: [
+    { required: true, message: '状态不能为空', trigger: 'blur' },
+  ],
+};
+
+const formRef = ref(null);
+
 // 外部传入的数据
 const editData = ref({});
 
@@ -76,34 +91,40 @@ const [EditDrawer, editDrawerApi] = useVbenDrawer({
 
 // 保存
 async function handleSave() {
-  const params = {
-    id: formData.id,
-    category: formData.category,
-    taxRate: formData.taxRate,
-    taxBody: formData.taxBody,
-    status: formData.status,
-    remark: formData.remark,
-    reserve1: formData.reserve1,
-    reserve2: formData.reserve2,
-  };
-  try {
-    if (params.id > 0) {
-      await update(params);
-      ElMessage.success('更新成功');
-    } else {
-      await create(params);
-      ElMessage.success('创建成功');
-    }
-    resetForm();
+  if (!formRef.value) return;
+  
+  formRef.value.validate(async (valid) => {
+    if (!valid) return;
+    
+    const params = {
+      id: formData.id,
+      category: formData.category,
+      taxRate: formData.taxRate,
+      taxBody: formData.taxBody,
+      status: formData.status,
+      remark: formData.remark,
+      reserve1: formData.reserve1,
+      reserve2: formData.reserve2,
+    };
+    try {
+      if (params.id > 0) {
+        await update(params);
+        ElMessage.success('更新成功');
+      } else {
+        await create(params);
+        ElMessage.success('创建成功');
+      }
+      resetForm();
     editDrawerApi.close();
     // 触发刷新
     if (window.invoiceConfigRefresh) {
       window.invoiceConfigRefresh();
     }
   } catch (error) {
-    console.error('保存失败:', error);
-    ElMessage.error('保存失败');
-  }
+      console.error('保存失败:', error);
+      ElMessage.error('保存失败');
+    }
+  });
 }
 
 // 打开抽屉（新增）
@@ -130,7 +151,7 @@ defineExpose({
 <template>
   <EditDrawer :title="drawerTitle">
     <div class="detail-card">
-      <ElForm :model="formData" label-width="100px" class="detail-form">
+      <ElForm ref="formRef" :model="formData" :rules="rules" label-width="100px" class="detail-form">
         <ElFormItem label="开票类目" prop="category">
           <ElInput v-model="formData.category" placeholder="请输入开票类目" />
         </ElFormItem>
@@ -149,13 +170,7 @@ defineExpose({
         </ElFormItem>
         <ElFormItem label="备注" prop="remark">
           <ElInput v-model="formData.remark" type="textarea" placeholder="请输入备注" :rows="3" />
-        </ElFormItem>
-        <ElFormItem label="备用字段1" prop="reserve1">
-          <ElInput v-model="formData.reserve1" placeholder="请输入备用字段1" />
-        </ElFormItem>
-        <ElFormItem label="备用字段2" prop="reserve2">
-          <ElInput v-model="formData.reserve2" placeholder="请输入备用字段2" />
-        </ElFormItem>
+        </ElFormItem> 
       </ElForm>
     </div>
   </EditDrawer>
