@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick } from 'vue';
+import { computed, reactive, ref, watch, nextTick, onMounted, onUnmounted } from 'vue'; // 增加 onMounted, onUnmounted
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
@@ -395,6 +395,25 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
+// ==================== 定时轮询自动刷新（每30秒） ====================
+let refreshTimer = null;
+
+onMounted(() => {
+  refreshTimer = setInterval(() => {
+    // 仅在页面可见时刷新，避免不必要的请求
+    if (document.visibilityState === 'visible') {
+      gridApi.reload();
+    }
+  }, 30000); // 30秒，可根据需要调整间隔
+});
+
+onUnmounted(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+});
+
 defineExpose({ handleFilterTagClick, clearFilters });
 </script>
 
@@ -461,7 +480,7 @@ defineExpose({ handleFilterTagClick, clearFilters });
         </el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">
+        <el-text>
           {{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>

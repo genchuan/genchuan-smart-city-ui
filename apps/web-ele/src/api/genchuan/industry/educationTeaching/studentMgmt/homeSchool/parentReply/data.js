@@ -1,7 +1,6 @@
 import { requestClient } from '#/api/request';
 
 // ==================== 映射表 ====================
-// 已读状态映射（后端数字 -> 前端中文）
 const readStatusMap = {
   '未读': '2',
   '已读': '1'
@@ -12,7 +11,6 @@ const readStatusReverse = {
   '2': '未读'
 };
 
-// 回复状态映射（后端数字 -> 前端中文）
 const replyStatusMap = {
   '未回复': '2',
   '已回复': '1'
@@ -23,7 +21,6 @@ const replyStatusReverse = {
   '2': '未回复'
 };
 
-// 通用转换函数：后端 → 前端（将数字转为中文）
 function convertEnToZh(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const result = { ...obj };
@@ -36,7 +33,6 @@ function convertEnToZh(obj) {
   return result;
 }
 
-// 通用转换函数：前端 → 后端（将中文转为数字）
 function convertZhToEn(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const result = { ...obj };
@@ -49,7 +45,6 @@ function convertZhToEn(obj) {
   return result;
 }
 
-// 转换列表数据
 function convertList(list) {
   if (!Array.isArray(list)) return list;
   return list.map(item => convertEnToZh(item));
@@ -72,7 +67,6 @@ export function getParentReplyPage(params) {
     });
 }
 
-// 标记已读（批量）
 export function readParentReply(ids) {
   return requestClient.put('/studentmgmt/parent-reply/read', { ids }).catch(err => {
     console.warn('标记已读接口失败，模拟成功', err);
@@ -80,7 +74,6 @@ export function readParentReply(ids) {
   });
 }
 
-// 老师回复（单个）
 export function replyParentReply(data) {
   return requestClient.put('/studentmgmt/parent-reply/reply', data).catch(err => {
     console.warn('回复接口失败，模拟成功', err);
@@ -88,7 +81,6 @@ export function replyParentReply(data) {
   });
 }
 
-// 导出
 export function exportParentReply(params) {
   const convertedParams = convertZhToEn(params);
   return requestClient.download('/studentmgmt/parent-reply/export-excel', convertedParams).catch(err => {
@@ -97,7 +89,6 @@ export function exportParentReply(params) {
   });
 }
 
-// 详情
 export function getParentReplyDetail(params) {
   return requestClient.get('/studentmgmt/parent-reply/get', { params })
     .then(res => convertEnToZh(res))
@@ -109,29 +100,14 @@ export function getParentReplyDetail(params) {
     });
 }
 
-// 获取沟通消息列表（用于关联消息下拉/展示）
-export function getCommunicateList(params) {
-  return requestClient.get('/studentmgmt/communicate-mgmt/list', { params }).catch(err => {
-    console.warn('获取沟通消息列表失败，使用模拟数据', err);
-    return Promise.resolve([
-      { id: 1, title: '关于加强宿舍安全管理的通知' },
-      { id: 2, title: '周末留宿申请提醒' },
-      { id: 3, title: '期中考试成绩反馈' },
-    ]);
-  });
-}
-
-// 家长提交回复
+// ==================== 家长提交回复（PUT） ====================
+// 注意：方法改为 PUT，且不再有 .catch 模拟成功，以便真实联调
 export function submitParentReply(data) {
   const convertedData = convertZhToEn(data);
-  return requestClient.post('/studentmgmt/parent-reply/submit', convertedData).catch(err => {
-    console.warn('提交回复接口失败，模拟成功', err);
-    return Promise.resolve(true);
-  });
+  return requestClient.put('/studentmgmt/parent-reply/submit', convertedData);
 }
 
 // ==================== 图表接口 ====================
-// 家长回复统计看板（卡片 + 折线图）
 export function getParentReplyChart(params) {
   return requestClient.get('/studentmgmt/parent-reply/chart', { params }).catch(err => {
     console.warn('看板接口失败，使用模拟数据', err);
@@ -153,7 +129,6 @@ export function getParentReplyChart(params) {
   });
 }
 
-// 家长回复核心指标（柱状图数据）
 export function getParentReplyIndex(params) {
   return requestClient.get('/studentmgmt/parent-reply/chart/index', { params }).catch(err => {
     console.warn('核心指标接口失败，使用模拟数据', err);
@@ -178,7 +153,7 @@ export function getParentReplyIndex(params) {
   });
 }
 
-// 模拟数据（原始值使用英文/数字，通过转换函数对外提供中文）
+// ==================== 模拟数据（仅供兜底） ====================
 export const getMockList = () => {
   return [
     {

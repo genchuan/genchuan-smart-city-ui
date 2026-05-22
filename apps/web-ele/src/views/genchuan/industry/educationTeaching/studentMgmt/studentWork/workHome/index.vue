@@ -69,12 +69,20 @@ const getTableData = async ({ page }) => {
     }
     const res = await getWorkHomePage(params);
     dataObj.total = res.total;
-    dataObj.list = res.list;
+    // ========== 修改点1：为每行数据添加唯一标识 _rowKey ==========
+    dataObj.list = (res.list || []).map((item, idx) => ({
+      ...item,
+      _rowKey: `${item.id}_${idx}_${Date.now()}` // 保证同一页面内绝对唯一
+    }));
   } catch (error) {
     console.error('获取数据失败:', error);
     const mockData = dataList();
     dataObj.total = mockData.length;
-    dataObj.list = mockData;
+    // ========== 修改点2：mock数据也添加唯一标识 ==========
+    dataObj.list = mockData.map((item, idx) => ({
+      ...item,
+      _rowKey: `${item.id}_${idx}_mock`
+    }));
   } finally {
     dataObj.loading = false;
   }
@@ -110,12 +118,16 @@ const [QueryForm] = useVbenForm({
   submitButtonOptions: { content: '查询' },
 });
 
+// ========== 修改点3：将 keyField 改为 _rowKey ==========
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: getColumnsByStatus(),
     keepSource: true,
     proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    rowConfig: {
+      keyField: '_rowKey',   // 使用唯一标识字段，不再使用重复的 id
+      isHover: true,
+    },
     pagerConfig: dataObj,
     toolbarConfig: { refresh: true, search: true },
     showOverflow: true,
