@@ -1,6 +1,6 @@
 <script setup>
 import {reactive, onMounted, ref, computed} from 'vue';
-import {ElMessage, ElDatePicker} from 'element-plus';
+import {ElMessage, ElDatePicker, ElSelect, ElOption} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
 import {
@@ -55,11 +55,14 @@ const cardList = computed(() => {
   ];
 });
 
+// ========== 两个柱状图的数据准备 ==========
+// 图表一：各年级资助人数
 const barGradeXData = computed(() => gradeData.value.map(item => item.grade));
 const barGradeSeries = computed(() => [
   {name: '资助人数', data: gradeData.value.map(item => item.fundCount)},
 ]);
 
+// 图表二：各年级资助类型分布（堆叠柱状图）
 const barTypeXData = computed(() => gradeData.value.map(item => item.grade));
 const barTypeScholarship = computed(() => gradeData.value.map(item => {
   const type = item.typeDistribution?.find(t => t.name === '助学金');
@@ -79,7 +82,30 @@ const barTypeSeries = computed(() => [
   {name: '其他', data: barTypeOther.value},
 ]);
 
-// ========== 核心修改：所有点击改为派发自定义事件 ==========
+// ========== 切换图表配置 ==========
+const chartOptions = [
+  {
+    title: '各年级资助人数',
+    xData: barGradeXData,
+    seriesData: barGradeSeries,
+    yName: '资助人数',
+  },
+  {
+    title: '各年级资助类型分布',
+    xData: barTypeXData,
+    seriesData: barTypeSeries,
+    yName: '人数',
+  },
+];
+const activeChartIndex = ref(1);
+const currentChart = computed(() => chartOptions[activeChartIndex.value]);
+
+// 切换图表
+const handleChartChange = (index) => {
+  activeChartIndex.value = index;
+};
+
+// ========== 所有点击改为派发自定义事件 ==========
 // 卡片点击映射
 const handleCardClick = (cardInfo) => {
   let filterType = null;
@@ -104,8 +130,8 @@ const handleCardClick = (cardInfo) => {
   }));
 };
 
-// 柱状图点击：统一按年级筛选
-const handleBarClick = (params, chartType) => {
+// 柱状图点击：统一按年级筛选（两个图表点击都是传递年级名称）
+const handleBarClick = (params) => {
   let gradeName = null;
   if (typeof params === 'string') {
     gradeName = params;
@@ -205,18 +231,20 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 第一个柱状图：各年级资助人数 -->
-    <Bar
-      style="flex: 1 !important;"
-      title="各年级资助人数"
-      :x-data="barGradeXData"
-      :series-data="barGradeSeries"
-      y-name="资助人数"
-      @bar-click="(params) => handleBarClick(params, 'grade')"
-    />
-
-    <!-- 第二个柱状图（含日期选择器） -->
+    <!-- 可切换柱状图区域（包含下拉框和日期选择器） -->
     <div class="bar-chart-container" style="flex: 1.5 !important; position: relative;">
+      <!-- 左上角：下拉切换 -->
+      <div class="chart-select-wrapper">
+        <el-select v-model="activeChartIndex" size="small" @change="handleChartChange">
+          <el-option
+            v-for="(opt, idx) in chartOptions"
+            :key="idx"
+            :label="opt.title"
+            :value="idx"
+          />
+        </el-select>
+      </div>
+      <!-- 右上角：日期范围选择器 -->
       <div class="date-range-wrapper">
         <el-date-picker
           v-model="timeRange"
@@ -235,12 +263,14 @@ onMounted(() => {
           @change="handleDateRangeChange"
         />
       </div>
+
+      <!-- 动态渲染当前选中的柱状图 -->
       <Bar
-        title="各年级资助类型分布"
-        :x-data="barTypeXData"
-        :series-data="barTypeSeries"
-        y-name="人数"
-        @bar-click="(params) => handleBarClick(params, 'type')"
+        :title="currentChart.title"
+        :x-data="currentChart.xData.value"
+        :series-data="currentChart.seriesData.value"
+        :y-name="currentChart.yName"
+        @bar-click="handleBarClick"
       />
     </div>
   </div>
@@ -273,6 +303,13 @@ onMounted(() => {
     margin-left: 12px;
   }
 
+  .chart-select-wrapper {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    z-index: 10;
+  }
+
   .date-range-wrapper {
     position: absolute;
     top: 8px;
@@ -294,6 +331,10 @@ onMounted(() => {
     .el-range__close-icon {
       margin-left: 2px;
     }
+  }
+
+  :deep(.el-select) {
+    width: 160px;
   }
 }
 </style>

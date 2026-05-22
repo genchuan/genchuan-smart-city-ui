@@ -52,7 +52,6 @@ export function createMemberOrder() {
     data,
     {
       headers: {
-        'tenant-id': 165,
         Authorization: 'Bearer test1',
       },
     },
@@ -72,7 +71,6 @@ export function submitMemberOrder(payOrderId: number) {
     data,
     {
       headers: {
-        'tenant-id': 165,
         Authorization: 'Bearer test1',
       },
     },

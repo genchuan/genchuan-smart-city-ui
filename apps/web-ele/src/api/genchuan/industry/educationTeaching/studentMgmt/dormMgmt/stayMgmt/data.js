@@ -95,20 +95,6 @@ export function getStayMgmtDetail(params) {
     });
 }
 
-// 获取学生列表（用于申请下拉框）
-export function getStudentOptions(params) {
-  return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
-    console.warn('获取学生列表失败，使用模拟数据', err);
-    return Promise.resolve([
-      { value: 1, label: '张三', className: '高一1班' },
-      { value: 2, label: '李四', className: '高一1班' },
-      { value: 3, label: '王五', className: '高一2班' },
-      { value: 4, label: '赵六', className: '高一2班' },
-      { value: 5, label: '孙七', className: '高一3班' },
-    ]);
-  });
-}
-
 // ==================== 图表接口 ====================
 export function getStayMgmtChart(params) {
   const convertedParams = convertZhToEn(params);

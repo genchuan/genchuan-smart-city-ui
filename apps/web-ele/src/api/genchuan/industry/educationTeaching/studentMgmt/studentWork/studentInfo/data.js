@@ -1,124 +1,71 @@
 import { requestClient } from '#/api/request';
 
 // ==================== 映射表 ====================
-// 学历层次映射
-const educationLevelMap = {
-  '中专': '1',
-  '大专': '2',
-  '本科': '3',
-  '研究生': '4'
-};
-const educationLevelReverse = {
-  '1': '中专',
-  '2': '大专',
-  '3': '本科',
-  '4': '研究生'
-};
+const educationLevelMap = { '中专': '1', '大专': '2', '本科': '3', '研究生': '4' };
+const educationLevelReverse = { '1': '中专', '2': '大专', '3': '本科', '4': '研究生' };
 
-// 学习形式映射
-const studyFormMap = {
-  '全日制': '1',
-  '非全日制': '2',
-  '函授': '3'
-};
-const studyFormReverse = {
-  '1': '全日制',
-  '2': '非全日制',
-  '3': '函授'
-};
+const studyFormMap = { '全日制': '1', '非全日制': '2', '函授': '3' };
+const studyFormReverse = { '1': '全日制', '2': '非全日制', '3': '函授' };
 
-// 学生类型映射
-const studentTypeMap = {
-  '普通生': '1',
-  '特长生': '2',
-  '转学生': '3'
-};
-const studentTypeReverse = {
-  '1': '普通生',
-  '2': '特长生',
-  '3': '转学生'
-};
+const studentTypeMap = { '普通生': '1', '特长生': '2', '转学生': '3' };
+const studentTypeReverse = { '1': '普通生', '2': '特长生', '3': '转学生' };
 
-// 学籍状态映射
-const statusMap = {
-  '在籍': '1',
-  '休学': '2',
-  '退学': '3',
-  '异动': '4'
-};
-const statusReverse = {
-  '1': '在籍',
-  '2': '休学',
-  '3': '退学',
-  '4': '异动'
-};
+const statusMap = { '在籍': '1', '休学': '2', '退学': '3', '异动': '4' };
+const statusReverse = { '1': '在籍', '2': '休学', '3': '退学', '4': '异动' };
 
-// 年级映射（将纯数字年份转为“XX级”）
 function formatGrade(grade) {
   if (!grade) return grade;
-  if (/^\d{4}$/.test(grade)) {
-    return `${grade}级`;
-  }
+  if (/^\d{4}$/.test(grade)) return `${grade}级`;
   return grade;
 }
-
-// 逆向年级映射（将“2024级”转为"2024"）
 function parseGrade(grade) {
   if (!grade) return grade;
-  if (grade.endsWith('级')) {
-    return grade.slice(0, -1);
-  }
+  if (grade.endsWith('级')) return grade.slice(0, -1);
   return grade;
 }
 
-// 通用转换函数：后端 → 前端（将数字/代码转为中文）
 function convertEnToZh(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const result = { ...obj };
-  if (result.educationLevel && educationLevelReverse[result.educationLevel]) {
+  if (result.educationLevel && educationLevelReverse[result.educationLevel])
     result.educationLevel = educationLevelReverse[result.educationLevel];
-  }
-  if (result.studyForm && studyFormReverse[result.studyForm]) {
+  if (result.studyForm && studyFormReverse[result.studyForm])
     result.studyForm = studyFormReverse[result.studyForm];
-  }
-  if (result.studentType && studentTypeReverse[result.studentType]) {
+  if (result.studentType && studentTypeReverse[result.studentType])
     result.studentType = studentTypeReverse[result.studentType];
-  }
-  if (result.status && statusReverse[result.status]) {
+  if (result.status && statusReverse[result.status])
     result.status = statusReverse[result.status];
-  }
-  if (result.grade) {
-    result.grade = formatGrade(result.grade);
-  }
+  if (result.grade) result.grade = formatGrade(result.grade);
   return result;
 }
 
-// 通用转换函数：前端 → 后端（将中文转为数字/代码）
 function convertZhToEn(obj) {
   if (!obj || typeof obj !== 'object') return obj;
   const result = { ...obj };
-  if (result.educationLevel && educationLevelMap[result.educationLevel]) {
+  if (result.educationLevel && educationLevelMap[result.educationLevel])
     result.educationLevel = educationLevelMap[result.educationLevel];
-  }
-  if (result.studyForm && studyFormMap[result.studyForm]) {
+  if (result.studyForm && studyFormMap[result.studyForm])
     result.studyForm = studyFormMap[result.studyForm];
-  }
-  if (result.studentType && studentTypeMap[result.studentType]) {
+  if (result.studentType && studentTypeMap[result.studentType])
     result.studentType = studentTypeMap[result.studentType];
-  }
-  if (result.status && statusMap[result.status]) {
+  if (result.status && statusMap[result.status])
     result.status = statusMap[result.status];
-  }
-  if (result.grade) {
-    result.grade = parseGrade(result.grade);
-  }
+  if (result.grade) result.grade = parseGrade(result.grade);
   return result;
 }
 
-// 转换列表数据
 function convertList(list) {
   if (!Array.isArray(list)) return list;
   return list.map(item => convertEnToZh(item));
+}
+
+// ==================== 文件上传接口 ====================
+export function uploadFile(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  return requestClient.post('/studentmgmt/file/upload-file', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
 }
 
 // ==================== 学生信息接口 ====================
@@ -126,14 +73,11 @@ export function getStudentInfoPage(params) {
   const convertedParams = convertZhToEn(params);
   return requestClient.get('/studentmgmt/student-info/page', { params: convertedParams })
     .then(res => {
-      if (res && res.list) {
-        res.list = convertList(res.list);
-      }
+      if (res && res.list) res.list = convertList(res.list);
       return res;
     })
     .catch(err => {
       console.warn('分页接口失败', err);
-      // 分页接口已联调成功，不再使用模拟数据，返回空列表
       return { list: [], total: 0 };
     });
 }
@@ -166,12 +110,11 @@ export function getStudentInfoDetail(params) {
     .then(res => convertEnToZh(res))
     .catch(err => {
       console.warn('详情接口失败', err);
-      // 不再使用模拟数据，直接抛出错误让调用方处理
       return Promise.reject(err);
     });
 }
 
-// ==================== 图表接口 ====================
+// ==================== 图表接口（保持原样）====================
 export function getStudentInfoChart(params) {
   return requestClient.get('/studentmgmt/student-info/chart', { params }).catch(err => {
     console.warn('图表总览接口失败，使用模拟数据', err);

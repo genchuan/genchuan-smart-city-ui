@@ -46,7 +46,8 @@ defineExpose({ open: () => detailDrawerApi.open(), close: () => detailDrawerApi.
       <!-- 基础信息 -->
       <div class="detail-section">⚠️ 违纪基础信息</div>
       <div class="detail-card-row"><div class="detail-row-left">学号：</div><div class="detail-row-right">{{ detailObj.studentId || '-' }}</div></div>
-      <div class="detail-card-row"><div class="detail-row-left">班级：</div><div class="detail-row-right">{{ detailObj.className || '-' }}</div></div>
+      <div class="detail-card-row"><div class="detail-row-left">学生姓名：</div><div class="detail-row-right">{{ detailObj.studentName || '-' }}</div></div>
+<!--      <div class="detail-card-row"><div class="detail-row-left">班级：</div><div class="detail-row-right">{{ detailObj.className || '-' }}</div></div>-->
       <div class="detail-card-row"><div class="detail-row-left">违纪类型：</div><div class="detail-row-right">{{ detailObj.violateType || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">处分类型：</div><div class="detail-row-right">{{ detailObj.punishType || '-' }}</div></div>
       <div class="detail-card-row"><div class="detail-row-left">违纪时间：</div><div class="detail-row-right">{{ formatTimestamp(detailObj.violateTime) }}</div></div>

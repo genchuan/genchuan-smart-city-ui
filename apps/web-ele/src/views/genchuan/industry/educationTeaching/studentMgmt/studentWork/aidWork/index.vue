@@ -15,7 +15,6 @@ import {
   followAidWork,
   exportAidWork,
   getAidWorkDetail,
-  getStudentOptions,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/studentWork/aidWork/data.js';
 import {
   textObj,
@@ -60,15 +59,23 @@ const formatMoney = (amount) => {
   return `¥${parseFloat(amount).toFixed(2)}`;
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
 const tagFilters = ref({});
 
 // ---------- 抽屉等 ----------
-const [Drawer, drawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => drawerApi.close() });
-const [FollowDrawer, followDrawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => followDrawerApi.close() });
+const [Drawer, drawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => drawerApi.close()
+});
+const [FollowDrawer, followDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => followDrawerApi.close()
+});
 
 const dataObj = reactive({
   totalShow: false,
@@ -85,7 +92,7 @@ const gridColumns = ref(getColumnsByStatus(activeName.value));
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -95,20 +102,10 @@ const isEditMode = ref(false);
 const currentEditId = ref(null);
 const currentFollowRow = ref(null);
 
-const studentOptions = ref([]);
-const loadStudentOptions = async () => {
-  const res = await getStudentOptions();
-  studentOptions.value = res;
-};
+// 直接使用原始 schema，不再注入 options（学号字段已为 Input）
+const createFormSchema = useCreateFormSchema();
 
-const createFormSchema = computed(() => {
-  const schema = useCreateFormSchema();
-  const studentField = schema.find(item => item.fieldName === 'studentId');
-  if (studentField) studentField.componentProps.options = studentOptions.value;
-  return schema;
-});
-
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const params = {
@@ -142,13 +139,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -176,15 +173,17 @@ function handleReset() {
 }
 
 async function handleExport() {
-  const loading = ElLoading.service({ text: '正在导出...' });
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
     const data = await exportAidWork(searchParams.value);
-    downloadFileFromBlobPart({ fileName: '奖助勤贷列表.xls', source: data });
+    downloadFileFromBlobPart({fileName: '奖助勤贷列表.xls', source: data});
     ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
     ElMessage.error('导出失败');
-  } finally { loading.close(); }
+  } finally {
+    loading.close();
+  }
 }
 
 // ---------- 单个审核 ----------
@@ -199,7 +198,7 @@ async function handleAudit(row) {
       cancelButtonText: '取消',
       type: 'info',
     });
-    const loading = ElLoading.service({ text: '审核中...' });
+    const loading = ElLoading.service({text: '审核中...'});
     try {
       const res = await auditAidWork({
         ids: [row.id],
@@ -243,7 +242,7 @@ async function handleBatchAudit() {
       cancelButtonText: '取消',
       type: 'info',
     });
-    const loading = ElLoading.service({ text: '批量审核中...' });
+    const loading = ElLoading.service({text: '批量审核中...'});
     try {
       const ids = selectedRows.map(row => row.id);
       const res = await auditAidWork({
@@ -286,33 +285,37 @@ function handleFollow(row) {
   if (row.status !== '已通过' && row.status !== '已完成') return ElMessage.warning('只有已通过或已完成状态的申请可以跟进');
   currentFollowRow.value = row;
   followFormApi.resetForm();
-  followFormApi.setValues({ processStatus: row.processStatus, remark: '' });
+  followFormApi.setValues({processStatus: row.processStatus, remark: ''});
   followDrawerApi.open();
 }
 
 const [CreateForm, createFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: isEditMode.value ? '更新中...' : '申报中...' });
+    const loading = ElLoading.service({text: isEditMode.value ? '更新中...' : '申报中...'});
     try {
       let res;
       if (isEditMode.value) {
-        res = await updateAidWork({ ...values, id: currentEditId.value });
+        res = await updateAidWork({...values, id: currentEditId.value});
       } else {
-        res = await createAidWork({ ...values, status: values.status || '待审核' });
+        res = await createAidWork({...values, status: values.status || '待审核'});
       }
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '更新成功' : '申报成功');
         createDrawerApi.close();
         handleRefresh();
-      } else { ElMessage.error(isEditMode.value ? '更新失败' : '申报失败'); }
-    } finally { loading.close(); }
+      } else {
+        ElMessage.error(isEditMode.value ? '更新失败' : '申报失败');
+      }
+    } finally {
+      loading.close();
+    }
   },
   layout: 'horizontal',
   schema: createFormSchema,
   showCollapseButton: false,
-  submitButtonOptions: { content: computed(() => isEditMode.value ? '保存' : '申报') },
+  submitButtonOptions: {content: computed(() => isEditMode.value ? '保存' : '申报')},
 });
 
 const [CreateDrawer, createDrawerApi] = useVbenDrawer({
@@ -324,7 +327,7 @@ const [CreateDrawer, createDrawerApi] = useVbenDrawer({
       await createFormApi.resetForm();
       if (isEditMode.value && currentEditId.value) {
         try {
-          const detail = await getAidWorkDetail({ id: currentEditId.value });
+          const detail = await getAidWorkDetail({id: currentEditId.value});
           await createFormApi.setValues({
             studentId: detail.studentId,
             aidType: detail.aidType,
@@ -468,7 +471,6 @@ watch(activeName, (newVal) => {
 });
 
 onMounted(() => {
-  loadStudentOptions();
   window.addEventListener('aidwork-chart-filter', handleChartFilter);
 });
 

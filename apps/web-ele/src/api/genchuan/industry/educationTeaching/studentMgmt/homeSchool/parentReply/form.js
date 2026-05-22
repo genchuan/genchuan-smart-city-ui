@@ -72,7 +72,7 @@ export function getColumns() {
   return allColumns;
 }
 
-// 老师回复表单 schema
+// 老师回复表单 schema（此处保留，但家长端不需要）
 export function useReplyFormSchema() {
   return [
     {
@@ -86,21 +86,9 @@ export function useReplyFormSchema() {
   ];
 }
 
-// 家长提交回复表单 schema
+// 家长提交回复表单 schema（只保留回复内容字段）
 export function useSubmitFormSchema() {
   return [
-    {
-      fieldName: 'communicateId',
-      label: '沟通消息',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择要回复的消息',
-        filterable: true,
-        options: [], // 动态加载未回复的沟通消息列表
-      },
-      rules: 'required',
-      labelWidth: '100',
-    },
     {
       fieldName: 'parentReplyContent',
       label: '回复内容',
@@ -118,4 +106,5 @@ export const textObj = {
   markReadText: '标记已读',
   viewDetailText: '详情',
   excelName: '家长回复列表',
+  submitText: '提交回复',  // 新增
 };

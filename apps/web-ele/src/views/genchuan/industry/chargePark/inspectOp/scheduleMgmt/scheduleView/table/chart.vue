@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive } from 'vue';
-
+import { userOptions } from './data.js'
 import { getScheduleViewChart } from '#/api/genchuan/industry/chargePark/inspectOp/scheduleMgmt/scheduleView';
 import BarClick from '#/genchuan-components/stats/barClick.vue';
 import IndicatorClick from '#/genchuan-components/stats/indicatorClick.vue';
@@ -13,6 +13,10 @@ import {
 } from './data';
 
 const emit = defineEmits(['dateFilter', 'statusFilter', 'userFilter']);
+
+const CALENDAR_ROW_COUNT = 2;
+const CALENDAR_COL_COUNT = 6;
+const CALENDAR_CELL_COUNT = CALENDAR_ROW_COUNT * CALENDAR_COL_COUNT;
 
 const state = reactive({
   cardList: [
@@ -52,15 +56,19 @@ const calendarCells = computed(() => {
     });
     grouped.set(item.date, list);
   });
-  console.log(grouped);
-  return [...grouped.entries()].map(([date, schedules]) => {
-    console.log(11,date, schedules);
-    return {
+  const cells = [...grouped.entries()]
+    .map(([date, schedules]) => ({
       date,
       day: date.slice(-2),
       schedules,
-    };
-  });
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, CALENDAR_CELL_COUNT);
+
+  while (cells.length < CALENDAR_CELL_COUNT) {
+    cells.push(null);
+  }
+  return cells;
 });
 
 function normalizeChartData(data) {
@@ -98,7 +106,10 @@ function handleDateClick(date) {
 }
 
 function handleUserClick(userName) {
-  emit('userFilter', userName);
+  console.log(userName);
+  const user = userOptions?.find((v) => v.label === userName) ?? null
+  console.log(user);
+  emit('userFilter', user);
 }
 
 onMounted(() => {
@@ -126,21 +137,27 @@ onMounted(() => {
       <div class="calendar-title">排班日历展示</div>
       <div class="calendar-grid">
         <button
-          v-for="cell in calendarCells"
-          :key="cell.date"
+          v-for="(cell, index) in calendarCells"
+          :key="cell?.date ?? `empty-${index}`"
           class="calendar-cell"
+          :class="{ 'is-empty': !cell }"
           type="button"
-          @click="handleDateClick(cell.date)"
+          :disabled="!cell"
+          @click="cell && handleDateClick(cell.date)"
         >
-          <span class="calendar-day">{{ cell.day }}</span>
-          <span class="calendar-date">{{ cell.date }}</span>
-          <span
-            v-for="schedule in cell.schedules"
-            :key="`${cell.date}-${schedule.userId}-${schedule.shiftType}`"
-            class="calendar-shift"
-          >
-            {{ schedule.userName }}
-          </span>
+          <template v-if="cell">
+            <span class="calendar-day">{{ cell.day }}</span>
+            <span class="calendar-date">{{ cell.date }}</span>
+            <div class="calendar-shifts">
+              <span
+                v-for="schedule in cell.schedules"
+                :key="`${cell.date}-${schedule.userId}-${schedule.shiftType}`"
+                class="calendar-shift"
+              >
+                {{ schedule.userName }}
+              </span>
+            </div>
+          </template>
         </button>
       </div>
     </div>
@@ -164,11 +181,12 @@ onMounted(() => {
 }
 
 .schedule-calendar-section {
+  display: flex;
   flex: 1.05 1 0;
+  flex-direction: column;
   min-width: 0;
   padding: 14px;
   overflow: hidden;
-  flex-direction: column;
 }
 
 .calendar-title {
@@ -181,10 +199,12 @@ onMounted(() => {
 
 .calendar-grid {
   display: grid;
+  flex: 1;
+  grid-template-rows: repeat(2, 1fr);
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 8px;
-  height: 270px;
-  overflow: auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .calendar-cell {
@@ -192,8 +212,10 @@ onMounted(() => {
   flex-direction: column;
   gap: 4px;
   align-items: flex-start;
+  width: 100%;
+  height: 100%;
   min-width: 0;
-  min-height: 82px;
+  min-height: 0;
   padding: 8px;
   text-align: left;
   cursor: pointer;
@@ -202,11 +224,19 @@ onMounted(() => {
   border-radius: 8px;
 }
 
-.calendar-cell:hover {
+.calendar-cell:not(:disabled):hover {
   border-color: var(--el-color-primary);
 }
 
+.calendar-cell.is-empty,
+.calendar-cell:disabled {
+  cursor: default;
+  background: var(--el-fill-color-lighter);
+  border-style: dashed;
+}
+
 .calendar-day {
+  flex-shrink: 0;
   font-size: 18px;
   font-weight: 600;
   line-height: 1;
@@ -214,11 +244,23 @@ onMounted(() => {
 }
 
 .calendar-date {
+  flex-shrink: 0;
   font-size: 11px;
   color: var(--el-text-color-secondary);
 }
 
+.calendar-shifts {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .calendar-shift {
+  flex-shrink: 0;
   max-width: 100%;
   padding: 2px 6px;
   overflow: hidden;
