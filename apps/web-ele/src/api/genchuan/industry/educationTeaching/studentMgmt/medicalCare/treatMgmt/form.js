@@ -54,6 +54,7 @@ export function getColumns() {
     { field: 'auditUser', title: '审核人', minWidth: 100, sortable: true, },
     { field: 'auditTime', title: '审核时间', minWidth: 180, sortable: true, slots: { default: 'auditTime' } },
     { field: 'feedbackTime', title: '家长反馈时间', minWidth: 180, sortable: true, slots: { default: 'feedbackTime' } },
+    { field: 'feedbackContent', title: '反馈内容', minWidth: 180, sortable: true },
     { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
     { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },

@@ -15,7 +15,6 @@ import {
   updateStayMgmt,
   exportStayMgmt,
   getStayMgmtDetail,
-  getStudentOptions,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/dormMgmt/stayMgmt/data.js';
 import {
   textObj,
@@ -25,7 +24,7 @@ import {
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/dormMgmt/stayMgmt/form.js';
 
 const getStatusType = (status) => {
-  const map = { '待确认': 'warning', '待审核': 'primary', '已通过': 'success' };
+  const map = {'待确认': 'warning', '待审核': 'primary', '已通过': 'success'};
   return map[status] || 'info';
 };
 const formatTimestamp = (timestamp) => {
@@ -106,7 +105,7 @@ const currentEditId = ref(null);
 const confirmIds = ref([]);
 const auditIds = ref([]);
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const merged = {
@@ -163,11 +162,11 @@ function resetPageAndQuery() {
     dataObj.currentPage = 1;
     gridApi.query();
   }
-  dataObj.currentPage = 1; // 确保界面分页显示第一页
+  dataObj.currentPage = 1;
 }
 
 function handleRefresh() {
-  gridApi.query(); // 手动刷新保持当前页码
+  gridApi.query();
 }
 
 function handleReset() {
@@ -362,21 +361,6 @@ const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
   },
 });
 
-const studentOptions = ref([]);
-const loadStudentOptions = async () => {
-  const res = await getStudentOptions();
-  studentOptions.value = res;
-};
-loadStudentOptions();
-
-watch(applyFormApi, (api) => {
-  if (api && studentOptions.value.length) {
-    const schema = api.getSchema();
-    const studentField = schema.find(f => f.fieldName === 'studentId');
-    if (studentField) studentField.componentProps.options = studentOptions.value;
-  }
-}, {immediate: true});
-
 const stayDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -391,7 +375,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    resetPageAndQuery(); // 查询时重置页码
+    resetPageAndQuery();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -438,7 +422,7 @@ function handleFilterTagClick(field, value) {
       tagFilters.value[field] = value;
     }
   }
-  resetPageAndQuery(); // 筛选时重置页码
+  resetPageAndQuery();
 }
 
 function clearFilters() {

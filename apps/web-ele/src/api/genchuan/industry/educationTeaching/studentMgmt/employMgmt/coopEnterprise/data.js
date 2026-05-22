@@ -100,18 +100,6 @@ export function getCoopEnterpriseDetail(params) {
     });
 }
 
-export function getDeptOptions(params) {
-  return requestClient.get('/studentmgmt/dept/options', { params }).catch(err => {
-    console.warn('获取系部列表失败，使用模拟数据', err);
-    return Promise.resolve([
-      { value: 2001, label: '计算机系' },
-      { value: 2002, label: '机电系' },
-      { value: 2003, label: '经贸系' },
-      { value: 2004, label: '其他' },
-    ]);
-  });
-}
-
 // ==================== 图表接口 ====================
 export function getCoopEnterpriseChart(params) {
   return requestClient.get('/studentmgmt/coop-enterprise/chart', { params }).catch(err => {

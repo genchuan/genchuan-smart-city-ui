@@ -16,7 +16,6 @@ import {
   feedbackTreatMgmt,
   exportTreatMgmt,
   getTreatMgmtDetail,
-  getStudentOptions,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/medicalCare/treatMgmt/data.js';
 import {
   textObj,
@@ -102,7 +101,7 @@ const feedbackVisible = ref(false);
 const feedbackContent = ref('');
 const currentFeedbackId = ref(null);
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const merged = {
@@ -392,29 +391,6 @@ const [RegisterForm, registerFormApi] = useVbenForm({
   showCollapseButton: false,
   submitButtonOptions: {content: '保存'},
 });
-
-// 学生选项注入
-const studentOptions = ref([]);
-const loadStudentOptions = async () => {
-  const res = await getStudentOptions();
-  studentOptions.value = res;
-};
-loadStudentOptions();
-
-watch(createAppointFormApi, (api) => {
-  if (api && studentOptions.value.length) {
-    const schema = api.getSchema();
-    const studentField = schema.find(f => f.fieldName === 'studentId');
-    if (studentField) studentField.componentProps.options = studentOptions.value;
-  }
-}, {immediate: true});
-watch(editAppointFormApi, (api) => {
-  if (api && studentOptions.value.length) {
-    const schema = api.getSchema();
-    const studentField = schema.find(f => f.fieldName === 'studentId');
-    if (studentField) studentField.componentProps.options = studentOptions.value;
-  }
-}, {immediate: true});
 
 const treatDetailDrawerRef = ref(null);
 

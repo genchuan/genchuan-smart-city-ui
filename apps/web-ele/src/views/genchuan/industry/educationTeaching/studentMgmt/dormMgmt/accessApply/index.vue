@@ -14,7 +14,6 @@ import {
   updateAccessApply,
   exportAccessApply,
   getAccessApplyDetail,
-  getStudentOptions,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/dormMgmt/accessApply/data.js';
 import {
   textObj,
@@ -145,7 +144,6 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
 // ========== 核心修复：强制重置分页到第一页并刷新 ==========
 function resetPageAndQuery() {
-  // 优先使用 commitProxy('reload') 重置分页
   if (gridApi.commitProxy) {
     gridApi.commitProxy('reload');
   } else if (gridApi.reload) {
@@ -154,15 +152,13 @@ function resetPageAndQuery() {
     dataObj.currentPage = 1;
     gridApi.query();
   }
-  dataObj.currentPage = 1; // 确保界面分页显示第一页
+  dataObj.currentPage = 1;
 }
 
-// 手动刷新（保持当前页码）
 function handleRefresh() {
   gridApi.query();
 }
 
-// 重置所有筛选条件
 function handleReset() {
   searchParams.value = {};
   tagFilters.value = {};
@@ -303,21 +299,6 @@ const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
   },
 });
 
-const studentOptions = ref([]);
-const loadStudentOptions = async () => {
-  const res = await getStudentOptions();
-  studentOptions.value = res;
-};
-loadStudentOptions();
-
-watch(applyFormApi, (api) => {
-  if (api && studentOptions.value.length) {
-    const schema = api.getSchema();
-    const studentField = schema.find(f => f.fieldName === 'studentId');
-    if (studentField) studentField.componentProps.options = studentOptions.value;
-  }
-}, {immediate: true});
-
 const accessApplyDetailDrawerRef = ref(null);
 
 function handleOpenDetail(row) {
@@ -332,7 +313,7 @@ const [QueryForm] = useVbenForm({
   handleSubmit: (values) => {
     searchParams.value = {...values};
     drawerApi.close();
-    resetPageAndQuery(); // 查询时重置页码
+    resetPageAndQuery();
   },
   layout: 'horizontal',
   schema: useFormSchema().map(v => {
@@ -343,7 +324,7 @@ const [QueryForm] = useVbenForm({
   submitButtonOptions: {content: '查询'},
 });
 
-// 筛选标签相关函数（使用 resetPageAndQuery）
+// 筛选标签相关函数
 function getFieldLabel(field) {
   const map = {
     applyType: '申请类型',
@@ -379,7 +360,7 @@ function handleFilterTagClick(field, value) {
       tagFilters.value[field] = value;
     }
   }
-  resetPageAndQuery(); // 筛选时重置页码
+  resetPageAndQuery();
 }
 
 function clearFilters() {

@@ -1,6 +1,6 @@
 <script setup>
-import { reactive, onMounted, ref, computed } from 'vue';
-import { ElMessage, ElSelect, ElOption } from 'element-plus';
+import { ref, computed, watch, onMounted } from 'vue';
+import { ElSelect, ElOption, ElRadioGroup, ElRadioButton, ElDatePicker } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
 import Radar from '#/genchuan-components/stats/radarClick.vue';
@@ -18,6 +18,33 @@ const dimensionData = ref([]);
 const radarData = ref([]);
 const coreData = ref([]);
 
+// 周期筛选相关（仅用于雷达图）
+const cycleFilter = ref('月');
+const cycleOptions = [
+  { label: '周', value: '周' },
+  { label: '月', value: '月' },
+  { label: '学期', value: '学期' },
+];
+const cycleMap = {
+  '周': 'week',
+  '月': 'month',
+  '学期': 'semester',
+};
+
+// 日期范围筛选（影响卡片、饼图、折线图）
+const dateRange = ref([new Date('2024-01-01'), new Date('2026-12-31')]);
+
+const formatLocalDateTime = (date) => {
+  if (!date) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
+
 // 卡片列表
 const cardList = computed(() => {
   const data = chartData.value;
@@ -33,39 +60,47 @@ const cardList = computed(() => {
   ];
 });
 
-// 饼图数据（各维度记录分布）
+// 饼图数据
 const pieData = computed(() => dimensionData.value.map(item => ({
   name: item.dimension,
   value: item.count,
 })));
 
-// 雷达图数据：维度为评分项，系列为班级
+// 雷达图指标
 const radarIndicator = [
   { name: '教室卫生', max: 100 },
   { name: '早操', max: 100 },
   { name: '文明班级', max: 100 },
   { name: '黑板报', max: 100 },
 ];
+
 const radarSeries = computed(() => radarData.value.map(item => ({
   name: item.className,
   value: [
-    item.healthScore || 0,
-    item.exerciseScore || 0,
-    item.civilizedScore || 0,
-    item.blackboardScore || 0,
+    Number(item.healthScore) || 0,
+    Number(item.exerciseScore) || 0,
+    Number(item.civilizedScore) || 0,
+    Number(item.blackboardScore) || 0,
   ],
 })));
 
-// 折线图数据
-const lineXData = computed(() => coreData.value.map(item => item.date));
-const lineSeriesData = computed(() => [
-  { name: '新增荣誉数', data: coreData.value.map(item => item.honorCount || 0) },
-  { name: '新增违纪数', data: coreData.value.map(item => item.violateCount || 0) },
-  { name: '新增考评数', data: coreData.value.map(item => item.assessCount || 0) },
-]);
+// 折线图数据（按日期排序）
+const lineXData = computed(() => {
+  return [...coreData.value]
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .map(item => item.date);
+});
+const lineSeriesData = computed(() => {
+  const sorted = [...coreData.value].sort((a, b) => new Date(a.date) - new Date(b.date));
+  return [
+    { name: '新增荣誉数', data: sorted.map(item => item.honorCount || 0) },
+    { name: '新增违纪数', data: sorted.map(item => item.violateCount || 0) },
+    { name: '新增考评数', data: sorted.map(item => item.assessCount || 0) },
+  ];
+});
 
-// 饼图/雷达图切换选项
-const pieRadarOptions = computed(() => [
+// 图表切换选项
+const chartOptions = computed(() => [
   {
     type: 'pie',
     title: '各维度记录分布',
@@ -77,12 +112,18 @@ const pieRadarOptions = computed(() => [
     indicator: radarIndicator,
     series: radarSeries.value,
   },
+  {
+    type: 'line',
+    title: '核心指标趋势',   // 改正标题，去除误导性的“（周）”
+    xData: lineXData.value,
+    seriesData: lineSeriesData.value,
+    yName: '数量',
+  },
 ]);
 
 const activeChartIndex = ref(0);
-const currentChart = computed(() => pieRadarOptions.value[activeChartIndex.value] || pieRadarOptions.value[0]);
+const currentChart = computed(() => chartOptions.value[activeChartIndex.value] || chartOptions.value[0]);
 
-// 切换图表
 const handleChartChange = (index) => {
   activeChartIndex.value = index;
 };
@@ -93,32 +134,46 @@ const handleCardClick = (cardInfo) => {
   emit('cardClick', cardInfo.status);
 };
 
-// 饼图点击
 const handlePieClick = (item) => {
   emit('pieClick', { dimension: item.name });
 };
 
-// 雷达图点击
 const handleRadarClick = (params) => {
   emit('radarClick', { className: params.name });
 };
 
-// 折线图点击
 const handleLineClick = (params) => {
   emit('lineClick', { date: params.name });
 };
 
-const loadData = async () => {
-  loading.value = true;
+const loadRadarData = async (cycle) => {
   try {
-    const [chartRes, dimRes, radarRes, coreRes] = await Promise.allSettled([
-      getWorkHomeChart({}),
-      getDimensionCount({}),
-      getScoreAnalysis({ cycle: '月', grade: '' }),
-      getCoreIndex({ cycle: '周' }),
+    const cycleEnum = cycleMap[cycle];
+    const res = await getScoreAnalysis({ cycle: cycleEnum });
+    radarData.value = res;
+  } catch (error) {
+    console.error('获取雷达图数据失败，使用模拟数据', error);
+    radarData.value = [
+      { className: '计算机2022级1班', healthScore: 95.5, exerciseScore: 92.0, civilizedScore: 98.0, blackboardScore: 90.0 },
+      { className: '计算机2022级2班', healthScore: 88.0, exerciseScore: 90.5, civilizedScore: 89.0, blackboardScore: 92.5 },
+    ];
+  }
+};
+
+const loadOtherData = async (startTime, endTime) => {
+  const params = {};
+  if (startTime) params.startTime = startTime;
+  if (endTime) params.endTime = endTime;
+
+  try {
+    const [chartRes, dimRes, coreRes] = await Promise.allSettled([
+      getWorkHomeChart(params),
+      getDimensionCount(params),
+      getCoreIndex(params),   // 移除多余的 cycle: '周'，只传时间范围
     ]);
     if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
     else chartData.value = { totalStudent: 1256, totalHonor: 328, totalAssess: 452, totalViolate: 86, totalMental: 215, totalFund: 168, unhandledViolate: 12, unhandledWarn: 5 };
+
     if (dimRes.status === 'fulfilled') dimensionData.value = dimRes.value;
     else dimensionData.value = [
       { dimension: '荣誉', count: 328 },
@@ -128,26 +183,64 @@ const loadData = async () => {
       { dimension: '心理', count: 215 },
       { dimension: '资助', count: 168 },
     ];
-    if (radarRes.status === 'fulfilled') radarData.value = radarRes.value;
-    else radarData.value = [
-      { className: '计算机2022级1班', healthScore: 95.5, exerciseScore: 92.0, civilizedScore: 98.0, blackboardScore: 90.0 },
-      { className: '计算机2022级2班', healthScore: 88.0, exerciseScore: 90.5, civilizedScore: 89.0, blackboardScore: 92.5 },
-    ];
-    if (coreRes.status === 'fulfilled') coreData.value = coreRes.value;
-    else coreData.value = [
-      { date: '2025-01-06', honorCount: 12, violateCount: 3, assessCount: 18 },
-      { date: '2025-01-13', honorCount: 15, violateCount: 2, assessCount: 18 },
-      { date: '2025-01-20', honorCount: 8, violateCount: 5, assessCount: 18 },
-    ];
+
+    if (coreRes.status === 'fulfilled') {
+      // 确保数据按日期排序（后端可能乱序）
+      const sortedData = [...coreRes.value].sort((a, b) => new Date(a.date) - new Date(b.date));
+      coreData.value = sortedData;
+    } else {
+      coreData.value = [
+        { date: '2025-01-06', honorCount: 12, violateCount: 3, assessCount: 18 },
+        { date: '2025-01-13', honorCount: 15, violateCount: 2, assessCount: 18 },
+        { date: '2025-01-20', honorCount: 8, violateCount: 5, assessCount: 18 },
+      ];
+    }
   } catch (error) {
-    console.error('加载图表数据失败', error);
-  } finally {
-    loading.value = false;
+    console.error('加载其他图表数据失败', error);
   }
 };
 
+const handleDateRangeChange = async () => {
+  if (dateRange.value && dateRange.value.length === 2) {
+    const startDate = dateRange.value[0];
+    const endDate = dateRange.value[1];
+    let startTime = null;
+    let endTime = null;
+    if (startDate) startTime = formatLocalDateTime(startDate);
+    if (endDate) {
+      const endDateTime = new Date(endDate);
+      endDateTime.setHours(23, 59, 59, 999);
+      endTime = formatLocalDateTime(endDateTime);
+    }
+    await loadOtherData(startTime, endTime);
+  }
+};
+
+watch(cycleFilter, (newCycle) => {
+  if (currentChart.value.type === 'radar') {
+    loadRadarData(newCycle);
+  }
+});
+
+const initData = async () => {
+  loading.value = true;
+  let startTime = null, endTime = null;
+  if (dateRange.value && dateRange.value.length === 2) {
+    const startDate = dateRange.value[0];
+    const endDate = dateRange.value[1];
+    if (startDate) startTime = formatLocalDateTime(startDate);
+    if (endDate) {
+      const endDateTime = new Date(endDate);
+      endDateTime.setHours(23, 59, 59, 999);
+      endTime = formatLocalDateTime(endDateTime);
+    }
+  }
+  await Promise.all([loadOtherData(startTime, endTime), loadRadarData(cycleFilter.value)]);
+  loading.value = false;
+};
+
 onMounted(() => {
-  loadData();
+  initData();
 });
 </script>
 
@@ -164,16 +257,48 @@ onMounted(() => {
       />
     </div>
 
-    <!-- 饼图/雷达图切换区域 -->
-    <div class="chart-switch-area">
-      <div class="chart-select-wrapper">
+    <!-- 统一图表切换区域 -->
+    <div class="chart-switch-area" style="flex: 2 !important;">
+      <!-- 左上角控件组：根据图表类型显示日期选择器或雷达图周期单选框 -->
+      <div class="top-left-controls">
+        <!-- 饼图/折线图模式：显示日期选择器 -->
+        <el-date-picker
+          v-if="currentChart.type !== 'radar'"
+          v-model="dateRange"
+          type="daterange"
+          range-separator="-"
+          start-placeholder="起始时间"
+          end-placeholder="结束时间"
+          size="small"
+          :shortcuts="[
+            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
+            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
+            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
+          ]"
+          @change="handleDateRangeChange"
+          class="date-picker"
+        />
+        <!-- 雷达图模式：显示周期单选框 -->
+        <el-radio-group
+          v-else
+          v-model="cycleFilter"
+          size="small"
+          class="cycle-radio"
+        >
+          <el-radio-button v-for="opt in cycleOptions" :key="opt.value" :label="opt.value" />
+        </el-radio-group>
+      </div>
+
+      <!-- 右上角：图表切换下拉选择器（始终显示） -->
+      <div class="top-right-controls">
         <el-select
           v-model="activeChartIndex"
           size="small"
           @change="handleChartChange"
+          class="chart-select"
         >
           <el-option
-            v-for="(opt, idx) in pieRadarOptions"
+            v-for="(opt, idx) in chartOptions"
             :key="idx"
             :label="opt.title"
             :value="idx"
@@ -181,7 +306,7 @@ onMounted(() => {
         </el-select>
       </div>
 
-      <!-- 动态渲染饼图或雷达图 -->
+      <!-- 动态渲染图表 -->
       <Pie
         v-if="currentChart.type === 'pie'"
         :title-text="currentChart.title"
@@ -189,23 +314,21 @@ onMounted(() => {
         @pie-click="handlePieClick"
       />
       <Radar
-        v-else
+        v-else-if="currentChart.type === 'radar'"
         :title-text="currentChart.title"
         :indicator="currentChart.indicator"
         :series="currentChart.series"
         @radar-click="handleRadarClick"
       />
+      <lineChart
+        v-else-if="currentChart.type === 'line'"
+        :title="currentChart.title"
+        :x-data="currentChart.xData"
+        :series-data="currentChart.seriesData"
+        :y-name="currentChart.yName"
+        @line-click="handleLineClick"
+      />
     </div>
-
-    <!-- 折线图（使用 lineChart 组件） -->
-    <lineChart
-      style="flex: 1.5 !important;"
-      title="核心指标趋势（周）"
-      :x-data="lineXData"
-      :series-data="lineSeriesData"
-      y-name="数量"
-      @line-click="handleLineClick"
-    />
   </div>
 </template>
 
@@ -230,19 +353,38 @@ onMounted(() => {
   }
 }
 
-/* 饼图/雷达图切换区域样式 */
 .chart-switch-area {
   position: relative;
-  flex: 1;
-  min-width: 280px;
+  flex: 2;
+  min-width: 320px;
   display: flex;
   flex-direction: column;
 }
 
-.chart-select-wrapper {
+/* 左上角控件容器 */
+.top-left-controls {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 10;
+}
+
+/* 右上角控件容器 */
+.top-right-controls {
   position: absolute;
   top: 8px;
   right: 10px;
   z-index: 10;
+}
+
+.chart-select {
+  width: 160px;
+}
+
+:deep(.el-date-editor) {
+  --el-date-editor-width: 240px;
+  .el-range__icon { margin-right: 2px; }
+  .el-range-separator { padding: 0 4px; }
+  .el-range__close-icon { margin-left: 2px; }
 }
 </style>
