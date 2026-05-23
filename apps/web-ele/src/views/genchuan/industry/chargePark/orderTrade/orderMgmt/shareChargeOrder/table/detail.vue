@@ -23,6 +23,34 @@ const drawerTitle = computed(() => {
   return title.value || `${orderNo} 详情`;
 });
 
+// 订单状态映射
+const statusMap = {
+  lending: '借出中',
+  pending_pay: '待支付',
+  paid: '已支付',
+  completed: '已完成',
+  cancelled: '已取消',
+  refunding: '退款中',
+};
+
+// 支付方式映射
+const payMethodMap = {
+  wechat: '微信',
+  alipay: '支付宝',
+  bank: '银行卡',
+  cash: '现金',
+};
+
+// 获取状态标签
+const getStatusLabel = (status) => {
+  return statusMap[status] || status || '-';
+};
+
+// 获取支付方式标签
+const getPayMethodLabel = (payMethod) => {
+  return payMethodMap[payMethod] || payMethod || '-';
+};
+
 // 抽屉
 const [DetailDrawer, detailDrawerApi] = useVbenDrawer({
   modal: false,
@@ -102,7 +130,7 @@ defineExpose({
 
       <div class="detail-card-row">
         <div class="detail-row-left">支付方式:</div>
-        <div class="detail-row-right">{{ detailObj.payMethod || '-' }}</div>
+        <div class="detail-row-right">{{ getPayMethodLabel(detailObj.payMethod) }}</div>
       </div>
 
       <div class="detail-card-row">

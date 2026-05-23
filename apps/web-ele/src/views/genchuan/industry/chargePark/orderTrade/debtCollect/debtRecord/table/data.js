@@ -41,7 +41,7 @@ export function useFormSchema() {
     },
     {
       fieldName: 'identifyTimeEnd',
-      label: '识别结束时间',  
+      label: '识别时间结束',  
       component: 'DatePicker',
       componentProps: {
         type: 'datetime',

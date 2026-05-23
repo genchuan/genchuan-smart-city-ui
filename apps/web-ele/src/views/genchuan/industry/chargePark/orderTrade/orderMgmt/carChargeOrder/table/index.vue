@@ -118,6 +118,22 @@ function handleRefresh() {
   gridApi.query();
 }
 
+// 点击支付方式筛选
+function handleFilterPayMethod(payMethod) {
+  dataObj.searchObj = { ...dataObj.searchObj, payMethod: payMethod };
+  queryFormApi.setValues({ payMethod: payMethod });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击创建者筛选
+function handleFilterCreator(creator) {
+  dataObj.searchObj = { ...dataObj.searchObj, creator: creator };
+  queryFormApi.setValues({ creator: creator });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
   const data = await exportCarChargeOrderExcel();
@@ -851,11 +867,18 @@ const alarmColumns = [
         </el-text>
       </template>
       <template #payMethod="{ row }">
-        <span v-if="row.payMethod === 'wechat'">微信</span>
-        <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
-        <span v-else-if="row.payMethod === 'bank'">银行卡</span>
-        <span v-else-if="row.payMethod === 'cash'">现金</span>
-        <span v-else>{{ row.payMethod }}</span>
+        <el-text @click="handleFilterPayMethod(row.payMethod)" class="common-align cursor-pointer" type="primary">
+          <span v-if="row.payMethod === 'wechat'">微信</span>
+          <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
+          <span v-else-if="row.payMethod === 'bank'">银行卡</span>
+          <span v-else-if="row.payMethod === 'cash'">现金</span>
+          <span v-else>{{ row.payMethod }}</span>
+        </el-text>
+      </template>
+      <template #creator="{ row }">
+        <el-text @click="handleFilterCreator(row.creator)" class="common-align cursor-pointer" type="primary">
+          {{ row.creator }}
+        </el-text>
       </template>
       <template #halfyearWarnCount="{ row }">
         <el-text @click="handleTotal(row)" class="common-align" type="primary">

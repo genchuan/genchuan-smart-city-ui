@@ -842,27 +842,10 @@ const alarmColumns = [
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="查看"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="检查"
-            icon-name="Search"
-            @click="handleCheck(row)"
-          />
-          <IconButton
-            content="忽略"
-            icon-name="delete"
-            color="#F56C6C"
-            @click="handleIgnore(row)"
-          />
-          <IconButton
-            content="更新进度"
-            icon-name="Refresh"
-            @click="handleUpdateProgress(row)"
-          />
+          <IconButton v-if="row.status === 'unhandled'" content="核查" icon-name="Search" @click="handleCheck(row)" />
+          <IconButton v-if="row.status === 'unhandled'" content="忽略" icon-name="delete" color="#F56C6C" @click="handleIgnore(row)" />
+          <IconButton v-if="row.status === 'handling'" content="更新进度" icon-name="Refresh" @click="handleUpdateProgress(row)" />
+          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
         </div>
       </template>
       <template #bottom>
