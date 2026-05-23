@@ -336,6 +336,21 @@ const getTableData = async (pageObj) => {
         ...dataObj.searchParams,
       };
 
+      // 处理时间范围参数 - 转换为时间戳字符串数组
+      if (params.dispatchTime && Array.isArray(params.dispatchTime) && params.dispatchTime.length === 2) {
+        params.dispatchTime = params.dispatchTime.map(dateStr => {
+          const timestamp = new Date(dateStr).getTime();
+          return String(timestamp);
+        });
+      }
+
+      // 移除空值参数
+      Object.keys(params).forEach(key => {
+        if (params[key] === null || params[key] === undefined || params[key] === '') {
+          delete params[key];
+        }
+      });
+
       if (isSearching) {
         isSearching = false;
         dataObj.currentPage = 1;
@@ -343,6 +358,7 @@ const getTableData = async (pageObj) => {
         dataObj.currentPage = page.currentPage;
       }
 
+      console.log('查询参数:', params); // 调试日志
       const res = await getInspectTaskPage(params);
       dataObj.total = res.total || 0;
       dataObj.list = res.list || [];
@@ -738,51 +754,81 @@ const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
     progressDrawerApi.close();
   },
   async onConfirm() {
-    const values = progressFormApi.form.values;
-    const currentRow = dataObj.currentProgressRow;
     try {
-      await updateInspectTaskProgress({
-        id: currentRow.id,
-        taskProgress: values.taskProgress,
-        remark: values.remark,
+      // 先验证表单
+      await progressFormApi.validate();
+
+      const values = progressFormApi.form.values;
+      const currentRow = dataObj.currentProgressRow;
+
+      const loadingInstance = ElLoading.service({
+        text: '更新中...',
       });
-      ElMessage.success('更新成功');
-      handleRefresh();
-      progressDrawerApi.close();
+
+      try {
+        await updateInspectTaskProgress({
+          id: currentRow.id,
+          taskProgress: values.taskProgress,
+          remark: values.remark,
+        });
+        ElMessage.success('更新成功');
+        handleRefresh();
+        progressDrawerApi.close();
+      } finally {
+        loadingInstance.close();
+      }
     } catch (error) {
-      ElMessage.error('更新失败');
-      console.error(error);
+      if (error?.message !== 'Validation failed') {
+        ElMessage.error('更新失败');
+        console.error(error);
+      }
     }
   },
 });
 
 const [ProgressForm, progressFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  layout: 'horizontal',
   schema: [
     {
       fieldName: 'taskProgress',
       label: '任务进度',
-      component: 'Textarea',
+      component: 'Input',
       componentProps: {
+        type: 'textarea',
         placeholder: '请输入任务进度',
         rows: 3,
+        maxlength: 200,
+        showWordLimit: true,
       },
       rules: 'required',
     },
     {
       fieldName: 'remark',
       label: '备注',
-      component: 'Textarea',
+      component: 'Input',
       componentProps: {
+        type: 'textarea',
         placeholder: '请输入备注',
         rows: 3,
+        maxlength: 200,
+        showWordLimit: true,
       },
     },
   ],
+  showDefaultActions: false,
 });
 
 const handleUpdateProgress = async (row) => {
   try {
     dataObj.currentProgressRow = row;
+    progressFormApi.resetForm();
     progressDrawerApi.open();
   } catch (error) {
     console.error('打开进度更新抽屉失败:', error);
@@ -897,16 +943,19 @@ const getActionButtons = (row) => {
         {
           content: '更新进度',
           iconName: 'Edit',
+          color: '#409EFF',
           onClick: () => handleUpdateProgress(row),
         },
         {
           content: '转派',
           iconName: 'SwitchButton',
+          color: '#E6A23C',
           onClick: () => handleTransfer(row),
         },
         {
           content: '查看',
           iconName: 'View',
+          color: '#409EFF',
           onClick: () => handleOpenDetail(row),
         },
       );
@@ -917,11 +966,13 @@ const getActionButtons = (row) => {
         {
           content: '查看',
           iconName: 'View',
+          color: '#409EFF',
           onClick: () => handleOpenDetail(row),
         },
         {
           content: '归档',
           iconName: 'FolderOpened',
+          color: '#67C23A',
           onClick: () => handleArchive(row),
         },
       );
@@ -932,11 +983,13 @@ const getActionButtons = (row) => {
         {
           content: '派发',
           iconName: 'Promotion',
+          color: '#409EFF',
           onClick: () => handleDispatch(row),
         },
         {
           content: '查看',
           iconName: 'View',
+          color: '#409EFF',
           onClick: () => handleOpenDetail(row),
         },
       );
@@ -944,10 +997,16 @@ const getActionButtons = (row) => {
     }
     case '待认领': {
       buttons.push(
-        { content: '认领', iconName: 'Check', onClick: () => handleClaim(row) },
+        {
+          content: '认领',
+          iconName: 'Check',
+          color: '#67C23A',
+          onClick: () => handleClaim(row)
+        },
         {
           content: '查看',
           iconName: 'View',
+          color: '#409EFF',
           onClick: () => handleOpenDetail(row),
         },
       );
@@ -957,6 +1016,7 @@ const getActionButtons = (row) => {
       buttons.push({
         content: '查看',
         iconName: 'View',
+        color: '#409EFF',
         onClick: () => handleOpenDetail(row),
       });
     }
@@ -1057,23 +1117,23 @@ const handleFieldFilter = (field, value, userName = '') => {
         <div class="common-toolbar-tools">
           <IconButton
             content="批量派发"
-            icon-name="Send"
+            icon-name="Promotion"
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchDispatch"
           />
           <IconButton
             content="导出"
-            icon-name="download"
+            icon-name="Download"
             @click="handleExport"
           />
           <IconButton
-            content="搜索"
-            icon-name="search"
+            content="筛选"
+            icon-name="Filter"
             @click="handleSerachShow"
           />
           <IconButton
             content="重置"
-            icon-name="Refresh"
+            icon-name="RefreshLeft"
             @click="handleResetFilters"
           />
           <IconButton

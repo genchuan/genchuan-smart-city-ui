@@ -207,11 +207,15 @@ const activeFilters = computed(() => {
   if (obj.status) {
     filters.push({ label: `状态：${obj.status}`, field: 'status' });
   }
-  if (obj.stationName) {
-    filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+  if (obj.passTime && obj.passTime.length === 2) {
+    filters.push({ label: `放行时间：${obj.passTime[0]} ~ ${obj.passTime[1]}`, field: 'passTime' });
   }
-  if (obj.operator) {
-    filters.push({ label: `操作人：${obj.operator}`, field: 'operator' });
+  if (obj.stationId) {
+    const station = stationOptions.value.find(s => s.value === obj.stationId);
+    filters.push({ label: `场站：${station?.label || obj.stationId}`, field: 'stationId' });
+  }
+  if (obj.operatorId) {
+    filters.push({ label: `操作人ID：${obj.operatorId}`, field: 'operatorId' });
   }
 
   return filters;
@@ -366,8 +370,29 @@ const handleFullShow = () => {
 
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
-  const filterParams = event.detail;
-  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+  const { filterKey, date } = event.detail;
+
+  // 根据不同的筛选类型设置查询参数（追加到现有筛选条件）
+  if (filterKey === 'todayPass') {
+    // 今日放行量：筛选今天的记录
+    dataObj.searchParams = {
+      ...dataObj.searchParams,
+      passTime: [date, date],
+    };
+  } else if (filterKey === 'abnormalPass') {
+    // 异常放行占比：筛选异常记录
+    dataObj.searchParams = {
+      ...dataObj.searchParams,
+      status: '异常记录',
+    };
+  } else if (filterKey === 'trendDate') {
+    // 折线图点击：筛选指定日期的记录
+    dataObj.searchParams = {
+      ...dataObj.searchParams,
+      passTime: [date, date],
+    };
+  }
+
   handleRefresh();
   ElMessage.success('已应用图表筛选');
 };
@@ -476,12 +501,12 @@ watch(
           />
           <IconButton
             content="导出"
-            icon-name="download"
+            icon-name="Download"
             @click="handleExport"
           />
           <IconButton
-            content="搜索"
-            icon-name="search"
+            content="筛选"
+            icon-name="Filter"
             @click="handleSerachShow"
           />
           <IconButton
@@ -542,14 +567,14 @@ watch(
           {{ row.stationName }}
         </el-text>
       </template>
-      <template #operator="{ row }">
+      <template #operatorName="{ row }">
         <el-text
-          @click="handleFieldClick('operator', row.operator)"
+          @click="handleFieldClick('operatorName', row.operatorName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
-          {{ row.operator }}
+          {{ row.operatorName }}
         </el-text>
       </template>
       <template #correctionMark="{ row }">

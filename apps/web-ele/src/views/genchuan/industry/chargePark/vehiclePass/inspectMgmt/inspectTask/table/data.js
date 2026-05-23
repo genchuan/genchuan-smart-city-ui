@@ -252,7 +252,7 @@ export function useSearchFormSchema() {
       componentProps: {
         type: 'daterange',
         placeholder: '请选择派发时间',
-        valueFormat: 'YYYY-MM-DD',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
     },
   ];

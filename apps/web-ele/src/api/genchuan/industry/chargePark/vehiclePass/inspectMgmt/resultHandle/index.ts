@@ -58,6 +58,7 @@ export namespace ResultHandleApi {
   /** 结果处置执行参数 */
   export interface ExecuteReqVO {
     id: number | string;
+    executeInfo: string;
     rectifyStatus: string;
   }
 

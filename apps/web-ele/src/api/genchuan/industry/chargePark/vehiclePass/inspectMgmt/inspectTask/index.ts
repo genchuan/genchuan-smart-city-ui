@@ -35,7 +35,18 @@ export namespace InspectTaskApi {
     areaId?: number;
     executeUserId?: number;
     finishTime?: string[];
+    taskProgress?: string;
+    transferReason?: string;
     remark?: string;
+    reserve1?: string;
+    reserve2?: string;
+    dispatchTimeNew?: string[];
+    deadlineTimeNew?: string[];
+    finishTimeNew?: string[];
+    creator?: string;
+    updater?: string;
+    createTime?: string[];
+    updateTime?: string[];
   }
 
   /** 稽查任务派发参数 */
