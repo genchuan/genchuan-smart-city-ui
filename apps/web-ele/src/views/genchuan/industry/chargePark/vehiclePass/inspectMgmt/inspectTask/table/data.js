@@ -1,5 +1,5 @@
 import { requestClient } from '#/api/request';
-import { getSimpleUserList } from '#/api/system/user';
+import { getExecuteUserSimpleList } from '#/api/genchuan/industry/chargePark/vehiclePass/inspectMgmt/inspectTask';
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
 
 /** 获取场站列表 */
@@ -25,21 +25,29 @@ export async function getStationOptions() {
 }
 
 /** 获取执行人列表 */
-let executorOptionsCache = null;
 export async function getExecutorOptions() {
-  if (executorOptionsCache) {
-    return executorOptionsCache;
-  }
   try {
-    console.log('正在调用执行人列表接口...');
-    const response = await getSimpleUserList();
-    console.log('执行人列表接口响应:', response);
-    if (response && Array.isArray(response)) {
-      executorOptionsCache = response.map(item => ({
-        label: item.nickname || item.username,
-        value: item.id,
+    const response = await getExecuteUserSimpleList();
+    console.log('执行人列表接口返回:', response);
+    console.log('response 类型:', typeof response);
+    console.log('response 是否为数组:', Array.isArray(response));
+    
+    let dataArray = [];
+    if (Array.isArray(response)) {
+      dataArray = response;
+    } else if (response && response.data && Array.isArray(response.data)) {
+      dataArray = response.data;
+    }
+    
+    console.log('最终使用的数据数组:', dataArray);
+    
+    if (dataArray.length > 0) {
+      const options = dataArray.map(item => ({
+        label: item.nickname,
+        value: item.userId,
       }));
-      return executorOptionsCache;
+      console.log('转换后的执行人选项:', options);
+      return options;
     }
     return [];
   } catch (error) {

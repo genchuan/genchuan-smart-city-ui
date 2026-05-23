@@ -5,6 +5,16 @@ import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
+import {
+  ArrowDown,
+  ArrowUp,
+  Promotion,
+  View,
+  Check,
+  Edit,
+  SwitchButton,
+  FolderOpened,
+} from '@element-plus/icons-vue';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -594,24 +604,41 @@ const [DispatchDrawer, dispatchDrawerApi] = useVbenDrawer({
   },
 });
 
-const [DispatchForm, dispatchFormApi] = useVbenForm({
-  schema: [
-    {
-      fieldName: 'executeUserId',
-      label: '执行人',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择执行人',
-        options: [],
-      },
-      rules: 'required',
+const dispatchSchema = ref([
+  {
+    fieldName: 'executeUserId',
+    label: '执行人',
+    component: 'Select',
+    componentProps: {
+      placeholder: '请选择执行人',
+      options: [],
     },
-  ],
+    rules: 'required',
+  },
+]);
+
+const [DispatchForm, dispatchFormApi] = useVbenForm({
+  schema: computed(() => dispatchSchema.value),
+  showDefaultActions: false,
 });
 
 const handleDispatch = async (row) => {
   try {
     dataObj.currentDispatchRow = row;
+    console.log('打开派发抽屉时 executorOptions 的值:', executorOptions.value);
+    // 更新执行人选项
+    dispatchSchema.value = [
+      {
+        fieldName: 'executeUserId',
+        label: '执行人',
+        component: 'Select',
+        componentProps: {
+          placeholder: '请选择执行人',
+          options: executorOptions.value,
+        },
+        rules: 'required',
+      },
+    ];
     dispatchDrawerApi.open();
   } catch (error) {
     console.error('打开派发抽屉失败:', error);
@@ -645,19 +672,22 @@ const [BatchDispatchDrawer, batchDispatchDrawerApi] = useVbenDrawer({
   },
 });
 
-const [BatchDispatchForm, batchDispatchFormApi] = useVbenForm({
-  schema: [
-    {
-      fieldName: 'executeUserId',
-      label: '执行人',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择执行人',
-        options: [],
-      },
-      rules: 'required',
+const batchDispatchSchema = ref([
+  {
+    fieldName: 'executeUserId',
+    label: '执行人',
+    component: 'Select',
+    componentProps: {
+      placeholder: '请选择执行人',
+      options: [],
     },
-  ],
+    rules: 'required',
+  },
+]);
+
+const [BatchDispatchForm, batchDispatchFormApi] = useVbenForm({
+  schema: computed(() => batchDispatchSchema.value),
+  showDefaultActions: false,
 });
 
 const handleBatchDispatch = async () => {
@@ -666,6 +696,19 @@ const handleBatchDispatch = async () => {
     return;
   }
   try {
+    // 更新执行人选项
+    batchDispatchSchema.value = [
+      {
+        fieldName: 'executeUserId',
+        label: '执行人',
+        component: 'Select',
+        componentProps: {
+          placeholder: '请选择执行人',
+          options: executorOptions.value,
+        },
+        rules: 'required',
+      },
+    ];
     batchDispatchDrawerApi.open();
   } catch (error) {
     console.error('打开批量派发抽屉失败:', error);
@@ -858,7 +901,7 @@ const getActionButtons = (row) => {
         },
         {
           content: '转派',
-          iconName: 'Switch',
+          iconName: 'SwitchButton',
           onClick: () => handleTransfer(row),
         },
         {
@@ -888,7 +931,7 @@ const getActionButtons = (row) => {
       buttons.push(
         {
           content: '派发',
-          iconName: 'Send',
+          iconName: 'Promotion',
           onClick: () => handleDispatch(row),
         },
         {

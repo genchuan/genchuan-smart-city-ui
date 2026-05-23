@@ -30,8 +30,11 @@ export namespace CycleReportApi {
 
   /** 周期报表分页查询参数 */
   export interface PageReqVO extends PageParam {
+    id?: number | string; // 报表ID（用于单行导出）
     reportCycle?: string; // 报表周期
     stationId?: number | string; // 场站ID
+    stationName?: string; // 场站名称（用于钻取筛选）
+    hour?: string; // 时段（用于钻取筛选）
     reportStatus?: string; // 报表生成状态
     beginTime?: string; // 统计开始时间
     endTime?: string; // 统计结束时间
@@ -74,6 +77,7 @@ export namespace CycleReportApi {
       spaceUseRate: number; // 泊位使用率
     }>;
     barData: Array<{
+      stationId?: number | string; // 场站ID
       stationName?: string; // 场站名称
       hour?: string; // 时段
       passCount: number; // 通行量

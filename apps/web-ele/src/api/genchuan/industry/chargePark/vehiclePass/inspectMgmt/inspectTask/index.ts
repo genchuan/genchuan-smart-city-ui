@@ -161,3 +161,10 @@ export function getInspectTaskChart(params: InspectTaskApi.ChartReqVO) {
     { params },
   );
 }
+
+/** 获得执行人精简列表 */
+export function getExecuteUserSimpleList() {
+  return requestClient.get<Array<{ userId: number; nickname: string }>>(
+    '/vehiclepass/inspect-task/simple-list',
+  );
+}

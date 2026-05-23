@@ -51,7 +51,7 @@ export function useFormInitial(
     (unref(props).schema || []).forEach((item) => {
       if (Reflect.has(item, 'defaultValue')) {
         set(initialValues, item.fieldName, item.defaultValue);
-      } else if (item.rules && !isString(item.rules)) {
+      } else if (item.rules && !isString(item.rules) && !Array.isArray(item.rules) && (item.rules as any)._def) {
         // 检查规则是否适合提取默认值
         const customDefaultValue = getCustomDefaultValue(item.rules);
         zodObject[item.fieldName] = item.rules;
