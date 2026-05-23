@@ -72,6 +72,7 @@ const drillFilters = ref({
   contact: '',
   groupType: '',
   phone: '',
+  registerTime: [] as string[],
   status: '',
 });
 const searchParams = ref<Record<string, any>>({});
@@ -89,6 +90,11 @@ const drillFilterConfigs = {
     formatter: (value: any) => maskPhone(String(value)),
     label: '联系手机号',
     type: 'primary',
+  },
+  registerTime: {
+    formatter: (value: any[]) => value.join(' 至 '),
+    label: '注册时间',
+    type: 'danger',
   },
   status: {
     label: '集团状态',
@@ -380,6 +386,7 @@ function handleRefresh() {
     contact: '',
     groupType: '',
     phone: '',
+    registerTime: [],
     status: '',
   };
   return gridApi.reload();
@@ -399,9 +406,10 @@ async function resetSearch() {
     contact: '',
     groupType: '',
     phone: '',
+    registerTime: [],
     status: '',
   };
-  await queryFormApi.resetForm();
+  void syncQueryFormValues();
   return gridApi.reload();
 }
 
@@ -415,9 +423,19 @@ async function setSearchValues(values: Record<string, any>) {
     contact: '',
     groupType: '',
     phone: '',
+    registerTime: [],
     status: '',
   };
   void syncQueryFormValues();
+  return gridApi.reload();
+}
+
+/** 设置图表钻取条件 */
+async function setDrillValues(values: Partial<typeof drillFilters.value>) {
+  drillFilters.value = {
+    ...drillFilters.value,
+    ...values,
+  };
   return gridApi.reload();
 }
 
@@ -430,6 +448,7 @@ async function recalculateLayout() {
 defineExpose({
   recalculateLayout,
   resetSearch,
+  setDrillValues,
   setSearchValues,
 });
 
@@ -645,8 +664,8 @@ async function handleOpenAccount(row: GroupInfoRow) {
 async function handleDownloadTemplate() {
   try {
     const data = await GroupInfoApi.importGroupInfoTemplate();
-    downloadFileIfValid({
-      fileName: 'group-info-import-template.xls',
+    await downloadFileIfValid({
+      fileName: '集团信息导入模板.xlsx',
       source: data,
     });
     ElMessage.success('模板下载成功');
@@ -750,6 +769,12 @@ function handleCancelStatusFilter() {
   gridApi.reload();
 }
 
+/** 取消注册时间筛选 */
+function handleCancelRegisterTimeFilter() {
+  drillFilters.value.registerTime = [];
+  gridApi.reload();
+}
+
 /** 移除筛选标签 */
 async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   if (tag.source === 'drill') {
@@ -764,6 +789,10 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
       }
       case 'phone': {
         handleCancelPhoneFilter();
+        break;
+      }
+      case 'registerTime': {
+        handleCancelRegisterTimeFilter();
         break;
       }
       case 'status': {

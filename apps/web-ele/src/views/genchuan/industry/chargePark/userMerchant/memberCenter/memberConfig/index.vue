@@ -21,12 +21,14 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberConfigApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberConfig';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
+import MemberStatsVisualization from '../components/MemberStatsVisualization.vue';
 import {
   buildActiveFilterTags,
   cleanQueryParams,
   formatLifecycleStatus,
+  getLifecycleStatusTagType,
   isEnabledStatus,
   refreshStatsLayout,
   STATUS_ENABLED,
@@ -228,6 +230,23 @@ async function handleStatsPieClick({ name }: { name: string }) {
   await handleRefresh();
 }
 
+async function handleDrillFilter(key: string, value: unknown) {
+  if (value === undefined || value === null || value === '') {
+    return;
+  }
+
+  const nextFilters = { ...drillFilters.value };
+
+  if (nextFilters[key] === value) {
+    delete nextFilters[key];
+  } else {
+    nextFilters[key] = value;
+  }
+
+  drillFilters.value = nextFilters;
+  await handleRefresh();
+}
+
 async function syncQueryFormValues() {
   await queryFormApi.resetForm();
   await queryFormApi.setValues(searchParams.value);
@@ -292,93 +311,116 @@ onMounted(() => {
   <div class="common-index">
     <FormModal @success="handleRefresh" />
 
-    <StatsVisualization
+    <MemberStatsVisualization
       v-if="showStats"
       :data="statsData"
       @card-click="handleStatsCardClick"
       @pie-click="handleStatsPieClick"
     />
 
-    <div class="park-lot-table-new user-merchant-table-grid">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="display: flex; flex-wrap: wrap; align-items: center"
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
+    <PageTabsShell title="会员配置">
+      <div class="park-lot-table-new user-merchant-table-grid">
+        <Grid>
+          <template #table-title>
+            <div
+              class="tabel-tabs"
+              style="display: flex; flex-wrap: wrap; align-items: center"
             >
-              {{ tag.label }}：{{ tag.value }}
+              <ElTag
+                v-for="tag in activeFilterTags"
+                :key="`${tag.source}-${tag.key}`"
+                :type="tag.type"
+                closable
+                style="height: 32px; margin: 4px 0; line-height: 32px"
+                @close="handleRemoveFilterTag(tag)"
+              >
+                {{ tag.label }}：{{ tag.value }}
+              </ElTag>
+            </div>
+          </template>
+
+          <template #toolbar-tools>
+            <div class="common-toolbar-tools">
+              <IconButton
+                v-access:code="['usermerchant:member-config:create']"
+                content="新增会员配置"
+                icon-name="Plus"
+                @click="handleCreate"
+              />
+              <IconButton
+                content="搜索"
+                icon-name="search"
+                @click="handleSearchShow"
+              />
+              <IconButton
+                :content="showStats ? '隐藏统计' : '显示统计'"
+                :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
+                @click="toggleStats"
+              />
+              <IconButton
+                content="全屏"
+                icon-name="FullScreen"
+                @click="() => screenfull.toggle()"
+              />
+            </div>
+          </template>
+
+          <template #configType="{ row }">
+            <el-text
+              class="common-align"
+              type="primary"
+              style="cursor: pointer"
+              @click="handleDrillFilter('configType', row.configType)"
+            >
+              {{ row.configType || '-' }}
+            </el-text>
+          </template>
+
+          <template #status="{ row }">
+            <ElTag
+              :type="getLifecycleStatusTagType(row.status)"
+              style="cursor: pointer"
+              @click="handleDrillFilter('status', row.status)"
+            >
+              {{ formatLifecycleStatus(row.status) }}
             </ElTag>
-          </div>
-        </template>
+          </template>
 
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton
-              v-access:code="['usermerchant:member-config:create']"
-              content="新增会员配置"
-              icon-name="Plus"
-              @click="handleCreate"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSearchShow"
-            />
-            <IconButton
-              :content="showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
+          <template #actions="{ row }">
+            <div class="table-toolbar-tools">
+              <IconButton
+                content="查看"
+                icon-name="View"
+                @click="handleDetail(row)"
+              />
+              <IconButton
+                v-access:code="['usermerchant:member-config:update']"
+                content="编辑"
+                icon-name="Edit"
+                @click="handleEdit(row)"
+              />
+              <IconButton
+                v-access:code="['usermerchant:member-config:update']"
+                :content="isEnabledStatus(row.status) ? '禁用' : '生效'"
+                :icon-name="isEnabledStatus(row.status) ? 'Close' : 'Check'"
+                @click="handleToggleStatus(row)"
+              />
+            </div>
+          </template>
+        </Grid>
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="查看"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-            <IconButton
-              v-access:code="['usermerchant:member-config:update']"
-              content="编辑"
-              icon-name="Edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              v-access:code="['usermerchant:member-config:update']"
-              :content="isEnabledStatus(row.status) ? '禁用' : '生效'"
-              :icon-name="isEnabledStatus(row.status) ? 'Close' : 'Check'"
-              @click="handleToggleStatus(row)"
-            />
-          </div>
-        </template>
-      </Grid>
+        <Drawer title="搜索">
+          <QueryForm class="query-form" />
+        </Drawer>
 
-      <Drawer title="搜索">
-        <QueryForm class="query-form" />
-      </Drawer>
-
-      <DetailDrawer
-        ref="detailDrawerRef"
-        :data="detailObj"
-        :fields="memberConfigDetailFields"
-        :title="detailObj ? `${detailObj.configType}详情` : '会员配置详情'"
-      />
-    </div>
+        <DetailDrawer
+          ref="detailDrawerRef"
+          :data="detailObj"
+          :fields="memberConfigDetailFields"
+          :title="detailObj ? `${detailObj.configType}详情` : '会员配置详情'"
+        />
+      </div>
+    </PageTabsShell>
   </div>
 </template>
 
@@ -425,31 +467,5 @@ onMounted(() => {
 :deep(.user-merchant-table-grid .vxe-tools--operate) {
   position: static !important;
   flex-shrink: 0;
-}
-
-:deep(.park-chart-box) {
-  height: 300px;
-}
-
-:deep(.park-chart-box .chart-box-left) {
-  height: 100%;
-}
-
-:deep(.park-chart-box .stat-card) {
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-:deep(.park-chart-box .map-wrapper),
-:deep(.park-chart-box .park-type-chart),
-:deep(.park-chart-box .simple-bar-chart) {
-  height: 100%;
-}
-
-:deep(.rule-chart-box),
-:deep(.rule-chart-box .chart-box-left),
-:deep(.rule-chart-box .charts-wrapper),
-:deep(.rule-chart-box .chart-area) {
-  height: 300px;
 }
 </style>

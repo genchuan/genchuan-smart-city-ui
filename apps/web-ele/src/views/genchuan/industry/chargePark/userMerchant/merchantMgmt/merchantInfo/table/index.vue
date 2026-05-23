@@ -822,8 +822,8 @@ async function handleOpenAccount(row: MerchantInfoRow) {
 async function handleDownloadTemplate() {
   try {
     const data = await MerchantInfoApi.importMerchantInfoTemplate();
-    downloadFileIfValid({
-      fileName: 'merchant-info-import-template.xls',
+    await downloadFileIfValid({
+      fileName: '商户信息导入模板.xlsx',
       source: data,
     });
     ElMessage.success('模板下载成功');

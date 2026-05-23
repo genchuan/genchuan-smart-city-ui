@@ -8,6 +8,7 @@ import { GroupInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/gr
 import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 import { buildDateRangeByChartName } from '#/views/genchuan/industry/chargePark/userMerchant/utils/chartDrill';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
 import { buildStatsDataFromApi } from './data';
 import Table from './table/index.vue';
 
@@ -16,6 +17,7 @@ import '#/genchuan-components/page/index.scss';
 type TableInstance = {
   recalculateLayout: () => Promise<void> | void;
   resetSearch: () => Promise<void> | void;
+  setDrillValues: (values: Record<string, any>) => Promise<void> | void;
   setSearchValues: (values: Record<string, any>) => Promise<void> | void;
 };
 
@@ -72,10 +74,10 @@ async function handleFilterAllGroups() {
 
 /** 钻取近 30 天新增集团 */
 async function handleFilterRecentGroups() {
-  await tableRef.value?.setSearchValues({
+  await tableRef.value?.setDrillValues({
     registerTime: [
-      dayjs().subtract(30, 'day').startOf('day').format('YYYY-MM-DD HH:mm:ss'),
-      dayjs().endOf('day').format('YYYY-MM-DD HH:mm:ss'),
+      dayjs().subtract(30, 'day').startOf('day').format('YYYY-MM-DDTHH:mm:ss'),
+      dayjs().endOf('day').format('YYYY-MM-DDTHH:mm:ss'),
     ],
   });
 }
@@ -88,7 +90,7 @@ async function handleFilterByMonth(month: string) {
     return;
   }
 
-  await tableRef.value?.setSearchValues({ registerTime: range });
+  await tableRef.value?.setDrillValues({ registerTime: range });
 }
 
 onMounted(() => {
@@ -107,12 +109,14 @@ onMounted(() => {
       "
       @line-click="({ name }) => handleFilterByMonth(name)"
     />
-    <Table
-      ref="tableRef"
-      :reload-stats="loadStats"
-      :show-stats="showStats"
-      :toggle-stats="toggleStats"
-    />
+    <PageTabsShell title="集团信息">
+      <Table
+        ref="tableRef"
+        :reload-stats="loadStats"
+        :show-stats="showStats"
+        :toggle-stats="toggleStats"
+      />
+    </PageTabsShell>
   </div>
 </template>
 

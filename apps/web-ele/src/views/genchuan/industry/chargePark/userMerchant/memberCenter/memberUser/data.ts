@@ -2,13 +2,10 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { MemberUserApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 
-import { h } from 'vue';
-
 import { DICT_TYPE } from '@vben/constants';
 import { getDictOptions } from '@vben/hooks';
 
 import dayjs from 'dayjs';
-import { ElAvatar, ElTag } from 'element-plus';
 
 import { z } from '#/adapter/form';
 import {
@@ -18,6 +15,8 @@ import {
 } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/options';
 import { getAreaTree } from '#/api/system/area';
 import { getRangePickerDefaultProps } from '#/utils';
+
+import { FORM_TIME_FORMAT } from '../utils';
 
 const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 export const MEMBER_STATUS_DISABLED = 0;
@@ -232,7 +231,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'DatePicker',
       componentProps: {
         format: 'YYYY-MM-DD',
-        valueFormat: QUERY_TIME_FORMAT,
+        valueFormat: FORM_TIME_FORMAT,
         placeholder: '请选择生日',
         class: '!w-full',
       },
@@ -347,7 +346,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'DatePicker',
       componentProps: {
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: QUERY_TIME_FORMAT,
+        valueFormat: FORM_TIME_FORMAT,
         placeholder: '请选择最后登录时间',
         type: 'datetime',
         class: '!w-full',
@@ -359,7 +358,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'DatePicker',
       componentProps: {
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: QUERY_TIME_FORMAT,
+        valueFormat: FORM_TIME_FORMAT,
         placeholder: '请选择到期时间',
         type: 'datetime',
         class: '!w-full',
@@ -474,110 +473,41 @@ export function useGridFormSchema(): VbenFormSchema[] {
   ];
 }
 
-function renderMemberTag(row: MemberUserApi.User) {
-  const tagName = Array.isArray(row.tagNames) ? row.tagNames[0] : row.tagNames;
-
-  if (!tagName) {
-    return '-';
-  }
-
-  return h(
-    ElTag,
-    {
-      type: 'primary',
-    },
-    () => tagName,
-  );
-}
-
-function renderStatus(status?: number | string) {
-  return h(
-    ElTag,
-    {
-      type: getMemberStatusTagType(status),
-    },
-    () => formatMemberStatus(status),
-  );
-}
-
 export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
     {
-      type: 'checkbox',
-      width: 50,
-    },
-    {
       field: 'id',
-      title: '会员编号',
+      title: '会员 ID',
       minWidth: 100,
-    },
-    {
-      field: 'avatar',
-      title: '头像',
-      width: 80,
-      slots: {
-        default: ({ row }) =>
-          h(ElAvatar, {
-            size: 32,
-            src: row.avatar,
-            shape: 'square',
-          }),
-      },
-    },
-    {
-      field: 'mobile',
-      title: '手机号',
-      minWidth: 120,
     },
     {
       field: 'nickname',
-      title: '昵称',
-      minWidth: 120,
-    },
-    {
-      field: 'name',
-      title: '真实姓名',
-      minWidth: 110,
-      formatter: ({ cellValue }) => cellValue || '-',
-    },
-    {
-      field: 'levelName',
-      title: '等级',
-      minWidth: 100,
-      formatter: ({ row }) => row.levelName || row.levelId || '-',
-    },
-    {
-      field: 'groupName',
-      title: '分组',
-      minWidth: 100,
-      formatter: ({ row }) => row.groupName || row.groupId || '-',
-    },
-    {
-      field: 'tagNames',
-      title: '会员标签',
+      title: '用户',
       minWidth: 160,
       slots: {
-        default: ({ row }) => renderMemberTag(row),
+        default: 'user',
       },
     },
     {
-      field: 'point',
-      title: '积分',
-      minWidth: 90,
-      formatter: ({ cellValue }) => Number(cellValue ?? 0),
+      field: 'levelName',
+      title: '会员等级',
+      minWidth: 120,
+      slots: {
+        default: 'level',
+      },
     },
     {
-      field: 'experience',
-      title: '经验值',
-      minWidth: 90,
-      formatter: ({ cellValue }) => Number(cellValue ?? 0),
+      field: 'createTime',
+      title: '开通时间',
+      minWidth: 160,
+      formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
     },
     {
       field: 'status',
       title: '状态',
       minWidth: 90,
       slots: {
-        default: ({ row }) => renderStatus(row.status),
+        default: 'status',
       },
     },
     {
@@ -589,18 +519,6 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     {
       field: 'expireTime',
       title: '到期时间',
-      minWidth: 160,
-      formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
-    },
-    {
-      field: 'loginDate',
-      title: '登录时间',
-      minWidth: 160,
-      formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
-    },
-    {
-      field: 'createTime',
-      title: '注册时间',
       minWidth: 160,
       formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
     },

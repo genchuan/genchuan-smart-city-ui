@@ -10,9 +10,12 @@ export type {
 export { buildActiveFilterTags } from '#/views/genchuan/industry/chargePark/userMerchant/utils/filterTags';
 
 export const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+export const FORM_TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 
 export const STATUS_DISABLED = 0;
 export const STATUS_ENABLED = 1;
+
+const NUMERIC_TIMESTAMP_PATTERN = /^\d+$/;
 
 export const normalStatusOptions = [
   { label: '正常', value: STATUS_ENABLED },
@@ -73,12 +76,58 @@ export function buildTodayDateRange() {
   ];
 }
 
+function parseDateTimeValue(value?: null | number | string) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const text = String(value).trim();
+
+  let timestampValue: null | number = null;
+
+  if (typeof value === 'number') {
+    timestampValue = value;
+  } else if (NUMERIC_TIMESTAMP_PATTERN.test(text)) {
+    timestampValue = Number(text);
+  }
+
+  if (timestampValue !== null && Number.isFinite(timestampValue)) {
+    if (timestampValue === 0) {
+      return dayjs(0);
+    }
+
+    if (text.length === 10) {
+      return dayjs(timestampValue * 1000);
+    }
+
+    if (text.length === 13) {
+      return dayjs(timestampValue);
+    }
+  }
+
+  return dayjs(text);
+}
+
+export function normalizeDateTimeFormValue(value?: null | number | string) {
+  const parsed = parseDateTimeValue(value);
+
+  if (!parsed) {
+    return undefined;
+  }
+
+  return parsed.isValid() ? parsed.format(FORM_TIME_FORMAT) : String(value);
+}
+
 export function formatDateTimeValue(value?: null | number | string) {
   if (value === null || value === undefined || value === '') {
     return '-';
   }
 
-  const parsed = dayjs(value);
+  const parsed = parseDateTimeValue(value);
+  if (!parsed) {
+    return '-';
+  }
+
   return parsed.isValid()
     ? parsed.format('YYYY-MM-DD HH:mm:ss')
     : String(value);
@@ -89,7 +138,11 @@ export function formatDateValue(value?: null | number | string) {
     return '-';
   }
 
-  const parsed = dayjs(value);
+  const parsed = parseDateTimeValue(value);
+  if (!parsed) {
+    return '-';
+  }
+
   return parsed.isValid() ? parsed.format('YYYY-MM-DD') : String(value);
 }
 

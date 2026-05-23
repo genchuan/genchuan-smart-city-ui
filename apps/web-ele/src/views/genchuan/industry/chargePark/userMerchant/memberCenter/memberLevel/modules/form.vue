@@ -11,7 +11,14 @@ import { useVbenForm } from '#/adapter/form';
 import { MemberLevelApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberLevel';
 import { $t } from '#/locales';
 
+import { normalizeDateTimeFormValue } from '../../utils';
 import { useFormSchema } from '../data';
+
+type MemberLevelFormDetail = MemberLevelVO & {
+  effectiveTimeStr?: number | string;
+  effectTime?: number | string;
+  effectTimeStr?: number | string;
+};
 
 const emit = defineEmits(['success']);
 const formData = ref<MemberLevelVO>();
@@ -20,6 +27,18 @@ const getTitle = computed(() => {
     ? $t('ui.actionTitle.edit', ['等级'])
     : $t('ui.actionTitle.create', ['等级']);
 });
+
+function normalizeSubmitData(data: MemberLevelVO) {
+  return {
+    ...data,
+    benefits:
+      typeof data.benefits === 'string' ? data.benefits.trim() : data.benefits,
+    upgradeCondition:
+      typeof data.upgradeCondition === 'string'
+        ? data.upgradeCondition.trim()
+        : data.upgradeCondition,
+  };
+}
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -40,9 +59,10 @@ const [Modal, modalApi] = useVbenModal({
     if (!valid) {
       return;
     }
+    const formValues = (await formApi.getValues()) as MemberLevelVO;
+    const data = normalizeSubmitData(formValues);
+
     modalApi.lock();
-    // 提交表单
-    const data = (await formApi.getValues()) as MemberLevelVO;
     try {
       await (formData.value?.id
         ? MemberLevelApi.updateMemberLevel(data)
@@ -57,16 +77,30 @@ const [Modal, modalApi] = useVbenModal({
   async onOpenChange(isOpen: boolean) {
     if (!isOpen) {
       formData.value = undefined;
+      await formApi.resetForm();
       return;
     }
     // 加载数据
     const data = modalApi.getData<MemberLevelVO>();
     if (!data || !data.id) {
+      await formApi.resetForm();
       return;
     }
     modalApi.lock();
     try {
-      formData.value = await MemberLevelApi.getMemberLevel(data.id);
+      const detail = (await MemberLevelApi.getMemberLevel(
+        data.id,
+      )) as MemberLevelFormDetail;
+      const effectiveTime =
+        detail.effectiveTime ??
+        detail.effectiveTimeStr ??
+        detail.effectTime ??
+        detail.effectTimeStr;
+
+      formData.value = {
+        ...detail,
+        effectiveTime: normalizeDateTimeFormValue(effectiveTime),
+      };
       // 设置到 values
       await formApi.setValues(formData.value);
     } finally {

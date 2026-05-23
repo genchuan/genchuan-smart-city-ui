@@ -5,6 +5,7 @@ import { nextTick, reactive } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 
+import dayjs from 'dayjs';
 import { ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -43,6 +44,66 @@ const dataObj = reactive({
   pageSize: 10,
   total: 0,
 });
+
+type GridColumn = NonNullable<VxeTableGridOptions['columns']>[number];
+
+const dateTimeFieldNames = new Set([
+  'applyTime',
+  'auditTime',
+  'bindTime',
+  'createTime',
+  'effectTime',
+  'execTime',
+  'lastSyncTime',
+  'loginTime',
+  'payTime',
+  'registerTime',
+  'updateTime',
+]);
+
+function normalizeDateTimeValue(value: number | string) {
+  if (typeof value === 'number') {
+    const timestampText = String(Math.trunc(value));
+    return timestampText.length === 10 ? value * 1000 : value;
+  }
+
+  if (/^\d{10,13}$/.test(value)) {
+    const timestamp = Number(value);
+    return value.length === 10 ? timestamp * 1000 : timestamp;
+  }
+
+  return value;
+}
+
+function formatDateTimeValue(value?: null | number | string) {
+  if (value === null || value === undefined || value === '') {
+    return '-';
+  }
+
+  const parsed = dayjs(normalizeDateTimeValue(value));
+  return parsed.isValid()
+    ? parsed.format('YYYY-MM-DD HH:mm:ss')
+    : String(value);
+}
+
+function isDateTimeColumn(column: GridColumn) {
+  const field = (column as { field?: unknown }).field;
+  return typeof field === 'string' && dateTimeFieldNames.has(field);
+}
+
+function withDateTimeFormat(columns: VxeTableGridOptions['columns']) {
+  return (columns || []).map((column) => {
+    if (!isDateTimeColumn(column)) {
+      return column;
+    }
+
+    return {
+      ...column,
+      formatter: ({ cellValue }: { cellValue?: null | number | string }) =>
+        formatDateTimeValue(cellValue),
+    };
+  });
+}
 
 const titleMap: Record<string, string> = {
   avgCreditScore: '平均信用分明细',
@@ -271,7 +332,7 @@ function getDrawerTitle() {
   return subTitle ? `${title} - ${subTitle}` : title;
 }
 
-function getGridColumns() {
+function getBaseGridColumns() {
   if (memberDrillTypes.has(drillInfo.drillType)) {
     return memberColumns;
   }
@@ -303,6 +364,10 @@ function getGridColumns() {
     return reportColumns;
   }
   return userColumns;
+}
+
+function getGridColumns() {
+  return withDateTimeFormat(getBaseGridColumns());
 }
 
 function buildReportParams(page: { currentPage: number; pageSize: number }) {
@@ -496,9 +561,9 @@ async function getDrillDownData({
 }
 
 const [Grid, gridApi] = useVbenVxeGrid({
+  class: 'user-op-drill-grid',
   gridOptions: {
     columns: getGridColumns(),
-    height: 'auto',
     keepSource: true,
     layouts: [['Top', 'Table', 'Bottom', 'Pager']],
     pagerConfig: dataObj,
@@ -579,6 +644,44 @@ defineExpose({
 </template>
 
 <style scoped lang="scss">
+.user-op-drill-dialog {
+  width: 100%;
+  min-height: 0;
+  max-height: calc(100vh - 120px);
+  overflow: auto;
+}
+
+:deep(.user-op-drill-grid) {
+  width: 100%;
+  height: auto !important;
+}
+
+:deep(.user-op-drill-grid .vxe-grid) {
+  width: 100%;
+  height: auto !important;
+}
+
+:deep(.user-op-drill-grid .vxe-grid--layout-body-wrapper),
+:deep(.user-op-drill-grid .vxe-grid--layout-body-content-wrapper) {
+  flex-grow: 0;
+  width: 100%;
+}
+
+:deep(.user-op-drill-grid .vxe-grid--layout-body-content-wrapper) {
+  overflow: visible;
+}
+
+:deep(.user-op-drill-grid .vxe-grid--table-container) {
+  flex-grow: 0;
+  width: 100%;
+}
+
+:deep(.user-op-drill-grid .vxe-grid--table-wrapper) {
+  flex-grow: 1;
+  width: 100%;
+  max-height: none;
+}
+
 :deep(.vxe-pager--wrapper) {
   justify-content: center;
 }
@@ -649,21 +752,10 @@ defineExpose({
   height: 300px;
 }
 
-.user-op-drill-dialog {
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-:deep(.vxe-grid) {
-  height: 100% !important;
-}
-
-:deep(.vxe-grid--layout-body-wrapper),
-:deep(.vxe-grid--layout-body-content-wrapper),
-:deep(.vxe-grid--table-container),
-:deep(.vxe-grid--table-wrapper) {
+:deep(.user-op-drill-grid .vxe-grid--layout-body-wrapper),
+:deep(.user-op-drill-grid .vxe-grid--layout-body-content-wrapper),
+:deep(.user-op-drill-grid .vxe-grid--table-container),
+:deep(.user-op-drill-grid .vxe-grid--table-wrapper) {
   min-height: 0;
 }
 </style>

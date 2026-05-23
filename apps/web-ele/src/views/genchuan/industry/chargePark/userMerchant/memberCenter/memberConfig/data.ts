@@ -2,20 +2,16 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { MemberConfigChartVO } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberConfig';
 
-import { h } from 'vue';
-
-import { ElTag } from 'element-plus';
-
 import { z } from '#/adapter/form';
 import { getRangePickerDefaultProps } from '#/utils';
 
 import {
+  FORM_TIME_FORMAT,
   formatDateTimeValue,
   formatLifecycleStatus,
   formatPercentValue,
   getLifecycleStatusTagType,
   lifecycleStatusOptions,
-  QUERY_TIME_FORMAT,
   STATUS_ENABLED,
 } from '../utils';
 
@@ -50,16 +46,6 @@ export function buildStatsDataFromApi(data?: Partial<MemberConfigChartVO>) {
       },
     ],
   };
-}
-
-function renderStatus(status?: number | string) {
-  return h(
-    ElTag,
-    {
-      type: getLifecycleStatusTagType(status),
-    },
-    () => formatLifecycleStatus(status),
-  );
 }
 
 export function useFormSchema(): VbenFormSchema[] {
@@ -113,7 +99,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'DatePicker',
       componentProps: {
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: QUERY_TIME_FORMAT,
+        valueFormat: FORM_TIME_FORMAT,
         type: 'datetime',
         placeholder: '请选择生效时间',
         class: '!w-full',
@@ -168,13 +154,16 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
     {
       field: 'id',
-      title: '配置编号',
+      title: '配置 ID',
       minWidth: 100,
     },
     {
       field: 'configType',
       title: '配置类型',
       minWidth: 140,
+      slots: {
+        default: 'configType',
+      },
     },
     {
       field: 'content',
@@ -184,29 +173,16 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       formatter: ({ cellValue }) => cellValue || '-',
     },
     {
-      field: 'remark',
-      title: '备注',
-      minWidth: 180,
-      showOverflow: 'tooltip',
-      formatter: ({ cellValue }) => cellValue || '-',
-    },
-    {
       field: 'status',
       title: '状态',
       minWidth: 100,
       slots: {
-        default: ({ row }) => renderStatus(row.status),
+        default: 'status',
       },
     },
     {
       field: 'effectiveTime',
       title: '生效时间',
-      minWidth: 180,
-      formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
-    },
-    {
-      field: 'createTime',
-      title: '创建时间',
       minWidth: 180,
       formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
     },

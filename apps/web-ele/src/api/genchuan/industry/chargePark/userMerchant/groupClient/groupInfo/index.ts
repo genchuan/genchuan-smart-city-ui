@@ -170,7 +170,9 @@ export const GroupInfoApi = {
   },
 
   importGroupInfoTemplate: async () => {
-    return await requestClient.download('/usermerchant/group-info/template');
+    return await requestClient.download('/usermerchant/group-info/template', {
+      responseReturn: 'raw',
+    });
   },
 
   exportGroupInfo: async (params: GroupInfoPageReqVO) => {

@@ -10,11 +10,11 @@ import { z } from '#/adapter/form';
 import { getRangePickerDefaultProps } from '#/utils';
 
 import {
+  FORM_TIME_FORMAT,
   formatDateTimeValue,
   formatLifecycleStatus,
   getLifecycleStatusTagType,
   lifecycleStatusOptions,
-  QUERY_TIME_FORMAT,
   STATUS_ENABLED,
 } from '../utils';
 
@@ -112,7 +112,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'DatePicker',
       componentProps: {
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: QUERY_TIME_FORMAT,
+        valueFormat: FORM_TIME_FORMAT,
         type: 'datetime',
         placeholder: '请选择生效时间',
         class: '!w-full',
@@ -166,24 +166,28 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
     {
       field: 'id',
-      title: '分组编号',
+      title: '分组 ID',
       minWidth: 100,
     },
     {
       field: 'name',
       title: '分组名称',
       minWidth: 160,
+      slots: {
+        default: 'groupName',
+      },
+    },
+    {
+      field: 'groupUserCount',
+      title: '分组用户数',
+      minWidth: 120,
+      slots: {
+        default: 'groupUserCount',
+      },
     },
     {
       field: 'description',
       title: '分组描述',
-      minWidth: 220,
-      showOverflow: 'tooltip',
-      formatter: ({ cellValue }) => cellValue || '-',
-    },
-    {
-      field: 'rule',
-      title: '分组规则',
       minWidth: 220,
       showOverflow: 'tooltip',
       formatter: ({ cellValue }) => cellValue || '-',
@@ -203,12 +207,6 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
     },
     {
-      field: 'createTime',
-      title: '创建时间',
-      minWidth: 180,
-      formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
-    },
-    {
       title: '操作',
       width: 190,
       fixed: 'right',
@@ -222,6 +220,7 @@ export const memberGroupDetailFields = [
   { key: 'name', label: '分组名称' },
   { key: 'description', label: '分组描述' },
   { key: 'rule', label: '分组规则' },
+  { key: 'groupUserCount', label: '分组用户数' },
   {
     key: 'status',
     label: '状态',

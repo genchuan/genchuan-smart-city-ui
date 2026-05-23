@@ -463,6 +463,15 @@ async function setSearchValues(values: Record<string, any>) {
   return gridApi.reload();
 }
 
+/** 设置图表钻取条件 */
+async function setDrillValues(values: Partial<typeof drillFilters.value>) {
+  drillFilters.value = {
+    ...drillFilters.value,
+    ...values,
+  };
+  return gridApi.reload();
+}
+
 /** 重新计算表格布局 */
 async function recalculateLayout() {
   await gridApi.grid?.recalculate?.(true);
@@ -472,6 +481,7 @@ async function recalculateLayout() {
 defineExpose({
   recalculateLayout,
   resetSearch,
+  setDrillValues,
   setSearchValues,
 });
 
@@ -725,8 +735,8 @@ function handleFilterByPlateColor(plateColor: string) {
 async function handleDownloadTemplate() {
   try {
     const data = await GroupCarApi.importGroupCarTemplate();
-    downloadFileIfValid({
-      fileName: 'group-car-import-template.xls',
+    await downloadFileIfValid({
+      fileName: '集团车辆导入模板.xlsx',
       source: data,
     });
     ElMessage.success('模板下载成功');

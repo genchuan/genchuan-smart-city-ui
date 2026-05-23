@@ -15,6 +15,7 @@ import {
 } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import { $t } from '#/locales';
 
+import { normalizeDateTimeFormValue } from '../../utils';
 import { useFormSchema } from '../data';
 
 const emit = defineEmits(['success']);
@@ -71,7 +72,13 @@ const [Modal, modalApi] = useVbenModal({
     }
     modalApi.lock();
     try {
-      formData.value = await getUser(data.id);
+      const detail = await getUser(data.id);
+      formData.value = {
+        ...detail,
+        birthday: normalizeDateTimeFormValue(detail.birthday),
+        expireTime: normalizeDateTimeFormValue(detail.expireTime),
+        loginDate: normalizeDateTimeFormValue(detail.loginDate),
+      };
       // 设置到 values
       await formApi.setValues(formData.value);
     } finally {

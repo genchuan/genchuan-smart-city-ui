@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import type { UploadUserFile } from 'element-plus';
+
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { MemberUserApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import type {
@@ -11,7 +13,7 @@ import { computed, onMounted, ref } from 'vue';
 import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
 
-import { ElLoading, ElMessage, ElTag } from 'element-plus';
+import { ElButton, ElDialog, ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -22,11 +24,16 @@ import {
   exportUser,
   getUserChart,
   getUserPage,
+  importUser,
+  importUserTemplate,
 } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
+import { getMemberLevelOptions } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/options';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
+import { downloadFileIfValid } from '#/views/genchuan/industry/chargePark/userMerchant/utils/download';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
+import MemberStatsVisualization from '../components/MemberStatsVisualization.vue';
 import { buildActiveFilterTags, refreshStatsLayout } from '../utils';
 import {
   buildDateRangeByChartName,
@@ -34,6 +41,7 @@ import {
   buildRecentMemberRange,
   buildStatsDataFromApi,
   formatMemberStatus,
+  getMemberStatusTagType,
   isMemberEnabled,
   memberUserDetailFields,
   useGridColumns,
@@ -49,11 +57,19 @@ const statsDataSource = ref(buildStatsDataFromApi());
 const detailDrawerRef = ref<null | { open: () => void }>(null);
 const detailObj = ref<MemberUserApi.User>();
 const showStats = ref(true);
+const importDialogVisible = ref(false);
+const importFileList = ref<UploadUserFile[]>([]);
+const levelNameMap = ref<Record<string, string>>({});
 
 const drillFilterConfigs: Record<string, FilterTagConfig> = {
   createTime: {
     label: '注册时间',
     type: 'primary',
+  },
+  levelId: {
+    formatter: formatLevelFilterValue,
+    label: '会员等级',
+    type: 'warning',
   },
 };
 
@@ -67,6 +83,7 @@ const searchFilterConfigs: Record<string, FilterTagConfig> = {
     type: 'warning',
   },
   levelId: {
+    formatter: formatLevelFilterValue,
     label: '会员等级',
     type: 'warning',
   },
@@ -92,6 +109,25 @@ const searchFilterConfigs: Record<string, FilterTagConfig> = {
     type: 'primary',
   },
 };
+
+function getMemberUserDisplay(row: MemberUserApi.User) {
+  return row.nickname || row.name || row.mobile || `会员${row.id}`;
+}
+
+function formatLevelFilterValue(value: unknown) {
+  return levelNameMap.value[String(value)] || String(value ?? '');
+}
+
+async function loadLevelNameMap() {
+  try {
+    const options = await getMemberLevelOptions();
+    levelNameMap.value = Object.fromEntries(
+      options.map((item) => [String(item.value), item.label]),
+    );
+  } catch (error) {
+    console.error('[memberUser] load member level options failed:', error);
+  }
+}
 
 const [FormModal, formModalApi] = useVbenModal({
   connectedComponent: Form,
@@ -233,6 +269,50 @@ async function handleExport() {
   }
 }
 
+async function handleImportUsers() {
+  const file = importFileList.value[0]?.raw;
+
+  if (!file) {
+    ElMessage.warning('请先上传导入文件');
+    return;
+  }
+
+  const loadingInstance = ElLoading.service({
+    text: '会员导入中...',
+  });
+
+  try {
+    await importUser(file);
+    importDialogVisible.value = false;
+    importFileList.value = [];
+    ElMessage.success('导入成功');
+    handleRefresh();
+  } catch (error) {
+    ElMessage.error('导入失败');
+    console.error('[memberUser] import failed:', error);
+  } finally {
+    loadingInstance.close();
+  }
+}
+
+async function handleDownloadTemplate() {
+  try {
+    const data = await importUserTemplate();
+    await downloadFileIfValid({
+      fileName: '会员导入模板.xlsx',
+      source: data,
+    });
+    ElMessage.success('模板下载成功');
+  } catch (error) {
+    ElMessage.error('模板下载失败');
+    console.error('[memberUser] download template failed:', error);
+  }
+}
+
+function handleImportDialogClosed() {
+  importFileList.value = [];
+}
+
 async function handleFilterAllMembers() {
   searchParams.value = {};
   drillFilters.value = {};
@@ -267,6 +347,38 @@ async function handleStatsLineClick({ name }: { name: string }) {
     createTime: range,
   };
   await handleRefresh();
+}
+
+async function handleDrillFilter(key: string, value: unknown) {
+  if (value === undefined || value === null || value === '') {
+    return;
+  }
+
+  const nextFilters = { ...drillFilters.value };
+
+  if (nextFilters[key] === value) {
+    delete nextFilters[key];
+  } else {
+    nextFilters[key] = value;
+  }
+
+  drillFilters.value = nextFilters;
+  await handleRefresh();
+}
+
+async function handleLevelDrill(row: MemberUserApi.User) {
+  if (!row.levelId) {
+    return;
+  }
+
+  if (row.levelName) {
+    levelNameMap.value = {
+      ...levelNameMap.value,
+      [String(row.levelId)]: row.levelName,
+    };
+  }
+
+  await handleDrillFilter('levelId', row.levelId);
 }
 
 async function syncQueryFormValues() {
@@ -325,6 +437,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 });
 
 onMounted(() => {
+  void loadLevelNameMap();
   void loadStats();
 });
 </script>
@@ -333,107 +446,230 @@ onMounted(() => {
   <div class="common-index">
     <FormModal @success="handleRefresh" />
 
-    <StatsVisualization
+    <MemberStatsVisualization
       v-if="showStats"
       :data="statsData"
       @card-click="handleStatsCardClick"
       @line-click="handleStatsLineClick"
     />
 
-    <div class="park-lot-table-new user-merchant-table-grid">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="display: flex; flex-wrap: wrap; align-items: center"
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
+    <PageTabsShell title="会员管理">
+      <div class="park-lot-table-new user-merchant-table-grid">
+        <Grid>
+          <template #table-title>
+            <div
+              class="tabel-tabs"
+              style="display: flex; flex-wrap: wrap; align-items: center"
             >
-              {{ tag.label }}：{{ tag.value }}
-            </ElTag>
-          </div>
-        </template>
+              <ElTag
+                v-for="tag in activeFilterTags"
+                :key="`${tag.source}-${tag.key}`"
+                :type="tag.type"
+                closable
+                style="height: 32px; margin: 4px 0; line-height: 32px"
+                @close="handleRemoveFilterTag(tag)"
+              >
+                {{ tag.label }}：{{ tag.value }}
+              </ElTag>
+            </div>
+          </template>
 
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton
-              v-access:code="['usermerchant:member-user:create']"
-              content="新增会员"
-              icon-name="Plus"
-              @click="handleCreate"
-            />
-            <IconButton
-              v-access:code="['usermerchant:member-user:export']"
-              content="导出"
-              icon-name="download"
-              @click="handleExport"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSearchShow"
-            />
-            <IconButton
-              :content="showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
+          <template #toolbar-tools>
+            <div class="common-toolbar-tools">
+              <IconButton
+                v-access:code="['usermerchant:member-user:create']"
+                content="新增会员"
+                icon-name="Plus"
+                @click="handleCreate"
+              />
+              <IconButton
+                content="导入"
+                icon-name="Upload"
+                @click="() => (importDialogVisible = true)"
+              />
+              <IconButton
+                v-access:code="['usermerchant:member-user:export']"
+                content="导出"
+                icon-name="download"
+                @click="handleExport"
+              />
+              <IconButton
+                content="搜索"
+                icon-name="search"
+                @click="handleSearchShow"
+              />
+              <IconButton
+                :content="showStats ? '隐藏统计' : '显示统计'"
+                :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
+                @click="toggleStats"
+              />
+              <IconButton
+                content="全屏"
+                icon-name="FullScreen"
+                @click="() => screenfull.toggle()"
+              />
+            </div>
+          </template>
 
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="详情"
-              icon-name="View"
+          <template #user="{ row }">
+            <el-text
+              class="common-align"
+              type="primary"
+              style="cursor: pointer"
               @click="handleViewDetail(row)"
-            />
-            <IconButton
-              v-access:code="['usermerchant:member-user:update']"
-              content="编辑"
-              icon-name="Edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              v-access:code="['usermerchant:member-user:update']"
-              :content="isMemberEnabled(row.status) ? '禁用' : '启用'"
-              :icon-name="isMemberEnabled(row.status) ? 'Close' : 'Check'"
-              @click="handleToggleStatus(row)"
-            />
+            >
+              {{ getMemberUserDisplay(row) }}
+            </el-text>
+          </template>
+
+          <template #level="{ row }">
+            <el-text
+              class="common-align"
+              type="primary"
+              style="cursor: pointer"
+              @click="handleLevelDrill(row)"
+            >
+              {{ row.levelName || row.levelId || '-' }}
+            </el-text>
+          </template>
+
+          <template #status="{ row }">
+            <ElTag
+              :type="getMemberStatusTagType(row.status)"
+              style="cursor: pointer"
+              @click="handleDrillFilter('status', row.status)"
+            >
+              {{ formatMemberStatus(row.status) }}
+            </ElTag>
+          </template>
+
+          <template #actions="{ row }">
+            <div class="table-toolbar-tools">
+              <IconButton
+                content="详情"
+                icon-name="View"
+                @click="handleViewDetail(row)"
+              />
+              <IconButton
+                v-if="isMemberEnabled(row.status)"
+                v-access:code="['usermerchant:member-user:update']"
+                content="编辑"
+                icon-name="Edit"
+                @click="handleEdit(row)"
+              />
+              <IconButton
+                v-access:code="['usermerchant:member-user:update']"
+                :content="isMemberEnabled(row.status) ? '禁用' : '启用'"
+                :icon-name="isMemberEnabled(row.status) ? 'Close' : 'Check'"
+                @click="handleToggleStatus(row)"
+              />
+            </div>
+          </template>
+        </Grid>
+
+        <Drawer title="搜索">
+          <QueryForm class="query-form" />
+        </Drawer>
+
+        <DetailDrawer
+          ref="detailDrawerRef"
+          :data="detailObj"
+          :fields="memberUserDetailFields"
+          :title="
+            detailObj
+              ? `${detailObj.nickname || detailObj.mobile}详情`
+              : '会员详情'
+          "
+        />
+
+        <ElDialog
+          v-model="importDialogVisible"
+          title="导入会员"
+          width="520px"
+          @closed="handleImportDialogClosed"
+        >
+          <div class="import-container">
+            <div class="template-section">
+              <div class="section-title">1. 下载导入模板</div>
+              <div class="section-content">
+                <p class="tip-text">
+                  请使用系统提供的模板格式导入数据，确保数据格式正确
+                </p>
+                <ElButton type="primary" @click="handleDownloadTemplate">
+                  下载导入模板
+                </ElButton>
+              </div>
+            </div>
+
+            <div class="upload-section">
+              <div class="section-title">2. 上传数据文件</div>
+              <div class="section-content">
+                <el-upload
+                  v-model:file-list="importFileList"
+                  drag
+                  :auto-upload="false"
+                  :limit="1"
+                  accept=".xls,.xlsx,.csv"
+                >
+                  <div class="el-upload__text">
+                    将文件拖到此处，或 <em>点击上传</em>
+                  </div>
+                  <template #tip>
+                    <div class="el-upload__tip">
+                      支持 .xls、.xlsx、.csv 格式文件
+                    </div>
+                  </template>
+                </el-upload>
+              </div>
+            </div>
           </div>
-        </template>
-      </Grid>
-
-      <Drawer title="搜索">
-        <QueryForm class="query-form" />
-      </Drawer>
-
-      <DetailDrawer
-        ref="detailDrawerRef"
-        :data="detailObj"
-        :fields="memberUserDetailFields"
-        :title="
-          detailObj
-            ? `${detailObj.nickname || detailObj.mobile}详情`
-            : '会员详情'
-        "
-      />
-    </div>
+          <template #footer>
+            <ElButton @click="importDialogVisible = false">取消</ElButton>
+            <ElButton type="primary" @click="handleImportUsers">
+              开始导入
+            </ElButton>
+          </template>
+        </ElDialog>
+      </div>
+    </PageTabsShell>
   </div>
 </template>
 
 <style scoped lang="scss">
+.import-container {
+  padding: 20px;
+}
+
+.template-section,
+.upload-section {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.section-content {
+  padding-left: 16px;
+}
+
+.tip-text {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+:deep(.el-upload) {
+  width: 100%;
+}
+
+:deep(.el-upload-dragger) {
+  width: 100%;
+}
+
 :deep(.vxe-pager--wrapper) {
   justify-content: center;
 }
@@ -476,31 +712,5 @@ onMounted(() => {
 :deep(.user-merchant-table-grid .vxe-tools--operate) {
   position: static !important;
   flex-shrink: 0;
-}
-
-:deep(.park-chart-box) {
-  height: 300px;
-}
-
-:deep(.park-chart-box .chart-box-left) {
-  height: 100%;
-}
-
-:deep(.park-chart-box .stat-card) {
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-:deep(.park-chart-box .map-wrapper),
-:deep(.park-chart-box .park-type-chart),
-:deep(.park-chart-box .simple-bar-chart) {
-  height: 100%;
-}
-
-:deep(.rule-chart-box),
-:deep(.rule-chart-box .chart-box-left),
-:deep(.rule-chart-box .charts-wrapper),
-:deep(.rule-chart-box .chart-area) {
-  height: 300px;
 }
 </style>

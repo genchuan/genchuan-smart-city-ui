@@ -323,14 +323,20 @@ async function handleExportRow(row: UserOpReportRow) {
     return;
   }
 
+  if (!row.statStartTime || !row.statEndTime) {
+    ElMessage.warning('当前报表缺少统计开始或结束时间，无法导出');
+    return;
+  }
+
   try {
     const data = await UserOpReportApi.exportUserOpReport({
-      id: row.id,
       reportCycle: row.reportType,
+      statEndTime: row.statEndTime,
+      statStartTime: row.statStartTime,
       tenantId: 1,
     });
     downloadFileFromBlobPart({
-      fileName: `用户运营报表_${row.reportType || row.id}.xls`,
+      fileName: `用户运营报表_${row.reportType || '当前报表'}.xls`,
       source: data,
     });
     ElMessage.success('导出成功');

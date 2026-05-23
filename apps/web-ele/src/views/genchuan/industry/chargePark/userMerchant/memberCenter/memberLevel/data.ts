@@ -2,20 +2,16 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { MemberLevelChartVO } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberLevel';
 
-import { h } from 'vue';
-
-import { ElTag } from 'element-plus';
-
 import { z } from '#/adapter/form';
 import { getRangePickerDefaultProps } from '#/utils';
 
 import {
+  FORM_TIME_FORMAT,
   formatDateTimeValue,
   formatLifecycleStatus,
   formatPercentValue,
   getLifecycleStatusTagType,
   lifecycleStatusOptions,
-  QUERY_TIME_FORMAT,
   STATUS_ENABLED,
 } from '../utils';
 
@@ -48,16 +44,6 @@ export function buildStatsDataFromApi(data?: Partial<MemberLevelChartVO>) {
       },
     ],
   };
-}
-
-function renderStatus(status?: number | string) {
-  return h(
-    ElTag,
-    {
-      type: getLifecycleStatusTagType(status),
-    },
-    () => formatLifecycleStatus(status),
-  );
 }
 
 export function useFormSchema(): VbenFormSchema[] {
@@ -125,7 +111,7 @@ export function useFormSchema(): VbenFormSchema[] {
       component: 'DatePicker',
       componentProps: {
         format: 'YYYY-MM-DD HH:mm:ss',
-        valueFormat: QUERY_TIME_FORMAT,
+        valueFormat: FORM_TIME_FORMAT,
         type: 'datetime',
         placeholder: '请选择生效时间',
         class: '!w-full',
@@ -194,16 +180,25 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       field: 'id',
       title: '等级编号',
       minWidth: 90,
+      slots: {
+        default: 'levelNo',
+      },
     },
     {
       field: 'name',
       title: '等级名称',
       minWidth: 140,
+      slots: {
+        default: 'levelName',
+      },
     },
     {
-      field: 'levelValue',
-      title: '等级数值',
-      minWidth: 100,
+      field: 'levelUserCount',
+      title: '等级用户数',
+      minWidth: 120,
+      slots: {
+        default: 'levelUserCount',
+      },
     },
     {
       field: 'upgradeCondition',
@@ -224,18 +219,12 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       title: '状态',
       minWidth: 100,
       slots: {
-        default: ({ row }) => renderStatus(row.status),
+        default: 'levelStatus',
       },
     },
     {
       field: 'effectiveTime',
       title: '生效时间',
-      minWidth: 180,
-      formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
-    },
-    {
-      field: 'createTime',
-      title: '创建时间',
       minWidth: 180,
       formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
     },
@@ -254,6 +243,7 @@ export const memberLevelDetailFields = [
   { key: 'levelValue', label: '等级数值' },
   { key: 'upgradeCondition', label: '升级条件' },
   { key: 'benefits', label: '权益内容' },
+  { key: 'levelUserCount', label: '等级用户数' },
   {
     key: 'status',
     label: '状态',
