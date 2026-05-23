@@ -64,16 +64,38 @@ export const defaultShortcuts = [
  * @description format 季度 + 星期 + 几周："YYYY-MM-DD HH:mm:ss WWW QQQQ ZZZ"
  * @returns 返回拼接后的时间字符串
  */
-export function formatDate(date: Date, format?: string): string {
+// export function formatDate(date: Date, format?: string): string {
+//   // 日期不存在，则返回空
+//   if (!date) {
+//     return '';
+//   }
+//   if (typeof date === 'string') {
+//     date = Number(date);
+//   }
+//   // 日期存在，则进行格式化
+//   return date ? dayjs(date).format(format ?? 'YYYY-MM-DD HH:mm:ss') : '';
+// }
+export function formatDate(date: any, format?: string): string {
   // 日期不存在，则返回空
   if (!date) {
     return '';
   }
+  let timestamp: any = date;
   if (typeof date === 'string') {
-    date = Number(date);
+    timestamp = Number(date);
+  }
+  // 处理数字时间戳：10 位（秒）转换为 13 位（毫秒）
+  if (
+    typeof timestamp === 'number' &&
+    timestamp > 0 &&
+    timestamp < 10_000_000_000
+  ) {
+    timestamp = timestamp * 1000;
   }
   // 日期存在，则进行格式化
-  return date ? dayjs(date).format(format ?? 'YYYY-MM-DD HH:mm:ss') : '';
+  return timestamp
+    ? dayjs(timestamp).format(format ?? 'YYYY-MM-DD HH:mm:ss')
+    : '';
 }
 // export function formatDate(date: any, format?: string): string {
 //   if (!date) {
