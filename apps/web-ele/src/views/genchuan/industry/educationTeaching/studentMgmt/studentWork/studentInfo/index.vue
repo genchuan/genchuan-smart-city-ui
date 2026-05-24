@@ -176,29 +176,68 @@ async function handleDelete(row) {
   } catch { }
 }
 
-// ========== 照片上传 ==========
+// ========== 照片上传（最终强化版） ==========
 const uploadLoading = ref(false);
 const photoPreviewUrl = ref('');
 
 const handlePhotoUpload = async (options) => {
   const { file } = options;
   uploadLoading.value = true;
+
   // 本地预览
-  if (photoPreviewUrl.value) URL.revokeObjectURL(photoPreviewUrl.value);
+  if (photoPreviewUrl.value && photoPreviewUrl.value.startsWith('blob:')) {
+    URL.revokeObjectURL(photoPreviewUrl.value);
+  }
   photoPreviewUrl.value = URL.createObjectURL(file);
+
   try {
     const res = await uploadFile(file);
-    const photoUrl = res.data?.url || res.url;
-    if (photoUrl) {
+    console.log('【上传响应】完整内容:', res); // 重要：查看控制台输出
+
+    // 万能解析函数：从各种响应结构中提取图片地址
+    let photoUrl = null;
+    if (typeof res === 'string') {
+      photoUrl = res;
+    } else if (res && typeof res === 'object') {
+      // 优先取 data 字段（可能是字符串，也可能是对象）
+      if (res.data !== undefined) {
+        if (typeof res.data === 'string') {
+          photoUrl = res.data;
+        } else if (typeof res.data === 'object' && (res.data.url || res.data.path)) {
+          photoUrl = res.data.url || res.data.path;
+        }
+      }
+      // 如果没有找到，尝试直接取 url 或 path
+      if (!photoUrl && res.url) photoUrl = res.url;
+      if (!photoUrl && res.path) photoUrl = res.path;
+      // 如果 response 被包装在 data 里，比如 { data: { data: "url" } }
+      if (!photoUrl && res.data && typeof res.data === 'object' && res.data.data) {
+        photoUrl = res.data.data;
+      }
+    }
+
+    if (photoUrl && photoUrl.startsWith('http')) {
+      // 更新表单字段
       await createFormApi.setFieldValue('photo', photoUrl);
+      // 将预览地址替换为服务器地址
+      if (photoPreviewUrl.value && photoPreviewUrl.value.startsWith('blob:')) {
+        URL.revokeObjectURL(photoPreviewUrl.value);
+      }
+      photoPreviewUrl.value = photoUrl;
       ElMessage.success('照片上传成功');
     } else {
-      throw new Error('未返回文件地址');
+      console.error('解析图片地址失败，响应结构:', res);
+      throw new Error(`未返回有效的图片地址 (${photoUrl})`);
     }
   } catch (error) {
-    console.error(error);
-    ElMessage.error('上传失败');
-    clearPhoto();
+    console.error('上传失败:', error);
+    ElMessage.error(error.message || '上传失败，请检查网络或后端接口');
+    // 清除预览
+    if (photoPreviewUrl.value && photoPreviewUrl.value.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreviewUrl.value);
+    }
+    photoPreviewUrl.value = '';
+    await createFormApi.setFieldValue('photo', '');
   } finally {
     uploadLoading.value = false;
   }
@@ -206,7 +245,9 @@ const handlePhotoUpload = async (options) => {
 
 const clearPhoto = () => {
   if (photoPreviewUrl.value) {
-    URL.revokeObjectURL(photoPreviewUrl.value);
+    if (photoPreviewUrl.value.startsWith('blob:')) {
+      URL.revokeObjectURL(photoPreviewUrl.value);
+    }
     photoPreviewUrl.value = '';
   }
   createFormApi.setFieldValue('photo', '');

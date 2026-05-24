@@ -699,8 +699,8 @@ async function handleRebind(row: UserCarRow) {
 async function handleDownloadTemplate() {
   try {
     const data = await UserCarApi.importUserCarTemplate();
-    downloadFileIfValid({
-      fileName: 'user-car-import-template.xls',
+    await downloadFileIfValid({
+      fileName: '用户车辆导入模板.xlsx',
       source: data,
     });
     ElMessage.success('模板下载成功');

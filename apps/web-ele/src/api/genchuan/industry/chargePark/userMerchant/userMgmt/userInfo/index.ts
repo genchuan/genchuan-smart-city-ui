@@ -160,7 +160,9 @@ export const UserInfoApi = {
   },
 
   importUserInfoTemplate: async () => {
-    return await requestClient.download('/usermerchant/user-info/template');
+    return await requestClient.download('/usermerchant/user-info/template', {
+      responseReturn: 'raw',
+    });
   },
 
   exportUserInfo: async (params: UserInfoPageReqVO) => {

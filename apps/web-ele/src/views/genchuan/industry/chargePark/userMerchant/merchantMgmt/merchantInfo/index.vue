@@ -8,6 +8,7 @@ import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant
 import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 import { buildDateRangeByChartName } from '#/views/genchuan/industry/chargePark/userMerchant/utils/chartDrill';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
 import { buildStatsDataFromApi } from './data';
 import Table from './table/index.vue';
 
@@ -127,12 +128,14 @@ onMounted(() => {
       @card-click="handleMerchantInfoCardClick"
       @line-click="handleMerchantInfoLineClick"
     />
-    <Table
-      ref="tableRef"
-      :reload-stats="loadStats"
-      :show-stats="showStats"
-      :toggle-stats="toggleStats"
-    />
+    <PageTabsShell title="商户信息">
+      <Table
+        ref="tableRef"
+        :reload-stats="loadStats"
+        :show-stats="showStats"
+        :toggle-stats="toggleStats"
+      />
+    </PageTabsShell>
   </div>
 </template>
 

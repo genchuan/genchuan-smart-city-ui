@@ -4,29 +4,38 @@ import type {
   MemberLevelPageReqVO,
   MemberLevelVO,
 } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberLevel';
+import type { MemberUserApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import type {
   ActiveFilterTag,
   FilterTagConfig,
 } from '#/views/genchuan/industry/chargePark/userMerchant/memberCenter/utils';
 
-import { computed, onMounted, ref } from 'vue';
+import { computed, h, nextTick, onMounted, ref } from 'vue';
 
 import { confirm, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
-import { ElLoading, ElMessage, ElTag } from 'element-plus';
+import { ElButton, ElDialog, ElLoading, ElMessage, ElTag } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberLevelApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberLevel';
+import {
+  getUserCount,
+  getUserPage,
+} from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
-import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
+import MemberStatsVisualization from '../components/MemberStatsVisualization.vue';
+import { formatMemberStatus, getMemberStatusTagType } from '../memberUser/data';
 import {
   buildActiveFilterTags,
   cleanQueryParams,
+  formatDateTimeValue,
   formatLifecycleStatus,
+  getLifecycleStatusTagType,
   isEnabledStatus,
   refreshStatsLayout,
   STATUS_ENABLED,
@@ -52,6 +61,15 @@ const drillFilters = ref<Record<string, any>>({});
 const searchParams = ref<Record<string, any>>({});
 const statsDataSource = ref(buildStatsDataFromApi());
 const showStats = ref(true);
+const levelUserCountCache = new Map<number, number>();
+const levelUserDialogVisible = ref(false);
+const selectedLevel = ref<MemberLevelVO>();
+
+const levelUserDialogTitle = computed(() =>
+  selectedLevel.value?.name
+    ? `${selectedLevel.value.name}会员列表`
+    : '等级会员列表',
+);
 
 const drillFilterConfigs: Record<string, FilterTagConfig> = {
   name: {
@@ -151,6 +169,7 @@ async function onQuerySubmit(values: Record<string, any>) {
 }
 
 function handleRefresh() {
+  levelUserCountCache.clear();
   gridApi.reload();
   void loadStats();
 }
@@ -174,9 +193,13 @@ function handleEdit(row: MemberLevelVO) {
 }
 
 async function handleDetail(row: MemberLevelVO) {
-  detailObj.value = row.id
+  const detail = row.id
     ? await MemberLevelApi.getMemberLevel(Number(row.id))
     : row;
+  detailObj.value = {
+    ...detail,
+    levelUserCount: await getLevelUserCount(detail),
+  };
   detailDrawerRef.value?.open();
 }
 
@@ -221,11 +244,187 @@ async function handleStatsBarClick({ name }: { name: string }) {
     return;
   }
 
-  drillFilters.value = {
-    name,
-  };
+  const level = await getLevelByName(name);
+
+  if (!level) {
+    ElMessage.warning('未找到对应会员等级');
+    return;
+  }
+
+  await handleOpenLevelUsers(level);
+}
+
+async function handleDrillFilter(key: string, value: unknown) {
+  if (value === undefined || value === null || value === '') {
+    return;
+  }
+
+  const nextFilters = { ...drillFilters.value };
+
+  if (nextFilters[key] === value) {
+    delete nextFilters[key];
+  } else {
+    nextFilters[key] = value;
+  }
+
+  drillFilters.value = nextFilters;
   await handleRefresh();
 }
+
+function getDirectLevelUserCount(row: MemberLevelVO) {
+  const value =
+    row.levelUserCount ??
+    row.userCount ??
+    row.memberUserCount ??
+    row.memberCount;
+  const count = Number(value);
+
+  return Number.isFinite(count) ? count : undefined;
+}
+
+async function getLevelUserCount(row: MemberLevelVO) {
+  const directCount = getDirectLevelUserCount(row);
+
+  if (directCount !== undefined) {
+    return directCount;
+  }
+
+  if (!row.id) {
+    return 0;
+  }
+
+  const levelId = Number(row.id);
+  const cachedCount = levelUserCountCache.get(levelId);
+
+  if (cachedCount !== undefined) {
+    return cachedCount;
+  }
+
+  const count = await getUserCount({ levelId });
+  levelUserCountCache.set(levelId, count);
+
+  return count;
+}
+
+async function appendLevelUserCounts(list: MemberLevelVO[] = []) {
+  return await Promise.all(
+    list.map(async (item) => ({
+      ...item,
+      levelUserCount: await getLevelUserCount(item),
+    })),
+  );
+}
+
+async function getLevelByName(name: string) {
+  const result = await MemberLevelApi.getMemberLevelPage({
+    name,
+    pageNo: 1,
+    pageSize: 100,
+  });
+
+  return result.list?.find((item) => item.name === name) || result.list?.[0];
+}
+
+async function handleOpenLevelUsers(row: MemberLevelVO) {
+  selectedLevel.value = {
+    ...row,
+    levelUserCount: await getLevelUserCount(row),
+  };
+  levelUserDialogVisible.value = true;
+  await nextTick();
+  levelUserGridApi.reload();
+}
+
+function getMemberUserDisplay(row: MemberUserApi.User) {
+  return row.nickname || row.name || row.mobile || `会员${row.id}`;
+}
+
+function renderMemberStatus(status?: number | string) {
+  return h(
+    ElTag,
+    {
+      type: getMemberStatusTagType(status),
+    },
+    () => formatMemberStatus(status),
+  );
+}
+
+const [LevelUserGrid, levelUserGridApi] = useVbenVxeGrid({
+  gridOptions: {
+    columns: [
+      {
+        field: 'id',
+        title: '会员 ID',
+        minWidth: 100,
+      },
+      {
+        field: 'nickname',
+        title: '用户',
+        minWidth: 160,
+        formatter: ({ row }) => getMemberUserDisplay(row),
+      },
+      {
+        field: 'mobile',
+        title: '手机号',
+        minWidth: 130,
+        formatter: ({ cellValue }) => cellValue || '-',
+      },
+      {
+        field: 'levelName',
+        title: '会员等级',
+        minWidth: 120,
+        formatter: ({ row }) => row.levelName || row.levelId || '-',
+      },
+      {
+        field: 'status',
+        title: '状态',
+        minWidth: 90,
+        slots: {
+          default: ({ row }) => renderMemberStatus(row.status),
+        },
+      },
+      {
+        field: 'createTime',
+        title: '开通时间',
+        minWidth: 160,
+        formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
+      },
+      {
+        field: 'expireTime',
+        title: '到期时间',
+        minWidth: 160,
+        formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
+      },
+    ],
+    keepSource: true,
+    proxyConfig: {
+      ajax: {
+        query: async ({ page }) => {
+          if (!selectedLevel.value?.id) {
+            return {
+              list: [],
+              total: 0,
+            };
+          }
+
+          return await getUserPage({
+            levelId: Number(selectedLevel.value.id),
+            pageNo: page.currentPage,
+            pageSize: page.pageSize,
+          });
+        },
+      },
+    },
+    rowConfig: {
+      keyField: 'id',
+      isHover: true,
+    },
+    toolbarConfig: {
+      refresh: true,
+    },
+  } as VxeTableGridOptions<MemberUserApi.User>,
+  showSearchForm: false,
+});
 
 async function syncQueryFormValues() {
   await queryFormApi.resetForm();
@@ -261,11 +460,16 @@ const [Grid, gridApi] = useVbenVxeGrid({
             ...drillFilters.value,
           }) as MemberLevelPageReqVO;
 
-          return await MemberLevelApi.getMemberLevelPage({
+          const result = await MemberLevelApi.getMemberLevelPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             ...queryValues,
           });
+
+          return {
+            ...result,
+            list: await appendLevelUserCounts(result.list || []),
+          };
         },
       },
     },
@@ -291,92 +495,132 @@ onMounted(() => {
   <div class="common-index">
     <FormModal @success="handleRefresh" />
 
-    <StatsVisualization
+    <MemberStatsVisualization
       v-if="showStats"
       :data="statsData"
       @bar-click="handleStatsBarClick"
       @card-click="handleStatsCardClick"
     />
 
-    <div class="park-lot-table-new user-merchant-table-grid">
-      <Grid>
-        <template #table-title>
-          <div
-            class="tabel-tabs"
-            style="display: flex; flex-wrap: wrap; align-items: center"
-          >
-            <ElTag
-              v-for="tag in activeFilterTags"
-              :key="`${tag.source}-${tag.key}`"
-              :type="tag.type"
-              closable
-              style="height: 32px; margin: 4px 0; line-height: 32px"
-              @close="handleRemoveFilterTag(tag)"
+    <PageTabsShell title="会员等级">
+      <div class="park-lot-table-new user-merchant-table-grid">
+        <Grid>
+          <template #table-title>
+            <div
+              class="tabel-tabs"
+              style="display: flex; flex-wrap: wrap; align-items: center"
             >
-              {{ tag.label }}：{{ tag.value }}
+              <ElTag
+                v-for="tag in activeFilterTags"
+                :key="`${tag.source}-${tag.key}`"
+                :type="tag.type"
+                closable
+                style="height: 32px; margin: 4px 0; line-height: 32px"
+                @close="handleRemoveFilterTag(tag)"
+              >
+                {{ tag.label }}：{{ tag.value }}
+              </ElTag>
+            </div>
+          </template>
+
+          <template #toolbar-tools>
+            <div class="common-toolbar-tools">
+              <IconButton
+                v-access:code="['usermerchant:member-level:create']"
+                content="新增等级"
+                icon-name="Plus"
+                @click="handleCreate"
+              />
+              <IconButton
+                content="搜索"
+                icon-name="search"
+                @click="handleSearchShow"
+              />
+              <IconButton
+                :content="showStats ? '隐藏统计' : '显示统计'"
+                :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
+                @click="toggleStats"
+              />
+              <IconButton
+                content="全屏"
+                icon-name="FullScreen"
+                @click="() => screenfull.toggle()"
+              />
+            </div>
+          </template>
+          <template #actions="{ row }">
+            <div class="table-toolbar-tools">
+              <IconButton
+                content="查看"
+                icon-name="View"
+                @click="handleDetail(row)"
+              />
+              <IconButton
+                v-access:code="['usermerchant:member-level:update']"
+                content="编辑"
+                icon-name="Edit"
+                @click="handleEdit(row)"
+              />
+              <IconButton
+                v-access:code="['usermerchant:member-level:update']"
+                :content="isEnabledStatus(row.status) ? '禁用' : '生效'"
+                :icon-name="isEnabledStatus(row.status) ? 'Close' : 'Check'"
+                @click="handleToggleStatus(row)"
+              />
+            </div>
+          </template>
+          <template #levelNo="{ row }">
+            <ElButton link type="primary" @click="handleDetail(row)">
+              {{ row.id || '-' }}
+            </ElButton>
+          </template>
+          <template #levelName="{ row }">
+            <ElButton
+              link
+              type="primary"
+              @click="handleDrillFilter('name', row.name)"
+            >
+              {{ row.name || '-' }}
+            </ElButton>
+          </template>
+          <template #levelUserCount="{ row }">
+            <ElButton link type="primary" @click="handleOpenLevelUsers(row)">
+              {{ row.levelUserCount ?? 0 }}
+            </ElButton>
+          </template>
+          <template #levelStatus="{ row }">
+            <ElTag
+              :type="getLifecycleStatusTagType(row.status)"
+              style="cursor: pointer"
+              @click="handleDrillFilter('status', row.status)"
+            >
+              {{ formatLifecycleStatus(row.status) }}
             </ElTag>
-          </div>
-        </template>
+          </template>
+        </Grid>
 
-        <template #toolbar-tools>
-          <div class="common-toolbar-tools">
-            <IconButton
-              v-access:code="['usermerchant:member-level:create']"
-              content="新增等级"
-              icon-name="Plus"
-              @click="handleCreate"
-            />
-            <IconButton
-              content="搜索"
-              icon-name="search"
-              @click="handleSearchShow"
-            />
-            <IconButton
-              :content="showStats ? '隐藏统计' : '显示统计'"
-              :icon-name="showStats ? 'ArrowUp' : 'ArrowDown'"
-              @click="toggleStats"
-            />
-            <IconButton
-              content="全屏"
-              icon-name="FullScreen"
-              @click="() => screenfull.toggle()"
-            />
-          </div>
-        </template>
-        <template #actions="{ row }">
-          <div class="table-toolbar-tools">
-            <IconButton
-              content="查看"
-              icon-name="View"
-              @click="handleDetail(row)"
-            />
-            <IconButton
-              v-access:code="['usermerchant:member-level:update']"
-              content="编辑"
-              icon-name="Edit"
-              @click="handleEdit(row)"
-            />
-            <IconButton
-              v-access:code="['usermerchant:member-level:update']"
-              :content="isEnabledStatus(row.status) ? '禁用' : '生效'"
-              :icon-name="isEnabledStatus(row.status) ? 'Close' : 'Check'"
-              @click="handleToggleStatus(row)"
-            />
-          </div>
-        </template>
-      </Grid>
+        <Drawer title="搜索">
+          <QueryForm class="query-form" />
+        </Drawer>
 
-      <Drawer title="搜索">
-        <QueryForm class="query-form" />
-      </Drawer>
+        <DetailDrawer
+          ref="detailDrawerRef"
+          :data="detailObj"
+          :fields="memberLevelDetailFields"
+          :title="detailObj ? `${detailObj.name}详情` : '会员等级详情'"
+        />
 
-      <DetailDrawer
-        ref="detailDrawerRef"
-        :data="detailObj"
-        :fields="memberLevelDetailFields"
-        :title="detailObj ? `${detailObj.name}详情` : '会员等级详情'"
-      />
-    </div>
+        <ElDialog
+          v-model="levelUserDialogVisible"
+          :title="levelUserDialogTitle"
+          width="960px"
+        >
+          <div class="member-level-user-dialog">
+            <LevelUserGrid />
+          </div>
+        </ElDialog>
+      </div>
+    </PageTabsShell>
   </div>
 </template>
 
@@ -425,29 +669,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-:deep(.park-chart-box) {
-  height: 300px;
-}
-
-:deep(.park-chart-box .chart-box-left) {
-  height: 100%;
-}
-
-:deep(.park-chart-box .stat-card) {
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-:deep(.park-chart-box .map-wrapper),
-:deep(.park-chart-box .park-type-chart),
-:deep(.park-chart-box .simple-bar-chart) {
-  height: 100%;
-}
-
-:deep(.rule-chart-box),
-:deep(.rule-chart-box .chart-box-left),
-:deep(.rule-chart-box .charts-wrapper),
-:deep(.rule-chart-box .chart-area) {
-  height: 300px;
+.member-level-user-dialog {
+  min-height: 420px;
 }
 </style>

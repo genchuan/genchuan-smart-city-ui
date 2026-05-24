@@ -136,13 +136,16 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
     {
       field: 'id',
-      title: '标签编号',
+      title: '标签 ID',
       minWidth: 100,
     },
     {
       field: 'name',
       title: '标签名称',
       minWidth: 160,
+      slots: {
+        default: 'tagName',
+      },
     },
     {
       field: 'description',
@@ -158,12 +161,6 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
       slots: {
         default: ({ row }) => renderStatus(row.status),
       },
-    },
-    {
-      field: 'createTime',
-      title: '创建时间',
-      minWidth: 180,
-      formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
     },
     {
       title: '操作',

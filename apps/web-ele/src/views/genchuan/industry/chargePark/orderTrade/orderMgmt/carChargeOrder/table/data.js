@@ -349,6 +349,7 @@ export function useGridColumns() {
       title: '创建者',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'creator' },
     },
     {
       field: 'updater',

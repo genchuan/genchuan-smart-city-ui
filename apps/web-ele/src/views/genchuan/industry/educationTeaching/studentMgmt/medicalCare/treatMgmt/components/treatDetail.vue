@@ -88,7 +88,7 @@ defineExpose({open: () => detailDrawerApi.open(), close: () => detailDrawerApi.c
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">家长反馈内容：</div>
-        <div class="detail-row-right">{{ detailObj.feedbackContent || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.reserve1 || '-' }}</div>
       </div>
       <div class="detail-card-row">
         <div class="detail-row-left">状态：</div>

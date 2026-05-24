@@ -2,10 +2,6 @@ import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { MemberPointChartVO } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberPoint';
 
-import { h } from 'vue';
-
-import { ElTag } from 'element-plus';
-
 import { getRangePickerDefaultProps } from '#/utils';
 
 import {
@@ -29,6 +25,15 @@ export function formatChangeType(value?: number | string) {
     return '消耗';
   }
   return '-';
+}
+
+export function formatChangeAmount(value?: number | string) {
+  const amount = Number(value ?? 0);
+  return amount > 0 ? `+${amount}` : String(amount);
+}
+
+export function getChangeAmountTagType(value?: number | string) {
+  return Number(value ?? 0) >= 0 ? 'primary' : 'danger';
 }
 
 export function isAbnormalRecord(status?: number | string) {
@@ -64,50 +69,24 @@ export function buildStatsDataFromApi(data?: Partial<MemberPointChartVO>) {
   };
 }
 
-function renderChangeAmount(value?: number | string) {
-  const amount = Number(value ?? 0);
-
-  return h(
-    ElTag,
-    {
-      type: amount >= 0 ? 'primary' : 'danger',
-    },
-    () => (amount > 0 ? `+${amount}` : String(amount)),
-  );
-}
-
-function renderStatus(status?: number | string) {
-  return h(
-    ElTag,
-    {
-      type: getRecordStatusTagType(status),
-    },
-    () => formatRecordStatus(status),
-  );
-}
-
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
     {
-      fieldName: 'userId',
-      label: '用户编号',
-      component: 'InputNumber',
+      fieldName: 'userName',
+      label: '用户名称',
+      component: 'Input',
       componentProps: {
-        min: 1,
-        precision: 0,
-        placeholder: '请输入用户编号',
-        controlsPosition: 'right',
+        placeholder: '请输入用户名称',
         clearable: true,
-        class: '!w-full',
       },
     },
     {
       fieldName: 'changeAmount',
-      label: '变动积分',
+      label: '变动金额',
       component: 'InputNumber',
       componentProps: {
         precision: 0,
-        placeholder: '请输入变动积分',
+        placeholder: '请输入变动金额',
         controlsPosition: 'right',
         clearable: true,
         class: '!w-full',
@@ -125,10 +104,10 @@ export function useGridFormSchema(): VbenFormSchema[] {
     },
     {
       fieldName: 'status',
-      label: '记录状态',
+      label: '状态',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择记录状态',
+        placeholder: '请选择状态',
         clearable: true,
         options: recordStatusOptions,
       },
@@ -149,39 +128,32 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
     {
       field: 'id',
-      title: '记录编号',
+      title: '积分 ID',
       minWidth: 100,
     },
     {
-      field: 'userId',
-      title: '用户编号',
-      minWidth: 100,
-    },
-    {
-      field: 'title',
-      title: '积分标题',
-      minWidth: 160,
-      formatter: ({ cellValue }) => cellValue || '-',
-    },
-    {
-      field: 'changeAmount',
-      title: '变动积分',
-      minWidth: 120,
+      field: 'userName',
+      title: '用户',
+      minWidth: 150,
       slots: {
-        default: ({ row }) => renderChangeAmount(row.changeAmount),
+        default: 'user',
       },
     },
     {
-      field: 'totalPoint',
-      title: '变动后总积分',
-      minWidth: 130,
-      formatter: ({ cellValue }) => Number(cellValue ?? 0),
+      field: 'changeAmount',
+      title: '变动金额',
+      minWidth: 120,
+      slots: {
+        default: 'changeAmount',
+      },
     },
     {
       field: 'changeType',
       title: '变动类型',
       minWidth: 100,
-      formatter: ({ cellValue }) => formatChangeType(cellValue),
+      slots: {
+        default: 'changeType',
+      },
     },
     {
       field: 'changeReason',
@@ -192,10 +164,10 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
     },
     {
       field: 'status',
-      title: '记录状态',
-      minWidth: 110,
+      title: '状态',
+      minWidth: 100,
       slots: {
-        default: ({ row }) => renderStatus(row.status),
+        default: 'status',
       },
     },
     {
@@ -214,16 +186,16 @@ export function useGridColumns(): VxeTableGridOptions['columns'] {
 }
 
 export const memberPointDetailFields = [
-  { key: 'id', label: '记录编号' },
-  { key: 'userId', label: '用户编号' },
+  { key: 'id', label: '积分 ID' },
+  { key: 'userName', label: '用户' },
   { key: 'title', label: '积分标题' },
-  { key: 'changeAmount', label: '变动积分' },
+  { key: 'changeAmount', label: '变动金额' },
   { key: 'totalPoint', label: '变动后总积分' },
   { key: 'changeType', label: '变动类型', formatter: formatChangeType },
   { key: 'changeReason', label: '变动原因' },
   {
     key: 'status',
-    label: '记录状态',
+    label: '状态',
     type: 'tag',
     tagType: getRecordStatusTagType,
     formatter: formatRecordStatus,

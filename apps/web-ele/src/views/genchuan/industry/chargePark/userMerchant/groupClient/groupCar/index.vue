@@ -6,6 +6,7 @@ import { ElMessage } from 'element-plus';
 import { GroupCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupCar';
 import StatsVisualization from '#/genchuan-components/stats/StatsVisualization.vue';
 
+import PageTabsShell from '../../components/PageTabsShell.vue';
 import { buildStatsDataFromApi } from './data';
 import Table from './table/index.vue';
 
@@ -14,6 +15,7 @@ import '#/genchuan-components/page/index.scss';
 type TableInstance = {
   recalculateLayout: () => Promise<void> | void;
   resetSearch: () => Promise<void> | void;
+  setDrillValues: (values: Record<string, any>) => Promise<void> | void;
   setSearchValues: (values: Record<string, any>) => Promise<void> | void;
 };
 
@@ -65,12 +67,12 @@ const statsData = computed(() => statsDataSource.value);
 
 /** 钻取已绑定车辆 */
 async function handleFilterBoundCars() {
-  await tableRef.value?.setSearchValues({ status: '已绑定' });
+  await tableRef.value?.setDrillValues({ status: '已绑定' });
 }
 
 /** 钻取已审核通过车辆 */
 async function handleFilterApprovedCars() {
-  await tableRef.value?.setSearchValues({ status: '已绑定' });
+  await tableRef.value?.setDrillValues({ status: '已绑定' });
 }
 
 /** 按车辆类型钻取列表 */
@@ -94,12 +96,14 @@ onMounted(() => {
           index === 0 ? handleFilterBoundCars() : handleFilterApprovedCars()
       "
     />
-    <Table
-      ref="tableRef"
-      :reload-stats="loadStats"
-      :show-stats="showStats"
-      :toggle-stats="toggleStats"
-    />
+    <PageTabsShell title="集团车辆">
+      <Table
+        ref="tableRef"
+        :reload-stats="loadStats"
+        :show-stats="showStats"
+        :toggle-stats="toggleStats"
+      />
+    </PageTabsShell>
   </div>
 </template>
 

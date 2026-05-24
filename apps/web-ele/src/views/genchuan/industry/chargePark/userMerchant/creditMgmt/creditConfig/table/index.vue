@@ -57,6 +57,29 @@ const drillFilters = ref({
 });
 const searchParams = ref<Record<string, any>>({});
 
+function hasQueryValue(value: any) {
+  return !(
+    value === '' ||
+    value === null ||
+    value === undefined ||
+    (Array.isArray(value) && value.length === 0)
+  );
+}
+
+function mergeQueryValues(...sources: Array<Record<string, any>>) {
+  const result: Record<string, any> = {};
+
+  for (const source of sources) {
+    Object.entries(source).forEach(([key, value]) => {
+      if (hasQueryValue(value)) {
+        result[key] = value;
+      }
+    });
+  }
+
+  return result;
+}
+
 const drillFilterConfigs = {
   configType: {
     label: '配置类型',
@@ -246,41 +269,22 @@ async function queryCreditConfigPage({
 }: {
   page: { currentPage: number; pageSize: number };
 }) {
-  const queryValues = {
-    ...searchParams.value,
+  const queryValues = mergeQueryValues(searchParams.value, {
+    configType: drillFilters.value.configType,
     levelThreshold: drillFilters.value.levelThreshold,
     ruleDesc: drillFilters.value.ruleDesc,
     status: drillFilters.value.status,
-  };
-  const isConfigTypeDrill = !!drillFilters.value.configType;
+  });
   const result = await CreditConfigApi.getCreditConfigPage({
-    pageNo: isConfigTypeDrill ? 1 : page.currentPage,
-    pageSize: isConfigTypeDrill ? 200 : page.pageSize,
+    pageNo: page.currentPage,
+    pageSize: page.pageSize,
     ...buildCreditConfigQueryParams(queryValues),
   });
 
   const sourceList = Array.isArray(result?.list) ? result.list : [];
-  const mappedList = sourceList.map((item) =>
-    buildCreditConfigRowFromApi(item),
-  );
-  const filteredList = drillFilters.value.configType
-    ? mappedList.filter(
-        (item) => item.configType === drillFilters.value.configType,
-      )
-    : mappedList;
-
-  if (isConfigTypeDrill) {
-    return {
-      list: filteredList.slice(
-        (page.currentPage - 1) * page.pageSize,
-        page.currentPage * page.pageSize,
-      ),
-      total: filteredList.length,
-    };
-  }
 
   return {
-    list: filteredList,
+    list: sourceList.map((item) => buildCreditConfigRowFromApi(item)),
     total: Number(result?.total || 0),
   };
 }
@@ -444,6 +448,15 @@ async function setSearchValues(values: Record<string, any>) {
   return gridApi.reload();
 }
 
+/** 设置图表钻取条件 */
+async function setDrillValues(values: Partial<typeof drillFilters.value>) {
+  drillFilters.value = {
+    ...drillFilters.value,
+    ...values,
+  };
+  return gridApi.reload();
+}
+
 /** 重新计算表格布局 */
 async function recalculateLayout() {
   await gridApi.grid?.recalculate?.(true);
@@ -453,6 +466,7 @@ async function recalculateLayout() {
 defineExpose({
   recalculateLayout,
   resetSearch,
+  setDrillValues,
   setSearchValues,
 });
 
@@ -563,39 +577,39 @@ async function syncQueryFormValues() {
 function handleFilterRuleDesc(ruleDesc: string) {
   drillFilters.value.ruleDesc =
     drillFilters.value.ruleDesc === ruleDesc ? '' : ruleDesc;
-  gridApi.reload();
+  void gridApi.reload();
 }
 
 /** 按等级阈值筛选 */
 function handleFilterLevelThreshold(levelThreshold: string) {
   drillFilters.value.levelThreshold =
     drillFilters.value.levelThreshold === levelThreshold ? '' : levelThreshold;
-  gridApi.reload();
+  void gridApi.reload();
 }
 
 /** 按配置状态筛选 */
 function handleFilterStatus(status: CreditConfigRow['status']) {
   drillFilters.value.status =
     drillFilters.value.status === status ? '' : status;
-  gridApi.reload();
+  void gridApi.reload();
 }
 
 /** 取消规则筛选 */
 function handleCancelRuleDescFilter() {
   drillFilters.value.ruleDesc = '';
-  gridApi.reload();
+  void gridApi.reload();
 }
 
 /** 取消等级阈值筛选 */
 function handleCancelLevelThresholdFilter() {
   drillFilters.value.levelThreshold = '';
-  gridApi.reload();
+  void gridApi.reload();
 }
 
 /** 取消配置状态筛选 */
 function handleCancelStatusFilter() {
   drillFilters.value.status = '';
-  gridApi.reload();
+  void gridApi.reload();
 }
 
 /** 移除筛选标签 */
@@ -604,7 +618,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
     switch (tag.key) {
       case 'configType': {
         drillFilters.value.configType = '';
-        gridApi.reload();
+        await gridApi.reload();
 
         break;
       }
