@@ -12,7 +12,7 @@ import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
 import EditDrawer from './edit.vue';
-import ReconcileBillDetailDrawer from '../reconcileBill/table/detail.vue';
+import ReconcileBillDetailDrawer from '#/views/genchuan/industry/chargePark/orderTrade/merchantReconcile/reconcileBill/table/detail.vue';
 const props = defineProps({
   secondShow: {
     type: Boolean,
