@@ -116,6 +116,54 @@ function handleRefresh() {
   gridApi.query();
 }
 
+// 点击追缴方式筛选
+function handleFilterCollectMethod(collectMethod) {
+  dataObj.searchObj = { ...dataObj.searchObj, collectMethod: collectMethod };
+  queryFormApi.setValues({ collectMethod: collectMethod });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击推送模板ID筛选
+function handleFilterTemplateId(templateId) {
+  dataObj.searchObj = { ...dataObj.searchObj, templateId: templateId };
+  queryFormApi.setValues({ templateId: templateId });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击配置状态筛选
+function handleFilterStatus(status) {
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  queryFormApi.setValues({ status: status });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击创建者筛选
+function handleFilterCreator(creator) {
+  dataObj.searchObj = { ...dataObj.searchObj, creator: creator };
+  queryFormApi.setValues({ creator: creator });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击操作人筛选
+function handleFilterOperatorId(operatorId) {
+  dataObj.searchObj = { ...dataObj.searchObj, operatorId: operatorId };
+  queryFormApi.setValues({ operatorId: operatorId });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击更新者筛选
+function handleFilterUpdater(updater) {
+  dataObj.searchObj = { ...dataObj.searchObj, updater: updater };
+  queryFormApi.setValues({ updater: updater });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
   ElMessage.info('导出功能开发中');
@@ -794,23 +842,67 @@ watch(
       </template>
 
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag 
+          :type="getStatusType(row.status)" 
+          class="cursor-pointer"
+          @click="handleFilterStatus(row.status)"
+        >
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
       <template #configNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
-          class="common-align"
+          class="common-align cursor-pointer"
           type="primary"
         >
           {{ row.configNo }}
         </el-text>
       </template>
       <template #collectMethod="{ row }">
-        <el-tag :type="getCollectMethodType(row.collectMethod)">
+        <el-tag 
+          :type="getCollectMethodType(row.collectMethod)" 
+          class="cursor-pointer"
+          @click="handleFilterCollectMethod(row.collectMethod)"
+        >
           {{ getCollectMethodLabel(row.collectMethod) }}
         </el-tag>
+      </template>
+      <template #templateId="{ row }">
+        <el-text 
+          @click="handleFilterTemplateId(row.templateId)" 
+          class="common-align cursor-pointer" 
+          type="primary"
+        >
+          {{ row.templateId }}
+        </el-text>
+      </template>
+      <template #operatorId="{ row }">
+        <el-text 
+          @click="handleFilterOperatorId(row.operatorId)" 
+          class="common-align cursor-pointer" 
+          type="primary"
+        >
+          {{ row.operatorId }}
+        </el-text>
+      </template>
+      <template #creator="{ row }">
+        <el-text 
+          @click="handleFilterCreator(row.creator)" 
+          class="common-align cursor-pointer" 
+          type="primary"
+        >
+          {{ row.creator }}
+        </el-text>
+      </template>
+      <template #updater="{ row }">
+        <el-text 
+          @click="handleFilterUpdater(row.updater)" 
+          class="common-align cursor-pointer" 
+          type="primary"
+        >
+          {{ row.updater }}
+        </el-text>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

@@ -27,6 +27,7 @@ import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightki
 
 import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
+import PlateNoDetail from '#/views/genchuan/industry/chargePark/orderTrade/orderMgmt/components/plateNoDetail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -115,6 +116,70 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 
 /** 刷新表格 */
 function handleRefresh() {
+  gridApi.query();
+}
+
+// 点击追缴方式筛选
+function handleFilterCollectMethod(collectMethod) {
+  dataObj.searchObj = { ...dataObj.searchObj, collectMethod: collectMethod };
+  queryFormApi.setValues({ collectMethod: collectMethod });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击追缴状态筛选
+function handleFilterStatus(status) {
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  queryFormApi.setValues({ status: status });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击片区ID筛选
+function handleFilterAreaId(areaId) {
+  dataObj.searchObj = { ...dataObj.searchObj, areaId: areaId };
+  queryFormApi.setValues({ areaId: areaId });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击处理人筛选
+function handleFilterTransferUserId(transferUserId) {
+  dataObj.searchObj = { ...dataObj.searchObj, transferUserId: transferUserId };
+  queryFormApi.setValues({ transferUserId: transferUserId });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击追缴进度筛选
+function handleFilterCollectProgress(collectProgress) {
+  dataObj.searchObj = { ...dataObj.searchObj, collectProgress: collectProgress };
+  queryFormApi.setValues({ collectProgress: collectProgress });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击操作人筛选
+function handleFilterOperatorId(operatorId) {
+  dataObj.searchObj = { ...dataObj.searchObj, operatorId: operatorId };
+  queryFormApi.setValues({ operatorId: operatorId });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击创建者筛选
+function handleFilterCreator(creator) {
+  dataObj.searchObj = { ...dataObj.searchObj, creator: creator };
+  queryFormApi.setValues({ creator: creator });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击更新者筛选
+function handleFilterUpdater(updater) {
+  dataObj.searchObj = { ...dataObj.searchObj, updater: updater };
+  queryFormApi.setValues({ updater: updater });
+  dataObj.currentPage = 1;
   gridApi.query();
 }
 
@@ -318,7 +383,15 @@ const handleFullShow = () => {
 };
 
 const parkDetailDrawerRef = ref(null);
+const plateDetailVisible = ref(false);
+const currentPlateNo = ref('');
 const enDetailObjRef = ref(null);
+
+const handlePlateDetail = (row) => {
+  currentPlateNo.value = row.plateNo;
+  plateDetailVisible.value = true;
+};
+
 const arrowChange = () => {
   emit('arrow-change');
 };
@@ -561,6 +634,7 @@ watch(
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
     />
+    <PlateNoDetail v-model:visible="plateDetailVisible" :plate-no="currentPlateNo" />
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -766,22 +840,93 @@ watch(
         </div>
       </template>
       <template #collectMethod="{ row }">
-        <el-tag :type="getCollectMethodType(row.collectMethod)">
+        <el-tag 
+          :type="getCollectMethodType(row.collectMethod)" 
+          class="cursor-pointer"
+          @click="handleFilterCollectMethod(row.collectMethod)"
+        >
           {{ getCollectMethodLabel(row.collectMethod) }}
         </el-tag>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag 
+          :type="getStatusType(row.status)" 
+          class="cursor-pointer"
+          @click="handleFilterStatus(row.status)"
+        >
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template> 
       <template #trackNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
-          class="common-align"
+          class="common-align cursor-pointer"
           type="primary"
         >
           {{ row.trackNo }}
+        </el-text>
+      </template>
+      <template #plateNo="{ row }">
+        <el-text
+          @click="handlePlateDetail(row)"
+          class="common-align cursor-pointer"
+          type="primary"
+        >
+          {{ row.plateNo }}
+        </el-text>
+      </template>
+      <template #areaId="{ row }">
+        <el-text 
+          @click="handleFilterAreaId(row.areaId)" 
+          class="common-align cursor-pointer" 
+          type="primary"
+        >
+          {{ row.areaId }}
+        </el-text>
+      </template>
+      <template #transferUserId="{ row }">
+        <el-text 
+          @click="handleFilterTransferUserId(row.transferUserId)" 
+          class="common-align cursor-pointer" 
+          type="primary"
+        >
+          {{ row.transferUserId }}
+        </el-text>
+      </template>
+      <template #collectProgress="{ row }">
+        <el-text 
+          @click="handleFilterCollectProgress(row.collectProgress)" 
+          class="common-align cursor-pointer" 
+          type="primary"
+        >
+          {{ row.collectProgress }}
+        </el-text>
+      </template>
+      <template #operatorId="{ row }">
+        <el-text 
+          @click="handleFilterOperatorId(row.operatorId)" 
+          class="common-align cursor-pointer" 
+          type="primary"
+        >
+          {{ row.operatorId }}
+        </el-text>
+      </template>
+      <template #creator="{ row }">
+        <el-text 
+          @click="handleFilterCreator(row.creator)" 
+          class="common-align cursor-pointer" 
+          type="primary"
+        >
+          {{ row.creator }}
+        </el-text>
+      </template>
+      <template #updater="{ row }">
+        <el-text 
+          @click="handleFilterUpdater(row.updater)" 
+          class="common-align cursor-pointer" 
+          type="primary"
+        >
+          {{ row.updater }}
         </el-text>
       </template>
       <template #payMethod="{ row }">
