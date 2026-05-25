@@ -16,6 +16,7 @@ const cards = reactive([
     desc: '今日累计放行次数',
     color: '#4A90E2',
     key: 'todayPassCount',
+    icon: 'CaretRight',
   },
   {
     title: '异常放行占比',
@@ -23,6 +24,7 @@ const cards = reactive([
     desc: '异常放行比例',
     color: '#F56C6C',
     key: 'abnormalPassRate',
+    icon: 'Warning',
   },
 ]);
 
@@ -120,7 +122,7 @@ function initTrendChart() {
     window.dispatchEvent(
       new CustomEvent('filterByChart:passRecord', {
         detail: {
-          filterKey: 'trendDate',
+          status: 'trendDate',
           date: date,
         },
       }),
@@ -133,17 +135,18 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
-  let filterParams = { filterKey: key };
+  let filterParams = { status: key };
 
   // 根据卡片类型设置不同的筛选参数
   if (key === 'todayPassCount') {
     // 今日放行量：筛选今天的记录
     const today = new Date();
-    const dateStr = today.toISOString().split('T')[0];
-    filterParams = { filterKey: 'todayPass', date: dateStr };
+    const startTime = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
+    const endTime = new Date(today.setHours(23, 59, 59, 999)).getTime().toString();
+    filterParams = { status: 'todayPass', startTime, endTime };
   } else if (key === 'abnormalPassRate') {
     // 异常放行占比：筛选异常记录
-    filterParams = { filterKey: 'abnormalPass' };
+    filterParams = { status: 'abnormalPass' };
   }
 
   window.dispatchEvent(
@@ -176,10 +179,9 @@ onUnmounted(() => {
       >
         <div class="card-header">
           <span class="card-title">{{ card.title }}</span>
-          <div
-            class="card-indicator"
-            :style="{ backgroundColor: card.color }"
-          ></div>
+          <el-icon class="card-icon" :style="{ color: card.color }">
+            <component :is="card.icon" />
+          </el-icon>
         </div>
         <div class="card-body">
           <div class="card-value" :style="{ color: card.color }">
@@ -246,6 +248,11 @@ onUnmounted(() => {
       &:hover {
         box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
         transform: translateY(-2px);
+
+        .card-icon {
+          opacity: 1;
+          transform: scale(1.1);
+        }
       }
 
       .card-header {
@@ -261,11 +268,11 @@ onUnmounted(() => {
           color: #606266;
         }
 
-        .card-indicator {
+        .card-icon {
           flex-shrink: 0;
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
+          font-size: 24px;
+          opacity: 0.8;
+          transition: all 0.3s ease;
         }
       }
 

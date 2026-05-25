@@ -16,6 +16,7 @@ const cards = reactive([
     desc: '累计申请次数',
     color: '#4A90E2',
     key: 'applyCount',
+    icon: 'DocumentCopy',
   },
   {
     title: '审批通过率',
@@ -23,6 +24,7 @@ const cards = reactive([
     desc: '审核通过比例',
     color: '#50E3C2',
     key: 'auditPassRate',
+    icon: 'SuccessFilled',
   },
 ]);
 
@@ -184,13 +186,9 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
-  // 申请量卡片不支持钻取
-  if (key === 'applyCount') {
-    return;
-  }
-
   const filterMap = {
-    auditPassRate: { status: '已通过' },
+    applyCount: {},
+    auditPassRate: { auditStatus: '已通过' },
   };
 
   const filterParams = filterMap[key];
@@ -223,16 +221,14 @@ onUnmounted(() => {
         v-for="card in cards"
         :key="card.key"
         class="left-card"
-        :class="{ 'card-clickable': card.key !== 'applyCount' }"
         :style="{ borderLeftColor: card.color }"
         @click="handleCardClick(card.key)"
       >
         <div class="card-header">
           <span class="card-title">{{ card.title }}</span>
-          <div
-            class="card-indicator"
-            :style="{ backgroundColor: card.color }"
-          ></div>
+          <el-icon class="card-icon" :style="{ color: card.color }">
+            <component :is="card.icon" />
+          </el-icon>
         </div>
         <div class="card-body">
           <div class="card-value" :style="{ color: card.color }">
@@ -289,17 +285,19 @@ onUnmounted(() => {
       flex-direction: column;
       padding: 16px 14px;
       overflow: hidden;
+      cursor: pointer;
       border-left: 4px solid #4a90e2;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
       transition: all 0.3s ease;
 
-      &.card-clickable {
-        cursor: pointer;
+      &:hover {
+        box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
+        transform: translateY(-2px);
 
-        &:hover {
-          box-shadow: 0 4px 12px rgb(0 0 0 / 12%);
-          transform: translateY(-2px);
+        .card-icon {
+          opacity: 1;
+          transform: scale(1.1);
         }
       }
 
@@ -316,11 +314,11 @@ onUnmounted(() => {
           color: #606266;
         }
 
-        .card-indicator {
+        .card-icon {
           flex-shrink: 0;
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
+          font-size: 24px;
+          opacity: 0.8;
+          transition: all 0.3s ease;
         }
       }
 

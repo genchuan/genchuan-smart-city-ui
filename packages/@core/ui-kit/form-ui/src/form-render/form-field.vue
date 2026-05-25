@@ -118,17 +118,6 @@ const shouldRequired = computed(() => {
     );
   }
 
-  // 处理 Element Plus 风格的数组验证规则
-  if (Array.isArray(currentRules.value)) {
-    const hasRequired = currentRules.value.some(
-      (rule: any) => rule.required === true,
-    );
-    if (hasRequired) {
-      return true;
-    }
-    return false;
-  }
-
   let isOptional = currentRules?.value?.isOptional?.();
 
   // 如果有设置默认值，则不是必填，需要特殊处理
@@ -157,12 +146,6 @@ const fieldRules = computed(() => {
     return rules;
   }
 
-  // 处理 Element Plus 风格的数组验证规则
-  // 对于数组格式，不使用 vee-validate 验证，而是让 Element Plus 组件自己处理
-  if (Array.isArray(rules)) {
-    return null;
-  }
-
   const isOptional = !shouldRequired.value;
   if (!isOptional) {
     const unwrappedRules = (rules as any)?.unwrap?.();
@@ -178,18 +161,10 @@ const computedProps = computed(() => {
     ? componentProps(values.value, formApi!)
     : componentProps;
 
-  // 处理 Element Plus 风格的数组验证规则
-  // 将数组格式的 rules 传递给 Element Plus 组件
-  let elementPlusRules = {};
-  if (currentRules.value && Array.isArray(currentRules.value)) {
-    elementPlusRules = { rules: currentRules.value };
-  }
-
   return {
     ...commonComponentProps,
     ...finalComponentProps,
     ...dynamicComponentProps.value,
-    ...elementPlusRules,
   };
 });
 

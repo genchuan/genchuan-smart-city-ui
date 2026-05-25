@@ -18,17 +18,6 @@ const toggleStats = () => {
   }
 };
 
-const typeNameMap = {
-  ESCA_: '逃费车',
-  GATE_: '抬杆放行',
-  NO_P_: '无牌车',
-  OTHE_: '其他异常',
-};
-
-const getTypeName = (type) => {
-  return typeNameMap[type] || type;
-};
-
 const statsData = ref({
   cards: [],
   pieData: [],
@@ -106,7 +95,7 @@ const fetchStatsData = async () => {
           label: '异常类型占比',
           value: 'abnormalType',
           data: (data.pieData || []).map((item) => ({
-            name: getTypeName(item.name || item.type),
+            name: item.name || item.type,
             value: item.count || item.value,
             type: item.type,
           })),
@@ -119,25 +108,19 @@ const fetchStatsData = async () => {
         {
           label: '场站通行量分布',
           value: 'stationDistribution',
-          data: (data.barData || [])
-            .filter((item) => item.stationName)
-            .map((item) => ({
-              name: item.stationName || item.name,
-              value: item.passCount || item.value,
-              stationName: item.stationName,
-              stationId: item.stationId,
-            })),
+          data: (data.barData || []).map((item) => ({
+            name: item.stationName || item.name,
+            value: item.passCount || item.value,
+            stationName: item.stationName,
+          })),
         },
         {
           label: '时段通行量分布',
           value: 'hourDistribution',
-          data: (data.barData || [])
-            .filter((item) => item.hour)
-            .map((item) => ({
-              name: item.hour || item.name,
-              value: item.passCount || item.value,
-              hour: item.hour,
-            })),
+          data: (data.barData || []).map((item) => ({
+            name: item.hour || item.name,
+            value: item.passCount || item.value,
+          })),
         },
       ].filter((item) => item.data.length > 0);
 
@@ -221,10 +204,9 @@ const useMockData = () => {
       label: '异常类型占比',
       value: 'abnormalType',
       data: [
-        { name: '逃费车', value: 45, type: 'ESCA_' },
-        { name: '抬杆放行', value: 30, type: 'GATE_' },
-        { name: '无牌车', value: 25, type: 'NO_P_' },
-        { name: '其他异常', value: 20, type: 'OTHE_' },
+        { name: '识别异常', value: 45, type: 'identify' },
+        { name: '核验异常', value: 30, type: 'check' },
+        { name: '支付异常', value: 25, type: 'payment' },
       ],
     },
   ];
@@ -239,19 +221,16 @@ const useMockData = () => {
           name: '泉州丰泽充停场站',
           value: 342,
           stationName: '泉州丰泽充停场站',
-          stationId: 1,
         },
         {
           name: '龙文区碧湖公园停车场',
           value: 256,
           stationName: '龙文区碧湖公园停车场',
-          stationId: 2,
         },
         {
           name: '龙海区石码镇停车场',
           value: 189,
           stationName: '龙海区石码镇停车场',
-          stationId: 3,
         },
       ],
     },
@@ -259,10 +238,10 @@ const useMockData = () => {
       label: '时段通行量分布',
       value: 'hourDistribution',
       data: [
-        { name: '00-06时', value: 45, hour: '00-06时' },
-        { name: '06-12时', value: 156, hour: '06-12时' },
-        { name: '12-18时', value: 234, hour: '12-18时' },
-        { name: '18-24时', value: 178, hour: '18-24时' },
+        { name: '00-06时', value: 45 },
+        { name: '06-12时', value: 156 },
+        { name: '12-18时', value: 234 },
+        { name: '18-24时', value: 178 },
       ],
     },
   ];

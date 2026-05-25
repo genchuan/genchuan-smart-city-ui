@@ -11,8 +11,7 @@
       "Bash(cat > *)",
       "Bash(python /tmp/apply_fix.py)",
       "Bash(bash /tmp/batch_fix.sh)",
-      "Bash(bash /tmp/fix_files.sh)",
-      "Bash(npm run *)"
+      "Bash(bash /tmp/fix_files.sh)"
     ],
     "additionalDirectories": [
       "\\tmp"

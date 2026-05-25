@@ -62,7 +62,7 @@ const shapes = computed(() => {
     const rules = schema.rules as ZodTypeAny;
 
     let typeName = '';
-    if (rules && !isString(rules) && !Array.isArray(rules) && rules._def) {
+    if (rules && !isString(rules)) {
       typeName = rules._def.typeName;
     }
 
