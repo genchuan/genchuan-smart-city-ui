@@ -4,21 +4,24 @@ export function useGridColumns() {
     { type: 'checkbox', width: 40 },
     {
       field: 'id',
-      title: '主键ID',
+      title: '单据编号',
       minWidth: 100,
       sortable: true,
+      slots: { default: 'id' },
     },
     {
       field: 'billNo',
       title: '对账单号',
       minWidth: 160,
       sortable: true,
+      slots: { default: 'billNo' },
     },
     {
       field: 'merchantName',
-      title: '商户名称',
+      title: '所属商户',
       minWidth: 160,
       sortable: true,
+      slots: { default: 'merchantName' },
     },
     {
       field: 'billDate',
@@ -49,7 +52,7 @@ export function useGridColumns() {
     },
     {
       field: 'status',
-      title: '对账状态',
+      title: '单据状态',
       minWidth: 120,
       sortable: true,
       slots: { default: 'status' },
@@ -57,26 +60,27 @@ export function useGridColumns() {
     /** 备注 */
     {
       field: 'remark',
-      title: '备注',
+      title: '差异说明',
       minWidth: 200,
       sortable: true,
     },
     {
-      field: 'operatorId',
-      title: '对账人ID',
+      field: 'operatorName',
+      title: '对账人',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'operatorName' },
     },
     {
       field: 'confirmTime',
-      title: '确认时间',
+      title: '对账时间',
       minWidth: 200,
       sortable: true,
       customRender: ({ text }) => text || '-',
     },
     {
       field: 'createTime',
-      title: '创建时间',
+      title: '生成时间',
       minWidth: 200,
       sortable: true,
       customRender: ({ text }) => text || '-',

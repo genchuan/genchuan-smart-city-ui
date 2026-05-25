@@ -1,10 +1,11 @@
 <script setup>import { reactive, ref, computed, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
-import { ElMessage, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElDialog } from 'element-plus';
+import { ElMessage, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElDialog, ElDescriptions, ElDescriptionsItem } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getSettleBillPage, exportSettleBillExcel, createSettleBill, updateSettleBill, deleteSettleBill, regenerateSettleBill, settleSettleBill, rejectSettleBill, passSettleBill, batchAuditSettleBill } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
+import { getMerchantInfoPage } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import { formatTimestamp } from '#/utils';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
@@ -321,6 +322,7 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
+  partnerDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -408,6 +410,51 @@ const arrowChange = () => {
   emit('arrow-change');
 };
 
+// 合作方详情弹窗
+const partnerDialogVisible = ref(false);
+
+// 点击合作方名称跳转合作方详情弹窗
+async function handleOpenPartnerDetail(row) {
+  try {
+    const res = await getMerchantInfoPage({ merchantName: row.partnerName });
+    if (res.list && res.list.length > 0) {
+      const firstMerchant = res.list[0];
+      dataObj.partnerDetailObj = {
+        ...firstMerchant,
+        registerTime: formatTimestamp(firstMerchant.registerTime),
+      };
+      partnerDialogVisible.value = true;
+    } else {
+      ElMessage.info('未找到相关合作方信息');
+    }
+  } catch (error) {
+    console.error('获取合作方详情失败:', error);
+    ElMessage.error('获取合作方详情失败');
+  }
+}
+
+// 点击审核人筛选
+function handleFilterAuditor(auditorName) {
+  if (!auditorName) return;
+  dataObj.searchObj = { ...dataObj.searchObj, auditorName: auditorName };
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击状态筛选
+function handleFilterStatus(status) {
+  if (!status) return;
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 手机号脱敏函数
+function maskPhone(phone) {
+  if (!phone) return '-';
+  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+}
+
 watch(
   () => props.filterParams,
   () => {
@@ -449,6 +496,37 @@ watch(
     </FormDrawer>
 
     <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
+    
+    <!-- 合作方详情弹窗 -->
+    <ElDialog v-model="partnerDialogVisible" title="合作方详情" width="520px">
+      <ElDescriptions v-if="dataObj.partnerDetailObj" :column="1" border>
+        <ElDescriptionsItem label="合作方名称">
+          {{ dataObj.partnerDetailObj.name || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="合作方类型">
+          {{ dataObj.partnerDetailObj.merchantType || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系人">
+          {{ dataObj.partnerDetailObj.contact || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系电话">
+          {{ maskPhone(dataObj.partnerDetailObj.phone) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="合作方地址">
+          {{ dataObj.partnerDetailObj.address || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="合作方状态">
+          {{ dataObj.partnerDetailObj.status || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="注册时间">
+          {{ dataObj.partnerDetailObj.registerTime || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="备注">
+          {{ dataObj.partnerDetailObj.remark || '-' }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+    </ElDialog>
+    
     <Drawer title="搜索">
       <ElForm
         ref="searchFormRef"
@@ -511,7 +589,11 @@ watch(
         </div>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag 
+          :type="getStatusType(row.status)"
+          class="cursor-pointer"
+          @click="handleFilterStatus(row.status)"
+        >
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
@@ -519,6 +601,22 @@ watch(
         <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
           {{ row.billNo }}
         </el-text>
+      </template>
+      <template #partnerName="{ row }">
+        <span
+          @click="handleOpenPartnerDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.partnerName }}
+        </span>
+      </template>
+      <template #auditorName="{ row }">
+        <span
+          @click="handleFilterAuditor(row.auditorName)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.auditorName || '-' }}
+        </span>
       </template>
 
       <template #actions="{ row }">

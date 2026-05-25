@@ -1,7 +1,7 @@
 <script setup>import { reactive, ref, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
-import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption } from 'element-plus';
+import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElDialog, ElDescriptions, ElDescriptionsItem } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getInvoiceListPage, exportInvoiceListExcel, batchInvoice, auditPass, auditReject, reapply, push, invoice, download } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
@@ -198,6 +198,7 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
+  orderDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -285,6 +286,42 @@ const arrowChange = () => {
   emit('arrow-change');
 };
 
+// 订单详情弹窗
+const orderDialogVisible = ref(false);
+
+// 点击关联订单跳转订单详情弹窗
+function handleOpenOrderDetail(row) {
+  dataObj.orderDetailObj = {
+    orderNo: row.orderNo,
+    orderId: row.orderId,
+  };
+  orderDialogVisible.value = true;
+}
+
+// 点击发票抬头筛选
+function handleFilterTitle(title) {
+  if (!title) return;
+  dataObj.searchObj = { ...dataObj.searchObj, title: title };
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击操作人筛选
+function handleFilterOperator(operatorName) {
+  if (!operatorName) return;
+  dataObj.searchObj = { ...dataObj.searchObj, operatorName: operatorName };
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击发票状态筛选
+function handleFilterStatus(status) {
+  if (!status) return;
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
 watch(
   () => props.filterParams,
   () => {
@@ -300,6 +337,21 @@ watch(
 <template>
   <div class="park-lot-table-new" v-loading="dataObj.loading">
     <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
+    
+    <!-- 订单详情弹窗 -->
+    <ElDialog v-model="orderDialogVisible" title="订单详情" width="520px">
+      <ElDescriptions v-if="dataObj.orderDetailObj" :column="1" border>
+        <ElDescriptionsItem label="订单编号">
+          {{ dataObj.orderDetailObj.orderNo || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="订单ID">
+          {{ dataObj.orderDetailObj.orderId || '-' }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+      <div style="margin-top: 16px; color: #909399; font-size: 13px;"> 
+      </div>
+    </ElDialog>
+    
     <Drawer title="搜索">
       <ElForm
         ref="searchFormRef"
@@ -335,15 +387,43 @@ watch(
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
+      <template #invoiceNo="{ row }">
+        <el-text @click="handleOpenDetail(row)" class="common-align cursor-pointer" type="primary">
+          {{ row.invoiceNo }}
+        </el-text>
+      </template>
+      <template #orderNo="{ row }">
+        <span
+          @click="handleOpenOrderDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.orderNo }}
+        </span>
+      </template>
+      <template #title="{ row }">
+        <span
+          @click="handleFilterTitle(row.title)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.title }}
+        </span>
+      </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag 
+          :type="getStatusType(row.status)"
+          class="cursor-pointer"
+          @click="handleFilterStatus(row.status)"
+        >
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
-      <template #invoiceNo="{ row }">
-        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
-          {{ row.invoiceNo }}
-        </el-text>
+      <template #operatorName="{ row }">
+        <span
+          @click="handleFilterOperator(row.operatorName)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.operatorName || '-' }}
+        </span>
       </template>
 
       <template #actions="{ row }">

@@ -125,6 +125,7 @@ export function useGridColumns() {
       title: '所属场站',
       minWidth: 140,
       sortable: true,
+      slots: { default: 'stationName' },
     },
     {
       field: 'payMethod',
@@ -151,6 +152,7 @@ export function useGridColumns() {
       title: '创建者',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'creator' },
     },
     {
       field: 'updater',

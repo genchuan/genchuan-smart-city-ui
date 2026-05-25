@@ -1,10 +1,11 @@
 <script setup>import { reactive, ref, computed, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
-import { ElMessage, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElDialog } from 'element-plus';
+import { ElMessage, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElDialog, ElDescriptions, ElDescriptionsItem } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getSplitRatePage, exportSplitRateExcel, createSplitRate, updateSplitRate, deleteSplitRate, enableSplitRate, disableSplitRate } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
+import { getMerchantInfoPage } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import { formatTimestamp } from '#/utils';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
@@ -256,6 +257,8 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
+  merchantDetailObj: {},
+  settlementListObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -342,6 +345,68 @@ const arrowChange = () => {
   emit('arrow-change');
 };
 
+// 商户详情弹窗
+const merchantDialogVisible = ref(false);
+
+// 结算单据明细弹窗
+const settlementListDialogVisible = ref(false);
+
+// 点击合作方名称跳转商户详情弹窗
+async function handleOpenMerchantDetail(row) {
+  try {
+    const res = await getMerchantInfoPage({ merchantName: row.partnerName });
+    if (res.list && res.list.length > 0) {
+      const firstMerchant = res.list[0];
+      dataObj.merchantDetailObj = {
+        ...firstMerchant,
+        registerTime: formatTimestamp(firstMerchant.registerTime),
+      };
+      merchantDialogVisible.value = true;
+    } else {
+      ElMessage.info('未找到相关商户信息');
+    }
+  } catch (error) {
+    console.error('获取商户详情失败:', error);
+    ElMessage.error('获取商户详情失败');
+  }
+}
+
+// 点击分账模式筛选
+function handleFilterSplitMode(splitMode) {
+  if (!splitMode) return;
+  dataObj.searchObj = { ...dataObj.searchObj, splitMode: splitMode };
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击状态筛选
+function handleFilterStatus(status) {
+  if (!status) return;
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击审核人筛选
+function handleFilterAuditor(auditorName) {
+  if (!auditorName) return;
+  dataObj.searchObj = { ...dataObj.searchObj, auditorName: auditorName };
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击累计分账金额跳转结算单据明细弹窗
+function handleOpenSettlementList(row) {
+  dataObj.settlementListObj = row;
+  settlementListDialogVisible.value = true;
+}
+
+// 手机号脱敏函数
+function maskPhone(phone) {
+  if (!phone) return '-';
+  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+}
+
 watch(
   () => props.filterParams,
   () => {
@@ -382,6 +447,61 @@ watch(
     </FormDrawer>
 
     <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
+    
+    <!-- 商户详情弹窗 -->
+    <ElDialog v-model="merchantDialogVisible" title="商户详情" width="520px">
+      <ElDescriptions v-if="dataObj.merchantDetailObj" :column="1" border>
+        <ElDescriptionsItem label="商户名称">
+          {{ dataObj.merchantDetailObj.name || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户类型">
+          {{ dataObj.merchantDetailObj.merchantType || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系人">
+          {{ dataObj.merchantDetailObj.contact || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系电话">
+          {{ maskPhone(dataObj.merchantDetailObj.phone) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户地址">
+          {{ dataObj.merchantDetailObj.address || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户状态">
+          {{ dataObj.merchantDetailObj.status || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="注册时间">
+          {{ dataObj.merchantDetailObj.registerTime || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="备注">
+          {{ dataObj.merchantDetailObj.remark || '-' }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+    </ElDialog>
+
+    <!-- 结算单据明细弹窗 -->
+    <ElDialog v-model="settlementListDialogVisible" title="关联结算单据明细" width="600px">
+      <ElDescriptions v-if="dataObj.settlementListObj" :column="1" border>
+        <ElDescriptionsItem label="配置ID">
+          {{ dataObj.settlementListObj.id || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="合作方名称">
+          {{ dataObj.settlementListObj.partnerName || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="分账模式">
+          {{ dataObj.settlementListObj.splitMode === 'fixed' ? '固定比例' : '阶梯比例' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="比例值">
+          {{ dataObj.settlementListObj.rateValue ? `${dataObj.settlementListObj.rateValue}%` : '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="累计分账金额">
+          ¥{{ (dataObj.settlementListObj.totalSplitAmount || 0).toFixed(2) }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+      <div style="margin-top: 16px; color: #909399; font-size: 13px;">
+        注：此处展示该配置关联的结算单据明细列表（需后端提供接口支持）
+      </div>
+    </ElDialog>
+    
     <Drawer title="搜索">
       <ElForm
         ref="searchFormRef"
@@ -413,13 +533,46 @@ watch(
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
+      <template #partnerName="{ row }">
+        <span
+          @click="handleOpenMerchantDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.partnerName }}
+        </span>
+      </template>
+      <template #splitMode="{ row }">
+        <span
+          @click="handleFilterSplitMode(row.splitMode)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.splitMode === 'fixed' ? '固定比例' : '阶梯比例' }}
+        </span>
+      </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag 
+          :type="getStatusType(row.status)"
+          class="cursor-pointer"
+          @click="handleFilterStatus(row.status)"
+        >
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
-      <template #splitMode="{ row }">
-        {{ row.splitMode === 'fixed' ? '固定比例' : '阶梯比例' }}
+      <template #auditorName="{ row }">
+        <span
+          @click="handleFilterAuditor(row.auditorName)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.auditorName || '-' }}
+        </span>
+      </template>
+      <template #totalSplitAmount="{ row }">
+        <span
+          @click="handleOpenSettlementList(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          ¥{{ (row.totalSplitAmount || 0).toFixed(2) }}
+        </span>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

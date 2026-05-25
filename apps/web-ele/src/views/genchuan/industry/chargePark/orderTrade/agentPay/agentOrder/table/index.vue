@@ -4,7 +4,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElDialog, ElLoading, ElMessage } from 'element-plus';
+import { ElDialog, ElLoading, ElMessage, ElDescriptions, ElDescriptionsItem } from 'element-plus';
 import screenfull from 'screenfull';
 // 导出插件
 
@@ -20,6 +20,7 @@ import {
   createAgentPayOrder,
   updateAgentPayOrder,
   getAgentPayRulePage,
+  getMerchantInfoPage,
 } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -238,6 +239,62 @@ function handleRefresh() {
   gridApi.query();
 }
 
+// 点击支付方式筛选
+function handleFilterPayType(payType) {
+  dataObj.searchObj = { ...dataObj.searchObj, payType: payType };
+  queryFormApi.setValues({ payType: payType });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击订单状态筛选
+function handleFilterStatus(status) {
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  queryFormApi.setValues({ status: status });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击操作人筛选
+function handleFilterCreator(creator) {
+  dataObj.searchObj = { ...dataObj.searchObj, creator: creator };
+  queryFormApi.setValues({ creator: creator });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击商户名称跳转商户详情弹窗
+async function handleOpenMerchantDetail(row) {
+  try {
+    const res = await getMerchantInfoPage({ merchantName: row.merchantName });
+    if (res.list && res.list.length > 0) {
+      const firstMerchant = res.list[0];
+      dataObj.merchantDetailObj = {
+        ...firstMerchant,
+        registerTime: formatTimestamp(firstMerchant.registerTime),
+      };
+      merchantDialogVisible.value = true;
+    } else {
+      ElMessage.info('未找到相关商户信息');
+    }
+  } catch (error) {
+    console.error('获取商户详情失败:', error);
+    ElMessage.error('获取商户详情失败');
+  }
+}
+
+// 点击车牌跳转车辆详情弹窗
+function handleOpenCarDetail(row) {
+  dataObj.carDetailObj = row;
+  carDialogVisible.value = true;
+}
+
+// 点击关联发票跳转发票详情弹窗
+function handleOpenInvoiceDetail(row) {
+  dataObj.invoiceDetailObj = row;
+  invoiceDetailDialogVisible.value = true;
+}
+
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
   const data = await exportAgentPayOrder();
@@ -423,6 +480,9 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
+  merchantDetailObj: {},
+  carDetailObj: {},
+  invoiceDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -589,6 +649,21 @@ const getPayTypeLabel = (payType) => {
   return payTypeMap[payType] || payType;
 };
 
+// ====================== 商户详情弹窗 ======================
+const merchantDialogVisible = ref(false);
+
+// ====================== 车辆详情弹窗 ======================
+const carDialogVisible = ref(false);
+
+// ====================== 发票详情弹窗 ======================
+const invoiceDetailDialogVisible = ref(false);
+
+// 手机号脱敏函数
+function maskPhone(phone) {
+  if (!phone) return '-';
+  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+}
+
 watch(
   () => props.filterParams,
   () => {
@@ -701,6 +776,87 @@ watch(
       </template>
     </ElDialog>
 
+    <!-- 商户详情弹窗 -->
+    <ElDialog v-model="merchantDialogVisible" title="商户详情" width="520px">
+      <ElDescriptions v-if="dataObj.merchantDetailObj" :column="1" border>
+        <ElDescriptionsItem label="商户名称">
+          {{ dataObj.merchantDetailObj.name || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户类型">
+          {{ dataObj.merchantDetailObj.merchantType || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系人">
+          {{ dataObj.merchantDetailObj.contact || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系电话">
+          {{ maskPhone(dataObj.merchantDetailObj.phone) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户地址">
+          {{ dataObj.merchantDetailObj.address || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户状态">
+          {{ dataObj.merchantDetailObj.status || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="注册时间">
+          {{ dataObj.merchantDetailObj.registerTime || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="备注">
+          {{ dataObj.merchantDetailObj.remark || '-' }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+    </ElDialog>
+
+    <!-- 车辆详情弹窗 -->
+    <ElDialog v-model="carDialogVisible" title="车辆详情" width="520px">
+      <ElDescriptions v-if="dataObj.carDetailObj" :column="1" border>
+        <ElDescriptionsItem label="车牌号码">
+          {{ dataObj.carDetailObj.carNo || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="所属商户">
+          {{ dataObj.carDetailObj.merchantName || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="订单编号">
+          {{ dataObj.carDetailObj.orderNo || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="代付金额">
+          ¥{{ (dataObj.carDetailObj.amount || 0).toFixed(2) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="支付方式">
+          {{ getPayTypeLabel(dataObj.carDetailObj.payType) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="订单状态">
+          {{ getStatusLabel(dataObj.carDetailObj.status) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="创建时间">
+          {{ dataObj.carDetailObj.createTime || '-' }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+    </ElDialog>
+
+    <!-- 发票详情弹窗 -->
+    <ElDialog v-model="invoiceDetailDialogVisible" title="发票详情" width="520px">
+      <ElDescriptions v-if="dataObj.invoiceDetailObj" :column="1" border>
+        <ElDescriptionsItem label="发票编号">
+          {{ dataObj.invoiceDetailObj.invoiceNo || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="订单编号">
+          {{ dataObj.invoiceDetailObj.orderNo || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户名称">
+          {{ dataObj.invoiceDetailObj.merchantName || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="发票金额">
+          ¥{{ (dataObj.invoiceDetailObj.amount || 0).toFixed(2) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="发票状态">
+          {{ dataObj.invoiceDetailObj.invoiceStatus || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="开票时间">
+          {{ dataObj.invoiceDetailObj.invoiceTime || '-' }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+    </ElDialog>
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
@@ -739,21 +895,61 @@ watch(
         </div>
       </template>
       <template #payType="{ row }">
-        {{ getPayTypeLabel(row.payType) }}
+        <span 
+          @click="handleFilterPayType(row.payType)" 
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ getPayTypeLabel(row.payType) }}
+        </span>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag 
+          :type="getStatusType(row.status)"
+          class="cursor-pointer"
+          @click="handleFilterStatus(row.status)"
+        >
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
       <template #orderNo="{ row }">
-        <el-text
+        <span
           @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
+          class="common-align cursor-pointer text-primary"
         >
           {{ row.orderNo }}
-        </el-text>
+        </span>
+      </template>
+      <template #merchantName="{ row }">
+        <span
+          @click="handleOpenMerchantDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.merchantName }}
+        </span>
+      </template>
+      <template #carNo="{ row }">
+        <span
+          @click="handleOpenCarDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.carNo }}
+        </span>
+      </template>
+      <template #invoiceNo="{ row }">
+        <span
+          @click="handleOpenInvoiceDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.invoiceNo || '-' }}
+        </span>
+      </template>
+      <template #creator="{ row }">
+        <span
+          @click="handleFilterCreator(row.creator)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.creator || '-' }}
+        </span>
       </template>
 
       <template #actions="{ row }">

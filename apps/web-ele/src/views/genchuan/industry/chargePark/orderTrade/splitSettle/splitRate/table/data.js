@@ -8,17 +8,12 @@ export function useGridColumns() {
       minWidth: 100,
       sortable: true,
     },
-    // {
-    //   field: 'partnerId',
-    //   title: '合作方ID',
-    //   minWidth: 120,
-    //   sortable: true,
-    // },
     {
       field: 'partnerName',
       title: '合作方名称',
       minWidth: 160,
       sortable: true,
+      slots: { default: 'partnerName' },
     },
     {
       field: 'splitMode',
@@ -46,14 +41,22 @@ export function useGridColumns() {
       title: '审核人',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'auditorName' },
     },
     {
       field: 'auditTime',
       title: '审核时间',
       minWidth: 200,
       sortable: true,
-      
       customRender: ({ text }) => text || '-',
+    },
+    {
+      field: 'totalSplitAmount',
+      title: '累计分账金额',
+      minWidth: 140,
+      sortable: true,
+      slots: { default: 'totalSplitAmount' },
+      customRender: ({ text }) => text ? `¥${text.toFixed(2)}` : '¥0.00',
     },
     {
       field: 'creator',

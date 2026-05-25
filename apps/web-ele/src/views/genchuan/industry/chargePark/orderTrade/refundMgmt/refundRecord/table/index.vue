@@ -14,7 +14,11 @@ import {
   getRefundRecordPage,
   exportRefundRecordExcel,
   checkRefundRecord,
+  getRefundApplyPage
 } from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
+import {
+  getOrderPage  
+} from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -23,6 +27,8 @@ import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightki
 
 import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
+import RefundApplyDetailDrawer from '#/views/genchuan/industry/chargePark/orderTrade/refundMgmt/refundApply/table/detail.vue';
+import OrderDetailDrawer from '#/views/genchuan/industry/chargePark/orderTrade/orderMgmt/allOrder/table/detail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -112,6 +118,52 @@ function handleRefresh() {
   gridApi.query();
 }
 
+// 点击记录状态筛选
+function handleFilterStatus(status) {
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  queryFormApi.setValues({ status: status });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击创建者筛选
+function handleFilterCreator(creator) {
+  dataObj.searchObj = { ...dataObj.searchObj, creator: creator };
+  queryFormApi.setValues({ creator: creator });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击更新者筛选
+function handleFilterUpdater(updater) {
+  dataObj.searchObj = { ...dataObj.searchObj, updater: updater };
+  queryFormApi.setValues({ updater: updater });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击关联订单ID跳转原订单详情弹窗
+async function handleOpenOrderDetail(row) {
+  try {
+    const res = await getOrderPage({ orderNo: row.orderId });
+    if (res.list && res.list.length > 0) {
+      const firstOrder = res.list[0];
+      dataObj.orderDetailObj = {
+        ...firstOrder,
+        payTime: formatTimestamp(firstOrder.payTime),
+        updateTime: formatTimestamp(firstOrder.updateTime),
+        createTime: formatTimestamp(firstOrder.createTime),
+      };
+      orderDetailDrawerRef.value?.open();
+    } else {
+      ElMessage.info('未找到相关订单信息');
+    }
+  } catch (error) {
+    console.error('获取订单详情失败:', error);
+    ElMessage.error('获取订单详情失败');
+  }
+}
+
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
   const data = await exportRefundRecordExcel();
@@ -179,6 +231,7 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
+  orderDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -312,6 +365,7 @@ const handleFullShow = () => {
 
 const parkDetailDrawerRef = ref(null);
 const enDetailObjRef = ref(null);
+const orderDetailDrawerRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
@@ -382,6 +436,29 @@ const handleBatchCheck = async () => {
   }
 };
 
+// 退款申请详情数据
+const applyDetailObj = ref({});
+
+// 点击退款申请编号查看详情
+const handleOpenApplyDetail = async (row) => {
+  try {
+    const res = await getRefundApplyPage({ applyNo: row.applyNo });
+    const data = res.list?.[0] || {};
+    applyDetailObj.value = {
+      ...data,
+      applyTime: formatTimestamp(data.applyTime),
+      auditTime: formatTimestamp(data.auditTime),
+      createTime: formatTimestamp(data.createTime),
+      updateTime: formatTimestamp(data.updateTime),
+    };
+    applyDetailDrawerRef.value?.open();
+  } catch {
+    ElMessage.error('获取退款申请详情失败');
+  }
+};
+
+const applyDetailDrawerRef = ref(null);
+
 // ====================== 告警明细弹窗 ======================
 const alarmDialogVisible = ref(false);
 const currentAlarmRow = ref({});
@@ -449,6 +526,7 @@ watch(
       :detail-obj="dataObj.detailObj"
     />
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
+    <OrderDetailDrawer ref="orderDetailDrawerRef" :detail-obj="dataObj.orderDetailObj" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -501,6 +579,11 @@ watch(
       </template>
     </ElDialog>
 
+    <RefundApplyDetailDrawer
+      ref="applyDetailDrawerRef"
+      :detail-obj="applyDetailObj"
+    />
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
@@ -528,33 +611,61 @@ watch(
       </template>
 
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag 
+          :type="getStatusType(row.status)" 
+          class="cursor-pointer"
+          @click="handleFilterStatus(row.status)"
+        >
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
       <template #recordNo="{ row }">
-        <el-text
+        <span
           @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
+          class="common-align cursor-pointer text-primary"
         >
           {{ row.recordNo }}
-        </el-text>
-      </template> 
+        </span>
+      </template>
+      <template #applyNo="{ row }">
+        <span
+          @click="handleOpenApplyDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.applyNo }}
+        </span>
+      </template>
       <template #halfyearWarnCount="{ row }">
-        <el-text @click="handleTotal(row)" class="common-align" type="primary">
+        <el-text @click="handleTotal(row)" class="common-align cursor-pointer type-primary">
           {{ row.halfyearWarnCount }}
         </el-text>
       </template>
 
       <template #orderId="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
+        <span
+          @click="handleOpenOrderDetail(row)"
+          class="common-align cursor-pointer text-primary"
         >
           {{ row.orderId }}
-        </el-text>
+        </span>
+      </template>
+
+      <template #creator="{ row }">
+        <span 
+          @click="handleFilterCreator(row.creator)" 
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.creator }}
+        </span>
+      </template>
+
+      <template #updater="{ row }">
+        <span 
+          @click="handleFilterUpdater(row.updater)" 
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.updater }}
+        </span>
       </template>
 
       <template #actions="{ row }">

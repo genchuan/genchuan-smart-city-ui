@@ -117,6 +117,22 @@ function handleRefresh() {
   gridApi.query();
 }
 
+// 点击订单状态筛选
+function handleFilterStatus(status) {
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  queryFormApi.setValues({ status: status });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击所属场站筛选
+function handleFilterStationName(stationName) {
+  dataObj.searchObj = { ...dataObj.searchObj, stationName: stationName };
+  queryFormApi.setValues({ stationName: stationName });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
   const data = await exportBikeChargeOrderExcel();
@@ -193,6 +209,7 @@ const dataObj = reactive({
   searchObj: {},
   filterParams: {},
 });
+const bikeDetailDrawerRef = ref(null);
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
@@ -291,7 +308,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 const activeName = ref('全部');
 const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
-  parkDetailDrawerRef.value?.open();
+  bikeDetailDrawerRef.value?.open();
 };
 const tabsData = ref([
   { label: '全部' },
@@ -559,7 +576,7 @@ const alarmColumns = [
       <Form />
     </FormDrawer>
     <ParkDetailDrawer
-      ref="parkDetailDrawerRef"
+      ref="bikeDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
     />
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
@@ -790,17 +807,30 @@ const alarmColumns = [
       </template>
 
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag 
+          :type="getStatusType(row.status)" 
+          class="cursor-pointer"
+          @click="handleFilterStatus(row.status)"
+        >
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
       <template #orderNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
-          class="common-align"
+          class="common-align cursor-pointer"
           type="primary"
         >
           {{ row.orderNo }}
+        </el-text>
+      </template>
+      <template #stationName="{ row }">
+        <el-text 
+          @click="handleFilterStationName(row.stationName)" 
+          class="common-align cursor-pointer" 
+          type="primary"
+        >
+          {{ row.stationName }}
         </el-text>
       </template>
       <template #payMethod="{ row }">
