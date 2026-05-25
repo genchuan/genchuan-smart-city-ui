@@ -4,7 +4,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElDialog, ElLoading, ElMessage } from 'element-plus';
+import { ElDialog, ElLoading, ElMessage, ElDescriptions, ElDescriptionsItem } from 'element-plus';
 import screenfull from 'screenfull';
 // 导出插件
 
@@ -19,6 +19,7 @@ import {
   refreshAgentPayCode,
   regenerateAgentPayCode,
   getAgentPayRulePage,
+  getMerchantInfoPage,
 } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -172,6 +173,63 @@ function handleRefresh() {
   gridApi.query();
 }
 
+// 点击码状态筛选
+function handleFilterStatus(status) {
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  queryFormApi.setValues({ status: status });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击商户名称跳转商户详情弹窗
+async function handleOpenMerchantDetail(row) {
+  try {
+    const res = await getMerchantInfoPage({ merchantName: row.merchantName });
+    if (res.list && res.list.length > 0) {
+      const firstMerchant = res.list[0];
+      dataObj.merchantDetailObj = {
+        ...firstMerchant,
+        registerTime: formatTimestamp(firstMerchant.registerTime),
+      };
+      merchantDialogVisible.value = true;
+    } else {
+      ElMessage.info('未找到相关商户信息');
+    }
+  } catch (error) {
+    console.error('获取商户详情失败:', error);
+    ElMessage.error('获取商户详情失败');
+  }
+}
+
+// 点击规则名称跳转代付规则详情弹窗
+async function handleOpenRuleDetail(row) {
+  try {
+    const res = await getAgentPayRulePage({ name: row.ruleName });
+    if (res.list && res.list.length > 0) {
+      const firstRule = res.list[0];
+      dataObj.ruleDetailObj = firstRule;
+      ruleDialogVisible.value = true;
+    } else {
+      ElMessage.info('未找到相关规则信息');
+    }
+  } catch (error) {
+    console.error('获取规则详情失败:', error);
+    ElMessage.error('获取规则详情失败');
+  }
+}
+
+// 点击用户名称跳转用户详情弹窗
+function handleOpenUserDetail(row) {
+  dataObj.userDetailObj = row;
+  userDialogVisible.value = true;
+}
+
+// 点击关联订单跳转代付订单详情弹窗
+function handleOpenOrderDetail(row) {
+  dataObj.orderDetailObj = row;
+  orderDialogVisible.value = true;
+}
+
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
   const data = await exportAgentPayCode();
@@ -320,6 +378,10 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
+  merchantDetailObj: {},
+  ruleDetailObj: {},
+  userDetailObj: {},
+  orderDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -598,6 +660,24 @@ const handleCalculateSubmit = async () => {
   }
 };
 
+// ====================== 商户详情弹窗 ======================
+const merchantDialogVisible = ref(false);
+
+// ====================== 规则详情弹窗 ======================
+const ruleDialogVisible = ref(false);
+
+// ====================== 用户详情弹窗 ======================
+const userDialogVisible = ref(false);
+
+// ====================== 订单详情弹窗 ======================
+const orderDialogVisible = ref(false);
+
+// 手机号脱敏函数
+function maskPhone(phone) {
+  if (!phone) return '-';
+  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+}
+
 // ====================== 告警明细弹窗 ======================
 const alarmDialogVisible = ref(false);
 const currentAlarmRow = ref({});
@@ -685,6 +765,111 @@ watch(
           :width="col.width"
         />
       </el-table>
+    </ElDialog>
+
+    <!-- 商户详情弹窗 -->
+    <ElDialog v-model="merchantDialogVisible" title="商户详情" width="520px">
+      <ElDescriptions v-if="dataObj.merchantDetailObj" :column="1" border>
+        <ElDescriptionsItem label="商户名称">
+          {{ dataObj.merchantDetailObj.name || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户类型">
+          {{ dataObj.merchantDetailObj.merchantType || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系人">
+          {{ dataObj.merchantDetailObj.contact || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系电话">
+          {{ maskPhone(dataObj.merchantDetailObj.phone) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户地址">
+          {{ dataObj.merchantDetailObj.address || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户状态">
+          {{ dataObj.merchantDetailObj.status || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="注册时间">
+          {{ dataObj.merchantDetailObj.registerTime || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="备注">
+          {{ dataObj.merchantDetailObj.remark || '-' }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+    </ElDialog>
+
+    <!-- 规则详情弹窗 -->
+    <ElDialog v-model="ruleDialogVisible" title="代付规则详情" width="520px">
+      <ElDescriptions v-if="dataObj.ruleDetailObj" :column="1" border>
+        <ElDescriptionsItem label="规则名称">
+          {{ dataObj.ruleDetailObj.name || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户名称">
+          {{ dataObj.ruleDetailObj.merchantName || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="代付类型">
+          {{ dataObj.ruleDetailObj.agentType === 'merchant' ? '商户代付' : dataObj.ruleDetailObj.agentType === 'enterprise' ? '企业代付' : dataObj.ruleDetailObj.agentType === 'public' ? '公益代付' : dataObj.ruleDetailObj.agentType || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="单次限额">
+          ¥{{ (dataObj.ruleDetailObj.singleLimit || 0).toFixed(2) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="日累计限额">
+          ¥{{ (dataObj.ruleDetailObj.dayLimit || 0).toFixed(2) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="适用场景">
+          {{ dataObj.ruleDetailObj.scene || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="规则状态">
+          {{ dataObj.ruleDetailObj.status === 'disabled' ? '已禁用' : dataObj.ruleDetailObj.status === 'enabled' ? '已生效' : dataObj.ruleDetailObj.status === 'pending' ? '待生效' : dataObj.ruleDetailObj.status || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="使用次数">
+          {{ dataObj.ruleDetailObj.useCount || 0 }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+    </ElDialog>
+
+    <!-- 用户详情弹窗 -->
+    <ElDialog v-model="userDialogVisible" title="用户详情" width="520px">
+      <ElDescriptions v-if="dataObj.userDetailObj" :column="1" border>
+        <ElDescriptionsItem label="用户名称">
+          {{ dataObj.userDetailObj.userName || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="用户手机号">
+          {{ maskPhone(dataObj.userDetailObj.userTel) }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="使用时间">
+          {{ dataObj.userDetailObj.useTime || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="关联订单">
+          {{ dataObj.userDetailObj.orderNo || '-' }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+    </ElDialog>
+
+    <!-- 订单详情弹窗 -->
+    <ElDialog v-model="orderDialogVisible" title="代付订单详情" width="520px">
+      <ElDescriptions v-if="dataObj.orderDetailObj" :column="1" border>
+        <ElDescriptionsItem label="订单编号">
+          {{ dataObj.orderDetailObj.orderNo || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="代付码">
+          {{ dataObj.orderDetailObj.code || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户名称">
+          {{ dataObj.orderDetailObj.merchantName || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="规则名称">
+          {{ dataObj.orderDetailObj.ruleName || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="使用时间">
+          {{ dataObj.orderDetailObj.useTime || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="用户名称">
+          {{ dataObj.orderDetailObj.userName || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="用户手机号">
+          {{ maskPhone(dataObj.orderDetailObj.userTel) }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
     </ElDialog>
 
     <!-- 确认弹窗 -->
@@ -844,27 +1029,57 @@ watch(
           />
         </div>
       </template>
-      <template #checkResult="{ row }">
-        <el-tag :type="getCheckResultType(row.checkResult)">
-          {{ getCheckResultLabel(row.checkResult) }}
-        </el-tag>
-      </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag 
+          :type="getStatusType(row.status)"
+          class="cursor-pointer"
+          @click="handleFilterStatus(row.status)"
+        >
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
-      <template #checkNo="{ row }">
-        <el-text
+      <template #code="{ row }">
+        <span
           @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
+          class="common-align cursor-pointer text-primary"
         >
-          {{ row.checkNo }}
-        </el-text>
-      </template> 
+          {{ row.code }}
+        </span>
+      </template>
+      <template #merchantName="{ row }">
+        <span
+          @click="handleOpenMerchantDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.merchantName }}
+        </span>
+      </template>
+      <template #ruleName="{ row }">
+        <span
+          @click="handleOpenRuleDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.ruleName }}
+        </span>
+      </template>
+      <template #userName="{ row }">
+        <span
+          @click="handleOpenUserDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.userName }}
+        </span>
+      </template>
+      <template #orderNo="{ row }">
+        <span
+          @click="handleOpenOrderDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.orderNo }}
+        </span>
+      </template>
       <template #halfyearWarnCount="{ row }">
-        <el-text @click="handleTotal(row)" class="common-align" type="primary">
+        <el-text @click="handleTotal(row)" class="common-align cursor-pointer text-primary">
           {{ row.halfyearWarnCount }}
         </el-text>
       </template>

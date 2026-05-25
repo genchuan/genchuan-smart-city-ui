@@ -10,7 +10,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { 
+import {
   getRefundApplyPage,
   exportRefundApplyExcel,
   approveRefundApply,
@@ -19,6 +19,7 @@ import {
   executeRefundApply,
   batchAuditRefundApply,
 } from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
+import { getOrderPage } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -27,6 +28,7 @@ import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightki
 
 import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
+import OrderDetailDrawer from '#/views/genchuan/industry/chargePark/orderTrade/orderMgmt/allOrder/table/detail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -63,8 +65,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() {},
-  async onOpenChange() {},
+  onConfirm() { },
+  async onOpenChange() { },
 });
 
 const formData = ref();
@@ -115,6 +117,76 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 /** 刷新表格 */
 function handleRefresh() {
   gridApi.query();
+}
+
+// 点击状态筛选
+function handleFilterStatus(status) {
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  queryFormApi.setValues({ status: status });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击申请人ID筛选
+function handleFilterApplicantId(applicantId) {
+  dataObj.searchObj = { ...dataObj.searchObj, applicantId: applicantId };
+  queryFormApi.setValues({ applicantId: applicantId });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击审核人ID筛选
+function handleFilterAuditUserId(auditUserId) {
+  dataObj.searchObj = { ...dataObj.searchObj, auditUserId: auditUserId };
+  queryFormApi.setValues({ auditUserId: auditUserId });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击操作人ID筛选
+function handleFilterOperatorId(operatorId) {
+  dataObj.searchObj = { ...dataObj.searchObj, operatorId: operatorId };
+  queryFormApi.setValues({ operatorId: operatorId });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击创建者筛选
+function handleFilterCreator(creator) {
+  dataObj.searchObj = { ...dataObj.searchObj, creator: creator };
+  queryFormApi.setValues({ creator: creator });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击更新者筛选
+function handleFilterUpdater(updater) {
+  dataObj.searchObj = { ...dataObj.searchObj, updater: updater };
+  queryFormApi.setValues({ updater: updater });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击关联订单ID跳转原订单详情弹窗
+async function handleOpenOrderDetail(row) {
+  try {
+    const res = await getOrderPage({ orderNo: row.orderId });
+    if (res.list && res.list.length > 0) {
+      const firstOrder = res.list[0];
+      dataObj.orderDetailObj = {
+        ...firstOrder,
+        payTime: formatTimestamp(firstOrder.payTime),
+        updateTime: formatTimestamp(firstOrder.updateTime),
+        createTime: formatTimestamp(firstOrder.createTime),
+      };
+      orderDetailDrawerRef.value?.open();
+    } else {
+      ElMessage.info('未找到相关订单信息');
+    }
+  } catch (error) {
+    console.error('获取订单详情失败:', error);
+    ElMessage.error('获取订单详情失败');
+  }
 }
 
 // ====================== 导出 EXCEL ======================
@@ -184,6 +256,7 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
+  orderDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -318,6 +391,7 @@ const handleFullShow = () => {
 
 const parkDetailDrawerRef = ref(null);
 const enDetailObjRef = ref(null);
+const orderDetailDrawerRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
@@ -335,17 +409,19 @@ const statusMap = {
   pending_audit: { label: '待审核', type: 'warning' },
   pending_exec: { label: '待执行', type: 'primary' },
   completed: { label: '已完成', type: 'success' },
-  rejected: { label: '已驳回', type: 'danger' },
+  rejected: { label: '已拒绝', type: 'danger' },
 };
 
 // 获取状态标签
 const getStatusLabel = (status) => {
-  return statusMap[status]?.label || status;
+  const label = statusMap[status]?.label;
+  return label || status;
 };
 
 // 获取状态类型
 const getStatusType = (status) => {
-  return statusMap[status]?.type || 'default';
+  const type = statusMap[status]?.type;
+  return type || 'default';
 };
 
 // 审核弹窗
@@ -530,51 +606,29 @@ watch(
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <ParkDetailDrawer
-      ref="parkDetailDrawerRef"
-      :detail-obj="dataObj.detailObj"
-    />
+    <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
+    <OrderDetailDrawer ref="orderDetailDrawerRef" :detail-obj="dataObj.orderDetailObj" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
 
     <!-- 告警明细弹窗 -->
-    <ElDialog
-      v-model="alarmDialogVisible"
-      title="本半年食品安全问题明细"
-      width="900px"
-      append-to-body
-    >
+    <ElDialog v-model="alarmDialogVisible" title="本半年食品安全问题明细" width="900px" append-to-body>
       <el-table :data="alarmList" border height="450">
-        <el-table-column
-          v-for="col in alarmColumns"
-          :key="col.prop"
-          :label="col.label"
-          :prop="col.prop"
-          :width="col.width"
-        />
+        <el-table-column v-for="col in alarmColumns" :key="col.prop" :label="col.label" :prop="col.prop"
+          :width="col.width" />
       </el-table>
     </ElDialog>
 
     <!-- 审核弹窗 -->
-    <ElDialog
-      v-model="auditDialogVisible"
-      title="退款审核"
-      width="500px"
-      append-to-body
-    >
+    <ElDialog v-model="auditDialogVisible" title="退款审核" width="500px" append-to-body>
       <el-form :model="auditForm" label-width="80px">
         <el-form-item label="申请ID">
           <el-input v-model="auditForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input
-            v-model="auditForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入审核备注"
-          />
+          <el-input v-model="auditForm.remark" type="textarea" rows="3" placeholder="请输入审核备注" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -588,23 +642,13 @@ watch(
     </ElDialog>
 
     <!-- 拒绝弹窗 -->
-    <ElDialog
-      v-model="rejectDialogVisible"
-      title="拒绝退款"
-      width="500px"
-      append-to-body
-    >
+    <ElDialog v-model="rejectDialogVisible" title="拒绝退款" width="500px" append-to-body>
       <el-form :model="rejectForm" label-width="80px">
         <el-form-item label="申请ID">
           <el-input v-model="rejectForm.id" disabled />
         </el-form-item>
         <el-form-item label="拒绝原因">
-          <el-input
-            v-model="rejectForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入拒绝原因"
-          />
+          <el-input v-model="rejectForm.remark" type="textarea" rows="3" placeholder="请输入拒绝原因" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -618,23 +662,13 @@ watch(
     </ElDialog>
 
     <!-- 重新申请弹窗 -->
-    <ElDialog
-      v-model="reapplyDialogVisible"
-      title="重新申请退款"
-      width="500px"
-      append-to-body
-    >
+    <ElDialog v-model="reapplyDialogVisible" title="重新申请退款" width="500px" append-to-body>
       <el-form :model="reapplyForm" label-width="80px">
         <el-form-item label="申请ID">
           <el-input v-model="reapplyForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input
-            v-model="reapplyForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入备注"
-          />
+          <el-input v-model="reapplyForm.remark" type="textarea" rows="3" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -648,23 +682,13 @@ watch(
     </ElDialog>
 
     <!-- 执行弹窗 -->
-    <ElDialog
-      v-model="executeDialogVisible"
-      title="执行退款"
-      width="500px"
-      append-to-body
-    >
+    <ElDialog v-model="executeDialogVisible" title="执行退款" width="500px" append-to-body>
       <el-form :model="executeForm" label-width="80px">
         <el-form-item label="申请ID">
           <el-input v-model="executeForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input
-            v-model="executeForm.remark"
-            type="textarea"
-            rows="3"
-            placeholder="请输入备注"
-          />
+          <el-input v-model="executeForm.remark" type="textarea" rows="3" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -680,97 +704,81 @@ watch(
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton
-            content="导出EXCEL"
-            icon-name="download"
-            @click="handleExport"
-          />
-          <IconButton
-            content="批量审核"
-            icon-name="Check"
-            :disabled="isEmpty(checkedIds)"
-            @click="handleBatchAudit"
-          />
-          <IconButton
-            content="搜索"
-            icon-name="search"
-            @click="handleSerachShow"
-          />
-          <IconButton
-            :content="props.arrowShow ? '展开' : '收缩'"
-            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
-            @click="arrowChange"
-          />
-          <IconButton
-            content="全屏"
-            icon-name="FullScreen"
-            @click="handleFullShow"
-          />
+          <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
+          <IconButton content="批量审核" icon-name="Check" :disabled="isEmpty(checkedIds)" @click="handleBatchAudit" />
+          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange" />
+          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
 
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag :type="getStatusType(row.status)" class="cursor-pointer" @click="handleFilterStatus(row.status)">
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
       <template #recordNo="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
+        <el-text @click="handleOpenDetail(row)" class="common-align cursor-pointer" type="primary">
           {{ row.recordNo }}
         </el-text>
-      </template> 
+      </template>
       <template #halfyearWarnCount="{ row }">
-        <el-text @click="handleTotal(row)" class="common-align" type="primary">
+        <el-text @click="handleTotal(row)" class="common-align cursor-pointer" type="primary">
           {{ row.halfyearWarnCount }}
         </el-text>
       </template>
 
       <template #applyNo="{ row }">
-        <el-text
-          @click="handleOpenDetail(row)"
-          class="common-align"
-          type="primary"
-        >
+        <span @click="handleOpenDetail(row)" class="common-align cursor-pointer text-primary">
           {{ row.applyNo }}
+        </span>
+      </template>
+
+      <template #orderId="{ row }">
+        <el-text @click="handleOpenOrderDetail(row)" class="common-align cursor-pointer" type="primary"> {{ row.orderId
+          }} </el-text>
+
+      </template>
+
+      <template #applicantId="{ row }">
+        <el-text @click="handleFilterApplicantId(row.applicantId)" class="common-align cursor-pointer" type="primary">
+          {{ row.applicantId }}
+        </el-text>
+      </template>
+
+      <template #auditUserId="{ row }">
+        <el-text @click="handleFilterAuditUserId(row.auditUserId)" class="common-align cursor-pointer" type="primary">
+          {{ row.auditUserId }}
+        </el-text>
+      </template>
+
+      <template #operatorId="{ row }">
+        <el-text @click="handleFilterOperatorId(row.operatorId)" class="common-align cursor-pointer" type="primary">
+          {{ row.operatorId }}
+        </el-text>
+      </template>
+
+      <template #creator="{ row }">
+        <el-text @click="handleFilterCreator(row.creator)" class="common-align cursor-pointer" type="primary">
+          {{ row.creator }}
+        </el-text>
+      </template>
+
+      <template #updater="{ row }">
+        <el-text @click="handleFilterUpdater(row.updater)" class="common-align cursor-pointer" type="primary">
+          {{ row.updater }}
         </el-text>
       </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton
-            content="查看"
-            icon-name="View"
-            @click="handleOpenDetail(row)"
-          />
-          <IconButton
-            content="审核"
-            v-if="row.status === 'pending_audit'"
-            icon-name="Check"
-            @click="handleAudit(row)"
-          />
-          <IconButton
-            content="拒绝"
-            v-if="row.status === 'pending_audit'"
-            icon-name="Close"
-            color="#F56C6C"
-            @click="handleReject(row)"
-          />
-          <IconButton
-            content="重新申请"
-            v-if="row.status === 'rejected'"
-            icon-name="Refresh"
-            @click="handleReapply(row)"
-          />
-          <IconButton
-            content="执行"
-            v-if="row.status === 'pending_exec'"
-            icon-name="right"
-            @click="handleExecute(row)"
-          />
+          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          <IconButton content="审核" v-if="row.status === 'pending_audit'" icon-name="Check" @click="handleAudit(row)" />
+          <IconButton content="拒绝" v-if="row.status === 'pending_audit'" icon-name="Close" color="#F56C6C"
+            @click="handleReject(row)" />
+          <IconButton content="重新申请" v-if="row.status === 'rejected'" icon-name="Refresh" @click="handleReapply(row)" />
+          <IconButton content="执行" v-if="row.status === 'pending_exec'" icon-name="right" @click="handleExecute(row)" />
         </div>
       </template>
       <template #bottom>

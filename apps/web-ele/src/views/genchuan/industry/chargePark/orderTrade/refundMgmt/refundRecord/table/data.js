@@ -70,6 +70,7 @@ export function useGridColumns() {
       title: '关联订单ID',
       minWidth: 140,
       sortable: true,
+      slots: { default: 'orderId' },
     },
     {
       field: 'refundAmount',
@@ -103,12 +104,14 @@ export function useGridColumns() {
       title: '创建者',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'creator' },
     },
     {
       field: 'updater',
       title: '更新者',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'updater' },
     },
     {
       field: 'createTime',

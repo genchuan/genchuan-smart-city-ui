@@ -198,4 +198,4 @@ export function getMerchantInfoPage(params) {
   return requestClient.get('/usermerchant/merchant-info/page', {
     params,
   });
-}
+} 
