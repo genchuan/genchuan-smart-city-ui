@@ -335,7 +335,7 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择排班日期',
         format: 'YYYY-MM-DD',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD',
         type: 'date',
         clearable: true,
       },

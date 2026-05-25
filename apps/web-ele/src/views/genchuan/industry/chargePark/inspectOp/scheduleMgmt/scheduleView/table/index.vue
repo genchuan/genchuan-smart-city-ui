@@ -163,7 +163,7 @@ function buildQueryParams(page) {
     pageSize: page.pageSize,
     ...dataObj.searchParams,
     userId: filterUserName.value?.value || dataObj.searchParams.userId,
-    scheduleDate: filterScheduleDate.value || dataObj.searchParams.scheduleDate,
+    scheduleDate: filterScheduleDate.value || dataObj.searchParams.scheduleDate ? dayjs(dataObj.searchParams.scheduleDate).valueOf() : '',
     shiftType: filterShiftType.value || dataObj.searchParams.shiftType,
     positionName: filterPositionName.value || dataObj.searchParams.positionName,
     status: filterStatus.value || dataObj.searchParams.status,
