@@ -49,6 +49,7 @@ const drillDetailFields = ref([]);
 const drillDrawerTitle = ref('关联信息');
 const importDialogVisible = ref(false);
 const importFile = ref(null);
+const importFileList = ref([]);
 const importLoading = ref(false);
 const importResult = ref(null);
 const importUpdateSupport = ref(false);
@@ -897,29 +898,102 @@ async function handleExport(extraParams = {}) {
   });
 }
 
-function handleOpenImport() {
+function resetImportState() {
   importFile.value = null;
+  importFileList.value = [];
   importResult.value = null;
   importUpdateSupport.value = false;
+}
+
+function handleOpenImport() {
+  resetImportState();
   importDialogVisible.value = true;
 }
 
 function handleImportFileChange(uploadFile) {
   importFile.value = uploadFile?.raw || uploadFile;
+  importFileList.value = uploadFile ? [uploadFile] : [];
   importResult.value = null;
 }
 
 function handleRemoveImportFile() {
   importFile.value = null;
+  importFileList.value = [];
+}
+
+function handleImportFileExceed(files) {
+  const file = files?.[0];
+  if (!file) return;
+  const rawFile = file.raw || file;
+  importFile.value = rawFile;
+  importFileList.value = [
+    {
+      name: rawFile.name || file.name || '导入文件',
+      raw: rawFile,
+      status: 'ready',
+      uid: Date.now(),
+    },
+  ];
+  importResult.value = null;
 }
 
 function normalizeImportResult(result) {
   const data = result?.data || result || {};
-  const failureList = data.failureList || data.failures || [];
+  const fallbackMessage =
+    data.msg ||
+    data.message ||
+    data.errorMsg ||
+    data.error ||
+    result?.msg ||
+    result?.message ||
+    result?.errorMsg ||
+    result?.error ||
+    '';
+  const rawFailureData =
+    data.failureList ||
+    data.failures ||
+    data.errorList ||
+    data.errors ||
+    data.failMsgs ||
+    (fallbackMessage ? [fallbackMessage] : []);
+  const rawFailureList = Array.isArray(rawFailureData)
+    ? rawFailureData
+    : Object.values(rawFailureData || {});
+  const failureList = rawFailureList.map((item, index) => {
+    if (typeof item === 'string') {
+      return { msg: item, row: index + 1 };
+    }
+    return {
+      ...item,
+      msg:
+        item.msg ||
+        item.message ||
+        item.errorMsg ||
+        item.reason ||
+        item.failReason ||
+        item.error ||
+        fallbackMessage ||
+        '导入失败',
+      name:
+        item.name ||
+        item.stationName ||
+        item.areaName ||
+        item.ruleName ||
+        item.spaceNo ||
+        item.rowName ||
+        '',
+      row: item.row || item.rowNum || item.line || item.index || index + 1,
+    };
+  });
   return {
-    failureCount: data.failureCount ?? failureList.length ?? 0,
+    failureCount:
+      data.failureCount ??
+      data.failCount ??
+      data.errorCount ??
+      failureList.length ??
+      0,
     failureList,
-    successCount: data.successCount ?? data.success ?? 0,
+    successCount: data.successCount ?? data.success ?? data.successNum ?? 0,
   };
 }
 
@@ -1102,14 +1176,58 @@ function getCellDisplayText(column, row) {
   }
   return '--';
 }
+
+function findChartSourceItem(config = [], value) {
+  const [dataKey, nameField] = config;
+  return (chartData.value?.[dataKey] || []).find(
+    (item) => String(item?.[nameField]) === String(value),
+  );
+}
+
+function resolveChartFilterValue(field, sourceRow, fallback) {
+  if (field !== 'stationId') {
+    return sourceRow?.[field] ?? fallback;
+  }
+  const directValue =
+    sourceRow?.stationId ?? sourceRow?.id ?? sourceRow?.stationID;
+  if (!isEmpty(directValue)) {
+    return directValue;
+  }
+  const stationName =
+    sourceRow?.stationName ||
+    sourceRow?.name ||
+    sourceRow?.stationNo ||
+    fallback;
+  const stationOptions = selectOptionsMap.value.StationInfo || [];
+  const matched = stationOptions.find((item) => {
+    const label = String(item.label || '');
+    return (
+      String(item.value) === String(stationName) ||
+      label === String(stationName) ||
+      label.startsWith(`${stationName} (`)
+    );
+  });
+  return matched?.value ?? fallback;
+}
+
 function handleCardClick(item) {
   if (!item.status) return;
   applySearchPatch({ status: item.status });
 }
 
-function handleBarClick(name) {
-  const field = pageConfig.chart?.bar?.[4] || pageConfig.chart?.bar?.[1];
-  applySearchPatch({ [field]: name });
+async function handleBarClick(name) {
+  const chartConfig = pageConfig.chart?.bar || [];
+  const field = chartConfig[4] || chartConfig[1];
+  if (!field) return;
+  if (
+    field === 'stationId' &&
+    (selectOptionsMap.value.StationInfo || []).length === 0
+  ) {
+    await loadSelectOptions();
+  }
+  const sourceRow = findChartSourceItem(chartConfig, name);
+  const value = resolveChartFilterValue(field, sourceRow, name);
+  applySearchPatch({ [field]: value });
 }
 
 function handleLineClick(payload) {
@@ -1376,6 +1494,7 @@ defineExpose({
     </div>
     <el-dialog
       v-model="importDialogVisible"
+      @closed="resetImportState"
       :title="`导入${pageConfig.title}`"
       width="520px"
       append-to-body
@@ -1390,11 +1509,13 @@ defineExpose({
           </el-checkbox>
         </div>
         <el-upload
+          v-model:file-list="importFileList"
           drag
           :auto-upload="false"
           :limit="1"
           accept=".xls,.xlsx"
           :on-change="handleImportFileChange"
+          :on-exceed="handleImportFileExceed"
           :on-remove="handleRemoveImportFile"
         >
           <div class="import-upload-text">

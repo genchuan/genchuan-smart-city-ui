@@ -424,7 +424,15 @@ async function handleExport(extraParams = {}, isRowExport = false) {
 }
 
 async function handleOpenDetail(row) {
-  detailObj.value = (await pageApi.getStationOpReportDetail(row.id)) || row;
+  const detail = (await pageApi.getStationOpReportDetail(row.id)) || row;
+  detailObj.value = {
+    ...row,
+    ...detail,
+  };
+  if (isEmpty(detailObj.value.status)) {
+    detailObj.value.status =
+      detailObj.value.generateStatus || detailObj.value.statusName;
+  }
   await nextTick();
   detailDrawerRef.value?.open();
 }
@@ -490,7 +498,10 @@ async function clearFilters() {
 }
 
 function getCellDisplayText(column, row) {
-  const value = row?.[column.field];
+  let value = row?.[column.field];
+  if (column.field === 'status') {
+    value = row?.status || row?.generateStatus || row?.statusName;
+  }
   if (!isEmpty(value)) {
     return Array.isArray(value) ? value.join(', ') : value;
   }

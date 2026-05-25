@@ -26,15 +26,20 @@ const currentTab = computed(
 <template>
   <div class="station-resource-entry">
     <el-tabs v-model="activeName" class="common-tabs" type="card">
-      <el-tab-pane v-for="item in tabs" :key="item.label" :name="item.label">
+      <el-tab-pane
+        v-for="item in tabs"
+        :key="item.label"
+        :label="item.label"
+        :name="item.label"
+      >
         <template #label>
           <div class="table-first">
             <span>{{ item.label }}</span>
           </div>
         </template>
-        <component :is="currentTab.component" />
       </el-tab-pane>
     </el-tabs>
+    <component :is="currentTab.component" />
   </div>
 </template>
 

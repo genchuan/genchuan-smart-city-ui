@@ -106,7 +106,7 @@ export const searchFields = [
     required: false,
   },
   {
-    field: 'generateStatus',
+    field: 'status',
     label: '生成状态',
     type: 'select',
     options: ['生成中', '生成成功', '生成失败'],
@@ -228,7 +228,7 @@ export const tableColumns = [
     drillLabel: '押金订单明细',
   },
   {
-    field: 'generateStatus',
+    field: 'status',
     label: '生成状态',
     minWidth: 120,
     drillType: 'filter',
@@ -252,7 +252,7 @@ export const tableColumns = [
 export const detailFields = [
   { key: 'reportCycle', label: '报表周期', section: '报表信息' },
   { key: 'statPeriod', label: '统计时段', section: '报表信息' },
-  { key: 'generateStatus', label: '生成状态', section: '报表信息' },
+  { key: 'status', label: '生成状态', section: '报表信息' },
   { key: 'generateTime', label: '报表生成时间', section: '报表信息' },
   { key: 'operator', label: '操作人', section: '报表信息' },
   { key: 'exportCount', label: '报表导出次数', section: '报表信息' },

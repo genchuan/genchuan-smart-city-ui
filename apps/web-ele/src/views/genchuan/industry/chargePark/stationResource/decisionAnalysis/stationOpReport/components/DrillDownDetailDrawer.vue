@@ -6,8 +6,11 @@ import { useVbenDrawer } from '@vben/common-ui';
 import { ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import * as areaInfoApi from '#/api/genchuan/industry/chargePark/stationResource/areaMgmt/areaInfo/index.js';
+import * as pageApi from '#/api/genchuan/industry/chargePark/stationResource/decisionAnalysis/stationOpReport/index.js';
+import * as stationInfoApi from '#/api/genchuan/industry/chargePark/stationResource/stationMgmt/stationInfo/index.js';
 
-import { formatDateTime } from '../table/data.js';
+import { formatDateTime, formatStatPeriod } from '../table/data.js';
 
 const drillInfo = reactive({
   source: '',
@@ -33,12 +36,11 @@ const metricMetaMap = {
   recoveryRate: { label: '追缴完成率', category: 'recovery' },
   depositOrderCount: { label: '押金订单量', category: 'deposit' },
   operator: { label: '操作人信息', category: 'operator' },
-  areaStationBar: { label: '片区场站数分布', category: 'area' },
+  areaStationBar: { label: '片区运营分布', category: 'areaOperation' },
   stationTypeBar: { label: '类型场站数分布', category: 'station' },
   stationOrderBar: { label: '场站订单量分布', category: 'order' },
   recoveryRateBar: { label: '场站追缴完成率', category: 'recovery' },
-  trendLine: { label: '周期订单及业务趋势', category: 'trend' },
-  mapStation: { label: '地图场站', category: 'station' },
+  trendLine: { label: '场站运营趋势', category: 'operationTrend' },
 };
 
 const statusTypeMap = {
@@ -55,36 +57,6 @@ const statusTypeMap = {
   停用: 'danger',
   不可用: 'danger',
   生成失败: 'danger',
-};
-
-const mapFieldLabelMap = {
-  address: '地址',
-  areaName: '所属片区',
-  availableSpaceCount: '可用车位数',
-  code: '编码',
-  coordinate: '地图坐标',
-  geoCode: '场站编码',
-  id: 'ID',
-  locationName: '位置名称',
-  name: '名称',
-  orderCount: '订单量',
-  revenue: '营收',
-  spaceCount: '车位数',
-  spaceTotal: '泊位总数',
-  stationCount: '场站数',
-  stationId: '场站ID',
-  stationName: '场站名称',
-  stationNo: '场站编号',
-  stationStatus: '运营状态',
-  stationType: '场站类型',
-  status: '状态',
-  statusName: '状态',
-  totalOrderCount: '总订单量',
-  totalRevenue: '总营收',
-  totalSpace: '总车位数',
-  totalSpaceCount: '总车位数',
-  type: '类型',
-  typeName: '类型',
 };
 
 const drawerTitle = computed(() => {
@@ -129,55 +101,7 @@ function withCommon(columns) {
   ];
 }
 
-function isPlainObject(value) {
-  return value && typeof value === 'object' && !Array.isArray(value);
-}
-
-function formatMapCellValue(value) {
-  if (value === undefined || value === null || value === '') return '';
-  if (Array.isArray(value)) return value.join('、');
-  if (isPlainObject(value)) return JSON.stringify(value);
-  return value;
-}
-
-function normalizeMapRow(row = {}) {
-  return Object.fromEntries(
-    Object.entries(row).map(([key, value]) => [key, formatMapCellValue(value)]),
-  );
-}
-
-function createMapColumns(row = {}) {
-  const keys = Object.keys(row).filter((key) => row[key] !== undefined);
-  const priorityKeys = [
-    'stationNo',
-    'geoCode',
-    'stationName',
-    'locationName',
-    'areaName',
-    'stationType',
-    'stationStatus',
-    'statusName',
-    'coordinate',
-    'stationCount',
-    'spaceCount',
-    'orderCount',
-    'revenue',
-  ];
-  const orderedKeys = [
-    ...priorityKeys.filter((key) => keys.includes(key)),
-    ...keys.filter((key) => !priorityKeys.includes(key)),
-  ];
-  return orderedKeys.map((key) => ({
-    field: key,
-    minWidth: key === 'coordinate' ? 180 : 140,
-    title: mapFieldLabelMap[key] || key,
-  }));
-}
-
 function getGridColumns() {
-  if (drillInfo.source === 'map') {
-    return withCommon(createMapColumns(drillInfo.row));
-  }
   const category = getMetricMeta().category;
   const columnsMap = {
     area: [
@@ -186,6 +110,18 @@ function getGridColumns() {
       { field: 'spaceCount', title: '车位数', minWidth: 100, sortable: true },
       { field: 'normalOperateCount', title: '正常运营数', minWidth: 120 },
       { field: 'managerName', title: '负责人', minWidth: 120 },
+    ],
+    areaOperation: [
+      { field: 'stationNo', title: '场站编号', minWidth: 140 },
+      { field: 'stationName', title: '场站名称', minWidth: 180 },
+      { field: 'areaName', title: '所属片区', minWidth: 140 },
+      { field: 'type', title: '场站类型', minWidth: 120 },
+      { field: 'operateType', title: '运营类型', minWidth: 120 },
+      { field: 'status', title: '运营状态', minWidth: 110 },
+      { field: 'spaceTotal', title: '泊位总数', minWidth: 100 },
+      { field: 'spaceCount', title: '车位绑定数', minWidth: 110 },
+      { field: 'deviceCount', title: '设备绑定数', minWidth: 110 },
+      { field: 'address', title: '场站地址', minWidth: 220 },
     ],
     station: [
       { field: 'stationNo', title: '场站编码', minWidth: 140 },
@@ -254,6 +190,32 @@ function getGridColumns() {
       { field: 'revenue', title: '营收', minWidth: 110 },
       { field: 'recoveryRate', title: '追缴完成率', minWidth: 120 },
     ],
+    operationTrend: [
+      { field: 'reportCycle', title: '报表周期', minWidth: 110 },
+      {
+        field: 'statPeriod',
+        title: '统计时段',
+        minWidth: 220,
+        formatter: ({ cellValue, row }) => formatStatPeriod(row, cellValue),
+      },
+      { field: 'totalAreaCount', title: '总片区数', minWidth: 110 },
+      { field: 'coverStationCount', title: '覆盖场站数', minWidth: 120 },
+      { field: 'totalStationCount', title: '总场站数', minWidth: 110 },
+      { field: 'normalOperateCount', title: '正常运营数', minWidth: 120 },
+      { field: 'totalSpaceCount', title: '总车位数', minWidth: 110 },
+      { field: 'availableSpaceCount', title: '可用车位数', minWidth: 120 },
+      { field: 'orderCount', title: '订单量', minWidth: 100 },
+      { field: 'revenue', title: '营收', minWidth: 110 },
+      { field: 'recoveryRate', title: '追缴完成率', minWidth: 120 },
+      { field: 'depositOrderCount', title: '押金订单量', minWidth: 120 },
+      { field: 'status', title: '生成状态', minWidth: 110 },
+      {
+        field: 'generateTime',
+        title: '报表生成时间',
+        minWidth: 170,
+        formatter: ({ cellValue }) => formatDateTime(cellValue),
+      },
+    ],
     default: [
       { field: 'name', title: '名称', minWidth: 180 },
       { field: 'type', title: '类型', minWidth: 120 },
@@ -272,10 +234,6 @@ function getBaseName(index) {
 }
 
 function getDrillRowCount(sourceRow) {
-  if (drillInfo.source === 'map') {
-    return 1;
-  }
-
   const directValue = Number(drillInfo.drillValue);
   if (Number.isFinite(directValue) && directValue > 0) {
     return Math.min(Math.floor(directValue), 500);
@@ -292,14 +250,6 @@ function getDrillRowCount(sourceRow) {
 function createRows() {
   const category = getMetricMeta().category;
   const sourceRow = drillInfo.row || {};
-  if (drillInfo.source === 'map') {
-    return [
-      {
-        id: sourceRow.id || sourceRow.stationId || sourceRow.geoCode || 'map-1',
-        ...normalizeMapRow(sourceRow),
-      },
-    ];
-  }
   const name = drillInfo.drillName || drillInfo.drillValue || getMetricLabel();
   const baseTime = sourceRow.generateTime || Date.now();
   const rowCount = getDrillRowCount(sourceRow);
@@ -424,7 +374,141 @@ function createRows() {
   });
 }
 
+function isEmpty(value) {
+  return value === undefined || value === null || value === '';
+}
+
+function sanitizeParams(source = {}) {
+  return Object.fromEntries(
+    Object.entries(source).filter(([, value]) => !isEmpty(value)),
+  );
+}
+
+function extractPageList(result) {
+  if (Array.isArray(result)) return result;
+  return (
+    result?.list ||
+    result?.rows ||
+    result?.records ||
+    result?.data?.list ||
+    result?.data?.rows ||
+    result?.data?.records ||
+    []
+  );
+}
+
+function extractPageTotal(result, list = []) {
+  return (
+    result?.total ??
+    result?.totalCount ??
+    result?.data?.total ??
+    result?.data?.totalCount ??
+    list.length
+  );
+}
+
+function normalizeStationRow(row = {}) {
+  return {
+    ...row,
+    areaName: row.areaName || row.area || '',
+    stationName: row.stationName || row.name || '',
+    stationNo: row.stationNo || row.stationCode || '',
+  };
+}
+
+function getReportCycleParam() {
+  if (!drillInfo.reportCycle || drillInfo.reportCycle === '全部') return {};
+  return { reportCycle: drillInfo.reportCycle };
+}
+
+function getClickedStatDate() {
+  const row = drillInfo.row || {};
+  return (
+    row.statDate || row.date || row.reportDate || drillInfo.drillName || ''
+  );
+}
+
+function getDateRangeParams(statDate) {
+  const row = drillInfo.row || {};
+  if (row.reportStartTime || row.reportEndTime) {
+    return {
+      reportEndTime: row.reportEndTime,
+      reportStartTime: row.reportStartTime,
+    };
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(statDate))) {
+    return {
+      reportEndTime: `${statDate} 23:59:59`,
+      reportStartTime: `${statDate} 00:00:00`,
+    };
+  }
+  return {};
+}
+
+async function getAreaIdByName(areaName) {
+  if (!areaName) return '';
+  try {
+    const result = await areaInfoApi.getAreaInfoPage({
+      name: areaName,
+      pageNo: 1,
+      pageSize: 1,
+    });
+    const area = extractPageList(result)[0] || {};
+    return area.id || area.areaId || '';
+  } catch {
+    return '';
+  }
+}
+
+async function getAreaOperationData({ page }) {
+  const sourceRow = drillInfo.row || {};
+  const areaName = sourceRow.areaName || drillInfo.drillName || '';
+  const areaId =
+    sourceRow.areaId || sourceRow.id || (await getAreaIdByName(areaName));
+  const result = await stationInfoApi.getStationInfoPage(
+    sanitizeParams({
+      areaId,
+      areaName: areaId ? undefined : areaName,
+      pageNo: page.currentPage,
+      pageSize: page.pageSize,
+    }),
+  );
+  const list = extractPageList(result).map((row) => normalizeStationRow(row));
+  return {
+    list,
+    total: extractPageTotal(result, list),
+  };
+}
+
+async function getTrendOperationData({ page }) {
+  const statDate = getClickedStatDate();
+  const result = await pageApi.getStationOpReportPage(
+    sanitizeParams({
+      ...getReportCycleParam(),
+      ...getDateRangeParams(statDate),
+      date: statDate,
+      reportDate: statDate,
+      statDate,
+      statPeriod: statDate,
+      pageNo: page.currentPage,
+      pageSize: page.pageSize,
+    }),
+  );
+  const list = extractPageList(result);
+  return {
+    list,
+    total: extractPageTotal(result, list),
+  };
+}
+
 async function getDrillData({ page }) {
+  if (drillInfo.drillType === 'areaStationBar') {
+    return getAreaOperationData({ page });
+  }
+  if (drillInfo.drillType === 'trendLine') {
+    return getTrendOperationData({ page });
+  }
+
   const list = createRows();
   const start = (page.currentPage - 1) * page.pageSize;
   const end = page.currentPage * page.pageSize;
