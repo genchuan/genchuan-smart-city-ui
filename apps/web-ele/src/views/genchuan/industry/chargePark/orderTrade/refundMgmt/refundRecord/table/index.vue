@@ -14,6 +14,7 @@ import {
   getRefundRecordPage,
   exportRefundRecordExcel,
   checkRefundRecord,
+  getRefundApplyPage
 } from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
@@ -23,6 +24,7 @@ import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightki
 
 import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
+import RefundApplyDetailDrawer from '#/views/genchuan/industry/chargePark/orderTrade/refundMgmt/refundApply/table/detail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -382,6 +384,29 @@ const handleBatchCheck = async () => {
   }
 };
 
+// 退款申请详情数据
+const applyDetailObj = ref({});
+
+// 点击退款申请编号查看详情
+const handleOpenApplyDetail = async (row) => {
+  try {
+    const res = await getRefundApplyPage({ applyNo: row.applyNo });
+    const data = res.list?.[0] || {};
+    applyDetailObj.value = {
+      ...data,
+      applyTime: formatTimestamp(data.applyTime),
+      auditTime: formatTimestamp(data.auditTime),
+      createTime: formatTimestamp(data.createTime),
+      updateTime: formatTimestamp(data.updateTime),
+    };
+    applyDetailDrawerRef.value?.open();
+  } catch {
+    ElMessage.error('获取退款申请详情失败');
+  }
+};
+
+const applyDetailDrawerRef = ref(null);
+
 // ====================== 告警明细弹窗 ======================
 const alarmDialogVisible = ref(false);
 const currentAlarmRow = ref({});
@@ -501,6 +526,11 @@ watch(
       </template>
     </ElDialog>
 
+    <RefundApplyDetailDrawer
+      ref="applyDetailDrawerRef"
+      :detail-obj="applyDetailObj"
+    />
+
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
@@ -540,7 +570,16 @@ watch(
         >
           {{ row.recordNo }}
         </el-text>
-      </template> 
+      </template>
+      <template #applyNo="{ row }">
+        <el-text
+          @click="handleOpenApplyDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.applyNo }}
+        </el-text>
+      </template>
       <template #halfyearWarnCount="{ row }">
         <el-text @click="handleTotal(row)" class="common-align" type="primary">
           {{ row.halfyearWarnCount }}
