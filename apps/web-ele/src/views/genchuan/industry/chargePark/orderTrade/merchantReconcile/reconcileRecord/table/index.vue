@@ -1,15 +1,18 @@
 <script setup>import { reactive, ref, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
-import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption } from 'element-plus';
+import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElDialog, ElDescriptions, ElDescriptionsItem } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getReconcileRecordListPage, exportReconcileRecord, checkReconcileRecord } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
+import { getMerchantInfoPage } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
+import { getReconcileBillListPage } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
 import { formatTimestamp } from '#/utils';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
 import EditDrawer from './edit.vue';
+import ReconcileBillDetailDrawer from '../reconcileBill/table/detail.vue';
 const props = defineProps({
   secondShow: {
     type: Boolean,
@@ -97,6 +100,8 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
+  merchantDetailObj: {},
+  reconcileBillDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -181,6 +186,72 @@ const arrowChange = () => {
   emit('arrow-change');
 };
 
+// 商户详情弹窗
+const merchantDialogVisible = ref(false);
+
+// 对账单据详情抽屉
+const reconcileBillDetailDrawerRef = ref(null);
+
+// 点击关联单据跳转对账单据详情弹窗
+async function handleOpenReconcileBillDetail(row) {
+  try {
+    const res = await getReconcileBillListPage({ billNo: row.billNo, pageNo: 1, pageSize: 1 });
+    if (res.list && res.list.length > 0) {
+      const firstBill = res.list[0];
+      dataObj.reconcileBillDetailObj = {
+        ...firstBill,
+        confirmTime: formatTimestamp(firstBill.confirmTime),
+        createTime: formatTimestamp(firstBill.createTime),
+      };
+      reconcileBillDetailDrawerRef.value?.open();
+    } else {
+      ElMessage.info('未找到相关对账单据信息');
+    }
+  } catch (error) {
+    console.error('获取对账单据详情失败:', error);
+    ElMessage.error('获取对账单据详情失败');
+  }
+}
+
+// 点击所属商户跳转商户详情弹窗
+async function handleOpenMerchantDetail(row) {
+  try {
+    const res = await getMerchantInfoPage({ merchantName: row.merchantName });
+    if (res.list && res.list.length > 0) {
+      const firstMerchant = res.list[0];
+      dataObj.merchantDetailObj = {
+        ...firstMerchant,
+        registerTime: formatTimestamp(firstMerchant.registerTime),
+        createTime: formatTimestamp(firstMerchant.createTime),
+        updateTime: formatTimestamp(firstMerchant.updateTime),
+        auditTime: firstMerchant.auditTime ? formatTimestamp(firstMerchant.auditTime) : null,
+      };
+      merchantDialogVisible.value = true;
+    } else {
+      ElMessage.info('未找到相关商户信息');
+    }
+  } catch (error) {
+    console.error('获取商户详情失败:', error);
+    ElMessage.error('获取商户详情失败');
+  }
+}
+
+// 点击核查人筛选
+function handleFilterChecker(checkerName) {
+  if (!checkerName) return;
+  dataObj.searchObj = { ...dataObj.searchObj, checkerName: checkerName };
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击记录状态筛选
+function handleFilterStatus(status) {
+  if (!status) return;
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
 watch(
   () => props.filterParams,
   () => {
@@ -194,6 +265,45 @@ watch(
 <template>
   <div class="park-lot-table-new" v-loading="dataObj.loading">
     <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
+    
+    <!-- 商户详情弹窗 -->
+    <ElDialog v-model="merchantDialogVisible" title="商户详情" width="600px">
+      <ElDescriptions v-if="dataObj.merchantDetailObj" :column="1" border>
+        <ElDescriptionsItem label="商户名称">
+          {{ dataObj.merchantDetailObj.name || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系人">
+          {{ dataObj.merchantDetailObj.contact || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系电话">
+          {{ dataObj.merchantDetailObj.phone || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户类型">
+          {{ dataObj.merchantDetailObj.merchantType || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="地址">
+          {{ dataObj.merchantDetailObj.address || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="钱包余额">
+          {{ dataObj.merchantDetailObj.walletBalance !== undefined ? `¥${dataObj.merchantDetailObj.walletBalance.toFixed(2)}` : '¥0.00' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="注册时间">
+          {{ dataObj.merchantDetailObj.registerTime || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="审核状态">
+          <el-tag :type="dataObj.merchantDetailObj.status === 'approved' ? 'success' : dataObj.merchantDetailObj.status === 'pending' ? 'warning' : 'info'">
+            {{ dataObj.merchantDetailObj.status === 'approved' ? '已通过' : dataObj.merchantDetailObj.status === 'pending' ? '待审核' : dataObj.merchantDetailObj.status || '-' }}
+          </el-tag>
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="备注">
+          {{ dataObj.merchantDetailObj.remark || '-' }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+    </ElDialog>
+    
+    <!-- 对账单据详情弹窗 -->
+    <ReconcileBillDetailDrawer ref="reconcileBillDetailDrawerRef" :detail-obj="dataObj.reconcileBillDetailObj" />
+    
     <Drawer title="搜索">
       <ElForm
         ref="searchFormRef"
@@ -219,6 +329,47 @@ watch(
             @click="arrowChange" />
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
+      </template>
+      <template #id="{ row }">
+        <span
+          @click="handleOpenDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.id }}
+        </span>
+      </template>
+      <template #billNo="{ row }">
+        <span
+          @click="handleOpenReconcileBillDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.billNo }}
+        </span>
+      </template>
+      <template #merchantName="{ row }">
+        <span
+          @click="handleOpenMerchantDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.merchantName }}
+        </span>
+      </template>
+      <template #checkerName="{ row }">
+        <span
+          @click="handleFilterChecker(row.checkerName)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.checkerName || '-' }}
+        </span>
+      </template>
+      <template #status="{ row }">
+        <el-tag 
+          :type="row.status === 'normal' ? 'success' : row.status === 'abnormal' ? 'danger' : 'info'"
+          class="cursor-pointer"
+          @click="handleFilterStatus(row.status)"
+        >
+          {{ row.status === 'normal' ? '正常' : row.status === 'abnormal' ? '异常' : row.status || '-' }}
+        </el-tag>
       </template>
 
       <template #actions="{ row }">

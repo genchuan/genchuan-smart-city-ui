@@ -2,7 +2,7 @@
 import { reactive, ref, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
-import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption } from 'element-plus';
+import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElDialog, ElDescriptions, ElDescriptionsItem } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { 
@@ -13,6 +13,7 @@ import {
   fixReconcileBill,
   reconcileBill
 } from '#/api/genchuan/industry/chargePark/orderTrade/merchantReconcile/index.js';
+import { getMerchantInfoPage } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import { formatTimestamp } from '#/utils';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
@@ -235,6 +236,7 @@ function handleRowCheckboxChange({ records }) {
 const dataObj = reactive({
   totalShow: false,
   detailObj: {},
+  merchantDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -327,6 +329,48 @@ const arrowChange = () => {
   emit('arrow-change');
 };
 
+// 商户详情弹窗
+const merchantDialogVisible = ref(false);
+
+// 点击所属商户跳转商户详情弹窗
+async function handleOpenMerchantDetail(row) {
+  try {
+    const res = await getMerchantInfoPage({ merchantName: row.merchantName });
+    if (res.list && res.list.length > 0) {
+      const firstMerchant = res.list[0];
+      dataObj.merchantDetailObj = {
+        ...firstMerchant,
+        registerTime: formatTimestamp(firstMerchant.registerTime),
+        createTime: formatTimestamp(firstMerchant.createTime),
+        updateTime: formatTimestamp(firstMerchant.updateTime),
+        auditTime: firstMerchant.auditTime ? formatTimestamp(firstMerchant.auditTime) : null,
+      };
+      merchantDialogVisible.value = true;
+    } else {
+      ElMessage.info('未找到相关商户信息');
+    }
+  } catch (error) {
+    console.error('获取商户详情失败:', error);
+    ElMessage.error('获取商户详情失败');
+  }
+}
+
+// 点击对账人筛选
+function handleFilterOperator(operatorName) {
+  if (!operatorName) return;
+  dataObj.searchObj = { ...dataObj.searchObj, operatorName: operatorName };
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击单据状态筛选
+function handleFilterStatus(status) {
+  if (!status) return;
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
 watch(
   () => props.filterParams,
   () => {
@@ -349,6 +393,41 @@ watch(
         </ElFormItem>
       </ElForm>
     </RemarkDrawer>
+    
+    <!-- 商户详情弹窗 -->
+    <ElDialog v-model="merchantDialogVisible" title="商户详情" width="600px">
+      <ElDescriptions v-if="dataObj.merchantDetailObj" :column="1" border>
+        <ElDescriptionsItem label="商户名称">
+          {{ dataObj.merchantDetailObj.name || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系人">
+          {{ dataObj.merchantDetailObj.contact || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="联系电话">
+          {{ dataObj.merchantDetailObj.phone || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="商户类型">
+          {{ dataObj.merchantDetailObj.merchantType || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="地址">
+          {{ dataObj.merchantDetailObj.address || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="钱包余额">
+          {{ dataObj.merchantDetailObj.walletBalance !== undefined ? `¥${dataObj.merchantDetailObj.walletBalance.toFixed(2)}` : '¥0.00' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="注册时间">
+          {{ dataObj.merchantDetailObj.registerTime || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="审核状态">
+          <el-tag :type="dataObj.merchantDetailObj.status === 'approved' ? 'success' : dataObj.merchantDetailObj.status === 'pending' ? 'warning' : 'info'">
+            {{ dataObj.merchantDetailObj.status === 'approved' ? '已通过' : dataObj.merchantDetailObj.status === 'pending' ? '待审核' : dataObj.merchantDetailObj.status || '-' }}
+          </el-tag>
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="备注">
+          {{ dataObj.merchantDetailObj.remark || '-' }}
+        </ElDescriptionsItem>
+      </ElDescriptions>
+    </ElDialog>
     
     <Drawer title="搜索">
       <ElForm
@@ -384,15 +463,43 @@ watch(
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
+      <template #id="{ row }">
+        <span
+          @click="handleOpenDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.id }}
+        </span>
+      </template>
+      <template #billNo="{ row }">
+        <el-text @click="handleOpenDetail(row)" class="common-align cursor-pointer" type="primary">
+          {{ row.billNo }}
+        </el-text>
+      </template>
+      <template #merchantName="{ row }">
+        <span
+          @click="handleOpenMerchantDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.merchantName }}
+        </span>
+      </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag 
+          :type="getStatusType(row.status)"
+          class="cursor-pointer"
+          @click="handleFilterStatus(row.status)"
+        >
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
-      <template #billNo="{ row }">
-        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
-          {{ row.billNo }}
-        </el-text>
+      <template #operatorName="{ row }">
+        <span
+          @click="handleFilterOperator(row.operatorName)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.operatorName || '-' }}
+        </span>
       </template>
 
       <template #actions="{ row }">
@@ -417,4 +524,3 @@ watch(
     </Grid>
   </div>
 </template>
- 
