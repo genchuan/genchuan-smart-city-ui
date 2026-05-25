@@ -30,7 +30,6 @@ export namespace GateOpenApi {
   /** 开闸管理分页查询参数 */
   export interface PageReqVO extends PageParam {
     stationId?: number;
-    stationName?: string;
     openReason?: string;
     applyUserId?: number;
     applyTime?: string[];
@@ -43,7 +42,6 @@ export namespace GateOpenApi {
   export interface CreateReqVO {
     stationId: number;
     openReason: string;
-    applyUserId: number;
     remark?: string;
   }
 

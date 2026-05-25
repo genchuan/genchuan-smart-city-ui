@@ -5,16 +5,6 @@ import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
-import {
-  ArrowDown,
-  ArrowUp,
-  Promotion,
-  View,
-  Check,
-  Edit,
-  SwitchButton,
-  FolderOpened,
-} from '@element-plus/icons-vue';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -336,21 +326,6 @@ const getTableData = async (pageObj) => {
         ...dataObj.searchParams,
       };
 
-      // 处理时间范围参数 - 转换为时间戳字符串数组
-      if (params.dispatchTime && Array.isArray(params.dispatchTime) && params.dispatchTime.length === 2) {
-        params.dispatchTime = params.dispatchTime.map(dateStr => {
-          const timestamp = new Date(dateStr).getTime();
-          return String(timestamp);
-        });
-      }
-
-      // 移除空值参数
-      Object.keys(params).forEach(key => {
-        if (params[key] === null || params[key] === undefined || params[key] === '') {
-          delete params[key];
-        }
-      });
-
       if (isSearching) {
         isSearching = false;
         dataObj.currentPage = 1;
@@ -358,7 +333,6 @@ const getTableData = async (pageObj) => {
         dataObj.currentPage = page.currentPage;
       }
 
-      console.log('查询参数:', params); // 调试日志
       const res = await getInspectTaskPage(params);
       dataObj.total = res.total || 0;
       dataObj.list = res.list || [];
@@ -620,41 +594,24 @@ const [DispatchDrawer, dispatchDrawerApi] = useVbenDrawer({
   },
 });
 
-const dispatchSchema = ref([
-  {
-    fieldName: 'executeUserId',
-    label: '执行人',
-    component: 'Select',
-    componentProps: {
-      placeholder: '请选择执行人',
-      options: [],
-    },
-    rules: 'required',
-  },
-]);
-
 const [DispatchForm, dispatchFormApi] = useVbenForm({
-  schema: computed(() => dispatchSchema.value),
-  showDefaultActions: false,
+  schema: [
+    {
+      fieldName: 'executeUserId',
+      label: '执行人',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择执行人',
+        options: [],
+      },
+      rules: 'required',
+    },
+  ],
 });
 
 const handleDispatch = async (row) => {
   try {
     dataObj.currentDispatchRow = row;
-    console.log('打开派发抽屉时 executorOptions 的值:', executorOptions.value);
-    // 更新执行人选项
-    dispatchSchema.value = [
-      {
-        fieldName: 'executeUserId',
-        label: '执行人',
-        component: 'Select',
-        componentProps: {
-          placeholder: '请选择执行人',
-          options: executorOptions.value,
-        },
-        rules: 'required',
-      },
-    ];
     dispatchDrawerApi.open();
   } catch (error) {
     console.error('打开派发抽屉失败:', error);
@@ -688,22 +645,19 @@ const [BatchDispatchDrawer, batchDispatchDrawerApi] = useVbenDrawer({
   },
 });
 
-const batchDispatchSchema = ref([
-  {
-    fieldName: 'executeUserId',
-    label: '执行人',
-    component: 'Select',
-    componentProps: {
-      placeholder: '请选择执行人',
-      options: [],
-    },
-    rules: 'required',
-  },
-]);
-
 const [BatchDispatchForm, batchDispatchFormApi] = useVbenForm({
-  schema: computed(() => batchDispatchSchema.value),
-  showDefaultActions: false,
+  schema: [
+    {
+      fieldName: 'executeUserId',
+      label: '执行人',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择执行人',
+        options: [],
+      },
+      rules: 'required',
+    },
+  ],
 });
 
 const handleBatchDispatch = async () => {
@@ -712,19 +666,6 @@ const handleBatchDispatch = async () => {
     return;
   }
   try {
-    // 更新执行人选项
-    batchDispatchSchema.value = [
-      {
-        fieldName: 'executeUserId',
-        label: '执行人',
-        component: 'Select',
-        componentProps: {
-          placeholder: '请选择执行人',
-          options: executorOptions.value,
-        },
-        rules: 'required',
-      },
-    ];
     batchDispatchDrawerApi.open();
   } catch (error) {
     console.error('打开批量派发抽屉失败:', error);
@@ -754,81 +695,51 @@ const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
     progressDrawerApi.close();
   },
   async onConfirm() {
+    const values = progressFormApi.form.values;
+    const currentRow = dataObj.currentProgressRow;
     try {
-      // 先验证表单
-      await progressFormApi.validate();
-
-      const values = progressFormApi.form.values;
-      const currentRow = dataObj.currentProgressRow;
-
-      const loadingInstance = ElLoading.service({
-        text: '更新中...',
+      await updateInspectTaskProgress({
+        id: currentRow.id,
+        taskProgress: values.taskProgress,
+        remark: values.remark,
       });
-
-      try {
-        await updateInspectTaskProgress({
-          id: currentRow.id,
-          taskProgress: values.taskProgress,
-          remark: values.remark,
-        });
-        ElMessage.success('更新成功');
-        handleRefresh();
-        progressDrawerApi.close();
-      } finally {
-        loadingInstance.close();
-      }
+      ElMessage.success('更新成功');
+      handleRefresh();
+      progressDrawerApi.close();
     } catch (error) {
-      if (error?.message !== 'Validation failed') {
-        ElMessage.error('更新失败');
-        console.error(error);
-      }
+      ElMessage.error('更新失败');
+      console.error(error);
     }
   },
 });
 
 const [ProgressForm, progressFormApi] = useVbenForm({
-  commonConfig: {
-    componentProps: {
-      class: 'w-full',
-    },
-    formItemClass: 'col-span-2',
-    labelWidth: 100,
-  },
-  layout: 'horizontal',
   schema: [
     {
       fieldName: 'taskProgress',
       label: '任务进度',
-      component: 'Input',
+      component: 'Textarea',
       componentProps: {
-        type: 'textarea',
         placeholder: '请输入任务进度',
         rows: 3,
-        maxlength: 200,
-        showWordLimit: true,
       },
       rules: 'required',
     },
     {
       fieldName: 'remark',
       label: '备注',
-      component: 'Input',
+      component: 'Textarea',
       componentProps: {
-        type: 'textarea',
         placeholder: '请输入备注',
         rows: 3,
-        maxlength: 200,
-        showWordLimit: true,
       },
     },
   ],
-  showDefaultActions: false,
 });
 
 const handleUpdateProgress = async (row) => {
   try {
     dataObj.currentProgressRow = row;
-    progressFormApi.resetForm();
     progressDrawerApi.open();
   } catch (error) {
     console.error('打开进度更新抽屉失败:', error);
@@ -943,19 +854,16 @@ const getActionButtons = (row) => {
         {
           content: '更新进度',
           iconName: 'Edit',
-          color: '#409EFF',
           onClick: () => handleUpdateProgress(row),
         },
         {
           content: '转派',
-          iconName: 'SwitchButton',
-          color: '#E6A23C',
+          iconName: 'Switch',
           onClick: () => handleTransfer(row),
         },
         {
           content: '查看',
           iconName: 'View',
-          color: '#409EFF',
           onClick: () => handleOpenDetail(row),
         },
       );
@@ -966,13 +874,11 @@ const getActionButtons = (row) => {
         {
           content: '查看',
           iconName: 'View',
-          color: '#409EFF',
           onClick: () => handleOpenDetail(row),
         },
         {
           content: '归档',
           iconName: 'FolderOpened',
-          color: '#67C23A',
           onClick: () => handleArchive(row),
         },
       );
@@ -982,14 +888,12 @@ const getActionButtons = (row) => {
       buttons.push(
         {
           content: '派发',
-          iconName: 'Promotion',
-          color: '#409EFF',
+          iconName: 'Send',
           onClick: () => handleDispatch(row),
         },
         {
           content: '查看',
           iconName: 'View',
-          color: '#409EFF',
           onClick: () => handleOpenDetail(row),
         },
       );
@@ -997,16 +901,10 @@ const getActionButtons = (row) => {
     }
     case '待认领': {
       buttons.push(
-        {
-          content: '认领',
-          iconName: 'Check',
-          color: '#67C23A',
-          onClick: () => handleClaim(row)
-        },
+        { content: '认领', iconName: 'Check', onClick: () => handleClaim(row) },
         {
           content: '查看',
           iconName: 'View',
-          color: '#409EFF',
           onClick: () => handleOpenDetail(row),
         },
       );
@@ -1016,7 +914,6 @@ const getActionButtons = (row) => {
       buttons.push({
         content: '查看',
         iconName: 'View',
-        color: '#409EFF',
         onClick: () => handleOpenDetail(row),
       });
     }
@@ -1117,23 +1014,23 @@ const handleFieldFilter = (field, value, userName = '') => {
         <div class="common-toolbar-tools">
           <IconButton
             content="批量派发"
-            icon-name="Promotion"
+            icon-name="Send"
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchDispatch"
           />
           <IconButton
             content="导出"
-            icon-name="Download"
+            icon-name="download"
             @click="handleExport"
           />
           <IconButton
-            content="筛选"
-            icon-name="Filter"
+            content="搜索"
+            icon-name="search"
             @click="handleSerachShow"
           />
           <IconButton
             content="重置"
-            icon-name="RefreshLeft"
+            icon-name="Refresh"
             @click="handleResetFilters"
           />
           <IconButton

@@ -100,7 +100,7 @@ export function useSearchFormSchema() {
       componentProps: {
         type: 'daterange',
         placeholder: '请选择查询时间范围',
-        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD',
       },
     },
   ];

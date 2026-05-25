@@ -1,6 +1,4 @@
 <script setup>
-import * as ElementPlusIconsVue from '@element-plus/icons-vue';
-
 // 定义组件 Props
 const props = defineProps({
   title: {
@@ -40,11 +38,6 @@ const handleManualClick = (obj) => {
   // 触发自定义事件，可携带参数
   emit('click', obj);
 };
-
-// 获取图标组件
-const iconComponent = () => {
-  return ElementPlusIconsVue[props.iconName] || ElementPlusIconsVue.Plus;
-};
 </script>
 <template>
   <el-popover
@@ -65,7 +58,7 @@ const iconComponent = () => {
           :color="props.disabled ? 'rgb(211, 210, 210)' : props.color"
         >
           <component
-            :is="iconComponent()"
+            :is="props.iconName"
             :color="props.disabled ? 'rgb(211, 210, 210)' : props.color"
           />
         </el-icon>

@@ -35,18 +35,7 @@ export namespace InspectTaskApi {
     areaId?: number;
     executeUserId?: number;
     finishTime?: string[];
-    taskProgress?: string;
-    transferReason?: string;
     remark?: string;
-    reserve1?: string;
-    reserve2?: string;
-    dispatchTimeNew?: string[];
-    deadlineTimeNew?: string[];
-    finishTimeNew?: string[];
-    creator?: string;
-    updater?: string;
-    createTime?: string[];
-    updateTime?: string[];
   }
 
   /** 稽查任务派发参数 */
@@ -170,12 +159,5 @@ export function getInspectTaskChart(params: InspectTaskApi.ChartReqVO) {
   return requestClient.get<InspectTaskApi.ChartVO>(
     '/vehiclepass/inspect-task/chart',
     { params },
-  );
-}
-
-/** 获得执行人精简列表 */
-export function getExecuteUserSimpleList() {
-  return requestClient.get<Array<{ userId: number; nickname: string }>>(
-    '/vehiclepass/inspect-task/simple-list',
   );
 }

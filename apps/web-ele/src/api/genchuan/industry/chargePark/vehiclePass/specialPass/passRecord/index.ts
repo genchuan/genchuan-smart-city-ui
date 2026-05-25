@@ -14,12 +14,10 @@ export namespace PassRecordApi {
     stationId?: number;
     stationName?: string;
     operatorId?: number;
-    operatorName?: string;
+    operator?: string;
     operatorTime?: string;
     checkResult?: string;
     remark?: string;
-    reserve1?: string;
-    reserve2?: string;
     creator?: string;
     updater?: string;
     createTime?: string;
@@ -33,15 +31,8 @@ export namespace PassRecordApi {
     passTime?: string[];
     status?: string;
     stationId?: number;
-    stationName?: string;
     operatorId?: number;
-    imageUrl?: string;
-    checkResult?: string;
     remark?: string;
-    reserve1?: string;
-    reserve2?: string;
-    creator?: string;
-    updater?: string;
   }
 
   /** 放行记录核查参数 */

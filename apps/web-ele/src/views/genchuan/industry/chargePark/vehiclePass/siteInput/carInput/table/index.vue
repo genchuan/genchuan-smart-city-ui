@@ -301,10 +301,6 @@ const activeFilters = computed(() => {
     const timeLabel = `时间范围：${obj.inputTime[0]} ~ ${obj.inputTime[1]}`;
     filters.push({ label: timeLabel, field: 'inputTime' });
   }
-  if (obj.createTimeRange && Array.isArray(obj.createTimeRange)) {
-    const timeLabel = `时间范围：${obj.createTimeRange[0]} ~ ${obj.createTimeRange[1]}`;
-    filters.push({ label: timeLabel, field: 'createTimeRange' });
-  }
 
   return filters;
 });
