@@ -119,6 +119,14 @@ function handleRefresh() {
   gridApi.query();
 }
 
+// 点击创建者筛选
+function handleFilterCreator(creator) {
+  dataObj.searchObj = { ...dataObj.searchObj, creator: creator };
+  queryFormApi.setValues({ creator: creator });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
 // 监听筛选参数变化
 watch(
   () => props.filterParams,
@@ -823,6 +831,15 @@ const alarmColumns = [
         <span v-else-if="row.payMethod === 'bank'">银行卡</span>
         <span v-else-if="row.payMethod === 'cash'">现金</span>
         <span v-else>{{ row.payMethod }}</span>
+      </template>
+      <template #creator="{ row }">
+        <el-text 
+          @click="handleFilterCreator(row.creator)" 
+          class="common-align cursor-pointer" 
+          type="primary"
+        >
+          {{ row.creator }}
+        </el-text>
       </template>
       <template #halfyearWarnCount="{ row }">
         <el-text @click="handleTotal(row)" class="common-align" type="primary">

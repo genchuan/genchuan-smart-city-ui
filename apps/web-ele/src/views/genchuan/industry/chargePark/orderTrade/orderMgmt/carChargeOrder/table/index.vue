@@ -118,6 +118,22 @@ function handleRefresh() {
   gridApi.query();
 }
 
+// 点击订单状态筛选
+function handleFilterStatus(status) {
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  queryFormApi.setValues({ status: status });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击所属场站筛选
+function handleFilterStationName(stationName) {
+  dataObj.searchObj = { ...dataObj.searchObj, stationName: stationName };
+  queryFormApi.setValues({ stationName: stationName });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
 // 点击支付方式筛选
 function handleFilterPayMethod(payMethod) {
   dataObj.searchObj = { ...dataObj.searchObj, payMethod: payMethod };
@@ -839,9 +855,22 @@ const alarmColumns = [
       </template>
 
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag 
+          :type="getStatusType(row.status)" 
+          class="cursor-pointer"
+          @click="handleFilterStatus(row.status)"
+        >
           {{ getStatusLabel(row.status) }}
         </el-tag>
+      </template>
+      <template #stationName="{ row }">
+        <el-text 
+          @click="handleFilterStationName(row.stationName)" 
+          class="common-align cursor-pointer" 
+          type="primary"
+        >
+          {{ row.stationName }}
+        </el-text>
       </template>
       <template #invoiceStatus="{ row }">
         <el-tag :type="getInvoiceStatusType(row.invoiceStatus)">
