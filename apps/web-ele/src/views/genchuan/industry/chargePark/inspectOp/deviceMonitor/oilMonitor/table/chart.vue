@@ -26,8 +26,8 @@ const state = reactive({
     {
       title: '处置完成率',
       value: '0%',
-      desc: '已关闭',
-      status: getProcessStatusOptionValue('已关闭'),
+      desc: '已处理',
+      status: getProcessStatusOptionValue('已处理'),
       color: '#2fbf71',
     },
   ],
