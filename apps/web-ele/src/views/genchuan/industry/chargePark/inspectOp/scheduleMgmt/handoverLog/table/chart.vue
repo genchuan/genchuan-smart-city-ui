@@ -51,7 +51,7 @@ function normalizeChartData(data) {
     data?.trendData || data?.cardData ? data : getMockChartData();
   const cardData = chartData.cardData || {};
 
-  state.cardList[0].value = cardData.logCount ?? 0;
+  state.cardList[0].value = cardData.totalCount ?? 0;
   state.cardList[1].value = formatRate(cardData.confirmRate);
   state.trendData = Array.isArray(chartData.trendData)
     ? chartData.trendData
