@@ -5,21 +5,27 @@ import { requestClient } from '#/api/request';
 /** 获取场站列表 */
 let stationOptionsCache = null;
 export async function getStationOptions() {
+  console.log('【车牌识别】getStationOptions 被调用');
   if (stationOptionsCache) {
+    console.log('【车牌识别】使用缓存数据:', stationOptionsCache);
     return stationOptionsCache;
   }
   try {
+    console.log('【车牌识别】开始请求 API: /vehiclepass/in-park-status/simple-list');
     const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
+    console.log('【车牌识别】API 响应:', response);
     if (response && Array.isArray(response)) {
       stationOptionsCache = response.map(item => ({
         label: item.stationName,
         value: item.stationId,
       }));
+      console.log('【车牌识别】处理后的选项:', stationOptionsCache);
       return stationOptionsCache;
     }
+    console.log('【车牌识别】响应不是数组，返回空数组');
     return [];
   } catch (error) {
-    console.error('获取场站列表失败:', error);
+    console.error('【车牌识别】获取场站列表失败:', error);
     return [];
   }
 }

@@ -494,6 +494,10 @@ const activeFilters = computed(() => {
 const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
   delete next[fieldName];
+  // 清除场站名称时，同时清除场站ID
+  if (fieldName === 'stationName') {
+    delete next.stationId;
+  }
   // 清除处置人ID时，同时清除处置人名称
   if (fieldName === 'handleUserId') {
     delete next.handleUserName;
@@ -733,11 +737,23 @@ const handleFilterByChart = (event) => {
     };
     ElMessage.success('已应用图表筛选');
   } else {
-    dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
-    if (filterParams.status) {
-      ElMessage.success(`已筛选状态: ${filterParams.status}`);
-    } else if (filterParams.stationName) {
-      ElMessage.success(`已筛选场站: ${filterParams.stationName}`);
+    const validParams = { ...filterParams };
+
+    // 如果有 stationId，自动补充 stationName
+    if (validParams.stationId && !validParams.stationName) {
+      const station = stationOptions.value.find(
+        (s) => s.value === validParams.stationId
+      );
+      if (station) {
+        validParams.stationName = station.label;
+      }
+    }
+
+    dataObj.searchParams = { ...dataObj.searchParams, ...validParams };
+    if (validParams.status) {
+      ElMessage.success(`已筛选状态: ${validParams.status}`);
+    } else if (validParams.stationName) {
+      ElMessage.success(`已筛选场站: ${validParams.stationName}`);
     } else {
       ElMessage.success('已应用图表筛选');
     }

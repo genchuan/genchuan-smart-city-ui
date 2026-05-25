@@ -345,6 +345,10 @@ const handleClearField = (fieldName) => {
   } else if (fieldName === 'updateTimeRange') {
     delete next.updateTimeStart;
     delete next.updateTimeEnd;
+  } else if (fieldName === 'stationName') {
+    // 清除场站名称时，同时清除场站ID
+    delete next.stationName;
+    delete next.stationId;
   } else {
     delete next[fieldName];
   }

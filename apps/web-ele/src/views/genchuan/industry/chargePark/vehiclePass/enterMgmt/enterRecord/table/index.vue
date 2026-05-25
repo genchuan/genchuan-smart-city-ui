@@ -81,7 +81,7 @@ const spaceDetailRef = ref(null);
 const formData = ref();
 
 // 查询表单
-const [SearchForm] = useVbenForm({
+const [SearchForm, searchFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: {
     componentProps: {
@@ -351,11 +351,22 @@ async function handleCorrectSubmit(data) {
       text: '正在修正...',
     });
     try {
-      await correctEnterRecord({
+      // 准备提交数据
+      const submitData = {
         ...data,
         id: formData.value?.id,
         isCorrected: true,
-      });
+      };
+
+      // 如果有 stationId，查找并设置正确的 stationName
+      if (submitData.stationId) {
+        const station = stationOptions.value.find(s => s.value === submitData.stationId);
+        if (station) {
+          submitData.stationName = station.label;
+        }
+      }
+
+      await correctEnterRecord(submitData);
       ElMessage.success('修正成功');
       handleRefresh();
       correctFormDrawerApi.close();
@@ -448,7 +459,7 @@ const activeFilters = computed(() => {
     const statusLabel = labels.status || obj.status;
     filters.push({ label: `记录状态：${statusLabel}`, field: 'status' });
   }
-  if (obj.stationId) {
+  if (obj.stationId && obj.stationName) {
     filters.push({ label: `场站：${obj.stationName}`, field: 'stationId' });
   }
   if (obj.isCorrected !== undefined && obj.isCorrected !== null) {
@@ -467,6 +478,20 @@ const activeFilters = computed(() => {
       field: 'enterTime',
     });
   }
+  if (obj.startTime && obj.endTime) {
+    const start = new Date(Number(obj.startTime)).toLocaleString('zh-CN');
+    const end = new Date(Number(obj.endTime)).toLocaleString('zh-CN');
+    filters.push({
+      label: `入场时间：${start} 至 ${end}`,
+      field: 'timeRange',
+    });
+  }
+  if (obj.enterTimeHour) {
+    filters.push({
+      label: `入场时段：${obj.enterTimeHour}`,
+      field: 'enterTimeHour',
+    });
+  }
 
   return filters;
 });
@@ -474,6 +499,15 @@ const activeFilters = computed(() => {
 const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
   delete next[fieldName];
+  // 清除场站ID时，同时清除场站名称
+  if (fieldName === 'stationId') {
+    delete next.stationName;
+  }
+  // 清除时间范围时，同时清除 startTime 和 endTime
+  if (fieldName === 'timeRange') {
+    delete next.startTime;
+    delete next.endTime;
+  }
   dataObj.searchParams = next;
 
   const nextLabels = { ...dataObj.filterLabels };
@@ -564,7 +598,18 @@ const getTableData = async (pageObj) => {
 };
 
 function onSubmit(values) {
-  dataObj.searchParams = values;
+  const params = { ...values };
+
+  // 如果选择了场站，需要同时保存场站名称
+  if (params.stationId) {
+    const station = stationOptions.value.find(s => s.value === params.stationId);
+    if (station) {
+      params.stationName = station.label;
+    }
+  }
+
+  // 清空之前的搜索参数，只保留新提交的值
+  dataObj.searchParams = params;
 
   // 保存标签信息
   const labels = {};
@@ -685,6 +730,18 @@ const handleClick = () => {
 };
 
 const handleSerachShow = () => {
+  // 打开搜索表单时，回填当前的搜索参数（只回填搜索表单中存在的字段）
+  const searchSchema = useSearchFormSchema();
+  const searchFieldNames = searchSchema.map((f) => f.fieldName);
+  const formValues = {};
+
+  searchFieldNames.forEach((fieldName) => {
+    if (dataObj.searchParams[fieldName] !== undefined) {
+      formValues[fieldName] = dataObj.searchParams[fieldName];
+    }
+  });
+
+  searchFormApi.setValues(formValues);
   drawerApi.open();
 };
 
@@ -768,7 +825,20 @@ const shouldShowCorrect = (status) => {
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
   console.log('[enterRecord] Received filter params:', filterParams);
-  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+
+  const validParams = { ...filterParams };
+
+  // 如果有 stationId，自动补充 stationName
+  if (validParams.stationId && !validParams.stationName) {
+    const station = stationOptions.value.find(
+      (s) => s.value === validParams.stationId
+    );
+    if (station) {
+      validParams.stationName = station.label;
+    }
+  }
+
+  dataObj.searchParams = { ...dataObj.searchParams, ...validParams };
   console.log('[enterRecord] Updated searchParams:', dataObj.searchParams);
   dataObj.currentPage = 1;
   gridApi.query();

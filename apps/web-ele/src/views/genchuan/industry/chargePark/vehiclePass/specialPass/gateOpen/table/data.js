@@ -1,5 +1,6 @@
 import { requestClient } from '#/api/request';
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+import { getSimpleUserList } from '#/api/system/user';
 
 /** 获取场站列表 */
 let stationOptionsCache = null;
@@ -19,6 +20,28 @@ export async function getStationOptions() {
     return [];
   } catch (error) {
     console.error('获取场站列表失败:', error);
+    return [];
+  }
+}
+
+/** 获取用户列表 */
+let userOptionsCache = null;
+export async function getUserOptions() {
+  if (userOptionsCache) {
+    return userOptionsCache;
+  }
+  try {
+    const response = await getSimpleUserList();
+    if (response && Array.isArray(response)) {
+      userOptionsCache = response.map(item => ({
+        label: item.nickname || item.username,
+        value: item.id,
+      }));
+      return userOptionsCache;
+    }
+    return [];
+  } catch (error) {
+    console.error('获取用户列表失败:', error);
     return [];
   }
 }
@@ -184,7 +207,7 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'executorId',
+      fieldName: 'auditUserId',
       label: '执行人',
       component: 'Select',
       componentProps: {
@@ -314,7 +337,7 @@ export function useGridColumns() {
     },
     {
       field: 'applyTime',
-      title: '派发时间',
+      title: '申请时间',
       minWidth: 180,
       sortable: true,
       formatter: createTimeFormatter(),
@@ -327,25 +350,25 @@ export function useGridColumns() {
       slots: { default: 'status' },
     },
     {
-      field: 'executorName',
-      title: '执行人',
+      field: 'auditUserName',
+      title: '审批人',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'executorName' },
+      slots: { default: 'auditUserName' },
     },
     {
-      field: 'completeTime',
-      title: '完成时间',
+      field: 'auditTime',
+      title: '审批时间',
       minWidth: 180,
       sortable: true,
       formatter: createTimeFormatter(),
     },
     {
-      field: 'taskProgress',
-      title: '任务进度',
-      minWidth: 100,
+      field: 'executeTime',
+      title: '执行时间',
+      minWidth: 180,
       sortable: true,
-      slots: { default: 'taskProgress' },
+      formatter: createTimeFormatter(),
     },
     {
       title: '操作',
@@ -370,11 +393,11 @@ export const detailFields = [
   { key: 'stationName', label: '片区' },
   { key: 'openReason', label: '任务类型' },
   { key: 'applyUserName', label: '申请人' },
-  { key: 'applyTime', label: '派发时间', formatter: formatTime },
+  { key: 'applyTime', label: '申请时间', formatter: formatTime },
   { key: 'status', label: '状态' },
-  { key: 'executorName', label: '执行人' },
-  { key: 'completeTime', label: '完成时间', formatter: formatTime },
-  { key: 'taskProgress', label: '任务进度' },
+  { key: 'auditUserName', label: '审批人' },
+  { key: 'auditTime', label: '审批时间', formatter: formatTime },
+  { key: 'executeTime', label: '执行时间', formatter: formatTime },
   { key: 'rejectReason', label: '驳回理由' },
   { key: 'remark', label: '备注' },
   { key: 'creator', label: '创建人' },

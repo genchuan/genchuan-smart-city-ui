@@ -161,18 +161,16 @@ export function useGridColumns() {
       slots: { default: 'orderNo' },
     },
     {
-      field: 'merchantName',
-      title: '商户名称',
-      minWidth: 140,
+      field: 'merchantId',
+      title: '商户ID',
+      minWidth: 120,
       sortable: true,
-      slots: { default: 'merchantName' },
     },
     {
       field: 'carNo',
       title: '车牌',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'carNo' },
     },
     {
       field: 'amount',
@@ -194,20 +192,6 @@ export function useGridColumns() {
       minWidth: 120,
       sortable: true,
       slots: { default: 'status' },
-    },
-    {
-      field: 'invoiceNo',
-      title: '关联发票',
-      minWidth: 160,
-      sortable: true,
-      slots: { default: 'invoiceNo' },
-    },
-    {
-      field: 'creator',
-      title: '操作人',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'creator' },
     },
     {
       field: 'payTime',

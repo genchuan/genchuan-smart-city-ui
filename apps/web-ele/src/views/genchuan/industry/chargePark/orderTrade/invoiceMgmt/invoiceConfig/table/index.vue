@@ -1,7 +1,7 @@
 <script setup>import { reactive, ref, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
-import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElDatePicker, ElDialog, ElDescriptions, ElDescriptionsItem } from 'element-plus';
+import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getInvoiceConfigPage, exportInvoiceConfigExcel, batchEnable, batchDisable, batchDelete, create, update } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
@@ -190,7 +190,6 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
-  invoiceListObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -283,47 +282,6 @@ const arrowChange = () => {
   emit('arrow-change');
 };
 
-// 关联发票明细弹窗
-const invoiceListDialogVisible = ref(false);
-
-// 点击开票类目筛选
-function handleFilterCategory(category) {
-  if (!category) return;
-  dataObj.searchObj = { ...dataObj.searchObj, category: category };
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击审核人筛选
-function handleFilterAuditor(auditorName) {
-  if (!auditorName) return;
-  dataObj.searchObj = { ...dataObj.searchObj, auditorName: auditorName };
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击累计开票量跳转关联发票明细弹窗
-function handleOpenInvoiceList(row) {
-  dataObj.invoiceListObj = row;
-  invoiceListDialogVisible.value = true;
-}
-
-// 点击开票主体筛选
-function handleFilterTaxBody(taxBody) {
-  if (!taxBody) return;
-  dataObj.searchObj = { ...dataObj.searchObj, taxBody: taxBody };
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击配置状态筛选
-function handleFilterStatus(status) {
-  if (!status) return;
-  dataObj.searchObj = { ...dataObj.searchObj, status: status };
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
 watch(
   () => props.filterParams,
   () => {
@@ -338,31 +296,6 @@ watch(
   <div class="park-lot-table-new" v-loading="dataObj.loading">
     <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
     <EditDrawer ref="editDrawerRef" />
-    
-    <!-- 关联发票明细弹窗 -->
-    <ElDialog v-model="invoiceListDialogVisible" title="关联发票明细" width="600px">
-      <ElDescriptions v-if="dataObj.invoiceListObj" :column="1" border>
-        <ElDescriptionsItem label="配置ID">
-          {{ dataObj.invoiceListObj.id || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="开票类目">
-          {{ dataObj.invoiceListObj.category || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="税率">
-          {{ dataObj.invoiceListObj.taxRate ? `${dataObj.invoiceListObj.taxRate}%` : '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="开票主体">
-          {{ dataObj.invoiceListObj.taxBody || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="累计开票量">
-          {{ dataObj.invoiceListObj.totalInvoiceCount || 0 }}
-        </ElDescriptionsItem>
-      </ElDescriptions>
-      <div style="margin-top: 16px; color: #909399; font-size: 13px;">
-        注：此处展示该配置关联的发票明细列表（需后端提供接口支持）
-      </div>
-    </ElDialog>
-    
     <Drawer title="搜索">
       <ElForm ref="searchFormRef" :model="searchFormData" label-width="100px" class="query-form">
         <ElFormItem label="状态">
@@ -397,54 +330,15 @@ watch(
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
-      <template #id="{ row }">
-        <span
-          @click="handleOpenDetail(row)"
-          class="common-align cursor-pointer text-primary"
-        >
-          {{ row.id }}
-        </span>
-      </template>
-      <template #category="{ row }">
-        <span
-          @click="handleFilterCategory(row.category)"
-          class="common-align cursor-pointer text-primary"
-        >
-          {{ row.category }}
-        </span>
-      </template>
       <template #status="{ row }">
-        <el-tag 
-          :type="getStatusType(row.status)"
-          class="cursor-pointer"
-          @click="handleFilterStatus(row.status)"
-        >
+        <el-tag :type="getStatusType(row.status)">
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
-      <template #auditorName="{ row }">
-        <span
-          @click="handleFilterAuditor(row.auditorName)"
-          class="common-align cursor-pointer text-primary"
-        >
-          {{ row.auditorName || '-' }}
-        </span>
-      </template>
-      <template #totalInvoiceCount="{ row }">
-        <span
-          @click="handleOpenInvoiceList(row)"
-          class="common-align cursor-pointer text-primary"
-        >
-          {{ row.totalInvoiceCount || 0 }}
-        </span>
-      </template>
-      <template #taxBody="{ row }">
-        <span
-          @click="handleFilterTaxBody(row.taxBody)"
-          class="common-align cursor-pointer text-primary"
-        >
-          {{ row.taxBody }}
-        </span>
+      <template #invoiceNo="{ row }">
+        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
+          {{ row.invoiceNo }}
+        </el-text>
       </template>
 
       <template #actions="{ row }">

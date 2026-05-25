@@ -410,9 +410,8 @@ const activeFilters = computed(() => {
   if (obj.stationName) {
     filters.push({ label: `场站：${obj.stationName}`, field: 'stationId' });
   }
-  if (obj.handleUserId) {
-    const handleUserName = labels.handleUserId || obj.handleUserId;
-    filters.push({ label: `处置人：${handleUserName}`, field: 'handleUserId' });
+  if (obj.handleUserName) {
+    filters.push({ label: `处置人：${obj.handleUserName}`, field: 'handleUserName' });
   }
 
   return filters;
@@ -421,6 +420,10 @@ const activeFilters = computed(() => {
 const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
   delete next[fieldName];
+  // 清除场站ID时，同时清除场站名称
+  if (fieldName === 'stationId') {
+    delete next.stationName;
+  }
   dataObj.searchParams = next;
 
   const nextLabels = { ...dataObj.filterLabels };
@@ -654,7 +657,7 @@ const handleHandleUserClick = (row) => {
   if (!row.handleUserName) return;
   dataObj.searchParams = {
     ...dataObj.searchParams,
-    handleUserId: row.handleUserId,
+    handleUserName: row.handleUserName,
   };
   dataObj.currentPage = 1;
   handleRefresh();
@@ -735,7 +738,19 @@ const handleFullShow = () => {
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
-  dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
+  const validParams = { ...filterParams };
+
+  // 如果有 stationId，自动补充 stationName
+  if (validParams.stationId && !validParams.stationName) {
+    const station = stationOptions.value.find(
+      (s) => s.value === validParams.stationId
+    );
+    if (station) {
+      validParams.stationName = station.label;
+    }
+  }
+
+  dataObj.searchParams = { ...dataObj.searchParams, ...validParams };
   handleRefresh();
   ElMessage.success('已应用图表筛选');
 };

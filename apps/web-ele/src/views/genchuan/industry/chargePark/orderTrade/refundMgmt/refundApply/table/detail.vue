@@ -8,7 +8,7 @@ const statusMap = {
   pending_audit: { label: '待审核', type: 'warning' },
   pending_exec: { label: '待执行', type: 'primary' },
   completed: { label: '已完成', type: 'success' },
-  rejected: { label: '已拒绝', type: 'danger' },
+  rejected: { label: '已驳回', type: 'danger' },
 };
 
 // 获取状态标签

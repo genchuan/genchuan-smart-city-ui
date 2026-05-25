@@ -68,14 +68,12 @@ export function useGridColumns() {
       title: '记录编号',
       minWidth: 160,
       sortable: true,
-      slots: { default: 'recordNo' },
     },
     {
       field: 'plateNo',
       title: '车牌',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'plateNo' },
     },
     {
       field: 'arrearOrderCount',
@@ -102,7 +100,6 @@ export function useGridColumns() {
       title: '所属场站',
       minWidth: 140,
       sortable: true,
-      slots: { default: 'stationName' },
     },
     {
       field: 'collectProgress',
@@ -115,14 +112,12 @@ export function useGridColumns() {
       title: '创建者',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'creator' },
     },
     {
       field: 'updater',
       title: '更新者',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'updater' },
     },
     {
       field: 'createTime',

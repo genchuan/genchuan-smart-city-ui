@@ -75,14 +75,12 @@ export function useGridColumns() {
       title: '车牌',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'plateNo' },
     },
     {
       field: 'orderIds',
       title: '关联欠费订单ID',
       minWidth: 200,
       sortable: true,
-      slots: { default: 'orderIds' },
     },
     {
       field: 'arrearAmount',
@@ -103,21 +101,18 @@ export function useGridColumns() {
       title: '所属场站',
       minWidth: 140,
       sortable: true,
-      slots: { default: 'stationName' },
     }, 
     {
       field: 'creator',
       title: '创建者',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'creator' },
     },
     {
       field: 'updater',
       title: '更新者',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'updater' },
     },
     {
       field: 'createTime',
