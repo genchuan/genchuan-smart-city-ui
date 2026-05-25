@@ -335,7 +335,10 @@ const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
       return;
     }
 
-    const values = createFormApi.form.values;
+    const values = { ...createFormApi.form.values };
+    if (values.identifyTime) {
+      values.identifyTime = new Date(values.identifyTime).getTime();
+    }
 
     if (USE_REAL_API) {
       const loadingInstance = ElLoading.service({ text: '补录中...' });
@@ -412,6 +415,12 @@ const activeFilters = computed(() => {
   }
   if (obj.handleUserName) {
     filters.push({ label: `处置人：${obj.handleUserName}`, field: 'handleUserName' });
+  }
+  if (obj.identifyTime && Array.isArray(obj.identifyTime) && obj.identifyTime.length === 2) {
+    filters.push({
+      label: `时间范围：${obj.identifyTime[0]} 至 ${obj.identifyTime[1]}`,
+      field: 'identifyTime',
+    });
   }
 
   return filters;

@@ -376,7 +376,9 @@ const activeFilters = computed(() => {
   const obj = dataObj.searchParams;
 
   if (obj.stationName) {
-    filters.push({ label: `片区：${obj.stationName}`, field: 'stationName' });
+    const station = stationOptions.value.find((s) => s.value === obj.stationName);
+    const stationLabel = station ? station.label : obj.stationName;
+    filters.push({ label: `片区：${stationLabel}`, field: 'stationName' });
   }
   if (obj.status) {
     filters.push({ label: `状态：${obj.status}`, field: 'status' });
@@ -386,8 +388,8 @@ const activeFilters = computed(() => {
   }
   if (obj.applyTime && Array.isArray(obj.applyTime) && obj.applyTime.length > 0) {
     const dateRange = obj.applyTime.length === 2
-      ? `${formatTime(obj.applyTime[0])} 至 ${formatTime(obj.applyTime[1])}`
-      : formatTime(obj.applyTime[0]);
+      ? `${obj.applyTime[0]} 至 ${obj.applyTime[1]}`
+      : obj.applyTime[0];
     filters.push({ label: `派发时间：${dateRange}`, field: 'applyTime' });
   }
   if (obj.auditStatus) {

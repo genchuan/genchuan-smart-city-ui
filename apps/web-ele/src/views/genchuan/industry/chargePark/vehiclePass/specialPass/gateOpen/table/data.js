@@ -190,6 +190,8 @@ export function useSearchFormSchema() {
       componentProps: {
         placeholder: '请选择派发时间',
         type: 'datetimerange',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
     },
     {
@@ -235,16 +237,6 @@ export function useCreateFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择场站',
-        options: [],
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'applyUserId',
-      label: '申请人',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择申请人',
         options: [],
       },
       rules: 'required',

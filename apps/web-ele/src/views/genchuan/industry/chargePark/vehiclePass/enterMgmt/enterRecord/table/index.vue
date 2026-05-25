@@ -478,7 +478,7 @@ const activeFilters = computed(() => {
       field: 'enterTime',
     });
   }
-  if (obj.startTime && obj.endTime) {
+  if (obj.startTime && obj.endTime && !obj.enterTimeHour) {
     const start = new Date(Number(obj.startTime)).toLocaleString('zh-CN');
     const end = new Date(Number(obj.endTime)).toLocaleString('zh-CN');
     filters.push({
@@ -505,6 +505,11 @@ const handleClearField = (fieldName) => {
   }
   // 清除时间范围时，同时清除 startTime 和 endTime
   if (fieldName === 'timeRange') {
+    delete next.startTime;
+    delete next.endTime;
+  }
+  // 清除入场时段时，同时清除其附带的当日 startTime/endTime
+  if (fieldName === 'enterTimeHour') {
     delete next.startTime;
     delete next.endTime;
   }

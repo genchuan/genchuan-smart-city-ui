@@ -130,13 +130,35 @@ function handleRefresh() {
   gridApi.query();
 }
 
+function toDateTimeString(value, isEnd) {
+  if (!value) return value;
+  const str = String(value);
+  if (/\d{2}:\d{2}:\d{2}/.test(str)) return str;
+  return `${str} ${isEnd ? '23:59:59' : '00:00:00'}`;
+}
+
+function buildApiParams(rawParams) {
+  const params = { ...rawParams };
+  if (
+    params.passTime &&
+    Array.isArray(params.passTime) &&
+    params.passTime.length === 2
+  ) {
+    params.passTime = [
+      toDateTimeString(params.passTime[0], false),
+      toDateTimeString(params.passTime[1], true),
+    ];
+  }
+  return params;
+}
+
 async function handleExport() {
   const loadingInstance = ElLoading.service({
     text: '导出中...',
   });
   try {
     if (USE_REAL_API) {
-      const res = await exportPassRecord(dataObj.searchParams);
+      const res = await exportPassRecord(buildApiParams(dataObj.searchParams));
       downloadFileFromBlobPart({ fileName: '放行记录.xlsx', source: res });
     } else {
       exportToExcel([], textObj.excelName, textObj.excelAllName);
@@ -192,6 +214,8 @@ const dataObj = reactive({
   searchParams: {},
 });
 
+const drillDownInfo = ref(null);
+
 let isSearching = false;
 
 const activeFilters = computed(() => {
@@ -210,11 +234,17 @@ const activeFilters = computed(() => {
   if (obj.passTime && obj.passTime.length === 2) {
     filters.push({ label: `放行时间：${obj.passTime[0]} ~ ${obj.passTime[1]}`, field: 'passTime' });
   }
-  if (obj.stationId) {
+  if (obj.stationName) {
+    filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+  }
+  if (obj.stationId && !obj.stationName) {
     const station = stationOptions.value.find(s => s.value === obj.stationId);
     filters.push({ label: `场站：${station?.label || obj.stationId}`, field: 'stationId' });
   }
-  if (obj.operatorId) {
+  if (obj.operatorName) {
+    filters.push({ label: `操作人：${obj.operatorName}`, field: 'operatorName' });
+  }
+  if (obj.operatorId && !obj.operatorName) {
     filters.push({ label: `操作人ID：${obj.operatorId}`, field: 'operatorId' });
   }
 
@@ -225,6 +255,16 @@ const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
   delete next[fieldName];
   dataObj.searchParams = next;
+  if (drillDownInfo.value?.fields?.includes(fieldName)) {
+    drillDownInfo.value = null;
+  }
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+const handleResetFilters = () => {
+  dataObj.searchParams = {};
+  drillDownInfo.value = null;
   dataObj.currentPage = 1;
   gridApi.query();
 };
@@ -242,7 +282,7 @@ const getTableData = async (pageObj) => {
       const params = {
         pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
-        ...dataObj.searchParams,
+        ...buildApiParams(dataObj.searchParams),
       };
 
       if (isSearching) {
@@ -379,17 +419,29 @@ const handleFilterByChart = (event) => {
       ...dataObj.searchParams,
       passTime: [date, date],
     };
+    drillDownInfo.value = {
+      label: `今日放行（${date}）`,
+      fields: ['passTime'],
+    };
   } else if (filterKey === 'abnormalPass') {
     // 异常放行占比：筛选异常记录
     dataObj.searchParams = {
       ...dataObj.searchParams,
       status: '异常记录',
     };
+    drillDownInfo.value = {
+      label: '异常放行记录',
+      fields: ['status'],
+    };
   } else if (filterKey === 'trendDate') {
     // 折线图点击：筛选指定日期的记录
     dataObj.searchParams = {
       ...dataObj.searchParams,
       passTime: [date, date],
+    };
+    drillDownInfo.value = {
+      label: `指定日期（${date}）`,
+      fields: ['passTime'],
     };
   }
 
@@ -419,15 +471,27 @@ watch(
         dataObj.searchParams = {
           passTime: [date, date],
         };
+        drillDownInfo.value = {
+          label: `今日放行（${date}）`,
+          fields: ['passTime'],
+        };
       } else if (filterKey === 'abnormalPass') {
         // 异常放行占比：筛选异常记录
         dataObj.searchParams = {
           status: '异常记录',
         };
+        drillDownInfo.value = {
+          label: '异常放行记录',
+          fields: ['status'],
+        };
       } else if (filterKey === 'trendDate') {
         // 折线图点击：筛选指定日期的记录
         dataObj.searchParams = {
           passTime: [date, date],
+        };
+        drillDownInfo.value = {
+          label: `指定日期（${date}）`,
+          fields: ['passTime'],
         };
       }
 
@@ -458,7 +522,19 @@ watch(
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
-          <div v-if="activeFilters.length" style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;">
+          <el-alert
+            v-if="drillDownInfo"
+            :title="`图表下钻筛选：${drillDownInfo.label}`"
+            type="warning"
+            show-icon
+            closable
+            style="margin-bottom: 8px;"
+            @close="handleResetFilters"
+          />
+          <div
+            v-if="activeFilters.length"
+            style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;"
+          >
             <el-tag
               v-for="filter in activeFilters"
               :key="filter.field"
@@ -468,6 +544,12 @@ watch(
             >
               {{ filter.label }}
             </el-tag>
+            <IconButton
+              v-if="activeFilters.length > 0"
+              content="重置"
+              icon-name="RefreshLeft"
+              @click="handleResetFilters"
+            />
           </div>
           <div v-if="props.secondShow">
             <el-tabs

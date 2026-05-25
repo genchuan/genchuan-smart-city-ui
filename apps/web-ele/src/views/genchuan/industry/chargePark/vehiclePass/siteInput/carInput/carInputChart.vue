@@ -118,7 +118,12 @@ function initPieChart() {
       const clickedDate = params.name;
       window.dispatchEvent(
         new CustomEvent('filterByChart:carInput', {
-          detail: { createTimeRange: [clickedDate, clickedDate] },
+          detail: {
+            inputTime: [
+              `${clickedDate} 00:00:00`,
+              `${clickedDate} 23:59:59`,
+            ],
+          },
         }),
       );
     }

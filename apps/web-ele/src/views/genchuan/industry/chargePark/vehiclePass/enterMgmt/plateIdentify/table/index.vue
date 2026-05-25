@@ -140,7 +140,7 @@ const [CorrectForm, correctFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: computed(() => {
     const schema = useCorrectFormSchema();
-    const stationField = schema.find((f) => f.fieldName === 'stationName');
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
     if (stationField) {
       stationField.componentProps.options = stationOptions.value;
     }
@@ -260,7 +260,8 @@ async function handleCorrectSubmit(data) {
       await correctPlateIdentify({
         ...data,
         id: formData.value?.id,
-        isCorrected: true,
+        status: '识别成功',
+        isCorrected: 1,
       });
       ElMessage.success('修正成功');
       handleRefresh();
@@ -274,7 +275,12 @@ async function handleCorrectSubmit(data) {
   } else {
     dataObj.apilist.forEach((v, i) => {
       if (v.id === formData.value?.id) {
-        dataObj.apilist[i] = { ...v, ...data, isCorrected: true };
+        dataObj.apilist[i] = {
+          ...v,
+          ...data,
+          status: '识别成功',
+          isCorrected: 1,
+        };
       }
     });
     handleRefresh();

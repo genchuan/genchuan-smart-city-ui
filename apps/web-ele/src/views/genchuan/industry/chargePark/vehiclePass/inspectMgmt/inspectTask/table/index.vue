@@ -155,13 +155,35 @@ function handleRefresh() {
   gridApi.query();
 }
 
+function toDateTimeString(value, isEnd) {
+  if (!value) return value;
+  const str = String(value);
+  if (/\d{2}:\d{2}:\d{2}/.test(str)) return str;
+  return `${str} ${isEnd ? '23:59:59' : '00:00:00'}`;
+}
+
+function buildApiParams(rawParams) {
+  const params = { ...rawParams };
+  if (
+    params.dispatchTime &&
+    Array.isArray(params.dispatchTime) &&
+    params.dispatchTime.length === 2
+  ) {
+    params.dispatchTime = [
+      toDateTimeString(params.dispatchTime[0], false),
+      toDateTimeString(params.dispatchTime[1], true),
+    ];
+  }
+  return params;
+}
+
 async function handleExport() {
   const loadingInstance = ElLoading.service({
     text: '导出中...',
   });
   try {
     if (USE_REAL_API) {
-      const res = await exportInspectTask(dataObj.searchParams);
+      const res = await exportInspectTask(buildApiParams(dataObj.searchParams));
       downloadFileFromBlobPart({ fileName: '稽查任务.xlsx', source: res });
     } else {
       exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
@@ -333,16 +355,8 @@ const getTableData = async (pageObj) => {
       const params = {
         pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
-        ...dataObj.searchParams,
+        ...buildApiParams(dataObj.searchParams),
       };
-
-      // 处理时间范围参数 - 转换为时间戳字符串数组
-      if (params.dispatchTime && Array.isArray(params.dispatchTime) && params.dispatchTime.length === 2) {
-        params.dispatchTime = params.dispatchTime.map(dateStr => {
-          const timestamp = new Date(dateStr).getTime();
-          return String(timestamp);
-        });
-      }
 
       // 移除空值参数
       Object.keys(params).forEach(key => {

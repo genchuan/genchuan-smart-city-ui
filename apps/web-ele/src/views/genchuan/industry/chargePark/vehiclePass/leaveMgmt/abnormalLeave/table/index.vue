@@ -478,13 +478,13 @@ const activeFilters = computed(() => {
     filters.push({ label: `处置人：${obj.handleUserName}`, field: 'handleUserId' });
   }
   if (
-    obj.leaveTime &&
-    Array.isArray(obj.leaveTime) &&
-    obj.leaveTime.length === 2
+    obj.identifyTime &&
+    Array.isArray(obj.identifyTime) &&
+    obj.identifyTime.length === 2
   ) {
     filters.push({
-      label: `离场时间：${obj.leaveTime[0]} 至 ${obj.leaveTime[1]}`,
-      field: 'leaveTime',
+      label: `离场时间：${obj.identifyTime[0]} 至 ${obj.identifyTime[1]}`,
+      field: 'identifyTime',
     });
   }
 
@@ -733,7 +733,7 @@ const handleFilterByChart = (event) => {
 
     dataObj.searchParams = {
       ...dataObj.searchParams,
-      leaveTime: [formatDateTime(startDate), formatDateTime(endDate)],
+      identifyTime: [formatDateTime(startDate), formatDateTime(endDate)],
     };
     ElMessage.success('已应用图表筛选');
   } else {

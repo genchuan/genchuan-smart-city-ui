@@ -70,6 +70,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 const detailDrawerRef = ref(null);
 
 const [SearchForm, searchFormApi] = useVbenForm({
+  collapsed: false,
   commonConfig: {
     componentProps: {
       class: 'w-full',
@@ -77,6 +78,7 @@ const [SearchForm, searchFormApi] = useVbenForm({
     formItemClass: 'col-span-2',
     labelWidth: 80,
   },
+  handleSubmit: onSubmit,
   layout: 'horizontal',
   schema: computed(() => {
     const schema = useSearchFormSchema();
@@ -86,7 +88,10 @@ const [SearchForm, searchFormApi] = useVbenForm({
     }
     return schema;
   }),
-  showDefaultActions: false,
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
 });
 
 const [CreateForm, createFormApi] = useVbenForm({
@@ -392,6 +397,16 @@ const activeFilters = computed(() => {
   if (obj.auditUser) {
     filters.push({ label: `审核人：${obj.auditUser}`, field: 'auditUser' });
   }
+  if (
+    obj.registerTime &&
+    Array.isArray(obj.registerTime) &&
+    obj.registerTime.length === 2
+  ) {
+    filters.push({
+      label: `登记时间：${obj.registerTime[0]} 至 ${obj.registerTime[1]}`,
+      field: 'registerTime',
+    });
+  }
 
   return filters;
 });
@@ -402,11 +417,6 @@ const handleClearField = (fieldName) => {
   // 清除场站名称时，同时清除场站ID
   if (fieldName === 'stationName') {
     delete next.stationId;
-  }
-  // 清除时间范围时，同时清除 startTime 和 endTime
-  if (fieldName === 'timeRange') {
-    delete next.startTime;
-    delete next.endTime;
   }
   dataObj.searchParams = next;
   dataObj.currentPage = 1;
@@ -484,7 +494,19 @@ const getTableData = async (pageObj) => {
 };
 
 function onSubmit(values) {
-  dataObj.searchParams = values;
+  const params = { ...values };
+
+  if (
+    params.registerTime &&
+    Array.isArray(params.registerTime) &&
+    params.registerTime.length === 2
+  ) {
+    params.registerTime = params.registerTime.map((t) =>
+      typeof t === 'number' ? t : new Date(t).getTime(),
+    );
+  }
+
+  dataObj.searchParams = params;
   isSearching = true;
   gridApi.query();
   drawerApi.close();
@@ -621,10 +643,7 @@ const handleCloseUserDetail = () => {
 
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
-  const filterParams = event.detail;
-  // 去除 status 字段，只保留图表相关的筛选字段
-  // eslint-disable-next-line unused-imports/no-unused-vars
-  const { status, ...validParams } = filterParams;
+  const validParams = { ...event.detail };
 
   // 如果有 stationId，需要同时设置 stationName
   if (validParams.stationId && !validParams.stationName) {

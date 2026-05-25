@@ -43,7 +43,6 @@ export namespace GateOpenApi {
   export interface CreateReqVO {
     stationId: number;
     openReason: string;
-    applyUserId: number;
     remark?: string;
   }
 
@@ -105,7 +104,10 @@ export function getGateOpen(id: number | string) {
 
 /** 新增开闸申请 */
 export function createGateOpen(data: GateOpenApi.CreateReqVO) {
-  return requestClient.post<boolean>('/vehiclepass/gate-open/create', data);
+  return requestClient.post<boolean>(
+    '/vehiclepass/gate-open/create-apply',
+    data,
+  );
 }
 
 /** 导出开闸管理 */

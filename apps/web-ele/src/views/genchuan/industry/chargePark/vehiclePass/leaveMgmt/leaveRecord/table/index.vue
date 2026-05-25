@@ -114,9 +114,16 @@ const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
 
     const obj = createFormApi.form.values;
 
+    const payload = {
+      ...obj,
+      enterTime: obj.enterTime ? new Date(obj.enterTime).getTime() : undefined,
+      leaveTime: obj.leaveTime ? new Date(obj.leaveTime).getTime() : undefined,
+      status: '正常记录',
+    };
+
     if (USE_REAL_API) {
       try {
-        await createLeaveRecord(obj);
+        await createLeaveRecord(payload);
         ElMessage.success('补录成功');
         handleRefresh();
         createFormDrawerApi.close();
@@ -125,7 +132,7 @@ const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
         console.error(error);
       }
     } else {
-      dataObj.apilist.push(obj);
+      dataObj.apilist.push(payload);
       handleRefresh();
       createFormDrawerApi.close();
     }

@@ -321,10 +321,8 @@ const activeFilters = computed(() => {
   if (obj.status) {
     filters.push({ label: `状态：${obj.status}`, field: 'status' });
   }
-  if (obj.inTimeStart && obj.inTimeEnd) {
-    const start = new Date(Number(obj.inTimeStart)).toLocaleString('zh-CN');
-    const end = new Date(Number(obj.inTimeEnd)).toLocaleString('zh-CN');
-    filters.push({ label: `入场时间：${start} 至 ${end}`, field: 'inTimeRange' });
+  if (obj.inTime && Array.isArray(obj.inTime) && obj.inTime.length === 2) {
+    filters.push({ label: `入场时间：${obj.inTime[0]} 至 ${obj.inTime[1]}`, field: 'inTime' });
   }
   if (obj.updateTimeStart && obj.updateTimeEnd) {
     const start = new Date(Number(obj.updateTimeStart)).toLocaleString('zh-CN');
@@ -339,10 +337,7 @@ const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
 
   // 处理时间范围字段的清除
-  if (fieldName === 'inTimeRange') {
-    delete next.inTimeStart;
-    delete next.inTimeEnd;
-  } else if (fieldName === 'updateTimeRange') {
+  if (fieldName === 'updateTimeRange') {
     delete next.updateTimeStart;
     delete next.updateTimeEnd;
   } else if (fieldName === 'stationName') {
@@ -470,12 +465,6 @@ const [SearchForm, searchFormApi] = useVbenForm({
 function onSubmit(values) {
   // 处理时间范围参数
   const params = { ...values };
-
-  if (params.inTimeRange && Array.isArray(params.inTimeRange)) {
-    params.inTimeStart = params.inTimeRange[0];
-    params.inTimeEnd = params.inTimeRange[1];
-    delete params.inTimeRange;
-  }
 
   if (params.updateTimeRange && Array.isArray(params.updateTimeRange)) {
     params.updateTimeStart = params.updateTimeRange[0];
@@ -659,15 +648,7 @@ const handleFullShow = () => {
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
 
-  // 转换时间参数格式
-  if (filterParams.startTime && filterParams.endTime) {
-    dataObj.searchParams = {
-      ...dataObj.searchParams,
-      inTimeStart: filterParams.startTime,
-      inTimeEnd: filterParams.endTime,
-    };
-    ElMessage.success('已应用图表筛选');
-  } else if (filterParams.showAll) {
+  if (filterParams.showAll) {
     // 在停车辆数卡片点击，清除所有筛选显示全部
     dataObj.searchParams = {};
     ElMessage.success('已显示全部在停车辆');
