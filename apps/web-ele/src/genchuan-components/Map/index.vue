@@ -164,6 +164,23 @@ const initAreaLayer = () => {
 const generateInfoWindowContent = (properties) => {
   const config = props.infoWindowConfig;
   const title = properties[config.title] || '未知';
+  const compact = config.compact === true;
+  const showTitle = config.showTitle !== false;
+  const labelStyle = compact
+    ? 'width:48px;padding:0 4px 0 0;text-align:right;color:#606266;white-space:nowrap;vertical-align:top;'
+    : 'width:78px;padding:2px 8px 2px 0;text-align:right;color:#606266;white-space:nowrap;vertical-align:top;';
+  const valueStyle =
+    'color:#303133;word-break:break-all;white-space:normal;vertical-align:top;';
+  const cellPadding = compact ? 'padding:0;' : 'padding:2px 0;';
+  const wrapperStyle = compact
+    ? 'box-sizing:border-box;max-width:190px;min-width:140px;max-height:118px;overflow:hidden;padding:4px 6px;font-size:12px;line-height:15px;'
+    : 'box-sizing:border-box;max-width:320px;min-width:220px;padding:8px 10px;';
+  const titleStyle = compact
+    ? 'margin:0 0 2px;font-size:12px;line-height:15px;color:#303133;word-break:break-all;'
+    : 'margin:0 0 6px;font-size:14px;line-height:18px;color:#303133;word-break:break-all;';
+  const tableStyle = compact
+    ? 'width:100%;border-collapse:collapse;font-size:12px;line-height:15px;'
+    : 'width:100%;border-collapse:collapse;';
 
   let fieldsHtml = '';
   if (config.fields) {
@@ -172,17 +189,17 @@ const generateInfoWindowContent = (properties) => {
       const style = field.bold ? 'font-weight:bold;' : '';
       fieldsHtml += `
         <tr>
-          <td style="width:78px;padding:2px 8px 2px 0;text-align:right;color:#606266;white-space:nowrap;vertical-align:top;">${field.label}：</td>
-          <td style="${style}padding:2px 0;color:#303133;word-break:break-all;white-space:normal;vertical-align:top;">${value}</td>
+          <td style="${labelStyle}">${field.label}：</td>
+          <td style="${style}${cellPadding}${valueStyle}">${value}</td>
         </tr>
       `;
     });
   }
 
   return `
-    <div style="box-sizing:border-box;max-width:320px;min-width:220px;padding:8px 10px;">
-      <h3 style="margin:0 0 6px;font-size:14px;line-height:18px;color:#303133;word-break:break-all;">${title}</h3>
-      <table style="width:100%;border-collapse:collapse;">
+    <div style="${wrapperStyle}">
+      ${showTitle ? `<h3 style="${titleStyle}">${title}</h3>` : ''}
+      <table style="${tableStyle}">
         ${fieldsHtml}
       </table>
     </div>

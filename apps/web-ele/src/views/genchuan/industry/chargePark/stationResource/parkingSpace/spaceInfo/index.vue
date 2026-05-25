@@ -1308,19 +1308,6 @@ function getCellDisplayText(column, row) {
   return '--';
 }
 
-function getImageUrl(value) {
-  if (!value || value === '--') return '';
-  const imageValue = String(Array.isArray(value) ? value[0] : value).trim();
-  if (!imageValue || imageValue === '--') return '';
-  if (/^data:image\//.test(imageValue)) return imageValue;
-  if (/^https?:\/\//.test(imageValue)) return imageValue;
-  if (/^[\d+/a-z]+=*$/i.test(imageValue) && imageValue.length > 100) {
-    return `data:image/png;base64,${imageValue}`;
-  }
-  const baseUrl = import.meta.env.VITE_BASE_URL || '';
-  return `${baseUrl}${String(imageValue).startsWith('/') ? '' : '/'}${imageValue}`;
-}
-
 function getQrCodeCellValue(column, row) {
   const candidates = [
     column.displayField,
@@ -1333,21 +1320,6 @@ function getQrCodeCellValue(column, row) {
   }
   const displayText = getCellDisplayText(column, row);
   return displayText && displayText !== '--' ? String(displayText).trim() : '';
-}
-
-function getColumnImageUrl(column, row) {
-  return getImageUrl(getQrCodeCellValue(column, row));
-}
-
-function isImageLikeQrCodeValue(value) {
-  if (!value) return false;
-  return (
-    /^data:image\//.test(value) ||
-    /^https?:\/\//.test(value) ||
-    /\.(?:gif|jpe?g|png|svg|webp)(?:[?#].*)?$/i.test(value) ||
-    value.startsWith('/') ||
-    (/^[\d+/a-z]+=*$/i.test(value) && value.length > 100)
-  );
 }
 
 function handleCardClick(item) {
@@ -1629,19 +1601,8 @@ defineExpose({
               :key="column.field"
               #[column.slotName]="{ row }"
             >
-              <el-image
-                v-if="
-                  column.type === 'image' &&
-                  isImageLikeQrCodeValue(getQrCodeCellValue(column, row))
-                "
-                class="common-cell-image"
-                :src="getColumnImageUrl(column, row)"
-                :preview-src-list="[getColumnImageUrl(column, row)]"
-                fit="cover"
-                preview-teleported
-              />
               <QrCodeCellImage
-                v-else-if="
+                v-if="
                   column.type === 'image' && getQrCodeCellValue(column, row)
                 "
                 :value="getQrCodeCellValue(column, row)"
