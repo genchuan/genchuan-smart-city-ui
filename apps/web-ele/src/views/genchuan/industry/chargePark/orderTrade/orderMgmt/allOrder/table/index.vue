@@ -118,6 +118,30 @@ function handleRefresh() {
   gridApi.query();
 }
 
+// 点击订单类型筛选
+function handleFilterOrderType(orderType) {
+  dataObj.searchObj = { ...dataObj.searchObj, orderType: orderType };
+  queryFormApi.setValues({ orderType: orderType });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击订单状态筛选
+function handleFilterStatus(status) {
+  dataObj.searchObj = { ...dataObj.searchObj, status: status };
+  queryFormApi.setValues({ status: status });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
+// 点击场站名称筛选
+function handleFilterStationName(stationName) {
+  dataObj.searchObj = { ...dataObj.searchObj, stationName: stationName };
+  queryFormApi.setValues({ stationName: stationName });
+  dataObj.currentPage = 1;
+  gridApi.query();
+}
+
 // 监听筛选参数变化
 watch(
   () => props.filterParams,
@@ -693,15 +717,17 @@ const alarmColumns = [
         </div>
       </template>
       <template #orderType="{ row }">
-        <span v-if="row.orderType === 'temp_park'">临时停车</span>
-        <span v-else-if="row.orderType === 'offtime_park'">错时停车</span>
-        <span v-else-if="row.orderType === 'car_charge'">汽车充电</span>
-        <span v-else-if="row.orderType === 'bike_charge'">两轮充电</span>
-        <span v-else-if="row.orderType === 'share_charge'">共享充电</span>
-        <span v-else>{{ row.orderType }}</span>
+        <el-text @click="handleFilterOrderType(row.orderType)" class="common-align cursor-pointer" type="primary">
+          <span v-if="row.orderType === 'temp_park'">临时停车</span>
+          <span v-else-if="row.orderType === 'offtime_park'">错时停车</span>
+          <span v-else-if="row.orderType === 'car_charge'">汽车充电</span>
+          <span v-else-if="row.orderType === 'bike_charge'">两轮充电</span>
+          <span v-else-if="row.orderType === 'share_charge'">共享充电</span>
+          <span v-else>{{ row.orderType }}</span>
+        </el-text>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag @click="handleFilterStatus(row.status)" :type="getStatusType(row.status)" class="cursor-pointer">
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
@@ -723,6 +749,11 @@ const alarmColumns = [
         </el-text>
       </template>
 
+      <template #stationName="{ row }">
+        <el-text @click="handleFilterStationName(row.stationName)" class="common-align cursor-pointer" type="primary">
+          {{ row.stationName }}
+        </el-text>
+      </template>
       <template #plateNo="{ row }">
         <el-text @click="handlePlateDetail(row)" class="common-align" type="primary">
           {{ row.plateNo }}

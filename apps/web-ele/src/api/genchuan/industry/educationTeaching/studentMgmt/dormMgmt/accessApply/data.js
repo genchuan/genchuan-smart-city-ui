@@ -105,20 +105,6 @@ export function getAccessApplyDetail(params) {
     });
 }
 
-// 获取学生列表
-export function getStudentOptions(params) {
-  return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
-    console.warn('获取学生列表失败，使用模拟数据', err);
-    return Promise.resolve([
-      { value: 1, label: '张三' },
-      { value: 2, label: '李四' },
-      { value: 3, label: '王五' },
-      { value: 4, label: '赵六' },
-      { value: 5, label: '孙七' },
-    ]);
-  });
-}
-
 // ==================== 图表接口 ====================
 export function getAccessApplyChart(params) {
   const convertedParams = convertZhToEn(params);

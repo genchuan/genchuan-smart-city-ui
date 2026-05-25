@@ -19,6 +19,7 @@ export type CreditConfigVO = {
 
 // 信用配置分页请求
 export type CreditConfigPageReqVO = PageParam & {
+  configType?: string;
   effectTime?: string[];
   levelThreshold?: string;
   remark?: string;

@@ -1,9 +1,10 @@
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, h, nextTick, onMounted, ref, watch } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
+import { useQRCode } from '@vueuse/integrations/useQRCode';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 
@@ -17,6 +18,7 @@ import CommonDetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import IconButton from '#/genchuan-components/IconButton.vue';
 
 import ChartDrillDrawer from '../../components/ChartDrillDrawer.vue';
+import { downloadImportTemplateFallback } from '../../utils/importTemplate.js';
 import DetailDrawer from './detail.vue';
 import gateChart from './gateChart.vue';
 import gateMap from './gateMap.vue';
@@ -60,6 +62,32 @@ const chartDrillDrawerRef = ref(null);
 const selectOptionsMap = ref({});
 let refreshRunning = false;
 let pendingRefreshQuery = null;
+
+const QrCodeCellImage = {
+  props: {
+    value: {
+      type: String,
+      default: '',
+    },
+  },
+  setup(props) {
+    const qrcode = useQRCode(
+      computed(() => props.value),
+      {
+        errorCorrectionLevel: 'H',
+        margin: 2,
+        width: 96,
+      },
+    );
+
+    return () =>
+      h('img', {
+        alt: '车位二维码',
+        class: 'common-cell-image',
+        src: qrcode.value,
+      });
+  },
+};
 
 function padTime(value) {
   return String(value).padStart(2, '0');
@@ -117,6 +145,81 @@ function extractPageList(result) {
   return (
     result?.list || result?.rows || result?.records || result?.data?.list || []
   );
+}
+
+function firstDefined(...values) {
+  return values.find((value) => !isEmpty(value));
+}
+
+function getSpaceQrCodeValue(row = {}) {
+  return firstDefined(
+    row.qrcode,
+    row.qrCodeUrl,
+    row.qrcodeUrl,
+    row.qrCode,
+    row.qr_code_url,
+    row.qrCodePath,
+    row.qrcodePath,
+    row.qrCodeBase64,
+    row.qrcodeBase64,
+    row.qrCodeImage,
+    row.qrcodeImage,
+  );
+}
+
+function normalizeSpaceRow(row = {}) {
+  return {
+    ...row,
+    qrcode: getSpaceQrCodeValue(row) || '',
+  };
+}
+
+async function fillMissingQrCodeRows(rows = []) {
+  const detailApi = pageApi[`get${apiName}Detail`];
+  if (typeof detailApi !== 'function') return rows;
+  await Promise.all(
+    rows.map(async (row) => {
+      if (!isEmpty(row.qrcode) || isEmpty(row.id)) return;
+      try {
+        const detail = await detailApi(row.id);
+        const qrcode = getSpaceQrCodeValue(detail || {});
+        if (!isEmpty(qrcode)) {
+          row.qrcode = qrcode;
+          Object.assign(row, {
+            qrCode: detail.qrCode ?? row.qrCode,
+            qrCodeUrl: detail.qrCodeUrl ?? row.qrCodeUrl,
+            qrcodeUrl: detail.qrcodeUrl ?? row.qrcodeUrl,
+          });
+        }
+      } catch (error) {
+        console.warn('加载车位二维码失败:', error);
+      }
+    }),
+  );
+  return rows;
+}
+
+async function normalizeSpacePageResult(result) {
+  if (Array.isArray(result)) {
+    return fillMissingQrCodeRows(result.map((item) => normalizeSpaceRow(item)));
+  }
+  const list = extractPageList(result);
+  const nextList = await fillMissingQrCodeRows(
+    list.map((item) => normalizeSpaceRow(item)),
+  );
+  if (result?.data?.list) {
+    return {
+      ...result,
+      data: {
+        ...result.data,
+        list: nextList,
+      },
+    };
+  }
+  if (result?.list) return { ...result, list: nextList };
+  if (result?.rows) return { ...result, rows: nextList };
+  if (result?.records) return { ...result, records: nextList };
+  return result;
 }
 
 function buildOptionsBySource(source, result) {
@@ -402,6 +505,18 @@ const dialogFieldCatalog = {
     { key: 'areaId', label: '所属片区ID', section: '归属信息' },
     { key: 'address', label: '地址', section: '归属信息' },
     { key: 'status', label: '状态', section: '运营信息' },
+    {
+      key: 'createTime',
+      label: '创建时间',
+      section: '运营信息',
+      formatter: 'formatDateTime',
+    },
+    {
+      key: 'updateTime',
+      label: '更新时间',
+      section: '运营信息',
+      formatter: 'formatDateTime',
+    },
   ],
   stationIds: [
     { key: 'stationIds', label: '适用场站', section: '关联信息' },
@@ -463,9 +578,19 @@ const fallbackDialogFields = [
   { key: pageConfig.nameField, label: '名称', section: '当前记录' },
   { key: 'status', label: '状态', section: '当前记录' },
   { key: 'creator', label: '创建人', section: '审计信息' },
-  { key: 'createTime', label: '创建时间', section: '审计信息' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'updater', label: '更新人', section: '审计信息' },
-  { key: 'updateTime', label: '更新时间', section: '审计信息' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
 ];
 
 function dedupeFields(fields = []) {
@@ -501,9 +626,17 @@ function buildDialogFields(column, row) {
 }
 
 async function handleOpenDrillDialog(column, row) {
+  const nextRow = { ...row };
+  if (
+    column.field === 'stationId' &&
+    isEmpty(nextRow.stationName) &&
+    !isEmpty(nextRow.stationId)
+  ) {
+    nextRow.stationName = getOptionLabel('stationId', nextRow.stationId);
+  }
   drillDrawerTitle.value = column.drillLabel || column.label || '关联信息';
-  drillDetailObj.value = row;
-  drillDetailFields.value = buildDialogFields(column, row);
+  drillDetailObj.value = nextRow;
+  drillDetailFields.value = buildDialogFields(column, nextRow);
   if (isEmpty(drillDetailFields.value)) {
     drillDetailFields.value = [
       {
@@ -667,11 +800,12 @@ const [Grid, gridApi] = useVbenVxeGrid({
             Object.keys(explicitValues).length > 0
               ? explicitValues
               : sanitizeParams(appliedQuery.value);
-          return await pageApi[`get${apiName}Page`]({
+          const result = await pageApi[`get${apiName}Page`]({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             ...query,
           });
+          return await normalizeSpacePageResult(result);
         },
       },
     },
@@ -811,8 +945,7 @@ async function handleOpenDetail(row) {
     nextDetail.stationName = getOptionLabel('stationId', nextDetail.stationId);
   }
   if (isEmpty(nextDetail.qrcode)) {
-    nextDetail.qrcode =
-      nextDetail.qrCodeUrl || nextDetail.qrcodeUrl || nextDetail.qrCode || '';
+    nextDetail.qrcode = getSpaceQrCodeValue(nextDetail) || '';
   }
   detailObj.value = nextDetail;
   await nextTick();
@@ -939,16 +1072,21 @@ function normalizeImportResult(result) {
 
 async function handleDownloadImportTemplate() {
   const templateApi = pageApi[`get${apiName}ImportTemplate`];
+  const fileName =
+    pageConfig.importTemplateName || `${pageConfig.title}导入模板.xlsx`;
   if (typeof templateApi !== 'function') {
-    ElMessage.warning(`接口文档未提供${pageConfig.title}导入模板下载接口`);
+    downloadImportTemplateFallback({ fields: formFields, fileName });
     return;
   }
-  const blob = await templateApi();
-  downloadFileFromBlobPart({
-    fileName:
-      pageConfig.importTemplateName || `${pageConfig.title}导入模板.xlsx`,
-    source: blob,
-  });
+  try {
+    const blob = await templateApi();
+    downloadFileFromBlobPart({
+      fileName,
+      source: blob,
+    });
+  } catch {
+    downloadImportTemplateFallback({ fields: formFields, fileName });
+  }
 }
 
 async function handleImportConfirm() {
@@ -1172,15 +1310,51 @@ function getCellDisplayText(column, row) {
 
 function getImageUrl(value) {
   if (!value || value === '--') return '';
-  const imageValue = Array.isArray(value) ? value[0] : value;
+  const imageValue = String(Array.isArray(value) ? value[0] : value).trim();
   if (!imageValue || imageValue === '--') return '';
   if (/^data:image\//.test(imageValue)) return imageValue;
   if (/^https?:\/\//.test(imageValue)) return imageValue;
+  if (/^[\d+/a-z]+=*$/i.test(imageValue) && imageValue.length > 100) {
+    return `data:image/png;base64,${imageValue}`;
+  }
   const baseUrl = import.meta.env.VITE_BASE_URL || '';
   return `${baseUrl}${String(imageValue).startsWith('/') ? '' : '/'}${imageValue}`;
 }
 
+function getQrCodeCellValue(column, row) {
+  const candidates = [
+    column.displayField,
+    column.field,
+    ...(column.fallbackFields || []),
+  ].filter(Boolean);
+  for (const field of new Set(candidates)) {
+    const value = row?.[field];
+    if (!isEmpty(value)) return String(value).trim();
+  }
+  const displayText = getCellDisplayText(column, row);
+  return displayText && displayText !== '--' ? String(displayText).trim() : '';
+}
+
+function getColumnImageUrl(column, row) {
+  return getImageUrl(getQrCodeCellValue(column, row));
+}
+
+function isImageLikeQrCodeValue(value) {
+  if (!value) return false;
+  return (
+    /^data:image\//.test(value) ||
+    /^https?:\/\//.test(value) ||
+    /\.(?:gif|jpe?g|png|svg|webp)(?:[?#].*)?$/i.test(value) ||
+    value.startsWith('/') ||
+    (/^[\d+/a-z]+=*$/i.test(value) && value.length > 100)
+  );
+}
+
 function handleCardClick(item) {
+  if (item.key === 'totalSpaceCount') {
+    handleRefresh(appliedQuery.value);
+    return;
+  }
   if (!item.status) {
     return openChartDrill('card', item.title, item.key, `${item.title}明细`, {
       metricValue: item.value,
@@ -1279,7 +1453,6 @@ async function handleCellDrill(column, row) {
     return;
   }
   if (drillType === 'dialog') {
-    if (isEmpty(rawValue)) return;
     return handleOpenDrillDialog(column, row);
   }
 }
@@ -1459,16 +1632,26 @@ defineExpose({
               <el-image
                 v-if="
                   column.type === 'image' &&
-                  getImageUrl(getCellDisplayText(column, row))
+                  isImageLikeQrCodeValue(getQrCodeCellValue(column, row))
                 "
                 class="common-cell-image"
-                :src="getImageUrl(getCellDisplayText(column, row))"
-                :preview-src-list="[
-                  getImageUrl(getCellDisplayText(column, row)),
-                ]"
+                :src="getColumnImageUrl(column, row)"
+                :preview-src-list="[getColumnImageUrl(column, row)]"
                 fit="cover"
                 preview-teleported
               />
+              <QrCodeCellImage
+                v-else-if="
+                  column.type === 'image' && getQrCodeCellValue(column, row)
+                "
+                :value="getQrCodeCellValue(column, row)"
+              />
+              <span
+                v-else-if="column.type === 'image'"
+                class="common-image-placeholder"
+              >
+                暂无图片
+              </span>
               <el-text
                 v-else
                 class="common-align"
@@ -1644,9 +1827,13 @@ defineExpose({
 }
 
 .common-cell-image {
-  width: 42px;
-  height: 42px;
+  width: 64px;
+  height: 64px;
   vertical-align: middle;
   border-radius: 4px;
+}
+
+.common-image-placeholder {
+  color: var(--el-text-color-placeholder);
 }
 </style>

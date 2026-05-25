@@ -2,6 +2,7 @@ export const pageConfig = {
   apiName: 'OfftimeRule',
   title: '错时规则',
   exportName: '错时规则数据.xlsx',
+  importTemplateName: '错时规则导入模板.xlsx',
   nameField: 'offTime',
   primaryField: 'id',
   toolbar: ['create', 'import', 'export'],

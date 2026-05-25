@@ -62,11 +62,35 @@ const detailObj = ref<UserCreditRow>();
 const drillFilters = ref<{
   creditLevel?: string;
   creditScore?: number | string;
+  lowCreditLevels?: string;
 }>({});
 const searchParams = ref<Record<string, any>>({});
 const userDialogVisible = ref(false);
 const userProfileMap = ref<Record<number, UserProfileInfo>>({});
 const userSelectOptions = ref<UserSelectOption[]>([]);
+
+function hasQueryValue(value: any) {
+  return !(
+    value === '' ||
+    value === null ||
+    value === undefined ||
+    (Array.isArray(value) && value.length === 0)
+  );
+}
+
+function mergeQueryValues(...sources: Array<Record<string, any>>) {
+  const result: Record<string, any> = {};
+
+  for (const source of sources) {
+    Object.entries(source).forEach(([key, value]) => {
+      if (hasQueryValue(value)) {
+        result[key] = value;
+      }
+    });
+  }
+
+  return result;
+}
 
 const drillFilterConfigs = {
   creditLevel: {
@@ -76,6 +100,10 @@ const drillFilterConfigs = {
   creditScore: {
     label: '信用分',
     type: 'primary',
+  },
+  lowCreditLevels: {
+    label: '低信用等级',
+    type: 'danger',
   },
 } as const;
 
@@ -264,12 +292,50 @@ async function queryUserCreditPage({
 }) {
   await ensureUserProfilesLoaded();
 
-  const queryValues = {
-    ...searchParams.value,
-  };
+  const queryValues = mergeQueryValues(searchParams.value, drillFilters.value);
+  const lowCreditLevels = ['较差', '极差'];
 
-  if (drillFilters.value.creditLevel) {
-    queryValues.creditLevel = drillFilters.value.creditLevel;
+  if (drillFilters.value.lowCreditLevels) {
+    const pageNo = page.currentPage;
+    const pageSize = page.pageSize;
+    const mergedPageSize = pageNo * pageSize;
+    const results = await Promise.all(
+      lowCreditLevels.map((creditLevel) =>
+        UserCreditApi.getUserCreditPage({
+          pageNo: 1,
+          pageSize: mergedPageSize,
+          ...buildUserCreditQueryParams(
+            {
+              ...queryValues,
+              creditLevel,
+              lowCreditLevels: undefined,
+            },
+            {
+              creditLevel,
+              creditScore: drillFilters.value.creditScore,
+            },
+          ),
+        }),
+      ),
+    );
+    const list = results.flatMap((result) =>
+      Array.isArray(result?.list) ? result.list : [],
+    );
+    const pageList = list.slice((pageNo - 1) * pageSize, pageNo * pageSize);
+
+    return {
+      list: pageList.map((item) =>
+        buildUserCreditRowFromApi(
+          item,
+          undefined,
+          userProfileMap.value[Number(item.userId ?? 0)],
+        ),
+      ),
+      total: results.reduce(
+        (sum, result) => sum + Number(result?.total || 0),
+        0,
+      ),
+    };
   }
 
   const result = await UserCreditApi.getUserCreditPage({
@@ -345,6 +411,11 @@ async function setSearchValues(values: Record<string, any>) {
   return gridApi.reload();
 }
 
+async function setDrillValues(values: Partial<typeof drillFilters.value>) {
+  drillFilters.value = { ...values };
+  return gridApi.reload();
+}
+
 /** 重新计算表格布局 */
 async function recalculateLayout() {
   await gridApi.grid?.recalculate?.(true);
@@ -354,6 +425,7 @@ async function recalculateLayout() {
 defineExpose({
   recalculateLayout,
   resetSearch,
+  setDrillValues,
   setSearchValues,
 });
 
@@ -361,7 +433,10 @@ defineExpose({
 async function handleExport() {
   try {
     const data = await UserCreditApi.exportUserCredit(
-      buildUserCreditQueryParams(searchParams.value, drillFilters.value),
+      buildUserCreditQueryParams(
+        mergeQueryValues(searchParams.value, drillFilters.value),
+        drillFilters.value,
+      ),
     );
     downloadFileFromBlobPart({ fileName: '用户信用.xls', source: data });
     ElMessage.success('导出成功');
@@ -451,13 +526,28 @@ function handleCancelLevelFilter() {
   gridApi.reload();
 }
 
+function handleCancelLowCreditFilter() {
+  drillFilters.value.lowCreditLevels = undefined;
+  gridApi.reload();
+}
+
 /** 移除筛选标签 */
 async function handleRemoveFilterTag(tag: ActiveFilterTag) {
   if (tag.source === 'drill') {
-    if (tag.key === 'creditScore') {
-      handleCancelScoreFilter();
-    } else if (tag.key === 'creditLevel') {
-      handleCancelLevelFilter();
+    switch (tag.key) {
+      case 'creditLevel': {
+        handleCancelLevelFilter();
+        break;
+      }
+      case 'creditScore': {
+        handleCancelScoreFilter();
+        break;
+      }
+      case 'lowCreditLevels': {
+        handleCancelLowCreditFilter();
+        break;
+      }
+      // No default
     }
     return;
   }

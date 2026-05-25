@@ -11,7 +11,14 @@ import { useVbenForm } from '#/adapter/form';
 import { MemberGroupApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberGroup';
 import { $t } from '#/locales';
 
+import { normalizeDateTimeFormValue } from '../../utils';
 import { useFormSchema } from '../data';
+
+type MemberGroupFormDetail = MemberGroupVO & {
+  effectiveTimeStr?: number | string;
+  effectTime?: number | string;
+  effectTimeStr?: number | string;
+};
 
 const emit = defineEmits(['success']);
 const formData = ref<MemberGroupVO>();
@@ -66,7 +73,19 @@ const [Modal, modalApi] = useVbenModal({
     }
     modalApi.lock();
     try {
-      formData.value = await MemberGroupApi.getMemberGroup(data.id);
+      const detail = (await MemberGroupApi.getMemberGroup(
+        data.id,
+      )) as MemberGroupFormDetail;
+      const effectiveTime =
+        detail.effectiveTime ??
+        detail.effectiveTimeStr ??
+        detail.effectTime ??
+        detail.effectTimeStr;
+
+      formData.value = {
+        ...detail,
+        effectiveTime: normalizeDateTimeFormValue(effectiveTime),
+      };
       // 设置表单 values
       await formApi.setValues(formData.value);
     } finally {

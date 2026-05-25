@@ -1,13 +1,51 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-
-import { CommonStatusEnum, DICT_TYPE } from '@vben/constants';
-import { getDictOptions } from '@vben/hooks';
+import type { MemberLevelChartVO } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberLevel';
 
 import { z } from '#/adapter/form';
 import { getRangePickerDefaultProps } from '#/utils';
 
-/** 新增/修改的表单 */
+import {
+  FORM_TIME_FORMAT,
+  formatDateTimeValue,
+  formatLifecycleStatus,
+  formatPercentValue,
+  getLifecycleStatusTagType,
+  lifecycleStatusOptions,
+  STATUS_ENABLED,
+} from '../utils';
+
+export function buildStatsDataFromApi(data?: Partial<MemberLevelChartVO>) {
+  const distribution = Array.isArray(data?.levelUserDistribution)
+    ? data.levelUserDistribution
+    : [];
+
+  return {
+    cards: [
+      {
+        title: '等级数',
+        value: Number(data?.levelCount ?? 0),
+        desc: '当前会员等级总数',
+        color: '#2F80ED',
+      },
+      {
+        title: '等级升级率',
+        value: formatPercentValue(data?.levelUpgradeRate),
+        desc: '非最低等级会员占比',
+        color: '#FF9F40',
+      },
+    ],
+    charts: [
+      {
+        title: '等级用户分布',
+        type: 'bar',
+        xAxis: distribution.map((item) => item.level || '未设置等级'),
+        series: distribution.map((item) => Number(item.count ?? 0)),
+      },
+    ],
+  };
+}
+
 export function useFormSchema(): VbenFormSchema[] {
   return [
     {
@@ -28,68 +66,68 @@ export function useFormSchema(): VbenFormSchema[] {
       rules: 'required',
     },
     {
-      fieldName: 'level',
-      label: '等级',
+      fieldName: 'levelValue',
+      label: '等级数值',
       component: 'InputNumber',
       componentProps: {
         min: 0,
         precision: 0,
-        placeholder: '请输入等级',
+        placeholder: '请输入等级数值',
         controlsPosition: 'right',
         class: '!w-full',
       },
       rules: 'required',
     },
     {
-      fieldName: 'experience',
-      label: '升级经验',
-      component: 'InputNumber',
+      fieldName: 'upgradeCondition',
+      label: '升级条件',
+      component: 'Textarea',
       componentProps: {
-        min: 0,
-        precision: 0,
-        placeholder: '请输入升级经验',
-        controlsPosition: 'right',
-        class: '!w-full',
+        placeholder: '请输入升级条件(JSON 或文本)',
       },
       rules: 'required',
     },
     {
-      fieldName: 'discountPercent',
-      label: '享受折扣(%)',
-      component: 'InputNumber',
+      fieldName: 'benefits',
+      label: '权益内容',
+      component: 'Textarea',
       componentProps: {
-        min: 0,
-        max: 100,
-        precision: 0,
-        placeholder: '请输入享受折扣',
-        controlsPosition: 'right',
-        class: '!w-full',
+        placeholder: '请输入权益内容(JSON 或文本)',
       },
       rules: 'required',
-    },
-    {
-      fieldName: 'icon',
-      label: '等级图标',
-      component: 'ImageUpload',
-    },
-    {
-      fieldName: 'backgroundUrl',
-      label: '等级背景图',
-      component: 'ImageUpload',
     },
     {
       fieldName: 'status',
       label: '状态',
       component: 'RadioGroup',
       componentProps: {
-        options: getDictOptions(DICT_TYPE.COMMON_STATUS, 'number'),
+        options: lifecycleStatusOptions,
       },
-      rules: z.number().default(CommonStatusEnum.ENABLE),
+      rules: z.number().default(STATUS_ENABLED),
+    },
+    {
+      fieldName: 'effectiveTime',
+      label: '生效时间',
+      component: 'DatePicker',
+      componentProps: {
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: FORM_TIME_FORMAT,
+        type: 'datetime',
+        placeholder: '请选择生效时间',
+        class: '!w-full',
+      },
+    },
+    {
+      fieldName: 'remark',
+      label: '备注',
+      component: 'Textarea',
+      componentProps: {
+        placeholder: '请输入备注',
+      },
     },
   ];
 }
 
-/** 列表的搜索表单 */
 export function useGridFormSchema(): VbenFormSchema[] {
   return [
     {
@@ -102,13 +140,26 @@ export function useGridFormSchema(): VbenFormSchema[] {
       },
     },
     {
+      fieldName: 'levelValue',
+      label: '等级数值',
+      component: 'InputNumber',
+      componentProps: {
+        min: 0,
+        precision: 0,
+        controlsPosition: 'right',
+        placeholder: '请输入等级数值',
+        clearable: true,
+        class: '!w-full',
+      },
+    },
+    {
       fieldName: 'status',
       label: '状态',
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
         clearable: true,
-        options: getDictOptions(DICT_TYPE.COMMON_STATUS, 'number'),
+        options: lifecycleStatusOptions,
       },
     },
     {
@@ -123,70 +174,87 @@ export function useGridFormSchema(): VbenFormSchema[] {
   ];
 }
 
-/** 列表的字段 */
 export function useGridColumns(): VxeTableGridOptions['columns'] {
   return [
     {
       field: 'id',
       title: '等级编号',
-      minWidth: 80,
-    },
-    {
-      field: 'icon',
-      title: '等级图标',
-      minWidth: 100,
-      cellRender: {
-        name: 'CellImage',
-      },
-    },
-    {
-      field: 'backgroundUrl',
-      title: '等级背景图',
-      minWidth: 120,
-      cellRender: {
-        name: 'CellImage',
+      minWidth: 90,
+      slots: {
+        default: 'levelNo',
       },
     },
     {
       field: 'name',
       title: '等级名称',
+      minWidth: 140,
+      slots: {
+        default: 'levelName',
+      },
+    },
+    {
+      field: 'levelUserCount',
+      title: '等级用户数',
       minWidth: 120,
+      slots: {
+        default: 'levelUserCount',
+      },
     },
     {
-      field: 'level',
-      title: '等级',
-      minWidth: 80,
+      field: 'upgradeCondition',
+      title: '升级条件',
+      minWidth: 220,
+      showOverflow: 'tooltip',
+      formatter: ({ cellValue }) => cellValue || '-',
     },
     {
-      field: 'experience',
-      title: '升级经验',
-      minWidth: 100,
-    },
-    {
-      field: 'discountPercent',
-      title: '享受折扣(%)',
-      minWidth: 120,
+      field: 'benefits',
+      title: '权益内容',
+      minWidth: 220,
+      showOverflow: 'tooltip',
+      formatter: ({ cellValue }) => cellValue || '-',
     },
     {
       field: 'status',
       title: '状态',
-      minWidth: 80,
-      cellRender: {
-        name: 'CellDict',
-        props: { type: DICT_TYPE.COMMON_STATUS },
+      minWidth: 100,
+      slots: {
+        default: 'levelStatus',
       },
     },
     {
-      field: 'createTime',
-      title: '创建时间',
+      field: 'effectiveTime',
+      title: '生效时间',
       minWidth: 180,
-      formatter: 'formatDateTime',
+      formatter: ({ cellValue }) => formatDateTimeValue(cellValue),
     },
     {
       title: '操作',
-      width: 180,
+      width: 190,
       fixed: 'right',
       slots: { default: 'actions' },
     },
   ];
 }
+
+export const memberLevelDetailFields = [
+  { key: 'id', label: '等级编号' },
+  { key: 'name', label: '等级名称' },
+  { key: 'levelValue', label: '等级数值' },
+  { key: 'upgradeCondition', label: '升级条件' },
+  { key: 'benefits', label: '权益内容' },
+  { key: 'levelUserCount', label: '等级用户数' },
+  {
+    key: 'status',
+    label: '状态',
+    type: 'tag',
+    tagType: getLifecycleStatusTagType,
+    formatter: formatLifecycleStatus,
+  },
+  { key: 'effectiveTime', label: '生效时间', formatter: formatDateTimeValue },
+  { key: 'remark', label: '备注' },
+  { key: 'creator', label: '创建者' },
+  { key: 'createTime', label: '创建时间', formatter: formatDateTimeValue },
+  { key: 'updater', label: '更新者' },
+  { key: 'updateTime', label: '更新时间', formatter: formatDateTimeValue },
+];

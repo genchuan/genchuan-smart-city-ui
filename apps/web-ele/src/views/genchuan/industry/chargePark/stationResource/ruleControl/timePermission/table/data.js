@@ -2,6 +2,7 @@ export const pageConfig = {
   apiName: 'TimePermission',
   title: '时段准入权限',
   exportName: '时段准入权限数据.xlsx',
+  importTemplateName: '时段准入权限导入模板.xlsx',
   nameField: 'timeRange',
   primaryField: 'id',
   toolbar: ['create', 'import', 'export'],

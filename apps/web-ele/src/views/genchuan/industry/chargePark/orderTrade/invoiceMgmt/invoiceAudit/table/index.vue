@@ -1,7 +1,7 @@
 <script setup>import { reactive, ref, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
-import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption } from 'element-plus';
+import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getInvoiceAuditPage, exportInvoiceAuditExcel, auditPass, auditReject, batchAudit, batchReapply } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
@@ -33,10 +33,11 @@ const props = defineProps({
 });
 const emit = defineEmits(['arrow-change', 'clear-filters']);
 // 搜索表单数据
-const searchFormData = reactive({
-  invoiceNo: '',
-  orderNo: '',
+const searchFormData = reactive({ 
+  applicantName: '',
   status: '',
+  auditTimeStart: '',
+  auditTimeEnd: '',
 });
 const searchFormRef = ref(null);
 // 重新申请弹窗数据
@@ -295,12 +296,9 @@ watch(
         label-width="100px"
         class="query-form"
       >
-        <ElFormItem label="发票编号">
-          <ElInput v-model="searchFormData.invoiceNo" placeholder="请输入发票编号" />
-        </ElFormItem>
-        <ElFormItem label="订单号">
-          <ElInput v-model="searchFormData.orderNo" placeholder="请输入订单号" />
-        </ElFormItem>
+        <ElFormItem label="申请人">
+          <ElInput v-model="searchFormData.applicantName" placeholder="请输入申请人" />
+        </ElFormItem> 
         <ElFormItem label="状态">
           <ElSelect v-model="searchFormData.status" placeholder="请选择状态">
             <ElOption label="待审核" value="pending" />
@@ -308,6 +306,13 @@ watch(
             <ElOption label="已驳回" value="rejected" />
           </ElSelect>
         </ElFormItem>
+        <ElFormItem label="审核开始时间">
+          <ElDatePicker v-model="searchFormData.auditTimeStart" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" format="YYYY-MM-DD HH:mm:ss" />
+        </ElFormItem>
+        <ElFormItem label="审核结束时间">
+          <ElDatePicker v-model="searchFormData.auditTimeEnd" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" format="YYYY-MM-DD HH:mm:ss" />
+        </ElFormItem>
+    
       </ElForm>
     </Drawer>
 

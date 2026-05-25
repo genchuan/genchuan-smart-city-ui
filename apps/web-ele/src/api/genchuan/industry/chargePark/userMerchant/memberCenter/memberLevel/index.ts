@@ -3,33 +3,34 @@ import type { PageParam, PageResult } from '@vben/request';
 import { normalizeQueryDateTimeRanges } from '#/api/genchuan/industry/chargePark/userMerchant/utils/query';
 import { requestClient } from '#/api/request';
 
-// 会员等级 VO
 export type MemberLevelVO = {
-  backgroundUrl?: string;
-  bgUrl?: string;
+  benefits?: string;
   createTime?: number | string;
-  discountPercent?: number;
-  experience?: number;
-  icon?: string;
+  effectiveTime?: number | string;
   id?: number;
-  level?: number;
+  levelUserCount?: number;
+  levelValue?: number;
+  memberCount?: number;
+  memberUserCount?: number;
   name: string;
   remark?: string;
   status?: number | string;
   updateTime?: number | string;
+  upgradeCondition?: string;
   userCount?: number;
-  value?: number;
 };
 
 export type MemberLevelPageReqVO = PageParam & {
+  benefits?: string;
   createTime?: string | string[];
   effectiveTime?: string[];
+  levelValue?: number;
   name?: string;
+  remark?: string;
   status?: number | string;
   updateTime?: string[];
+  upgradeCondition?: string;
 };
-
-export type MemberLevelSaveReqVO = MemberLevelVO;
 
 export type MemberLevelOperateReqVO = {
   ids: number[];
@@ -48,29 +49,9 @@ export type MemberLevelChartVO = {
   }>;
 };
 
-function normalizeMemberLevel(data?: MemberLevelVO) {
-  if (!data) {
-    return data;
-  }
-  return {
-    ...data,
-    backgroundUrl: data.backgroundUrl ?? data.bgUrl,
-    level: data.level ?? data.value,
-  };
-}
-
-function buildMemberLevelPayload(data: MemberLevelVO) {
-  return {
-    ...data,
-    bgUrl: data.backgroundUrl ?? data.bgUrl,
-    value: data.level ?? data.value,
-  };
-}
-
-// 会员等级 API
 export const MemberLevelApi = {
   getMemberLevelPage: async (params: MemberLevelPageReqVO) => {
-    const result = await requestClient.get<PageResult<MemberLevelVO>>(
+    return await requestClient.get<PageResult<MemberLevelVO>>(
       '/usermerchant/member-level/page',
       {
         params: normalizeQueryDateTimeRanges(params, [
@@ -80,43 +61,27 @@ export const MemberLevelApi = {
         ]),
       },
     );
-    return {
-      ...result,
-      list: Array.isArray(result.list)
-        ? result.list.map((item) => normalizeMemberLevel(item) as MemberLevelVO)
-        : [],
-    };
   },
 
   getMemberLevel: async (id: number) => {
-    const result = await requestClient.get<MemberLevelVO>(
+    return await requestClient.get<MemberLevelVO>(
       '/usermerchant/member-level/get',
       {
         params: { id },
       },
     );
-    return normalizeMemberLevel(result) as MemberLevelVO;
   },
 
   createMemberLevel: async (data: MemberLevelVO) => {
-    return await requestClient.post(
-      '/usermerchant/member-level/create',
-      buildMemberLevelPayload(data),
-    );
+    return await requestClient.post('/usermerchant/member-level/create', data);
   },
 
-  saveMemberLevel: async (data: MemberLevelSaveReqVO) => {
-    return await requestClient.post(
-      '/usermerchant/member-level/save',
-      buildMemberLevelPayload(data),
-    );
+  saveMemberLevel: async (data: MemberLevelVO) => {
+    return await requestClient.post('/usermerchant/member-level/save', data);
   },
 
   updateMemberLevel: async (data: MemberLevelVO) => {
-    return await requestClient.put(
-      '/usermerchant/member-level/update',
-      buildMemberLevelPayload(data),
-    );
+    return await requestClient.put('/usermerchant/member-level/update', data);
   },
 
   enableMemberLevel: async (data: MemberLevelOperateReqVO) => {

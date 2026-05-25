@@ -23,7 +23,7 @@ const drawerTitle = computed(() => {
   return title.value || `${billNo} 详情`;
 });
 
-// 状态映射 - ReconcileBillStatusEnum
+// 状态映射 - ReconcileBillStatusEnum44444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
 const statusMap = {
   pending: { label: '待对账', type: 'warning' },
   reconciled: { label: '已对账', type: 'success' },
@@ -83,12 +83,12 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">对账日期:</div>
+        <div class="detail-row-left">对账周期:</div>
         <div class="detail-row-right">{{ detailObj.billDate || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">系统订单总金额:</div>
+        <div class="detail-row-left">平台金额:</div>
         <div class="detail-row-right">{{ detailObj.sysAmount ? `¥${detailObj.sysAmount.toFixed(2)}` : '¥0.00' }}</div>
       </div>
 
@@ -117,7 +117,7 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">操作人ID:</div>
+        <div class="detail-row-left">对账人ID:</div>
         <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
       </div>
 

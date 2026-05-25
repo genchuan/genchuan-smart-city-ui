@@ -11,6 +11,9 @@ import videoPlaybackChart from './videoPlayback/components/chart.vue';
 import aiRecognition from './aiRecognition/index.vue';
 import aiRecognitionChart from './aiRecognition/components/chart.vue';
 import '#/components/page/index.scss';
+// 设备管理组件
+import cameraMgmt from './cameraMgmt/index.vue';
+import cameraMgmtChart from './cameraMgmt/components/chart.vue';
 
 const changeArrowStatus = () => {
   secondShow.value = !secondShow.value;
@@ -47,6 +50,15 @@ const tabArray = ref([
     arrowShow: true,
     arrowState: false,
   },
+  {
+    label: '设备管理',
+    components: cameraMgmt,
+    chartComponent: cameraMgmtChart,
+    showSecondary: true,
+    secondShow: false,
+    arrowShow: true,
+    arrowState: false,
+  },
 ]);
 
 const arrowChange = () => {
@@ -74,6 +86,12 @@ const setVideoPlaybackRef = (el) => {
 const aiRecognitionRef = ref(null);
 const setAiRecognitionRef = (el) => {
   if (el) aiRecognitionRef.value = el;
+};
+
+// 设备管理组件引用
+const cameraMgmtRef = ref(null);
+const setCameraMgmtRef = (el) => {
+  if (el) cameraMgmtRef.value = el;
 };
 
 // ========== 实时监控图表事件 ==========
@@ -165,6 +183,32 @@ const onAiPieSelect = async ({ field, value, type }) => {
   }
 };
 
+// ========== 设备管理图表事件 ==========
+const onDeviceCardSelect = async (status) => {
+  await nextTick();
+  if (!cameraMgmtRef.value) {
+    ElMessage.warning('设备管理列表组件未就绪');
+    return;
+  }
+  cameraMgmtRef.value.clearFilters();
+  if (status === 'online') {
+    cameraMgmtRef.value.handleFilterTagClick('runStatus', '在线');
+  } else if (status === 'offline') {
+    cameraMgmtRef.value.handleFilterTagClick('runStatus', '离线');
+  } else if (status === 'fault') {
+    cameraMgmtRef.value.handleFilterTagClick('runStatus', '故障');
+  }
+};
+
+const onDeviceBarSelect = async ({ field, value }) => {
+  await nextTick();
+  if (!cameraMgmtRef.value) {
+    ElMessage.warning('设备管理列表组件未就绪');
+    return;
+  }
+  cameraMgmtRef.value.handleFilterTagClick('area', value);
+};
+
 const currentTab = computed(() => tabArray.value.find(item => item.label === activeName.value) || tabArray.value[0]);
 const currentChartComponent = computed(() => currentTab.value.chartComponent);
 const currentArrowShow = computed(() => currentTab.value.arrowShow);
@@ -194,6 +238,13 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
       @cardSelect="onAiCardSelect"
       @pieSelect="onAiPieSelect"
     />
+    <!-- 设备管理图表 -->
+    <component
+      v-if="currentArrowShow && activeName === '设备管理'"
+      :is="currentChartComponent"
+      @cardSelect="onDeviceCardSelect"
+      @barSelect="onDeviceBarSelect"
+    />
     <el-tabs v-model="activeName" class="common-tabs" type="card">
       <el-tab-pane v-for="item in tabArray" :key="item.label" :name="item.label">
         <template #label>
@@ -218,9 +269,18 @@ const currentArrowShow = computed(() => currentTab.value.arrowShow);
           @arrow-change="arrowChange"
         />
         <component
-          v-else
+          v-else-if="item.label === 'AI识别'"
           :is="item.components"
           :ref="setAiRecognitionRef"
+          :second-show="item.secondShow"
+          :key="item.label"
+          :arrow-show="item.arrowShow"
+          @arrow-change="arrowChange"
+        />
+        <component
+          v-else
+          :is="item.components"
+          :ref="setCameraMgmtRef"
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"

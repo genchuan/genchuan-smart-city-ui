@@ -2,6 +2,7 @@ export const pageConfig = {
   apiName: 'FeeRule',
   title: '费率规则',
   exportName: '费率规则数据.xlsx',
+  importTemplateName: '费率规则导入模板.xlsx',
   nameField: 'rateType',
   primaryField: 'id',
   toolbar: ['create', 'import', 'export'],
@@ -130,13 +131,6 @@ export const tableColumns = [
   { field: 'peakValleyConfig', label: '峰谷配置', minWidth: 160 },
   { field: 'memberConfig', label: '会员配置', minWidth: 160 },
   {
-    field: 'rateRuleDistribution',
-    label: '费率规则分布',
-    minWidth: 150,
-    displayField: 'rateRuleDistribution',
-    formatter: 'formatRateRuleDistribution',
-  },
-  {
     field: 'matchRate',
     label: '匹配率',
     minWidth: 120,
@@ -184,7 +178,6 @@ export const detailFields = [
   { key: 'maxPrice', label: '最高费用', section: '费率内容' },
   { key: 'peakValleyConfig', label: '峰谷配置', section: '费率内容' },
   { key: 'memberConfig', label: '会员配置', section: '费率内容' },
-  { key: 'rateRuleDistribution', label: '费率规则分布', section: '运营信息' },
   { key: 'matchRate', label: '匹配率', section: '运营信息', suffix: '%' },
   { key: 'remark', label: '备注', section: '费率内容' },
   {

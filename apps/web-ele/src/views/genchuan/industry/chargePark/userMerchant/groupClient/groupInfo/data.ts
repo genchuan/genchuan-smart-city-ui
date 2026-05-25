@@ -513,31 +513,48 @@ export function buildStatsDataFromApi(data?: Partial<GroupInfoChartVO>) {
 /**
  * 构建查询参数
  */
+function formatQueryTimeRange(value: any) {
+  return Array.isArray(value) &&
+    value.length === 2 &&
+    value.every((item) => dayjs(item).isValid())
+    ? [
+        dayjs(value[0]).format(QUERY_TIME_FORMAT),
+        dayjs(value[1]).format(QUERY_TIME_FORMAT),
+      ]
+    : undefined;
+}
+
+function hasQueryValue(value: any) {
+  return !(
+    value === '' ||
+    value === null ||
+    value === undefined ||
+    (Array.isArray(value) && value.length === 0)
+  );
+}
+
 export function buildGroupInfoQueryParams(
   formValues: Record<string, any>,
   extraValues: Record<string, any> = {},
 ): GroupInfoPageReqVO {
-  const params = {
+  const mergedValues: Record<string, any> = {
     ...formValues,
-    ...extraValues,
-    registerTime:
-      Array.isArray(formValues.registerTime) &&
-      formValues.registerTime.length === 2
-        ? [
-            dayjs(formValues.registerTime[0]).format(QUERY_TIME_FORMAT),
-            dayjs(formValues.registerTime[1]).format(QUERY_TIME_FORMAT),
-          ]
-        : undefined,
+  };
+
+  Object.entries(extraValues).forEach(([key, value]) => {
+    if (hasQueryValue(value)) {
+      mergedValues[key] = value;
+    }
+  });
+
+  const params = {
+    ...mergedValues,
+    registerTime: formatQueryTimeRange(mergedValues.registerTime),
   };
 
   return Object.fromEntries(
     Object.entries(params).filter(([, value]) => {
-      return !(
-        value === '' ||
-        value === null ||
-        value === undefined ||
-        (Array.isArray(value) && value.length === 0)
-      );
+      return hasQueryValue(value);
     }),
   ) as GroupInfoPageReqVO;
 }

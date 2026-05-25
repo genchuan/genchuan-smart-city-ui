@@ -9,11 +9,13 @@ import { ElMessage } from 'element-plus';
 
 import { useVbenForm } from '#/adapter/form';
 import {
+  createUser,
   getUser,
   updateUser,
 } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import { $t } from '#/locales';
 
+import { normalizeDateTimeFormValue } from '../../utils';
 import { useFormSchema } from '../data';
 
 const emit = defineEmits(['success']);
@@ -47,7 +49,7 @@ const [Modal, modalApi] = useVbenModal({
     // 提交表单
     const data = (await formApi.getValues()) as MemberUserApi.User;
     try {
-      await updateUser(data);
+      await (formData.value?.id ? updateUser(data) : createUser(data));
       // 关闭并提示
       await modalApi.close();
       emit('success');
@@ -64,11 +66,19 @@ const [Modal, modalApi] = useVbenModal({
     // 加载数据
     const data = modalApi.getData<MemberUserApi.User>();
     if (!data || !data.id) {
+      formData.value = undefined;
+      await formApi.resetForm();
       return;
     }
     modalApi.lock();
     try {
-      formData.value = await getUser(data.id);
+      const detail = await getUser(data.id);
+      formData.value = {
+        ...detail,
+        birthday: normalizeDateTimeFormValue(detail.birthday),
+        expireTime: normalizeDateTimeFormValue(detail.expireTime),
+        loginDate: normalizeDateTimeFormValue(detail.loginDate),
+      };
       // 设置到 values
       await formApi.setValues(formData.value);
     } finally {

@@ -178,7 +178,7 @@ function initBarChart() {
         detail: {
           startTime: todayStart,
           endTime: todayEnd,
-          hour: params.name,
+          leaveTimeHour: params.name,
         },
       }),
     );
@@ -213,7 +213,7 @@ function handleCardClick(key) {
           detail: {
             startTime: todayStart,
             endTime: todayEnd,
-            hour: peakHour,
+            leaveTimeHour: peakHour,
           },
         }),
       );

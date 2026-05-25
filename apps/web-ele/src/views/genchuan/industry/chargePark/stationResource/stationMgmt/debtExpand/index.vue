@@ -15,6 +15,7 @@ import * as stationInfoApi from '#/api/genchuan/industry/chargePark/stationResou
 import CommonDetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import IconButton from '#/genchuan-components/IconButton.vue';
 
+import { downloadImportTemplateFallback } from '../../utils/importTemplate.js';
 import DetailDrawer from './detail.vue';
 import gateChart from './gateChart.vue';
 import {
@@ -443,7 +444,12 @@ const dialogFieldCatalog = {
     { key: 'expandStatus', label: '拓场进度', section: '进度明细' },
     { key: 'debtRate', label: '追缴范围', section: '进度明细' },
     { key: 'status', label: '状态', section: '进度明细' },
-    { key: 'updateTime', label: '更新时间', section: '进度明细' },
+    {
+      key: 'updateTime',
+      label: '更新时间',
+      section: '进度明细',
+      formatter: 'formatDateTime',
+    },
   ],
 };
 
@@ -452,9 +458,19 @@ const fallbackDialogFields = [
   { key: pageConfig.nameField, label: '名称', section: '当前记录' },
   { key: 'status', label: '状态', section: '当前记录' },
   { key: 'creator', label: '创建人', section: '审计信息' },
-  { key: 'createTime', label: '创建时间', section: '审计信息' },
+  {
+    key: 'createTime',
+    label: '创建时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
   { key: 'updater', label: '更新人', section: '审计信息' },
-  { key: 'updateTime', label: '更新时间', section: '审计信息' },
+  {
+    key: 'updateTime',
+    label: '更新时间',
+    section: '审计信息',
+    formatter: 'formatDateTime',
+  },
 ];
 
 function dedupeFields(fields = []) {
@@ -929,16 +945,21 @@ function normalizeImportResult(result) {
 
 async function handleDownloadImportTemplate() {
   const templateApi = pageApi[`get${apiName}ImportTemplate`];
+  const fileName =
+    pageConfig.importTemplateName || `${pageConfig.title}导入模板.xlsx`;
   if (typeof templateApi !== 'function') {
-    ElMessage.warning(`接口文档未提供${pageConfig.title}导入模板下载接口`);
+    downloadImportTemplateFallback({ fields: formFields, fileName });
     return;
   }
-  const blob = await templateApi();
-  downloadFileFromBlobPart({
-    fileName:
-      pageConfig.importTemplateName || `${pageConfig.title}导入模板.xlsx`,
-    source: blob,
-  });
+  try {
+    const blob = await templateApi();
+    downloadFileFromBlobPart({
+      fileName,
+      source: blob,
+    });
+  } catch {
+    downloadImportTemplateFallback({ fields: formFields, fileName });
+  }
 }
 
 async function handleImportConfirm() {

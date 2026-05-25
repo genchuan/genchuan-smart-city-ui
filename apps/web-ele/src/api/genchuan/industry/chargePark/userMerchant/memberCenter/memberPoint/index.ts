@@ -3,31 +3,47 @@ import type { PageParam, PageResult } from '@vben/request';
 import { normalizeQueryDateTimeRanges } from '#/api/genchuan/industry/chargePark/userMerchant/utils/query';
 import { requestClient } from '#/api/request';
 
-// 会员积分 VO
 export type MemberPointVO = {
   bizId?: number | string;
   bizType?: number | string;
+  changeAmount?: number;
+  changeReason?: string;
+  changeType?: number | string;
+  checkBy?: string;
   checkResult?: string;
+  checkTime?: number | string;
   createTime?: number | string;
+  creator?: string;
   description?: string;
   id?: number;
+  mobile?: string;
   nickname?: string;
-  point?: number;
-  status?: string;
+  status?: number | string;
   title?: string;
   totalPoint?: number;
+  updater?: string;
   updateTime?: number | string;
   userId?: number;
+  userName?: string;
 };
 
 export type MemberPointPageReqVO = PageParam & {
+  bizId?: number | string;
   bizType?: number | string;
+  changeAmount?: number | string;
+  changeReason?: string;
+  changeType?: number | string;
+  checkBy?: string;
+  checkResult?: string;
   checkTime?: string[];
   createTime?: string | string[];
-  nickname?: string;
-  point?: number | string;
-  status?: string;
+  description?: string;
+  status?: number | string;
+  title?: string;
+  totalPoint?: number | string;
   updateTime?: string[];
+  userId?: number;
+  userName?: string;
 };
 
 export type MemberPointCheckReqVO = {
@@ -48,17 +64,22 @@ export type MemberPointChartVO = {
   totalPoint: number;
 };
 
-// 会员积分 API
+function buildPointQuery(params: MemberPointPageReqVO) {
+  const { userName: _userName, ...queryParams } = params;
+
+  return normalizeQueryDateTimeRanges(queryParams, [
+    'checkTime',
+    'createTime',
+    'updateTime',
+  ]);
+}
+
 export const MemberPointApi = {
   getMemberPointPage: async (params: MemberPointPageReqVO) => {
     return await requestClient.get<PageResult<MemberPointVO>>(
       '/usermerchant/member-point/page',
       {
-        params: normalizeQueryDateTimeRanges(params, [
-          'checkTime',
-          'createTime',
-          'updateTime',
-        ]),
+        params: buildPointQuery(params),
       },
     );
   },
@@ -74,11 +95,7 @@ export const MemberPointApi = {
 
   exportMemberPoint: async (params: MemberPointPageReqVO) => {
     return await requestClient.download('/usermerchant/member-point/export', {
-      params: normalizeQueryDateTimeRanges(params, [
-        'checkTime',
-        'createTime',
-        'updateTime',
-      ]),
+      params: buildPointQuery(params),
     });
   },
 

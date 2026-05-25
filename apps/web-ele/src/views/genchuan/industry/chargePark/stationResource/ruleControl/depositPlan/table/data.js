@@ -2,6 +2,7 @@ export const pageConfig = {
   apiName: 'DepositPlan',
   title: '押金方案',
   exportName: '押金方案数据.xlsx',
+  importTemplateName: '押金方案导入模板.xlsx',
   nameField: 'scene',
   primaryField: 'id',
   toolbar: ['create', 'import', 'export'],

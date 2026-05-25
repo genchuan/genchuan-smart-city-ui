@@ -119,20 +119,6 @@ export function getTreatMgmtDetail(params) {
     });
 }
 
-// 获取学生列表（用于预约下拉框）
-export function getStudentOptions(params) {
-  return requestClient.get('/studentmgmt/student/options', { params }).catch(err => {
-    console.warn('获取学生列表失败，使用模拟数据', err);
-    return Promise.resolve([
-      { value: 1, label: '张三', grade: '高一' },
-      { value: 2, label: '李四', grade: '高一' },
-      { value: 3, label: '王五', grade: '高二' },
-      { value: 4, label: '赵六', grade: '高二' },
-      { value: 5, label: '孙七', grade: '高三' },
-    ]);
-  });
-}
-
 // ==================== 图表接口 ====================
 export function getTreatMgmtChart(params) {
   const convertedParams = convertZhToEn(params);

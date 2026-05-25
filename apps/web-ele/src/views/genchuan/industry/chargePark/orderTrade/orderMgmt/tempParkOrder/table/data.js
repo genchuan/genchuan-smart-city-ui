@@ -247,6 +247,7 @@ export function useGridColumns() {
       title: '场站名称',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'stationName' },
     },
     {
       field: 'parkDuration',
@@ -279,6 +280,7 @@ export function useGridColumns() {
       title: '所属场站',
       minWidth: 140,
       sortable: true,
+      slots: { default: 'stationName' },
     },
     {
       field: 'payTime',

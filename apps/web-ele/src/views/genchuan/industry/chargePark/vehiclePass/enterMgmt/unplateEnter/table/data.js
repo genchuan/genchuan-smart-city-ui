@@ -9,8 +9,8 @@ export async function getStationOptions() {
   }
   try {
     const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
-    if (response && response.data && Array.isArray(response.data)) {
-      stationOptionsCache = response.data.map(item => ({
+    if (response && Array.isArray(response)) {
+      stationOptionsCache = response.map(item => ({
         label: item.stationName,
         value: item.stationId,
       }));
@@ -195,7 +195,7 @@ export function useCreateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '场站',
       component: 'Select',
       componentProps: {
@@ -280,11 +280,12 @@ export function useCorrectFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '场站',
-      component: 'Input',
+      component: 'Select',
       componentProps: {
-        placeholder: '请输入场站',
+        placeholder: '请选择场站',
+        options: [],
       },
       rules: 'required',
     },
@@ -340,6 +341,12 @@ export function useGridColumns() {
       field: 'status',
       title: '审核状态',
       minWidth: 100,
+      sortable: true,
+    },
+    {
+      field: 'stationName',
+      title: '场站',
+      minWidth: 150,
       sortable: true,
     },
     // {

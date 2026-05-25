@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
-import type { MemberPointRecordApi } from '#/api/member/point/record';
+import type { MemberPointVO } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberPoint';
 
 import { ref } from 'vue';
 
@@ -10,12 +10,13 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getRecordPage } from '#/api/member/point/record';
+import { MemberPointApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberPoint';
 import IconButton from '#/components/common/IconButton.vue';
+
 import {
   useGridColumns as usePointGridColumns,
   useGridFormSchema as usePointGridFormSchema,
-} from '#/views/member/point/record/data';
+} from '../../../memberPoint/data';
 
 const props = defineProps<{
   userId: number;
@@ -23,19 +24,17 @@ const props = defineProps<{
 
 const searchParams = ref<Record<string, any>>({});
 
-/** 列表的搜索表单（过滤掉用户相关字段） */
 function useGridFormSchema() {
-  const excludeFields = new Set(['nickname']);
+  const excludeFields = new Set(['userId']);
   return usePointGridFormSchema().filter(
     (item) => !excludeFields.has(item.fieldName),
   );
 }
 
-/** 列表的字段（过滤掉用户相关字段） */
 function useGridColumns() {
-  const excludeFields = new Set(['nickname']);
+  const excludeFields = new Set(['userId']);
   return usePointGridColumns()?.filter(
-    (item) => item.field && !excludeFields.has(item.field),
+    (item) => !item.field || !excludeFields.has(item.field),
   );
 }
 
@@ -46,7 +45,6 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  async onOpenChange() {},
 });
 
 const [QueryForm, queryFormApi] = useVbenForm({
@@ -71,19 +69,16 @@ const [QueryForm, queryFormApi] = useVbenForm({
   },
 });
 
-/** 搜索表单提交 */
 async function onQuerySubmit(values: Record<string, any>) {
   searchParams.value = { ...values };
   await handleRefresh();
   drawerApi.close();
 }
 
-/** 刷新表格 */
 function handleRefresh() {
   gridApi.reload();
 }
 
-/** 打开搜索抽屉 */
 async function handleSearchShow() {
   drawerApi.open();
   await queryFormApi.setValues(searchParams.value);
@@ -92,15 +87,11 @@ async function handleSearchShow() {
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: useGridColumns(),
-    layouts: [['Top', 'Toolbar', 'Table', 'Bottom', 'Pager']],
     keepSource: true,
-    pagerConfig: {
-      pageSize: 10,
-    },
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          return await getRecordPage({
+          return await MemberPointApi.getMemberPointPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
             userId: props.userId,
@@ -118,7 +109,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
       refresh: true,
       search: true,
     },
-  } as VxeTableGridOptions<MemberPointRecordApi.Record>,
+  } as VxeTableGridOptions<MemberPointVO>,
   showSearchForm: false,
 });
 </script>

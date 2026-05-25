@@ -193,4 +193,9 @@ export function exportAgentPayRecord(params) {
 export function getAgentPayRecordChart() {
   return requestClient.get('/ordertrade/agent-record/chart');
 }
- 
+ /** 商户列表页面 */
+export function getMerchantInfoPage(params) {
+  return requestClient.get('/usermerchant/merchant-info/page', {
+    params,
+  });
+}

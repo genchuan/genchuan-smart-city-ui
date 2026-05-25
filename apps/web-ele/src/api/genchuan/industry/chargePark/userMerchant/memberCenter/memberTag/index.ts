@@ -6,18 +6,23 @@ import { requestClient } from '#/api/request';
 // 会员标签 VO
 export type MemberTagVO = {
   createTime?: number | string;
+  creator?: string;
   description?: string;
   id?: number;
   name: string;
   status?: number | string;
+  updater?: string;
   updateTime?: number | string;
-  userCount?: number;
 };
 
 export type MemberTagPageReqVO = PageParam & {
   createTime?: string | string[];
+  creator?: string;
+  description?: string;
   name?: string;
   status?: number | string;
+  updater?: string;
+  updateTime?: string[];
 };
 
 export type MemberTagOperateReqVO = {
@@ -71,6 +76,12 @@ export const MemberTagApi = {
   importMemberTag: async (file: File) => {
     return await requestClient.upload('/usermerchant/member-tag/import', {
       file,
+    });
+  },
+
+  importMemberTagTemplate: async () => {
+    return await requestClient.download('/usermerchant/member-tag/template', {
+      responseReturn: 'raw',
     });
   },
 

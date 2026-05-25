@@ -8,6 +8,7 @@ export type UserOpReportVO = {
   bindCarCount?: number;
   createTime?: string;
   creator?: string;
+  exportCount?: number;
   filterCondition?: null | string;
   id?: number;
   linkMerchantCount?: number;
@@ -32,13 +33,15 @@ export type UserOpReportVO = {
 // 用户运营报表分页请求
 export type UserOpReportPageReqVO = PageParam & {
   createTime?: string;
+  id?: number;
   reportCycle?: string;
   reportStatus?: string;
   reportType?: string;
-  statEndTime?: string[];
-  statStartTime?: string[];
+  statEndTime?: string | string[];
+  statStartTime?: string | string[];
   statTime?: string;
   status?: string;
+  tenantId?: number;
   timeScale?: string;
 };
 
@@ -46,15 +49,17 @@ export type UserOpReportGenerateReqVO = {
   filterCondition?: string;
   remark?: string;
   reportCycle?: string;
+  reportName?: string;
   statEndTime?: string;
   statStartTime?: string;
+  tenantId?: number;
 };
 
 export type UserOpReportChartReqVO = {
   reportCycle?: string;
-  reportId?: number;
   statEndTime?: string;
   statStartTime?: string;
+  tenantId?: number;
   timeRange?: string;
 };
 
@@ -106,16 +111,25 @@ export type UserOpReportChartVO = {
 
 export type UserOpReportDetailVO = UserOpReportVO & {
   barData?: UserOpReportChartVO['barData'];
+  carTypeDistribution?: Record<string, number>;
   compareSummary?: string;
   coreIndex?: UserOpReportChartVO['coreIndex'];
   creditLevelDistribution?: Record<string, number>;
   exportCount?: number;
+  groupTypeDistribution?: Record<string, number>;
   lineData?: UserOpReportChartVO['lineData'];
   memberLevelDistribution?: Record<string, number>;
+  merchantTypeDistribution?: Record<string, number>;
   pieData?: UserOpReportChartVO['pieData'];
+  plateAuthTrend?: Array<{ count: number; date: string }>;
+  rechargeAmountTrend?: Array<{ amount: number; date: string }>;
+  sendCouponTrend?: Array<{ count: number; date: string }>;
   summary?: string;
+  userGrowthTrend?: Array<{ count: number; date: string }>;
   userOpTrend?: UserOpReportChartVO['userOpTrend'];
-  userTypeDistribution?: UserOpReportChartVO['userTypeDistribution'];
+  userTypeDistribution?:
+    | Record<string, number>
+    | UserOpReportChartVO['userTypeDistribution'];
 };
 
 // 用户运营报表 API
@@ -127,11 +141,18 @@ export const UserOpReportApi = {
     );
   },
 
-  getUserOpReport: async (id: number) => {
+  getUserOpReport: async (
+    paramsOrId: number | { id: number; tenantId?: number },
+  ) => {
+    const params =
+      typeof paramsOrId === 'number'
+        ? { id: paramsOrId, tenantId: 1 }
+        : { tenantId: 1, ...paramsOrId };
+
     return await requestClient.get<UserOpReportDetailVO>(
       '/usermerchant/cycle-report/get',
       {
-        params: { id },
+        params,
       },
     );
   },
@@ -153,16 +174,10 @@ export const UserOpReportApi = {
     );
   },
 
-  getUserOpReportChart: async (_params?: UserOpReportChartReqVO) => {
-    return {
-      coreIndex: {
-        avgCreditScore: 0,
-        totalMemberCount: 0,
-        totalUserCount: 0,
-        userGrowthRate: 0,
-      },
-      userOpTrend: [],
-      userTypeDistribution: [],
-    } as UserOpReportChartVO;
+  getUserOpReportChart: async (params: UserOpReportChartReqVO) => {
+    return await requestClient.get<UserOpReportChartVO>(
+      '/usermerchant/cycle-report/chart',
+      { params },
+    );
   },
 };

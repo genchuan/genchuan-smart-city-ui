@@ -332,10 +332,12 @@ async function handleResetSearch() {
 }
 
 async function handleOpenSearch() {
-  await syncQueryForm(appliedQuery.value);
   searchDrawerApi.open();
   await nextTick();
-  await syncQueryForm(appliedQuery.value);
+  await syncQueryForm({
+    ...appliedQuery.value,
+    ...(currentReportPeriod() ? { reportCycle: currentReportPeriod() } : {}),
+  });
 }
 
 function handleOpenGenerate() {
@@ -371,16 +373,20 @@ async function handleGenerate() {
 
   generating.value = true;
   try {
-    await pageApi.createStationOpReport({
-      ...values,
-      reportCycle:
-        values.reportCycle ||
-        currentReportPeriod() ||
-        reportPeriodMap[REPORT_TYPE],
-      statPeriod: [values.reportStartTime, values.reportEndTime]
-        .filter(Boolean)
-        .join(' - '),
-    });
+    await pageApi.createStationOpReport(
+      sanitizeParams({
+        ...values,
+        reportEndTime: Number.isNaN(endTime) ? undefined : endTime,
+        reportCycle:
+          values.reportCycle ||
+          currentReportPeriod() ||
+          reportPeriodMap[REPORT_TYPE],
+        reportStartTime: Number.isNaN(startTime) ? undefined : startTime,
+        statPeriod: [values.reportStartTime, values.reportEndTime]
+          .filter(Boolean)
+          .join(' - '),
+      }),
+    );
     ElMessage.success('生成成功');
     formDrawerApi.close();
     handleRefresh();
@@ -414,6 +420,7 @@ async function handleExport(extraParams = {}, isRowExport = false) {
     source: blob,
   });
   ElMessage.success('导出成功');
+  handleRefresh();
 }
 
 async function handleOpenDetail(row) {

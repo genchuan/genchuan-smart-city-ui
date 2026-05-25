@@ -3,6 +3,14 @@ import { ref } from 'vue';
 
 import { createIconifyIcon } from '@vben/icons';
 
+import { ElMessage } from 'element-plus';
+import QRCode from 'qrcode';
+
+import {
+  createMemberOrder,
+  submitMemberOrder,
+} from '#/api/genchuan/pay/memberPay';
+
 // 使用 Iconify 图标创建组件
 const CheckIcon = createIconifyIcon('carbon:checkmark');
 const CloseIcon = createIconifyIcon('carbon:close');
@@ -25,6 +33,9 @@ const ArrowDown = createIconifyIcon('carbon:chevron-down');
 const showPremiumPayment = ref(false);
 const showEnterprisePayment = ref(false);
 
+// 二维码数据
+const premiumQrCode = ref('');
+
 // 联系方式二维码弹窗状态
 const showContactQr = ref(false);
 
@@ -37,8 +48,26 @@ function scrollToPricing() {
 }
 
 // 显示高级会员支付弹窗
-function showPremiumPaymentModal() {
+async function showPremiumPaymentModal() {
   showPremiumPayment.value = true;
+  premiumQrCode.value = '';
+
+  try {
+    const createRes = await createMemberOrder();
+    const payOrderId = createRes.payOrderId;
+
+    const submitRes = await submitMemberOrder(payOrderId);
+    if (submitRes.displayContent) {
+      const qrDataUrl = await QRCode.toDataURL(submitRes.displayContent, {
+        width: 200,
+        margin: 2,
+      });
+      premiumQrCode.value = qrDataUrl;
+    }
+  } catch (error) {
+    console.error('获取支付二维码失败:', error);
+    ElMessage.error('获取支付二维码失败，请重试');
+  }
 }
 
 // 显示旗舰版会员支付弹窗
@@ -607,12 +636,15 @@ const faqList = ref([
       <div class="payment-modal" @click.stop>
         <button class="modal-close-btn" @click="closePremiumPayment">✕</button>
         <h3 class="modal-title">高级会员 - ¥198/年</h3>
-        <p class="modal-subtitle">请使用支付宝扫码完成支付</p>
+        <p class="modal-subtitle">请使用微信扫码完成支付</p>
         <div class="qr-code-container">
-          <div class="qr-code-placeholder">
+          <div v-if="premiumQrCode" class="qr-code-real">
+            <img :src="premiumQrCode" alt="微信支付二维码" class="qr-image" />
+          </div>
+          <div v-else class="qr-code-placeholder">
             <div class="qr-icon">📱</div>
-            <p>支付宝二维码</p>
-            <p class="qr-hint">(模拟二维码 - 前端演示)</p>
+            <p>正在生成支付二维码...</p>
+            <p class="qr-hint">请稍候</p>
           </div>
         </div>
         <div class="payment-info">
@@ -629,9 +661,9 @@ const faqList = ref([
             <span class="info-value">1年</span>
           </div>
         </div>
-        <p class="payment-notice">
-          ⚠️ 提示：此为前端模拟演示，实际支付需要后端集成支付宝SDK生成真实二维码
-        </p>
+        <!--        <p class="payment-notice">-->
+        <!--          ⚠️ 提示：此为前端模拟演示，实际支付需要后端集成微信SDK生成真实二维码-->
+        <!--        </p>-->
       </div>
     </div>
 
@@ -646,11 +678,11 @@ const faqList = ref([
           ✕
         </button>
         <h3 class="modal-title">旗舰版会员 - ¥9999/年</h3>
-        <p class="modal-subtitle">请使用支付宝扫码完成支付</p>
+        <p class="modal-subtitle">请使用微信扫码完成支付</p>
         <div class="qr-code-container">
           <div class="qr-code-placeholder enterprise">
             <div class="qr-icon">📱</div>
-            <p>支付宝二维码</p>
+            <p>微信二维码</p>
             <p class="qr-hint">(模拟二维码 - 前端演示)</p>
           </div>
         </div>
@@ -1847,6 +1879,24 @@ const faqList = ref([
       display: flex;
       justify-content: center;
       margin-bottom: 28px;
+
+      .qr-code-real {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 220px;
+        height: 220px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgb(102 126 234 / 10%);
+
+        .qr-image {
+          width: 200px;
+          height: 200px;
+          object-fit: contain;
+          border-radius: 8px;
+        }
+      }
 
       .qr-code-placeholder {
         display: flex;

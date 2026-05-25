@@ -64,17 +64,17 @@ export function useAssignFormSchema() {
   return [
     {
       fieldName: 'dormNum',
-      label: '宿舍号',
+      label: '宿舍号ID',
       component: 'Input',
-      componentProps: { placeholder: '请输入宿舍号，例如：1号楼101' },
+      componentProps: { placeholder: '请输入宿舍号ID' },
       rules: 'required',
       labelWidth: '100',
     },
     {
       fieldName: 'bedStartNum',
-      label: '起始床位号',
+      label: '床位号ID',
       component: 'InputNumber',
-      componentProps: { placeholder: '起始床位号（数字）', min: 1, step: 1, style: 'width: 100%' },
+      componentProps: { placeholder: '请输入床位号ID', min: 1, step: 1, style: 'width: 100%' },
       rules: 'required',
       labelWidth: '100',
     },

@@ -42,7 +42,7 @@ export function useFormSchema() {
     },
     {
       fieldName: 'collectTimeEnd',
-      label: '追缴时间结束时间',    
+      label: '追缴时间结束',    
       component: 'DatePicker',
       componentProps: {
         type: 'datetime',

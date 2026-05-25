@@ -1,25 +1,36 @@
 import type { PageParam, PageResult } from '@vben/request';
 
+import dayjs from 'dayjs';
+
 import { normalizeQueryDateTimeRanges } from '#/api/genchuan/industry/chargePark/userMerchant/utils/query';
 import { requestClient } from '#/api/request';
 
-// 会员签到 VO
 export type MemberSignVO = {
+  continuousDays?: number;
   createTime?: number | string;
-  day?: number;
-  description?: string;
+  creator?: string;
+  experience?: number;
   id?: number;
+  mobile?: string;
   nickname?: string;
   point?: number;
+  signDate?: number | string;
+  status?: number | string;
+  updater?: string;
   updateTime?: number | string;
   userId?: number;
+  userName?: string;
 };
 
 export type MemberSignPageReqVO = PageParam & {
+  continuousDays?: number;
   createTime?: string | string[];
-  nickname?: string;
+  experience?: number;
+  point?: number;
   signDate?: string[];
+  status?: number | string;
   updateTime?: string[];
+  userId?: number;
 };
 
 export type MemberSignChartReqVO = {
@@ -39,16 +50,42 @@ export type MemberSignChartVO = {
   todaySignCount: number;
 };
 
-// 会员签到 API
+const QUERY_DATE_FORMAT = 'YYYY-MM-DD';
+
+function formatQueryDateRange(value?: unknown) {
+  if (!Array.isArray(value) || value.length !== 2) {
+    return undefined;
+  }
+
+  const range = value.map((item) => dayjs(item));
+
+  if (range.some((item) => !item.isValid())) {
+    return undefined;
+  }
+
+  return range.map((item) => item.format(QUERY_DATE_FORMAT));
+}
+
+function buildSignQuery(params: MemberSignPageReqVO) {
+  const nextParams = normalizeQueryDateTimeRanges(params, [
+    'createTime',
+    'updateTime',
+  ]);
+  const signDate = formatQueryDateRange(nextParams.signDate);
+
+  if (signDate) {
+    nextParams.signDate = signDate;
+  }
+
+  return nextParams;
+}
+
 export const MemberSignApi = {
   getMemberSignPage: async (params: MemberSignPageReqVO) => {
     return await requestClient.get<PageResult<MemberSignVO>>(
       '/usermerchant/member-sign/page',
       {
-        params: normalizeQueryDateTimeRanges(params, [
-          'createTime',
-          'updateTime',
-        ]),
+        params: buildSignQuery(params),
       },
     );
   },
@@ -64,10 +101,7 @@ export const MemberSignApi = {
 
   exportMemberSign: async (params: MemberSignPageReqVO) => {
     return await requestClient.download('/usermerchant/member-sign/export', {
-      params: normalizeQueryDateTimeRanges(params, [
-        'createTime',
-        'updateTime',
-      ]),
+      params: buildSignQuery(params),
     });
   },
 

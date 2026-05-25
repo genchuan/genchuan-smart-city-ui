@@ -2,6 +2,7 @@ export const pageConfig = {
   apiName: 'BlackWhiteList',
   title: '黑白名单',
   exportName: '黑白名单数据.xlsx',
+  importTemplateName: '黑白名单导入模板.xlsx',
   nameField: 'plateNo',
   primaryField: 'id',
   toolbar: ['create', 'import', 'export'],
@@ -46,8 +47,6 @@ export const searchFields = [
     options: statusOptions,
     required: false,
   },
-  { field: 'creator', label: '创建人', type: 'input', required: false },
-  { field: 'updater', label: '更新人', type: 'input', required: false },
 ];
 
 export const formFields = [
@@ -95,7 +94,6 @@ export const tableColumns = [
     field: 'certInfo',
     label: '证明材料',
     minWidth: 160,
-    drillType: 'filter',
   },
   {
     field: 'interceptCount',
@@ -117,14 +115,14 @@ export const tableColumns = [
     minWidth: 120,
     displayField: 'auditUserName',
   },
-  { field: 'creator', label: '创建人', minWidth: 120, drillType: 'filter' },
+  { field: 'creator', label: '创建人', minWidth: 120 },
   {
     field: 'createTime',
     label: '创建时间',
     minWidth: 180,
     formatter: 'formatDateTime',
   },
-  { field: 'updater', label: '更新人', minWidth: 120, drillType: 'filter' },
+  { field: 'updater', label: '更新人', minWidth: 120 },
   {
     field: 'updateTime',
     label: '更新时间',

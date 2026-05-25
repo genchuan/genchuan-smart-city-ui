@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 
+import dayjs from 'dayjs';
 import { ElMessage } from 'element-plus';
 
 import { UserOpReportApi } from '#/api/genchuan/industry/chargePark/userMerchant/decisionAnalysis/userOpReport';
-import { buildDateRangeByChartName } from '#/views/genchuan/industry/chargePark/userMerchant/utils/chartDrill';
 
 import DrillDownDetailDialog from './components/DrillDownDetailDialog.vue';
 import UserOpReportStats from './components/UserOpReportStats.vue';
-import { buildStatsDataFromApi } from './data';
+import { buildTopStatsDataFromApi } from './data';
 import Table from './table/index.vue';
 
 import '#/genchuan-components/page/index.scss';
@@ -24,7 +24,7 @@ const activeName = ref('全部');
 const drillDownDialogRef = ref<InstanceType<typeof DrillDownDetailDialog>>();
 const tableRef = ref<null | TableInstance>(null);
 const showStats = ref(true);
-const statsDataSource = ref(buildStatsDataFromApi());
+const statsDataSource = ref(buildTopStatsDataFromApi());
 
 const reportCycleTabs = [
   { label: '全部', value: '' },
@@ -36,6 +36,15 @@ const reportCycleTabs = [
   { label: '年报', value: '年报' },
   { label: '自定义报表', value: '自定义报表' },
 ];
+
+function buildDefaultChartParams() {
+  return {
+    reportCycle: '月报',
+    statEndTime: dayjs().endOf('month').format('YYYY-MM-DD HH:mm:ss'),
+    statStartTime: dayjs().startOf('month').format('YYYY-MM-DD HH:mm:ss'),
+    tenantId: 1,
+  };
+}
 
 /** 等待布局稳定后再重算表格 */
 function waitForLayoutStable() {
@@ -68,87 +77,88 @@ const toggleStats = async () => {
 /** 加载统计数据 */
 async function loadStats() {
   try {
-    const data = await UserOpReportApi.getUserOpReportChart();
-    statsDataSource.value = buildStatsDataFromApi(data);
+    const data = await UserOpReportApi.getUserOpReportChart(
+      buildDefaultChartParams(),
+    );
+    statsDataSource.value = buildTopStatsDataFromApi(data);
   } catch (error) {
-    statsDataSource.value = buildStatsDataFromApi();
+    statsDataSource.value = buildTopStatsDataFromApi();
     ElMessage.error('加载用户运营分析失败');
     console.error('[userOpReport] load stats failed:', error);
   }
 }
 
 const statsData = computed(() => statsDataSource.value);
+const pieChartOptions = computed(() => statsDataSource.value.pieChartOptions);
+const barChartOptions = computed(() => statsDataSource.value.barChartOptions);
+const lineChartOptions = computed(() => statsDataSource.value.lineChartOptions);
 
 function openDrillDown(info: {
   drillName?: string;
   drillType: string;
   drillValue?: number | string;
 }) {
-  drillDownDialogRef.value?.open(info);
+  drillDownDialogRef.value?.open({
+    ...info,
+    reportCycle: activeName.value,
+  });
 }
 
-function handleStatsCardClick({
+async function handleStatsCardClick({
   card,
-  index,
+  type,
 }: {
   card: Record<string, any>;
-  index: number;
+  type: string;
 }) {
-  const drillTypes = [
-    'totalUserCount',
-    'totalMemberCount',
-    'avgCreditScore',
-    'userGrowthRate',
-  ];
-
   openDrillDown({
     drillName: card.title,
-    drillType: drillTypes[index] || 'totalUserCount',
-    drillValue: card.value,
+    drillType: type,
+    drillValue: type,
   });
-
-  if (index === 3) {
-    void tableRef.value?.setSearchValues({ timeScale: '月' });
-  } else {
-    void tableRef.value?.resetSearch();
-  }
+  await nextTick();
+  await tableRef.value?.handleStatsFilter('card', type);
 }
 
-async function handleStatsChartClick({
-  chart,
-  name,
-  value,
-}: {
-  chart: Record<string, any>;
+function handlePieClick(info: {
   name: string;
+  type: string;
   value: number | string;
 }) {
   openDrillDown({
-    drillName: name,
-    drillType: chart.type === 'line' ? 'userOpTrend' : 'userTypeDistribution',
-    drillValue: value,
+    drillName: info.name,
+    drillType: info.type,
+    drillValue: info.value,
   });
+}
 
-  if (chart.type === 'line') {
-    const range = buildDateRangeByChartName(name);
+function handleBarClick(info: {
+  name: string;
+  type: string;
+  value: number | string;
+}) {
+  openDrillDown({
+    drillName: info.name,
+    drillType: info.type,
+    drillValue: info.value,
+  });
+}
 
-    if (range) {
-      await tableRef.value?.setSearchValues({ statTime: range });
-    }
-
-    return;
-  }
-
-  if (chart.type === 'bar') {
-    await tableRef.value?.setSearchValues({
-      reportType: name.includes('会员') ? '月报' : '日报',
-    });
-  }
+function handleLineClick(info: {
+  name: string;
+  type: string;
+  value: number | string;
+}) {
+  openDrillDown({
+    drillName: info.name,
+    drillType: info.type,
+    drillValue: info.value,
+  });
 }
 
 async function tabChange(tabName: string) {
   const tab = reportCycleTabs.find((item) => item.label === tabName);
-  await tableRef.value?.handleStatsFilter('reportType', tab?.value || '');
+  await tableRef.value?.handleStatsFilter('reportCycle', tab?.value || '');
   await nextTick();
   await tableRef.value?.recalculateLayout();
 }
@@ -163,8 +173,13 @@ onMounted(() => {
     <UserOpReportStats
       v-if="showStats"
       :data="statsData"
+      :bar-chart-options="barChartOptions"
+      :line-chart-options="lineChartOptions"
+      :pie-chart-options="pieChartOptions"
       @card-click="handleStatsCardClick"
-      @chart-click="handleStatsChartClick"
+      @pie-click="handlePieClick"
+      @bar-click="handleBarClick"
+      @line-click="handleLineClick"
     />
     <DrillDownDetailDialog ref="drillDownDialogRef" />
     <el-tabs

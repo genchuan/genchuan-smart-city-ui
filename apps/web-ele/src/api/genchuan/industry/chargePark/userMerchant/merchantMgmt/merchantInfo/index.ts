@@ -188,7 +188,12 @@ export const MerchantInfoApi = {
   },
 
   importMerchantInfoTemplate: async () => {
-    return await requestClient.download('/usermerchant/merchant-info/template');
+    return await requestClient.download(
+      '/usermerchant/merchant-info/template',
+      {
+        responseReturn: 'raw',
+      },
+    );
   },
 
   exportMerchantInfo: async (params: MerchantInfoPageReqVO) => {

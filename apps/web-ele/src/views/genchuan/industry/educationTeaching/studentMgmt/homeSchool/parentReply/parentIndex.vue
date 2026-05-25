@@ -1,11 +1,11 @@
 <script setup>
 import { computed, reactive, ref, watch, onMounted } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
+import { ElLoading, ElMessage, ElMessageBox} from 'element-plus';
 import screenfull from 'screenfull';
-import { useVbenForm } from '#/adapter/form';
-import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { downloadFileFromBlobPart } from '@vben/utils';
+import {useVbenForm} from '#/adapter/form';
+import {useVbenVxeGrid} from '#/adapter/vxe-table';
+import {downloadFileFromBlobPart} from '@vben/utils';
 import ParentReplyDetailDrawer from './components/parentReplyDetail.vue';
 import {
   getMockList,
@@ -13,7 +13,7 @@ import {
   submitParentReply,
   exportParentReply,
   getParentReplyDetail,
-  getCommunicateList,
+  // 已删除 getCommunicateList
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/homeSchool/parentReply/data.js';
 import {
   textObj,
@@ -64,7 +64,7 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 
-const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
+const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
@@ -140,14 +140,14 @@ const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
 
 const searchParams = ref({});
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
 
   try {
@@ -167,7 +167,7 @@ const getTableData = async ({ page }) => {
       sourceList = getMockList();
     }
 
-    // 前端标签筛选（统一入口）
+    // 前端标签筛选
     let filtered = sourceList;
 
     Object.entries(tagFilters.value).forEach(([field, filterValue]) => {
@@ -203,7 +203,6 @@ const getTableData = async ({ page }) => {
       });
     });
 
-    // ✅ 核心修复点
     dataObj.total = filtered.length;
     dataObj.list = filtered;
 
@@ -233,10 +232,10 @@ function handleReset() {
 
 async function handleExport() {
   try {
-    const loading = ElLoading.service({ text: '正在导出...' });
+    const loading = ElLoading.service({text: '正在导出...'});
     try {
       const data = await exportParentReply(searchParams.value);
-      downloadFileFromBlobPart({ fileName: `${textObj.excelName}.xls`, source: data });
+      downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
       ElMessage.success('导出成功');
     } finally {
       loading.close();
@@ -247,23 +246,18 @@ async function handleExport() {
   }
 }
 
-// 提交回复
-function handleSubmit() {
-  // 加载未回复的沟通消息列表（实际应调用接口获取可回复的消息）
-  loadCommunicateOptions();
+// ---------- 提交回复（基于行数据）----------
+const currentReplyRow = ref(null);
+
+function handleReply(row) {
+  currentReplyRow.value = row;
   submitFormApi.resetForm();
   submitDrawerApi.open();
 }
 
-// 加载沟通消息选项
-const communicateOptions = ref([]);
-const loadCommunicateOptions = async () => {
-  const res = await getCommunicateList({ status: '已发布' }); // 只获取已发布的消息
-  communicateOptions.value = res;
-};
-
 // 详情抽屉
 const parentReplyDetailDrawerRef = ref(null);
+
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   parentReplyDetailDrawerRef.value.open();
@@ -272,23 +266,36 @@ function handleOpenDetail(row) {
 // 提交回复表单
 const [SubmitForm, submitFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '提交中...' });
+    if (!currentReplyRow.value) {
+      ElMessage.error('请选择要回复的消息');
+      return;
+    }
+    const loading = ElLoading.service({text: '提交中...'});
     try {
+      // 格式化当前时间为后端要求的字符串格式 yyyy-MM-dd HH:mm:ss
+      const now = new Date();
+      const formattedTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
       const res = await submitParentReply({
-        communicateId: values.communicateId,
-        studentId: 1, // 实际应从登录信息获取当前学生的ID
+        communicateId: currentReplyRow.value.communicateId,
+        studentId: currentReplyRow.value.studentId,
         parentReplyContent: values.parentReplyContent,
-        parentReplyTime: Date.now(),
+        parentReplyTime: formattedTime,
       });
-      if (res === true) {
+
+      // 根据后端实际返回结构调整判断逻辑
+      if (res === true || res?.code === 200 || res?.success === true) {
         ElMessage.success('回复成功');
         submitDrawerApi.close();
         handleRefresh();
       } else {
-        ElMessage.error('回复失败');
+        ElMessage.error(res?.message || '回复失败');
       }
+    } catch (error) {
+      console.error('提交回复失败:', error);
+      ElMessage.error(error?.message || '回复失败，请检查网络或联系管理员');
     } finally {
       loading.close();
     }
@@ -296,25 +303,14 @@ const [SubmitForm, submitFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useSubmitFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '提交' },
+  submitButtonOptions: {content: '提交'},
 });
-
-// 动态注入沟通消息选项
-watch(submitFormApi, (api) => {
-  if (api && communicateOptions.value.length) {
-    const schema = api.getSchema();
-    const communicateField = schema.find(f => f.fieldName === 'communicateId');
-    if (communicateField) {
-      communicateField.componentProps.options = communicateOptions.value;
-    }
-  }
-}, { immediate: true });
 
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     gridApi.reload();
   },
@@ -324,20 +320,20 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -350,17 +346,22 @@ const toggleChart = () => {
   showChart.value = !showChart.value;
 };
 
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <ParentReplyDetailDrawer ref="parentReplyDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
+    <ParentReplyDetailDrawer ref="parentReplyDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                             @refresh="handleRefresh"/>
     <Drawer title="搜索">
-      <QueryForm />
+      <QueryForm/>
     </Drawer>
-    <SubmitDrawer :title="textObj.submitText">
-      <SubmitForm />
+    <SubmitDrawer :title="`回复消息：${currentReplyRow?.communicateTitle || textObj.submitText}`">
+      <div v-if="currentReplyRow"
+           style="margin-bottom: 16px; padding: 8px; background: #f5f7fa; border-radius: 4px;">
+        正在回复：{{ currentReplyRow.communicateTitle }}
+      </div>
+      <SubmitForm/>
     </SubmitDrawer>
     <Grid>
       <template #table-title>
@@ -377,10 +378,10 @@ defineExpose({ handleFilterTagClick, clearFilters });
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="提交回复" icon-name="EditPen" @click="handleSubmit" />
-          <IconButton content="导出" icon-name="download" @click="handleExport" />
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
+          <!-- 已移除全局的“提交回复”按钮 -->
+          <IconButton content="导出" icon-name="download" @click="handleExport"/>
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
           <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
@@ -392,27 +393,34 @@ defineExpose({ handleFilterTagClick, clearFilters });
         </el-text>
       </template>
       <template #studentName="{ row }">
-        <el-text @click="handleFilterTagClick('studentName', row.studentName)" type="primary" style="cursor: pointer;">
+        <el-text @click="handleFilterTagClick('studentName', row.studentName)" type="primary"
+                 style="cursor: pointer;">
           {{ row.studentName }}
         </el-text>
       </template>
       <template #parentReplyTime="{ row }">
-        <el-text @click="handleFilterTagClick('parentReplyTime', getDateFromTimestamp(row.parentReplyTime))" type="primary" style="cursor: pointer;">
+        <el-text
+          @click="handleFilterTagClick('parentReplyTime', getDateFromTimestamp(row.parentReplyTime))"
+          type="primary" style="cursor: pointer;">
           {{ formatTimestamp(row.parentReplyTime) }}
         </el-text>
       </template>
       <template #readStatus="{ row }">
-        <el-tag :type="getReadStatusType(row.readStatus)" @click="handleFilterTagClick('readStatus', row.readStatus)" style="cursor: pointer;">
+        <el-tag :type="getReadStatusType(row.readStatus)"
+                @click="handleFilterTagClick('readStatus', row.readStatus)"
+                style="cursor: pointer;">
           {{ row.readStatus }}
         </el-tag>
       </template>
       <template #replyStatus="{ row }">
-        <el-tag :type="getReplyStatusType(row.replyStatus)" @click="handleFilterTagClick('replyStatus', row.replyStatus)" style="cursor: pointer;">
+        <el-tag :type="getReplyStatusType(row.replyStatus)"
+                @click="handleFilterTagClick('replyStatus', row.replyStatus)"
+                style="cursor: pointer;">
           {{ row.replyStatus }}
         </el-tag>
       </template>
       <template #createTime="{ row }">
-        <el-text @click="handleFilterTagClick('createTime', getDateFromTimestamp(row.createTime))" type="primary" style="cursor: pointer;">
+        <el-text>
           {{ formatTimestamp(row.createTime) }}
         </el-text>
       </template>
@@ -425,10 +433,11 @@ defineExpose({ handleFilterTagClick, clearFilters });
         <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
       </template>
 
-      <!-- 操作按钮（家长端无标记已读和回复，只有详情） -->
+      <!-- 操作按钮：增加“回复”按钮 -->
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
+          <IconButton content="回复" icon-name="EditPen" @click="handleReply(row)"/>
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
         </div>
       </template>
     </Grid>
