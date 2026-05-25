@@ -33,7 +33,7 @@ const trendXData = computed(() => state.trendData.map((item) => item.time));
 const trendSeriesData = computed(() => [
   {
     name: '日志数量',
-    data: state.trendData.map((item) => item.totalCount),
+    data: state.trendData.map((item) => item.logCount),
     color: '#2f80ed',
   },
 ]);
@@ -51,7 +51,7 @@ function normalizeChartData(data) {
     data?.trendData || data?.cardData ? data : getMockChartData();
   const cardData = chartData.cardData || {};
 
-  state.cardList[0].value = cardData.logCount ?? 0;
+  state.cardList[0].value = cardData.totalCount ?? 0;
   state.cardList[1].value = formatRate(cardData.confirmRate);
   state.trendData = Array.isArray(chartData.trendData)
     ? chartData.trendData
