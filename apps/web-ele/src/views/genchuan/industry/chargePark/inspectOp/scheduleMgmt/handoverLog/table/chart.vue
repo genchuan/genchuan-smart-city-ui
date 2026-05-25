@@ -33,7 +33,7 @@ const trendXData = computed(() => state.trendData.map((item) => item.time));
 const trendSeriesData = computed(() => [
   {
     name: '日志数量',
-    data: state.trendData.map((item) => item.logCount),
+    data: state.trendData.map((item) => item.totalCount),
     color: '#2f80ed',
   },
 ]);
