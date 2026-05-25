@@ -70,7 +70,7 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '场站',
       component: 'Select',
       componentProps: {
@@ -79,7 +79,7 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'operator',
+      fieldName: 'operatorId',
       label: '操作人',
       component: 'Input',
       componentProps: {
@@ -178,11 +178,11 @@ export function useGridColumns() {
       slots: { default: 'stationName' },
     },
     {
-      field: 'operator',
+      field: 'operatorName',
       title: '操作人',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'operator' },
+      slots: { default: 'operatorName' },
     },
     {
       field: 'operatorTime',
@@ -213,21 +213,16 @@ export const textObj = {
 
 /** 详情抽屉字段配置 */
 export const detailFields = [
+  { key: 'id', label: 'ID' },
   { key: 'plateNo', label: '车牌' },
   { key: 'passReason', label: '放行原因' },
   { key: 'passTime', label: '放行时间', formatter: formatTime },
   { key: 'imageUrl', label: '抓拍图片', type: 'image' },
   { key: 'status', label: '状态' },
   { key: 'stationName', label: '场站' },
-  { key: 'operator', label: '操作人' },
+  { key: 'operatorName', label: '操作人' },
   { key: 'operatorTime', label: '操作时间', formatter: formatTime },
-  { key: 'checkResult', label: '核查结果' },
   { key: 'remark', label: '备注' },
-  { key: 'creator', label: '创建人' },
-  { key: 'createTime', label: '创建时间', formatter: formatTime },
-  { key: 'updater', label: '操作人' },
-  { key: 'updateTime', label: '操作时间', formatter: formatTime },
-  { key: 'isCorrected', label: '修正记录标记' },
 ];
 
 /** 模拟详情数据 */
@@ -242,7 +237,7 @@ export const mockDetailData = {
   stationId: 1,
   stationName: '1号场站',
   operatorId: 1,
-  operator: '张三',
+  operatorName: '张三',
   operatorTime: 1745011815000,
   checkResult: '',
   remark: '',

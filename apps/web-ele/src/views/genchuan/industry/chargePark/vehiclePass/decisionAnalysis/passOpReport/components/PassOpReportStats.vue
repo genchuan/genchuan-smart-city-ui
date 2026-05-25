@@ -769,11 +769,12 @@ onUnmounted(() => {
   height: 280px;
   padding: 4px;
   box-sizing: border-box;
+  gap: 8px;
 }
 
 .chart-area {
   position: relative;
-  flex: 0 0 28%;
+  flex: 1;
   min-width: 0;
   height: 272px;
   box-sizing: border-box;
