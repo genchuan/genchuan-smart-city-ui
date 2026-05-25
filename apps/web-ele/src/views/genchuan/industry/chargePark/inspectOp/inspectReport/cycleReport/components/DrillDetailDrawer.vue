@@ -378,8 +378,9 @@ function open(payload = {}) {
           break;
         }
         case 'inspectTask': {
-          sharedQuery.taskStatus = getTaskStatusOptionValue('处理中');
-          titleParts.push('巡检任务（待处理）');
+          // getTaskStatusOptionValue('处理中')
+          sharedQuery.taskStatus = '';
+          titleParts.push('巡检任务');
           tabs = [
             {
               key: 'task',
@@ -442,8 +443,8 @@ function open(payload = {}) {
           break;
         }
         case 'oilHandleComplete': {
-          sharedQuery.processStatus = getProcessStatusOptionValue('已关闭');
-          titleParts.push('油车占位（已关闭）');
+          sharedQuery.processStatus = getProcessStatusOptionValue('已处理');
+          titleParts.push('油车占位（已处理）');
           tabs = [
             {
               key: 'oil',
