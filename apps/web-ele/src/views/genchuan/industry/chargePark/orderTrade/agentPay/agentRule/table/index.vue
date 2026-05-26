@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch, onMounted } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
@@ -80,6 +80,20 @@ const loadMerchantOptions = async () => {
       label: item.name,
       value: item.id,
     }));
+    // 更新编辑表单中的商户选项
+    formApi.updateSchema([{
+      fieldName: 'merchantId',
+      componentProps: {
+        options: merchantOptions.value,
+      },
+    }]);
+    // 更新搜索表单中的商户选项
+    queryFormApi.updateSchema([{
+      fieldName: 'merchantId',
+      componentProps: {
+        options: merchantOptions.value,
+      },
+    }]);
   } catch (error) {
     console.error('加载商户列表失败:', error);
   }
@@ -130,12 +144,6 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
     if (isOpen) {
       await loadMerchantOptions();
       formData.value = formDrawerApi.getData();
-      formApi.updateSchema([{
-        fieldName: 'merchantId',
-        componentProps: {
-          options: merchantOptions.value,
-        },
-      }]);
       if (formData.value?.id) {
         await formApi.setValues(formData.value);
       } else {
@@ -691,6 +699,11 @@ watch(
   },
   { deep: true }
 );
+
+// 组件挂载时加载商户选项
+onMounted(() => {
+  loadMerchantOptions();
+});
 </script>
 
 <template>

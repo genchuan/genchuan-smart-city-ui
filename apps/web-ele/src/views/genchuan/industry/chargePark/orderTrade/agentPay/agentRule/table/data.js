@@ -29,8 +29,10 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择商户',
+        options: [],
       },
       labelWidth: 120,
+      isSearch: true,
       isEdit: true,
     },
     {
