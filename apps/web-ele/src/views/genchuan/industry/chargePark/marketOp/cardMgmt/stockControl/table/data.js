@@ -439,7 +439,8 @@ export const detailFields = [
     formatter: (value) =>
       value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '-',
   },
-  { key: 'creator', label: '创建者' },
+  // { key: 'creator', label: '创建者' },
+  { key: 'creatorName', label: '创建者' },
   { key: 'updater', label: '更新者' },
   {
     key: 'createTime',

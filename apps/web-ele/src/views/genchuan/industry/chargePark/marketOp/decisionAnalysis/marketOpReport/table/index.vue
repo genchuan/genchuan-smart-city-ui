@@ -514,10 +514,16 @@ const handleOpenDetail = async (row) => {
     // 处理统计时段字段：将时间戳格式化为日期字符串并拼接
     if (detailData.statStartTime || detailData.statEndTime) {
       const startTime = detailData.statStartTime
-        ? formatDate(new Date(Number(detailData.statStartTime)), 'YYYY-MM-DD HH:mm:ss')
+        ? formatDate(
+            new Date(Number(detailData.statStartTime)),
+            'YYYY-MM-DD HH:mm:ss',
+          )
         : '';
       const endTime = detailData.statEndTime
-        ? formatDate(new Date(Number(detailData.statEndTime)), 'YYYY-MM-DD HH:mm:ss')
+        ? formatDate(
+            new Date(Number(detailData.statEndTime)),
+            'YYYY-MM-DD HH:mm:ss',
+          )
         : '';
       if (startTime && endTime) {
         detailData.statTime = `${startTime} 至 ${endTime}`;
@@ -538,10 +544,16 @@ const handleOpenDetail = async (row) => {
     const localDetail = { ...row };
     if (localDetail.statStartTime || localDetail.statEndTime) {
       const startTime = localDetail.statStartTime
-        ? formatDate(new Date(Number(localDetail.statStartTime)), 'YYYY-MM-DD HH:mm:ss')
+        ? formatDate(
+            new Date(Number(localDetail.statStartTime)),
+            'YYYY-MM-DD HH:mm:ss',
+          )
         : '';
       const endTime = localDetail.statEndTime
-        ? formatDate(new Date(Number(localDetail.statEndTime)), 'YYYY-MM-DD HH:mm:ss')
+        ? formatDate(
+            new Date(Number(localDetail.statEndTime)),
+            'YYYY-MM-DD HH:mm:ss',
+          )
         : '';
       if (startTime && endTime) {
         localDetail.statTime = `${startTime} 至 ${endTime}`;
