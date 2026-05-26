@@ -25,10 +25,10 @@ const filterParams = reactive({
 });
 
 const handleFilterChange = (params) => {
-  filterParams.createOrderTimeStart = null;
-  filterParams.createOrderTimeEnd = null;
-  filterParams.stationName = null;
-  Object.assign(filterParams, params);
+  // 完全重置所有筛选条件
+  filterParams.createOrderTimeStart = params.createOrderTimeStart || null;
+  filterParams.createOrderTimeEnd = params.createOrderTimeEnd || null;
+  filterParams.stationName = params.stationName || null;
 };
 
 const handleClearFilters = () => {
@@ -38,7 +38,7 @@ const handleClearFilters = () => {
 };
 
 const hasActiveFilters = () => {
-  return filterParams.createOrderTimeStart || filterParams.stationName;
+  return !!(filterParams.createOrderTimeStart || filterParams.stationName);
 };
 
 const clearDateFilter = () => {
@@ -67,7 +67,7 @@ const secondShow = ref(false);
 <template>
   <div class="common-index">
     <Chart @filter-change="handleFilterChange" v-if="tabArray[0].arrowShow"/>
-    <div v-if="hasActiveFilters" class="filter-tags">
+    <div v-if="hasActiveFilters()" class="filter-tags">
       <el-tag
         v-if="filterParams.stationName"
         closable
@@ -76,7 +76,7 @@ const secondShow = ref(false);
         场站: {{ filterParams.stationName }}
       </el-tag>
       <el-tag
-        v-else-if="filterParams.createOrderTimeStart"
+        v-if="filterParams.createOrderTimeStart && !filterParams.stationName"
         closable
         @close="clearDateFilter"
       >
