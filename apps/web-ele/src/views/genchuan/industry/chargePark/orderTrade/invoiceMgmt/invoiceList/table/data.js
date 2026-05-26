@@ -71,7 +71,7 @@ export function useGridColumns() {
       customRender: ({ text }) => text || 0,
     },
     {
-      field: 'auditorName',
+      field: 'creator',
       title: '审核人',
       minWidth: 120,
       sortable: true,
@@ -89,13 +89,7 @@ export function useGridColumns() {
       minWidth: 200,
       sortable: true,
       customRender: ({ text }) => text || '-',
-    },
-    {
-      field: 'creator',
-      title: '创建者',
-      minWidth: 120,
-      sortable: true,
-    },
+    }, 
     {
       field: 'createTime',
       title: '生成时间',
