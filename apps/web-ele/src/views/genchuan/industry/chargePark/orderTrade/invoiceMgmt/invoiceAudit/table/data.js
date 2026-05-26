@@ -17,11 +17,11 @@ export function useGridColumns() {
       slots: { default: 'invoiceNo' },
     },
     {
-      field: 'applicantName',
+      field: 'creator',
       title: '申请人',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'applicantName' },
+      slots: { default: 'creator' },
     },
     {
       field: 'status',

@@ -34,11 +34,11 @@ const props = defineProps({
 });
 const emit = defineEmits(['arrow-change', 'clear-filters']);
 // 搜索表单数据
-const searchFormData = reactive({ 
+const searchFormData = reactive({
   applicantName: '',
   status: '',
-  auditTimeStart: '',
-  auditTimeEnd: '',
+  applyTimeStart: '',
+  applyTimeEnd: '',
 });
 const searchFormRef = ref(null);
 // 重新申请弹窗数据
@@ -324,20 +324,15 @@ watch(
 <template>
   <div class="park-lot-table-new" v-loading="dataObj.loading">
     <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
-    
+
     <!-- 发票详情弹窗 -->
     <InvoiceDetailDrawer ref="invoiceDetailDrawerRef" :detail-obj="dataObj.invoiceDetailObj" />
-    
+
     <Drawer title="搜索">
-      <ElForm
-        ref="searchFormRef"
-        :model="searchFormData"
-        label-width="100px"
-        class="query-form"
-      >
+      <ElForm ref="searchFormRef" :model="searchFormData" label-width="100px" class="query-form">
         <ElFormItem label="申请人">
-          <ElInput v-model="searchFormData.applicantName" placeholder="请输入申请人" />
-        </ElFormItem> 
+          <ElInput v-model="searchFormData.creator" placeholder="请输入申请人" />
+        </ElFormItem>
         <ElFormItem label="状态">
           <ElSelect v-model="searchFormData.status" placeholder="请选择状态">
             <ElOption label="待审核" value="pending" />
@@ -346,30 +341,23 @@ watch(
           </ElSelect>
         </ElFormItem>
         <ElFormItem label="审核开始时间">
-          <ElDatePicker v-model="searchFormData.auditTimeStart" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" format="YYYY-MM-DD HH:mm:ss" />
+          <ElDatePicker v-model="searchFormData.applyTimeStart" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss"
+            format="YYYY-MM-DD HH:mm:ss" />
         </ElFormItem>
+
         <ElFormItem label="审核结束时间">
-          <ElDatePicker v-model="searchFormData.auditTimeEnd" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" format="YYYY-MM-DD HH:mm:ss" />
+          <ElDatePicker v-model="searchFormData.applyTimeEnd" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss"
+            format="YYYY-MM-DD HH:mm:ss" />
         </ElFormItem>
-    
+
       </ElForm>
     </Drawer>
 
     <!-- 重新申请弹窗 -->
-    <ElDialog
-      v-model="reapplyDialog.visible"
-      title="重新申请开票"
-      width="450px"
-      append-to-body
-    >
+    <ElDialog v-model="reapplyDialog.visible" title="重新申请开票" width="450px" append-to-body>
       <ElForm :model="reapplyDialog" label-width="80px">
         <ElFormItem label="备注">
-          <ElInput
-            v-model="reapplyDialog.remark"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入备注（选填）"
-          />
+          <ElInput v-model="reapplyDialog.remark" type="textarea" :rows="3" placeholder="请输入备注（选填）" />
         </ElFormItem>
       </ElForm>
       <template #footer>
@@ -382,7 +370,7 @@ watch(
 
     <Grid>
       <template #toolbar-tools>
-        <div class="common-toolbar-tools"> 
+        <div class="common-toolbar-tools">
           <IconButton content="批量审核" icon-name="Check" @click="handleBatchAuditPass" />
           <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
@@ -392,43 +380,27 @@ watch(
         </div>
       </template>
       <template #id="{ row }">
-        <span
-          @click="handleOpenDetail(row)"
-          class="common-align cursor-pointer text-primary"
-        >
+        <span @click="handleOpenDetail(row)" class="common-align cursor-pointer text-primary">
           {{ row.id }}
         </span>
       </template>
       <template #invoiceNo="{ row }">
-        <span
-          @click="handleOpenInvoiceDetail(row)"
-          class="common-align cursor-pointer text-primary"
-        >
+        <span @click="handleOpenInvoiceDetail(row)" class="common-align cursor-pointer text-primary">
           {{ row.invoiceNo }}
         </span>
       </template>
-      <template #applicantName="{ row }">
-        <span
-          @click="handleFilterApplicant(row.applicantName)"
-          class="common-align cursor-pointer text-primary"
-        >
-          {{ row.applicantName }}
+      <template #creator="{ row }">
+        <span @click="handleFilterApplicant(row.creator)" class="common-align cursor-pointer text-primary">
+          {{ row.creator }}
         </span>
       </template>
       <template #status="{ row }">
-        <el-tag 
-          :type="getStatusType(row.status)"
-          class="cursor-pointer"
-          @click="handleFilterStatus(row.status)"
-        >
+        <el-tag :type="getStatusType(row.status)" class="cursor-pointer" @click="handleFilterStatus(row.status)">
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
       <template #auditorName="{ row }">
-        <span
-          @click="handleFilterAuditor(row.auditorName)"
-          class="common-align cursor-pointer text-primary"
-        >
+        <span @click="handleFilterAuditor(row.auditorName)" class="common-align cursor-pointer text-primary">
           {{ row.auditorName || '-' }}
         </span>
       </template>
@@ -437,7 +409,8 @@ watch(
         <div class="table-toolbar-tools">
           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           <IconButton v-if="row.status === 'pending'" content="审核通过" icon-name="Check" @click="handleAuditPass(row)" />
-          <IconButton v-if="row.status === 'pending'" content="审核拒绝" icon-name="Close" @click="handleAuditReject(row)" />
+          <IconButton v-if="row.status === 'pending'" content="审核拒绝" icon-name="Close"
+            @click="handleAuditReject(row)" />
           <IconButton v-if="row.status === 'rejected'" content="重新申请" icon-name="Refresh" @click="handleReapply(row)" />
         </div>
       </template>
