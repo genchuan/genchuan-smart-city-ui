@@ -296,6 +296,28 @@ watch(
   <div class="park-lot-table-new" v-loading="dataObj.loading">
     <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
     <EditDrawer ref="editDrawerRef" />
+    
+    <!-- 关联发票明细弹窗 -->
+    <ElDialog v-model="invoiceListDialogVisible" title="关联发票明细" width="600px">
+      <ElDescriptions v-if="dataObj.invoiceListObj" :column="1" border>
+        <ElDescriptionsItem label="配置ID">
+          {{ dataObj.invoiceListObj.id || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="开票类目">
+          {{ dataObj.invoiceListObj.category || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="税率">
+          {{ dataObj.invoiceListObj.taxRate ? `${dataObj.invoiceListObj.taxRate}%` : '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="开票主体">
+          {{ dataObj.invoiceListObj.taxBody || '-' }}
+        </ElDescriptionsItem>
+        <ElDescriptionsItem label="累计开票量">
+          {{ dataObj.invoiceListObj.totalInvoiceCount || 0 }}
+        </ElDescriptionsItem>
+      </ElDescriptions> 
+    </ElDialog>
+    
     <Drawer title="搜索">
       <ElForm ref="searchFormRef" :model="searchFormData" label-width="100px" class="query-form">
         <ElFormItem label="状态">
@@ -306,13 +328,13 @@ watch(
           </ElSelect>
         </ElFormItem>
         <ElFormItem label="申请人">
-          <ElInput v-model="searchFormData.applicantName" placeholder="请输入申请人" />
+          <ElInput v-model="searchFormData.creator" placeholder="请输入申请人" />
         </ElFormItem>
-        <ElFormItem label="审核开始时间">
+        <ElFormItem label="创建开始时间">
           <ElDatePicker v-model="searchFormData.createTimeStart" type="datetime" value-format="YYYY-MM-DD HH:mm:ss"
             format="YYYY-MM-DD HH:mm:ss" />
         </ElFormItem>
-        <ElFormItem label="审核结束时间">
+        <ElFormItem label="创建结束时间">
           <ElDatePicker v-model="searchFormData.createTimeEnd" type="datetime" value-format="YYYY-MM-DD HH:mm:ss"
             format="YYYY-MM-DD HH:mm:ss" />
         </ElFormItem>

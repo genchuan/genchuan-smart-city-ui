@@ -23,7 +23,7 @@ const drawerTitle = computed(() => {
   return title.value || `${billNo} 详情`;
 });
 
-// 状态映射 - ReconcileBillStatusEnum44444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444444
+// 状态映射 - ReconcileBillStatusEnum
 const statusMap = {
   pending: { label: '待对账', type: 'warning' },
   reconciled: { label: '已对账', type: 'success' },
@@ -63,7 +63,7 @@ defineExpose({
   <DetailDrawer :title="drawerTitle">
     <div class="detail-card">
       <div class="detail-card-row">
-        <div class="detail-row-left">主键ID:</div>
+        <div class="detail-row-left">单据编号:</div>
         <div class="detail-row-right">{{ detailObj.id || '-' }}</div>
       </div>
 
@@ -73,23 +73,18 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">商户ID:</div>
-        <div class="detail-row-right">{{ detailObj.merchantId || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">商户名称:</div>
+        <div class="detail-row-left">所属商户:</div>
         <div class="detail-row-right">{{ detailObj.merchantName || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">对账周期:</div>
-        <div class="detail-row-right">{{ detailObj.billDate || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.cycle || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">平台金额:</div>
-        <div class="detail-row-right">{{ detailObj.sysAmount ? `¥${detailObj.sysAmount.toFixed(2)}` : '¥0.00' }}</div>
+        <div class="detail-row-right">{{ detailObj.platformAmount ? `¥${detailObj.platformAmount.toFixed(2)}` : '¥0.00' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -103,7 +98,7 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">对账状态:</div>
+        <div class="detail-row-left">单据状态:</div>
         <div class="detail-row-right">
           <el-tag :type="getStatusType(detailObj.status)">
             {{ getStatusLabel(detailObj.status) }}
@@ -112,23 +107,28 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">确认时间:</div>
-        <div class="detail-row-right">{{ detailObj.confirmTime || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">对账人ID:</div>
-        <div class="detail-row-right">{{ detailObj.operatorId || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备注:</div>
+        <div class="detail-row-left">差异说明:</div>
         <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">创建时间:</div>
+        <div class="detail-row-left">对账人:</div>
+        <div class="detail-row-right">{{ detailObj.operatorName || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">对账时间:</div>
+        <div class="detail-row-right">{{ detailObj.confirmTime || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">生成时间:</div>
         <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
+      </div>
+
+      <div class="detail-card-row">
+        <div class="detail-row-left">更新时间:</div>
+        <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
       </div>
     </div>
   </DetailDrawer>

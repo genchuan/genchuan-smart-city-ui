@@ -388,6 +388,22 @@ watch(
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
+      <template #id="{ row }">
+        <span
+          @click="handleOpenDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.id }}
+        </span>
+      </template>
+      <template #billNo="{ row }">
+        <span
+          @click="handleOpenSettleBillDetail(row)"
+          class="common-align cursor-pointer text-primary"
+        >
+          {{ row.billNo }}
+        </span>
+      </template>
       <template #status="{ row }">
         <el-tag :type="getStatusType(row.status)">
           {{ getStatusLabel(row.status) }}

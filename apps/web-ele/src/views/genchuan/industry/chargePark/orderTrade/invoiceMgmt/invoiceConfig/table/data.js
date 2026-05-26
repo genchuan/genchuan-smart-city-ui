@@ -48,7 +48,7 @@ export function useGridColumns() {
     },
     {
       field: 'creator',
-      title: '创建者',
+      title: '申请人',
       minWidth: 120,
       sortable: true,
     },

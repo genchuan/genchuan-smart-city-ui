@@ -21,13 +21,13 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'billDate',
+      field: 'cycle',
       title: '对账周期',
       minWidth: 120,
       sortable: true,
     },
     {
-      field: 'sysAmount',
+      field: 'platformAmount',
       title: '平台金额',
       minWidth: 160,
       sortable: true,
@@ -39,14 +39,7 @@ export function useGridColumns() {
       minWidth: 160,
       sortable: true,
       customRender: ({ text }) => text ? `¥${text.toFixed(2)}` : '¥0.00',
-    },
-    {
-      field: 'diffAmount',
-      title: '差异金额',
-      minWidth: 120,
-      sortable: true,
-      customRender: ({ text }) => text ? `¥${text.toFixed(2)}` : '¥0.00',
-    },
+    }, 
     {
       field: 'status',
       title: '对账状态',

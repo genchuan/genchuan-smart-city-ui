@@ -467,9 +467,14 @@ const handleCheckSubmit = async () => {
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
+          <IconButton 
+            v-if="row.status === 'abnormal'" 
+            content="核算" 
+            icon-name="Check" 
+            @click="handleCheck(row)" 
+          />
           <!-- <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" /> -->
-          <IconButton content="删除" icon-name="Delete" @click="handleDelete(row)" />
-          <IconButton content="核算" icon-name="Check" @click="handleCheck(row)" />
+          <!-- <IconButton content="删除" icon-name="Delete" @click="handleDelete(row)" /> -->
         </div>
       </template>
       <template #bottom>

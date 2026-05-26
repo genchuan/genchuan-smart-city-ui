@@ -9,10 +9,11 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'billId',
-      title: '关联结算单据ID',
+      field: 'billNo',
+      title: '关联单据编号',
       minWidth: 160,
       sortable: true,
+      slots: { default: 'billNo' },
     },
     {
       field: 'status',

@@ -67,8 +67,8 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">关联结算单据ID:</div>
-        <div class="detail-row-right">{{ detailObj.billId || '-' }}</div>
+        <div class="detail-row-left">关联结算单据编号:</div>
+        <div class="detail-row-right">{{ detailObj.billNo || '-' }}</div>
       </div>
 
       <div class="detail-card-row">

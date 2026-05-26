@@ -24,7 +24,7 @@ export function useFormSchema() {
       isSearch: true,
     },
     {
-      fieldName: 'agentType',
+      fieldName: 'status',
       label: '状态',
       component: 'Select',
       componentProps: {

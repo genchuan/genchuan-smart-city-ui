@@ -15,10 +15,11 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'applicantName',
-      title: '申请人名称',
+      field: 'creator',
+      title: '申请人',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'creator' },
     },
     {
       field: 'status',
