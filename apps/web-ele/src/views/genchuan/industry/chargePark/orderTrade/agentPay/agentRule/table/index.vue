@@ -4,13 +4,13 @@ import { computed, reactive, ref, watch } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElDialog, ElLoading, ElMessage, ElDescriptions, ElDescriptionsItem } from 'element-plus';
+import { ElDialog, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 // 导出插件
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import {
+import { 
   getAgentPayRulePage,
   exportAgentPayRule,
   importAgentPayRuleTemplate,
@@ -65,8 +65,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
   onCancel() {
     drawerApi.close();
   },
-  onConfirm() { },
-  async onOpenChange() { },
+  onConfirm() {},
+  async onOpenChange() {},
 });
 
 const formData = ref();
@@ -150,56 +150,6 @@ function handleRefresh() {
   gridApi.query();
 }
 
-// 点击代付类型筛选
-function handleFilterAgentType(agentType) {
-  dataObj.searchObj = { ...dataObj.searchObj, agentType: agentType };
-  queryFormApi.setValues({ agentType: agentType });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击规则状态筛选
-function handleFilterStatus(status) {
-  dataObj.searchObj = { ...dataObj.searchObj, status: status };
-  queryFormApi.setValues({ status: status });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击审核人筛选
-function handleFilterAuditorName(auditorName) {
-  dataObj.searchObj = { ...dataObj.searchObj, auditorName: auditorName };
-  queryFormApi.setValues({ auditorName: auditorName });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击商户名称跳转商户详情弹窗
-async function handleOpenMerchantDetail(row) {
-  try {
-    const res = await getMerchantInfoPage({ merchantName: row.merchantName });
-    if (res.list && res.list.length > 0) {
-      const firstMerchant = res.list[0];
-      dataObj.merchantDetailObj = {
-        ...firstMerchant,
-        registerTime: formatTimestamp(firstMerchant.registerTime),
-      };
-      merchantDialogVisible.value = true;
-    } else {
-      ElMessage.info('未找到相关商户信息');
-    }
-  } catch (error) {
-    console.error('获取商户详情失败:', error);
-    ElMessage.error('获取商户详情失败');
-  }
-}
-
-// 点击使用次数跳转到关联代付订单明细弹窗
-function handleOpenOrderDetail(row) {
-  dataObj.orderDetailObj = row;
-  orderDetailDrawerRef.value?.open();
-}
-
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
   const data = await exportAgentPayRule(dataObj.searchObj);
@@ -232,7 +182,7 @@ function handleOpenImportDialog() {
 }
 
 // 文件选择处理
-function handleFileChange(event) {
+function handleFileChange(event) { 
   const file = event.raw;
   if (file) {
     importForm.file = file;
@@ -360,8 +310,6 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
-  merchantDetailObj: {},
-  orderDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -496,8 +444,6 @@ const handleFullShow = () => {
 
 const parkDetailDrawerRef = ref(null);
 const enDetailObjRef = ref(null);
-const merchantDetailDrawerRef = ref(null);
-const orderDetailDrawerRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
@@ -514,7 +460,7 @@ const openEn = async () => {
 const statusMap = {
   'disabled': { label: '已禁用', type: 'danger' },
   'enabled': { label: '已生效', type: 'success' },
-  'pending': { label: '待生效', type: 'warning' },
+  'pending': { label: '待生效', type: 'warning' }, 
 };
 
 // 获取状态标签
@@ -632,15 +578,6 @@ const alarmDialogVisible = ref(false);
 const currentAlarmRow = ref({});
 const alarmList = ref([]);
 
-// ====================== 商户详情弹窗 ======================
-const merchantDialogVisible = ref(false);
-
-// 手机号脱敏函数
-function maskPhone(phone) {
-  if (!phone) return '-';
-  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
-}
-
 function generateAlarmData(row) {
   const count = row.halfyearWarnCount || 0;
   const typeItems = row.highIllegalType.split(',').map((item) => item.trim());
@@ -698,58 +635,51 @@ watch(
     <FormDrawer :title="getTitle">
       <Form />
     </FormDrawer>
-    <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
+    <ParkDetailDrawer
+      ref="parkDetailDrawerRef"
+      :detail-obj="dataObj.detailObj"
+    />
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
 
     <!-- 告警明细弹窗 -->
-    <ElDialog v-model="alarmDialogVisible" title="本半年食品安全问题明细" width="900px" append-to-body>
+    <ElDialog
+      v-model="alarmDialogVisible"
+      title="本半年食品安全问题明细"
+      width="900px"
+      append-to-body
+    >
       <el-table :data="alarmList" border height="450">
-        <el-table-column v-for="col in alarmColumns" :key="col.prop" :label="col.label" :prop="col.prop"
-          :width="col.width" />
+        <el-table-column
+          v-for="col in alarmColumns"
+          :key="col.prop"
+          :label="col.label"
+          :prop="col.prop"
+          :width="col.width"
+        />
       </el-table>
     </ElDialog>
 
-    <!-- 商户详情弹窗 -->
-    <ElDialog v-model="merchantDialogVisible" title="商户详情" width="520px">
-      <ElDescriptions v-if="dataObj.merchantDetailObj" :column="1" border>
-        <ElDescriptionsItem label="商户名称">
-          {{ dataObj.merchantDetailObj.name || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="商户类型">
-          {{ dataObj.merchantDetailObj.merchantType || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="联系人">
-          {{ dataObj.merchantDetailObj.contact || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="联系电话">
-          {{ maskPhone(dataObj.merchantDetailObj.phone) }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="商户地址">
-          {{ dataObj.merchantDetailObj.address || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="商户状态">
-          {{ dataObj.merchantDetailObj.status || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="注册时间">
-          {{ dataObj.merchantDetailObj.registerTime || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="备注">
-          {{ dataObj.merchantDetailObj.remark || '-' }}
-        </ElDescriptionsItem>
-      </ElDescriptions>
-    </ElDialog>
-
     <!-- 确认弹窗 -->
-    <ElDialog v-model="confirmDialogVisible" title="金额确认" width="500px" append-to-body>
+    <ElDialog
+      v-model="confirmDialogVisible"
+      title="金额确认"
+      width="500px"
+      append-to-body
+    >
       <el-form :model="confirmForm" label-width="80px">
         <el-form-item label="记录ID">
           <el-input v-model="confirmForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="confirmForm.remark" type="textarea" rows="3" placeholder="请输入确认备注" />
+          <el-input
+            v-model="confirmForm.remark"
+            type="textarea"
+            rows="3"
+            placeholder="请输入确认备注"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -763,13 +693,23 @@ watch(
     </ElDialog>
 
     <!-- 计算弹窗 -->
-    <ElDialog v-model="calculateDialogVisible" title="金额计算" width="500px" append-to-body>
+    <ElDialog
+      v-model="calculateDialogVisible"
+      title="金额计算"
+      width="500px"
+      append-to-body
+    >
       <el-form :model="calculateForm" label-width="80px">
         <el-form-item label="记录ID">
           <el-input v-model="calculateForm.id" disabled />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="calculateForm.remark" type="textarea" rows="3" placeholder="请输入计算备注" />
+          <el-input
+            v-model="calculateForm.remark"
+            type="textarea"
+            rows="3"
+            placeholder="请输入计算备注"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -783,13 +723,23 @@ watch(
     </ElDialog>
 
     <!-- 批量计算弹窗 -->
-    <ElDialog v-model="batchCalculateDialogVisible" title="批量金额计算" width="500px" append-to-body>
+    <ElDialog
+      v-model="batchCalculateDialogVisible"
+      title="批量金额计算"
+      width="500px"
+      append-to-body
+    >
       <el-form :model="batchCalculateForm" label-width="80px">
         <el-form-item label="选中数量">
           <el-input :value="batchCalculateForm.ids.length" disabled />
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="batchCalculateForm.remark" type="textarea" rows="3" placeholder="请输入计算备注" />
+          <el-input
+            v-model="batchCalculateForm.remark"
+            type="textarea"
+            rows="3"
+            placeholder="请输入计算备注"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -803,11 +753,21 @@ watch(
     </ElDialog>
 
     <!-- 导入弹窗 -->
-    <ElDialog v-model="importDialogVisible" title="导入代付规则" width="500px" append-to-body>
+    <ElDialog
+      v-model="importDialogVisible"
+      title="导入代付规则"
+      width="500px"
+      append-to-body
+    >
       <el-form :model="importForm" label-width="100px">
         <el-form-item label="Excel文件">
-          <el-upload class="upload-demo" :auto-upload="false" :show-file-list="false" :before-upload="() => false"
-            @change="handleFileChange">
+          <el-upload
+            class="upload-demo"
+            :auto-upload="false"
+            :show-file-list="false"
+            :before-upload="() => false"
+            @change="handleFileChange"
+          >
             <el-button size="small" type="primary">点击选择文件</el-button>
           </el-upload>
           <div v-if="importForm.file" class="mt-2 text-sm text-gray-500">
@@ -815,7 +775,11 @@ watch(
           </div>
         </el-form-item>
         <el-form-item label="是否支持更新">
-          <el-switch v-model="importForm.updateSupport" active-text="是" inactive-text="否" />
+          <el-switch
+            v-model="importForm.updateSupport"
+            active-text="是"
+            inactive-text="否"
+          />
           <span class="ml-2 text-sm text-gray-400">开启后，已存在的数据将被更新</span>
         </el-form-item>
       </el-form>
@@ -832,57 +796,102 @@ watch(
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
-          <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
-          <IconButton content="下载导入模板" icon-name="download" @click="handleDownloadTemplate" />
-          <IconButton content="导入" icon-name="upload" @click="handleOpenImportDialog" />
-          <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
-            @click="arrowChange" />
-          <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
+          <IconButton
+            content="新增"
+            icon-name="Plus"
+            @click="handleCreate"
+          />
+          <IconButton
+            content="导出EXCEL"
+            icon-name="download"
+            @click="handleExport"
+          />
+          <IconButton
+            content="下载导入模板"
+            icon-name="download"
+            @click="handleDownloadTemplate"
+          />
+          <IconButton
+            content="导入"
+            icon-name="upload"
+            @click="handleOpenImportDialog"
+          /> 
+          <IconButton
+            content="搜索"
+            icon-name="search"
+            @click="handleSerachShow"
+          />
+          <IconButton
+            :content="props.arrowShow ? '展开' : '收缩'"
+            :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
+            @click="arrowChange"
+          />
+          <IconButton
+            content="全屏"
+            icon-name="FullScreen"
+            @click="handleFullShow"
+          />
         </div>
       </template>
       <template #agentType="{ row }">
-        <el-tag :type="getAgentTypeType(row.agentType)" class="cursor-pointer"
-          @click="handleFilterAgentType(row.agentType)">
+        <el-tag :type="getAgentTypeType(row.agentType)">
           {{ getAgentTypeLabel(row.agentType) }}
         </el-tag>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" class="cursor-pointer" @click="handleFilterStatus(row.status)">
+        <el-tag :type="getStatusType(row.status)">
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
-      <template #name="{ row }">
-        <span @click="handleOpenDetail(row)" class="common-align cursor-pointer text-primary">
-          {{ row.name }}
-        </span>
-      </template>
-      <template #merchantName="{ row }">
-        <span @click="handleOpenMerchantDetail(row)" class="common-align cursor-pointer text-primary">
-          {{ row.merchantName }}
-        </span>
-      </template>
-      <template #useCount="{ row }">
-        <span @click="handleOpenOrderDetail(row)" class="common-align cursor-pointer text-primary">
-          {{ row.useCount }}
-        </span>
-      </template>
-      <template #auditorName="{ row }">
-        <span @click="handleFilterAuditorName(row.auditorName)" class="common-align cursor-pointer text-primary">
-          {{ row.auditorName }}
-        </span>
+      <template #checkNo="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.checkNo }}
+        </el-text>
+      </template> 
+
+      <template #orderId="{ row }">
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.orderId }}
+        </el-text>
       </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
-          <IconButton content="编辑" icon-name="Edit" @click="handleEdit(row)" />
-          <IconButton content="启用" v-if="String(row.status) === 'disabled' || String(row.status) === 'pending'"
-            icon-name="Check" @click="handleEnable(row)" />
-          <IconButton content="禁用" v-if="String(row.status) === 'enabled'" icon-name="Close"
-            @click="handleDisable(row)" />
-          <IconButton content="删除" icon-name="Delete" @click="handleDelete(row)" />
+          <IconButton
+            content="查看"
+            icon-name="View"
+            @click="handleOpenDetail(row)"
+          />
+          <IconButton
+            content="编辑"
+            icon-name="Edit"
+            @click="handleEdit(row)"
+          />
+          <IconButton
+            content="启用"
+            v-if="String(row.status) === 'disabled' || String(row.status) === 'pending'"
+            icon-name="Check"
+            @click="handleEnable(row)"
+          />
+          <IconButton
+            content="禁用"
+            v-if="String(row.status) === 'enabled'"
+            icon-name="Close"
+            @click="handleDisable(row)"
+          />
+          <IconButton
+            content="删除"
+            icon-name="Delete"
+            @click="handleDelete(row)"
+          />
         </div>
       </template>
       <template #bottom>

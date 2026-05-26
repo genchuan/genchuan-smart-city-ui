@@ -49,7 +49,6 @@ const drillDetailFields = ref([]);
 const drillDrawerTitle = ref('关联信息');
 const importDialogVisible = ref(false);
 const importFile = ref(null);
-const importFileList = ref([]);
 const importLoading = ref(false);
 const importResult = ref(null);
 const importUpdateSupport = ref(false);
@@ -385,18 +384,8 @@ const dialogFieldCatalog = {
     { key: 'stationIds', label: '适用场站', section: '关联信息' },
     { key: 'name', label: '规则名称', section: '当前记录' },
     { key: 'status', label: '状态', section: '当前记录' },
-    {
-      key: 'startTime',
-      label: '开始时间',
-      section: '规则配置',
-      formatter: 'formatDateTime',
-    },
-    {
-      key: 'endTime',
-      label: '结束时间',
-      section: '规则配置',
-      formatter: 'formatDateTime',
-    },
+    { key: 'startTime', label: '开始时间', section: '规则配置' },
+    { key: 'endTime', label: '结束时间', section: '规则配置' },
   ],
   stationCount: [
     { key: 'areaNo', label: '片区编号', section: '当前记录' },
@@ -417,12 +406,7 @@ const dialogFieldCatalog = {
     { key: 'stationId', label: '所属场站ID', section: '关联信息' },
     { key: 'status', label: '状态', section: '监控信息' },
     { key: 'location', label: '定位信息', section: '监控信息' },
-    {
-      key: 'lastReportTime',
-      label: '最近上报时间',
-      section: '监控信息',
-      formatter: 'formatDateTime',
-    },
+    { key: 'lastReportTime', label: '最近上报时间', section: '监控信息' },
   ],
   location: [
     { key: 'location', label: '定位信息', section: '地图定位' },
@@ -430,30 +414,15 @@ const dialogFieldCatalog = {
     { key: 'stationId', label: '所属场站ID', section: '地图定位' },
     { key: 'deviceId', label: '设备ID', section: '地图定位' },
     { key: 'status', label: '状态', section: '监控信息' },
-    {
-      key: 'lastReportTime',
-      label: '最近上报时间',
-      section: '监控信息',
-      formatter: 'formatDateTime',
-    },
+    { key: 'lastReportTime', label: '最近上报时间', section: '监控信息' },
   ],
   carNo: [
     { key: 'carNo', label: '车牌号', section: '车辆信息' },
     { key: 'type', label: '名单类型', section: '车辆信息' },
     { key: 'reason', label: '细分类型', section: '车辆信息' },
     { key: 'stationIds', label: '适用场站', section: '生效信息' },
-    {
-      key: 'startTime',
-      label: '生效时间',
-      section: '生效信息',
-      formatter: 'formatDateTime',
-    },
-    {
-      key: 'endTime',
-      label: '失效时间',
-      section: '生效信息',
-      formatter: 'formatDateTime',
-    },
+    { key: 'startTime', label: '生效时间', section: '生效信息' },
+    { key: 'endTime', label: '失效时间', section: '生效信息' },
     { key: 'status', label: '状态', section: '生效信息' },
   ],
   expandStatus: [
@@ -462,12 +431,7 @@ const dialogFieldCatalog = {
     { key: 'expandStatus', label: '拓场进度', section: '进度明细' },
     { key: 'debtRate', label: '追缴范围', section: '进度明细' },
     { key: 'status', label: '状态', section: '进度明细' },
-    {
-      key: 'updateTime',
-      label: '更新时间',
-      section: '进度明细',
-      formatter: 'formatDateTime',
-    },
+    { key: 'updateTime', label: '更新时间', section: '进度明细' },
   ],
 };
 
@@ -476,19 +440,9 @@ const fallbackDialogFields = [
   { key: pageConfig.nameField, label: '名称', section: '当前记录' },
   { key: 'status', label: '状态', section: '当前记录' },
   { key: 'creator', label: '创建人', section: '审计信息' },
-  {
-    key: 'createTime',
-    label: '创建时间',
-    section: '审计信息',
-    formatter: 'formatDateTime',
-  },
+  { key: 'createTime', label: '创建时间', section: '审计信息' },
   { key: 'updater', label: '更新人', section: '审计信息' },
-  {
-    key: 'updateTime',
-    label: '更新时间',
-    section: '审计信息',
-    formatter: 'formatDateTime',
-  },
+  { key: 'updateTime', label: '更新时间', section: '审计信息' },
 ];
 
 function dedupeFields(fields = []) {
@@ -874,43 +828,20 @@ async function handleExport(extraParams = {}) {
   });
 }
 
-function resetImportState() {
+function handleOpenImport() {
   importFile.value = null;
-  importFileList.value = [];
   importResult.value = null;
   importUpdateSupport.value = false;
-}
-
-function handleOpenImport() {
-  resetImportState();
   importDialogVisible.value = true;
 }
 
 function handleImportFileChange(uploadFile) {
   importFile.value = uploadFile?.raw || uploadFile;
-  importFileList.value = uploadFile ? [uploadFile] : [];
   importResult.value = null;
 }
 
 function handleRemoveImportFile() {
   importFile.value = null;
-  importFileList.value = [];
-}
-
-function handleImportFileExceed(files) {
-  const file = files?.[0];
-  if (!file) return;
-  const rawFile = file.raw || file;
-  importFile.value = rawFile;
-  importFileList.value = [
-    {
-      name: rawFile.name || file.name || '导入文件',
-      raw: rawFile,
-      status: 'ready',
-      uid: Date.now(),
-    },
-  ];
-  importResult.value = null;
 }
 
 function normalizeImportResult(result) {
@@ -925,16 +856,13 @@ function normalizeImportResult(result) {
     result?.errorMsg ||
     result?.error ||
     '';
-  const rawFailureData =
+  const rawFailureList =
     data.failureList ||
     data.failures ||
     data.errorList ||
     data.errors ||
     data.failMsgs ||
     (fallbackMessage ? [fallbackMessage] : []);
-  const rawFailureList = Array.isArray(rawFailureData)
-    ? rawFailureData
-    : Object.values(rawFailureData || {});
   const failureList = rawFailureList.map((item, index) => {
     if (typeof item === 'string') {
       return { msg: item, row: index + 1 };
@@ -1503,7 +1431,6 @@ defineExpose({
     </div>
     <el-dialog
       v-model="importDialogVisible"
-      @closed="resetImportState"
       :title="`导入${pageConfig.title}`"
       width="520px"
       append-to-body
@@ -1518,13 +1445,11 @@ defineExpose({
           </el-checkbox>
         </div>
         <el-upload
-          v-model:file-list="importFileList"
           drag
           :auto-upload="false"
           :limit="1"
           accept=".xls,.xlsx"
           :on-change="handleImportFileChange"
-          :on-exceed="handleImportFileExceed"
           :on-remove="handleRemoveImportFile"
         >
           <div class="import-upload-text">

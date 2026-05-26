@@ -20,7 +20,6 @@ export function useGridColumns() {
       title: '合作方名称',
       minWidth: 160,
       sortable: true,
-      slots: { default: 'partnerName' },
     },
     {
       field: 'totalAmount',
@@ -48,7 +47,6 @@ export function useGridColumns() {
       title: '审核人',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'auditorName' },
     },
     {
       field: 'auditTime',

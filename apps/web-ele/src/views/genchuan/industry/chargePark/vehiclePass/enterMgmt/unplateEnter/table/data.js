@@ -306,17 +306,11 @@ export function useGridColumns() {
   return [
     { type: 'checkbox', width: 40 },
     {
-      field: 'id',
-      title: '编号',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'id' },
-    },
-    {
       field: 'carType',
       title: '车辆类型',
       minWidth: 100,
       sortable: true,
+      slots: { default: 'carType' },
     },
     {
       field: 'carColor',
@@ -329,6 +323,7 @@ export function useGridColumns() {
       title: '联系电话',
       minWidth: 120,
       sortable: true,
+      slots: { default: 'phone' },
     },
     {
       field: 'registerTime',
@@ -342,25 +337,22 @@ export function useGridColumns() {
       title: '审核状态',
       minWidth: 100,
       sortable: true,
+      slots: { default: 'status' },
     },
     {
       field: 'stationName',
       title: '场站',
       minWidth: 150,
       sortable: true,
+      slots: { default: 'stationName' },
     },
-    // {
-    //   field: 'stationId',
-    //   title: '场站ID',
-    //   minWidth: 100,
-    //   sortable: true,
-    // },
-    // {
-    //   field: 'auditUserId',
-    //   title: '审核人ID',
-    //   minWidth: 100,
-    //   sortable: true,
-    // },
+    {
+      field: 'auditUser',
+      title: '审核人',
+      minWidth: 100,
+      sortable: true,
+      slots: { default: 'auditUser' },
+    },
     {
       field: 'auditTime',
       title: '审核时间',
@@ -369,44 +361,10 @@ export function useGridColumns() {
       formatter: createTimeFormatter(),
     },
     {
-      field: 'remark',
-      title: '备注',
+      field: 'auditComment',
+      title: '审核意见',
       minWidth: 150,
       sortable: true,
-    },
-    {
-      field: 'isCorrected',
-      title: '修正记录标记',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'correctionMark' },
-    },
-    {
-      field: 'updater',
-      title: '操作人',
-      minWidth: 100,
-      sortable: true,
-      slots: { default: 'updater' },
-    },
-    {
-      field: 'updateTime',
-      title: '操作时间',
-      minWidth: 180,
-      sortable: true,
-      slots: { default: 'updateTime' },
-    },
-    {
-      field: 'creator',
-      title: '创建人',
-      minWidth: 100,
-      sortable: true,
-    },
-    {
-      field: 'createTime',
-      title: '创建时间',
-      minWidth: 180,
-      sortable: true,
-      formatter: createTimeFormatter(),
     },
     {
       title: '操作',

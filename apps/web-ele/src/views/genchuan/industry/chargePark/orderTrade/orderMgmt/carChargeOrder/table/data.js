@@ -290,7 +290,6 @@ export function useGridColumns() {
       title: '所属场站',
       minWidth: 140,
       sortable: true,
-      slots: { default: 'stationName' },
     },
     {
       field: 'status',
@@ -305,7 +304,13 @@ export function useGridColumns() {
       minWidth: 220,
       sortable: true,
       customRender: ({ text }) => text ? new Date(Number(text)).toLocaleString() : '-',
-    }, 
+    },
+    {
+      field: 'stationName',
+      title: '所属场站',
+      minWidth: 140,
+      sortable: true,
+    },
     {
       field: 'payTime',
       title: '支付时间',

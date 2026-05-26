@@ -117,38 +117,6 @@ function handleRefresh() {
   gridApi.query();
 }
 
-// 点击订单状态筛选
-function handleFilterStatus(status) {
-  dataObj.searchObj = { ...dataObj.searchObj, status: status };
-  queryFormApi.setValues({ status: status });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击所属场站筛选
-function handleFilterStationName(stationName) {
-  dataObj.searchObj = { ...dataObj.searchObj, stationName: stationName };
-  queryFormApi.setValues({ stationName: stationName });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击支付方式筛选
-function handleFilterPayMethod(payMethod) {
-  dataObj.searchObj = { ...dataObj.searchObj, payMethod: payMethod };
-  queryFormApi.setValues({ payMethod: payMethod });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击创建者筛选
-function handleFilterCreator(creator) {
-  dataObj.searchObj = { ...dataObj.searchObj, creator: creator };
-  queryFormApi.setValues({ creator: creator });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
   const data = await exportShareChargeOrderExcel();
@@ -828,53 +796,25 @@ const alarmColumns = [
       </template>
 
       <template #status="{ row }">
-        <el-tag 
-          :type="getStatusType(row.status)" 
-          class="cursor-pointer"
-          @click="handleFilterStatus(row.status)"
-        >
+        <el-tag :type="getStatusType(row.status)">
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
       <template #orderNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
-          class="common-align cursor-pointer"
+          class="common-align"
           type="primary"
         >
           {{ row.orderNo }}
         </el-text>
       </template>
-      <template #stationName="{ row }">
-        <el-text 
-          @click="handleFilterStationName(row.stationName)" 
-          class="common-align cursor-pointer" 
-          type="primary"
-        >
-          {{ row.stationName }}
-        </el-text>
-      </template>
       <template #payMethod="{ row }">
-        <el-text 
-          @click="handleFilterPayMethod(row.payMethod)" 
-          class="common-align cursor-pointer" 
-          type="primary"
-        >
-          <span v-if="row.payMethod === 'wechat'">微信</span>
-          <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
-          <span v-else-if="row.payMethod === 'bank'">银行卡</span>
-          <span v-else-if="row.payMethod === 'cash'">现金</span>
-          <span v-else>{{ row.payMethod }}</span>
-        </el-text>
-      </template>
-      <template #creator="{ row }">
-        <el-text 
-          @click="handleFilterCreator(row.creator)" 
-          class="common-align cursor-pointer" 
-          type="primary"
-        >
-          {{ row.creator }}
-        </el-text>
+        <span v-if="row.payMethod === 'wechat'">微信</span>
+        <span v-else-if="row.payMethod === 'alipay'">支付宝</span>
+        <span v-else-if="row.payMethod === 'bank'">银行卡</span>
+        <span v-else-if="row.payMethod === 'cash'">现金</span>
+        <span v-else>{{ row.payMethod }}</span>
       </template>
       <template #halfyearWarnCount="{ row }">
         <el-text @click="handleTotal(row)" class="common-align" type="primary">

@@ -4,7 +4,7 @@ import { computed, reactive, ref, watch } from 'vue';
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { ElDialog, ElLoading, ElMessage, ElDescriptions, ElDescriptionsItem } from 'element-plus';
+import { ElDialog, ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
 // 导出插件
 
@@ -17,7 +17,6 @@ import {
   createAgentPayRecord,
   updateAgentPayRecord,
   checkAgentPayRecord,
-  getMerchantInfoPage,
 } from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -142,48 +141,6 @@ function handleRefresh() {
   gridApi.query();
 }
 
-// 点击记录状态筛选
-function handleFilterStatus(status) {
-  dataObj.searchObj = { ...dataObj.searchObj, status: status };
-  queryFormApi.setValues({ status: status });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击核查人筛选
-function handleFilterCheckerName(checkerName) {
-  dataObj.searchObj = { ...dataObj.searchObj, checkerName: checkerName };
-  queryFormApi.setValues({ checkerName: checkerName });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击关联订单跳转代付订单详情弹窗
-function handleOpenOrderDetail(row) {
-  dataObj.orderDetailObj = row;
-  orderDialogVisible.value = true;
-}
-
-// 点击商户名称跳转商户详情弹窗
-async function handleOpenMerchantDetail(row) {
-  try {
-    const res = await getMerchantInfoPage({ merchantName: row.merchantName });
-    if (res.list && res.list.length > 0) {
-      const firstMerchant = res.list[0];
-      dataObj.merchantDetailObj = {
-        ...firstMerchant,
-        registerTime: formatTimestamp(firstMerchant.registerTime),
-      };
-      merchantDialogVisible.value = true;
-    } else {
-      ElMessage.info('未找到相关商户信息');
-    }
-  } catch (error) {
-    console.error('获取商户详情失败:', error);
-    ElMessage.error('获取商户详情失败');
-  }
-}
-
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
   const data = await exportAgentPayRecord(dataObj.searchObj);
@@ -258,8 +215,6 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
-  orderDetailObj: {},
-  merchantDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -413,18 +368,6 @@ const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
 };
 
-// ====================== 商户详情弹窗 ======================
-const merchantDialogVisible = ref(false);
-
-// ====================== 订单详情弹窗 ======================
-const orderDialogVisible = ref(false);
-
-// 手机号脱敏函数
-function maskPhone(phone) {
-  if (!phone) return '-';
-  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
-}
-
 watch(
   () => props.filterParams,
   () => {
@@ -499,60 +442,6 @@ const handleCheckSubmit = async () => {
       </template>
     </ElDialog>
 
-    <!-- 商户详情弹窗 -->
-    <ElDialog v-model="merchantDialogVisible" title="商户详情" width="520px">
-      <ElDescriptions v-if="dataObj.merchantDetailObj" :column="1" border>
-        <ElDescriptionsItem label="商户名称">
-          {{ dataObj.merchantDetailObj.name || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="商户类型">
-          {{ dataObj.merchantDetailObj.merchantType || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="联系人">
-          {{ dataObj.merchantDetailObj.contact || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="联系电话">
-          {{ maskPhone(dataObj.merchantDetailObj.phone) }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="商户地址">
-          {{ dataObj.merchantDetailObj.address || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="商户状态">
-          {{ dataObj.merchantDetailObj.status || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="注册时间">
-          {{ dataObj.merchantDetailObj.registerTime || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="备注">
-          {{ dataObj.merchantDetailObj.remark || '-' }}
-        </ElDescriptionsItem>
-      </ElDescriptions>
-    </ElDialog>
-
-    <!-- 订单详情弹窗 -->
-    <ElDialog v-model="orderDialogVisible" title="代付订单详情" width="520px">
-      <ElDescriptions v-if="dataObj.orderDetailObj" :column="1" border>
-        <ElDescriptionsItem label="订单编号">
-          {{ dataObj.orderDetailObj.orderNo || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="商户名称">
-          {{ dataObj.orderDetailObj.merchantName || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="车牌号码">
-          {{ dataObj.orderDetailObj.carNo || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="代付金额">
-          ¥{{ (dataObj.orderDetailObj.amount || 0).toFixed(2) }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="交易时间">
-          {{ dataObj.orderDetailObj.tradeTime || '-' }}
-        </ElDescriptionsItem>
-        <ElDescriptionsItem label="记录状态">
-          {{ getStatusLabel(dataObj.orderDetailObj.status) }}
-        </ElDescriptionsItem>
-      </ElDescriptions>
-    </ElDialog>
-
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
@@ -565,46 +454,14 @@ const handleCheckSubmit = async () => {
         </div>
       </template>
 
-      <template #recordNo="{ row }">
-        <span
-          @click="handleOpenDetail(row)"
-          class="common-align cursor-pointer text-primary"
-        >
+      <template #recordNo="{ row }"> <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
           {{ row.recordNo }}
-        </span>
+        </el-text>
       </template>
       <template #status="{ row }">
-        <el-tag
-          :type="getStatusType(row.status)"
-          class="cursor-pointer"
-          @click="handleFilterStatus(row.status)"
-        >
+        <el-tag :type="getStatusType(row.status)">
           {{ getStatusLabel(row.status) }}
         </el-tag>
-      </template>
-      <template #orderNo="{ row }">
-        <span
-          @click="handleOpenOrderDetail(row)"
-          class="common-align cursor-pointer text-primary"
-        >
-          {{ row.orderNo }}
-        </span>
-      </template>
-      <template #merchantName="{ row }">
-        <span
-          @click="handleOpenMerchantDetail(row)"
-          class="common-align cursor-pointer text-primary"
-        >
-          {{ row.merchantName }}
-        </span>
-      </template>
-      <template #checkerName="{ row }">
-        <span
-          @click="handleFilterCheckerName(row.checkerName)"
-          class="common-align cursor-pointer text-primary"
-        >
-          {{ row.checkerName || '-' }}
-        </span>
       </template>
 
       <template #actions="{ row }">

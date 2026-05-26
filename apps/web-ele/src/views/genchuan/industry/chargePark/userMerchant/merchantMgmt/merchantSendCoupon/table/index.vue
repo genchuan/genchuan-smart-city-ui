@@ -1,6 +1,5 @@
 <script lang="ts" setup>
 import type {
-  CouponMgmtApiVO,
   CouponProfileInfo,
   MerchantProfileInfo,
   MerchantSelectOption,
@@ -37,10 +36,7 @@ import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import {
-  getCouponMgmtDetail,
-  getCouponMgmtPage,
-} from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
+import { getCouponMgmtDetail } from '#/api/genchuan/industry/chargePark/marketOp/couponActivity/couponMgmt';
 import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import { MerchantSendCouponApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantSendCoupon';
 import IconButton from '#/components/common/IconButton.vue';
@@ -82,7 +78,7 @@ const props = withDefaults(
 const checkedIds = ref<number[]>([]);
 const checkedRows = ref<MerchantSendCouponRow[]>([]);
 const couponDialogVisible = ref(false);
-const couponDetailCache = new Map<number, Partial<CouponMgmtApiVO>>();
+const couponDetailCache = new Map<number, Record<string, any>>();
 const currentCouponProfile = ref<CouponProfileInfo | null>(null);
 const currentMerchantProfile = ref<MerchantProfileInfo | null>(null);
 const currentRedemptions = ref<RedemptionLog[]>([]);
@@ -93,7 +89,6 @@ const merchantDetailCache = new Map<number, MerchantInfoDetailVO>();
 const merchantDialogVisible = ref(false);
 const merchantProfileLookup = ref(buildMerchantProfileLookup([]));
 const merchantSelectOptions = ref<MerchantSelectOption[]>([]);
-const merchantPageListCache = ref<MerchantInfoVO[]>([]);
 const queryExtraValues = ref<Record<string, any>>({});
 const redemptionDialogVisible = ref(false);
 const searchParams = ref<Record<string, any>>({});
@@ -232,7 +227,6 @@ async function loadMerchantOptions() {
     );
 
     merchantSelectOptions.value = buildMerchantOptionsFromApi(list);
-    merchantPageListCache.value = list;
     merchantProfileLookup.value = buildMerchantProfileLookup(
       merchantSelectOptions.value,
     );
@@ -256,7 +250,6 @@ async function loadMerchantOptions() {
     schema: useCreateSchema(merchantSelectOptions.value),
   }));
 
-  await loadCouponProfiles();
   await handleRefresh();
 }
 
@@ -283,24 +276,6 @@ async function fetchAllPages<T>(
   return list;
 }
 
-function mergeMerchantProfiles(list: MerchantInfoVO[]) {
-  merchantPageListCache.value = [
-    ...merchantPageListCache.value,
-    ...list,
-  ].filter(
-    (item, index, array) =>
-      item.id &&
-      array.findIndex((target) => Number(target.id) === Number(item.id)) ===
-        index,
-  );
-  merchantSelectOptions.value = buildMerchantOptionsFromApi(
-    merchantPageListCache.value,
-  );
-  merchantProfileLookup.value = buildMerchantProfileLookup(
-    merchantSelectOptions.value,
-  );
-}
-
 /** 获取商户详情 */
 async function fetchMerchantProfile(
   merchantId: number,
@@ -323,32 +298,7 @@ async function fetchMerchantProfile(
   }
 }
 
-/** 批量加载优惠券信息 */
-async function loadCouponProfiles() {
-  if (couponDetailCache.size > 0) {
-    return;
-  }
-
-  try {
-    const list = await fetchAllPages<Partial<CouponMgmtApiVO>>((pageNo) =>
-      getCouponMgmtPage({
-        pageNo,
-        pageSize: MAX_PAGE_SIZE,
-      }),
-    );
-
-    list.forEach((item) => {
-      const couponId = Number(item.id ?? 0);
-
-      if (couponId > 0) {
-        couponDetailCache.set(couponId, item);
-      }
-    });
-  } catch (error) {
-    console.error('[merchantSendCoupon] load coupon list failed:', error);
-  }
-}
-
+/** 补齐商户信息索引 */
 /** 获取优惠券详情 */
 async function fetchCouponProfile(couponId: number) {
   if (!couponId) {
@@ -362,14 +312,6 @@ async function fetchCouponProfile(couponId: number) {
   }
 
   try {
-    await loadCouponProfiles();
-
-    const latestCachedDetail = couponDetailCache.get(couponId);
-
-    if (latestCachedDetail) {
-      return latestCachedDetail;
-    }
-
     const data = await getCouponMgmtDetail(couponId);
     couponDetailCache.set(couponId, data);
     return data;
@@ -388,32 +330,8 @@ async function ensureMerchantProfiles(merchantIds: number[]) {
     return;
   }
 
-  try {
-    const list = await fetchAllPages<MerchantInfoVO>((pageNo) =>
-      MerchantInfoApi.getMerchantInfoPage({
-        pageNo,
-        pageSize: MAX_PAGE_SIZE,
-      }),
-    );
-
-    mergeMerchantProfiles(list);
-  } catch (error) {
-    console.error(
-      '[merchantSendCoupon] load merchant page list failed:',
-      error,
-    );
-  }
-
-  const fallbackIds = uniqueIds.filter(
-    (id) => !merchantProfileLookup.value[id],
-  );
-
-  if (fallbackIds.length === 0) {
-    return;
-  }
-
   const details = await Promise.all(
-    fallbackIds.map((id) => fetchMerchantProfile(id, '加载商户信息失败')),
+    uniqueIds.map((id) => fetchMerchantProfile(id, '加载商户信息失败')),
   );
   const patchedOptions = details
     .filter((item): item is MerchantInfoDetailVO => Boolean(item?.id))
@@ -433,8 +351,8 @@ async function ensureMerchantProfiles(merchantIds: number[]) {
     return;
   }
 
-  mergeMerchantProfiles(
-    patchedOptions.map((item) => ({
+  merchantSelectOptions.value = buildMerchantOptionsFromApi([
+    ...merchantSelectOptions.value.map((item) => ({
       address: item.address || '',
       contact: item.contact || '',
       id: item.value,
@@ -445,6 +363,20 @@ async function ensureMerchantProfiles(merchantIds: number[]) {
       remark: item.remark || '',
       status: item.status || '-',
     })),
+    ...patchedOptions.map((item) => ({
+      address: item.address || '',
+      contact: item.contact || '',
+      id: item.value,
+      merchantType: item.merchantType || '',
+      name: item.label,
+      phone: item.phone || '',
+      registerTime: item.registerTime || '',
+      remark: item.remark || '',
+      status: item.status || '-',
+    })),
+  ]);
+  merchantProfileLookup.value = buildMerchantProfileLookup(
+    merchantSelectOptions.value,
   );
 }
 
@@ -627,6 +559,7 @@ function handleRefresh() {
 async function handleReloadPage() {
   detailCache.clear();
   merchantDetailCache.clear();
+  couponDetailCache.clear();
   clearCheckedRows();
   await handleRefresh();
   await props.reloadStats?.();
@@ -816,42 +749,46 @@ async function handleDetail(row: MerchantSendCouponRow) {
 
 /** 打开商户详情弹窗 */
 async function handleOpenMerchant(row: MerchantSendCouponRow) {
-  currentMerchantProfile.value = buildMerchantProfile(
-    undefined,
-    row,
-    merchantProfileLookup.value,
-  );
-  merchantDialogVisible.value = true;
-
-  try {
-    const detail = await fetchMerchantProfile(row.merchantId);
-    if (detail) {
-      currentMerchantProfile.value = buildMerchantProfile(
-        detail,
-        row,
-        merchantProfileLookup.value,
-      );
-    }
-  } catch (error) {
-    console.error('[merchantSendCoupon] load merchant detail failed:', error);
-  }
-}
-
-/** 打开优惠券详情弹窗 */
-async function handleOpenCoupon(row: MerchantSendCouponRow) {
   const loadingInstance = ElLoading.service({
     target: '.merchant-send-coupon-table',
     text: '加载中...',
   });
 
   try {
-    const couponDetail = await fetchCouponProfile(row.couponId);
+    const detail = await fetchMerchantProfile(row.merchantId);
+    currentMerchantProfile.value = buildMerchantProfile(
+      detail || undefined,
+      row,
+      merchantProfileLookup.value,
+    );
+  } finally {
+    loadingInstance.close();
+  }
+
+  merchantDialogVisible.value = true;
+}
+
+/** 打开优惠券详情弹窗 */
+async function handleOpenCoupon(row: MerchantSendCouponRow) {
+  const detail = await fetchMerchantSendCouponDetail(row, '加载优惠券详情失败');
+
+  if (!detail) {
+    return;
+  }
+
+  const loadingInstance = ElLoading.service({
+    target: '.merchant-send-coupon-table',
+    text: '加载中...',
+  });
+
+  try {
+    const couponDetail = await fetchCouponProfile(detail.row.couponId);
 
     if (!couponDetail) {
       ElMessage.warning('未获取到优惠券详情，已展示发券记录中的基础信息');
     }
 
-    currentCouponProfile.value = buildCouponProfile(couponDetail, row);
+    currentCouponProfile.value = buildCouponProfile(couponDetail, detail.row);
   } finally {
     loadingInstance.close();
   }
@@ -958,7 +895,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
         <div class="common-toolbar-tools">
           <IconButton
             content="导出"
-            icon-name="Download"
+            icon-name="download"
             @click="handleExport"
           />
           <IconButton
@@ -968,7 +905,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
           />
           <IconButton
             content="搜索"
-            icon-name="Search"
+            icon-name="search"
             @click="handleSerachShow"
           />
           <IconButton

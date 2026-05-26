@@ -217,17 +217,29 @@ const getTableData = async (pageObj) => {
     // 图表下钻 - 根据下钻类型添加筛选
     if (isChartDrill.value) {
       // 柱状图下钻 - 按场站筛选
-      if (drillInfo.drillType === 'stationDistribution' && drillInfo.stationId) {
-        params.stationId = drillInfo.stationId;
+      if (drillInfo.drillType === 'stationDistribution') {
+        if (drillInfo.stationId) {
+          params.stationId = drillInfo.stationId;
+        } else if (drillInfo.drillName) {
+          // 如果没有 stationId，按场站名称筛选
+          params.stationName = drillInfo.drillName;
+        }
+      }
+
+      // 柱状图下钻 - 按时段筛选（hourDistribution）
+      if (drillInfo.drillType === 'hourDistribution' && drillInfo.drillName) {
+        params.hour = drillInfo.drillName;
       }
 
       // 折线图下钻 - 按时间筛选
       if ((drillInfo.drillType === 'passTrend' || drillInfo.drillType === 'identifyTrend') && drillInfo.drillValue) {
         const date = new Date(drillInfo.drillValue);
-        const beginTime = new Date(date.setHours(0, 0, 0, 0)).toISOString().slice(0, 19);
-        const endTime = new Date(date.setHours(23, 59, 59, 999)).toISOString().slice(0, 19);
-        params.beginTime = beginTime;
-        params.endTime = endTime;
+        if (!isNaN(date.getTime())) {
+          const beginTime = new Date(date.setHours(0, 0, 0, 0)).toISOString().slice(0, 19);
+          const endTime = new Date(date.setHours(23, 59, 59, 999)).toISOString().slice(0, 19);
+          params.beginTime = beginTime;
+          params.endTime = endTime;
+        }
       }
 
       // 饼图下钻 - 暂时不添加特定筛选，显示所有数据

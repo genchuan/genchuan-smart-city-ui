@@ -110,7 +110,7 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'inTimeRange',
+      fieldName: 'inTime',
       label: '入场时间',
       component: 'DatePicker',
       componentProps: {
@@ -119,7 +119,8 @@ export function useSearchFormSchema() {
         rangeSeparator: '至',
         startPlaceholder: '开始时间',
         endPlaceholder: '结束时间',
-        valueFormat: 'x',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
     },
     {

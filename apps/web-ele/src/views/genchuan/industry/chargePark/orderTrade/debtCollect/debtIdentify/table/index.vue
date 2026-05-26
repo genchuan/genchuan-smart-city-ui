@@ -129,38 +129,6 @@ function handleRefresh() {
   gridApi.query();
 }
 
-// 点击识别状态筛选
-function handleFilterStatus(status) {
-  dataObj.searchObj = { ...dataObj.searchObj, status: status };
-  queryFormApi.setValues({ status: status });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击所属场站筛选
-function handleFilterStationName(stationName) {
-  dataObj.searchObj = { ...dataObj.searchObj, stationName: stationName };
-  queryFormApi.setValues({ stationName: stationName });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击创建者筛选
-function handleFilterCreator(creator) {
-  dataObj.searchObj = { ...dataObj.searchObj, creator: creator };
-  queryFormApi.setValues({ creator: creator });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击更新者筛选
-function handleFilterUpdater(updater) {
-  dataObj.searchObj = { ...dataObj.searchObj, updater: updater };
-  queryFormApi.setValues({ updater: updater });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
   const data = await exportDebtIdentifyExcel();
@@ -680,18 +648,14 @@ const alarmColumns = [
       </template>
 
       <template #status="{ row }">
-        <el-tag 
-          :type="getStatusType(row.status)" 
-          class="cursor-pointer"
-          @click="handleFilterStatus(row.status)"
-        >
+        <el-tag :type="getStatusType(row.status)">
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
       <template #identifyNo="{ row }">
         <el-text
           @click="handleOpenDetail(row)"
-          class="common-align cursor-pointer"
+          class="common-align"
           type="primary"
         >
           {{ row.identifyNo }}
@@ -700,37 +664,10 @@ const alarmColumns = [
       <template #plateNo="{ row }">
         <el-text
           @click="handlePlateDetail(row)"
-          class="common-align cursor-pointer"
+          class="common-align"
           type="primary"
         >
           {{ row.plateNo }}
-        </el-text>
-      </template>
-      <template #stationName="{ row }">
-        <el-text 
-          @click="handleFilterStationName(row.stationName)" 
-          class="common-align cursor-pointer" 
-          type="primary"
-        >
-          {{ row.stationName }}
-        </el-text>
-      </template>
-      <template #creator="{ row }">
-        <el-text 
-          @click="handleFilterCreator(row.creator)" 
-          class="common-align cursor-pointer" 
-          type="primary"
-        >
-          {{ row.creator }}
-        </el-text>
-      </template>
-      <template #updater="{ row }">
-        <el-text 
-          @click="handleFilterUpdater(row.updater)" 
-          class="common-align cursor-pointer" 
-          type="primary"
-        >
-          {{ row.updater }}
         </el-text>
       </template>
       <template #payMethod="{ row }">

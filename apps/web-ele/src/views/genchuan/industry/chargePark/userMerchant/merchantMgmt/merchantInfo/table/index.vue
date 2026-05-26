@@ -912,12 +912,12 @@ function getStatusTagType(status: MerchantInfoRow['status']) {
           />
           <IconButton
             content="导出"
-            icon-name="Download"
+            icon-name="download"
             @click="handleExport"
           />
           <IconButton
             content="搜索"
-            icon-name="Search"
+            icon-name="search"
             @click="handleSerachShow"
           />
           <IconButton

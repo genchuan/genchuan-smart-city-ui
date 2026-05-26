@@ -351,7 +351,6 @@ export const detailFields = [
   { key: 'handleUserName', label: '处置人' },
   { key: 'handleTime', label: '处置时间', formatter: formatTime },
   { key: 'handleMethod', label: '处置方式' },
-  { key: 'handleProgress', label: '处置进度' },
   { key: 'ignoreReason', label: '忽略理由' },
   { key: 'remark', label: '备注' },
   { key: 'creator', label: '创建者' },

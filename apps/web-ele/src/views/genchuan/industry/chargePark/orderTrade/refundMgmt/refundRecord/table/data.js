@@ -59,18 +59,16 @@ export function useGridColumns() {
       slots: { default: 'recordNo' },
     },
     {
-      field: 'applyNo',
-      title: '关联退款申请编号',
+      field: 'applyId',
+      title: '关联退款申请ID',
       minWidth: 160,
       sortable: true,
-      slots: { default: 'applyNo' },
     },
     {
       field: 'orderId',
       title: '关联订单ID',
       minWidth: 140,
       sortable: true,
-      slots: { default: 'orderId' },
     },
     {
       field: 'refundAmount',
@@ -104,14 +102,12 @@ export function useGridColumns() {
       title: '创建者',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'creator' },
     },
     {
       field: 'updater',
       title: '更新者',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'updater' },
     },
     {
       field: 'createTime',
