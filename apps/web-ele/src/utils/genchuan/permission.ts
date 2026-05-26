@@ -1,5 +1,7 @@
-import { useAccessStore } from '@vben/stores';
 import type { Router } from 'vue-router';
+
+import { useAccessStore } from '@vben/stores';
+
 import { ElMessage } from 'element-plus';
 
 /**
@@ -31,8 +33,8 @@ export function checkPermissionAndUpgrade(
   permissionCode: string,
   router: Router,
   options?: {
-    showMessage?: boolean;
     message?: string;
+    showMessage?: boolean;
     upgradePath?: string;
   },
 ): boolean {
@@ -74,8 +76,8 @@ export function checkAnyPermissionAndUpgrade(
   permissionCodes: string[],
   router: Router,
   options?: {
-    showMessage?: boolean;
     message?: string;
+    showMessage?: boolean;
     upgradePath?: string;
   },
 ): boolean {
@@ -89,8 +91,7 @@ export function checkAnyPermissionAndUpgrade(
   if (!hasAnyPermission) {
     if (options?.showMessage !== false) {
       ElMessage.warning(
-        options?.message ||
-          '您缺少必要的操作权限，请先升级会员以解锁功能。',
+        options?.message || '您缺少必要的操作权限，请先升级会员以解锁功能。',
       );
     }
 
