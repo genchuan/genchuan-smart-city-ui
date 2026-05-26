@@ -442,12 +442,12 @@ watch(
           {{ row.id }}
         </span>
       </template>
-      <template #billId="{ row }">
+      <template #billNo="{ row }">
         <span
           @click="handleOpenSettleBillDetail(row)"
           class="common-align cursor-pointer text-primary"
         >
-          {{ row.billId }}
+          {{ row.billNo }}
         </span>
       </template>
       <template #status="{ row }">

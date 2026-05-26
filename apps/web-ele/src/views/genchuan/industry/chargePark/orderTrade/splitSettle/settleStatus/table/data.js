@@ -10,11 +10,11 @@ export function useGridColumns() {
       slots: { default: 'id' },
     },
     {
-      field: 'billId',
-      title: '关联单据',
+      field: 'billNo',
+      title: '关联单据编号',
       minWidth: 160,
       sortable: true,
-      slots: { default: 'billId' },
+      slots: { default: 'billNo' },
     },
     {
       field: 'status',
