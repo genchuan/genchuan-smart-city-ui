@@ -29,6 +29,10 @@ import { $t } from '#/locales';
 
 import { useVbenForm } from './form';
 
+export function VxeTableGridOptions() {
+}
+
+
 setupVbenVxeTable({
   configVxeTable: (vxeUI) => {
     vxeUI.setConfig({
