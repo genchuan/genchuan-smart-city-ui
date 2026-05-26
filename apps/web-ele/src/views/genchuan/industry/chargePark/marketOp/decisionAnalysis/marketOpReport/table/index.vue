@@ -503,16 +503,57 @@ const handleOpenDetail = async (row) => {
   try {
     // 调用详情API
     const response = await getCycleReportDetail({ id: row.id });
+    let detailData;
     if (response && response.code === 200 && response.data) {
-      dataObj.detailObj = response.data;
+      detailData = { ...response.data };
     } else {
       // API调用失败，使用本地数据
-      dataObj.detailObj = row;
+      detailData = { ...row };
     }
+
+    // 处理统计时段字段：将时间戳格式化为日期字符串并拼接
+    if (detailData.statStartTime || detailData.statEndTime) {
+      const startTime = detailData.statStartTime
+        ? formatDate(new Date(Number(detailData.statStartTime)), 'YYYY-MM-DD HH:mm:ss')
+        : '';
+      const endTime = detailData.statEndTime
+        ? formatDate(new Date(Number(detailData.statEndTime)), 'YYYY-MM-DD HH:mm:ss')
+        : '';
+      if (startTime && endTime) {
+        detailData.statTime = `${startTime} 至 ${endTime}`;
+      } else if (startTime) {
+        detailData.statTime = startTime;
+      } else if (endTime) {
+        detailData.statTime = endTime;
+      } else {
+        detailData.statTime = '--';
+      }
+    }
+
+    dataObj.detailObj = detailData;
     detailDrawerRef.value.open();
   } catch (error) {
     console.error('获取详情失败:', error);
-    dataObj.detailObj = row;
+    // 处理本地数据的统计时段
+    const localDetail = { ...row };
+    if (localDetail.statStartTime || localDetail.statEndTime) {
+      const startTime = localDetail.statStartTime
+        ? formatDate(new Date(Number(localDetail.statStartTime)), 'YYYY-MM-DD HH:mm:ss')
+        : '';
+      const endTime = localDetail.statEndTime
+        ? formatDate(new Date(Number(localDetail.statEndTime)), 'YYYY-MM-DD HH:mm:ss')
+        : '';
+      if (startTime && endTime) {
+        localDetail.statTime = `${startTime} 至 ${endTime}`;
+      } else if (startTime) {
+        localDetail.statTime = startTime;
+      } else if (endTime) {
+        localDetail.statTime = endTime;
+      } else {
+        localDetail.statTime = '--';
+      }
+    }
+    dataObj.detailObj = localDetail;
     detailDrawerRef.value.open();
   } finally {
     loadingInstance.close();

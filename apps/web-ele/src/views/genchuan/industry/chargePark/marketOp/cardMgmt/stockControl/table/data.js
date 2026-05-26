@@ -362,18 +362,18 @@ export function useGridColumns() {
       slots: { default: 'updateTime' },
     },
     {
-      field: 'allocateCount',
+      field: 'allocateLog',
       title: '调配记录',
       minWidth: 80,
       sortable: true,
-      slots: { default: 'allocateCount' },
+      slots: { default: 'allocateLog' },
     },
     {
-      field: 'replenishCount',
+      field: 'replenishLog',
       title: '补货记录',
       minWidth: 80,
       sortable: true,
-      slots: { default: 'replenishCount' },
+      slots: { default: 'replenishLog' },
     },
     {
       field: 'warnStatusName',
@@ -433,8 +433,6 @@ export const detailFields = [
     formatter: (value) => getStockControlWarnStatusLabel(value),
     tagType: (value) => getStockControlWarnStatusTagType(value),
   },
-  { key: 'allocateCount', label: '调配记录数' },
-  { key: 'replenishCount', label: '补货记录数' },
   {
     key: 'syncTime',
     label: '同步时间',
@@ -456,3 +454,27 @@ export const detailFields = [
       value ? formatDate(new Date(Number(value)), 'YYYY-MM-DD HH:mm:ss') : '',
   },
 ];
+
+/** 解析记录日志 JSON 字符串，返回记录数量 */
+export function parseLogCount(logString) {
+  if (!logString || typeof logString !== 'string') return 0;
+  try {
+    const logs = JSON.parse(logString);
+    return Array.isArray(logs) ? logs.length : 0;
+  } catch (error) {
+    console.error('解析日志JSON失败:', error);
+    return 0;
+  }
+}
+
+/** 解析记录日志 JSON 字符串，返回记录数组 */
+export function parseLogList(logString) {
+  if (!logString || typeof logString !== 'string') return [];
+  try {
+    const logs = JSON.parse(logString);
+    return Array.isArray(logs) ? logs : [];
+  } catch (error) {
+    console.error('解析日志JSON失败:', error);
+    return [];
+  }
+}
