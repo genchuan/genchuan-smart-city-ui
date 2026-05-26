@@ -137,7 +137,7 @@ export function updateAgentPayOrder(data) {
 
 /** 代付订单发票 */
 export function invoiceAgentPayOrder(data) {
-  return requestClient.put('/ordertrade/agent-order/invoice', data);
+  return requestClient.post('/ordertrade/agent-order/invoice', data);
 }
 /** 代付订单删除 */
 export function deleteAgentPayOrder(params) {
