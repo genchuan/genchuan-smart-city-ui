@@ -357,10 +357,7 @@ watch(
         <ElDescriptionsItem label="累计开票量">
           {{ dataObj.invoiceListObj.totalInvoiceCount || 0 }}
         </ElDescriptionsItem>
-      </ElDescriptions>
-      <div style="margin-top: 16px; color: #909399; font-size: 13px;">
-        注：此处展示该配置关联的发票明细列表（需后端提供接口支持）
-      </div>
+      </ElDescriptions> 
     </ElDialog>
     
     <Drawer title="搜索">
@@ -373,13 +370,13 @@ watch(
           </ElSelect>
         </ElFormItem>
         <ElFormItem label="申请人">
-          <ElInput v-model="searchFormData.applicantName" placeholder="请输入申请人" />
+          <ElInput v-model="searchFormData.creator" placeholder="请输入申请人" />
         </ElFormItem>
-        <ElFormItem label="审核开始时间">
+        <ElFormItem label="创建开始时间">
           <ElDatePicker v-model="searchFormData.createTimeStart" type="datetime" value-format="YYYY-MM-DD HH:mm:ss"
             format="YYYY-MM-DD HH:mm:ss" />
         </ElFormItem>
-        <ElFormItem label="审核结束时间">
+        <ElFormItem label="创建结束时间">
           <ElDatePicker v-model="searchFormData.createTimeEnd" type="datetime" value-format="YYYY-MM-DD HH:mm:ss"
             format="YYYY-MM-DD HH:mm:ss" />
         </ElFormItem>
