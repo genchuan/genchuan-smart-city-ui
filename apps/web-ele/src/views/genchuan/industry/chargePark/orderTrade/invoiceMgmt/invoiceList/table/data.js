@@ -13,7 +13,6 @@ export function useGridColumns() {
       title: '发票编号',
       minWidth: 160,
       sortable: true,
-      slots: { default: 'invoiceNo' },
     },
     {
       field: 'taxNo',
@@ -23,17 +22,15 @@ export function useGridColumns() {
     },
     {
       field: 'orderNo',
-      title: '关联订单',
+      title: '关联订单编号',
       minWidth: 160,
       sortable: true,
-      slots: { default: 'orderNo' },
     },
     {
       field: 'title',
       title: '发票抬头',
       minWidth: 160,
       sortable: true,
-      slots: { default: 'title' },
     },
     {
       field: 'amount',
@@ -44,7 +41,7 @@ export function useGridColumns() {
     },
     {
       field: 'status',
-      title: '发票状态',
+      title: '状态',
       minWidth: 120,
       sortable: true,
       slots: { default: 'status' },
@@ -92,7 +89,7 @@ export function useGridColumns() {
     }, 
     {
       field: 'createTime',
-      title: '生成时间',
+      title: '创建时间',
       minWidth: 200,
       sortable: true,
       customRender: ({ text }) => text || '-',

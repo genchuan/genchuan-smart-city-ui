@@ -222,16 +222,27 @@ export function useCreateFormSchema() {
       rules: 'required',
     },
     {
+      fieldName: 'status',
+      label: '处置状态',
+      component: 'Select',
+      defaultValue: '未处理',
+      componentProps: {
+        placeholder: '请选择处置状态',
+        options: [
+          { label: '未处理', value: '未处理' },
+          { label: '处理中', value: '处理中' },
+          { label: '已关闭', value: '已关闭' },
+        ],
+      },
+      rules: 'required',
+    },
+    {
       fieldName: 'stationId',
       label: '场站',
       component: 'Select',
       componentProps: {
         placeholder: '请选择场站',
-        options: [
-          { label: '充电站1', value: 1 },
-          { label: '充电站2', value: 2 },
-          { label: '充电站3', value: 3 },
-        ],
+        options: [],
       },
       rules: 'required',
     },

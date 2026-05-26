@@ -4,10 +4,9 @@ export function useGridColumns() {
     { type: 'checkbox', width: 40 },
     {
       field: 'id',
-      title: '状态编号',
+      title: '主键ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'id' },
     },
     {
       field: 'billNo',
@@ -18,7 +17,7 @@ export function useGridColumns() {
     },
     {
       field: 'status',
-      title: '结算状态',
+      title: '状态',
       minWidth: 120,
       sortable: true,
       slots: { default: 'status' },
@@ -30,11 +29,10 @@ export function useGridColumns() {
       sortable: true,
     },
     {
-      field: 'checkerName',
-      title: '核查人',
+      field: 'checkerId',
+      title: '核查人ID',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'checkerName' },
     },
     {
       field: 'checkTime',

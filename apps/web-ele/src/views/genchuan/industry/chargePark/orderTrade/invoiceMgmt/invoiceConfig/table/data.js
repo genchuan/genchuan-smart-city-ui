@@ -4,17 +4,15 @@ export function useGridColumns() {
     { type: 'checkbox', width: 40 },
     {
       field: 'id',
-      title: '配置名称',
+      title: '主键ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'id' },
     },
     {
       field: 'category',
       title: '开票类目',
       minWidth: 160,
       sortable: true,
-      slots: { default: 'category' },
     },
     {
       field: 'taxRate',
@@ -27,21 +25,19 @@ export function useGridColumns() {
       title: '开票主体',
       minWidth: 160,
       sortable: true,
-      slots: { default: 'taxBody' },
     },
     {
       field: 'status',
-      title: '配置状态',
+      title: '状态',
       minWidth: 120,
       sortable: true,
       slots: { default: 'status' },
     },
     {
       field: 'auditorName',
-      title: '审核人',
+      title: '审核人名称',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'auditorName' },
     },
     {
       field: 'auditTime',
@@ -49,14 +45,6 @@ export function useGridColumns() {
       minWidth: 200,
       sortable: true,
       customRender: ({ text }) => text || '-',
-    },
-    {
-      field: 'totalInvoiceCount',
-      title: '累计开票量',
-      minWidth: 120,
-      sortable: true,
-      slots: { default: 'totalInvoiceCount' },
-      customRender: ({ text }) => text || 0,
     },
     {
       field: 'creator',

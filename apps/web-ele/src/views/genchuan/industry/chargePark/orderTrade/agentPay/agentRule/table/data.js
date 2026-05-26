@@ -145,14 +145,12 @@ export function useGridColumns() {
       title: '规则名称',
       minWidth: 160,
       sortable: true,
-      slots: { default: 'name' },
     },
     {
       field: 'merchantName',
       title: '商户名称',
       minWidth: 140,
       sortable: true,
-      slots: { default: 'merchantName' },
     },
     {
       field: 'agentType',
@@ -193,14 +191,12 @@ export function useGridColumns() {
       title: '使用次数',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'useCount' },
     },
     {
       field: 'auditorName',
       title: '审核人名称',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'auditorName' },
     },
     {
       field: 'auditTime',

@@ -1,7 +1,7 @@
 <script setup>import { reactive, ref, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
-import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElDatePicker, ElDialog, ElDescriptions, ElDescriptionsItem } from 'element-plus';
+import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getInvoiceAuditPage, exportInvoiceAuditExcel, auditPass, auditReject, batchAudit, batchReapply } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
@@ -9,7 +9,6 @@ import { formatTimestamp } from '#/utils';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
-import InvoiceDetailDrawer from '#/views/genchuan/industry/chargePark/orderTrade/invoiceMgmt/invoiceList/table/detail.vue';
 const props = defineProps({
   secondShow: {
     type: Boolean,
@@ -190,7 +189,6 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
-  invoiceDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -274,42 +272,9 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 const parkDetailDrawerRef = ref(null);
-const invoiceDetailDrawerRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
-
-// 点击关联申请跳转发票详情弹窗
-function handleOpenInvoiceDetail(row) {
-  dataObj.invoiceDetailObj = {
-    invoiceNo: row.invoiceNo,
-  };
-  invoiceDetailDrawerRef.value?.open();
-}
-
-// 点击申请人筛选
-function handleFilterApplicant(applicantName) {
-  if (!applicantName) return;
-  dataObj.searchObj = { ...dataObj.searchObj, applicantName: applicantName };
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击审核人筛选
-function handleFilterAuditor(auditorName) {
-  if (!auditorName) return;
-  dataObj.searchObj = { ...dataObj.searchObj, auditorName: auditorName };
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击审核状态筛选
-function handleFilterStatus(status) {
-  if (!status) return;
-  dataObj.searchObj = { ...dataObj.searchObj, status: status };
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
 
 watch(
   () => props.filterParams,

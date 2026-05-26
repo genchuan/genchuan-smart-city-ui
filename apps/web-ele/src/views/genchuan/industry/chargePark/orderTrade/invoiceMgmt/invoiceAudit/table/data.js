@@ -4,17 +4,15 @@ export function useGridColumns() {
     { type: 'checkbox', width: 40 },
     {
       field: 'id',
-      title: '审核编号',
+      title: '主键ID',
       minWidth: 100,
       sortable: true,
-      slots: { default: 'id' },
     },
     {
       field: 'invoiceNo',
-      title: '关联申请',
+      title: '关联发票编号',
       minWidth: 160,
       sortable: true,
-      slots: { default: 'invoiceNo' },
     },
     {
       field: 'creator',
@@ -25,17 +23,16 @@ export function useGridColumns() {
     },
     {
       field: 'status',
-      title: '审核状态',
+      title: '状态',
       minWidth: 120,
       sortable: true,
       slots: { default: 'status' },
     },
     {
       field: 'auditorName',
-      title: '审核人',
+      title: '审核人名称',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'auditorName' },
     },
     {
       field: 'auditResult',

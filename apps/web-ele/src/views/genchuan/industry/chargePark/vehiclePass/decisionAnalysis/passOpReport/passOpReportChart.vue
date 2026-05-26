@@ -13,6 +13,17 @@ const props = defineProps({
 
 const detailDialogRef = ref(null);
 
+const typeNameMap = {
+  ESCA_: '逃费车',
+  GATE_: '抬杆放行',
+  NO_P_: '无牌车',
+  OTHE_: '其他异常',
+};
+
+const getTypeName = (type) => {
+  return typeNameMap[type] || type;
+};
+
 const cards = reactive([
   {
     title: '入场量',
@@ -314,7 +325,7 @@ function initPieChart() {
   pieChartInstance = echarts.init(pieChartRef.value);
 
   const pieChartData = state.chartData.pieData.map((item) => ({
-    name: item.type || item.name,
+    name: getTypeName(item.type || item.name),
     value: item.count || item.value,
   }));
 
@@ -376,13 +387,9 @@ function initCharts() {
 function handleCardClick(key) {
   console.log('卡片点击:', key);
   const today = new Date();
-  // 使用 ISO 8601 格式：YYYY-MM-DDTHH:mm:ss
-  const todayStart = new Date(today.setHours(0, 0, 0, 0))
-    .toISOString()
-    .slice(0, 19);
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999))
-    .toISOString()
-    .slice(0, 19);
+  // 使用时间戳格式
+  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime();
+  const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime();
 
   const cardTitleMap = {
     enterCount: '入场量',
@@ -460,14 +467,10 @@ function openDetailDialog(chartType, seriesName, data) {
       break;
     }
     case 'line': {
-      // 将日期字符串转换为 ISO 8601 格式
+      // 将日期字符串转换为时间戳格式
       const statDate = new Date(data.statTime);
-      const beginTime = new Date(statDate.setHours(0, 0, 0, 0))
-        .toISOString()
-        .slice(0, 19);
-      const endTime = new Date(statDate.setHours(23, 59, 59, 999))
-        .toISOString()
-        .slice(0, 19);
+      const beginTime = new Date(statDate.setHours(0, 0, 0, 0)).getTime();
+      const endTime = new Date(statDate.setHours(23, 59, 59, 999)).getTime();
 
       switch (seriesName) {
         case '异常处置率': {

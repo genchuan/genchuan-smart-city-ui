@@ -170,12 +170,15 @@ function initTrendChart() {
 
   // 添加点击事件
   trendChartInstance.on('click', (params) => {
-    const clickDate = new Date(params.name);
-    const startTime = new Date(clickDate.setHours(0, 0, 0, 0)).getTime().toString();
-    const endTime = new Date(clickDate.setHours(23, 59, 59, 999)).getTime().toString();
+    const clickedDate = params.name;
     window.dispatchEvent(
       new CustomEvent('filterByChart:inParkStatus', {
-        detail: { startTime, endTime },
+        detail: {
+          inTime: [
+            `${clickedDate} 00:00:00`,
+            `${clickedDate} 23:59:59`,
+          ],
+        },
       }),
     );
   });

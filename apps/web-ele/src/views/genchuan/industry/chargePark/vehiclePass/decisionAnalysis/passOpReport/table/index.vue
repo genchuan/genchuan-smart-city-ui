@@ -185,7 +185,10 @@ async function handleExport() {
     });
     try {
       const res = await exportCycleReport(dataObj.searchParams);
-      downloadFileFromBlobPart({ fileName: '周期报表.xlsx', source: res });
+      downloadFileFromBlobPart({
+        fileName: textObj.excelAllName,
+        source: res,
+      });
     } catch (error) {
       ElMessage.error('导出失败');
       console.error(error);
@@ -340,8 +343,20 @@ const [SearchForm] = useVbenForm({
   },
 });
 
+function convertToTimestamp(timeStr) {
+  if (!timeStr) return timeStr;
+  return new Date(timeStr).getTime();
+}
+
 function onSubmit(values) {
-  dataObj.searchParams = values;
+  const params = { ...values };
+  if (params.beginTime) {
+    params.beginTime = convertToTimestamp(params.beginTime);
+  }
+  if (params.endTime) {
+    params.endTime = convertToTimestamp(params.endTime);
+  }
+  dataObj.searchParams = params;
   isSearching = true;
   gridApi.query();
   drawerApi.close();
@@ -577,10 +592,17 @@ const handleExportRow = async (row) => {
   });
   try {
     if (USE_REAL_API) {
-      await exportCycleReportById(row.id);
+      const res = await exportCycleReport({
+        id: row.id,
+      });
+      downloadFileFromBlobPart({
+        fileName: `${row.reportCycle}_${row.stationName || '报表'}.xlsx`,
+        source: res,
+      });
     } else {
       // 模拟导出
       await new Promise((resolve) => setTimeout(resolve, 1000));
+      exportToExcel([row], textObj.excelName, textObj.excelAllName);
     }
   } catch (error) {
     ElMessage.error('导出失败');
@@ -595,13 +617,9 @@ onMounted(() => {
   const handleCardClick = (e) => {
     const { key } = e.detail;
     const today = new Date();
-    // 使用 ISO 8601 格式：YYYY-MM-DDTHH:mm:ss
-    const todayStart = new Date(today.setHours(0, 0, 0, 0))
-      .toISOString()
-      .slice(0, 19);
-    const todayEnd = new Date(today.setHours(23, 59, 59, 999))
-      .toISOString()
-      .slice(0, 19);
+    // 使用时间戳格式
+    const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime();
+    const todayEnd = new Date(today.setHours(23, 59, 59, 999)).getTime();
 
     // 根据卡片类型筛选报表列表，并传递点击类型参数
     const filterParams = {

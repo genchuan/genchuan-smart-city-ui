@@ -28,6 +28,7 @@ import {
   dataList,
   detailFields,
   getStationOptions,
+  getUserOptions,
   textObj,
   useSearchFormSchema,
   useGridColumns,
@@ -45,12 +46,21 @@ const props = defineProps({
 const USE_REAL_API = true;
 
 const stationOptions = ref([]);
+const userOptions = ref([]);
 
 async function loadStationOptions() {
   try {
     stationOptions.value = await getStationOptions();
   } catch (error) {
     console.error('Failed to load station options:', error);
+  }
+}
+
+async function loadUserOptions() {
+  try {
+    userOptions.value = await getUserOptions();
+  } catch (error) {
+    console.error('Failed to load user options:', error);
   }
 }
 
@@ -229,8 +239,8 @@ const activeFilters = computed(() => {
   if (obj.status) {
     filters.push({ label: `缴费状态：${obj.status}`, field: 'status' });
   }
-  if (obj.stationName) {
-    filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+  if (obj.stationId && obj.stationName) {
+    filters.push({ label: `场站：${obj.stationName}`, field: 'stationId' });
   }
   if (obj.checkUserId && obj.checkUserName) {
     filters.push({ label: `核验人：${obj.checkUserName}`, field: 'checkUserId' });
@@ -255,6 +265,14 @@ const handleClearField = (fieldName) => {
   // 清除核验人ID时，同时清除核验人名称
   if (fieldName === 'checkUserId') {
     delete next.checkUserName;
+  }
+  // 清除核验人名称时，同时清除核验人ID
+  if (fieldName === 'checkUserName') {
+    delete next.checkUserId;
+  }
+  // 清除场站ID时，同时清除场站名称
+  if (fieldName === 'stationId') {
+    delete next.stationName;
   }
   dataObj.searchParams = next;
   dataObj.currentPage = 1;
@@ -353,6 +371,10 @@ const [SearchForm] = useVbenForm({
     if (stationField) {
       stationField.componentProps.options = stationOptions.value;
     }
+    const userField = schema.find((f) => f.fieldName === 'checkUserId');
+    if (userField) {
+      userField.componentProps.options = userOptions.value;
+    }
     return schema;
   }),
   showCollapseButton: true,
@@ -362,7 +384,24 @@ const [SearchForm] = useVbenForm({
 });
 
 function onSubmit(values) {
-  dataObj.searchParams = values;
+  const params = { ...values };
+
+  // 如果选择了场站，需要同时保存场站名称
+  if (params.stationId) {
+    const station = stationOptions.value.find(s => s.value === params.stationId);
+    if (station) {
+      params.stationName = station.label;
+    }
+  }
+  // 如果选择了核验人，需要同时保存核验人名称
+  if (params.checkUserId) {
+    const user = userOptions.value.find(u => u.value === params.checkUserId);
+    if (user) {
+      params.checkUserName = user.label;
+    }
+  }
+
+  dataObj.searchParams = params;
   isSearching = true;
   gridApi.query();
   drawerApi.close();
@@ -504,6 +543,7 @@ const handleFilterByChart = (event) => {
 
 onMounted(() => {
   loadStationOptions();
+  loadUserOptions();
   window.addEventListener('filterByChart:payCheck', handleFilterByChart);
 });
 
@@ -518,12 +558,14 @@ const handlePlateClick = (row) => {
 };
 
 // 字段点击筛选
-const handleFieldFilter = (field, value) => {
+const handleFieldFilter = (field, value, extraData = {}) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
     [field]: value,
+    ...extraData,
   };
-  handleRefresh();
+  isSearching = true;
+  gridApi.query();
 };
 </script>
 
@@ -618,7 +660,7 @@ const handleFieldFilter = (field, value) => {
       </template>
       <template #stationName="{ row }">
         <el-text
-          @click="handleFieldFilter('stationName', row.stationName)"
+          @click="handleFieldFilter('stationId', row.stationId, { stationName: row.stationName })"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -629,7 +671,7 @@ const handleFieldFilter = (field, value) => {
       <template #checkUserName="{ row }">
         <el-text
           v-if="row.checkUserName"
-          @click="handleFieldFilter('checkUserId', row.checkUserId); dataObj.searchParams.checkUserName = row.checkUserName"
+          @click="handleFieldFilter('checkUserId', row.checkUserId, { checkUserName: row.checkUserName })"
           class="common-align"
           type="primary"
           style="cursor: pointer"

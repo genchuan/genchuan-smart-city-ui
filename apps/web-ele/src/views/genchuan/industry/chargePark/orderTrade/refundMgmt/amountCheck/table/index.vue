@@ -16,7 +16,6 @@ import {
   confirmAmountCheck,
   calculateAmountCheck,
 } from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
-import { getOrderPage } from '#/api/genchuan/industry/chargePark/orderTrade/orderMgmt/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
 import { formatTimestamp } from '#/utils';
@@ -25,7 +24,6 @@ import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightki
 
 import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
-import OrderDetailDrawer from '#/views/genchuan/industry/chargePark/orderTrade/orderMgmt/allOrder/table/detail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -115,60 +113,6 @@ function handleRefresh() {
   gridApi.query();
 }
 
-// 点击核算状态筛选
-function handleFilterStatus(status) {
-  dataObj.searchObj = { ...dataObj.searchObj, status: status };
-  queryFormApi.setValues({ status: status });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击核算结果筛选
-function handleFilterCheckResult(checkResult) {
-  dataObj.searchObj = { ...dataObj.searchObj, checkResult: checkResult };
-  queryFormApi.setValues({ checkResult: checkResult });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击创建者筛选
-function handleFilterCreator(creator) {
-  dataObj.searchObj = { ...dataObj.searchObj, creator: creator };
-  queryFormApi.setValues({ creator: creator });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击更新者筛选
-function handleFilterUpdater(updater) {
-  dataObj.searchObj = { ...dataObj.searchObj, updater: updater };
-  queryFormApi.setValues({ updater: updater });
-  dataObj.currentPage = 1;
-  gridApi.query();
-}
-
-// 点击关联订单ID跳转原订单详情弹窗
-async function handleOpenOrderDetail(row) {
-  try {
-    const res = await getOrderPage({ orderNo: row.orderId });
-    if (res.list && res.list.length > 0) {
-      const firstOrder = res.list[0];
-      dataObj.orderDetailObj = {
-        ...firstOrder,
-        payTime: formatTimestamp(firstOrder.payTime),
-        updateTime: formatTimestamp(firstOrder.updateTime),
-        createTime: formatTimestamp(firstOrder.createTime),
-      };
-      orderDetailDrawerRef.value?.open();
-    } else {
-      ElMessage.info('未找到相关订单信息');
-    }
-  } catch (error) {
-    console.error('获取订单详情失败:', error);
-    ElMessage.error('获取订单详情失败');
-  }
-}
-
 // ====================== 导出 EXCEL ======================
 async function handleExport() {
   const data = await exportAmountCheckExcel();
@@ -236,7 +180,6 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
-  orderDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -369,7 +312,6 @@ const handleFullShow = () => {
 
 const parkDetailDrawerRef = ref(null);
 const enDetailObjRef = ref(null);
-const orderDetailDrawerRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
@@ -565,7 +507,6 @@ watch(
       :detail-obj="dataObj.detailObj"
     />
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
-    <OrderDetailDrawer ref="orderDetailDrawerRef" :detail-obj="dataObj.orderDetailObj" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -710,30 +651,23 @@ watch(
         </div>
       </template>
       <template #checkResult="{ row }">
-        <el-tag 
-          :type="getCheckResultType(row.checkResult)"
-          class="cursor-pointer"
-          @click="handleFilterCheckResult(row.checkResult)"
-        >
+        <el-tag :type="getCheckResultType(row.checkResult)">
           {{ getCheckResultLabel(row.checkResult) }}
         </el-tag>
       </template>
       <template #status="{ row }">
-        <el-tag 
-          :type="getStatusType(row.status)"
-          class="cursor-pointer"
-          @click="handleFilterStatus(row.status)"
-        >
+        <el-tag :type="getStatusType(row.status)">
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
       <template #checkNo="{ row }">
-        <span
+        <el-text
           @click="handleOpenDetail(row)"
-          class="common-align cursor-pointer text-primary"
+          class="common-align"
+          type="primary"
         >
           {{ row.checkNo }}
-        </span>
+        </el-text>
       </template>
       <template #payMethod="{ row }">
         <span v-if="row.payMethod === 'wechat'">微信</span>
@@ -749,30 +683,13 @@ watch(
       </template>
 
       <template #orderId="{ row }">
-        <span
-          @click="handleOpenOrderDetail(row)"
-          class="common-align cursor-pointer text-primary"
+        <el-text
+          @click="handleOpenDetail(row)"
+          class="common-align"
+          type="primary"
         >
           {{ row.orderId }}
-        </span>
-      </template>
-
-      <template #creator="{ row }">
-        <span 
-          @click="handleFilterCreator(row.creator)" 
-          class="common-align cursor-pointer text-primary"
-        >
-          {{ row.creator }}
-        </span>
-      </template>
-
-      <template #updater="{ row }">
-        <span 
-          @click="handleFilterUpdater(row.updater)" 
-          class="common-align cursor-pointer text-primary"
-        >
-          {{ row.updater }}
-        </span>
+        </el-text>
       </template>
 
       <template #actions="{ row }">

@@ -72,8 +72,8 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">关联退款申请编号:</div>
-        <div class="detail-row-right">{{ detailObj.applyNo || '-' }}</div>
+        <div class="detail-row-left">关联退款申请ID:</div>
+        <div class="detail-row-right">{{ detailObj.applyId || '-' }}</div>
       </div>
 
       <div class="detail-card-row">

@@ -61,14 +61,12 @@ export function useGridColumns() {
       title: '关联订单编号',
       minWidth: 160,
       sortable: true,
-      slots: { default: 'orderNo' },
     },
     {
       field: 'merchantName',
       title: '商户名称',
       minWidth: 140,
       sortable: true,
-      slots: { default: 'merchantName' },
     },
     {
       field: 'amount',
@@ -96,7 +94,6 @@ export function useGridColumns() {
       title: '核查人名称',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'checkerName' },
     },
     {
       field: 'checkTime',
