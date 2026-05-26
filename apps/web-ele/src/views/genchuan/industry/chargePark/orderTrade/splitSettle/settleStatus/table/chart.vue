@@ -15,8 +15,8 @@ const statusMap = {
 
 const state = reactive({
   cardList: [
-    { title: '完成率', value: 0, color: '#4ECDC4', suffix: '%', status: null },
-    { title: '异常率', value: 0, color: '#FF6B6B', suffix: '%', status: 'abnormal' },
+    { title: '完成率', value: '0%', color: '#4ECDC4', suffix: '%', status: null },
+    { title: '异常率', value: '0%', color: '#FF6B6B', suffix: '%', status: 'abnormal' },
     { title: '正常数量', value: 0, color: '#13ce66', status: 'normal' },
   ],
   statusData: [],
@@ -45,10 +45,14 @@ let lineChartInstance = null;
 const fetchSettleStatusChartData = async () => {
   try {
     const res = await getSplitRateStatusChart();
-    state.cardList[0].value = res.cardData?.completeRate || res.completeRate || 0;
-    state.cardList[1].value = res.cardData?.abnormalRate || res.abnormalRate || 0;
+    const completeRate = res.cardData?.completeRate || res.completeRate || 0;
+    const abnormalRate = res.cardData?.abnormalRate || res.abnormalRate || 0;
     const normalData = res.statusData?.find(item => item.status === 'normal');
+    
+    state.cardList[0].value = `${completeRate}%`;
+    state.cardList[1].value = `${abnormalRate}%`;
     state.cardList[2].value = normalData?.count || 0;
+    
     state.statusData =
       res.statusData && res.statusData.length > 0
         ? res.statusData
@@ -59,8 +63,8 @@ const fetchSettleStatusChartData = async () => {
     updateLineChart();
   } catch (error) {
     console.error('获取结算状态图表数据失败:', error);
-    state.cardList[0].value = 90;
-    state.cardList[1].value = 10;
+    state.cardList[0].value = '90%';
+    state.cardList[1].value = '10%';
     state.cardList[2].value = 9;
     state.statusData = [
       { status: 'normal', count: 9 },
