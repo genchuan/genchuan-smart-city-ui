@@ -39,7 +39,6 @@ import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
-  getStationOptions,
   getExecutorOptions,
   textObj,
   useGridColumns,
@@ -62,16 +61,7 @@ const props = defineProps({
 // 是否使用真实API
 const USE_REAL_API = true;
 
-const stationOptions = ref([]);
 const executorOptions = ref([]);
-
-async function loadStationOptions() {
-  try {
-    stationOptions.value = await getStationOptions();
-  } catch (error) {
-    console.error('Failed to load station options:', error);
-  }
-}
 
 async function loadExecutorOptions() {
   try {
@@ -310,9 +300,8 @@ const activeFilters = computed(() => {
   if (obj.areaName) {
     filters.push({ label: `片区：${obj.areaName}`, field: 'areaName' });
   }
-  if (obj.executeUserId !== undefined && obj.executeUserId !== null && obj.executeUserId !== '') {
-    const label = labels.executeUserId || userNameMap.value.executeUserId || obj.executeUserId;
-    filters.push({ label: `执行人：${label}`, field: 'executeUserId' });
+  if (obj.executeUserName) {
+    filters.push({ label: `执行人：${obj.executeUserName}`, field: 'executeUserName' });
   }
   if (
     obj.dispatchTime &&
@@ -455,11 +444,6 @@ const [SearchForm] = useVbenForm({
       delete v.rules;
       return { ...v };
     });
-
-    const areaField = schema.find((f) => f.fieldName === 'areaId');
-    if (areaField) {
-      areaField.componentProps.options = stationOptions.value;
-    }
 
     return schema;
   }),
@@ -610,7 +594,6 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
-  loadStationOptions();
   loadExecutorOptions();
   window.addEventListener('filterByChart:inspectTask', handleFilterByChart);
 });
@@ -1198,7 +1181,7 @@ const handleFieldFilter = (field, value, userName = '') => {
       </template>
       <template #executeUserName="{ row }">
         <el-text
-          @click="handleFieldFilter('executeUserId', row.executeUserName, row.executeUserName)"
+          @click="handleFieldFilter('executeUserName', row.executeUserName, row.executeUserName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
