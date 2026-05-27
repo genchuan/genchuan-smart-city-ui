@@ -15,6 +15,7 @@ import {
   exportAmountCheckExcel,
   confirmAmountCheck,
   calculateAmountCheck,
+  checkAmountCheck
 } from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
@@ -374,7 +375,7 @@ const handleConfirm = (row) => {
 // 提交确认
 const handleConfirmSubmit = async () => {
   try {
-    await confirmAmountCheck(confirmForm);
+    await checkAmountCheck(confirmForm);
     ElMessage.success('确认成功');
     confirmDialogVisible.value = false;
     handleRefresh();

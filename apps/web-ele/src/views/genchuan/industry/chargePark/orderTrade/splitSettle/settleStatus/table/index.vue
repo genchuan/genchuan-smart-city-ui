@@ -1,14 +1,15 @@
 <script setup>import { reactive, ref, computed, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
-import { ElMessage, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElDialog } from 'element-plus';
+import { ElMessage, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElDialog, ElDatePicker } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getSplitRateStatusPage, exportSplitRateStatusExcel, createSplitRateStatus, updateSplitRateStatus, deleteSplitRateStatus, checkSplitRateStatus } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
+import { getSplitRateStatusPage, exportSplitRateStatusExcel, createSplitRateStatus, updateSplitRateStatus, deleteSplitRateStatus, checkSplitRateStatus, getSettleBillPage } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
 import { formatTimestamp } from '#/utils';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
+import SettleBillDetailDrawer from '#/views/genchuan/industry/chargePark/orderTrade/splitSettle/settleBill/table/detail.vue';
 const props = defineProps({
   secondShow: {
     type: Boolean,
@@ -32,8 +33,10 @@ const props = defineProps({
 const emit = defineEmits(['arrow-change', 'clear-filters']);
 // 搜索表单数据
 const searchFormData = reactive({
-  billId: '',
+  billNo: '',
   status: '',
+  createTimeStart: '',
+  createTimeEnd: '',
 });
 const searchFormRef = ref(null);
 // 表单数据
@@ -203,8 +206,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
 /** 搜索 */
 function handleSearch() {
   dataObj.searchObj = {
-    billId: searchFormData.billId ? Number(searchFormData.billId) : undefined,
+    billNo: searchFormData.billNo || undefined,
     status: searchFormData.status || undefined,
+    createTimeStart: searchFormData.createTimeStart ? searchFormData.createTimeStart.replace(' ', 'T') : undefined,
+    createTimeEnd: searchFormData.createTimeEnd ? searchFormData.createTimeEnd.replace(' ', 'T') : undefined,
   };
   dataObj.currentPage = 1;
   gridApi.query();
@@ -212,8 +217,10 @@ function handleSearch() {
 }
 /** 重置搜索 */
 function resetSearch() {
-  searchFormData.billId = '';
+  searchFormData.billNo = '';
   searchFormData.status = '';
+  searchFormData.createTimeStart = '';
+  searchFormData.createTimeEnd = '';
   dataObj.searchObj = {};
   dataObj.currentPage = 1;
   gridApi.query();
@@ -235,6 +242,7 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
+  settleBillDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -311,6 +319,28 @@ const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value?.open();
 };
+const handleOpenSettleBillDetail = async (row) => {
+  try {
+    const res = await getSettleBillPage({ billNo: row.billNo, pageNo: 1, pageSize: 1 });
+    if (res.list && res.list.length > 0) {
+      const firstBill = res.list[0];
+      // 格式化时间字段
+      dataObj.settleBillDetailObj = {
+        ...firstBill,
+        createTime: formatTimestamp(firstBill.createTime),
+        updateTime: formatTimestamp(firstBill.updateTime),
+        auditTime: formatTimestamp(firstBill.auditTime),
+        settleTime: formatTimestamp(firstBill.settleTime),
+      };
+      settleBillDetailDrawerRef.value?.open();
+    } else {
+      ElMessage.info('未找到相关结算单据信息');
+    }
+  } catch (error) {
+    console.error('获取结算单据详情失败:', error);
+    ElMessage.error('获取结算单据详情失败');
+  }
+};
 const handleSerachShow = () => {
   drawerApi.open();
 };
@@ -318,6 +348,7 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 const parkDetailDrawerRef = ref(null);
+const settleBillDetailDrawerRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
@@ -358,6 +389,7 @@ watch(
     </FormDrawer>
 
     <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
+    <SettleBillDetailDrawer ref="settleBillDetailDrawerRef" :detail-obj="dataObj.settleBillDetailObj" />
     <Drawer title="搜索">
       <ElForm
         ref="searchFormRef"
@@ -365,14 +397,34 @@ watch(
         label-width="100px"
         class="query-form"
       >
-        <ElFormItem label="单据ID">
-          <ElInputNumber v-model="searchFormData.billId" :min="0" placeholder="请输入单据ID" />
+        <ElFormItem label="关联单据编号">
+          <ElInput v-model="searchFormData.billNo"  placeholder="请输入关联单据编号" />
         </ElFormItem>
         <ElFormItem label="状态">
           <ElSelect v-model="searchFormData.status" placeholder="请选择状态">
             <ElOption label="正常" value="normal" />
             <ElOption label="异常" value="abnormal" />
           </ElSelect>
+        </ElFormItem>
+        <ElFormItem label="创建时间">
+          <ElDatePicker
+            v-model="searchFormData.createTimeStart"
+            type="datetime"
+            placeholder="选择开始时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            class="w-full"
+          />
+        </ElFormItem>
+        <ElFormItem label="至">
+          <ElDatePicker
+            v-model="searchFormData.createTimeEnd"
+            type="datetime"
+            placeholder="选择结束时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            class="w-full"
+          />
         </ElFormItem>
       </ElForm>
     </Drawer>
@@ -389,20 +441,14 @@ watch(
         </div>
       </template>
       <template #id="{ row }">
-        <span
-          @click="handleOpenDetail(row)"
-          class="common-align cursor-pointer text-primary"
-        >
+        <el-text @click="handleOpenDetail(row)" class="cursor-pointer" type="primary">
           {{ row.id }}
-        </span>
+        </el-text>
       </template>
       <template #billNo="{ row }">
-        <span
-          @click="handleOpenSettleBillDetail(row)"
-          class="common-align cursor-pointer text-primary"
-        >
+        <el-text @click="handleOpenSettleBillDetail(row)" class="cursor-pointer" type="primary">
           {{ row.billNo }}
-        </span>
+        </el-text>
       </template>
       <template #status="{ row }">
         <el-tag :type="getStatusType(row.status)">
@@ -410,7 +456,7 @@ watch(
         </el-tag>
       </template>
       <template #billId="{ row }">
-        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
+        <el-text @click="handleOpenDetail(row)" class="cursor-pointer" type="primary">
           {{ row.billId }}
         </el-text>
       </template>

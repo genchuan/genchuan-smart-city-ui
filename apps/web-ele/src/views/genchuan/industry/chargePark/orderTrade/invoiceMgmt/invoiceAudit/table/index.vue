@@ -4,11 +4,12 @@ import { downloadFileFromBlobPart } from '@vben/utils';
 import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getInvoiceAuditPage, exportInvoiceAuditExcel, auditPass, auditReject, batchAudit, batchReapply } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
+import { getInvoiceAuditPage, exportInvoiceAuditExcel, auditPass, auditReject, batchAudit, batchReapply, getInvoiceListPage } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
 import { formatTimestamp } from '#/utils';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
+import InvoiceDetailDrawer from '#/views/genchuan/industry/chargePark/orderTrade/invoiceMgmt/invoiceList/table/detail.vue';
 const props = defineProps({
   secondShow: {
     type: Boolean,
@@ -46,6 +47,8 @@ const reapplyDialog = reactive({
   id: 0,
   remark: '',
 });
+// 发票详情抽屉引用
+const invoiceDetailDrawerRef = ref(null);
 // 发票审核状态映射 - InvoiceAuditStatusEnum
 const statusMap = {
   pending: { label: '待审核', type: 'warning' },
@@ -181,6 +184,30 @@ async function submitReapply() {
   }
 }
 
+/** 点击关联发票编号跳转发票详情 */
+async function handleOpenInvoiceDetail(row) {
+  try {
+    const res = await getInvoiceListPage({ invoiceNo: row.invoiceNo, pageNo: 1, pageSize: 1 });
+    if (res.list && res.list.length > 0) {
+      const firstInvoice = res.list[0];
+      dataObj.invoiceDetailObj = {
+        ...firstInvoice,
+        auditTime: formatTimestamp(firstInvoice.auditTime),
+        invoiceTime: formatTimestamp(firstInvoice.invoiceTime),
+        pushTime: formatTimestamp(firstInvoice.pushTime),
+        createTime: formatTimestamp(firstInvoice.createTime),
+        updateTime: formatTimestamp(firstInvoice.updateTime),
+      };
+      invoiceDetailDrawerRef.value?.open();
+    } else {
+      ElMessage.info('未找到相关发票信息');
+    }
+  } catch (error) {
+    console.error('获取发票详情失败:', error);
+    ElMessage.error('获取发票详情失败');
+  }
+}
+
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
@@ -189,6 +216,7 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
+  invoiceDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -305,12 +333,12 @@ watch(
             <ElOption label="已驳回" value="rejected" />
           </ElSelect>
         </ElFormItem>
-        <ElFormItem label="审核开始时间">
+        <ElFormItem label="申请开始时间">
           <ElDatePicker v-model="searchFormData.applyTimeStart" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss"
             format="YYYY-MM-DD HH:mm:ss" />
         </ElFormItem>
 
-        <ElFormItem label="审核结束时间">
+        <ElFormItem label="申请结束时间">
           <ElDatePicker v-model="searchFormData.applyTimeEnd" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss"
             format="YYYY-MM-DD HH:mm:ss" />
         </ElFormItem>
@@ -344,20 +372,20 @@ watch(
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
-      <template #id="{ row }">
-        <span @click="handleOpenDetail(row)" class="common-align cursor-pointer text-primary">
+     <template #id="{ row }">
+        <el-text @click="handleOpenDetail(row)" class="cursor-pointer" type="primary">
           {{ row.id }}
-        </span>
+        </el-text>
       </template>
       <template #invoiceNo="{ row }">
-        <span @click="handleOpenInvoiceDetail(row)" class="common-align cursor-pointer text-primary">
+        <el-text @click="handleOpenInvoiceDetail(row)" class="cursor-pointer" type="primary">
           {{ row.invoiceNo }}
-        </span>
+        </el-text>
       </template>
       <template #creator="{ row }">
-        <span @click="handleFilterApplicant(row.creator)" class="common-align cursor-pointer text-primary">
+        <el-text @click="handleFilterApplicant(row.creator)" class="cursor-pointer" type="primary">
           {{ row.creator }}
-        </span>
+        </el-text>
       </template>
       <template #status="{ row }">
         <el-tag :type="getStatusType(row.status)" class="cursor-pointer" @click="handleFilterStatus(row.status)">
@@ -365,9 +393,9 @@ watch(
         </el-tag>
       </template>
       <template #auditorName="{ row }">
-        <span @click="handleFilterAuditor(row.auditorName)" class="common-align cursor-pointer text-primary">
+        <el-text @click="handleFilterAuditor(row.auditorName)" class="cursor-pointer" type="primary">
           {{ row.auditorName || '-' }}
-        </span>
+        </el-text>
       </template>
 
       <template #actions="{ row }">
