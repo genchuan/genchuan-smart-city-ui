@@ -27,6 +27,7 @@ const statusMap = {
   pending: { label: '待核查', type: 'warning' },
   passed: { label: '核查通过', type: 'success' },
   abnormal: { label: '核查异常', type: 'danger' },
+  normal: { label: '正常', type: 'info' },
 };
 
 // 获取状态标签

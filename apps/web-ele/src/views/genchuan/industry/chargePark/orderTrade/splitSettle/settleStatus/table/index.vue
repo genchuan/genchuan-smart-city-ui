@@ -4,11 +4,12 @@ import { downloadFileFromBlobPart } from '@vben/utils';
 import { ElMessage, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElDialog, ElDatePicker } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getSplitRateStatusPage, exportSplitRateStatusExcel, createSplitRateStatus, updateSplitRateStatus, deleteSplitRateStatus, checkSplitRateStatus } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
+import { getSplitRateStatusPage, exportSplitRateStatusExcel, createSplitRateStatus, updateSplitRateStatus, deleteSplitRateStatus, checkSplitRateStatus, getSettleBillPage } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
 import { formatTimestamp } from '#/utils';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
+import SettleBillDetailDrawer from '#/views/genchuan/industry/chargePark/orderTrade/splitSettle/settleBill/table/detail.vue';
 const props = defineProps({
   secondShow: {
     type: Boolean,
@@ -241,6 +242,7 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
+  settleBillDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -317,6 +319,28 @@ const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value?.open();
 };
+const handleOpenSettleBillDetail = async (row) => {
+  try {
+    const res = await getSettleBillPage({ billNo: row.billNo, pageNo: 1, pageSize: 1 });
+    if (res.list && res.list.length > 0) {
+      const firstBill = res.list[0];
+      // 格式化时间字段
+      dataObj.settleBillDetailObj = {
+        ...firstBill,
+        createTime: formatTimestamp(firstBill.createTime),
+        updateTime: formatTimestamp(firstBill.updateTime),
+        auditTime: formatTimestamp(firstBill.auditTime),
+        settleTime: formatTimestamp(firstBill.settleTime),
+      };
+      settleBillDetailDrawerRef.value?.open();
+    } else {
+      ElMessage.info('未找到相关结算单据信息');
+    }
+  } catch (error) {
+    console.error('获取结算单据详情失败:', error);
+    ElMessage.error('获取结算单据详情失败');
+  }
+};
 const handleSerachShow = () => {
   drawerApi.open();
 };
@@ -324,6 +348,7 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 const parkDetailDrawerRef = ref(null);
+const settleBillDetailDrawerRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
 };
@@ -364,6 +389,7 @@ watch(
     </FormDrawer>
 
     <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
+    <SettleBillDetailDrawer ref="settleBillDetailDrawerRef" :detail-obj="dataObj.settleBillDetailObj" />
     <Drawer title="搜索">
       <ElForm
         ref="searchFormRef"
@@ -415,20 +441,14 @@ watch(
         </div>
       </template>
       <template #id="{ row }">
-        <span
-          @click="handleOpenDetail(row)"
-          class="common-align cursor-pointer text-primary"
-        >
+        <el-text @click="handleOpenDetail(row)" class="cursor-pointer" type="primary">
           {{ row.id }}
-        </span>
+        </el-text>
       </template>
       <template #billNo="{ row }">
-        <span
-          @click="handleOpenSettleBillDetail(row)"
-          class="common-align cursor-pointer text-primary"
-        >
+        <el-text @click="handleOpenSettleBillDetail(row)" class="cursor-pointer" type="primary">
           {{ row.billNo }}
-        </span>
+        </el-text>
       </template>
       <template #status="{ row }">
         <el-tag :type="getStatusType(row.status)">
@@ -436,7 +456,7 @@ watch(
         </el-tag>
       </template>
       <template #billId="{ row }">
-        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
+        <el-text @click="handleOpenDetail(row)" class="cursor-pointer" type="primary">
           {{ row.billId }}
         </el-text>
       </template>
