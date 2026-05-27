@@ -38,12 +38,12 @@ export type MemberPointPageReqVO = PageParam & {
   checkTime?: string[];
   createTime?: string | string[];
   description?: string;
+  nickname?: string;
   status?: number | string;
   title?: string;
   totalPoint?: number | string;
   updateTime?: string[];
   userId?: number;
-  userName?: string;
 };
 
 export type MemberPointCheckReqVO = {
@@ -65,9 +65,7 @@ export type MemberPointChartVO = {
 };
 
 function buildPointQuery(params: MemberPointPageReqVO) {
-  const { userName: _userName, ...queryParams } = params;
-
-  return normalizeQueryDateTimeRanges(queryParams, [
+  return normalizeQueryDateTimeRanges(params, [
     'checkTime',
     'createTime',
     'updateTime',

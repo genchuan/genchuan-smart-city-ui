@@ -22,10 +22,7 @@ import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { MemberPointApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberPoint';
-import {
-  getUser,
-  getUserPage,
-} from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
+import { getUser } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import IconButton from '#/components/common/IconButton.vue';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 
@@ -62,8 +59,6 @@ const drillFilters = ref<Record<string, any>>({});
 const searchParams = ref<Record<string, any>>({});
 const statsDataSource = ref(buildStatsDataFromApi());
 const showStats = ref(true);
-const userNameCache = new Map<number, string>();
-let memberUserListCache: Promise<MemberUserApi.User[]> | undefined;
 
 const drillFilterConfigs: Record<string, FilterTagConfig> = {
   changeAmount: {
@@ -105,7 +100,7 @@ const searchFilterConfigs: Record<string, FilterTagConfig> = {
     label: '状态',
     type: 'success',
   },
-  userName: {
+  nickname: {
     label: '用户名称',
     type: 'info',
   },
@@ -178,152 +173,6 @@ function getPointUserDisplay(row: MemberPointVO) {
   );
 }
 
-function getMemberUserDisplay(user: MemberUserApi.User, userId: number) {
-  return user.nickname || user.name || user.mobile || `用户 ${userId}`;
-}
-
-async function loadMemberUserList() {
-  memberUserListCache ||= (async () => {
-    const pageSize = 200;
-    const firstPage = await getUserPage({
-      pageNo: 1,
-      pageSize,
-    });
-    const total = Number(firstPage.total ?? firstPage.list?.length ?? 0);
-    const pageCount = Math.ceil(total / pageSize);
-    const list = [...(firstPage.list || [])];
-
-    if (pageCount > 1) {
-      const restPages = await Promise.all(
-        Array.from({ length: pageCount - 1 }, (_, index) =>
-          getUserPage({
-            pageNo: index + 2,
-            pageSize,
-          }),
-        ),
-      );
-
-      list.push(...restPages.flatMap((page) => page.list || []));
-    }
-
-    return list;
-  })().catch((error) => {
-    memberUserListCache = undefined;
-    throw error;
-  });
-
-  return await memberUserListCache;
-}
-
-async function getPointUserName(userId?: number) {
-  if (!userId) {
-    return '';
-  }
-
-  const cachedName = userNameCache.get(userId);
-  if (cachedName) {
-    return cachedName;
-  }
-
-  try {
-    const users = await loadMemberUserList();
-    const user = users.find((item) => Number(item.id) === userId);
-    const userName = user
-      ? getMemberUserDisplay(user, userId)
-      : `用户 ${userId}`;
-
-    userNameCache.set(userId, userName);
-    return userName;
-  } catch (error) {
-    console.warn('[memberPoint] load member user names failed:', error);
-    return `用户 ${userId}`;
-  }
-}
-
-async function appendPointUserName<T extends MemberPointVO>(row: T) {
-  if (!row.userId) {
-    return row;
-  }
-
-  return {
-    ...row,
-    userName: await getPointUserName(Number(row.userId)),
-  };
-}
-
-async function appendPointUserNames<T extends MemberPointVO>(list: T[] = []) {
-  const userIds = [
-    ...new Set(
-      list
-        .map((item) => item.userId)
-        .filter((item): item is number => item !== undefined && item !== null)
-        .map(Number),
-    ),
-  ];
-
-  await Promise.all(userIds.map((userId) => getPointUserName(userId)));
-
-  return list.map((item) => ({
-    ...item,
-    userName: item.userId
-      ? userNameCache.get(Number(item.userId)) || getPointUserDisplay(item)
-      : getPointUserDisplay(item),
-  }));
-}
-
-async function getUserIdByName(userName?: string) {
-  const keyword = String(userName ?? '').trim();
-
-  if (!keyword) {
-    return undefined;
-  }
-
-  const users = await loadMemberUserList();
-  const user =
-    users.find(
-      (item) =>
-        item.nickname === keyword ||
-        item.name === keyword ||
-        item.mobile === keyword,
-    ) ||
-    users.find((item) =>
-      [item.nickname, item.name, item.mobile].some((value) =>
-        String(value ?? '').includes(keyword),
-      ),
-    );
-
-  if (!user?.id) {
-    return undefined;
-  }
-
-  const userId = Number(user.id);
-  userNameCache.set(userId, getMemberUserDisplay(user, userId));
-
-  return userId;
-}
-
-async function buildPointQueryValues(
-  values: MemberPointPageReqVO,
-): Promise<MemberPointPageReqVO | undefined> {
-  const { userName, ...queryValues } = values;
-
-  if (!userName) {
-    return queryValues;
-  }
-
-  const userId = await getUserIdByName(userName);
-
-  if (!userId) {
-    ElMessage.warning('未找到对应用户');
-    return undefined;
-  }
-
-  return {
-    ...queryValues,
-    userId,
-  };
-}
-
 async function onQuerySubmit(values: Record<string, any>) {
   searchParams.value = { ...values };
   drillFilters.value = {};
@@ -338,20 +187,11 @@ const [Grid, gridApi] = useVbenVxeGrid({
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
-          const queryValues = await buildPointQueryValues(
-            cleanQueryParams({
-              ...searchParams.value,
-              ...formValues,
-              ...drillFilters.value,
-            }) as MemberPointPageReqVO,
-          );
-
-          if (!queryValues) {
-            return {
-              list: [],
-              total: 0,
-            };
-          }
+          const queryValues = cleanQueryParams({
+            ...searchParams.value,
+            ...formValues,
+            ...drillFilters.value,
+          }) as MemberPointPageReqVO;
 
           const result = await MemberPointApi.getMemberPointPage({
             pageNo: page.currentPage,
@@ -361,7 +201,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
 
           return {
             ...result,
-            list: await appendPointUserNames(result.list || []),
+            list: result.list || [],
           };
         },
       },
@@ -396,16 +236,10 @@ async function handleSearchShow() {
 
 async function handleExport() {
   try {
-    const queryValues = await buildPointQueryValues(
-      cleanQueryParams({
-        ...searchParams.value,
-        ...drillFilters.value,
-      }) as MemberPointPageReqVO,
-    );
-
-    if (!queryValues) {
-      return;
-    }
+    const queryValues = cleanQueryParams({
+      ...searchParams.value,
+      ...drillFilters.value,
+    }) as MemberPointPageReqVO;
 
     const data = await MemberPointApi.exportMemberPoint(
       queryValues as MemberPointPageReqVO,
@@ -421,7 +255,21 @@ async function handleDetail(row: MemberPointVO) {
   const detail = row.id
     ? await MemberPointApi.getMemberPoint(Number(row.id))
     : row;
-  detailObj.value = await appendPointUserName(detail);
+  detailObj.value = {
+    ...detail,
+    mobile: detail.mobile || row.mobile,
+    nickname: detail.nickname || row.nickname,
+    userName:
+      detail.userName ||
+      detail.nickname ||
+      detail.mobile ||
+      row.userName ||
+      row.nickname ||
+      row.mobile ||
+      (detail.userId || row.userId
+        ? `用户 ${detail.userId || row.userId}`
+        : '-'),
+  };
   detailDrawerRef.value?.open();
 }
 
@@ -563,12 +411,12 @@ onMounted(() => {
               <IconButton
                 v-access:code="['usermerchant:member-point:export']"
                 content="导出"
-                icon-name="download"
+                icon-name="Download"
                 @click="handleExport"
               />
               <IconButton
                 content="搜索"
-                icon-name="search"
+                icon-name="Search"
                 @click="handleSearchShow"
               />
               <IconButton

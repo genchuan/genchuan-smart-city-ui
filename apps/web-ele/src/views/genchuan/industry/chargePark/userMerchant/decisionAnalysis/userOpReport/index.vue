@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { UserOpReportChartReqVO } from '#/api/genchuan/industry/chargePark/userMerchant/decisionAnalysis/userOpReport';
+
 import { computed, nextTick, onMounted, ref } from 'vue';
 
 import dayjs from 'dayjs';
@@ -25,6 +27,7 @@ const drillDownDialogRef = ref<InstanceType<typeof DrillDownDetailDialog>>();
 const tableRef = ref<null | TableInstance>(null);
 const showStats = ref(true);
 const statsDataSource = ref(buildTopStatsDataFromApi());
+const DEFAULT_CHART_REPORT_CYCLE = '月报';
 
 const reportCycleTabs = [
   { label: '全部', value: '' },
@@ -37,13 +40,87 @@ const reportCycleTabs = [
   { label: '自定义报表', value: '自定义报表' },
 ];
 
-function buildDefaultChartParams() {
+function getChartReportCycle(tabName = activeName.value) {
+  const tab = reportCycleTabs.find((item) => item.label === tabName);
+
+  return tab?.value || DEFAULT_CHART_REPORT_CYCLE;
+}
+
+function buildChartTimeRange(reportCycle?: string) {
+  const now = dayjs();
+
+  if (reportCycle === '日报') {
+    return {
+      statEndTime: now.endOf('day'),
+      statStartTime: now.startOf('day'),
+    };
+  }
+
+  if (reportCycle === '周报') {
+    return {
+      statEndTime: now.endOf('week'),
+      statStartTime: now.startOf('week'),
+    };
+  }
+
+  if (reportCycle === '季报') {
+    const quarterStartMonth = Math.floor(now.month() / 3) * 3;
+    const startTime = now.month(quarterStartMonth).startOf('month');
+
+    return {
+      statEndTime: startTime.add(2, 'month').endOf('month'),
+      statStartTime: startTime,
+    };
+  }
+
+  if (reportCycle === '半年报') {
+    const halfYearStartMonth = now.month() < 6 ? 0 : 6;
+    const startTime = now.month(halfYearStartMonth).startOf('month');
+
+    return {
+      statEndTime: startTime.add(5, 'month').endOf('month'),
+      statStartTime: startTime,
+    };
+  }
+
+  if (reportCycle === '年报') {
+    return {
+      statEndTime: now.endOf('year'),
+      statStartTime: now.startOf('year'),
+    };
+  }
+
   return {
-    reportCycle: '月报',
-    statEndTime: dayjs().endOf('month').format('YYYY-MM-DD HH:mm:ss'),
-    statStartTime: dayjs().startOf('month').format('YYYY-MM-DD HH:mm:ss'),
-    tenantId: 1,
+    statEndTime: now.endOf('month'),
+    statStartTime: now.startOf('month'),
   };
+}
+
+function buildChartParams(params?: Partial<UserOpReportChartReqVO> | string) {
+  let reportCycle: string | undefined;
+
+  if (typeof params === 'string') {
+    reportCycle = params || DEFAULT_CHART_REPORT_CYCLE;
+  } else if (params) {
+    reportCycle = params.reportCycle || DEFAULT_CHART_REPORT_CYCLE;
+  } else {
+    reportCycle = getChartReportCycle();
+  }
+
+  const { statEndTime, statStartTime } = buildChartTimeRange(reportCycle);
+
+  return {
+    reportCycle,
+    statEndTime:
+      typeof params === 'object' && params.statEndTime
+        ? params.statEndTime
+        : statEndTime.format('YYYY-MM-DD HH:mm:ss'),
+    statStartTime:
+      typeof params === 'object' && params.statStartTime
+        ? params.statStartTime
+        : statStartTime.format('YYYY-MM-DD HH:mm:ss'),
+    tenantId: typeof params === 'object' ? params.tenantId || 1 : 1,
+  } satisfies UserOpReportChartReqVO;
 }
 
 /** 等待布局稳定后再重算表格 */
@@ -75,10 +152,10 @@ const toggleStats = async () => {
 };
 
 /** 加载统计数据 */
-async function loadStats() {
+async function loadStats(params?: Partial<UserOpReportChartReqVO> | string) {
   try {
     const data = await UserOpReportApi.getUserOpReportChart(
-      buildDefaultChartParams(),
+      buildChartParams(params),
     );
     statsDataSource.value = buildTopStatsDataFromApi(data);
   } catch (error) {
@@ -100,7 +177,7 @@ function openDrillDown(info: {
 }) {
   drillDownDialogRef.value?.open({
     ...info,
-    reportCycle: activeName.value,
+    reportCycle: getChartReportCycle(),
   });
 }
 
@@ -158,7 +235,11 @@ function handleLineClick(info: {
 
 async function tabChange(tabName: string) {
   const tab = reportCycleTabs.find((item) => item.label === tabName);
-  await tableRef.value?.handleStatsFilter('reportCycle', tab?.value || '');
+  const reportCycle = tab?.value || '';
+  await Promise.all([
+    tableRef.value?.handleStatsFilter('reportCycle', reportCycle),
+    loadStats(reportCycle || DEFAULT_CHART_REPORT_CYCLE),
+  ]);
   await nextTick();
   await tableRef.value?.recalculateLayout();
 }

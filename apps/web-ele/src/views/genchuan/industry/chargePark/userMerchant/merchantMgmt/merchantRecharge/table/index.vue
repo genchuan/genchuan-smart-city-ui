@@ -223,6 +223,10 @@ function getStatusTagType(status: MerchantRechargeRow['status']) {
   }
 }
 
+function canConfirmRecharge(row: MerchantRechargeRow) {
+  return row.status === '已支付' && row.confirmTime === '-';
+}
+
 /** 加载商户下拉 */
 async function loadMerchantOptions() {
   try {
@@ -850,7 +854,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
             @click="handleOpenPay(row)"
           />
           <IconButton
-            v-if="row.status === '已支付'"
+            v-if="canConfirmRecharge(row)"
             content="确认"
             icon-name="Check"
             @click="handleConfirm(row)"
