@@ -1,5 +1,6 @@
-import { appRequestClient } from '#/api/request';
 import { useUserStore } from '@vben/stores';
+
+import { appRequestClient } from '#/api/request';
 
 export namespace MemberPayApi {
   /** 创建订单请求参数 */
@@ -33,6 +34,20 @@ export namespace MemberPayApi {
     status: number;
     displayMode: string;
     displayContent: string;
+  }
+
+  /** 查询交易订单响应 */
+  export interface TradeOrderDetailRespVO {
+    code: number;
+    msg: string;
+    data: any;
+  }
+
+  /** 查询支付订单响应 */
+  export interface PayOrderRespVO {
+    code: number;
+    msg: string;
+    data: any;
   }
 }
 
@@ -82,4 +97,33 @@ export function submitMemberOrder(payOrderId: number) {
       },
     },
   );
+}
+
+/** 查询交易订单详情 */
+export function getTradeOrderDetail(payOrderId: number) {
+  return appRequestClient.get<MemberPayApi.TradeOrderDetailRespVO>(
+    '/trade/order/get-detail',
+    {
+      params: {
+        id: payOrderId,
+        sync: true,
+      },
+      headers: {
+        Authorization: 'Bearer test1',
+      },
+    },
+  );
+}
+
+/** 查询支付订单 */
+export function getPayOrder(payOrderId: number) {
+  return appRequestClient.get<MemberPayApi.PayOrderRespVO>('/pay/order/get', {
+    params: {
+      id: payOrderId,
+      sync: true,
+    },
+    headers: {
+      Authorization: 'Bearer test1',
+    },
+  });
 }

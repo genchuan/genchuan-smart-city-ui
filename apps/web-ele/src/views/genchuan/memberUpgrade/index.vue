@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onUnmounted, ref } from 'vue';
 
 import { createIconifyIcon } from '@vben/icons';
 
@@ -8,6 +8,8 @@ import QRCode from 'qrcode';
 
 import {
   createMemberOrder,
+  getPayOrder,
+  getTradeOrderDetail,
   submitMemberOrder,
 } from '#/api/genchuan/pay/memberPay';
 
@@ -36,6 +38,15 @@ const showEnterprisePayment = ref(false);
 // 二维码数据
 const premiumQrCode = ref('');
 
+// 支付轮询相关
+const payOrderId = ref<number>(0);
+const pollingTimer = ref<null | ReturnType<typeof setInterval>>(null);
+const paymentStatus = ref<'error' | 'loading' | 'success' | 'waiting'>(
+  'loading',
+);
+const countdown = ref(7200); // 2小时倒计时（秒）
+const countdownTimer = ref<null | ReturnType<typeof setInterval>>(null);
+
 // 联系方式二维码弹窗状态
 const showContactQr = ref(false);
 
@@ -51,22 +62,106 @@ function scrollToPricing() {
 async function showPremiumPaymentModal() {
   showPremiumPayment.value = true;
   premiumQrCode.value = '';
+  paymentStatus.value = 'loading';
+  countdown.value = 7200;
+
+  // 清理之前的定时器
+  stopPolling();
+  stopCountdown();
 
   try {
     const createRes = await createMemberOrder();
-    const payOrderId = createRes.payOrderId;
+    payOrderId.value = createRes.payOrderId;
 
-    const submitRes = await submitMemberOrder(payOrderId);
+    const submitRes = await submitMemberOrder(payOrderId.value);
     if (submitRes.displayContent) {
       const qrDataUrl = await QRCode.toDataURL(submitRes.displayContent, {
         width: 200,
         margin: 2,
       });
       premiumQrCode.value = qrDataUrl;
+      paymentStatus.value = 'waiting';
+
+      // 开始轮询查询支付状态
+      startPolling();
+      // 开始倒计时
+      startCountdown();
     }
   } catch (error) {
     console.error('获取支付二维码失败:', error);
+    paymentStatus.value = 'error';
     ElMessage.error('获取支付二维码失败，请重试');
+  }
+}
+
+// 开始轮询支付状态
+function startPolling() {
+  // 每30秒查询一次
+  pollingTimer.value = setInterval(async () => {
+    await checkPaymentStatus();
+  }, 10_000);
+}
+
+// 停止轮询
+function stopPolling() {
+  if (pollingTimer.value) {
+    clearInterval(pollingTimer.value);
+    pollingTimer.value = null;
+  }
+}
+
+// 开始倒计时
+function startCountdown() {
+  countdownTimer.value = setInterval(() => {
+    if (countdown.value > 0) {
+      countdown.value--;
+    } else {
+      // 倒计时结束，停止轮询
+      stopPolling();
+      stopCountdown();
+      if (paymentStatus.value === 'waiting') {
+        paymentStatus.value = 'error';
+        ElMessage.warning('二维码已过期，请重新获取');
+      }
+    }
+  }, 1000);
+}
+
+// 停止倒计时
+function stopCountdown() {
+  if (countdownTimer.value) {
+    clearInterval(countdownTimer.value);
+    countdownTimer.value = null;
+  }
+}
+
+// 查询支付状态
+async function checkPaymentStatus() {
+  if (!payOrderId.value) return;
+
+  try {
+    // 仅查询支付订单
+    const payOrderRes = await getPayOrder(payOrderId.value);
+
+    // 判断支付订单状态是否为10（支付成功）
+    if (payOrderRes.status === 10) {
+      // 支付成功
+      stopPolling();
+      stopCountdown();
+      paymentStatus.value = 'success';
+
+      ElMessage.success('支付成功，已成功升级高级会员！');
+
+      // 3秒后自动关闭弹窗并刷新页面
+      setTimeout(() => {
+        closePremiumPayment();
+        // 自动刷新页面（模拟F5）
+        window.location.reload();
+      }, 3000);
+    }
+  } catch (error) {
+    console.error('查询支付状态失败:', error);
+    // 查询失败不停止轮询，继续尝试
   }
 }
 
@@ -78,6 +173,9 @@ function showEnterprisePaymentModal() {
 // 关闭弹窗
 function closePremiumPayment() {
   showPremiumPayment.value = false;
+  // 清理定时器
+  stopPolling();
+  stopCountdown();
 }
 
 function closeEnterprisePayment() {
@@ -117,6 +215,12 @@ const faqList = ref([
       '免费版可查看所有功能模块的数据，包括城市智能大屏、生命线、SCADA、30余个行业应用等，但无法进行增删改查操作、无法导出数据、无法进行系统集成，也不享有商业授权。适合初步评估和体验平台能力。',
   },
 ]);
+
+// 组件卸载时清理定时器
+onUnmounted(() => {
+  stopPolling();
+  stopCountdown();
+});
 </script>
 
 <template>
@@ -636,34 +740,73 @@ const faqList = ref([
       <div class="payment-modal" @click.stop>
         <button class="modal-close-btn" @click="closePremiumPayment">✕</button>
         <h3 class="modal-title">高级会员 - ¥198/年</h3>
-        <p class="modal-subtitle">请使用微信扫码完成支付</p>
-        <div class="qr-code-container">
-          <div v-if="premiumQrCode" class="qr-code-real">
-            <img :src="premiumQrCode" alt="微信支付二维码" class="qr-image" />
-          </div>
-          <div v-else class="qr-code-placeholder">
-            <div class="qr-icon">📱</div>
-            <p>正在生成支付二维码...</p>
-            <p class="qr-hint">请稍候</p>
+
+        <!-- 加载中 -->
+        <div v-if="paymentStatus === 'loading'" class="payment-loading">
+          <p class="modal-subtitle">正在生成支付二维码...</p>
+          <div class="qr-code-placeholder">
+            <div class="qr-icon">⏳</div>
+            <p>请稍候</p>
           </div>
         </div>
-        <div class="payment-info">
-          <div class="info-item">
-            <span class="info-label">套餐名称</span>
-            <span class="info-value">高级会员（年付）</span>
+
+        <!-- 等待扫码 -->
+        <div v-else-if="paymentStatus === 'waiting'">
+          <p class="modal-subtitle">请使用微信扫码完成支付</p>
+
+          <div class="qr-status-bar">
+            <span class="countdown-text">
+              ⏱️ 有效期: {{ Math.floor(countdown / 60) }}:{{
+                String(countdown % 60).padStart(2, '0')
+              }}
+            </span>
+            <button class="refresh-qr-btn" @click="showPremiumPaymentModal">
+              🔄 刷新二维码
+            </button>
           </div>
-          <div class="info-item">
-            <span class="info-label">支付金额</span>
-            <span class="info-value price-highlight">¥198.00</span>
+
+          <div class="qr-code-container">
+            <div v-if="premiumQrCode" class="qr-code-real">
+              <img :src="premiumQrCode" alt="微信支付二维码" class="qr-image" />
+            </div>
           </div>
-          <div class="info-item">
-            <span class="info-label">有效期</span>
-            <span class="info-value">1年</span>
+
+          <div class="payment-info">
+            <div class="info-item">
+              <span class="info-label">套餐名称</span>
+              <span class="info-value">高级会员（年付）</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">支付金额</span>
+              <span class="info-value price-highlight">¥198.00</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">有效期</span>
+              <span class="info-value">1年</span>
+            </div>
           </div>
+
+          <p class="payment-notice waiting-notice">
+            💡 请使用微信扫描二维码完成支付，支付成功后会自动跳转...
+          </p>
         </div>
-        <!--        <p class="payment-notice">-->
-        <!--          ⚠️ 提示：此为前端模拟演示，实际支付需要后端集成微信SDK生成真实二维码-->
-        <!--        </p>-->
+
+        <!-- 支付成功 -->
+        <div v-else-if="paymentStatus === 'success'" class="payment-success">
+          <div class="success-icon">✅</div>
+          <p class="success-title">支付成功！</p>
+          <p class="success-desc">已成功升级高级会员</p>
+          <p class="success-hint">窗口将在 3 秒后自动关闭...</p>
+        </div>
+
+        <!-- 支付失败/错误 -->
+        <div v-else-if="paymentStatus === 'error'" class="payment-error">
+          <div class="error-icon">❌</div>
+          <p class="error-title">支付失败或二维码已过期</p>
+          <button class="retry-btn" @click="showPremiumPaymentModal">
+            🔄 重新获取二维码
+          </button>
+        </div>
       </div>
     </div>
 
@@ -2048,6 +2191,120 @@ const faqList = ref([
           }
         }
       }
+    }
+  }
+
+  // 新增：支付状态相关样式
+  .qr-status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 8px;
+
+    .countdown-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: #0369a1;
+    }
+
+    .refresh-qr-btn {
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: white;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgb(102 126 234 / 30%);
+      }
+    }
+  }
+
+  .waiting-notice {
+    color: #0369a1 !important;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+    border-left-color: #3b82f6 !important;
+  }
+
+  // 支付成功样式
+  .payment-success {
+    padding: 40px 20px;
+    text-align: center;
+
+    .success-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .success-title {
+      margin-bottom: 8px;
+      font-size: 24px;
+      font-weight: 700;
+      color: #059669;
+    }
+
+    .success-desc {
+      margin-bottom: 12px;
+      font-size: 16px;
+      color: #047857;
+    }
+
+    .success-hint {
+      font-size: 14px;
+      color: #6b7280;
+    }
+  }
+
+  // 支付失败/错误样式
+  .payment-error {
+    padding: 40px 20px;
+    text-align: center;
+
+    .error-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .error-title {
+      margin-bottom: 20px;
+      font-size: 18px;
+      font-weight: 600;
+      color: #dc2626;
+    }
+
+    .retry-btn {
+      padding: 10px 28px;
+      font-size: 15px;
+      font-weight: 600;
+      color: white !important;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgb(102 126 234 / 40%);
+      }
+    }
+  }
+
+  // 加载中样式
+  .payment-loading {
+    text-align: center;
+    padding: 40px 20px;
+
+    .modal-subtitle {
+      margin-bottom: 24px;
     }
   }
 }
