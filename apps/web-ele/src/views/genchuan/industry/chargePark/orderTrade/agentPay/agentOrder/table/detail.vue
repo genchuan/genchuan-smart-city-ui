@@ -85,10 +85,6 @@ defineExpose({
         <div class="detail-row-right">{{ detailObj.orderNo || '-' }}</div>
       </div>
 
-      <div class="detail-card-row">
-        <div class="detail-row-left">商户ID:</div>
-        <div class="detail-row-right">{{ detailObj.merchantId || '-' }}</div>
-      </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">商户名称:</div>
