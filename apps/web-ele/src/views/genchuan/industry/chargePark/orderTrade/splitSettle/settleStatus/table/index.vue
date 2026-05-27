@@ -1,7 +1,7 @@
 <script setup>import { reactive, ref, computed, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
-import { ElMessage, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElDialog } from 'element-plus';
+import { ElMessage, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElDialog, ElDatePicker } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getSplitRateStatusPage, exportSplitRateStatusExcel, createSplitRateStatus, updateSplitRateStatus, deleteSplitRateStatus, checkSplitRateStatus } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
@@ -32,8 +32,10 @@ const props = defineProps({
 const emit = defineEmits(['arrow-change', 'clear-filters']);
 // 搜索表单数据
 const searchFormData = reactive({
-  billId: '',
+  billNo: '',
   status: '',
+  createTimeStart: '',
+  createTimeEnd: '',
 });
 const searchFormRef = ref(null);
 // 表单数据
@@ -203,8 +205,10 @@ const [Drawer, drawerApi] = useVbenDrawer({
 /** 搜索 */
 function handleSearch() {
   dataObj.searchObj = {
-    billId: searchFormData.billId ? Number(searchFormData.billId) : undefined,
+    billNo: searchFormData.billNo || undefined,
     status: searchFormData.status || undefined,
+    createTimeStart: searchFormData.createTimeStart ? searchFormData.createTimeStart.replace(' ', 'T') : undefined,
+    createTimeEnd: searchFormData.createTimeEnd ? searchFormData.createTimeEnd.replace(' ', 'T') : undefined,
   };
   dataObj.currentPage = 1;
   gridApi.query();
@@ -212,8 +216,10 @@ function handleSearch() {
 }
 /** 重置搜索 */
 function resetSearch() {
-  searchFormData.billId = '';
+  searchFormData.billNo = '';
   searchFormData.status = '';
+  searchFormData.createTimeStart = '';
+  searchFormData.createTimeEnd = '';
   dataObj.searchObj = {};
   dataObj.currentPage = 1;
   gridApi.query();
@@ -365,14 +371,34 @@ watch(
         label-width="100px"
         class="query-form"
       >
-        <ElFormItem label="单据ID">
-          <ElInputNumber v-model="searchFormData.billId" :min="0" placeholder="请输入单据ID" />
+        <ElFormItem label="关联单据编号">
+          <ElInput v-model="searchFormData.billNo"  placeholder="请输入关联单据编号" />
         </ElFormItem>
         <ElFormItem label="状态">
           <ElSelect v-model="searchFormData.status" placeholder="请选择状态">
             <ElOption label="正常" value="normal" />
             <ElOption label="异常" value="abnormal" />
           </ElSelect>
+        </ElFormItem>
+        <ElFormItem label="创建时间">
+          <ElDatePicker
+            v-model="searchFormData.createTimeStart"
+            type="datetime"
+            placeholder="选择开始时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            class="w-full"
+          />
+        </ElFormItem>
+        <ElFormItem label="至">
+          <ElDatePicker
+            v-model="searchFormData.createTimeEnd"
+            type="datetime"
+            placeholder="选择结束时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            class="w-full"
+          />
         </ElFormItem>
       </ElForm>
     </Drawer>
