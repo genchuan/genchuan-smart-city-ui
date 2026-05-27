@@ -4,8 +4,7 @@ import { computed, h, nextTick, onMounted, ref, watch } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
-import { useQRCode } from '@vueuse/integrations/useQRCode';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElImage, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -71,20 +70,16 @@ const QrCodeCellImage = {
     },
   },
   setup(props) {
-    const qrcode = useQRCode(
-      computed(() => props.value),
-      {
-        errorCorrectionLevel: 'H',
-        margin: 2,
-        width: 96,
-      },
-    );
-
     return () =>
-      h('img', {
+      h(ElImage, {
         alt: '车位二维码',
         class: 'common-cell-image',
-        src: qrcode.value,
+        crossorigin: 'anonymous',
+        fit: 'cover',
+        previewSrcList: [getFullImageUrl(props.value)],
+        referrerPolicy: 'no-referrer',
+        src: getFullImageUrl(props.value),
+        style: 'width: 100px; height: 100px; cursor: pointer;',
       });
   },
 };
@@ -149,6 +144,21 @@ function extractPageList(result) {
 
 function firstDefined(...values) {
   return values.find((value) => !isEmpty(value));
+}
+
+function getFullImageUrl(url) {
+  if (!url) return '';
+  const imageUrl = Array.isArray(url) ? url[0] : url;
+  if (!imageUrl) return '';
+  if (
+    imageUrl.startsWith('http://') ||
+    imageUrl.startsWith('https://') ||
+    imageUrl.startsWith('data:image/')
+  ) {
+    return imageUrl;
+  }
+  const baseUrl = import.meta.env.VITE_BASE_URL || '';
+  return `${baseUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
 }
 
 function getSpaceQrCodeValue(row = {}) {
@@ -812,6 +822,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
     rowConfig: {
       keyField: 'id',
       isHover: true,
+      height: 'auto',
     },
     showOverflow: true,
     toolbarConfig: {
@@ -1308,19 +1319,6 @@ function getCellDisplayText(column, row) {
   return '--';
 }
 
-function getImageUrl(value) {
-  if (!value || value === '--') return '';
-  const imageValue = String(Array.isArray(value) ? value[0] : value).trim();
-  if (!imageValue || imageValue === '--') return '';
-  if (/^data:image\//.test(imageValue)) return imageValue;
-  if (/^https?:\/\//.test(imageValue)) return imageValue;
-  if (/^[\d+/a-z]+=*$/i.test(imageValue) && imageValue.length > 100) {
-    return `data:image/png;base64,${imageValue}`;
-  }
-  const baseUrl = import.meta.env.VITE_BASE_URL || '';
-  return `${baseUrl}${String(imageValue).startsWith('/') ? '' : '/'}${imageValue}`;
-}
-
 function getQrCodeCellValue(column, row) {
   const candidates = [
     column.displayField,
@@ -1333,21 +1331,6 @@ function getQrCodeCellValue(column, row) {
   }
   const displayText = getCellDisplayText(column, row);
   return displayText && displayText !== '--' ? String(displayText).trim() : '';
-}
-
-function getColumnImageUrl(column, row) {
-  return getImageUrl(getQrCodeCellValue(column, row));
-}
-
-function isImageLikeQrCodeValue(value) {
-  if (!value) return false;
-  return (
-    /^data:image\//.test(value) ||
-    /^https?:\/\//.test(value) ||
-    /\.(?:gif|jpe?g|png|svg|webp)(?:[?#].*)?$/i.test(value) ||
-    value.startsWith('/') ||
-    (/^[\d+/a-z]+=*$/i.test(value) && value.length > 100)
-  );
 }
 
 function handleCardClick(item) {
@@ -1629,29 +1612,15 @@ defineExpose({
               :key="column.field"
               #[column.slotName]="{ row }"
             >
-              <el-image
-                v-if="
-                  column.type === 'image' &&
-                  isImageLikeQrCodeValue(getQrCodeCellValue(column, row))
-                "
-                class="common-cell-image"
-                :src="getColumnImageUrl(column, row)"
-                :preview-src-list="[getColumnImageUrl(column, row)]"
-                fit="cover"
-                preview-teleported
-              />
-              <QrCodeCellImage
-                v-else-if="
-                  column.type === 'image' && getQrCodeCellValue(column, row)
-                "
-                :value="getQrCodeCellValue(column, row)"
-              />
-              <span
-                v-else-if="column.type === 'image'"
-                class="common-image-placeholder"
-              >
-                暂无图片
-              </span>
+              <div v-if="column.type === 'image'" class="qrcode-cell">
+                <QrCodeCellImage
+                  v-if="
+                    column.type === 'image' && getQrCodeCellValue(column, row)
+                  "
+                  :value="getQrCodeCellValue(column, row)"
+                />
+                <span v-else class="common-image-placeholder">暂无图片</span>
+              </div>
               <el-text
                 v-else
                 class="common-align"
@@ -1827,10 +1796,16 @@ defineExpose({
 }
 
 .common-cell-image {
-  width: 64px;
-  height: 64px;
-  vertical-align: middle;
+  display: block;
   border-radius: 4px;
+}
+
+.qrcode-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 112px;
+  padding: 6px 0;
 }
 
 .common-image-placeholder {

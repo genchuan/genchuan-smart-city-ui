@@ -249,6 +249,7 @@ function buildGridColumns() {
   return [
     ...tableColumns.map((column) => {
       const columnConfig = {
+        ...column,
         field: column.field,
         minWidth: column.minWidth || 140,
         showOverflow: true,
@@ -424,7 +425,15 @@ async function handleExport(extraParams = {}, isRowExport = false) {
 }
 
 async function handleOpenDetail(row) {
-  detailObj.value = (await pageApi.getStationOpReportDetail(row.id)) || row;
+  const detail = (await pageApi.getStationOpReportDetail(row.id)) || row;
+  detailObj.value = {
+    ...row,
+    ...detail,
+  };
+  if (isEmpty(detailObj.value.status)) {
+    detailObj.value.status =
+      detailObj.value.generateStatus || detailObj.value.statusName;
+  }
   await nextTick();
   detailDrawerRef.value?.open();
 }
@@ -468,9 +477,9 @@ function getFieldLabel(field) {
 
 function getTagDisplayText(field, value) {
   if (field === 'status') {
-    if (value === 'enabled') return '启用';
-    if (value === 'disabled') return '停用';
-    if (value === 'wait') return '待处理';
+    if (value === '生成中') return '生成中';
+    if (value === '生成成功') return '生成成功';
+    if (value === '生成失败') return '生成失败';
   }
   return value;
 }
@@ -490,7 +499,10 @@ async function clearFilters() {
 }
 
 function getCellDisplayText(column, row) {
-  const value = row?.[column.field];
+  let value = row?.[column.field];
+  if (column.field === 'generateStatus') {
+    value = row?.generateStatus;
+  }
   if (!isEmpty(value)) {
     return Array.isArray(value) ? value.join(', ') : value;
   }

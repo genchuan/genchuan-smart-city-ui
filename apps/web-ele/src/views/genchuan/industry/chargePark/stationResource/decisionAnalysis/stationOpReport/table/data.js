@@ -109,7 +109,7 @@ export const searchFields = [
     field: 'generateStatus',
     label: '生成状态',
     type: 'select',
-    options: ['生成中', '生成成功', '生成失败'],
+    options: ['已生成'],
     required: false,
   },
 ];
@@ -231,6 +231,7 @@ export const tableColumns = [
     field: 'generateStatus',
     label: '生成状态',
     minWidth: 120,
+    drillField: 'status',
     drillType: 'filter',
   },
   {
