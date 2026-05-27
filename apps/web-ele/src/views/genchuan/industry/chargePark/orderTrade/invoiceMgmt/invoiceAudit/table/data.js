@@ -7,12 +7,14 @@ export function useGridColumns() {
       title: '主键ID',
       minWidth: 100,
       sortable: true,
+      slots: { default: 'id' },
     },
     {
       field: 'invoiceNo',
       title: '关联发票编号',
       minWidth: 160,
       sortable: true,
+      slots: { default: 'invoiceNo' },
     },
     {
       field: 'creator',
@@ -29,7 +31,7 @@ export function useGridColumns() {
       slots: { default: 'status' },
     },
     {
-      field: 'auditorName',
+      field: 'updater',
       title: '审核人名称',
       minWidth: 120,
       sortable: true,
