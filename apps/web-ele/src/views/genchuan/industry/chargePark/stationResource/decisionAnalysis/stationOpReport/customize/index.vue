@@ -249,6 +249,7 @@ function buildGridColumns() {
   return [
     ...tableColumns.map((column) => {
       const columnConfig = {
+        ...column,
         field: column.field,
         minWidth: column.minWidth || 140,
         showOverflow: true,
@@ -476,9 +477,9 @@ function getFieldLabel(field) {
 
 function getTagDisplayText(field, value) {
   if (field === 'status') {
-    if (value === 'enabled') return '启用';
-    if (value === 'disabled') return '停用';
-    if (value === 'wait') return '待处理';
+    if (value === '生成中') return '生成中';
+    if (value === '生成成功') return '生成成功';
+    if (value === '生成失败') return '生成失败';
   }
   return value;
 }
@@ -499,8 +500,8 @@ async function clearFilters() {
 
 function getCellDisplayText(column, row) {
   let value = row?.[column.field];
-  if (column.field === 'status') {
-    value = row?.status || row?.generateStatus || row?.statusName;
+  if (column.field === 'generateStatus') {
+    value = row?.generateStatus;
   }
   if (!isEmpty(value)) {
     return Array.isArray(value) ? value.join(', ') : value;
