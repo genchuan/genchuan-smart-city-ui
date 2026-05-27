@@ -88,6 +88,10 @@ const [CreateForm, createFormApi] = useVbenForm({
     if (stationField) {
       stationField.componentProps.options = stationOptions.value;
     }
+    const areaField = schema.find((f) => f.fieldName === 'areaId');
+    if (areaField) {
+      areaField.componentProps.options = stationOptions.value;
+    }
     return schema;
   }),
   showDefaultActions: false,
@@ -412,11 +416,18 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
+  schema: computed(() => {
+    const schema = useSearchFormSchema().map((v) => {
+      delete v.rules;
+      return { ...v };
+    });
+
+    const areaField = schema.find((f) => f.fieldName === 'areaId');
+    if (areaField) {
+      areaField.componentProps.options = stationOptions.value;
+    }
+
+    return schema;
   }),
   showCollapseButton: true,
   submitButtonOptions: {
@@ -749,7 +760,8 @@ const handleFilterByStatus = (status) => {
 
 // 按片区筛选
 const handleFilterByArea = (areaId, areaName) => {
-  dataObj.searchParams = { ...dataObj.searchParams, areaName };
+  dataObj.searchParams = { ...dataObj.searchParams, areaId };
+  dataObj.filterLabels = { ...dataObj.filterLabels, areaId: areaName };
   isSearching = true;
   gridApi.query();
 };

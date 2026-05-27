@@ -448,7 +448,9 @@ const activeFilters = computed(() => {
     filters.push({ label: `状态：${statusLabel}`, field: 'status' });
   }
   if (obj.areaId) {
-    filters.push({ label: `片区：${obj.areaId}`, field: 'areaId' });
+    const station = stationOptions.value.find((s) => s.value === obj.areaId);
+    const stationLabel = station ? station.label : obj.areaId;
+    filters.push({ label: `片区：${stationLabel}`, field: 'areaId' });
   }
   if (obj.handleUserId) {
     const handleUserLabel = labels.handleUserId || obj.handleUserId;
@@ -604,7 +606,19 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: computed(() => {
+    const schema = useSearchFormSchema().map((v) => {
+      delete v.rules;
+      return { ...v };
+    });
+
+    const areaField = schema.find((f) => f.fieldName === 'areaId');
+    if (areaField) {
+      areaField.componentProps.options = stationOptions.value;
+    }
+
+    return schema;
+  }),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -980,7 +994,7 @@ const getActionButtons = (row) => {
       </template>
       <template #areaName="{ row }">
         <el-text
-          @click="handleFieldFilter('areaId', row.areaName)"
+          @click="handleFieldFilter('areaId', row.areaId, row.areaName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"

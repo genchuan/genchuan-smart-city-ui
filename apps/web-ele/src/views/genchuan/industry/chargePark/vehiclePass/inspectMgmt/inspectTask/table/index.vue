@@ -114,6 +114,10 @@ const [Form, formApi] = useVbenForm({
     if (stationField) {
       stationField.componentProps.options = stationOptions.value;
     }
+    const areaField = schema.find((f) => f.fieldName === 'areaName');
+    if (areaField) {
+      areaField.componentProps.options = stationOptions.value;
+    }
     return schema;
   }),
   showDefaultActions: false,
@@ -303,8 +307,8 @@ const activeFilters = computed(() => {
     const statusLabel = labels.status || obj.status;
     filters.push({ label: `任务状态：${statusLabel}`, field: 'status' });
   }
-  if (obj.areaId) {
-    filters.push({ label: `片区：${obj.areaId}`, field: 'areaId' });
+  if (obj.areaName) {
+    filters.push({ label: `片区：${obj.areaName}`, field: 'areaName' });
   }
   if (obj.executeUserId !== undefined && obj.executeUserId !== null && obj.executeUserId !== '') {
     const label = labels.executeUserId || userNameMap.value.executeUserId || obj.executeUserId;
@@ -446,11 +450,18 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
+  schema: computed(() => {
+    const schema = useSearchFormSchema().map((v) => {
+      delete v.rules;
+      return { ...v };
+    });
+
+    const areaField = schema.find((f) => f.fieldName === 'areaId');
+    if (areaField) {
+      areaField.componentProps.options = stationOptions.value;
+    }
+
+    return schema;
   }),
   showCollapseButton: true,
   submitButtonOptions: {
@@ -1177,7 +1188,7 @@ const handleFieldFilter = (field, value, userName = '') => {
       </template>
       <template #areaName="{ row }">
         <el-text
-          @click="handleFieldFilter('areaId', row.areaName)"
+          @click="handleFieldFilter('areaName', row.areaName, row.areaName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"

@@ -237,7 +237,7 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'areaId',
+      fieldName: 'areaName',
       label: '片区',
       component: 'Select',
       componentProps: {
@@ -276,7 +276,7 @@ export function useCreateFormSchema() {
       rules: 'required',
     },
     {
-      fieldName: 'areaId',
+      fieldName: 'areaName',
       label: '片区',
       component: 'Select',
       componentProps: {

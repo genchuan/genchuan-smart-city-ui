@@ -86,11 +86,7 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择片区',
-        options: [
-          { label: '芗城区', value: 1 },
-          { label: '龙文区', value: 2 },
-          { label: '龙海区', value: 3 },
-        ],
+        options: [],
       },
     },
     {
