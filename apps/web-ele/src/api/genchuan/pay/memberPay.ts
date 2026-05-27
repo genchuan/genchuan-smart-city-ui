@@ -1,4 +1,5 @@
 import { appRequestClient } from '#/api/request';
+import { useUserStore } from '@vben/stores';
 
 export namespace MemberPayApi {
   /** 创建订单请求参数 */
@@ -23,6 +24,8 @@ export namespace MemberPayApi {
     id: number;
     channelCode: string;
     channelExtras: Record<string, any>;
+    userId: number;
+    userType: number;
   }
 
   /** 提交支付订单响应 */
@@ -60,10 +63,14 @@ export function createMemberOrder() {
 
 /** 提交支付订单（获取二维码） */
 export function submitMemberOrder(payOrderId: number) {
+  const userStore = useUserStore();
+  const userId = Number(userStore.userInfo?.id) || 0;
   const data: MemberPayApi.SubmitOrderReqVO = {
     id: payOrderId,
     channelCode: 'wx_native',
     channelExtras: {},
+    userId,
+    userType: 1,
   };
 
   return appRequestClient.post<MemberPayApi.SubmitOrderRespVO>(
