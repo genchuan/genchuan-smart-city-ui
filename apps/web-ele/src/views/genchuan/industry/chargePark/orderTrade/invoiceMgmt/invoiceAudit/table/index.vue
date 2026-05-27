@@ -333,12 +333,12 @@ watch(
             <ElOption label="已驳回" value="rejected" />
           </ElSelect>
         </ElFormItem>
-        <ElFormItem label="审核开始时间">
+        <ElFormItem label="申请开始时间">
           <ElDatePicker v-model="searchFormData.applyTimeStart" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss"
             format="YYYY-MM-DD HH:mm:ss" />
         </ElFormItem>
 
-        <ElFormItem label="审核结束时间">
+        <ElFormItem label="申请结束时间">
           <ElDatePicker v-model="searchFormData.applyTimeEnd" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss"
             format="YYYY-MM-DD HH:mm:ss" />
         </ElFormItem>
