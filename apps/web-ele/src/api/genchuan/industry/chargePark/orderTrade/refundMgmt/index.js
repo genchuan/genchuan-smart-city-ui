@@ -81,3 +81,7 @@ export function getAmountCheckChart(params) {
     params,
   });
 }
+/** 订单金额核算检查 */
+export function checkAmountCheck(data) {
+  return requestClient.post('/ordertrade/amount-check/check', data);
+} 
