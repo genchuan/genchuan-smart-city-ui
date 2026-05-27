@@ -58,17 +58,11 @@ const handleLineChartClick = (params) => {
   }
 };
 
-// 柱状图点击事件处理
+// 柱状图点击事件处理 - 只筛选异常类型，不传递时间参数
 const handleBarChartClick = (params) => {
   if (params && params.name) {
     const abnormalTypeKey = Object.keys(abnormalTypeMap).find(key => abnormalTypeMap[key].label === params.name);
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
-    const start = thirtyDaysAgo.toISOString().split('T')[0] + ' 00:00:00';
-    const end = today.toISOString().split('T')[0] + ' 23:59:59';
     emit('filter-change', {
-      identifyTimeStart: start,
-      identifyTimeEnd: end,
       abnormalType: abnormalTypeKey || params.name,
       status: null,
     });
@@ -223,7 +217,7 @@ onMounted(() => {
   <div class="park-chart-box">
     <div class="chart-box-left chart-box-left-two">
       <Card
-        class="left-card cursor-pointer"
+        class="left-card.cursor-pointer"
         v-for="(item, index) in state.cardList"
         :key="item.title"
         v-bind="item"
