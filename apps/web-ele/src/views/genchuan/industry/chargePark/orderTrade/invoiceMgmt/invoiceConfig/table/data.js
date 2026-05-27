@@ -34,7 +34,7 @@ export function useGridColumns() {
       slots: { default: 'status' },
     },
     {
-      field: 'auditorName',
+      field: 'updater',
       title: '审核人名称',
       minWidth: 120,
       sortable: true,

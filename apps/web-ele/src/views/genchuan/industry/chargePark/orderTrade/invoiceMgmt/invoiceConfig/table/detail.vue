@@ -93,29 +93,13 @@ defineExpose({
       </div> 
       <div class="detail-card-row">
         <div class="detail-row-left">审核人名称:</div>
-        <div class="detail-row-right">{{ detailObj.auditorName || '-' }}</div>
+        <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
         <div class="detail-row-left">审核时间:</div>
         <div class="detail-row-right">{{ detailObj.auditTime || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备注:</div>
-        <div class="detail-row-right">{{ detailObj.remark || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段1:</div>
-        <div class="detail-row-right">{{ detailObj.reserve1 || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">备用字段2:</div>
-        <div class="detail-row-right">{{ detailObj.reserve2 || '-' }}</div>
-      </div>
-
+      </div> 
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
