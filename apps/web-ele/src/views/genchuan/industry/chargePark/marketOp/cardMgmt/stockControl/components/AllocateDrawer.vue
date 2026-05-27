@@ -1,12 +1,13 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+
 import { ElMessage } from 'element-plus';
 
+import { useVbenForm } from '#/adapter/form';
 import { allocateStockControl } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/stockControl';
 import { getStationSimpleList } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
-import { useVbenForm } from '#/adapter/form';
 
 const emit = defineEmits(['success']);
 
