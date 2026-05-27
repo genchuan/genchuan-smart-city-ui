@@ -9,21 +9,6 @@ export function useFormSchema() {
       labelWidth: '100',
     },
     {
-      fieldName: 'grade',
-      label: '年级',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择年级',
-        options: [
-          { label: '2021级', value: '2021' },
-          { label: '2022级', value: '2022' },
-          { label: '2023级', value: '2023' },
-          { label: '2024级', value: '2024' },
-        ],
-      },
-      labelWidth: '100',
-    },
-    {
       fieldName: 'dateRange',
       label: '时间范围',
       component: 'DatePicker',

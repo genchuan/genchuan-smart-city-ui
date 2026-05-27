@@ -1,6 +1,6 @@
 <script setup>
-import {ref, computed, onMounted} from 'vue';
-import {ElSelect, ElOption, ElDatePicker} from 'element-plus';
+import { ref, computed, onMounted } from 'vue';
+import { ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
 import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
@@ -10,9 +10,15 @@ import {
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/medicalCare/treatMgmt/data.js';
 
 const loading = ref(true);
+
+// 受时间范围影响的数据（卡片、饼图）
 const chartData = ref({});
 const distributionData = ref({});
 
+// 折线图数据（独立，不随 timeRange 变化）
+const lineData = ref({ xAxis: [], series: [] });
+
+// 时间范围选择器（仅用于控制卡片和饼图）
 const timeRange = ref([]);
 
 const getDefaultTimeRange = () => {
@@ -42,10 +48,12 @@ const getTimeRangeParam = () => {
   return `${formatDateTime(defaultStart, false)},${formatDateTime(defaultEnd, true)}`;
 };
 
+// 日期变化时只刷新受时间范围影响的数据（卡片 + 饼图）
 const handleDateRangeChange = () => {
-  loadData();
+  loadOverviewData();
 };
 
+// 卡片数据（基于 chartData）
 const cardList = computed(() => {
   const total = chartData.value.totalTreatCount || 0;
   const pending = chartData.value.pendingAuditCount || 0;
@@ -63,14 +71,7 @@ const cardList = computed(() => {
   ];
 });
 
-const lineData = computed(() => {
-  const trend = chartData.value.recentWeekTreatTrend || [];
-  return {
-    xAxis: trend.map(item => item.date),
-    series: [{name: '就诊次数', data: trend.map(item => item.count)}],
-  };
-});
-
+// 饼图数据（基于 distributionData）
 const treatTypePieData = computed(() => {
   const data = distributionData.value.treatTypeDistribution || [];
   return data.map(item => ({
@@ -99,7 +100,91 @@ const handlePieChange = (index) => {
   activePieIndex.value = index;
 };
 
-// ========== 核心修改：所有点击改为派发自定义事件 ==========
+// ========== 数据加载 ==========
+// 加载受时间范围影响的卡片 + 饼图数据
+const loadOverviewData = async () => {
+  try {
+    const timeRangeParam = getTimeRangeParam();
+    // 注意：不再等待折线图，只等待这两个请求
+    const [chartRes, distRes] = await Promise.allSettled([
+      getTreatMgmtChart({timeRange: timeRangeParam}),
+      getTreatMgmtDistribution({timeRange: timeRangeParam}),
+    ]);
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else {
+      // 降级假数据
+      chartData.value = {
+        totalTreatCount: 86,
+        pendingAuditCount: 12,
+        finishedTreatCount: 74,
+        outpatientCount: 62,
+        emergencyCount: 18,
+        otherCount: 6,
+      };
+    }
+    if (distRes.status === 'fulfilled') distributionData.value = distRes.value;
+    else {
+      distributionData.value = {
+        treatTypeDistribution: [
+          {type: '门诊', value: 62},
+          {type: '急诊', value: 18},
+          {type: '其他', value: 6},
+        ],
+        gradeDistribution: [
+          {grade: '高一', value: 25},
+          {grade: '高二', value: 30},
+          {grade: '高三', value: 31},
+        ],
+      };
+    }
+  } catch (error) {
+    console.error('加载卡片/饼图数据失败', error);
+  }
+};
+
+// 独立加载折线图数据：不传 timeRange，始终取近一周趋势
+const loadLineTrend = async () => {
+  try {
+    // 关键改动：不传递 timeRange 参数
+    const res = await getTreatMgmtChart();
+    const trend = res.recentWeekTreatTrend || [];
+    lineData.value = {
+      xAxis: trend.map(item => item.date),
+      series: [{name: '就诊次数', data: trend.map(item => item.count)}],
+    };
+  } catch (error) {
+    console.error('加载近一周趋势失败，使用默认数据', error);
+    // 降级默认近一周数据
+    const defaultTrend = [
+      {date: '2025-03-25', count: 8},
+      {date: '2025-03-26', count: 12},
+      {date: '2025-03-27', count: 10},
+      {date: '2025-03-28', count: 9},
+      {date: '2025-03-29', count: 7},
+      {date: '2025-03-30', count: 5},
+      {date: '2025-03-31', count: 6},
+    ];
+    lineData.value = {
+      xAxis: defaultTrend.map(item => item.date),
+      series: [{name: '就诊次数', data: defaultTrend.map(item => item.count)}],
+    };
+  }
+};
+
+// 完整加载（初始调用）
+const loadAllData = async () => {
+  loading.value = true;
+  try {
+    // 并行加载，但折线图独立，两者互不影响
+    await Promise.all([loadOverviewData(), loadLineTrend()]);
+  } catch (error) {
+    console.error('初始化数据失败', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// ========== 点击事件（保持不变） ==========
 const handleCardClick = (cardInfo) => {
   let filterType = null;
   let filterValue = null;
@@ -149,67 +234,15 @@ const handlePieClick = (params) => {
 const handleLineClick = (params) => {
   const date = params.xValue || params.name;
   if (date) {
-    // 按该日期筛选就诊记录（创建时间或就诊日期）
     window.dispatchEvent(new CustomEvent('treat-chart-filter', {
       detail: {type: 'createTime', value: [date, date]}
     }));
   }
 };
 
-// 加载数据（保持不变）
-const loadData = async () => {
-  loading.value = true;
-  try {
-    const timeRangeParam = getTimeRangeParam();
-    const [chartRes, distRes] = await Promise.allSettled([
-      getTreatMgmtChart({timeRange: timeRangeParam}),
-      getTreatMgmtDistribution({timeRange: timeRangeParam}),
-    ]);
-    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
-    else {
-      chartData.value = {
-        totalTreatCount: 86,
-        pendingAuditCount: 12,
-        finishedTreatCount: 74,
-        outpatientCount: 62,
-        emergencyCount: 18,
-        otherCount: 6,
-        recentWeekTreatTrend: [
-          {date: '2025-03-25', count: 8},
-          {date: '2025-03-26', count: 12},
-          {date: '2025-03-27', count: 10},
-          {date: '2025-03-28', count: 9},
-          {date: '2025-03-29', count: 7},
-          {date: '2025-03-30', count: 5},
-          {date: '2025-03-31', count: 6},
-        ],
-      };
-    }
-    if (distRes.status === 'fulfilled') distributionData.value = distRes.value;
-    else {
-      distributionData.value = {
-        treatTypeDistribution: [
-          {type: '门诊', value: 62},
-          {type: '急诊', value: 18},
-          {type: '其他', value: 6},
-        ],
-        gradeDistribution: [
-          {grade: '高一', value: 25},
-          {grade: '高二', value: 30},
-          {grade: '高三', value: 31},
-        ],
-      };
-    }
-  } catch (error) {
-    console.error('加载图表数据失败', error);
-  } finally {
-    loading.value = false;
-  }
-};
-
 onMounted(() => {
   timeRange.value = getDefaultTimeRange();
-  loadData();
+  loadAllData();
 });
 </script>
 
@@ -225,8 +258,20 @@ onMounted(() => {
       />
     </div>
 
-    <div class="line-chart-container" style="flex: 1.5 !important; position: relative;">
-      <div class="date-range-wrapper">
+    <div class="line-chart-container" style="flex: 1 !important; position: relative;">
+      <!-- 移除原日期选择器，折线图不再受其控制 -->
+      <lineChart
+        title="近一周就诊趋势"
+        :x-data="lineData.xAxis"
+        :series-data="lineData.series"
+        y-name="就诊次数"
+        @line-click="handleLineClick"
+      />
+    </div>
+
+    <div class="chart-area">
+      <!-- 日期选择器已移动到饼图区域的左上角 -->
+      <div class="date-range-wrapper-left">
         <el-date-picker
           v-model="timeRange"
           type="daterange"
@@ -244,16 +289,6 @@ onMounted(() => {
           @change="handleDateRangeChange"
         />
       </div>
-      <lineChart
-        title="近一周就诊趋势"
-        :x-data="lineData.xAxis"
-        :series-data="lineData.series"
-        y-name="就诊次数"
-        @line-click="handleLineClick"
-      />
-    </div>
-
-    <div class="chart-area">
       <div class="chart-select-wrapper">
         <el-select v-model="activePieIndex" size="small" @change="handlePieChange">
           <el-option v-for="(opt, idx) in pieOptions" :key="idx" :label="opt.title" :value="idx"/>
@@ -296,13 +331,6 @@ onMounted(() => {
     margin-left: 12px;
   }
 
-  .date-range-wrapper {
-    position: absolute;
-    top: 8px;
-    right: 10px;
-    z-index: 10;
-  }
-
   .chart-area {
     position: relative;
     flex: 1;
@@ -311,6 +339,15 @@ onMounted(() => {
     margin-left: 12px;
   }
 
+  // 日期选择器放在饼图左上角
+  .date-range-wrapper-left {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    z-index: 10;
+  }
+
+  // 下拉切换放在饼图右上角
   .chart-select-wrapper {
     position: absolute;
     top: 8px;
