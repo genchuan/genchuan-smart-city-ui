@@ -106,10 +106,10 @@ export const searchFields = [
     required: false,
   },
   {
-    field: 'status',
+    field: 'generateStatus',
     label: '生成状态',
     type: 'select',
-    options: ['已生成'],
+    options: ['已生成', '生成失败', '生成中'],
     required: false,
   },
 ];
