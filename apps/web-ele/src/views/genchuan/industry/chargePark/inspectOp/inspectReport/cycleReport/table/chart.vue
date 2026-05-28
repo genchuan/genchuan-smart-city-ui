@@ -224,7 +224,7 @@ onMounted(fetchChartData);
   align-content: stretch;
   width: min(420px, 42%);
   min-width: 360px;
-  height: 280px;
+  height: 311px;
   padding: 4px;
   overflow: hidden;
 }
