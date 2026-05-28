@@ -383,15 +383,15 @@ watch(
         </div>
       </template>
       <template #category="{ row }">
-  <span @click="handleFilterCategory(row.category)" class="cursor-pointer text-primary">
-    {{ row.category }}
-  </span>
-</template>
-<template #taxBody="{ row }">
-  <span @click="handleFilterTaxBody(row.taxBody)" class="cursor-pointer text-primary">
-    {{ row.taxBody }}
-  </span>
-</template>
+        <el-text @click="handleFilterCategory(row.category)" class="cursor-pointer" type="primary">
+          {{ row.category }}
+        </el-text>
+      </template>
+      <template #taxBody="{ row }">
+        <el-text @click="handleFilterTaxBody(row.taxBody)" class="cursor-pointer" type="primary">
+          {{ row.taxBody }}
+        </el-text>
+      </template>
       <template #status="{ row }">
         <el-tag :type="getStatusType(row.status)" class="cursor-pointer" @click="handleFilterStatus(row.status)">
           {{ getStatusLabel(row.status) }}
