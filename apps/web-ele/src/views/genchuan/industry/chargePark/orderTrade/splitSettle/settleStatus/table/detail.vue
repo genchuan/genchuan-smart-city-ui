@@ -27,6 +27,7 @@ const statusMap = {
   pending: { label: '待核查', type: 'warning' },
   passed: { label: '核查通过', type: 'success' },
   abnormal: { label: '核查异常', type: 'danger' },
+  normal: { label: '正常', type: 'info' },
 };
 
 // 获取状态标签
@@ -67,8 +68,8 @@ defineExpose({
       </div>
 
       <div class="detail-card-row">
-        <div class="detail-row-left">关联结算单据ID:</div>
-        <div class="detail-row-right">{{ detailObj.billId || '-' }}</div>
+        <div class="detail-row-left">关联结算单据编号:</div>
+        <div class="detail-row-right">{{ detailObj.billNo || '-' }}</div>
       </div>
 
       <div class="detail-card-row">

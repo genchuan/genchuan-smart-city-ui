@@ -5,21 +5,27 @@ import { requestClient } from '#/api/request';
 /** 获取场站列表 */
 let stationOptionsCache = null;
 export async function getStationOptions() {
+  console.log('【车牌识别】getStationOptions 被调用');
   if (stationOptionsCache) {
+    console.log('【车牌识别】使用缓存数据:', stationOptionsCache);
     return stationOptionsCache;
   }
   try {
+    console.log('【车牌识别】开始请求 API: /vehiclepass/in-park-status/simple-list');
     const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
+    console.log('【车牌识别】API 响应:', response);
     if (response && Array.isArray(response)) {
       stationOptionsCache = response.map(item => ({
         label: item.stationName,
         value: item.stationId,
       }));
+      console.log('【车牌识别】处理后的选项:', stationOptionsCache);
       return stationOptionsCache;
     }
+    console.log('【车牌识别】响应不是数组，返回空数组');
     return [];
   } catch (error) {
-    console.error('获取场站列表失败:', error);
+    console.error('【车牌识别】获取场站列表失败:', error);
     return [];
   }
 }
@@ -151,12 +157,16 @@ export function useSearchFormSchema() {
       label: '时间范围',
       component: 'DatePicker',
       componentProps: {
-        type: 'daterange',
+        type: 'datetimerange',
         placeholder: '请选择时间范围',
-        startPlaceholder: '开始日期',
-        endPlaceholder: '结束日期',
-        format: 'YYYY-MM-DD',
-        valueFormat: 'YYYY-MM-DD',
+        startPlaceholder: '开始时间',
+        endPlaceholder: '结束时间',
+        format: 'YYYY-MM-DD HH:mm:ss',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
+        defaultTime: [
+          new Date(2000, 0, 1, 0, 0, 0),
+          new Date(2000, 0, 1, 23, 59, 59),
+        ],
       },
     },
   ];
@@ -278,6 +288,7 @@ export function useCorrectFormSchema() {
         placeholder: '请输入置信度',
         min: 0,
         max: 100,
+        disabled: true,
       },
     },
     {
@@ -298,17 +309,19 @@ export function useCorrectFormSchema() {
           { label: '识别成功', value: '识别成功' },
           { label: '识别失败', value: '识别失败' },
         ],
+        disabled: true,
       },
       rules: 'required',
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '场站',
       component: 'Select',
       componentProps: {
         placeholder: '请选择场站',
         options: [],
         filterable: true,
+        disabled: true,
       },
       rules: 'required',
     },

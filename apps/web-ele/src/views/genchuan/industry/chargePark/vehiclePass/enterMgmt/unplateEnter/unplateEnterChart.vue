@@ -131,16 +131,16 @@ function initCharts() {
 }
 
 function handleCardClick(key) {
+  const pad = (n) => String(n).padStart(2, '0');
   const today = new Date();
-  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999))
-    .getTime()
-    .toString();
+  const dateStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  const todayStart = `${dateStr} 00:00:00`;
+  const todayEnd = `${dateStr} 23:59:59`;
 
   const filterMap = {
-    total: { startTime: todayStart, endTime: todayEnd },
-    passRate: { auditStatus: '已通过' },
-    pending: { auditStatus: '待审核' },
+    total: { registerTime: [todayStart, todayEnd] },
+    passRate: { status: '已通过' },
+    pending: { status: '待审核' },
   };
 
   const filterParams = filterMap[key];

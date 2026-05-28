@@ -445,25 +445,6 @@ const mapData = computed(() =>
         '正常',
         sourceObjects,
       );
-      const positionName = pickText(
-        item,
-        [
-          'positionName',
-          'locationText',
-          'locationDesc',
-          'address',
-          'addr',
-          'detailAddress',
-          'stationAddress',
-          'siteAddress',
-          'parkAddress',
-          'areaAddress',
-          'roadName',
-          'placeName',
-        ],
-        '',
-        sourceObjects,
-      );
 
       return {
         ...item,
@@ -504,7 +485,6 @@ const mapData = computed(() =>
           '',
           sourceObjects,
         ),
-        positionName,
         revenue: pickText(
           item,
           ['revenue', 'totalRevenue', 'amount'],
@@ -531,12 +511,15 @@ const mapData = computed(() =>
 
 const mapInfoWindowConfig = {
   title: 'locationName',
-  compact: true,
-  showTitle: false,
   fields: [
+    { key: 'geoCode', label: '场站编码' },
     { key: 'areaName', label: '片区' },
+    { key: 'stationName', label: '场站' },
+    { key: 'coordinate', label: '坐标' },
     { key: 'stationCount', label: '场站数' },
-    { key: 'coordinate', label: '位置' },
+    { key: 'spaceCount', label: '车位数' },
+    { key: 'orderCount', label: '订单量', bold: true },
+    { key: 'revenue', label: '营收' },
     { key: 'statusName', label: '状态' },
   ],
 };
@@ -673,7 +656,7 @@ const barChartPanels = computed(() =>
       drillType: 'areaStationBar',
       hasData: hasAreaBar.value,
       seriesData: areaBarSeriesData.value,
-      title: '片区运营分布',
+      title: '各片区场站数分布',
       xData: areaBarXData.value,
       yName: '数量',
     },
@@ -752,75 +735,38 @@ function handleCardClick(card) {
   });
 }
 
-function getBarSourceRow(drillType, drillName) {
-  const sourceMap = {
-    areaStationBar: {
-      keys: ['areaName'],
-      list: areaBarList.value,
-    },
-    recoveryRateBar: {
-      keys: ['stationName', 'name'],
-      list: recoveryBarList.value,
-    },
-    stationOrderBar: {
-      keys: ['stationName', 'name'],
-      list: stationOrderBarList.value,
-    },
-    stationTypeBar: {
-      keys: ['stationType', 'typeName', 'name'],
-      list: stationTypeBarList.value,
-    },
-  };
-  const source = sourceMap[drillType];
-  if (!source) return {};
-  return (
-    source.list.find((item) =>
-      source.keys.some(
-        (key) => String(item?.[key] || '') === String(drillName),
-      ),
-    ) || {}
-  );
-}
-
 function handleBarClick(drillType, drillLabel, drillValue) {
-  const sourceRow = getBarSourceRow(drillType, drillValue);
-  const isAreaOperation = drillType === 'areaStationBar';
   openDrillDown({
     source: 'chart',
     drillType,
-    drillLabel: isAreaOperation ? '片区运营分布' : drillLabel,
+    drillLabel,
     drillName: drillValue,
-    drillValue: isAreaOperation
-      ? (sourceRow.stationCount ?? sourceRow.value ?? drillValue)
-      : drillValue,
-    row: isAreaOperation
-      ? {
-          ...sourceRow,
-          areaName: sourceRow.areaName || drillValue,
-        }
-      : sourceRow,
+    drillValue,
   });
 }
 
 function handleLineClick(info) {
-  const sourceRow =
-    (chartData.value?.lineData || [])[info?.dataIndex] ||
-    (chartData.value?.lineData || []).find(
-      (item) => String(item?.date || '') === String(info?.categoryName || ''),
-    ) ||
-    {};
   openDrillDown({
     source: 'chart',
     drillType: 'trendLine',
-    drillLabel: '场站运营趋势',
+    drillLabel: info?.seriesName || '周期订单及业务趋势',
     drillName: info?.categoryName,
     drillValue: info?.value,
-    row: {
-      ...sourceRow,
-      clickedMetricName: info?.seriesName || '',
-      clickedMetricValue: info?.value,
-      statDate: sourceRow.date || info?.categoryName || '',
-    },
+  });
+}
+
+function handleMapMarkerClick(marker) {
+  openDrillDown({
+    source: 'map',
+    drillType: 'mapStation',
+    drillLabel: '地图场站',
+    drillName:
+      marker?.stationName ||
+      marker?.locationName ||
+      marker?.stationNo ||
+      marker?.geoCode,
+    drillValue: 1,
+    row: marker || {},
   });
 }
 </script>
@@ -855,6 +801,7 @@ function handleLineClick(info) {
           :data="mapData"
           :info-window-config="mapInfoWindowConfig"
           class="chart-panel-inner"
+          @marker-click="handleMapMarkerClick"
         />
       </div>
 
@@ -865,7 +812,6 @@ function handleLineClick(info) {
           :x-data="firstBarPanel.xData"
           :series-data="firstBarPanel.seriesData"
           :y-name="firstBarPanel.yName"
-          tooltip-compact
           @bar-click="
             handleBarClick(firstBarPanel.drillType, firstBarPanel.title, $event)
           "
@@ -879,7 +825,6 @@ function handleLineClick(info) {
           :x-data="secondBarPanel.xData"
           :series-data="secondBarPanel.seriesData"
           :y-name="secondBarPanel.yName"
-          tooltip-compact
           @bar-click="
             handleBarClick(
               secondBarPanel.drillType,
@@ -893,11 +838,10 @@ function handleLineClick(info) {
       <div v-if="hasLine" class="chart-area line-chart-area">
         <LineChartClick
           class="chart-panel-inner"
-          title="场站运营趋势"
+          title="周期订单及业务趋势"
           :x-data="lineXData"
           :series-data="lineSeriesData"
           y-name="数量"
-          tooltip-compact
           @line-click="handleLineClick"
         />
       </div>

@@ -253,7 +253,7 @@ export const tableColumns = [
 export const detailFields = [
   { key: 'reportCycle', label: '报表周期', section: '报表信息' },
   { key: 'statPeriod', label: '统计时段', section: '报表信息' },
-  { key: 'status', label: '生成状态', section: '报表信息' },
+  { key: 'generateStatus', label: '生成状态', section: '报表信息' },
   { key: 'generateTime', label: '报表生成时间', section: '报表信息' },
   { key: 'operator', label: '操作人', section: '报表信息' },
   { key: 'exportCount', label: '报表导出次数', section: '报表信息' },

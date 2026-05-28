@@ -49,7 +49,6 @@ const drillDetailFields = ref([]);
 const drillDrawerTitle = ref('关联信息');
 const importDialogVisible = ref(false);
 const importFile = ref(null);
-const importFileList = ref([]);
 const importLoading = ref(false);
 const importResult = ref(null);
 const importUpdateSupport = ref(false);
@@ -831,43 +830,20 @@ async function handleExport(extraParams = {}) {
   });
 }
 
-function resetImportState() {
+function handleOpenImport() {
   importFile.value = null;
-  importFileList.value = [];
   importResult.value = null;
   importUpdateSupport.value = false;
-}
-
-function handleOpenImport() {
-  resetImportState();
   importDialogVisible.value = true;
 }
 
 function handleImportFileChange(uploadFile) {
   importFile.value = uploadFile?.raw || uploadFile;
-  importFileList.value = uploadFile ? [uploadFile] : [];
   importResult.value = null;
 }
 
 function handleRemoveImportFile() {
   importFile.value = null;
-  importFileList.value = [];
-}
-
-function handleImportFileExceed(files) {
-  const file = files?.[0];
-  if (!file) return;
-  const rawFile = file.raw || file;
-  importFile.value = rawFile;
-  importFileList.value = [
-    {
-      name: rawFile.name || file.name || '导入文件',
-      raw: rawFile,
-      status: 'ready',
-      uid: Date.now(),
-    },
-  ];
-  importResult.value = null;
 }
 
 function getImportErrorMessage(item) {
@@ -1395,7 +1371,6 @@ defineExpose({
     </div>
     <el-dialog
       v-model="importDialogVisible"
-      @closed="resetImportState"
       :title="`导入${pageConfig.title}`"
       width="520px"
       append-to-body
@@ -1410,13 +1385,11 @@ defineExpose({
           </el-checkbox>
         </div>
         <el-upload
-          v-model:file-list="importFileList"
           drag
           :auto-upload="false"
           :limit="1"
           accept=".xls,.xlsx"
           :on-change="handleImportFileChange"
-          :on-exceed="handleImportFileExceed"
           :on-remove="handleRemoveImportFile"
         >
           <div class="import-upload-text">

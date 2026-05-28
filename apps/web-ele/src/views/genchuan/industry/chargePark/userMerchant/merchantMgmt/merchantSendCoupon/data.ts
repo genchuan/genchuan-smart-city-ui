@@ -13,9 +13,6 @@ import type {
   MerchantSendCouponRedemptionVO,
 } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantSendCoupon';
 
-import { DICT_TYPE } from '@vben/constants';
-import { getDictObj } from '@vben/hooks';
-
 import dayjs from 'dayjs';
 
 import { getRangePickerDefaultProps } from '#/utils';
@@ -29,23 +26,6 @@ function hasQueryValue(value: any) {
     value === undefined ||
     (Array.isArray(value) && value.length === 0)
   );
-}
-
-function formatCouponDictLabel(
-  dictType: string,
-  value?: null | number | string,
-  valueName?: null | number | string,
-) {
-  const rawValue = value === null || value === undefined ? '' : String(value);
-  const rawName =
-    valueName === null || valueName === undefined ? '' : String(valueName);
-  const dict = rawValue ? getDictObj(dictType, rawValue) : undefined;
-
-  if (dict?.label) {
-    return dict.label;
-  }
-
-  return rawName || rawValue || '-';
 }
 
 export type MerchantSendCouponStatus = '已取消' | '已执行' | '待执行';
@@ -400,16 +380,8 @@ export function buildCouponProfile(
     name: data?.name || fallback.couponName || '-',
     remark: data?.description || fallback.remark || '',
     rule: data?.useCondition || '-',
-    status: formatCouponDictLabel(
-      DICT_TYPE.COUPON_MGMT_STATUS,
-      data?.status,
-      data?.statusName,
-    ),
-    type: formatCouponDictLabel(
-      DICT_TYPE.COUPON_MGMT_TYPE,
-      data?.type,
-      data?.typeName,
-    ),
+    status: data?.statusName || data?.status || '-',
+    type: data?.typeName || data?.type || '-',
     validPeriod: formatApiTime(data?.validTime),
   };
 }

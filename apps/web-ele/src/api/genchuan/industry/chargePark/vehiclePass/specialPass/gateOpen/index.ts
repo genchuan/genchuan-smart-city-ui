@@ -30,6 +30,7 @@ export namespace GateOpenApi {
   /** 开闸管理分页查询参数 */
   export interface PageReqVO extends PageParam {
     stationId?: number;
+    stationName?: string;
     openReason?: string;
     applyUserId?: number;
     applyTime?: string[];
@@ -103,7 +104,10 @@ export function getGateOpen(id: number | string) {
 
 /** 新增开闸申请 */
 export function createGateOpen(data: GateOpenApi.CreateReqVO) {
-  return requestClient.post<boolean>('/vehiclepass/gate-open/create', data);
+  return requestClient.post<boolean>(
+    '/vehiclepass/gate-open/create-apply',
+    data,
+  );
 }
 
 /** 导出开闸管理 */

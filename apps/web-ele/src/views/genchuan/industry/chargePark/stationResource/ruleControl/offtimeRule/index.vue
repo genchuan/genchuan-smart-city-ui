@@ -49,7 +49,6 @@ const drillDetailFields = ref([]);
 const drillDrawerTitle = ref('关联信息');
 const importDialogVisible = ref(false);
 const importFile = ref(null);
-const importFileList = ref([]);
 const importLoading = ref(false);
 const importResult = ref(null);
 const importUpdateSupport = ref(false);
@@ -844,102 +843,29 @@ async function handleExport(extraParams = {}) {
   });
 }
 
-function resetImportState() {
+function handleOpenImport() {
   importFile.value = null;
-  importFileList.value = [];
   importResult.value = null;
   importUpdateSupport.value = false;
-}
-
-function handleOpenImport() {
-  resetImportState();
   importDialogVisible.value = true;
 }
 
 function handleImportFileChange(uploadFile) {
   importFile.value = uploadFile?.raw || uploadFile;
-  importFileList.value = uploadFile ? [uploadFile] : [];
   importResult.value = null;
 }
 
 function handleRemoveImportFile() {
   importFile.value = null;
-  importFileList.value = [];
-}
-
-function handleImportFileExceed(files) {
-  const file = files?.[0];
-  if (!file) return;
-  const rawFile = file.raw || file;
-  importFile.value = rawFile;
-  importFileList.value = [
-    {
-      name: rawFile.name || file.name || '导入文件',
-      raw: rawFile,
-      status: 'ready',
-      uid: Date.now(),
-    },
-  ];
-  importResult.value = null;
 }
 
 function normalizeImportResult(result) {
   const data = result?.data || result || {};
-  const fallbackMessage =
-    data.msg ||
-    data.message ||
-    data.errorMsg ||
-    data.error ||
-    result?.msg ||
-    result?.message ||
-    result?.errorMsg ||
-    result?.error ||
-    '';
-  const rawFailureData =
-    data.failureList ||
-    data.failures ||
-    data.errorList ||
-    data.errors ||
-    data.failMsgs ||
-    (fallbackMessage ? [fallbackMessage] : []);
-  const rawFailureList = Array.isArray(rawFailureData)
-    ? rawFailureData
-    : Object.values(rawFailureData || {});
-  const failureList = rawFailureList.map((item, index) => {
-    if (typeof item === 'string') {
-      return { msg: item, row: index + 1 };
-    }
-    return {
-      ...item,
-      msg:
-        item.msg ||
-        item.message ||
-        item.errorMsg ||
-        item.reason ||
-        item.failReason ||
-        item.error ||
-        fallbackMessage ||
-        '导入失败',
-      name:
-        item.name ||
-        item.stationName ||
-        item.areaName ||
-        item.ruleName ||
-        item.spaceNo ||
-        item.rowName ||
-        '',
-      row: item.row || item.rowNum || item.line || item.index || index + 1,
-    };
-  });
+  const failureList = data.failureList || data.failures || [];
   return {
-    failureCount:
-      data.failureCount ??
-      data.failCount ??
-      data.errorCount ??
-      failureList.length ??
-      0,
+    failureCount: data.failureCount ?? failureList.length ?? 0,
     failureList,
-    successCount: data.successCount ?? data.success ?? data.successNum ?? 0,
+    successCount: data.successCount ?? data.success ?? 0,
   };
 }
 
@@ -1391,7 +1317,6 @@ defineExpose({
     </div>
     <el-dialog
       v-model="importDialogVisible"
-      @closed="resetImportState"
       :title="`导入${pageConfig.title}`"
       width="520px"
       append-to-body
@@ -1406,13 +1331,11 @@ defineExpose({
           </el-checkbox>
         </div>
         <el-upload
-          v-model:file-list="importFileList"
           drag
           :auto-upload="false"
           :limit="1"
           accept=".xls,.xlsx"
           :on-change="handleImportFileChange"
-          :on-exceed="handleImportFileExceed"
           :on-remove="handleRemoveImportFile"
         >
           <div class="import-upload-text">

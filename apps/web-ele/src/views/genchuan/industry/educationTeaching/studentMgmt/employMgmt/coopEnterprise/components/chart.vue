@@ -1,145 +1,150 @@
 <script setup>
-import {reactive, onMounted, ref, computed} from 'vue';
-import {ElMessage, ElDatePicker} from 'element-plus';
+import { ref, computed, onMounted } from 'vue';
+import { ElSelect, ElOption } from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
-import lineChart from '#/genchuan-components/stats/lineChartClick.vue';
+import Bar from '#/genchuan-components/stats/bar.vue';
+import Pie from '#/genchuan-components/stats/pieClick.vue';
+import lineChart from '#/genchuan-components/stats/lineChart.vue';
 import {
-  getDutyMgmtChart,
-  getDutyIndex,
-} from '#/api/genchuan/industry/educationTeaching/studentMgmt/studentWork/dutyMgmt/data.js';
+  getCoopEnterpriseChart,
+  getCoopEnterpriseDistribution,
+} from '#/api/genchuan/industry/educationTeaching/studentMgmt/employMgmt/coopEnterprise/data.js';
 
 const loading = ref(true);
 const chartData = ref({});
-const indexData = ref({
-  monthList: [],
-  dutyCountList: [],
-  checkInRateList: [],
-  shiftRateList: [],
-  vehicleRateList: []
-});
-
-const getDefaultTimeRange = () => {
-  return [new Date('2024-01-01'), new Date('2026-12-31')];
-};
-const dateRange = ref(getDefaultTimeRange());
-
-const formatLocalDateTime = (date, isEnd = false) => {
-  if (!date) return '';
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const time = isEnd ? '23:59:59' : '00:00:00';
-  return `${year}-${month}-${day}T${time}`;
-};
-
-const getTimeRangeParam = () => {
-  if (dateRange.value && dateRange.value.length === 2) {
-    const startStr = formatLocalDateTime(dateRange.value[0], false);
-    const endStr = formatLocalDateTime(dateRange.value[1], true);
-    return `${startStr},${endStr}`;
-  }
-  const [defaultStart, defaultEnd] = getDefaultTimeRange();
-  return `${formatLocalDateTime(defaultStart, false)},${formatLocalDateTime(defaultEnd, true)}`;
-};
+const distributionData = ref({});
 
 const cardList = computed(() => {
-  const total = chartData.value.totalDutyCount || 0;
-  const today = chartData.value.todayDutyCount || 0;
-  const checkInRate = chartData.value.checkInRate || 0;
-  const shiftCount = chartData.value.shiftApplyCount || 0;
-  const vehicleCount = chartData.value.vehicleApplyCount || 0;
+  const total = chartData.value.totalEnterprise || 0;
+  const cooperating = chartData.value.cooperatingEnterprise || 0;
+  const finished = chartData.value.finishedEnterprise || 0;
   return [
-    {title: '总值班次数', value: total, color: '#409EFF'},
-    {title: '今日值班人数', value: today, color: '#67C23A'},
-    {title: '打卡率(%)', value: checkInRate, color: '#E6A23C'},
-    {title: '调班次数', value: shiftCount, color: '#F56C6C'},
-    {title: '出车次数', value: vehicleCount, color: '#909399'},
+    {title: '总合作企业数', value: total, color: '#409EFF', status: 'total'},
+    {title: '合作中', value: cooperating, color: '#67C23A', status: 'cooperating'},
+    {title: '已结束', value: finished, color: '#909399', status: 'finished'},
   ];
 });
 
-const lineXData = computed(() => indexData.value.monthList || []);
-const lineSeriesData = computed(() => [
-  {name: '值班次数', data: indexData.value.dutyCountList || []},
-  {name: '打卡率(%)', data: indexData.value.checkInRateList || []},
-  {name: '调班率(%)', data: indexData.value.shiftRateList || []},
-  {name: '出车率(%)', data: indexData.value.vehicleRateList || []},
+const pieData = computed(() => {
+  const dist = distributionData.value.typeDistribution || [];
+  return dist.map(item => ({name: item.name, value: item.value}));
+});
+
+const chartOptions = computed(() => [
+  {
+    type: 'bar',
+    title: '各系部合作数量分布',
+    getData: () => {
+      const deptDist = distributionData.value.deptDistribution || [];
+      return {
+        xData: deptDist.map(item => item.name),
+        seriesData: [{name: '合作企业数', data: deptDist.map(item => item.value)}],
+      };
+    },
+    yName: '合作企业数',
+  },
+  {
+    type: 'line',
+    title: '合作趋势',
+    getData: () => {
+      const trend = chartData.value.coopTrend || [];
+      return {
+        xData: trend.map(item => item.date),
+        seriesData: [{name: '合作企业数', data: trend.map(item => item.count)}],
+      };
+    },
+    yName: '合作企业数',
+  },
 ]);
 
-// ========== 核心修改：折线图点击改为派发自定义事件 ==========
-const handleLineClick = (monthName) => {
-  window.dispatchEvent(new CustomEvent('duty-chart-filter', {
-    detail: {month: monthName}
+const activeChartIndex = ref(0);
+const currentChart = computed(() => {
+  const opt = chartOptions.value[activeChartIndex.value];
+  const {xData, seriesData} = opt.getData();
+  return {
+    type: opt.type,
+    title: opt.title,
+    xData,
+    seriesData,
+    yName: opt.yName,
+  };
+});
+
+const handleChartChange = (index) => {
+  activeChartIndex.value = index;
+};
+
+// ========== 核心修改：所有点击改为派发自定义事件 ==========
+const handleCardClick = (cardInfo) => {
+  let filterType = null;
+  let filterValue = null;
+  switch (cardInfo.status) {
+    case 'cooperating':
+      filterType = 'status';
+      filterValue = '合作中';
+      break;
+    case 'finished':
+      filterType = 'status';
+      filterValue = '已结束';
+      break;
+    case 'total':
+    default:
+      return;
+  }
+  window.dispatchEvent(new CustomEvent('coop-enterprise-chart-filter', {
+    detail: {type: filterType, value: filterValue}
   }));
 };
 
-// 加载数据（保持不变，但使用统一的参数传递）
-const loadChartData = async (timeRangeParam) => {
-  try {
-    const params = {};
-    if (timeRangeParam) {
-      params.startTime = timeRangeParam.split(',')[0];
-      params.endTime = timeRangeParam.split(',')[1];
-    }
-    const res = await getDutyMgmtChart(params);
-    chartData.value = res;
-  } catch (error) {
-    console.warn('获取看板数据失败，使用模拟数据', error);
-    chartData.value = {
-      totalDutyCount: 124,
-      todayDutyCount: 4,
-      checkInRate: 96.77,
-      shiftApplyCount: 8,
-      vehicleApplyCount: 5,
-      statusCountMap: {'待打卡': 12, '待调班审批': 2, '待出车审批': 1, '已完成': 109},
-    };
-  }
+const handlePieClick = (item) => {
+  window.dispatchEvent(new CustomEvent('coop-enterprise-chart-filter', {
+    detail: {type: 'enterpriseType', value: item.name}
+  }));
 };
 
-const loadIndexData = async (timeRangeParam) => {
-  try {
-    const params = {};
-    if (timeRangeParam) {
-      params.startTime = timeRangeParam.split(',')[0];
-      params.endTime = timeRangeParam.split(',')[1];
-    }
-    const res = await getDutyIndex(params);
-    indexData.value = res;
-  } catch (error) {
-    console.warn('获取核心指标数据失败，使用模拟数据', error);
-    indexData.value = {
-      monthList: ['2025-01', '2025-02', '2025-03'],
-      dutyCountList: [112, 98, 124],
-      checkInRateList: [95.54, 96.94, 96.77],
-      shiftRateList: [6.25, 7.14, 6.45],
-      vehicleRateList: [4.46, 3.06, 4.03],
-    };
-  }
-};
-
-const handleDateRangeChange = async () => {
-  if (dateRange.value && dateRange.value.length === 2) {
-    loading.value = true;
-    try {
-      const timeRangeParam = getTimeRangeParam();
-      await Promise.all([
-        loadChartData(timeRangeParam),
-        loadIndexData(timeRangeParam),
-      ]);
-    } finally {
-      loading.value = false;
-    }
-  }
-};
-
+// 加载数据（保持不变）
 const loadData = async () => {
   loading.value = true;
   try {
-    const timeRangeParam = getTimeRangeParam();
-    await Promise.all([
-      loadChartData(timeRangeParam),
-      loadIndexData(timeRangeParam),
+    const [chartRes, distRes] = await Promise.allSettled([
+      getCoopEnterpriseChart({}),
+      getCoopEnterpriseDistribution({}),
     ]);
+    if (chartRes.status === 'fulfilled') chartData.value = chartRes.value;
+    else {
+      chartData.value = {
+        totalEnterprise: 36,
+        cooperatingEnterprise: 28,
+        finishedEnterprise: 8,
+        deptCoopCount: [
+          {deptName: '计算机系', count: 12},
+          {deptName: '机电系', count: 10},
+          {deptName: '经贸系', count: 8},
+          {deptName: '其他', count: 6},
+        ],
+        coopTrend: [
+          {date: '2024-01', count: 2},
+          {date: '2024-02', count: 3},
+          {date: '2024-03', count: 5},
+        ],
+      };
+    }
+    if (distRes.status === 'fulfilled') distributionData.value = distRes.value;
+    else {
+      distributionData.value = {
+        typeDistribution: [
+          {name: '民企', value: 22},
+          {name: '国企', value: 8},
+          {name: '外企', value: 6},
+        ],
+        deptDistribution: [
+          {name: '计算机系', value: 12},
+          {name: '机电系', value: 10},
+          {name: '经贸系', value: 8},
+          {name: '其他', value: 6},
+        ],
+      };
+    }
   } catch (error) {
     console.error('加载图表数据失败', error);
   } finally {
@@ -154,38 +159,43 @@ onMounted(() => {
 
 <template>
   <div v-loading="loading" class="chart-box">
-    <div class="box-left-m">
+    <div class="chart-box-left">
       <Indicator
         class="left-card"
         v-for="item in cardList"
         :key="item.title"
         v-bind="item"
+        @click="handleCardClick"
       />
     </div>
-    <div class="line-chart-container">
-      <div class="date-range-wrapper">
-        <el-date-picker
-          v-model="dateRange"
-          type="daterange"
-          range-separator="-"
-          start-placeholder="起始时间"
-          end-placeholder="结束时间"
-          size="small"
-          :shortcuts="[
-            { text: '近三个月', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 3); return [start, end]; } },
-            { text: '近半年', value: () => { const end = new Date(); const start = new Date(); start.setMonth(start.getMonth() - 6); return [start, end]; } },
-            { text: '近一年', value: () => { const end = new Date(); const start = new Date(); start.setFullYear(start.getFullYear() - 1); return [start, end]; } }
-          ]"
-          @change="handleDateRangeChange"
-        />
+
+    <Pie
+      style="flex: 1 !important;"
+      title-text="合作企业类型分布"
+      :data="pieData"
+      @pie-click="handlePieClick"
+    />
+
+    <div class="chart-area">
+      <div class="chart-select-wrapper">
+        <el-select v-model="activeChartIndex" size="small" @change="handleChartChange">
+          <el-option v-for="(opt, idx) in chartOptions" :key="idx" :label="opt.title" :value="idx"/>
+        </el-select>
       </div>
+
+      <Bar
+        v-if="currentChart.type === 'bar'"
+        :title="currentChart.title"
+        :x-data="currentChart.xData"
+        :series-data="currentChart.seriesData"
+        :y-name="currentChart.yName"
+      />
       <lineChart
-        style="flex: 1.5 !important;"
-        :title="'值班核心指标趋势'"
-        :x-data="lineXData"
-        :series-data="lineSeriesData"
-        y-name="数值"
-        @line-click="handleLineClick"
+        v-else
+        :title="currentChart.title"
+        :x-data="currentChart.xData"
+        :series-data="currentChart.seriesData"
+        :y-name="currentChart.yName"
       />
     </div>
   </div>
@@ -200,46 +210,27 @@ onMounted(() => {
   padding-right: 15px;
   width: 100% !important;
 
-  .box-left-m {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr);
-    min-width: 360px;
-    max-width: 400px;
-    margin-top: 10px !important;
-
-    .left-card {
-      height: 150px !important;
-    }
+  .chart-box-left {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 280px;
+    max-width: 320px;
+    margin: 0;
   }
 
-  .line-chart-container {
+  .chart-area {
     position: relative;
     flex: 1.5;
-    min-width: 300px;
-    margin-top: 10px;
+    min-width: 280px;
+    height: 100%;
   }
 
-  .date-range-wrapper {
+  .chart-select-wrapper {
     position: absolute;
     top: 8px;
     right: 10px;
     z-index: 10;
-  }
-
-  :deep(.el-date-editor) {
-    --el-date-editor-width: 240px;
-
-    .el-range__icon {
-      margin-right: 2px;
-    }
-
-    .el-range-separator {
-      padding: 0 4px;
-    }
-
-    .el-range__close-icon {
-      margin-left: 2px;
-    }
   }
 }
 </style>

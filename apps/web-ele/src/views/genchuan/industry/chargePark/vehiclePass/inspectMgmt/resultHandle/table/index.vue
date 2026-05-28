@@ -149,9 +149,10 @@ const [ExecuteDrawer, executeDrawerApi] = useVbenDrawer({
         if (USE_REAL_API) {
           await executeResultHandle({
             id: dataObj.currentExecuteRow.id,
+            executeInfo: values.executeInfo,
             rectifyStatus: values.rectifyStatus,
           });
-          ElMessage.success('执行成功');
+          ElMessage.success('执行成功，处置状态已更新为已完成');
         }
 
         executeDrawerApi.close();
@@ -172,10 +173,23 @@ const [ExecuteForm, executeFormApi] = useVbenForm({
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
-    labelWidth: 100,
+    labelWidth: 120,
   },
   layout: 'horizontal',
   schema: [
+    {
+      fieldName: 'executeInfo',
+      label: '处置执行信息',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        placeholder: '请输入处置执行信息',
+        rows: 4,
+        maxlength: 200,
+        showWordLimit: true,
+      },
+      rules: 'required',
+    },
     {
       fieldName: 'rectifyStatus',
       label: '整改状态',
@@ -329,26 +343,21 @@ function handleOpenBatchHandle() {
 
 // 通过
 async function handleApprove(row) {
-  try {
-    await confirm('确定通过该处置结果吗？');
-    const loadingInstance = ElLoading.service({
-      text: '审核中...',
-    });
+  const loadingInstance = ElLoading.service({
+    text: '审核中...',
+  });
 
-    try {
-      if (USE_REAL_API) {
-        await approveResultHandle({ id: row.id });
-        ElMessage.success('审核通过');
-      }
-      handleRefresh();
-    } finally {
-      loadingInstance.close();
+  try {
+    if (USE_REAL_API) {
+      await approveResultHandle({ id: row.id });
+      ElMessage.success('审核通过，处置状态已更新为待处置');
     }
+    handleRefresh();
   } catch (error) {
-    if (error?.message !== 'cancel') {
-      ElMessage.error('审核失败');
-      console.error(error);
-    }
+    ElMessage.error('审核失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
   }
 }
 
@@ -765,10 +774,11 @@ const getActionButtons = (row) => {
       break;
     }
     case '已驳回': {
-      buttons.push(
-        { label: '重新处置', handler: handleExecute, color: '#409EFF' },
-        { label: '查看', handler: handleOpenDetail, color: '#409EFF' },
-      );
+      buttons.push({
+        label: '查看',
+        handler: handleOpenDetail,
+        color: '#409EFF',
+      });
       break;
     }
     default: {
@@ -879,17 +889,17 @@ const getActionButtons = (row) => {
         <div class="common-toolbar-tools">
           <IconButton
             content="筛选"
-            icon-name="search"
+            icon-name="Filter"
             @click="handleSerachShow"
           />
           <IconButton
             content="重置"
-            icon-name="Refresh"
+            icon-name="RefreshLeft"
             @click="handleClearAllFilters"
           />
           <IconButton
             content="导出"
-            icon-name="download"
+            icon-name="Download"
             @click="handleExport"
           />
           <IconButton
@@ -1010,7 +1020,9 @@ const getActionButtons = (row) => {
                   ? 'Close'
                   : btn.label === '执行'
                     ? 'Setting'
-                    : 'View'
+                    : btn.label === '重新处置'
+                      ? 'RefreshRight'
+                      : 'View'
             "
             :color="btn.color"
             @click="btn.handler(row)"

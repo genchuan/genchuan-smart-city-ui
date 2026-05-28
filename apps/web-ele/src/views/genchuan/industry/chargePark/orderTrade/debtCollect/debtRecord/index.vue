@@ -7,30 +7,30 @@ import Table from './table/index.vue';
 import '#/components/page/index.scss';
 
 const filterParams = reactive({
-  identifyTimeStart: null,
-  identifyTimeEnd: null,
+  createTimeStart: null,
+  createTimeEnd: null,
   status: null,
 });
 
 const hasActiveFilters = computed(() => {
-  return filterParams.identifyTimeStart || filterParams.status;
+  return filterParams.createTimeStart || filterParams.status;
 });
 
 const handleFilterChange = (params) => {
-  filterParams.identifyTimeStart = params.identifyTimeStart || null;
-  filterParams.identifyTimeEnd = params.identifyTimeEnd || null;
+  filterParams.createTimeStart = params.createTimeStart || null;
+  filterParams.createTimeEnd = params.createTimeEnd || null;
   filterParams.status = params.status || null;
 };
 
 const handleClearFilters = () => {
-  filterParams.identifyTimeStart = null;
-  filterParams.identifyTimeEnd = null;
+  filterParams.createTimeStart = null;
+  filterParams.createTimeEnd = null;
   filterParams.status = null;
 };
 
 const clearFilter = () => {
-  filterParams.identifyTimeStart = null;
-  filterParams.identifyTimeEnd = null;
+  filterParams.createTimeStart = null;
+  filterParams.createTimeEnd = null;
   filterParams.status = null;
 };
 
@@ -47,7 +47,7 @@ const arrowChange = () => {
 };
 const tabArray = ref([
   {
-    label: '共享充电车订单',
+    label: '逃费记录',
     components: Table,
     showSecondary: true,
     secondShow: false,
@@ -56,7 +56,7 @@ const tabArray = ref([
     filterParams,
   },
 ]);
-const activeName = ref('共享充电车订单');
+const activeName = ref('逃费记录');
 const secondShow = ref(false);
 </script>
 
@@ -65,12 +65,12 @@ const secondShow = ref(false);
     <Chart @filter-change="handleFilterChange"  v-if="tabArray[0].arrowShow"/>
     <div v-if="hasActiveFilters" class="filter-tags">
       <el-tag
-        v-if="filterParams.identifyTimeStart"
+        v-if="filterParams.createTimeStart"
         closable
         @close="clearFilter"
         type="info"
       >
-        识别时间: {{ filterParams.identifyTimeStart?.split(' ')[0] }}
+        识别时间: {{ filterParams.createTimeStart?.split(' ')[0] }}
       </el-tag>
     </div>
     <div class="icon-change">

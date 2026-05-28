@@ -294,7 +294,10 @@ const [CreateForm, createFormApi] = useVbenForm({
     try {
       let res;
       if (isEditMode.value) {
-        res = await updateAidWork({...values, id: currentEditId.value});
+        // ==================== 修改点：编辑时强制 status 为 '待审核' ====================
+        const updateData = { ...values, id: currentEditId.value, status: '待审核' };
+        res = await updateAidWork(updateData);
+        // =====================================================================
       } else {
         res = await createAidWork({...values, status: values.status || '待审核'});
       }
@@ -504,14 +507,14 @@ onUnmounted(() => {
             <el-radio label="0">驳回</el-radio>
           </el-radio-group>
         </el-form-item>
-<!--        <el-form-item label="备注">-->
-<!--          <el-input-->
-<!--            v-model="auditForm.remark"-->
-<!--            type="textarea"-->
-<!--            :rows="3"-->
-<!--            placeholder="请输入备注（驳回时建议填写原因）"-->
-<!--          />-->
-<!--        </el-form-item>-->
+        <!--        <el-form-item label="备注">-->
+        <!--          <el-input-->
+        <!--            v-model="auditForm.remark"-->
+        <!--            type="textarea"-->
+        <!--            :rows="3"-->
+        <!--            placeholder="请输入备注（驳回时建议填写原因）"-->
+        <!--          />-->
+        <!--        </el-form-item>-->
       </el-form>
       <template #footer>
         <span class="dialog-footer">

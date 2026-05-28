@@ -152,7 +152,12 @@ function initLineChart() {
     const clickedDate = params.name; // 日期格式如 "2026-04-14"
     window.dispatchEvent(
       new CustomEvent('filterByChart:plateIdentify', {
-        detail: { createTimeRange: [clickedDate, clickedDate] },
+        detail: {
+          createTimeRange: [
+            `${clickedDate} 00:00:00`,
+            `${clickedDate} 23:59:59`,
+          ],
+        },
       }),
     );
   });

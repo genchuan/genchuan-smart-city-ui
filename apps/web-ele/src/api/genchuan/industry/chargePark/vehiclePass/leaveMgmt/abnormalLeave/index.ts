@@ -104,7 +104,7 @@ export function exportAbnormalLeave(params?: AbnormalLeaveApi.PageReqVO) {
 export function batchHandleAbnormalLeave(
   data: AbnormalLeaveApi.BatchHandleReqVO,
 ) {
-  return requestClient.put<boolean>(
+  return requestClient.post<boolean>(
     '/vehiclepass/abnormal-leave/batch-handle',
     data,
   );

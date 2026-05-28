@@ -72,12 +72,7 @@ defineExpose({
         <div class="detail-row-left">发票编号:</div>
         <div class="detail-row-right">{{ detailObj.invoiceNo || '-' }}</div>
       </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">关联订单ID:</div>
-        <div class="detail-row-right">{{ detailObj.orderId || '-' }}</div>
-      </div>
-
+ 
       <div class="detail-card-row">
         <div class="detail-row-left">关联订单编号:</div>
         <div class="detail-row-right">{{ detailObj.orderNo || '-' }}</div>
@@ -106,15 +101,10 @@ defineExpose({
           </el-tag>
         </div>
       </div>
-
+ 
       <div class="detail-card-row">
-        <div class="detail-row-left">审核人ID:</div>
-        <div class="detail-row-right">{{ detailObj.auditorId || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">审核人名称:</div>
-        <div class="detail-row-right">{{ detailObj.auditorName || '-' }}</div>
+        <div class="detail-row-left">审核人:</div>
+        <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
       </div>
 
       <div class="detail-card-row">

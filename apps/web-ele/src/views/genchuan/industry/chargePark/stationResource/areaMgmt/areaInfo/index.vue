@@ -12,7 +12,6 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import * as pageApi from '#/api/genchuan/industry/chargePark/stationResource/areaMgmt/areaInfo/index.js';
 import * as stationApi from '#/api/genchuan/industry/chargePark/stationResource/stationMgmt/stationInfo/index.js';
 import { getAreaTree } from '#/api/system/area';
-import { getSimpleUserList } from '#/api/system/user';
 import CommonDetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import IconButton from '#/genchuan-components/IconButton.vue';
 
@@ -55,10 +54,8 @@ const drillDrawerTitle = ref('关联信息');
 const chartData = ref({});
 const chartDrillDrawerRef = ref(null);
 const areaTreeData = ref([]);
-const userOptions = ref([]);
 const importDialogVisible = ref(false);
 const importFile = ref(null);
-const importFileList = ref([]);
 const importLoading = ref(false);
 const importResult = ref(null);
 const importUpdateSupport = ref(false);
@@ -120,13 +117,6 @@ function normalizeOptions(options = []) {
       value: item,
     };
   });
-}
-
-function getSelectOptions(field) {
-  if (field.apiSource === 'SystemUser') {
-    return userOptions.value;
-  }
-  return normalizeOptions(field.options || []);
 }
 
 function extractPageList(result) {
@@ -271,7 +261,7 @@ function createSchema(fields, isSearch = false) {
         allowClear: true,
         clearable: true,
         filterOption: true,
-        options: getSelectOptions(field),
+        options: normalizeOptions(field.options || []),
         showSearch: true,
       });
     }
@@ -522,11 +512,6 @@ const [Form, formApi] = useVbenForm({
   showDefaultActions: false,
 });
 
-async function refreshSelectSchemas() {
-  await queryFormApi.updateSchema(createSchema(searchFields, true));
-  await formApi.updateSchema(createSchema(formFields, false));
-}
-
 async function handleFormConfirm() {
   const values = sanitizeParams({
     ...formData.value,
@@ -565,8 +550,6 @@ async function handleFormConfirm() {
     ElMessage.warning('请选择所属行政区划');
     return;
   }
-  delete values.bindUserId;
-  delete values.bindTime;
 
   try {
     if (formMode.value === 'edit' && values.id) {
@@ -803,15 +786,6 @@ async function handleOpenDetail(row) {
     ...row,
     ...detail,
   };
-  if (!isEmpty(detailObj.value.userId)) {
-    detailObj.value.userId = getOptionLabel('userId', detailObj.value.userId);
-  }
-  if (!isEmpty(detailObj.value.bindUserId)) {
-    detailObj.value.bindUserId = getOptionLabel(
-      'bindUserId',
-      detailObj.value.bindUserId,
-    );
-  }
   await nextTick();
   detailDrawerRef.value?.open();
 }
@@ -911,102 +885,29 @@ async function handleExport(extraParams = {}) {
   });
 }
 
-function resetImportState() {
+function handleOpenImport() {
   importFile.value = null;
-  importFileList.value = [];
   importResult.value = null;
   importUpdateSupport.value = false;
-}
-
-function handleOpenImport() {
-  resetImportState();
   importDialogVisible.value = true;
 }
 
 function handleImportFileChange(uploadFile) {
   importFile.value = uploadFile?.raw || uploadFile;
-  importFileList.value = uploadFile ? [uploadFile] : [];
   importResult.value = null;
 }
 
 function handleRemoveImportFile() {
   importFile.value = null;
-  importFileList.value = [];
-}
-
-function handleImportFileExceed(files) {
-  const file = files?.[0];
-  if (!file) return;
-  const rawFile = file.raw || file;
-  importFile.value = rawFile;
-  importFileList.value = [
-    {
-      name: rawFile.name || file.name || '导入文件',
-      raw: rawFile,
-      status: 'ready',
-      uid: Date.now(),
-    },
-  ];
-  importResult.value = null;
 }
 
 function normalizeImportResult(result) {
   const data = result?.data || result || {};
-  const fallbackMessage =
-    data.msg ||
-    data.message ||
-    data.errorMsg ||
-    data.error ||
-    result?.msg ||
-    result?.message ||
-    result?.errorMsg ||
-    result?.error ||
-    '';
-  const rawFailureData =
-    data.failureList ||
-    data.failures ||
-    data.errorList ||
-    data.errors ||
-    data.failMsgs ||
-    (fallbackMessage ? [fallbackMessage] : []);
-  const rawFailureList = Array.isArray(rawFailureData)
-    ? rawFailureData
-    : Object.values(rawFailureData || {});
-  const failureList = rawFailureList.map((item, index) => {
-    if (typeof item === 'string') {
-      return { msg: item, row: index + 1 };
-    }
-    return {
-      ...item,
-      msg:
-        item.msg ||
-        item.message ||
-        item.errorMsg ||
-        item.reason ||
-        item.failReason ||
-        item.error ||
-        fallbackMessage ||
-        '导入失败',
-      name:
-        item.name ||
-        item.stationName ||
-        item.areaName ||
-        item.ruleName ||
-        item.spaceNo ||
-        item.rowName ||
-        '',
-      row: item.row || item.rowNum || item.line || item.index || index + 1,
-    };
-  });
+  const failureList = data.failureList || data.failures || [];
   return {
-    failureCount:
-      data.failureCount ??
-      data.failCount ??
-      data.errorCount ??
-      failureList.length ??
-      0,
+    failureCount: data.failureCount ?? failureList.length ?? 0,
     failureList,
-    successCount: data.successCount ?? data.success ?? data.successNum ?? 0,
+    successCount: data.successCount ?? data.success ?? 0,
   };
 }
 
@@ -1179,7 +1080,7 @@ function getFieldLabel(field) {
 
 function getOptionLabel(field, value) {
   const config = searchFields.find((item) => item.field === field);
-  const options = config ? getSelectOptions(config) : [];
+  const options = config ? normalizeOptions(config.options || []) : [];
   const option = options.find(
     (item) => item.value === value || String(item.value) === String(value),
   );
@@ -1191,13 +1092,7 @@ function getTagDisplayText(field, value) {
 }
 
 function getCellDisplayText(column, row) {
-  let value = row?.[column.field];
-  if (column.field === 'userId' || column.field === 'bindUserId') {
-    value =
-      row?.[`${column.field}Name`] ||
-      row?.[column.field.replace(/Id$/, 'Name')] ||
-      getOptionLabel(column.field, value);
-  }
+  const value = row?.[column.field];
   if (!isEmpty(value)) {
     const nextValue = Array.isArray(value) ? value.join('、') : value;
     const formatted =
@@ -1393,24 +1288,8 @@ function handleFullScreen() {
   }
 }
 
-async function loadUserOptions() {
-  try {
-    const result = await getSimpleUserList();
-    userOptions.value = extractPageList(result).map((item) => ({
-      label: item.nickname
-        ? `${item.nickname}${item.username ? ` (${item.username})` : ''}`
-        : item.username || item.name || item.id || item.userId,
-      value: item.id ?? item.userId,
-    }));
-    await refreshSelectSchemas();
-  } catch (error) {
-    console.error('加载用户选项失败:', error);
-  }
-}
-
 onMounted(() => {
   loadChart();
-  loadUserOptions();
 });
 </script>
 
@@ -1585,7 +1464,6 @@ onMounted(() => {
 
     <el-dialog
       v-model="importDialogVisible"
-      @closed="resetImportState"
       title="导入片区信息"
       width="520px"
       append-to-body
@@ -1600,13 +1478,11 @@ onMounted(() => {
           </el-checkbox>
         </div>
         <el-upload
-          v-model:file-list="importFileList"
           drag
           :auto-upload="false"
           :limit="1"
           accept=".xls,.xlsx"
           :on-change="handleImportFileChange"
-          :on-exceed="handleImportFileExceed"
           :on-remove="handleRemoveImportFile"
         >
           <div class="import-upload-text">

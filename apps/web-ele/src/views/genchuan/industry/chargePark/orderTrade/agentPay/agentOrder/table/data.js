@@ -24,7 +24,7 @@ export function useFormSchema() {
       isSearch: true,
     },
     {
-      fieldName: 'agentType',
+      fieldName: 'status',
       label: '状态',
       component: 'Select',
       componentProps: {
@@ -161,8 +161,8 @@ export function useGridColumns() {
       slots: { default: 'orderNo' },
     },
     {
-      field: 'merchantId',
-      title: '商户ID',
+      field: 'merchantName',
+      title: '商户名称',
       minWidth: 120,
       sortable: true,
     },

@@ -4,21 +4,27 @@ import { requestClient } from '#/api/request';
 /** 获取场站列表 */
 let stationOptionsCache = null;
 export async function getStationOptions() {
+  console.log('【入场记录】getStationOptions 被调用');
   if (stationOptionsCache) {
+    console.log('【入场记录】使用缓存数据:', stationOptionsCache);
     return stationOptionsCache;
   }
   try {
+    console.log('【入场记录】开始请求 API: /vehiclepass/in-park-status/simple-list');
     const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
+    console.log('【入场记录】API 响应:', response);
     if (response && Array.isArray(response)) {
       stationOptionsCache = response.map(item => ({
         label: item.stationName,
         value: item.stationId,
       }));
+      console.log('【入场记录】处理后的选项:', stationOptionsCache);
       return stationOptionsCache;
     }
+    console.log('【入场记录】响应不是数组，返回空数组');
     return [];
   } catch (error) {
-    console.error('获取场站列表失败:', error);
+    console.error('【入场记录】获取场站列表失败:', error);
     return [];
   }
 }

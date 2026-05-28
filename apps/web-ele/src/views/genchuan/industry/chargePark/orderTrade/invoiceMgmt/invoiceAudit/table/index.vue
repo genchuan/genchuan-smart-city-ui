@@ -4,11 +4,12 @@ import { downloadFileFromBlobPart } from '@vben/utils';
 import { ElMessage, ElForm, ElFormItem, ElInput, ElSelect, ElOption, ElDatePicker } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getInvoiceAuditPage, exportInvoiceAuditExcel, auditPass, auditReject, batchAudit, batchReapply } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
+import { getInvoiceAuditPage, exportInvoiceAuditExcel, auditPass, auditReject, batchAudit, batchReapply, getInvoiceListPage } from '#/api/genchuan/industry/chargePark/orderTrade/invoiceMgmt/index.js';
 import { formatTimestamp } from '#/utils';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
+import InvoiceDetailDrawer from '#/views/genchuan/industry/chargePark/orderTrade/invoiceMgmt/invoiceList/table/detail.vue';
 const props = defineProps({
   secondShow: {
     type: Boolean,
@@ -33,11 +34,11 @@ const props = defineProps({
 });
 const emit = defineEmits(['arrow-change', 'clear-filters']);
 // 搜索表单数据
-const searchFormData = reactive({ 
+const searchFormData = reactive({
   applicantName: '',
   status: '',
-  auditTimeStart: '',
-  auditTimeEnd: '',
+  applyTimeStart: '',
+  applyTimeEnd: '',
 });
 const searchFormRef = ref(null);
 // 重新申请弹窗数据
@@ -46,6 +47,8 @@ const reapplyDialog = reactive({
   id: 0,
   remark: '',
 });
+// 发票详情抽屉引用
+const invoiceDetailDrawerRef = ref(null);
 // 发票审核状态映射 - InvoiceAuditStatusEnum
 const statusMap = {
   pending: { label: '待审核', type: 'warning' },
@@ -181,6 +184,30 @@ async function submitReapply() {
   }
 }
 
+/** 点击关联发票编号跳转发票详情 */
+async function handleOpenInvoiceDetail(row) {
+  try {
+    const res = await getInvoiceListPage({ invoiceNo: row.invoiceNo, pageNo: 1, pageSize: 1 });
+    if (res.list && res.list.length > 0) {
+      const firstInvoice = res.list[0];
+      dataObj.invoiceDetailObj = {
+        ...firstInvoice,
+        auditTime: formatTimestamp(firstInvoice.auditTime),
+        invoiceTime: formatTimestamp(firstInvoice.invoiceTime),
+        pushTime: formatTimestamp(firstInvoice.pushTime),
+        createTime: formatTimestamp(firstInvoice.createTime),
+        updateTime: formatTimestamp(firstInvoice.updateTime),
+      };
+      invoiceDetailDrawerRef.value?.open();
+    } else {
+      ElMessage.info('未找到相关发票信息');
+    }
+  } catch (error) {
+    console.error('获取发票详情失败:', error);
+    ElMessage.error('获取发票详情失败');
+  }
+}
+
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
@@ -189,6 +216,7 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
+  invoiceDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -289,16 +317,15 @@ watch(
 <template>
   <div class="park-lot-table-new" v-loading="dataObj.loading">
     <ParkDetailDrawer ref="parkDetailDrawerRef" :detail-obj="dataObj.detailObj" />
+
+    <!-- 发票详情弹窗 -->
+    <InvoiceDetailDrawer ref="invoiceDetailDrawerRef" :detail-obj="dataObj.invoiceDetailObj" />
+
     <Drawer title="搜索">
-      <ElForm
-        ref="searchFormRef"
-        :model="searchFormData"
-        label-width="100px"
-        class="query-form"
-      >
+      <ElForm ref="searchFormRef" :model="searchFormData" label-width="100px" class="query-form">
         <ElFormItem label="申请人">
-          <ElInput v-model="searchFormData.applicantName" placeholder="请输入申请人" />
-        </ElFormItem> 
+          <ElInput v-model="searchFormData.creator" placeholder="请输入申请人" />
+        </ElFormItem>
         <ElFormItem label="状态">
           <ElSelect v-model="searchFormData.status" placeholder="请选择状态">
             <ElOption label="待审核" value="pending" />
@@ -306,31 +333,24 @@ watch(
             <ElOption label="已驳回" value="rejected" />
           </ElSelect>
         </ElFormItem>
-        <ElFormItem label="审核开始时间">
-          <ElDatePicker v-model="searchFormData.auditTimeStart" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" format="YYYY-MM-DD HH:mm:ss" />
+        <ElFormItem label="申请开始时间">
+          <ElDatePicker v-model="searchFormData.applyTimeStart" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss"
+            format="YYYY-MM-DD HH:mm:ss" />
         </ElFormItem>
-        <ElFormItem label="审核结束时间">
-          <ElDatePicker v-model="searchFormData.auditTimeEnd" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" format="YYYY-MM-DD HH:mm:ss" />
+
+        <ElFormItem label="申请结束时间">
+          <ElDatePicker v-model="searchFormData.applyTimeEnd" type="datetime" value-format="YYYY-MM-DDTHH:mm:ss"
+            format="YYYY-MM-DD HH:mm:ss" />
         </ElFormItem>
-    
+
       </ElForm>
     </Drawer>
 
     <!-- 重新申请弹窗 -->
-    <ElDialog
-      v-model="reapplyDialog.visible"
-      title="重新申请开票"
-      width="450px"
-      append-to-body
-    >
+    <ElDialog v-model="reapplyDialog.visible" title="重新申请开票" width="450px" append-to-body>
       <ElForm :model="reapplyDialog" label-width="80px">
         <ElFormItem label="备注">
-          <ElInput
-            v-model="reapplyDialog.remark"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入备注（选填）"
-          />
+          <ElInput v-model="reapplyDialog.remark" type="textarea" :rows="3" placeholder="请输入备注（选填）" />
         </ElFormItem>
       </ElForm>
       <template #footer>
@@ -343,7 +363,7 @@ watch(
 
     <Grid>
       <template #toolbar-tools>
-        <div class="common-toolbar-tools"> 
+        <div class="common-toolbar-tools">
           <IconButton content="批量审核" icon-name="Check" @click="handleBatchAuditPass" />
           <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />
@@ -352,14 +372,29 @@ watch(
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
+     <template #id="{ row }">
+        <el-text @click="handleOpenDetail(row)" class="cursor-pointer" type="primary">
+          {{ row.id }}
+        </el-text>
+      </template>
+      <template #invoiceNo="{ row }">
+        <el-text @click="handleOpenInvoiceDetail(row)" class="cursor-pointer" type="primary">
+          {{ row.invoiceNo }}
+        </el-text>
+      </template>
+      <template #creator="{ row }">
+        <el-text @click="handleFilterApplicant(row.creator)" class="cursor-pointer" type="primary">
+          {{ row.creator }}
+        </el-text>
+      </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag :type="getStatusType(row.status)" class="cursor-pointer" @click="handleFilterStatus(row.status)">
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
-      <template #invoiceNo="{ row }">
-        <el-text @click="handleOpenDetail(row)" class="common-align" type="primary">
-          {{ row.invoiceNo }}
+      <template #auditorName="{ row }">
+        <el-text @click="handleFilterAuditor(row.auditorName)" class="cursor-pointer" type="primary">
+          {{ row.auditorName || '-' }}
         </el-text>
       </template>
 
@@ -367,7 +402,8 @@ watch(
         <div class="table-toolbar-tools">
           <IconButton content="查看" icon-name="View" @click="handleOpenDetail(row)" />
           <IconButton v-if="row.status === 'pending'" content="审核通过" icon-name="Check" @click="handleAuditPass(row)" />
-          <IconButton v-if="row.status === 'pending'" content="审核拒绝" icon-name="Close" @click="handleAuditReject(row)" />
+          <IconButton v-if="row.status === 'pending'" content="审核拒绝" icon-name="Close"
+            @click="handleAuditReject(row)" />
           <IconButton v-if="row.status === 'rejected'" content="重新申请" icon-name="Refresh" @click="handleReapply(row)" />
         </div>
       </template>

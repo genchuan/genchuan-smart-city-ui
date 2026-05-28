@@ -317,6 +317,9 @@ const activeFilters = computed(() => {
   if (obj.stationName) {
     filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
   }
+  if (obj.handleUserName) {
+    filters.push({ label: `处置人：${obj.handleUserName}`, field: 'handleUserName' });
+  }
   if (obj.identifyTime && Array.isArray(obj.identifyTime) && obj.identifyTime.length === 2) {
     filters.push({
       label: `识别时间：${obj.identifyTime[0]} 至 ${obj.identifyTime[1]}`,
@@ -333,6 +336,18 @@ const handleClearField = (fieldName) => {
   // 清除日期时，同时清除展示字段
   if (fieldName === 'identifyTime') {
     dataObj._displayDate = '';
+  }
+  // 清除场站名称时，同时清除场站ID
+  if (fieldName === 'stationName') {
+    delete next.stationId;
+  }
+  // 清除处置人ID时，同时清除处置人名称
+  if (fieldName === 'handleUserId') {
+    delete next.handleUserName;
+  }
+  // 清除处置人名称时，同时清除处置人ID
+  if (fieldName === 'handleUserName') {
+    delete next.handleUserId;
   }
   dataObj.searchParams = next;
   dataObj.currentPage = 1;
@@ -433,7 +448,17 @@ const [SearchForm] = useVbenForm({
 });
 
 function onSubmit(values) {
-  dataObj.searchParams = values;
+  const params = { ...values };
+
+  // 如果选择了场站，同时传递 stationId 和 stationName
+  if (params.stationId) {
+    const station = stationOptions.value.find(s => s.value === params.stationId);
+    if (station) {
+      params.stationName = station.label;
+    }
+  }
+
+  dataObj.searchParams = params;
   isSearching = true;
   gridApi.query();
   drawerApi.close();
@@ -527,6 +552,7 @@ const handleHandleUserClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
     handleUserId: row.handleUserId,
+    handleUserName: row.handleUserName,
   };
   handleRefresh();
   ElMessage.success(`已筛选处置人: ${row.handleUserName}`);
@@ -604,11 +630,23 @@ const handleFilterByChart = (event) => {
     };
     ElMessage.success('已应用图表筛选');
   } else {
-    dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
-    if (filterParams.status) {
-      ElMessage.success(`已筛选状态: ${filterParams.status}`);
-    } else if (filterParams.stationName) {
-      ElMessage.success(`已筛选场站: ${filterParams.stationName}`);
+    const validParams = { ...filterParams };
+
+    // 如果有 stationId，自动补充 stationName
+    if (validParams.stationId && !validParams.stationName) {
+      const station = stationOptions.value.find(
+        (s) => s.value === validParams.stationId
+      );
+      if (station) {
+        validParams.stationName = station.label;
+      }
+    }
+
+    dataObj.searchParams = { ...dataObj.searchParams, ...validParams };
+    if (validParams.status) {
+      ElMessage.success(`已筛选状态: ${validParams.status}`);
+    } else if (validParams.stationName) {
+      ElMessage.success(`已筛选场站: ${validParams.stationName}`);
     } else {
       ElMessage.success('已应用图表筛选');
     }

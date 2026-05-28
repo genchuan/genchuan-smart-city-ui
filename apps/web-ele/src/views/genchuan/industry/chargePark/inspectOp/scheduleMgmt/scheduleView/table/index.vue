@@ -157,13 +157,13 @@ const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
 });
 
 function buildQueryParams(page) {
-  console.log( dataObj.searchParams);
+  console.log(filterUserName.value);
   return {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
     ...dataObj.searchParams,
-    userId: filterUserName.value?.value || dataObj.searchParams.userId,
-    scheduleDate: filterScheduleDate.value || dataObj.searchParams.scheduleDate ? dayjs(dataObj.searchParams.scheduleDate).valueOf() : '',
+    userId: filterUserName.value?.value,
+    scheduleDate: filterScheduleDate.value || dataObj.searchParams.scheduleDate,
     shiftType: filterShiftType.value || dataObj.searchParams.shiftType,
     positionName: filterPositionName.value || dataObj.searchParams.positionName,
     status: filterStatus.value || dataObj.searchParams.status,
@@ -430,7 +430,7 @@ onMounted(() => {
             type="primary"
             @close="cancelFilter('date')"
           >
-            排班日期：{{ dayjs(filterScheduleDate).format('YYYY-MM-DD HH:mm:ss') }}
+            排班日期：{{ dayjs(filterScheduleDate).format('YYYY-MM-DD') }}
           </ElTag>
           <ElTag
             v-if="filterShiftType"
@@ -506,7 +506,7 @@ onMounted(() => {
           @click="handleDateClick(row.scheduleDate)"
         >
           <!-- {{ row.scheduleDateStr }} -->
-          {{ dayjs(row.scheduleDate).format('YYYY-MM-DD HH:mm:ss') }}
+          {{ dayjs(row.scheduleDate).format('YYYY-MM-DD') }}
         </el-text>
       </template>
 
