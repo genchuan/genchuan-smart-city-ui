@@ -28,10 +28,11 @@ const props = defineProps({
     default: () => ({
       status: null,
       category: null,
+      taxBody: null,
     }),
   },
 });
-const emit = defineEmits(['arrow-change', 'clear-filters']);
+const emit = defineEmits(['arrow-change', 'clear-filters', 'filter-change']);
 // 搜索表单数据
 const searchFormData = reactive({
   status: '',
@@ -182,6 +183,33 @@ async function handleAdd() {
   editDrawerRef.value?.openAdd();
 }
 
+/** 点击开票类目筛选 */
+function handleFilterCategory(category) {
+  emit('filter-change', {
+    category: category,
+    taxBody: null,
+    status: null,
+  });
+}
+
+/** 点击开票主体筛选 */
+function handleFilterTaxBody(taxBody) {
+  emit('filter-change', {
+    category: null,
+    taxBody: taxBody,
+    status: null,
+  });
+}
+
+/** 点击状态筛选 */
+function handleFilterStatus(status) {
+  emit('filter-change', {
+    category: null,
+    taxBody: null,
+    status: status,
+  });
+}
+
 const checkedIds = ref([]);
 function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map((item) => item.id);
@@ -286,6 +314,8 @@ watch(
   () => props.filterParams,
   () => {
     dataObj.currentPage = 1;
+    dataObj.searchObj = {};
+    dataObj.filterParams = props.filterParams;
     gridApi.query();
   },
   { deep: true }
@@ -352,8 +382,18 @@ watch(
           <IconButton content="全屏" icon-name="FullScreen" @click="handleFullShow" />
         </div>
       </template>
+      <template #category="{ row }">
+  <span @click="handleFilterCategory(row.category)" class="cursor-pointer text-primary">
+    {{ row.category }}
+  </span>
+</template>
+<template #taxBody="{ row }">
+  <span @click="handleFilterTaxBody(row.taxBody)" class="cursor-pointer text-primary">
+    {{ row.taxBody }}
+  </span>
+</template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">
+        <el-tag :type="getStatusType(row.status)" class="cursor-pointer" @click="handleFilterStatus(row.status)">
           {{ getStatusLabel(row.status) }}
         </el-tag>
       </template>
