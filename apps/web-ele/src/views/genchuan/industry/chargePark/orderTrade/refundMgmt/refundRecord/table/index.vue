@@ -14,6 +14,7 @@ import {
   getRefundRecordPage,
   exportRefundRecordExcel,
   checkRefundRecord,
+  getRefundApplyPage,
 } from '#/api/genchuan/industry/chargePark/orderTrade/refundMgmt/index.js';
 import { getDetailEnObj } from '#/api/genchuan/industry/marketsupervision/index.js';
 import { $t } from '#/locales';
@@ -23,6 +24,7 @@ import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightki
 
 import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
+import RefundApplyDetailDrawer from '../../refundApply/table/detail.vue';
 
 const props = defineProps({
   secondShow: {
@@ -179,6 +181,7 @@ const dataObj = reactive({
   totalShow: false,
   detailObj: {},
   enDetailObj: {},
+  refundApplyDetailObj: {},
   total: 0,
   currentPage: 1,
   pageSize: 10,
@@ -286,6 +289,30 @@ const handleOpenDetail = (row) => {
   dataObj.detailObj = row;
   parkDetailDrawerRef.value?.open();
 };
+
+/** 打开退款申请详情 */
+const handleOpenRefundApplyDetail = async (row) => {
+  try {
+    const res = await getRefundApplyPage({ applyNo: row.applyNo, pageNo: 1, pageSize: 1 });
+    if (res.list && res.list.length > 0) {
+      const firstApply = res.list[0];
+      dataObj.refundApplyDetailObj = {
+        ...firstApply,
+        applyTime: formatTimestamp(firstApply.applyTime),
+        auditTime: formatTimestamp(firstApply.auditTime),
+        createTime: formatTimestamp(firstApply.createTime),
+        updateTime: formatTimestamp(firstApply.updateTime),
+      };
+      refundApplyDetailDrawerRef.value?.open();
+    } else {
+      ElMessage.info('未找到相关退款申请信息');
+    }
+  } catch (error) {
+    console.error('获取退款申请详情失败:', error);
+    ElMessage.error('获取退款申请详情失败');
+  }
+};
+
 const tabsData = ref([
   { label: '全部' },
   { label: '启用' },
@@ -311,6 +338,7 @@ const handleFullShow = () => {
 };
 
 const parkDetailDrawerRef = ref(null);
+const refundApplyDetailDrawerRef = ref(null);
 const enDetailObjRef = ref(null);
 const arrowChange = () => {
   emit('arrow-change');
@@ -448,6 +476,10 @@ watch(
       ref="parkDetailDrawerRef"
       :detail-obj="dataObj.detailObj"
     />
+    <RefundApplyDetailDrawer
+      ref="refundApplyDetailDrawerRef"
+      :detail-obj="dataObj.refundApplyDetailObj"
+    />
     <enDetailDrawer ref="enDetailObjRef" :detail-obj="dataObj.enDetailObj" />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
@@ -554,6 +586,16 @@ watch(
           type="primary"
         >
           {{ row.orderId }}
+        </el-text>
+      </template>
+
+      <template #applyNo="{ row }">
+        <el-text
+          @click="handleOpenRefundApplyDetail(row)"
+          class="common-align"
+          type="primary"
+        >
+          {{ row.applyNo }}
         </el-text>
       </template>
 
