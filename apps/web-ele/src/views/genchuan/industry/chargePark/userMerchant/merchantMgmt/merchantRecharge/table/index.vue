@@ -214,6 +214,9 @@ function getStatusTagType(status: MerchantRechargeRow['status']) {
     case '已支付': {
       return 'primary';
     }
+    case '已生效': {
+      return 'success';
+    }
     case '待支付': {
       return 'warning';
     }

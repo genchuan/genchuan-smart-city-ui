@@ -12,6 +12,7 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { UserCreditApi } from '#/api/genchuan/industry/chargePark/userMerchant/creditMgmt/userCredit';
 import { UserOpReportApi } from '#/api/genchuan/industry/chargePark/userMerchant/decisionAnalysis/userOpReport';
 import { GroupInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/groupClient/groupInfo';
+import { MemberLevelApi } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberLevel';
 import { getUserPage as getMemberUserPage } from '#/api/genchuan/industry/chargePark/userMerchant/memberCenter/memberUser';
 import { MerchantInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantInfo';
 import { MerchantLinkApi } from '#/api/genchuan/industry/chargePark/userMerchant/merchantMgmt/merchantLink';
@@ -21,12 +22,21 @@ import { PlateAuthApi } from '#/api/genchuan/industry/chargePark/userMerchant/us
 import { UserCarApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userCar';
 import { UserInfoApi } from '#/api/genchuan/industry/chargePark/userMerchant/userMgmt/userInfo';
 
+type UserInfoSimple = {
+  id?: number;
+  nickname?: string;
+  phone?: string;
+  userType?: string;
+};
+
 type DrillInfo = {
   drillName?: string;
   drillType: string;
   drillValue?: number | string;
   reportCycle?: string;
   reportId?: number | string;
+  statEndTime?: string;
+  statStartTime?: string;
 };
 
 const emit = defineEmits(['close']);
@@ -37,6 +47,8 @@ const drillInfo = reactive<DrillInfo>({
   drillValue: '',
   reportCycle: '',
   reportId: '',
+  statEndTime: '',
+  statStartTime: '',
 });
 
 const dataObj = reactive({
@@ -54,12 +66,18 @@ const dateTimeFieldNames = new Set([
   'createTime',
   'effectTime',
   'execTime',
+  'expireTime',
   'lastSyncTime',
   'loginTime',
   'payTime',
   'registerTime',
   'updateTime',
 ]);
+
+const QUERY_DATE_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+const creditRuleNameMap: Record<string, string> = {
+  DEFAULT_RULE: '默认评分规则',
+};
 
 function normalizeDateTimeValue(value: number | string) {
   if (typeof value === 'number') {
@@ -103,6 +121,25 @@ function withDateTimeFormat(columns: VxeTableGridOptions['columns']) {
         formatDateTimeValue(cellValue),
     };
   });
+}
+
+function formatMemberStatus(status?: number | string) {
+  return Number(status) === 1 ? '正常' : '禁用';
+}
+
+function getMemberStatusTagType(status?: number | string) {
+  return Number(status) === 1 ? 'success' : 'danger';
+}
+
+function formatCreditRule(row: Record<string, any>) {
+  const ruleCode = String(row.ruleCode || '').trim();
+
+  return (
+    row.ruleDesc ||
+    (ruleCode ? creditRuleNameMap[ruleCode] || ruleCode : '') ||
+    row.remark ||
+    '-'
+  );
 }
 
 const titleMap: Record<string, string> = {
@@ -160,6 +197,10 @@ const memberDrillTypes = new Set([
   'totalMemberCount',
 ]);
 const creditDrillTypes = new Set(['avgCreditScore', 'creditLevel']);
+let userInfoSimpleMapCache:
+  | Map<string, Pick<UserInfoSimple, 'nickname' | 'phone' | 'userType'>>
+  | undefined;
+const memberLevelIdCache = new Map<string, number>();
 
 const reportColumns: VxeTableGridOptions['columns'] = [
   { type: 'seq', title: '序号', width: 60 },
@@ -301,28 +342,40 @@ const groupColumns: VxeTableGridOptions['columns'] = [
 
 const memberColumns: VxeTableGridOptions['columns'] = [
   { type: 'seq', title: '序号', width: 60 },
-  { field: 'nickname', title: '会员昵称', minWidth: 140 },
-  { field: 'mobile', title: '手机号', minWidth: 140 },
+  {
+    field: 'nickname',
+    title: '用户名称',
+    minWidth: 160,
+    formatter: ({ row }) => row.nickname || row.name || row.mobile || '-',
+  },
   { field: 'levelName', title: '会员等级', minWidth: 120 },
-  { field: 'point', title: '当前积分', minWidth: 100 },
-  { field: 'totalPoint', title: '累计积分', minWidth: 100 },
+  { field: 'createTime', title: '开通时间', minWidth: 170 },
   {
     field: 'status',
-    title: '状态',
+    title: '会员状态',
     minWidth: 100,
     slots: { default: 'status' },
   },
-  { field: 'createTime', title: '注册时间', minWidth: 170 },
+  { field: 'expireTime', title: '到期时间', minWidth: 170 },
+  {
+    field: 'autoRenew',
+    title: '自动续费状态',
+    minWidth: 120,
+    formatter: ({ cellValue }) => (Number(cellValue) === 1 ? '是' : '否'),
+  },
 ];
 
 const creditColumns: VxeTableGridOptions['columns'] = [
   { type: 'seq', title: '序号', width: 60 },
-  { field: 'userName', title: '用户名称', minWidth: 140 },
-  { field: 'phone', title: '手机号', minWidth: 140 },
-  { field: 'userType', title: '用户类型', minWidth: 120 },
+  { field: 'userName', title: '用户名称', minWidth: 160 },
   { field: 'creditScore', title: '信用分', minWidth: 100 },
   { field: 'creditLevel', title: '信用等级', minWidth: 120 },
-  { field: 'ruleDesc', title: '触发规则', minWidth: 180 },
+  {
+    field: 'ruleDesc',
+    title: '评分规则',
+    minWidth: 180,
+    formatter: ({ row }) => formatCreditRule(row),
+  },
   { field: 'updateTime', title: '更新时间', minWidth: 170 },
 ];
 
@@ -392,59 +445,215 @@ function buildReportParams(page: { currentPage: number; pageSize: number }) {
   return params;
 }
 
-function buildDayRange(value?: number | string) {
-  if (!value) {
-    return undefined;
-  }
-
-  return [`${value} 00:00:00`, `${value} 23:59:59`];
-}
-
 function hasDateValue(value?: number | string) {
   return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value);
 }
 
-function buildUserParams(page: { currentPage: number; pageSize: number }) {
-  const params: Record<string, any> = {
+function buildPageParams(page: { currentPage: number; pageSize: number }) {
+  return {
     pageNo: page.currentPage,
     pageSize: page.pageSize,
   };
+}
+
+function setParamIfValid(
+  params: Record<string, any>,
+  fieldName: string,
+  value?: unknown,
+) {
+  if (value !== undefined && value !== null && value !== '') {
+    params[fieldName] = value;
+  }
+}
+
+function getDrillFilterValue() {
+  return drillInfo.drillValue || drillInfo.drillName;
+}
+
+function getMemberLevelFilterName() {
+  return String(drillInfo.drillName || drillInfo.drillValue || '').trim();
+}
+
+async function getMemberLevelIdByName() {
+  const levelName = getMemberLevelFilterName();
+
+  if (!levelName) {
+    return undefined;
+  }
+
+  const cachedLevelId = memberLevelIdCache.get(levelName);
+
+  if (cachedLevelId !== undefined) {
+    return cachedLevelId;
+  }
+
+  const result = await MemberLevelApi.getMemberLevelPage({
+    name: levelName,
+    pageNo: 1,
+    pageSize: 100,
+  });
+  const matchedLevel =
+    result.list?.find((item) => item.name === levelName) || result.list?.[0];
+  const levelId =
+    matchedLevel?.id === undefined || matchedLevel.id === null
+      ? undefined
+      : Number(matchedLevel.id);
+
+  if (levelId !== undefined && Number.isFinite(levelId)) {
+    memberLevelIdCache.set(levelName, levelId);
+    return levelId;
+  }
+
+  return undefined;
+}
+
+function buildDayRange(value?: number | string) {
+  if (!hasDateValue(value)) {
+    return undefined;
+  }
+
+  const date = dayjs(value);
+
+  if (!date.isValid()) {
+    return undefined;
+  }
+
+  return [
+    date.startOf('day').format(QUERY_DATE_TIME_FORMAT),
+    date.endOf('day').format(QUERY_DATE_TIME_FORMAT),
+  ];
+}
+
+function buildDrillTimeRange() {
+  if (!drillInfo.statStartTime || !drillInfo.statEndTime) {
+    return undefined;
+  }
+
+  const startTime = dayjs(drillInfo.statStartTime);
+  const endTime = dayjs(drillInfo.statEndTime);
+
+  if (!startTime.isValid() || !endTime.isValid()) {
+    return undefined;
+  }
+
+  return [
+    startTime.format(QUERY_DATE_TIME_FORMAT),
+    endTime.format(QUERY_DATE_TIME_FORMAT),
+  ];
+}
+
+function buildScopedParams(
+  page: { currentPage: number; pageSize: number },
+  options: {
+    dateFieldName?: string;
+    extra?: Record<string, any>;
+    fieldName?: string;
+    preferPointDate?: boolean;
+  } = {},
+) {
+  const params: Record<string, any> = buildPageParams(page);
+  const { dateFieldName, extra, fieldName, preferPointDate = false } = options;
+
+  if (fieldName) {
+    setParamIfValid(params, fieldName, getDrillFilterValue());
+  }
+
+  if (dateFieldName) {
+    const dateRange =
+      preferPointDate && hasDateValue(drillInfo.drillValue)
+        ? buildDayRange(drillInfo.drillValue)
+        : buildDrillTimeRange();
+
+    if (dateRange) {
+      params[dateFieldName] = dateRange;
+    }
+  }
+
+  if (extra) {
+    for (const [key, value] of Object.entries(extra)) {
+      setParamIfValid(params, key, value);
+    }
+  }
+
+  return params;
+}
+
+function buildUserParams(page: { currentPage: number; pageSize: number }) {
+  const params = buildScopedParams(page, {
+    dateFieldName: 'registerTime',
+    preferPointDate:
+      drillInfo.drillType === 'userGrowth' ||
+      drillInfo.drillType === 'userOpTrend',
+  });
 
   if (
     drillInfo.drillType === 'userType' ||
     drillInfo.drillType === 'userTypeDistribution'
   ) {
-    params.userType = drillInfo.drillName || drillInfo.drillValue;
-  }
-  if (
-    (drillInfo.drillType === 'userGrowth' ||
-      drillInfo.drillType === 'userOpTrend') &&
-    hasDateValue(drillInfo.drillValue)
-  ) {
-    params.registerTime = buildDayRange(drillInfo.drillValue);
+    setParamIfValid(params, 'userType', getDrillFilterValue());
   }
 
   return params;
 }
 
-function buildTypedParams(
-  page: { currentPage: number; pageSize: number },
-  fieldName: string,
-  dateFieldName?: string,
-) {
-  const params: Record<string, any> = {
-    pageNo: page.currentPage,
-    pageSize: page.pageSize,
+function buildCreditParams(page: { currentPage: number; pageSize: number }) {
+  return buildScopedParams(page, {
+    dateFieldName: 'updateTime',
+    fieldName: drillInfo.drillType === 'creditLevel' ? 'creditLevel' : '',
+  });
+}
+
+async function getUserInfoSimpleMap() {
+  if (userInfoSimpleMapCache) {
+    return userInfoSimpleMapCache;
+  }
+
+  try {
+    const list = await UserInfoApi.getUserInfoSimpleList();
+    userInfoSimpleMapCache = new Map(
+      (Array.isArray(list) ? list : [])
+        .filter((item) => item.id !== undefined && item.id !== null)
+        .map((item) => [
+          String(item.id),
+          {
+            nickname: item.nickname,
+            phone: item.phone,
+            userType: item.userType,
+          },
+        ]),
+    );
+  } catch (error) {
+    console.error('[userOpReport] load user info simple list failed:', error);
+    userInfoSimpleMapCache = new Map();
+  }
+
+  return userInfoSimpleMapCache;
+}
+
+async function getCreditDrillDownData(page: {
+  currentPage: number;
+  pageSize: number;
+}) {
+  const [result, userInfoSimpleMap] = await Promise.all([
+    UserCreditApi.getUserCreditPage(buildCreditParams(page)),
+    getUserInfoSimpleMap(),
+  ]);
+
+  return {
+    ...result,
+    list: Array.isArray(result?.list)
+      ? result.list.map((item) => {
+          const userInfo = userInfoSimpleMap.get(String(item.userId ?? ''));
+
+          return {
+            ...item,
+            phone: item.phone || userInfo?.phone,
+            userName: item.userName || item.nickname || userInfo?.nickname,
+            userType: item.userType || userInfo?.userType,
+          };
+        })
+      : [],
   };
-
-  if (fieldName) {
-    params[fieldName] = drillInfo.drillValue || drillInfo.drillName;
-  }
-  if (dateFieldName && hasDateValue(drillInfo.drillValue)) {
-    params[dateFieldName] = buildDayRange(drillInfo.drillValue);
-  }
-
-  return params;
 }
 
 async function getDrillDownData({
@@ -453,100 +662,103 @@ async function getDrillDownData({
   page: { currentPage: number; pageSize: number };
 }) {
   if (memberDrillTypes.has(drillInfo.drillType)) {
-    const params: Record<string, any> = {
-      pageNo: page.currentPage,
-      pageSize: page.pageSize,
-    };
-    if (drillInfo.drillType === 'memberLevel') {
-      params.levelName = drillInfo.drillValue || drillInfo.drillName;
-    }
-    return await getMemberUserPage({
-      ...params,
+    const params = buildScopedParams(page, {
+      dateFieldName: 'createTime',
     });
+
+    if (drillInfo.drillType === 'memberLevel') {
+      const levelId = await getMemberLevelIdByName();
+
+      if (levelId === undefined) {
+        return {
+          list: [],
+          total: 0,
+        };
+      }
+
+      params.levelId = levelId;
+    }
+
+    return await getMemberUserPage(params);
   }
 
   if (creditDrillTypes.has(drillInfo.drillType)) {
-    return await UserCreditApi.getUserCreditPage(
-      drillInfo.drillType === 'creditLevel'
-        ? buildTypedParams(page, 'creditLevel')
-        : {
-            pageNo: page.currentPage,
-            pageSize: page.pageSize,
-          },
-    );
+    return await getCreditDrillDownData(page);
   }
 
   if (userCarDrillTypes.has(drillInfo.drillType)) {
     return await UserCarApi.getUserCarPage(
       drillInfo.drillType === 'carType'
-        ? buildTypedParams(page, 'carType')
-        : {
-            pageNo: page.currentPage,
-            pageSize: page.pageSize,
-          },
+        ? buildScopedParams(page, {
+            dateFieldName: 'bindTime',
+            fieldName: 'carType',
+          })
+        : buildScopedParams(page, {
+            dateFieldName: 'bindTime',
+            extra: { status: '已绑定' },
+          }),
     );
   }
 
   if (plateAuthDrillTypes.has(drillInfo.drillType)) {
     return await PlateAuthApi.getPlateAuthPage(
-      drillInfo.drillType === 'plateAuth' && hasDateValue(drillInfo.drillValue)
-        ? buildTypedParams(page, '', 'applyTime')
-        : {
-            pageNo: page.currentPage,
-            pageSize: page.pageSize,
-          },
+      buildScopedParams(page, {
+        dateFieldName: 'applyTime',
+        preferPointDate: drillInfo.drillType === 'plateAuth',
+      }),
     );
   }
 
   if (merchantDrillTypes.has(drillInfo.drillType)) {
     return await MerchantInfoApi.getMerchantInfoPage(
       drillInfo.drillType === 'merchantType'
-        ? buildTypedParams(page, 'merchantType')
-        : {
-            pageNo: page.currentPage,
-            pageSize: page.pageSize,
-          },
+        ? buildScopedParams(page, {
+            dateFieldName: 'registerTime',
+            fieldName: 'merchantType',
+          })
+        : buildScopedParams(page, {
+            dateFieldName: 'registerTime',
+          }),
     );
   }
 
   if (merchantLinkDrillTypes.has(drillInfo.drillType)) {
-    return await MerchantLinkApi.getMerchantLinkPage({
-      pageNo: page.currentPage,
-      pageSize: page.pageSize,
-    });
+    return await MerchantLinkApi.getMerchantLinkPage(
+      buildScopedParams(page, {
+        dateFieldName: 'effectTime',
+        extra: { status: '已对接' },
+      }),
+    );
   }
 
   if (merchantRechargeDrillTypes.has(drillInfo.drillType)) {
     return await MerchantRechargeApi.getMerchantRechargePage(
-      drillInfo.drillType === 'rechargeAmountTrend' &&
-        hasDateValue(drillInfo.drillValue)
-        ? buildTypedParams(page, '', 'payTime')
-        : {
-            pageNo: page.currentPage,
-            pageSize: page.pageSize,
-          },
+      buildScopedParams(page, {
+        dateFieldName: 'payTime',
+        preferPointDate: drillInfo.drillType === 'rechargeAmountTrend',
+      }),
     );
   }
 
   if (merchantSendCouponDrillTypes.has(drillInfo.drillType)) {
     return await MerchantSendCouponApi.getMerchantSendCouponPage(
-      drillInfo.drillType === 'sendCoupon' && hasDateValue(drillInfo.drillValue)
-        ? buildTypedParams(page, '', 'execTime')
-        : {
-            pageNo: page.currentPage,
-            pageSize: page.pageSize,
-          },
+      buildScopedParams(page, {
+        dateFieldName: 'execTime',
+        preferPointDate: drillInfo.drillType === 'sendCoupon',
+      }),
     );
   }
 
   if (groupDrillTypes.has(drillInfo.drillType)) {
     return await GroupInfoApi.getGroupInfoPage(
       drillInfo.drillType === 'groupType'
-        ? buildTypedParams(page, 'groupType')
-        : {
-            pageNo: page.currentPage,
-            pageSize: page.pageSize,
-          },
+        ? buildScopedParams(page, {
+            dateFieldName: 'registerTime',
+            fieldName: 'groupType',
+          })
+        : buildScopedParams(page, {
+            dateFieldName: 'registerTime',
+          }),
     );
   }
 
@@ -600,6 +812,8 @@ async function open(info: DrillInfo) {
   drillInfo.drillName = info.drillName || String(info.drillValue || '');
   drillInfo.reportCycle = info.reportCycle || '';
   drillInfo.reportId = info.reportId || '';
+  drillInfo.statEndTime = info.statEndTime || '';
+  drillInfo.statStartTime = info.statStartTime || '';
 
   drawerApi.setState({
     title: getDrawerTitle(),
@@ -630,12 +844,18 @@ defineExpose({
         <template #status="{ row }">
           <ElTag
             :type="
-              ['正常', '已生成', 1, '1', true].includes(row.status)
-                ? 'success'
-                : 'warning'
+              memberDrillTypes.has(drillInfo.drillType)
+                ? getMemberStatusTagType(row.status)
+                : ['正常', '已生成', 1, '1', true].includes(row.status)
+                  ? 'success'
+                  : 'warning'
             "
           >
-            {{ row.status }}
+            {{
+              memberDrillTypes.has(drillInfo.drillType)
+                ? formatMemberStatus(row.status)
+                : row.status
+            }}
           </ElTag>
         </template>
       </Grid>
