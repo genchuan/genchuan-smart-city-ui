@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
@@ -469,6 +469,10 @@ const handleClearField = (fieldName) => {
   if (fieldName === 'stationId') {
     delete next.stationName;
   }
+  // 清除leaveTime时，同时清除leaveTimeHour（如果存在）
+  if (fieldName === 'leaveTime') {
+    delete next.leaveTimeHour;
+  }
   dataObj.searchParams = next;
   dataObj.currentPage = 1;
   gridApi.query();
@@ -477,6 +481,63 @@ const handleClearField = (fieldName) => {
 const changeTotalShow = () => {
   dataObj.totalShow = !dataObj.totalShow;
 };
+
+function formatDateTime(value, isEnd) {
+  if (!value) return value;
+
+  let date;
+  // 解析时间值
+  if (typeof value === 'number') {
+    // 时间戳
+    date = new Date(value);
+  } else if (value instanceof Date) {
+    // Date 对象
+    date = value;
+  } else {
+    // 字符串，尝试解析
+    date = new Date(value);
+  }
+
+  // 检查是否有效
+  if (isNaN(date.getTime())) {
+    return value;
+  }
+
+  // 格式化为 YYYY-MM-DD HH:mm:ss
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = isEnd ? '23' : '00';
+  const minutes = isEnd ? '59' : '00';
+  const seconds = isEnd ? '59' : '00';
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+function buildApiParams(rawParams) {
+  const params = { ...rawParams };
+  if (
+    params.leaveTime &&
+    Array.isArray(params.leaveTime) &&
+    params.leaveTime.length === 2
+  ) {
+    params.leaveTime = [
+      formatDateTime(params.leaveTime[0], false),
+      formatDateTime(params.leaveTime[1], true),
+    ];
+  }
+  if (
+    params.enterTime &&
+    Array.isArray(params.enterTime) &&
+    params.enterTime.length === 2
+  ) {
+    params.enterTime = [
+      formatDateTime(params.enterTime[0], false),
+      formatDateTime(params.enterTime[1], true),
+    ];
+  }
+  return params;
+}
 
 const getTableData = async (pageObj) => {
   const page = pageObj.page;
@@ -487,7 +548,7 @@ const getTableData = async (pageObj) => {
       const params = {
         pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
-        ...dataObj.searchParams,
+        ...buildApiParams(dataObj.searchParams),
       };
 
       if (isSearching) {
@@ -585,22 +646,7 @@ function onSubmit(values) {
     }
   }
 
-  // 转换入场时间为时间戳数组
-  if (params.enterTime && Array.isArray(params.enterTime) && params.enterTime.length === 2) {
-    params.enterTime = params.enterTime.map(time => {
-      const timestamp = typeof time === 'number' ? time : new Date(time).getTime();
-      return timestamp;
-    });
-  }
-
-  // 转换离场时间为时间戳数组
-  if (params.leaveTime && Array.isArray(params.leaveTime) && params.leaveTime.length === 2) {
-    params.leaveTime = params.leaveTime.map(time => {
-      const timestamp = typeof time === 'number' ? time : new Date(time).getTime();
-      return timestamp;
-    });
-  }
-
+  // 时间不做任何转换，保持原样，由 buildApiParams 统一处理
   dataObj.searchParams = params;
   isSearching = true;
   gridApi.query();
@@ -699,11 +745,22 @@ const handleFullShow = () => {
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
 
-  // 如果有 leaveTimeHour 参数，只传递小时参数
+  // 如果有 leaveTimeHour 参数，转换成完整的时间范围
   if (filterParams.leaveTimeHour) {
+    const hourStr = String(filterParams.leaveTimeHour).padStart(2, '0');
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    
+    const leaveTimeRange = [
+      `${year}-${month}-${day} ${hourStr}:00:00`,
+      `${year}-${month}-${day} ${hourStr}:59:59`
+    ];
+    
     dataObj.searchParams = {
       ...dataObj.searchParams,
-      leaveTimeHour: filterParams.leaveTimeHour,
+      leaveTime: leaveTimeRange,
     };
     ElMessage.success(`已筛选 ${filterParams.leaveTimeHour} 时段的离场记录`);
   } else if (filterParams.startTime && filterParams.endTime) {
@@ -841,7 +898,7 @@ const formatDuration = (minutes) => {
           />
           <IconButton
             content="筛选"
-            icon-name="Filter"
+            icon-name="Search"
             @click="handleSerachShow"
           />
           <IconButton
