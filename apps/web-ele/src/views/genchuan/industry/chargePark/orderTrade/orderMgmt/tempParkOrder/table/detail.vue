@@ -14,6 +14,14 @@ const statusMap = {
   refunding: { label: '退款中', type: 'danger' },
 };
 
+// 支付方式映射
+const payMethodMap = {
+  wechat: '微信',
+  alipay: '支付宝',
+  bank: '银行卡',
+  cash: '现金',
+};
+
 // 获取状态标签
 const getStatusLabel = (status) => {
   return statusMap[status]?.label || status;
@@ -22,6 +30,11 @@ const getStatusLabel = (status) => {
 // 获取状态类型
 const getStatusType = (status) => {
   return statusMap[status]?.type || 'default';
+};
+
+// 获取支付方式标签
+const getPayMethodLabel = (payMethod) => {
+  return payMethodMap[payMethod] || payMethod || '-';
 };
 
 // 定义组件接收的属性（临时停车订单详情）
@@ -146,7 +159,7 @@ defineExpose({
       <div class="detail-card-row">
         <div class="detail-row-left">支付方式:</div>
         <div class="detail-row-right">
-          {{ detailObj.payMethod || '-' }}
+          {{ getPayMethodLabel(detailObj.payMethod) }}
         </div>
       </div>
 
