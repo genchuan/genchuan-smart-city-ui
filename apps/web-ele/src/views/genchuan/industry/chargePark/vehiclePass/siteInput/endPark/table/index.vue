@@ -329,11 +329,18 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
+  schema: computed(() => {
+    const schema = useSearchFormSchema().map((v) => {
+      delete v.rules;
+      return { ...v };
+    });
+
+    const areaField = schema.find((f) => f.fieldName === 'areaId');
+    if (areaField) {
+      areaField.componentProps.options = stationOptions.value;
+    }
+
+    return schema;
   }),
   showCollapseButton: true,
   submitButtonOptions: {
@@ -358,13 +365,23 @@ function onSubmit(values) {
   searchSchema.forEach((field) => {
     if (field.component === 'Select' && newParams[field.fieldName]) {
       const option = field.componentProps.options?.find(
-        (opt) => opt.value === newParams[field.fieldName]
+        (opt) => String(opt.value) === String(newParams[field.fieldName])
       );
       if (option) {
         labels[field.fieldName] = option.label;
       }
     }
   });
+
+  // 片区标签从 stationOptions 获取
+  if (newParams.areaId) {
+    const areaOption = stationOptions.value.find(
+      (opt) => String(opt.value) === String(newParams.areaId)
+    );
+    if (areaOption) {
+      labels.areaId = areaOption.label;
+    }
+  }
 
   dataObj.filterLabels = { ...dataObj.filterLabels, ...labels };
   isSearching = true;
@@ -689,7 +706,10 @@ const handleAreaClick = (row) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
     areaId: row.areaId,
-    areaName: row.areaName,
+  };
+  dataObj.filterLabels = {
+    ...dataObj.filterLabels,
+    areaId: row.areaName,
   };
   dataObj.currentPage = 1;
   handleRefresh();
@@ -834,12 +854,12 @@ const handleChartFilter = (event) => {
         <div class="common-toolbar-tools">
           <IconButton
             content="筛选"
-            icon-name="search"
+            icon-name="Filter"
             @click="handleSerachShow"
           />
           <IconButton
             content="导出"
-            icon-name="download"
+            icon-name="Download"
             @click="handleExport"
           />
           <IconButton

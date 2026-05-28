@@ -98,3 +98,10 @@ export function getSpaceQueryChart(params: SpaceQueryApi.ChartReqVO) {
     },
   );
 }
+
+/** 导出泊位查询 */
+export function exportSpaceQuery(params?: SpaceQueryApi.PageReqVO) {
+  return requestClient.download('/vehiclepass/space-query/export', {
+    params: { ...params },
+  });
+}
