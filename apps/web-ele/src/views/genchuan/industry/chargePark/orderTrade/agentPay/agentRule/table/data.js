@@ -11,6 +11,10 @@ export function useFormSchema() {
       labelWidth: 120,
       isEdit: true,
       isHidden: true,
+       dependencies: {
+        show: (values) => !!values.id,
+        triggerFields: ['id'],
+      },
     },
     {
       fieldName: 'name',
