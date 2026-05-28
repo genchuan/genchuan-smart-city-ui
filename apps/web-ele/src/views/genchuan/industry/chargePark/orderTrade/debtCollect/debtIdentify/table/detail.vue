@@ -92,14 +92,10 @@ defineExpose({
         <div class="detail-row-right">{{ detailObj.stationName || '-' }}</div>
       </div>
 
+ 
 
       <div class="detail-card-row">
-        <div class="detail-row-left">创建者:</div>
-        <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新者:</div>
+        <div class="detail-row-left">识别人:</div>
         <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
       </div>
 
@@ -107,11 +103,7 @@ defineExpose({
         <div class="detail-row-left">创建时间:</div>
         <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
       </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新时间:</div>
-        <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
-      </div>
+ 
     </div>
   </DetailDrawer>
 </template>
