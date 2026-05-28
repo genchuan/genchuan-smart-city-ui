@@ -25,13 +25,15 @@ export namespace LeaveRecordApi {
   /** 离场记录分页查询参数 */
   export interface PageReqVO extends PageParam {
     plateNo?: string;
-    enterTime?: string;
-    leaveTime?: string;
+    enterTime?: number[];
+    leaveTime?: number[];
+    leaveTimeHour?: string;
     parkDuration?: number;
     status?: string;
     stationId?: number;
+    stationName?: string;
     remark?: string;
-    isCorrected?: boolean;
+    isCorrected?: number;
   }
 
   /** 离场记录创建参数 */

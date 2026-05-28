@@ -331,13 +331,9 @@ export function useSearchFormSchema() {
     {
       fieldName: 'scheduleDate',
       label: '排班日期',
-      component: 'DatePicker',
+      component: 'RangePicker',
       componentProps: {
-        placeholder: '请选择排班日期',
-        format: 'YYYY-MM-DD',
-        valueFormat: 'YYYY-MM-DD',
-        type: 'date',
-        clearable: true,
+        ...getRangePickerDefaultProps(),
       },
     },
     // {

@@ -30,6 +30,7 @@ import {
   dataList,
   detailFields,
   getStationOptions,
+  getUserOptions,
   textObj,
   useSearchFormSchema,
   useCreateFormSchema,
@@ -37,7 +38,6 @@ import {
   useGridColumns,
   statusTypeMap,
   openReasonMap,
-  taskProgressMap,
 } from './data';
 
 const props = defineProps({
@@ -51,12 +51,21 @@ const props = defineProps({
 const USE_REAL_API = true;
 
 const stationOptions = ref([]);
+const userOptions = ref([]);
 
 async function loadStationOptions() {
   try {
     stationOptions.value = await getStationOptions();
   } catch (error) {
     console.error('Failed to load station options:', error);
+  }
+}
+
+async function loadUserOptions() {
+  try {
+    userOptions.value = await getUserOptions();
+  } catch (error) {
+    console.error('Failed to load user options:', error);
   }
 }
 
@@ -89,6 +98,10 @@ const [CreateForm, createFormApi] = useVbenForm({
     const stationField = schema.find((f) => f.fieldName === 'stationId');
     if (stationField) {
       stationField.componentProps.options = stationOptions.value;
+    }
+    const applyUserField = schema.find((f) => f.fieldName === 'applyUserId');
+    if (applyUserField) {
+      applyUserField.componentProps.options = userOptions.value;
     }
     return schema;
   }),
@@ -356,7 +369,6 @@ let isSearching = false;
 const userNameMap = ref({
   applyUserId: '',
   auditUserId: '',
-  executorId: '',
 });
 
 const activeFilters = computed(() => {
@@ -364,7 +376,9 @@ const activeFilters = computed(() => {
   const obj = dataObj.searchParams;
 
   if (obj.stationName) {
-    filters.push({ label: `片区：${obj.stationName}`, field: 'stationName' });
+    const station = stationOptions.value.find((s) => s.value === obj.stationName);
+    const stationLabel = station ? station.label : obj.stationName;
+    filters.push({ label: `片区：${stationLabel}`, field: 'stationName' });
   }
   if (obj.status) {
     filters.push({ label: `状态：${obj.status}`, field: 'status' });
@@ -381,17 +395,11 @@ const activeFilters = computed(() => {
   if (obj.auditStatus) {
     filters.push({ label: `审批状态：${obj.auditStatus}`, field: 'auditStatus' });
   }
-  if (obj.applyUserId !== undefined && obj.applyUserId !== null && obj.applyUserId !== '') {
-    const label = userNameMap.value.applyUserId || obj.applyUserId;
-    filters.push({ label: `申请人：${label}`, field: 'applyUserId' });
+  if (obj.applyUserName) {
+    filters.push({ label: `申请人：${obj.applyUserName}`, field: 'applyUserName' });
   }
-  if (obj.auditUserId !== undefined && obj.auditUserId !== null && obj.auditUserId !== '') {
-    const label = userNameMap.value.auditUserId || obj.auditUserId;
-    filters.push({ label: `审批人：${label}`, field: 'auditUserId' });
-  }
-  if (obj.executorId !== undefined && obj.executorId !== null && obj.executorId !== '') {
-    const label = userNameMap.value.executorId || obj.executorId;
-    filters.push({ label: `执行人：${label}`, field: 'executorId' });
+  if (obj.auditUserName) {
+    filters.push({ label: `审批人：${obj.auditUserName}`, field: 'auditUserName' });
   }
 
   return filters;
@@ -406,8 +414,6 @@ const handleClearField = (fieldName) => {
     userNameMap.value.applyUserId = '';
   } else if (fieldName === 'auditUserId') {
     userNameMap.value.auditUserId = '';
-  } else if (fieldName === 'executorId') {
-    userNameMap.value.executorId = '';
   }
 
   isSearching = true;
@@ -425,13 +431,10 @@ const getTableData = async (pageObj) => {
   // 使用真实API
   if (USE_REAL_API) {
     try {
-      // 过滤掉 API 不需要的字段
-      const { applyUserName, auditUserName, ...apiParams } = dataObj.searchParams;
-
       const params = {
         pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
-        ...apiParams,
+        ...dataObj.searchParams,
       };
 
       if (isSearching) {
@@ -507,11 +510,31 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
+  schema: computed(() => {
+    const schema = useSearchFormSchema().map((v) => {
+      delete v.rules;
+      return { ...v };
+    });
+
+    // 更新片区选项
+    const stationField = schema.find((f) => f.fieldName === 'stationName');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+
+    // 更新申请人选项
+    const applyUserField = schema.find((f) => f.fieldName === 'applyUserId');
+    if (applyUserField) {
+      applyUserField.componentProps.options = userOptions.value;
+    }
+
+    // 更新执行人选项
+    const executorField = schema.find((f) => f.fieldName === 'auditUserId');
+    if (executorField) {
+      executorField.componentProps.options = userOptions.value;
+    }
+
+    return schema;
   }),
   showCollapseButton: true,
   submitButtonOptions: {
@@ -521,10 +544,22 @@ const [SearchForm] = useVbenForm({
 
 function onSubmit(values) {
   Object.assign(dataObj.searchParams, values);
-  // 清除用户名映射，因为搜索表单提交时没有用户名
-  userNameMap.value.applyUserId = '';
-  userNameMap.value.auditUserId = '';
-  userNameMap.value.executorId = '';
+
+  // 根据选中的ID更新用户名映射
+  if (values.applyUserId) {
+    const user = userOptions.value.find(u => u.value === values.applyUserId);
+    userNameMap.value.applyUserId = user ? user.label : '';
+  } else {
+    userNameMap.value.applyUserId = '';
+  }
+
+  if (values.auditUserId) {
+    const user = userOptions.value.find(u => u.value === values.auditUserId);
+    userNameMap.value.auditUserId = user ? user.label : '';
+  } else {
+    userNameMap.value.auditUserId = '';
+  }
+
   isSearching = true;
   gridApi.query();
   drawerApi.close();
@@ -638,6 +673,8 @@ const handleFilterByChart = (event) => {
 
 onMounted(() => {
   window.addEventListener('filterByChart:gateOpen', handleFilterByChart);
+  loadStationOptions();
+  loadUserOptions();
 });
 
 onUnmounted(() => {
@@ -655,8 +692,6 @@ const handleFieldFilter = (field, value, userName = '') => {
     userNameMap.value.applyUserId = userName;
   } else if (field === 'auditUserId' && userName) {
     userNameMap.value.auditUserId = userName;
-  } else if (field === 'executorId' && userName) {
-    userNameMap.value.executorId = userName;
   }
 
   dataObj.currentPage = 1;
@@ -721,12 +756,12 @@ const handleFieldFilter = (field, value, userName = '') => {
           />
           <IconButton
             content="导出"
-            icon-name="download"
+            icon-name="Download"
             @click="handleExport"
           />
           <IconButton
-            content="搜索"
-            icon-name="search"
+            content="筛选"
+            icon-name="Filter"
             @click="handleSerachShow"
           />
           <IconButton
@@ -757,13 +792,15 @@ const handleFieldFilter = (field, value, userName = '') => {
       </template>
       <template #applyUserName="{ row }">
         <el-text
-          @click="handleFieldFilter('applyUserId', row.applyUserId, row.applyUserName)"
+          v-if="row.applyUserName"
+          @click="handleFieldFilter('applyUserName', row.applyUserName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
           {{ row.applyUserName }}
         </el-text>
+        <span v-else>-</span>
       </template>
       <template #status="{ row }">
         <el-tag
@@ -777,22 +814,17 @@ const handleFieldFilter = (field, value, userName = '') => {
       <template #updater="{ row }">
         <span>{{ row.updater || '-' }}</span>
       </template>
-      <template #executorName="{ row }">
+      <template #auditUserName="{ row }">
         <el-text
-          @click="handleFieldFilter('executorId', row.executorId, row.executorName)"
+          v-if="row.auditUserName"
+          @click="handleFieldFilter('auditUserName', row.auditUserName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
-          {{ row.executorName }}
+          {{ row.auditUserName }}
         </el-text>
-      </template>
-      <template #taskProgress="{ row }">
-        <el-tag
-          :type="taskProgressMap[row.taskProgress]"
-        >
-          {{ row.taskProgress }}
-        </el-tag>
+        <span v-else>-</span>
       </template>
       <template #updateTime="{ row }">
         <span>{{ formatTime(row.updateTime) }}</span>

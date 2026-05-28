@@ -5,6 +5,16 @@ import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
+import {
+  ArrowDown,
+  ArrowUp,
+  Promotion,
+  View,
+  Check,
+  Edit,
+  SwitchButton,
+  FolderOpened,
+} from '@element-plus/icons-vue';
 import screenfull from 'screenfull';
 
 import { useVbenForm } from '#/adapter/form';
@@ -29,8 +39,8 @@ import { formatTime } from '../../../utils/timeFormatter';
 import {
   dataList,
   detailFields,
-  getStationOptions,
   getExecutorOptions,
+  getStationOptions,
   textObj,
   useGridColumns,
   useSearchFormSchema,
@@ -52,22 +62,22 @@ const props = defineProps({
 // 是否使用真实API
 const USE_REAL_API = true;
 
-const stationOptions = ref([]);
 const executorOptions = ref([]);
-
-async function loadStationOptions() {
-  try {
-    stationOptions.value = await getStationOptions();
-  } catch (error) {
-    console.error('Failed to load station options:', error);
-  }
-}
+const stationOptions = ref([]);
 
 async function loadExecutorOptions() {
   try {
     executorOptions.value = await getExecutorOptions();
   } catch (error) {
     console.error('Failed to load executor options:', error);
+  }
+}
+
+async function loadStationOptions() {
+  try {
+    stationOptions.value = await getStationOptions();
+  } catch (error) {
+    console.error('Failed to load station options:', error);
   }
 }
 
@@ -103,6 +113,10 @@ const [Form, formApi] = useVbenForm({
     const stationField = schema.find((f) => f.fieldName === 'stationId');
     if (stationField) {
       stationField.componentProps.options = stationOptions.value;
+    }
+    const areaField = schema.find((f) => f.fieldName === 'areaId');
+    if (areaField) {
+      areaField.componentProps.options = stationOptions.value;
     }
     return schema;
   }),
@@ -145,13 +159,35 @@ function handleRefresh() {
   gridApi.query();
 }
 
+function toDateTimeString(value, isEnd) {
+  if (!value) return value;
+  const str = String(value);
+  if (/\d{2}:\d{2}:\d{2}/.test(str)) return str;
+  return `${str} ${isEnd ? '23:59:59' : '00:00:00'}`;
+}
+
+function buildApiParams(rawParams) {
+  const params = { ...rawParams };
+  if (
+    params.dispatchTime &&
+    Array.isArray(params.dispatchTime) &&
+    params.dispatchTime.length === 2
+  ) {
+    params.dispatchTime = [
+      toDateTimeString(params.dispatchTime[0], false),
+      toDateTimeString(params.dispatchTime[1], true),
+    ];
+  }
+  return params;
+}
+
 async function handleExport() {
   const loadingInstance = ElLoading.service({
     text: '导出中...',
   });
   try {
     if (USE_REAL_API) {
-      const res = await exportInspectTask(dataObj.searchParams);
+      const res = await exportInspectTask(buildApiParams(dataObj.searchParams));
       downloadFileFromBlobPart({ fileName: '稽查任务.xlsx', source: res });
     } else {
       exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
@@ -272,11 +308,12 @@ const activeFilters = computed(() => {
     filters.push({ label: `任务状态：${statusLabel}`, field: 'status' });
   }
   if (obj.areaId) {
-    filters.push({ label: `片区：${obj.areaId}`, field: 'areaId' });
+    const station = stationOptions.value.find((s) => String(s.value) === String(obj.areaId));
+    const stationLabel = station ? station.label : obj.areaId;
+    filters.push({ label: `片区：${stationLabel}`, field: 'areaId' });
   }
-  if (obj.executeUserId !== undefined && obj.executeUserId !== null && obj.executeUserId !== '') {
-    const label = labels.executeUserId || userNameMap.value.executeUserId || obj.executeUserId;
-    filters.push({ label: `执行人：${label}`, field: 'executeUserId' });
+  if (obj.executeUserName) {
+    filters.push({ label: `执行人：${obj.executeUserName}`, field: 'executeUserName' });
   }
   if (
     obj.dispatchTime &&
@@ -323,8 +360,15 @@ const getTableData = async (pageObj) => {
       const params = {
         pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
-        ...dataObj.searchParams,
+        ...buildApiParams(dataObj.searchParams),
       };
+
+      // 移除空值参数
+      Object.keys(params).forEach(key => {
+        if (params[key] === null || params[key] === undefined || params[key] === '') {
+          delete params[key];
+        }
+      });
 
       if (isSearching) {
         isSearching = false;
@@ -333,6 +377,7 @@ const getTableData = async (pageObj) => {
         dataObj.currentPage = page.currentPage;
       }
 
+      console.log('查询参数:', params); // 调试日志
       const res = await getInspectTaskPage(params);
       dataObj.total = res.total || 0;
       dataObj.list = res.list || [];
@@ -406,11 +451,18 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
+  schema: computed(() => {
+    const schema = useSearchFormSchema().map((v) => {
+      delete v.rules;
+      return { ...v };
+    });
+
+    const areaField = schema.find((f) => f.fieldName === 'areaId');
+    if (areaField) {
+      areaField.componentProps.options = stationOptions.value;
+    }
+
+    return schema;
   }),
   showCollapseButton: true,
   submitButtonOptions: {
@@ -427,13 +479,23 @@ function onSubmit(values) {
   searchSchema.forEach((field) => {
     if (field.component === 'Select' && values[field.fieldName]) {
       const option = field.componentProps.options?.find(
-        (opt) => opt.value === values[field.fieldName]
+        (opt) => String(opt.value) === String(values[field.fieldName])
       );
       if (option) {
         labels[field.fieldName] = option.label;
       }
     }
   });
+
+  // 片区标签从 stationOptions 获取
+  if (values.areaId) {
+    const areaOption = stationOptions.value.find(
+      (opt) => String(opt.value) === String(values.areaId)
+    );
+    if (areaOption) {
+      labels.areaId = areaOption.label;
+    }
+  }
 
   dataObj.filterLabels = labels;
   // 清除用户名映射，因为搜索表单提交时没有用户名
@@ -559,8 +621,8 @@ const handleFilterByChart = (event) => {
 };
 
 onMounted(() => {
-  loadStationOptions();
   loadExecutorOptions();
+  loadStationOptions();
   window.addEventListener('filterByChart:inspectTask', handleFilterByChart);
 });
 
@@ -594,24 +656,41 @@ const [DispatchDrawer, dispatchDrawerApi] = useVbenDrawer({
   },
 });
 
-const [DispatchForm, dispatchFormApi] = useVbenForm({
-  schema: [
-    {
-      fieldName: 'executeUserId',
-      label: '执行人',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择执行人',
-        options: [],
-      },
-      rules: 'required',
+const dispatchSchema = ref([
+  {
+    fieldName: 'executeUserId',
+    label: '执行人',
+    component: 'Select',
+    componentProps: {
+      placeholder: '请选择执行人',
+      options: [],
     },
-  ],
+    rules: 'required',
+  },
+]);
+
+const [DispatchForm, dispatchFormApi] = useVbenForm({
+  schema: computed(() => dispatchSchema.value),
+  showDefaultActions: false,
 });
 
 const handleDispatch = async (row) => {
   try {
     dataObj.currentDispatchRow = row;
+    console.log('打开派发抽屉时 executorOptions 的值:', executorOptions.value);
+    // 更新执行人选项
+    dispatchSchema.value = [
+      {
+        fieldName: 'executeUserId',
+        label: '执行人',
+        component: 'Select',
+        componentProps: {
+          placeholder: '请选择执行人',
+          options: executorOptions.value,
+        },
+        rules: 'required',
+      },
+    ];
     dispatchDrawerApi.open();
   } catch (error) {
     console.error('打开派发抽屉失败:', error);
@@ -645,19 +724,22 @@ const [BatchDispatchDrawer, batchDispatchDrawerApi] = useVbenDrawer({
   },
 });
 
-const [BatchDispatchForm, batchDispatchFormApi] = useVbenForm({
-  schema: [
-    {
-      fieldName: 'executeUserId',
-      label: '执行人',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择执行人',
-        options: [],
-      },
-      rules: 'required',
+const batchDispatchSchema = ref([
+  {
+    fieldName: 'executeUserId',
+    label: '执行人',
+    component: 'Select',
+    componentProps: {
+      placeholder: '请选择执行人',
+      options: [],
     },
-  ],
+    rules: 'required',
+  },
+]);
+
+const [BatchDispatchForm, batchDispatchFormApi] = useVbenForm({
+  schema: computed(() => batchDispatchSchema.value),
+  showDefaultActions: false,
 });
 
 const handleBatchDispatch = async () => {
@@ -666,6 +748,19 @@ const handleBatchDispatch = async () => {
     return;
   }
   try {
+    // 更新执行人选项
+    batchDispatchSchema.value = [
+      {
+        fieldName: 'executeUserId',
+        label: '执行人',
+        component: 'Select',
+        componentProps: {
+          placeholder: '请选择执行人',
+          options: executorOptions.value,
+        },
+        rules: 'required',
+      },
+    ];
     batchDispatchDrawerApi.open();
   } catch (error) {
     console.error('打开批量派发抽屉失败:', error);
@@ -695,51 +790,81 @@ const [ProgressDrawer, progressDrawerApi] = useVbenDrawer({
     progressDrawerApi.close();
   },
   async onConfirm() {
-    const values = progressFormApi.form.values;
-    const currentRow = dataObj.currentProgressRow;
     try {
-      await updateInspectTaskProgress({
-        id: currentRow.id,
-        taskProgress: values.taskProgress,
-        remark: values.remark,
+      // 先验证表单
+      await progressFormApi.validate();
+
+      const values = progressFormApi.form.values;
+      const currentRow = dataObj.currentProgressRow;
+
+      const loadingInstance = ElLoading.service({
+        text: '更新中...',
       });
-      ElMessage.success('更新成功');
-      handleRefresh();
-      progressDrawerApi.close();
+
+      try {
+        await updateInspectTaskProgress({
+          id: currentRow.id,
+          taskProgress: values.taskProgress,
+          remark: values.remark,
+        });
+        ElMessage.success('更新成功');
+        handleRefresh();
+        progressDrawerApi.close();
+      } finally {
+        loadingInstance.close();
+      }
     } catch (error) {
-      ElMessage.error('更新失败');
-      console.error(error);
+      if (error?.message !== 'Validation failed') {
+        ElMessage.error('更新失败');
+        console.error(error);
+      }
     }
   },
 });
 
 const [ProgressForm, progressFormApi] = useVbenForm({
+  commonConfig: {
+    componentProps: {
+      class: 'w-full',
+    },
+    formItemClass: 'col-span-2',
+    labelWidth: 100,
+  },
+  layout: 'horizontal',
   schema: [
     {
       fieldName: 'taskProgress',
       label: '任务进度',
-      component: 'Textarea',
+      component: 'Input',
       componentProps: {
+        type: 'textarea',
         placeholder: '请输入任务进度',
         rows: 3,
+        maxlength: 200,
+        showWordLimit: true,
       },
       rules: 'required',
     },
     {
       fieldName: 'remark',
       label: '备注',
-      component: 'Textarea',
+      component: 'Input',
       componentProps: {
+        type: 'textarea',
         placeholder: '请输入备注',
         rows: 3,
+        maxlength: 200,
+        showWordLimit: true,
       },
     },
   ],
+  showDefaultActions: false,
 });
 
 const handleUpdateProgress = async (row) => {
   try {
     dataObj.currentProgressRow = row;
+    progressFormApi.resetForm();
     progressDrawerApi.open();
   } catch (error) {
     console.error('打开进度更新抽屉失败:', error);
@@ -854,16 +979,19 @@ const getActionButtons = (row) => {
         {
           content: '更新进度',
           iconName: 'Edit',
+          color: '#409EFF',
           onClick: () => handleUpdateProgress(row),
         },
         {
           content: '转派',
-          iconName: 'Switch',
+          iconName: 'SwitchButton',
+          color: '#E6A23C',
           onClick: () => handleTransfer(row),
         },
         {
           content: '查看',
           iconName: 'View',
+          color: '#409EFF',
           onClick: () => handleOpenDetail(row),
         },
       );
@@ -874,11 +1002,13 @@ const getActionButtons = (row) => {
         {
           content: '查看',
           iconName: 'View',
+          color: '#409EFF',
           onClick: () => handleOpenDetail(row),
         },
         {
           content: '归档',
           iconName: 'FolderOpened',
+          color: '#67C23A',
           onClick: () => handleArchive(row),
         },
       );
@@ -888,12 +1018,14 @@ const getActionButtons = (row) => {
       buttons.push(
         {
           content: '派发',
-          iconName: 'Send',
+          iconName: 'Promotion',
+          color: '#409EFF',
           onClick: () => handleDispatch(row),
         },
         {
           content: '查看',
           iconName: 'View',
+          color: '#409EFF',
           onClick: () => handleOpenDetail(row),
         },
       );
@@ -901,10 +1033,16 @@ const getActionButtons = (row) => {
     }
     case '待认领': {
       buttons.push(
-        { content: '认领', iconName: 'Check', onClick: () => handleClaim(row) },
+        {
+          content: '认领',
+          iconName: 'Check',
+          color: '#67C23A',
+          onClick: () => handleClaim(row)
+        },
         {
           content: '查看',
           iconName: 'View',
+          color: '#409EFF',
           onClick: () => handleOpenDetail(row),
         },
       );
@@ -914,6 +1052,7 @@ const getActionButtons = (row) => {
       buttons.push({
         content: '查看',
         iconName: 'View',
+        color: '#409EFF',
         onClick: () => handleOpenDetail(row),
       });
     }
@@ -923,14 +1062,14 @@ const getActionButtons = (row) => {
 };
 
 // 字段点击筛选
-const handleFieldFilter = (field, value, userName = '') => {
+const handleFieldFilter = (field, value, label = '') => {
   Object.assign(dataObj.searchParams, {
     [field]: value,
   });
 
-  // 更新用户名映射
-  if (field === 'executeUserId' && userName) {
-    userNameMap.value.executeUserId = userName;
+  // 如果提供了标签名，则保存标签
+  if (label) {
+    dataObj.filterLabels[field] = label;
   }
 
   dataObj.currentPage = 1;
@@ -1014,23 +1153,23 @@ const handleFieldFilter = (field, value, userName = '') => {
         <div class="common-toolbar-tools">
           <IconButton
             content="批量派发"
-            icon-name="Send"
+            icon-name="Promotion"
             :disabled="isEmpty(checkedIds)"
             @click="handleBatchDispatch"
           />
           <IconButton
             content="导出"
-            icon-name="download"
+            icon-name="Download"
             @click="handleExport"
           />
           <IconButton
-            content="搜索"
-            icon-name="search"
+            content="筛选"
+            icon-name="Filter"
             @click="handleSerachShow"
           />
           <IconButton
             content="重置"
-            icon-name="Refresh"
+            icon-name="RefreshLeft"
             @click="handleResetFilters"
           />
           <IconButton
@@ -1060,7 +1199,7 @@ const handleFieldFilter = (field, value, userName = '') => {
       </template>
       <template #areaName="{ row }">
         <el-text
-          @click="handleFieldFilter('areaId', row.areaName)"
+          @click="handleFieldFilter('areaId', row.areaId)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -1070,7 +1209,7 @@ const handleFieldFilter = (field, value, userName = '') => {
       </template>
       <template #executeUserName="{ row }">
         <el-text
-          @click="handleFieldFilter('executeUserId', row.executeUserName, row.executeUserName)"
+          @click="handleFieldFilter('executeUserName', row.executeUserName, row.executeUserName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"

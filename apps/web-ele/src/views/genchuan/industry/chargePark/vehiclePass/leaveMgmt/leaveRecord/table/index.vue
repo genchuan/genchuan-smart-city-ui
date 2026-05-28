@@ -114,9 +114,16 @@ const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
 
     const obj = createFormApi.form.values;
 
+    const payload = {
+      ...obj,
+      enterTime: obj.enterTime ? new Date(obj.enterTime).getTime() : undefined,
+      leaveTime: obj.leaveTime ? new Date(obj.leaveTime).getTime() : undefined,
+      status: '正常记录',
+    };
+
     if (USE_REAL_API) {
       try {
-        await createLeaveRecord(obj);
+        await createLeaveRecord(payload);
         ElMessage.success('补录成功');
         handleRefresh();
         createFormDrawerApi.close();
@@ -125,7 +132,7 @@ const [CreateFormDrawer, createFormDrawerApi] = useVbenDrawer({
         console.error(error);
       }
     } else {
-      dataObj.apilist.push(obj);
+      dataObj.apilist.push(payload);
       handleRefresh();
       createFormDrawerApi.close();
     }
@@ -148,12 +155,7 @@ const [UpdateForm, updateFormApi] = useVbenForm({
   },
   layout: 'horizontal',
   schema: computed(() => {
-    const schema = useUpdateFormSchema();
-    const stationField = schema.find((f) => f.fieldName === 'stationId');
-    if (stationField) {
-      stationField.componentProps.options = stationOptions.value;
-    }
-    return schema;
+    return useUpdateFormSchema();
   }),
   showDefaultActions: false,
 });
@@ -202,12 +204,9 @@ const [UpdateFormDrawer, updateFormDrawerApi] = useVbenDrawer({
   async onOpenChange(isOpen) {
     if (isOpen) {
       formData.value = updateFormDrawerApi.getData();
-      const formValues = {
-        ...formData.value,
-        enterTime: formData.value.enterTime ? new Date(formData.value.enterTime).getTime() : null,
-        leaveTime: formData.value.leaveTime ? new Date(formData.value.leaveTime).getTime() : null,
-      };
-      await updateFormApi.setValues(formValues);
+      await updateFormApi.setValues({
+        remark: formData.value.remark || '',
+      });
     }
   },
 });
@@ -251,13 +250,23 @@ const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
 
     const obj = correctFormApi.form.values;
 
+    // 时间合法性校验：离场时间必须晚于入场时间
+    const enterTime = obj.enterTime ? new Date(obj.enterTime).getTime() : null;
+    const leaveTime = obj.leaveTime ? new Date(obj.leaveTime).getTime() : null;
+
+    if (enterTime && leaveTime && leaveTime <= enterTime) {
+      ElMessage.error('离场时间必须晚于入场时间');
+      return;
+    }
+
     if (USE_REAL_API) {
       try {
         await correctLeaveRecord({
           id: formData.value?.id,
           ...obj,
+          status: '正常记录', // 修正后更新状态为正常记录
         });
-        ElMessage.success('修正成功');
+        ElMessage.success('修正成功，记录状态已更新为正常');
         handleRefresh();
         correctFormDrawerApi.close();
       } catch (error) {
@@ -267,9 +276,15 @@ const [CorrectFormDrawer, correctFormDrawerApi] = useVbenDrawer({
     } else {
       dataObj.apilist.forEach((v, i) => {
         if (v.id === formData.value?.id) {
-          dataObj.apilist[i] = { ...v, ...obj, isCorrected: true };
+          dataObj.apilist[i] = {
+            ...v,
+            ...obj,
+            status: '正常记录',
+            isCorrected: true
+          };
         }
       });
+      ElMessage.success('修正成功，记录状态已更新为正常');
       handleRefresh();
       correctFormDrawerApi.close();
     }
@@ -391,28 +406,44 @@ const activeFilters = computed(() => {
   if (obj.plateNo) {
     filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
   }
-  if (obj.plateColor) {
-    filters.push({ label: `车牌颜色：${obj.plateColor}`, field: 'plateColor' });
-  }
   if (obj.status) {
     filters.push({ label: `记录状态：${obj.status}`, field: 'status' });
   }
-  if (obj.stationName) {
-    filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
+  if (obj.stationId && obj.stationName) {
+    filters.push({ label: `场站：${obj.stationName}`, field: 'stationId' });
   }
   if (obj.updater) {
     filters.push({ label: `操作人：${obj.updater}`, field: 'updater' });
   }
-  if (obj.isCorrected !== undefined && obj.isCorrected !== null) {
+  if (obj.parkDuration !== undefined && obj.parkDuration !== null) {
     filters.push({
-      label: `修正状态：${obj.isCorrected ? '已修正' : '未修正'}`,
+      label: `停车时长：${obj.parkDuration}分钟`,
+      field: 'parkDuration',
+    });
+  }
+  if (obj.isCorrected !== undefined && obj.isCorrected !== null) {
+    const correctedLabels = { 0: '未修正', 1: '已修正', 2: '已确认' };
+    filters.push({
+      label: `修正状态：${correctedLabels[obj.isCorrected] || obj.isCorrected}`,
       field: 'isCorrected',
     });
   }
   if (obj.leaveTimeHour) {
     filters.push({
-      label: `离场时间：${obj.leaveTimeHour}`,
+      label: `离场小时：${obj.leaveTimeHour}`,
       field: 'leaveTimeHour',
+    });
+  }
+  if (
+    obj.enterTime &&
+    Array.isArray(obj.enterTime) &&
+    obj.enterTime.length === 2
+  ) {
+    const startTime = formatTime(obj.enterTime[0]);
+    const endTime = formatTime(obj.enterTime[1]);
+    filters.push({
+      label: `入场时间：${startTime} 至 ${endTime}`,
+      field: 'enterTime',
     });
   }
   if (
@@ -420,8 +451,10 @@ const activeFilters = computed(() => {
     Array.isArray(obj.leaveTime) &&
     obj.leaveTime.length === 2
   ) {
+    const startTime = formatTime(obj.leaveTime[0]);
+    const endTime = formatTime(obj.leaveTime[1]);
     filters.push({
-      label: `离场时间：${obj.leaveTime[0]} 至 ${obj.leaveTime[1]}`,
+      label: `离场时间：${startTime} 至 ${endTime}`,
       field: 'leaveTime',
     });
   }
@@ -432,6 +465,10 @@ const activeFilters = computed(() => {
 const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
   delete next[fieldName];
+  // 清除场站ID时，同时清除场站名称
+  if (fieldName === 'stationId') {
+    delete next.stationName;
+  }
   dataObj.searchParams = next;
   dataObj.currentPage = 1;
   gridApi.query();
@@ -538,7 +575,33 @@ const [SearchForm] = useVbenForm({
 });
 
 function onSubmit(values) {
-  dataObj.searchParams = values;
+  const params = { ...values };
+
+  // 如果选择了场站，需要同时保存场站名称
+  if (params.stationId) {
+    const station = stationOptions.value.find(s => s.value === params.stationId);
+    if (station) {
+      params.stationName = station.label;
+    }
+  }
+
+  // 转换入场时间为时间戳数组
+  if (params.enterTime && Array.isArray(params.enterTime) && params.enterTime.length === 2) {
+    params.enterTime = params.enterTime.map(time => {
+      const timestamp = typeof time === 'number' ? time : new Date(time).getTime();
+      return timestamp;
+    });
+  }
+
+  // 转换离场时间为时间戳数组
+  if (params.leaveTime && Array.isArray(params.leaveTime) && params.leaveTime.length === 2) {
+    params.leaveTime = params.leaveTime.map(time => {
+      const timestamp = typeof time === 'number' ? time : new Date(time).getTime();
+      return timestamp;
+    });
+  }
+
+  dataObj.searchParams = params;
   isSearching = true;
   gridApi.query();
   drawerApi.close();
@@ -689,12 +752,14 @@ const handlePlateClick = (row) => {
 };
 
 // 字段点击筛选
-const handleFieldFilter = (field, value) => {
+const handleFieldFilter = (field, value, extraData = {}) => {
   dataObj.searchParams = {
     ...dataObj.searchParams,
     [field]: value,
+    ...extraData,
   };
-  handleRefresh();
+  isSearching = true;
+  gridApi.query();
 };
 
 // 格式化停车时长
@@ -768,10 +833,10 @@ const formatDuration = (minutes) => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="补录" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="补录" icon-name="DocumentAdd" @click="handleCreate" />
           <IconButton
             content="导出"
-            icon-name="download"
+            icon-name="Download"
             @click="handleExport"
           />
           <IconButton
@@ -810,7 +875,7 @@ const formatDuration = (minutes) => {
       </template>
       <template #stationName="{ row }">
         <el-text
-          @click="handleFieldFilter('stationName', row.stationName)"
+          @click="handleFieldFilter('stationId', row.stationId, { stationName: row.stationName })"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -850,13 +915,13 @@ const formatDuration = (minutes) => {
           <IconButton
             v-if="row.status === '正常记录'"
             content="编辑"
-            icon-name="edit"
+            icon-name="Edit"
             @click="handleEdit(row)"
           />
           <IconButton
             v-if="row.status === '异常记录'"
             content="修正"
-            icon-name="edit"
+            icon-name="Tools"
             @click="handleCorrect(row)"
           />
           <IconButton

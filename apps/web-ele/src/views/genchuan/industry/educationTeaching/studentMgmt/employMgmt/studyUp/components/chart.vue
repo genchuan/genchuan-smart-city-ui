@@ -3,7 +3,7 @@ import {ref, computed, onMounted} from 'vue';
 import {ElSelect, ElOption, ElDatePicker} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Bar from '#/genchuan-components/stats/barClick.vue';
-import Pie from '#/genchuan-components/stats/pieClick.vue';
+import Pie from '#/genchuan-components/stats/pie.vue';
 import {
   getStudyUpChart,
   getStudyUpCount,

@@ -9,6 +9,7 @@ const props = defineProps({
   seriesData: { type: Array, required: true },
   yName: { type: String, default: '' },
   smooth: { type: Boolean, default: true },
+  tooltipCompact: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['lineClick']);
@@ -61,6 +62,13 @@ const initChart = async () => {
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
+        confine: true,
+        extraCssText: props.tooltipCompact
+          ? 'max-width:220px;max-height:120px;overflow:auto;padding:4px 6px;line-height:16px;font-size:12px;'
+          : '',
+        textStyle: props.tooltipCompact
+          ? { fontSize: 12, lineHeight: 16 }
+          : undefined,
       },
       legend: {
         top: 40,

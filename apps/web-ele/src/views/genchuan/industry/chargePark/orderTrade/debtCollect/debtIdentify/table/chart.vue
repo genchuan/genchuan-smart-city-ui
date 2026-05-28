@@ -29,21 +29,13 @@ const state = reactive({
 // 点击卡片事件
 const handleCardClick = (index) => {
   if (index === 0) {
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    // 点击"待识别数量"卡片，只传递状态参数
     emit('filter-change', {
-      identifyTimeStart: todayStr + ' 00:00:00',
-      identifyTimeEnd: todayStr + ' 23:59:59',
       status: 'pending',
     });
   } else {
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
-    const start = thirtyDaysAgo.toISOString().split('T')[0] + ' 00:00:00';
-    const end = today.toISOString().split('T')[0] + ' 23:59:59';
+    // 点击"识别成功率"卡片，清空所有筛选条件
     emit('filter-change', {
-      identifyTimeStart: start,
-      identifyTimeEnd: end,
       status: null,
     });
   }

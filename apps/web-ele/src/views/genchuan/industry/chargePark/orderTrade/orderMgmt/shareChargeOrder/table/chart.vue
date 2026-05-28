@@ -46,13 +46,9 @@ const handleLineChartClick = (params) => {
 // 柱状图点击事件处理
 const handleBarChartClick = (params) => {
   if (params && params.name) {
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
-    const start = thirtyDaysAgo.toISOString().split('T')[0] + ' 00:00:00';
-    const end = today.toISOString().split('T')[0] + ' 23:59:59';
     emit('filter-change', {
-      createOrderTimeStart: start,
-      createOrderTimeEnd: end,
+      createOrderTimeStart: null,
+      createOrderTimeEnd: null,
       stationName: params.name,
     });
   }

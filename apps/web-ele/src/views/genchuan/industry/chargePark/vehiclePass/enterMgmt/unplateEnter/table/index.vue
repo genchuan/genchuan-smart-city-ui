@@ -70,6 +70,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
 const detailDrawerRef = ref(null);
 
 const [SearchForm, searchFormApi] = useVbenForm({
+  collapsed: false,
   commonConfig: {
     componentProps: {
       class: 'w-full',
@@ -77,6 +78,7 @@ const [SearchForm, searchFormApi] = useVbenForm({
     formItemClass: 'col-span-2',
     labelWidth: 80,
   },
+  handleSubmit: onSubmit,
   layout: 'horizontal',
   schema: computed(() => {
     const schema = useSearchFormSchema();
@@ -86,7 +88,10 @@ const [SearchForm, searchFormApi] = useVbenForm({
     }
     return schema;
   }),
-  showDefaultActions: false,
+  showCollapseButton: true,
+  submitButtonOptions: {
+    content: '查询',
+  },
 });
 
 const [CreateForm, createFormApi] = useVbenForm({
@@ -380,19 +385,26 @@ const activeFilters = computed(() => {
   const filters = [];
   const obj = dataObj.searchParams;
 
-  if (obj.plateNo) {
-    filters.push({ label: `车牌号码：${obj.plateNo}`, field: 'plateNo' });
+  if (obj.carType) {
+    filters.push({ label: `车辆类型：${obj.carType}`, field: 'carType' });
   }
   if (obj.status) {
-    filters.push({ label: `状态：${obj.status}`, field: 'status' });
+    filters.push({ label: `审核状态：${obj.status}`, field: 'status' });
   }
   if (obj.stationName) {
     filters.push({ label: `场站：${obj.stationName}`, field: 'stationName' });
   }
-  if (obj.isCorrected !== undefined && obj.isCorrected !== null) {
+  if (obj.auditUser) {
+    filters.push({ label: `审核人：${obj.auditUser}`, field: 'auditUser' });
+  }
+  if (
+    obj.registerTime &&
+    Array.isArray(obj.registerTime) &&
+    obj.registerTime.length === 2
+  ) {
     filters.push({
-      label: `修正状态：${obj.isCorrected ? '已修正' : '未修正'}`,
-      field: 'isCorrected',
+      label: `登记时间：${obj.registerTime[0]} 至 ${obj.registerTime[1]}`,
+      field: 'registerTime',
     });
   }
 
@@ -402,6 +414,10 @@ const activeFilters = computed(() => {
 const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
   delete next[fieldName];
+  // 清除场站名称时，同时清除场站ID
+  if (fieldName === 'stationName') {
+    delete next.stationId;
+  }
   dataObj.searchParams = next;
   dataObj.currentPage = 1;
   gridApi.query();
@@ -478,7 +494,19 @@ const getTableData = async (pageObj) => {
 };
 
 function onSubmit(values) {
-  dataObj.searchParams = values;
+  const params = { ...values };
+
+  if (
+    params.registerTime &&
+    Array.isArray(params.registerTime) &&
+    params.registerTime.length === 2
+  ) {
+    params.registerTime = params.registerTime.map((t) =>
+      typeof t === 'number' ? t : new Date(t).getTime(),
+    );
+  }
+
+  dataObj.searchParams = params;
   isSearching = true;
   gridApi.query();
   drawerApi.close();
@@ -568,12 +596,63 @@ const handleFullShow = () => {
   screenfull.toggle();
 };
 
+// 处理列点击筛选
+const handleFieldClick = (field, value, row) => {
+  if (!value) return;
+
+  const next = { ...dataObj.searchParams };
+
+  if (field === 'stationName') {
+    // 场站：同时设置 stationId 和 stationName
+    next.stationId = row.stationId;
+    next.stationName = value;
+  } else {
+    next[field] = value;
+  }
+
+  dataObj.searchParams = next;
+  dataObj.currentPage = 1;
+  gridApi.query();
+};
+
+// 用户详情弹窗状态
+const userDetailVisible = ref(false);
+const userDetailData = ref({});
+
+// 打开用户详情弹窗
+const handleOpenUserDetail = (phone) => {
+  if (!phone) return;
+
+  // 这里应该调用API获取用户详情，暂时使用模拟数据
+  userDetailData.value = {
+    phone: phone,
+    name: '用户姓名',
+    idCard: '身份证号',
+    address: '详细地址',
+    // 其他用户信息...
+  };
+
+  userDetailVisible.value = true;
+};
+
+// 关闭用户详情弹窗
+const handleCloseUserDetail = () => {
+  userDetailVisible.value = false;
+  userDetailData.value = {};
+};
+
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
-  const filterParams = event.detail;
-  // 去除 status 字段，只保留图表相关的筛选字段
-  // eslint-disable-next-line unused-imports/no-unused-vars
-  const { status, ...validParams } = filterParams;
+  const validParams = { ...event.detail };
+
+  // 如果有 stationId，需要同时设置 stationName
+  if (validParams.stationId && !validParams.stationName) {
+    const station = stationOptions.value.find(s => s.value === validParams.stationId);
+    if (station) {
+      validParams.stationName = station.label;
+    }
+  }
+
   dataObj.searchParams = { ...dataObj.searchParams, ...validParams };
   handleRefresh();
   ElMessage.success('已应用图表筛选');
@@ -591,6 +670,32 @@ onUnmounted(() => {
 
 <template>
   <div class="park-lot-table-new">
+    <!-- 用户详情弹窗 -->
+    <el-dialog
+      v-model="userDetailVisible"
+      title="用户详情"
+      width="600px"
+      @close="handleCloseUserDetail"
+    >
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="联系电话">
+          {{ userDetailData.phone }}
+        </el-descriptions-item>
+        <el-descriptions-item label="用户姓名">
+          {{ userDetailData.name }}
+        </el-descriptions-item>
+        <el-descriptions-item label="身份证号">
+          {{ userDetailData.idCard }}
+        </el-descriptions-item>
+        <el-descriptions-item label="详细地址" :span="2">
+          {{ userDetailData.address }}
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="handleCloseUserDetail">关闭</el-button>
+      </template>
+    </el-dialog>
+
     <CreateFormDrawer title="新增无牌入场">
       <CreateForm />
     </CreateFormDrawer>
@@ -653,12 +758,12 @@ onUnmounted(() => {
           <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
           <IconButton
             content="导出"
-            icon-name="download"
+            icon-name="Download"
             @click="handleExport"
           />
           <IconButton
             content="搜索"
-            icon-name="search"
+            icon-name="Filter"
             @click="handleSerachShow"
           />
           <IconButton
@@ -666,29 +771,62 @@ onUnmounted(() => {
             icon-name="FullScreen"
             @click="handleFullShow"
           />
+          <IconButton
+            content="刷新"
+            icon-name="Refresh"
+            @click="handleRefresh"
+          />
         </div>
       </template>
-      <template #id="{ row }">
+      <template #carType="{ row }">
         <el-text
-          @click="handleOpenDetail(row)"
+          @click="handleFieldClick('carType', row.carType, row)"
           class="common-align"
           type="primary"
+          style="cursor: pointer"
         >
-          {{ row.id }}
+          {{ row.carType }}
         </el-text>
       </template>
-      <template #updater="{ row }">
-        <el-text>{{ row.updater || '-' }}</el-text>
-      </template>
-      <template #updateTime="{ row }">
-        <el-text>
-          {{ row.updateTime ? formatTime(row.updateTime) : '-' }}
+      <template #phone="{ row }">
+        <el-text
+          @click="handleOpenUserDetail(row.phone)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.phone }}
         </el-text>
       </template>
-      <template #correctionMark="{ row }">
-        <el-tag :type="row.isCorrected ? 'success' : 'info'">
-          {{ row.isCorrected ? '已修正' : '未修正' }}
-        </el-tag>
+      <template #status="{ row }">
+        <el-text
+          @click="handleFieldClick('status', row.status, row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.status }}
+        </el-text>
+      </template>
+      <template #stationName="{ row }">
+        <el-text
+          @click="handleFieldClick('stationName', row.stationName, row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.stationName }}
+        </el-text>
+      </template>
+      <template #auditUser="{ row }">
+        <el-text
+          @click="handleFieldClick('auditUser', row.auditUser, row)"
+          class="common-align"
+          type="primary"
+          style="cursor: pointer"
+        >
+          {{ row.auditUser || '-' }}
+        </el-text>
       </template>
       <template #actions="{ row }">
         <div class="table-toolbar-tools">

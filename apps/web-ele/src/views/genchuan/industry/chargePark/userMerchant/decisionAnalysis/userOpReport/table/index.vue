@@ -1,7 +1,10 @@
 <script lang="ts" setup>
 import type { UserOpReportRow } from '../data';
 
-import type { UserOpReportDetailVO } from '#/api/genchuan/industry/chargePark/userMerchant/decisionAnalysis/userOpReport';
+import type {
+  UserOpReportChartReqVO,
+  UserOpReportDetailVO,
+} from '#/api/genchuan/industry/chargePark/userMerchant/decisionAnalysis/userOpReport';
 
 import { ref } from 'vue';
 
@@ -42,7 +45,9 @@ import {
 
 const props = withDefaults(
   defineProps<{
-    reloadStats?: () => Promise<void> | void;
+    reloadStats?:
+      | (() => Promise<void> | void)
+      | ((params?: Partial<UserOpReportChartReqVO>) => Promise<void> | void);
     showStats?: boolean;
     toggleStats?: () => void;
   }>(),
@@ -126,10 +131,33 @@ function getGridColumns() {
   return useGridColumns();
 }
 
+function buildCurrentQueryValues(values = searchParams.value) {
+  return {
+    ...values,
+    ...(filterReportCycle.value
+      ? { reportCycle: filterReportCycle.value }
+      : {}),
+  };
+}
+
+function buildStatsQueryParams(values = searchParams.value) {
+  const queryParams = buildUserOpReportQueryParams(
+    buildCurrentQueryValues(values),
+  );
+
+  return {
+    reportCycle: queryParams.reportCycle,
+    statEndTime: queryParams.statEndTime,
+    statStartTime: queryParams.statStartTime,
+    tenantId: queryParams.tenantId,
+  };
+}
+
 /** 搜索表单提交 */
 async function onQuerySubmit(values: Record<string, any>) {
   searchParams.value = { ...values };
   await handleRefresh();
+  await props.reloadStats?.(buildStatsQueryParams());
   drawerApi.close();
 }
 
@@ -169,13 +197,7 @@ async function queryUserOpReportPage({
 }: {
   page: { currentPage: number; pageSize: number };
 }) {
-  const queryValues = {
-    ...searchParams.value,
-  };
-
-  if (filterReportCycle.value) {
-    queryValues.reportCycle = filterReportCycle.value;
-  }
+  const queryValues = buildCurrentQueryValues();
 
   const result = await UserOpReportApi.getUserOpReportPage({
     pageNo: page.currentPage,
@@ -222,7 +244,7 @@ function handleRefresh() {
 async function handleReloadPage() {
   detailCache.clear();
   await handleRefresh();
-  await props.reloadStats?.();
+  await props.reloadStats?.(buildStatsQueryParams());
 }
 
 /** 重置筛选条件 */
@@ -230,7 +252,8 @@ async function resetSearch() {
   searchParams.value = {};
   filterReportCycle.value = '';
   await queryFormApi.resetForm();
-  return gridApi.reload();
+  await gridApi.reload();
+  await props.reloadStats?.(buildStatsQueryParams());
 }
 
 /** 设置筛选条件 */
@@ -241,7 +264,8 @@ async function setSearchValues(values: Record<string, any>) {
   };
   filterReportCycle.value = '';
   void syncQueryFormValues();
-  return gridApi.reload();
+  await gridApi.reload();
+  await props.reloadStats?.(buildStatsQueryParams());
 }
 
 /** 重新计算表格布局 */

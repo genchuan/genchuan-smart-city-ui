@@ -29,6 +29,7 @@ import ImagePreviewDialog from '../../plateIdentify/components/ImagePreviewDialo
 import {
   dataList,
   detailFields,
+  getStationOptions,
   plateColorTypeMap,
   statusTypeMap,
   textObj,
@@ -52,11 +53,9 @@ const stationOptions = ref([]);
 
 async function loadStationOptions() {
   try {
-    const res = await getStationInfoPage({ pageNo: 1, pageSize: 10 });
-    stationOptions.value = (res.list || []).map((station) => ({
-      label: station.stationName,
-      value: station.stationName,
-    }));
+    const options = await getStationOptions();
+    console.log('车牌识别-加载场站选项:', options);
+    stationOptions.value = options;
   } catch (error) {
     console.error('Failed to load station options:', error);
   }
@@ -94,7 +93,14 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: computed(() => {
+    const schema = useSearchFormSchema();
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
+    if (stationField) {
+      stationField.componentProps.options = stationOptions.value;
+    }
+    return schema;
+  }),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -113,7 +119,7 @@ const [CreateForm, createFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: computed(() => {
     const schema = useCreateFormSchema();
-    const stationField = schema.find((f) => f.fieldName === 'stationName');
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
     if (stationField) {
       stationField.componentProps.options = stationOptions.value;
     }
@@ -134,7 +140,7 @@ const [CorrectForm, correctFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: computed(() => {
     const schema = useCorrectFormSchema();
-    const stationField = schema.find((f) => f.fieldName === 'stationName');
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
     if (stationField) {
       stationField.componentProps.options = stationOptions.value;
     }
@@ -254,7 +260,8 @@ async function handleCorrectSubmit(data) {
       await correctPlateIdentify({
         ...data,
         id: formData.value?.id,
-        isCorrected: true,
+        status: '识别成功',
+        isCorrected: 1,
       });
       ElMessage.success('修正成功');
       handleRefresh();
@@ -268,7 +275,12 @@ async function handleCorrectSubmit(data) {
   } else {
     dataObj.apilist.forEach((v, i) => {
       if (v.id === formData.value?.id) {
-        dataObj.apilist[i] = { ...v, ...data, isCorrected: true };
+        dataObj.apilist[i] = {
+          ...v,
+          ...data,
+          status: '识别成功',
+          isCorrected: 1,
+        };
       }
     });
     handleRefresh();
@@ -416,6 +428,13 @@ const getTableData = async (pageObj) => {
 };
 
 function onSubmit(values) {
+  // 如果选择了场站，需要同时保存场站ID和场站名称
+  if (values.stationId) {
+    const station = stationOptions.value.find(s => s.value === values.stationId);
+    if (station) {
+      values.stationName = station.label;
+    }
+  }
   dataObj.searchParams = values;
   isSearching = true;
   gridApi.query();
@@ -560,6 +579,14 @@ const handleCorrectedClick = (row) => {
 const handleClearFilter = (key) => {
   if (key === 'createTimeRange') {
     delete dataObj.searchParams.createTimeRange;
+  } else if (key === 'stationName') {
+    // 清除场站时，同时清除 stationId 和 stationName
+    delete dataObj.searchParams.stationName;
+    delete dataObj.searchParams.stationId;
+  } else if (key === 'stationId') {
+    // 清除场站时，同时清除 stationId 和 stationName
+    delete dataObj.searchParams.stationName;
+    delete dataObj.searchParams.stationId;
   } else {
     delete dataObj.searchParams[key];
   }

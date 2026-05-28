@@ -88,6 +88,10 @@ const [CreateForm, createFormApi] = useVbenForm({
     if (stationField) {
       stationField.componentProps.options = stationOptions.value;
     }
+    const areaField = schema.find((f) => f.fieldName === 'areaId');
+    if (areaField) {
+      areaField.componentProps.options = stationOptions.value;
+    }
     return schema;
   }),
   showDefaultActions: false,
@@ -288,8 +292,10 @@ const activeFilters = computed(() => {
     const statusLabel = labels.status || obj.status;
     filters.push({ label: `审核状态：${statusLabel}`, field: 'status' });
   }
-  if (obj.areaName) {
-    filters.push({ label: `片区：${obj.areaName}`, field: 'areaName' });
+  if (obj.areaId) {
+    const station = stationOptions.value.find((s) => String(s.value) === String(obj.areaId));
+    const stationLabel = station ? station.label : obj.areaId;
+    filters.push({ label: `片区：${stationLabel}`, field: 'areaId' });
   }
   if (obj.inputUserName) {
     filters.push({ label: `录入人：${obj.inputUserName}`, field: 'inputUserName' });
@@ -300,6 +306,10 @@ const activeFilters = computed(() => {
   if (obj.inputTime && Array.isArray(obj.inputTime)) {
     const timeLabel = `时间范围：${obj.inputTime[0]} ~ ${obj.inputTime[1]}`;
     filters.push({ label: timeLabel, field: 'inputTime' });
+  }
+  if (obj.createTimeRange && Array.isArray(obj.createTimeRange)) {
+    const timeLabel = `时间范围：${obj.createTimeRange[0]} ~ ${obj.createTimeRange[1]}`;
+    filters.push({ label: timeLabel, field: 'createTimeRange' });
   }
 
   return filters;
@@ -408,11 +418,18 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema().map((v) => {
-    delete v.rules;
-    return {
-      ...v,
-    };
+  schema: computed(() => {
+    const schema = useSearchFormSchema().map((v) => {
+      delete v.rules;
+      return { ...v };
+    });
+
+    const areaField = schema.find((f) => f.fieldName === 'areaId');
+    if (areaField) {
+      areaField.componentProps.options = stationOptions.value;
+    }
+
+    return schema;
   }),
   showCollapseButton: true,
   submitButtonOptions: {
@@ -429,13 +446,23 @@ function onSubmit(values) {
   searchSchema.forEach((field) => {
     if (field.component === 'Select' && values[field.fieldName]) {
       const option = field.componentProps.options?.find(
-        (opt) => opt.value === values[field.fieldName]
+        (opt) => String(opt.value) === String(values[field.fieldName])
       );
       if (option) {
         labels[field.fieldName] = option.label;
       }
     }
   });
+
+  // 片区标签从 stationOptions 获取
+  if (values.areaId) {
+    const areaOption = stationOptions.value.find(
+      (opt) => String(opt.value) === String(values.areaId)
+    );
+    if (areaOption) {
+      labels.areaId = areaOption.label;
+    }
+  }
 
   dataObj.filterLabels = labels;
   isSearching = true;
@@ -745,7 +772,8 @@ const handleFilterByStatus = (status) => {
 
 // 按片区筛选
 const handleFilterByArea = (areaId, areaName) => {
-  dataObj.searchParams = { ...dataObj.searchParams, areaName };
+  dataObj.searchParams = { ...dataObj.searchParams, areaId };
+  dataObj.filterLabels = { ...dataObj.filterLabels, areaId: areaName };
   isSearching = true;
   gridApi.query();
 };

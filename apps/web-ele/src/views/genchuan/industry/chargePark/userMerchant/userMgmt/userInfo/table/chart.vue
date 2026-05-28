@@ -90,16 +90,25 @@ function getChartOption(chart: StatsChart) {
     '#A17FE0',
     '#FF6B8B',
   ];
+  const isLineOrBar = chart.type === 'line' || chart.type === 'bar';
 
   const option: echarts.EChartsOption = {
     backgroundColor: 'transparent',
     color: freshColors,
-    grid: {
-      bottom: '3%',
-      containLabel: true,
-      left: '3%',
-      right: '4%',
-    },
+    grid: isLineOrBar
+      ? {
+          bottom: chart.type === 'bar' ? 42 : 40,
+          containLabel: true,
+          left: 48,
+          right: chart.type === 'line' ? 56 : 44,
+          top: 48,
+        }
+      : {
+          bottom: '3%',
+          containLabel: true,
+          left: '3%',
+          right: '4%',
+        },
     title: {
       left: 'center',
       text: chart.title,
@@ -122,13 +131,18 @@ function getChartOption(chart: StatsChart) {
       axisLabel: {
         color: '#9AA8B7',
         fontSize: 11,
+        hideOverlap: false,
+        interval: 0,
+        margin: 12,
+        showMaxLabel: true,
+        showMinLabel: true,
       },
       axisLine: {
         lineStyle: {
           color: '#E8F4FD',
         },
       },
-      boundaryGap: chart.type === 'bar',
+      boundaryGap: chart.type === 'bar' ? true : ['4%', '4%'],
       data: chart.xAxis || [],
       type: 'category',
     };

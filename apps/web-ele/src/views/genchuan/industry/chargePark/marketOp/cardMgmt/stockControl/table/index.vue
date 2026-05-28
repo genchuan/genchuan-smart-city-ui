@@ -17,6 +17,7 @@ import { exportToExcel } from '#/utils/excel.js';
 import { formatDate } from '#/utils/genchuan/formatTime';
 
 import AllocateDrawer from '../components/AllocateDrawer.vue';
+import RecordLogDrawer from '../components/RecordLogDrawer.vue';
 import ReplenishDialog from '../components/ReplenishDialog.vue';
 import WarnConfirmDialog from '../components/WarnConfirmDialog.vue';
 import {
@@ -28,6 +29,8 @@ import {
   getStockControlStatusTagType,
   getStockControlWarnStatusLabel,
   getStockControlWarnStatusTagType,
+  parseLogCount,
+  parseLogList,
   textObj,
   useFormSchema,
   useGridColumns,
@@ -68,6 +71,9 @@ const detailDrawerRef = ref(null);
 const allocateDrawerRef = ref(null);
 const replenishDialogRef = ref(null);
 const warnDialogRef = ref(null);
+const recordLogDrawerRef = ref(null);
+const recordLogData = ref([]);
+const recordLogTitle = ref('');
 const formData = ref();
 
 const [Form, formApi] = useVbenForm({
@@ -342,20 +348,20 @@ const handleOpenCardDetail = (row) => {
   detailDrawerRef.value.open();
 };
 
-/** 打开库存调配明细弹窗 */
+/** 打开库存调配明细抽屉 */
 const handleOpenAllocateDetail = (row) => {
-  ElMessage.info(
-    `查看库存调配明细: ${row.cardName}，调配记录数: ${row.allocateCount}`,
-  );
-  // TODO: 实现库存调配明细弹窗
+  const logs = parseLogList(row.allocateLog);
+  recordLogTitle.value = `${row.cardName} - 调配记录`;
+  recordLogData.value = logs;
+  recordLogDrawerRef.value?.open();
 };
 
-/** 打开库存补货明细弹窗 */
+/** 打开库存补货明细抽屉 */
 const handleOpenReplenishDetail = (row) => {
-  ElMessage.info(
-    `查看库存补货明细: ${row.cardName}，补货记录数: ${row.replenishCount}`,
-  );
-  // TODO: 实现库存补货明细弹窗
+  const logs = parseLogList(row.replenishLog);
+  recordLogTitle.value = `${row.cardName} - 补货记录`;
+  recordLogData.value = logs;
+  recordLogDrawerRef.value?.open();
 };
 
 const handleSerachShow = () => {
@@ -446,6 +452,12 @@ onMounted(async () => {
     <ReplenishDialog ref="replenishDialogRef" @success="handleRefresh" />
     <!--   告警确认弹窗-->
     <WarnConfirmDialog ref="warnDialogRef" @success="handleRefresh" />
+    <!--   记录详情抽屉-->
+    <RecordLogDrawer
+      ref="recordLogDrawerRef"
+      :title="recordLogTitle"
+      :log-data="recordLogData"
+    />
     <Drawer title="搜索">
       <QueryForm class="query-form" />
     </Drawer>
@@ -555,25 +567,25 @@ onMounted(async () => {
         }}</span>
       </template>
       <!-- 调配记录 - 点击跳转调配明细 -->
-      <template #allocateCount="{ row }">
+      <template #allocateLog="{ row }">
         <el-text
           @click="handleOpenAllocateDetail(row)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
-          {{ row.allocateCount }}
+          {{ parseLogCount(row.allocateLog) }}
         </el-text>
       </template>
       <!-- 补货记录 - 点击跳转补货明细 -->
-      <template #replenishCount="{ row }">
+      <template #replenishLog="{ row }">
         <el-text
           @click="handleOpenReplenishDetail(row)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
-          {{ row.replenishCount }}
+          {{ parseLogCount(row.replenishLog) }}
         </el-text>
       </template>
       <!-- 告警状�?- 点击筛选同告警状�?-->

@@ -15,7 +15,7 @@ export function exportCycleReport(params) {
 }
 
 export function exportCycleReportById(id) {
-  return requestClient.download(`/inspectop/cycle-report/export-excel/${id}`);
+  return requestClient.download(`/inspectop/cycle-report/export-excel?id=${id}`);
 }
 
 export function getCycleReportDetail(id) {

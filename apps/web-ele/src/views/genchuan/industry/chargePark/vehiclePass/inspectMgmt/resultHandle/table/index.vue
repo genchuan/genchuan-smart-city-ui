@@ -149,9 +149,10 @@ const [ExecuteDrawer, executeDrawerApi] = useVbenDrawer({
         if (USE_REAL_API) {
           await executeResultHandle({
             id: dataObj.currentExecuteRow.id,
+            executeInfo: values.executeInfo,
             rectifyStatus: values.rectifyStatus,
           });
-          ElMessage.success('执行成功');
+          ElMessage.success('执行成功，处置状态已更新为已完成');
         }
 
         executeDrawerApi.close();
@@ -172,10 +173,23 @@ const [ExecuteForm, executeFormApi] = useVbenForm({
       class: 'w-full',
     },
     formItemClass: 'col-span-2',
-    labelWidth: 100,
+    labelWidth: 120,
   },
   layout: 'horizontal',
   schema: [
+    {
+      fieldName: 'executeInfo',
+      label: '处置执行信息',
+      component: 'Input',
+      componentProps: {
+        type: 'textarea',
+        placeholder: '请输入处置执行信息',
+        rows: 4,
+        maxlength: 200,
+        showWordLimit: true,
+      },
+      rules: 'required',
+    },
     {
       fieldName: 'rectifyStatus',
       label: '整改状态',
@@ -329,26 +343,21 @@ function handleOpenBatchHandle() {
 
 // 通过
 async function handleApprove(row) {
-  try {
-    await confirm('确定通过该处置结果吗？');
-    const loadingInstance = ElLoading.service({
-      text: '审核中...',
-    });
+  const loadingInstance = ElLoading.service({
+    text: '审核中...',
+  });
 
-    try {
-      if (USE_REAL_API) {
-        await approveResultHandle({ id: row.id });
-        ElMessage.success('审核通过');
-      }
-      handleRefresh();
-    } finally {
-      loadingInstance.close();
+  try {
+    if (USE_REAL_API) {
+      await approveResultHandle({ id: row.id });
+      ElMessage.success('审核通过，处置状态已更新为待处置');
     }
+    handleRefresh();
   } catch (error) {
-    if (error?.message !== 'cancel') {
-      ElMessage.error('审核失败');
-      console.error(error);
-    }
+    ElMessage.error('审核失败');
+    console.error(error);
+  } finally {
+    loadingInstance.close();
   }
 }
 
@@ -414,6 +423,7 @@ const dataObj = reactive({
   list: [],
   searchParams: {},
   filterLabels: {},
+  chartFilterFields: [],
 });
 
 let isSearching = false;
@@ -438,8 +448,14 @@ const activeFilters = computed(() => {
     const statusLabel = labels.status || obj.status;
     filters.push({ label: `状态：${statusLabel}`, field: 'status' });
   }
+  if (obj.rectifyStatus) {
+    const rectifyStatusLabel = labels.rectifyStatus || obj.rectifyStatus;
+    filters.push({ label: `整改状态：${rectifyStatusLabel}`, field: 'rectifyStatus' });
+  }
   if (obj.areaId) {
-    filters.push({ label: `片区：${obj.areaId}`, field: 'areaId' });
+    const station = stationOptions.value.find((s) => String(s.value) === String(obj.areaId));
+    const stationLabel = station ? station.label : obj.areaId;
+    filters.push({ label: `片区：${stationLabel}`, field: 'areaId' });
   }
   if (obj.handleUserId) {
     const handleUserLabel = labels.handleUserId || obj.handleUserId;
@@ -457,12 +473,32 @@ const activeFilters = computed(() => {
 
 const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
-  delete next[fieldName];
+  
+  // 如果清除的字段是通过图表点击添加的，则同时清除所有图表点击添加的字段
+  const chartFields = dataObj.chartFilterFields || [];
+  if (chartFields.includes(fieldName)) {
+    chartFields.forEach(field => {
+      delete next[field];
+    });
+    dataObj.chartFilterFields = [];
+  } else {
+    delete next[fieldName];
+  }
+  
   dataObj.searchParams = next;
   dataObj.currentPage = 1;
 
   const nextLabels = { ...dataObj.filterLabels };
-  delete nextLabels[fieldName];
+  
+  // 同时清除对应的标签
+  if (chartFields.includes(fieldName)) {
+    chartFields.forEach(field => {
+      delete nextLabels[field];
+    });
+  } else {
+    delete nextLabels[fieldName];
+  }
+  
   dataObj.filterLabels = nextLabels;
 
   gridApi.query();
@@ -476,10 +512,16 @@ const handleClearAllFilters = () => {
 };
 
 // 字段点击筛选
-const handleFieldFilter = (field, value) => {
+const handleFieldFilter = (field, value, label) => {
   Object.assign(dataObj.searchParams, {
     [field]: value,
   });
+  
+  // 如果提供了标签名，则保存标签
+  if (label) {
+    dataObj.filterLabels[field] = label;
+  }
+  
   dataObj.currentPage = 1;
   isSearching = true;
   handleRefresh();
@@ -507,9 +549,9 @@ const getTableData = async (pageObj) => {
         );
       }
 
-      // 移除空值参数
+      // 移除空值参数和前端内部字段
       Object.keys(params).forEach(key => {
-        if (params[key] === null || params[key] === undefined || params[key] === '') {
+        if (params[key] === null || params[key] === undefined || params[key] === '' || key === 'filterKey') {
           delete params[key];
         }
       });
@@ -595,7 +637,19 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: computed(() => {
+    const schema = useSearchFormSchema().map((v) => {
+      delete v.rules;
+      return { ...v };
+    });
+
+    const areaField = schema.find((f) => f.fieldName === 'areaId');
+    if (areaField) {
+      areaField.componentProps.options = stationOptions.value;
+    }
+
+    return schema;
+  }),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -611,13 +665,23 @@ function onSubmit(values) {
   searchSchema.forEach((field) => {
     if (field.component === 'Select' && values[field.fieldName]) {
       const option = field.componentProps.options?.find(
-        (opt) => opt.value === values[field.fieldName]
+        (opt) => String(opt.value) === String(values[field.fieldName])
       );
       if (option) {
         labels[field.fieldName] = option.label;
       }
     }
   });
+
+  // 片区标签从 stationOptions 获取
+  if (values.areaId) {
+    const areaOption = stationOptions.value.find(
+      (opt) => String(opt.value) === String(values.areaId)
+    );
+    if (areaOption) {
+      labels.areaId = areaOption.label;
+    }
+  }
 
   dataObj.filterLabels = labels;
   isSearching = true;
@@ -722,6 +786,11 @@ const handleFullShow = () => {
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
+  
+  // 记录通过图表点击添加的字段（排除 filterKey）
+  const chartFields = Object.keys(filterParams).filter(key => key !== 'filterKey');
+  dataObj.chartFilterFields = chartFields;
+  
   dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
   handleRefresh();
   ElMessage.success('已应用图表筛选');
@@ -765,10 +834,11 @@ const getActionButtons = (row) => {
       break;
     }
     case '已驳回': {
-      buttons.push(
-        { label: '重新处置', handler: handleExecute, color: '#409EFF' },
-        { label: '查看', handler: handleOpenDetail, color: '#409EFF' },
-      );
+      buttons.push({
+        label: '查看',
+        handler: handleOpenDetail,
+        color: '#409EFF',
+      });
       break;
     }
     default: {
@@ -879,17 +949,17 @@ const getActionButtons = (row) => {
         <div class="common-toolbar-tools">
           <IconButton
             content="筛选"
-            icon-name="search"
+            icon-name="Filter"
             @click="handleSerachShow"
           />
           <IconButton
             content="重置"
-            icon-name="Refresh"
+            icon-name="RefreshLeft"
             @click="handleClearAllFilters"
           />
           <IconButton
             content="导出"
-            icon-name="download"
+            icon-name="Download"
             @click="handleExport"
           />
           <IconButton
@@ -970,7 +1040,7 @@ const getActionButtons = (row) => {
       </template>
       <template #areaName="{ row }">
         <el-text
-          @click="handleFieldFilter('areaId', row.areaName)"
+          @click="handleFieldFilter('areaId', row.areaId, row.areaName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
@@ -980,7 +1050,7 @@ const getActionButtons = (row) => {
       </template>
       <template #handleUserName="{ row }">
         <el-text
-          @click="handleFieldFilter('handleUserId', row.handleUserName)"
+          @click="handleFieldFilter('handleUserId', row.handleUserId, row.handleUserName)"
           class="common-align"
           style="cursor: pointer; color: #409eff"
         >
@@ -1010,7 +1080,9 @@ const getActionButtons = (row) => {
                   ? 'Close'
                   : btn.label === '执行'
                     ? 'Setting'
-                    : 'View'
+                    : btn.label === '重新处置'
+                      ? 'RefreshRight'
+                      : 'View'
             "
             :color="btn.color"
             @click="btn.handler(row)"

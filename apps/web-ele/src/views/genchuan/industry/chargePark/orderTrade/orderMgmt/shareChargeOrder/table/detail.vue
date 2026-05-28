@@ -115,7 +115,7 @@ defineExpose({
 
       <div class="detail-card-row">
         <div class="detail-row-left">订单状态:</div>
-        <div class="detail-row-right">{{ detailObj.status || '-' }}</div>
+        <div class="detail-row-right">{{ getStatusLabel(detailObj.status) }}</div>
       </div>
 
       <div class="detail-card-row">

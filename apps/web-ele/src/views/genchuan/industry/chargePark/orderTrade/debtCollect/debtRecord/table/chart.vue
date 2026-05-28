@@ -31,8 +31,8 @@ const handleCardClick = (index) => {
 const handleLineChartClick = (params) => {
   if (params && params.name) {
     emit('filter-change', {
-      identifyTimeStart: params.name + ' 00:00:00',
-      identifyTimeEnd: params.name + ' 23:59:59',
+      createTimeStart: params.name + ' 00:00:00',
+      createTimeEnd: params.name + ' 23:59:59',
       status: null,
     });
   }

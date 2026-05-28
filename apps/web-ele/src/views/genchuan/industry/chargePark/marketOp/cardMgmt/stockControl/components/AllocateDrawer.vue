@@ -1,15 +1,18 @@
 <script setup>
-import { ref, computed } from 'vue';
+import { onMounted, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
+
 import { ElMessage } from 'element-plus';
 
-import { allocateStockControl } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/stockControl';
 import { useVbenForm } from '#/adapter/form';
+import { allocateStockControl } from '#/api/genchuan/industry/chargePark/marketOp/cardMgmt/stockControl';
+import { getStationSimpleList } from '#/api/genchuan/industry/chargePark/marketOp/pointActivity/pointActivity';
 
 const emit = defineEmits(['success']);
 
 const currentRow = ref({});
+const stationOptions = ref([]);
 
 const [Form, formApi] = useVbenForm({
   commonConfig: {
@@ -43,12 +46,8 @@ const [Form, formApi] = useVbenForm({
       component: 'Select',
       componentProps: {
         placeholder: '请选择调配来源场站',
-        options: [
-          { label: '总部仓库', value: 1 },
-          { label: 'A场站', value: 2 },
-          { label: 'B场站', value: 3 },
-          { label: 'C场站', value: 4 },
-        ],
+        options: stationOptions,
+        clearable: true,
       },
       rules: 'required',
     },
@@ -58,12 +57,8 @@ const [Form, formApi] = useVbenForm({
       component: 'Select',
       componentProps: {
         placeholder: '请选择目标场站',
-        options: [
-          { label: 'A场站', value: 2 },
-          { label: 'B场站', value: 3 },
-          { label: 'C场站', value: 4 },
-          { label: 'D场站', value: 5 },
-        ],
+        options: stationOptions,
+        clearable: true,
       },
       rules: 'required',
     },
@@ -80,6 +75,25 @@ const [Form, formApi] = useVbenForm({
     },
   ],
   showDefaultActions: false,
+});
+
+const fetchStationList = async () => {
+  try {
+    const response = await getStationSimpleList();
+    if (response && Array.isArray(response)) {
+      stationOptions.value = response.map((station) => ({
+        label: station.name || station.stationName,
+        value: station.id,
+      }));
+    }
+  } catch (error) {
+    console.error('获取场站列表失败:', error);
+    stationOptions.value = [];
+  }
+};
+
+onMounted(() => {
+  fetchStationList();
 });
 
 const [Drawer, drawerApi] = useVbenDrawer({
@@ -114,18 +128,15 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (isOpen) {
       const data = drawerApi.getData();
       currentRow.value = data || {};
+      await formApi.resetForm();
       await formApi.setValues({
         cardName: data?.cardName || '',
         currentStock: data?.currentStock || 0,
-        sourceStationId: undefined,
-        targetStationId: undefined,
-        num: undefined,
       });
     }
   },
 });
 
-// 暴露open方法供父组件调用
 defineExpose({
   open: (row) => {
     drawerApi.setData(row);

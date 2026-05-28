@@ -218,7 +218,7 @@ function initPieChart() {
       trigger: 'item',
       formatter: (params) => {
         const data = state.chartData.spaceLocationList[params.dataIndex];
-        return `泊位编号: ${data.spaceNo}<br/>状态: ${data.spaceStatus}<br/>场站: ${data.areaName}<br/>经度: ${data.lon}<br/>纬度: ${data.lat}`;
+        return `泊位编号: ${data.spaceNo}<br/>状态: ${data.spaceStatus}<br/>片区: ${data.areaName}<br/>经度: ${data.lon}<br/>纬度: ${data.lat}`;
       },
     },
     grid: {
@@ -331,7 +331,7 @@ function handleAreaFilter(areaName) {
       detail: { areaName, spaceNos },
     }),
   );
-  ElMessage.success(`已筛选场站：${areaName}（${spaceNos.length}个泊位）`);
+  ElMessage.success(`已筛选片区：${areaName}（${spaceNos.length}个泊位）`);
 }
 
 onMounted(() => {

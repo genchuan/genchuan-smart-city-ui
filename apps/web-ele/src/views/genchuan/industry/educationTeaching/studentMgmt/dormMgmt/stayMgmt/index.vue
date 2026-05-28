@@ -1,6 +1,6 @@
 <script setup>
-import { computed, reactive, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
-import { confirm, useVbenDrawer } from '@vben/common-ui';
+import { reactive, ref, onMounted, onUnmounted } from 'vue';
+import { useVbenDrawer } from '@vben/common-ui';
 import { ElLoading, ElMessage, ElMessageBox } from 'element-plus';
 import screenfull from 'screenfull';
 import { useVbenForm } from '#/adapter/form';
@@ -23,8 +23,9 @@ import {
   useApplyFormSchema,
 } from '#/api/genchuan/industry/educationTeaching/studentMgmt/dormMgmt/stayMgmt/form.js';
 
+// ---------- 通用函数 ----------
 const getStatusType = (status) => {
-  const map = {'待确认': 'warning', '待审核': 'primary', '已通过': 'success'};
+  const map = { '待确认': 'warning', '待审核': 'primary', '已通过': 'success' };
   return map[status] || 'info';
 };
 const formatTimestamp = (timestamp) => {
@@ -38,15 +39,6 @@ const formatTimestamp = (timestamp) => {
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-};
-const getDateFromTimestamp = (timestamp) => {
-  if (!timestamp) return '';
-  const date = new Date(parseInt(timestamp));
-  if (isNaN(date.getTime())) return '';
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 };
 const formatStayDate = (stayDate) => {
   if (!stayDate || !Array.isArray(stayDate) || stayDate.length < 3) return '-';
@@ -67,7 +59,17 @@ const timestampToStayDateArray = (timestamp) => {
   return [year, month, day];
 };
 
-const props = defineProps({secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean});
+// ========== 日期范围转换（搜索专用） ==========
+// 将 ['2026-01-01', '2026-01-31'] 转为 '2026-01-01,2026-01-31'
+const formatDateRangeForBackend = (dateRangeArr) => {
+  if (!Array.isArray(dateRangeArr) || dateRangeArr.length !== 2) return null;
+  const [start, end] = dateRangeArr;
+  if (!start || !end) return null;
+  return `${start},${end}`;
+};
+
+// ---------- props & emit ----------
+const props = defineProps({ secondShow: Boolean, arrowShow: Boolean, arrowState: Boolean });
 const emit = defineEmits(['arrow-change']);
 
 // ---------- 标签筛选 ----------
@@ -94,7 +96,7 @@ const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({records}) {
+function handleRowCheckboxChange({ records }) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -102,21 +104,30 @@ function handleRowCheckboxChange({records}) {
 const searchParams = ref({});
 const isEditMode = ref(false);
 const currentEditId = ref(null);
-const confirmIds = ref([]);
-const auditIds = ref([]);
 
-const getTableData = async ({page}) => {
+// ---------- 表格数据获取（核心转换） ----------
+const getTableData = async ({ page }) => {
   dataObj.loading = true;
   try {
     const merged = {
       ...searchParams.value,
       ...tagFilters.value,
     };
-    const params = {
+    let params = {
       ...merged,
       pageNo: page.currentPage,
       pageSize: page.pageSize,
     };
+    // 将 stayDate 数组转换为逗号分隔字符串
+    if (params.stayDate && Array.isArray(params.stayDate)) {
+      const rangeStr = formatDateRangeForBackend(params.stayDate);
+      if (rangeStr) {
+        params.stayDate = rangeStr;
+      } else {
+        delete params.stayDate;
+      }
+    }
+    // 清理空值
     Object.keys(params).forEach(key => {
       if (params[key] === '' || params[key] === null || params[key] === undefined) {
         delete params[key];
@@ -137,22 +148,21 @@ const getTableData = async ({page}) => {
   }
 };
 
-// ========== 表格实例（提前定义，确保 gridApi 可用） ==========
+// ---------- 表格实例 ----------
 const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: {ajax: {query: getTableData}},
-    rowConfig: {keyField: 'id', isHover: true},
+    proxyConfig: { ajax: { query: getTableData } },
+    rowConfig: { keyField: 'id', isHover: true },
     pagerConfig: dataObj,
-    toolbarConfig: {refresh: true, search: true},
+    toolbarConfig: { refresh: true, search: true },
     showOverflow: true,
   },
-  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
+  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
   showSearchForm: false,
 });
 
-// ========== 核心修复：强制重置分页到第一页并刷新 ==========
 function resetPageAndQuery() {
   if (gridApi.commitProxy) {
     gridApi.commitProxy('reload');
@@ -175,11 +185,18 @@ function handleReset() {
   resetPageAndQuery();
 }
 
+// ---------- 导出 ----------
 async function handleExport() {
-  const loading = ElLoading.service({text: '正在导出...'});
+  let exportParams = { ...searchParams.value };
+  if (exportParams.stayDate && Array.isArray(exportParams.stayDate)) {
+    const rangeStr = formatDateRangeForBackend(exportParams.stayDate);
+    if (rangeStr) exportParams.stayDate = rangeStr;
+    else delete exportParams.stayDate;
+  }
+  const loading = ElLoading.service({ text: '正在导出...' });
   try {
-    const data = await exportStayMgmt(searchParams.value);
-    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
+    const data = await exportStayMgmt(exportParams);
+    downloadFileFromBlobPart({ fileName: `${textObj.excelName}.xls`, source: data });
     ElMessage.success('导出成功');
   } catch (error) {
     console.error('导出失败:', error);
@@ -189,6 +206,7 @@ async function handleExport() {
   }
 }
 
+// ---------- 批量操作 ----------
 async function handleBatchConfirm() {
   if (checkedIds.value.length === 0) return ElMessage.warning('请至少选择一个留宿记录');
   const pendingRows = checkedRows.value.filter(row => row.status === '待确认');
@@ -199,10 +217,10 @@ async function handleBatchConfirm() {
       cancelButtonText: '取消',
       type: 'warning'
     });
-    const loading = ElLoading.service({text: '确认中...'});
+    const loading = ElLoading.service({ text: '确认中...' });
     try {
       const ids = pendingRows.map(row => row.id);
-      const res = await confirmStayMgmt({ids});
+      const res = await confirmStayMgmt({ ids });
       if (res && res !== false) {
         ElMessage.success('批量确认成功');
         handleRefresh();
@@ -212,8 +230,7 @@ async function handleBatchConfirm() {
     } finally {
       loading.close();
     }
-  } catch {
-  }
+  } catch { }
 }
 
 async function handleBatchAudit() {
@@ -226,10 +243,10 @@ async function handleBatchAudit() {
       cancelButtonText: '取消',
       type: 'warning'
     });
-    const loading = ElLoading.service({text: '审核中...'});
+    const loading = ElLoading.service({ text: '审核中...' });
     try {
       const ids = pendingRows.map(row => row.id);
-      const res = await auditStayMgmt({ids});
+      const res = await auditStayMgmt({ ids });
       if (res && res !== false) {
         ElMessage.success('批量审核成功');
         handleRefresh();
@@ -239,10 +256,10 @@ async function handleBatchAudit() {
     } finally {
       loading.close();
     }
-  } catch {
-  }
+  } catch { }
 }
 
+// ---------- 单个操作 ----------
 function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
@@ -263,9 +280,9 @@ async function handleConfirm(row) {
       cancelButtonText: '取消',
       type: 'warning'
     });
-    const loading = ElLoading.service({text: '确认中...'});
+    const loading = ElLoading.service({ text: '确认中...' });
     try {
-      const res = await confirmStayMgmt({ids: [row.id]});
+      const res = await confirmStayMgmt({ ids: [row.id] });
       if (res && res !== false) {
         ElMessage.success('确认成功');
         handleRefresh();
@@ -275,8 +292,7 @@ async function handleConfirm(row) {
     } finally {
       loading.close();
     }
-  } catch {
-  }
+  } catch { }
 }
 
 async function handleAudit(row) {
@@ -287,9 +303,9 @@ async function handleAudit(row) {
       cancelButtonText: '取消',
       type: 'warning'
     });
-    const loading = ElLoading.service({text: '审核中...'});
+    const loading = ElLoading.service({ text: '审核中...' });
     try {
-      const res = await auditStayMgmt({ids: [row.id]});
+      const res = await auditStayMgmt({ ids: [row.id] });
       if (res && res !== false) {
         ElMessage.success('审核成功');
         handleRefresh();
@@ -299,21 +315,23 @@ async function handleAudit(row) {
     } finally {
       loading.close();
     }
-  } catch {
-  }
+  } catch { }
 }
 
-// 申请表单
+// ---------- 申请表单（创建/编辑，保持单个日期） ----------
 const [ApplyForm, applyFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({text: isEditMode.value ? '保存中...' : '提交中...'});
+    const loading = ElLoading.service({ text: isEditMode.value ? '保存中...' : '提交中...' });
     try {
       let res;
-      const submitValues = {...values, stayDate: timestampToStayDateArray(values.stayDate)};
-      if (isEditMode.value) res = await updateStayMgmt({...submitValues, id: currentEditId.value});
-      else res = await createStayMgmt({...submitValues, status: submitValues.status || '待确认'});
+      const submitValues = { ...values, stayDate: timestampToStayDateArray(values.stayDate) };
+      if (isEditMode.value) {
+        res = await updateStayMgmt({ ...submitValues, id: currentEditId.value });
+      } else {
+        res = await createStayMgmt({ ...submitValues, status: submitValues.status || '待确认' });
+      }
       if (res && res !== false) {
         ElMessage.success(isEditMode.value ? '编辑成功' : '申请成功');
         applyDrawerApi.close();
@@ -328,7 +346,7 @@ const [ApplyForm, applyFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: useApplyFormSchema(isEditMode.value),
   showCollapseButton: false,
-  submitButtonOptions: {content: '保存'},
+  submitButtonOptions: { content: '保存' },
 });
 
 const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
@@ -340,7 +358,7 @@ const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
       await applyFormApi.resetForm();
       if (isEditMode.value && currentEditId.value) {
         try {
-          const detail = await getStayMgmtDetail({id: currentEditId.value});
+          const detail = await getStayMgmtDetail({ id: currentEditId.value });
           await applyFormApi.setValues({
             studentId: detail.studentId,
             stayDate: stayDateToTimestamp(detail.stayDate),
@@ -355,25 +373,25 @@ const [ApplyDrawer, applyDrawerApi] = useVbenDrawer({
           applyDrawerApi.close();
         }
       } else {
-        await applyFormApi.setValues({applyTime: Date.now(), status: '待确认'});
+        await applyFormApi.setValues({ applyTime: Date.now(), status: '待确认' });
       }
     }
   },
 });
 
 const stayDetailDrawerRef = ref(null);
-
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   stayDetailDrawerRef.value.open();
 }
 
-// 高级查询表单
+// ---------- 高级查询表单（搜索） ----------
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
+  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
   handleSubmit: (values) => {
-    searchParams.value = {...values};
+    // values.stayDate 是数组 ['2026-01-01', '2026-01-31'] 或 null
+    searchParams.value = { ...values };
     drawerApi.close();
     resetPageAndQuery();
   },
@@ -383,10 +401,10 @@ const [QueryForm] = useVbenForm({
     return v;
   }),
   showCollapseButton: true,
-  submitButtonOptions: {content: '查询'},
+  submitButtonOptions: { content: '查询' },
 });
 
-// 筛选标签相关函数（使用 resetPageAndQuery）
+// ---------- 标签筛选相关 ----------
 function getFieldLabel(field) {
   const map = {
     status: '状态',
@@ -400,6 +418,9 @@ function getFieldLabel(field) {
 }
 
 function getTagDisplayText(field, value) {
+  if (field === 'stayDate' && Array.isArray(value) && value.length === 2) {
+    return `${value[0]} 至 ${value[1]}`;
+  }
   if (Array.isArray(value)) return value.join('、');
   return value || '-';
 }
@@ -436,17 +457,11 @@ function removeFilterTag(field) {
 }
 
 const handleSerachShow = () => drawerApi.open();
-const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-const showChart = ref(true);
-const toggleChart = () => {
-  showChart.value = !showChart.value;
-};
-defineExpose({handleFilterTagClick, clearFilters});
 
-// ========== 监听图表自定义事件 ==========
+// ---------- 图表自定义事件 ----------
 const handleChartFilter = (event) => {
-  const {type, value} = event.detail;
+  const { type, value } = event.detail;
   if (type === 'status') {
     handleFilterTagClick('status', value);
   } else if (type === 'className') {
@@ -462,17 +477,18 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('stay-chart-filter', handleChartFilter);
 });
+
+defineExpose({ handleFilterTagClick, clearFilters });
 </script>
 
 <template>
   <div class="park-lot-table-new">
-    <StayDetailDrawer ref="stayDetailDrawerRef" :detail-obj="dataObj.detailObj"
-                      @refresh="handleRefresh"/>
+    <StayDetailDrawer ref="stayDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh" />
     <Drawer title="搜索">
-      <QueryForm/>
+      <QueryForm />
     </Drawer>
     <ApplyDrawer :title="isEditMode ? textObj.editText : textObj.applyText">
-      <ApplyForm/>
+      <ApplyForm />
     </ApplyDrawer>
     <Grid>
       <template #table-title>
@@ -489,38 +505,31 @@ onUnmounted(() => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="申请" icon-name="Plus" @click="handleCreate"/>
-          <IconButton content="确认" icon-name="Check" @click="handleBatchConfirm"/>
-          <IconButton content="审核" icon-name="Checked" @click="handleBatchAudit"/>
-          <IconButton content="导出" icon-name="download" @click="handleExport"/>
-          <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
-          <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
-                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton content="申请" icon-name="Plus" @click="handleCreate" />
+          <IconButton content="确认" icon-name="Check" @click="handleBatchConfirm" />
+          <IconButton content="审核" icon-name="Checked" @click="handleBatchAudit" />
+          <IconButton content="导出" icon-name="download" @click="handleExport" />
+          <IconButton content="筛选" icon-name="search" @click="handleSerachShow" />
+          <IconButton content="重置" icon-name="Refresh" @click="handleReset" />
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange" />
           <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
+      <!-- 列模板 -->
       <template #studentId="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
-          {{ row.studentId }}
-        </el-text>
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentId }}</el-text>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)"
-                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
+        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer;">
           {{ row.status }}
         </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
-                 style="cursor: pointer;">{{ row.creator || '-' }}
-        </el-text>
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer;">{{ row.creator || '-' }}</el-text>
       </template>
       <template #createTime="{ row }">
-        <el-text>
-          {{ formatTimestamp(row.createTime) }}
-        </el-text>
+        <el-text>{{ formatTimestamp(row.createTime) }}</el-text>
       </template>
       <template #stayDate="{ row }">
         <el-text>{{ formatStayDate(row.stayDate) }}</el-text>
@@ -540,13 +549,10 @@ onUnmounted(() => {
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
-          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '待确认'" content="编辑" icon-name="Edit"
-                      @click="handleEdit(row)"/>
-          <IconButton v-if="row.status === '待确认'" content="确认" icon-name="Check"
-                      @click="handleConfirm(row)"/>
-          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Checked"
-                      @click="handleAudit(row)"/>
+          <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)" />
+          <IconButton v-if="row.status === '待确认'" content="编辑" icon-name="Edit" @click="handleEdit(row)" />
+          <IconButton v-if="row.status === '待确认'" content="确认" icon-name="Check" @click="handleConfirm(row)" />
+          <IconButton v-if="row.status === '待审核'" content="审核" icon-name="Checked" @click="handleAudit(row)" />
         </div>
       </template>
     </Grid>

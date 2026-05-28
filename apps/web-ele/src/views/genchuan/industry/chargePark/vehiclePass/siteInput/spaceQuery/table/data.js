@@ -1,26 +1,21 @@
 import { requestClient } from '#/api/request';
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
 
-/** 获取场站列表 */
+/** 获取片区列表（模拟数据） */
 let stationOptionsCache = null;
 export async function getStationOptions() {
   if (stationOptionsCache) {
     return stationOptionsCache;
   }
-  try {
-    const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
-    if (response && Array.isArray(response)) {
-      stationOptionsCache = response.map(item => ({
-        label: item.stationName,
-        value: item.stationId,
-      }));
-      return stationOptionsCache;
-    }
-    return [];
-  } catch (error) {
-    console.error('获取场站列表失败:', error);
-    return [];
-  }
+  // TODO: 替换为真实接口
+  stationOptionsCache = [
+    { label: '芗城区', value: 1 },
+    { label: '龙文区', value: 2 },
+    { label: '龙海区', value: 3 },
+    { label: '长泰区', value: 4 },
+    { label: '漳浦县', value: 5 },
+  ];
+  return stationOptionsCache;
 }
 
 /** 模块表格初始数据 */
@@ -86,11 +81,7 @@ export function useSearchFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择片区',
-        options: [
-          { label: '芗城区', value: 1 },
-          { label: '龙文区', value: 2 },
-          { label: '龙海区', value: 3 },
-        ],
+        options: [],
       },
     },
     {
@@ -100,7 +91,7 @@ export function useSearchFormSchema() {
       componentProps: {
         type: 'daterange',
         placeholder: '请选择查询时间范围',
-        valueFormat: 'YYYY-MM-DD',
+        valueFormat: 'YYYY-MM-DD HH:mm:ss',
       },
     },
   ];
@@ -133,7 +124,7 @@ export function useGridColumns() {
     },
     {
       field: 'areaName',
-      title: '场站',
+      title: '片区',
       minWidth: 120,
       sortable: true,
       slots: { default: 'areaName' },
@@ -167,6 +158,6 @@ export const detailFields = [
   { key: 'spaceNo', label: '泊位编号' },
   { key: 'queryTime', label: '查询时间', formatter: formatTime },
   { key: 'queryUserName', label: '查询人' },
-  { key: 'areaName', label: '场站' },
+  { key: 'areaName', label: '片区' },
   { key: 'spaceStatus', label: '泊位状态' },
 ];

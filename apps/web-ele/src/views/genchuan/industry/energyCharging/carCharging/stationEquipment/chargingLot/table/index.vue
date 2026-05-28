@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { DICT_TYPE } from '@vben/constants';
@@ -22,10 +23,10 @@ import {
 } from '#/api/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingLot';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
-import StationDetailDrawer from '#/views/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingStation/components/detail.vue';
-import PileDetailDrawer from '#/views/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingPile/table/detail.vue';
-
 import { formatDate } from '#/utils/genchuan/formatTime';
+import { checkPermissionAndUpgrade } from '#/utils/genchuan/permission';
+import PileDetailDrawer from '#/views/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingPile/table/detail.vue';
+import StationDetailDrawer from '#/views/genchuan/industry/energyCharging/carCharging/stationEquipment/chargingStation/components/detail.vue';
 
 import MarkOccupyDialog from '../components/MarkOccupyDialog.vue';
 import {
@@ -54,6 +55,9 @@ const props = defineProps({
     default: () => {},
   },
 });
+
+// 在setup顶层初始化router实例
+const router = useRouter();
 
 const getTitle = computed(() => {
   return formData.value?.id ? textObj.editText : textObj.addText;
@@ -138,7 +142,9 @@ watch(
       ...prev,
       schema: computed(() => {
         const schema = useFormSchema(newOptions);
-        const stationField = schema.find((item) => item.fieldName === 'stationId');
+        const stationField = schema.find(
+          (item) => item.fieldName === 'stationId',
+        );
         if (stationField) {
           stationField.componentProps = {
             ...stationField.componentProps,
@@ -232,6 +238,12 @@ function handleRefresh() {
 
 /** 导出表格 */
 async function handleExport() {
+  if (
+    !checkPermissionAndUpgrade('vehiclecharging:charging-lot:export', router)
+  ) {
+    return;
+  }
+
   try {
     const data = await exportChargingLot();
     downloadFileFromBlobPart({ fileName: '充电车位表.xls', source: data });
@@ -244,6 +256,12 @@ async function handleExport() {
 
 /** 创建 */
 function handleCreate() {
+  if (
+    !checkPermissionAndUpgrade('vehiclecharging:charging-lot:create', router)
+  ) {
+    return;
+  }
+
   formDrawerApi
     .setData({
       title: textObj.addText,
@@ -253,6 +271,12 @@ function handleCreate() {
 
 /** 编辑 */
 function handleEdit(row) {
+  if (
+    !checkPermissionAndUpgrade('vehiclecharging:charging-lot:update', router)
+  ) {
+    return;
+  }
+
   formDrawerApi
     .setData({
       title: textObj.editText,
@@ -263,6 +287,12 @@ function handleEdit(row) {
 
 /** 删除 */
 async function handleDelete(row) {
+  if (
+    !checkPermissionAndUpgrade('vehiclecharging:charging-lot:delete', router)
+  ) {
+    return;
+  }
+
   try {
     await confirm(`确定删除 "${row.lotCode}" 吗？`);
   } catch {
@@ -286,6 +316,12 @@ async function handleDelete(row) {
 
 /** 批量删除 */
 async function handleDeleteBatch() {
+  if (
+    !checkPermissionAndUpgrade('vehiclecharging:charging-lot:delete', router)
+  ) {
+    return;
+  }
+
   try {
     await confirm($t('确定删除这些数据吗？'));
   } catch {
@@ -310,6 +346,15 @@ async function handleDeleteBatch() {
 
 /** 占用标记 */
 function handleMarkOccupy(row) {
+  if (
+    !checkPermissionAndUpgrade(
+      'vehiclecharging:charging-lot:mark-occupy',
+      router,
+    )
+  ) {
+    return;
+  }
+
   if (markOccupyDialogRef.value) {
     markOccupyDialogRef.value.open(row);
   }
@@ -317,6 +362,12 @@ function handleMarkOccupy(row) {
 
 /** 空闲标记 */
 async function handleMarkIdle(row) {
+  if (
+    !checkPermissionAndUpgrade('vehiclecharging:charging-lot:mark-idle', router)
+  ) {
+    return;
+  }
+
   try {
     await confirm(`确定将车位 "${row.lotCode}" 标记为空闲吗？`);
   } catch {
@@ -386,8 +437,8 @@ const getTableData = async (pageObj) => {
     // 取日期部分（前10个字符：yyyy-MM-dd），避免重复追加时间
     const createTimeParam = filterCreateTime.value
       ? [
-          filterCreateTime.value.substring(0, 10) + ' 00:00:00',
-          filterCreateTime.value.substring(0, 10) + ' 23:59:59',
+          `${filterCreateTime.value.slice(0, 10)} 00:00:00`,
+          `${filterCreateTime.value.slice(0, 10)} 23:59:59`,
         ]
       : undefined;
 
@@ -432,10 +483,12 @@ const [QueryForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: computed(() => useSearchFormSchema(stationOptions.value).map((v) => {
-    delete v.rules;
-    return { ...v };
-  })),
+  schema: computed(() =>
+    useSearchFormSchema(stationOptions.value).map((v) => {
+      delete v.rules;
+      return { ...v };
+    }),
+  ),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -448,10 +501,12 @@ watch(
   (newOptions) => {
     QueryForm.setState((prev) => ({
       ...prev,
-      schema: computed(() => useSearchFormSchema(newOptions).map((v) => {
-        delete v.rules;
-        return { ...v };
-      })),
+      schema: computed(() =>
+        useSearchFormSchema(newOptions).map((v) => {
+          delete v.rules;
+          return { ...v };
+        }),
+      ),
     }));
   },
   { deep: true },

@@ -656,25 +656,6 @@ onUnmounted(() => {
         </div>
         <div ref="barChartRef" class="chart-container"></div>
       </div>
-
-      <div class="chart-area line-chart-area">
-        <div v-if="lineChartOptions.length > 1" class="chart-select-wrapper">
-          <ElSelect
-            :model-value="currentLineIndex"
-            size="small"
-            class="chart-select"
-            @change="handleLineChange"
-          >
-            <ElOption
-              v-for="(option, idx) in lineChartOptions"
-              :key="idx"
-              :label="option.label"
-              :value="idx"
-            />
-          </ElSelect>
-        </div>
-        <div ref="lineChartRef" class="chart-container"></div>
-      </div>
     </div>
   </div>
 </template>
@@ -769,11 +750,12 @@ onUnmounted(() => {
   height: 280px;
   padding: 4px;
   box-sizing: border-box;
+  gap: 8px;
 }
 
 .chart-area {
   position: relative;
-  flex: 0 0 28%;
+  flex: 1;
   min-width: 0;
   height: 272px;
   box-sizing: border-box;

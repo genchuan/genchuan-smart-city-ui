@@ -50,7 +50,7 @@ const gridColumns = ref(getColumns());
 const checkedIds = ref([]);
 const checkedRows = ref([]);
 
-function handleRowCheckboxChange({ records }) {
+function handleRowCheckboxChange({records}) {
   checkedIds.value = records.map(item => item.id);
   checkedRows.value = records;
 }
@@ -83,11 +83,11 @@ const getDateFromTimestamp = (timestamp) => {
   return `${year}-${month}-${day}`;
 };
 const getStatusType = (status) => {
-  const map = { '待规划': 'warning', '已规划': 'success' };
+  const map = {'待规划': 'warning', '已规划': 'success'};
   return map[status] || 'info';
 };
 
-const getTableData = async ({ page }) => {
+const getTableData = async ({page}) => {
   dataObj.loading = true;
   try {
     const merged = {
@@ -133,13 +133,13 @@ const [Grid, gridApi] = useVbenVxeGrid({
   gridOptions: {
     columns: gridColumns.value,
     keepSource: true,
-    proxyConfig: { ajax: { query: getTableData } },
-    rowConfig: { keyField: 'id', isHover: true },
+    proxyConfig: {ajax: {query: getTableData}},
+    rowConfig: {keyField: 'id', isHover: true},
     pagerConfig: dataObj,
-    toolbarConfig: { refresh: true, search: true },
+    toolbarConfig: {refresh: true, search: true},
     showOverflow: true,
   },
-  gridEvents: { checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange },
+  gridEvents: {checkboxAll: handleRowCheckboxChange, checkboxChange: handleRowCheckboxChange},
   showSearchForm: false,
 });
 
@@ -167,27 +167,61 @@ function handleReset() {
 }
 
 async function handleExport() {
-  const loading = ElLoading.service({ text: '正在导出...' });
+  const loading = ElLoading.service({text: '正在导出...'});
   try {
     const data = await exportStudyUp(searchParams.value);
-    downloadFileFromBlobPart({ fileName: `${textObj.excelName}.xls`, source: data });
+    downloadFileFromBlobPart({fileName: `${textObj.excelName}.xls`, source: data});
     ElMessage.success('导出成功');
-  } catch (error) { console.error('导出失败:', error); ElMessage.error('导出失败'); }
-  finally { loading.close(); }
+  } catch (error) {
+    console.error('导出失败:', error);
+    ElMessage.error('导出失败');
+  } finally {
+    loading.close();
+  }
 }
 
+// ---------- 工具栏按钮操作（支持单行） ----------
+function handleToolbarSelect() {
+  if (checkedRows.value.length !== 1) {
+    ElMessage.warning('请选择一行数据');
+    return;
+  }
+  const row = checkedRows.value[0];
+  if (row.status !== '待规划') {
+    ElMessage.warning('只有待规划状态的学生可以选择院校');
+    return;
+  }
+  handleSelect(row);
+}
+
+function handleToolbarPlan() {
+  if (checkedRows.value.length !== 1) {
+    ElMessage.warning('请选择一行数据');
+    return;
+  }
+  const row = checkedRows.value[0];
+  if (row.status !== '待规划') {
+    ElMessage.warning('只有待规划状态的学生可以进行规划');
+    return;
+  }
+  handlePlan(row);
+}
+
+// 行内操作：选择院校
 function handleSelect(row) {
-  if (row.status !== '待规划') return ElMessage.warning('只有待规划状态的学生可以选择院校');
   currentSelectRow.value = row;
   selectFormApi.resetForm();
   selectDrawerApi.open();
 }
+
+// 行内操作：规划
 function handlePlan(row) {
-  if (row.status !== '待规划') return ElMessage.warning('只有待规划状态的学生可以进行规划');
   currentPlanRow.value = row;
   planFormApi.resetForm();
   planDrawerApi.open();
 }
+
+// 行内操作：跟踪记录
 function handleRecord(row) {
   if (row.status !== '已规划') return ElMessage.warning('只有已规划状态的学生可以记录跟踪');
   currentRecordRow.value = row;
@@ -198,58 +232,91 @@ function handleRecord(row) {
 // 选择表单
 const [SelectForm, selectFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '保存中...' });
+    const loading = ElLoading.service({text: '保存中...'});
     try {
-      const res = await selectStudyUp({ id: currentSelectRow.value.id, studentId: currentSelectRow.value.studentId, ...values });
-      if (res && res !== false) { ElMessage.success('选择成功'); selectDrawerApi.close(); handleRefresh(); }
-      else { ElMessage.error('选择失败'); }
-    } finally { loading.close(); }
+      const res = await selectStudyUp({
+        id: currentSelectRow.value.id,
+        studentId: currentSelectRow.value.studentId, ...values
+      });
+      if (res && res !== false) {
+        ElMessage.success('选择成功');
+        selectDrawerApi.close();
+        handleRefresh();
+      } else {
+        ElMessage.error('选择失败');
+      }
+    } finally {
+      loading.close();
+    }
   },
   layout: 'horizontal',
   schema: useSelectFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '确认' },
+  submitButtonOptions: {content: '确认'},
 });
 
 // 规划表单
 const [PlanForm, planFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '保存中...' });
+    const loading = ElLoading.service({text: '保存中...'});
     try {
-      const res = await planStudyUp({ id: currentPlanRow.value.id, planContent: values.planContent, planTime: Date.now() });
-      if (res && res !== false) { ElMessage.success('规划成功'); planDrawerApi.close(); handleRefresh(); }
-      else { ElMessage.error('规划失败'); }
-    } finally { loading.close(); }
+      const res = await planStudyUp({
+        id: currentPlanRow.value.id,
+        planContent: values.planContent,
+        planTime: Date.now()
+      });
+      if (res && res !== false) {
+        ElMessage.success('规划成功');
+        planDrawerApi.close();
+        handleRefresh();
+      } else {
+        ElMessage.error('规划失败');
+      }
+    } finally {
+      loading.close();
+    }
   },
   layout: 'horizontal',
   schema: usePlanFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
 });
 
 // 跟踪记录表单
 const [RecordForm, recordFormApi] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: async (values) => {
-    const loading = ElLoading.service({ text: '保存中...' });
+    const loading = ElLoading.service({text: '保存中...'});
     try {
-      const res = await recordStudyUp({ id: currentRecordRow.value.id, recordTime: Date.now(), remark: values.remark });
-      if (res && res !== false) { ElMessage.success('记录成功'); recordDrawerApi.close(); handleRefresh(); }
-      else { ElMessage.error('记录失败'); }
-    } finally { loading.close(); }
+      const res = await recordStudyUp({
+        id: currentRecordRow.value.id,
+        recordTime: Date.now(),
+        remark: values.remark
+      });
+      if (res && res !== false) {
+        ElMessage.success('记录成功');
+        recordDrawerApi.close();
+        handleRefresh();
+      } else {
+        ElMessage.error('记录失败');
+      }
+    } finally {
+      loading.close();
+    }
   },
   layout: 'horizontal',
   schema: useRecordFormSchema(),
   showCollapseButton: false,
-  submitButtonOptions: { content: '保存' },
+  submitButtonOptions: {content: '保存'},
 });
 
 const studyUpDetailDrawerRef = ref(null);
+
 function handleOpenDetail(row) {
   dataObj.detailObj = row;
   studyUpDetailDrawerRef.value.open();
@@ -258,16 +325,19 @@ function handleOpenDetail(row) {
 // 高级查询表单
 const [QueryForm] = useVbenForm({
   collapsed: false,
-  commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
+  commonConfig: {componentProps: {class: 'w-full'}, formItemClass: 'col-span-2', labelWidth: 100},
   handleSubmit: (values) => {
-    searchParams.value = { ...values };
+    searchParams.value = {...values};
     drawerApi.close();
     resetPageAndQuery(); // 查询时重置页码
   },
   layout: 'horizontal',
-  schema: useFormSchema().map(v => { delete v.rules; return v; }),
+  schema: useFormSchema().map(v => {
+    delete v.rules;
+    return v;
+  }),
   showCollapseButton: true,
-  submitButtonOptions: { content: '查询' },
+  submitButtonOptions: {content: '查询'},
 });
 
 // 筛选标签相关函数（使用 resetPageAndQuery）
@@ -283,6 +353,7 @@ function getFieldLabel(field) {
   };
   return map[field] || field;
 }
+
 function getTagDisplayText(field, value) {
   if (Array.isArray(value)) return value.join('、');
   return value || '-';
@@ -322,11 +393,11 @@ function removeFilterTag(field) {
 const handleSerachShow = () => drawerApi.open();
 const handleFullShow = () => screenfull.toggle();
 const arrowChange = () => emit('arrow-change');
-defineExpose({ handleFilterTagClick, clearFilters });
+defineExpose({handleFilterTagClick, clearFilters});
 
 // ========== 监听图表自定义事件 ==========
 const handleChartFilter = (event) => {
-  const { type, value } = event.detail;
+  const {type, value} = event.detail;
   if (type === 'status') {
     handleFilterTagClick('status', value);
   } else if (type === 'schoolName') {
@@ -350,11 +421,20 @@ onUnmounted(() => {
 
 <template>
   <div class="park-lot-table-new">
-    <StudyUpDetailDrawer ref="studyUpDetailDrawerRef" :detail-obj="dataObj.detailObj" @refresh="handleRefresh"/>
-    <Drawer title="搜索"><QueryForm/></Drawer>
-    <SelectDrawer title="选择目标院校"><SelectForm/></SelectDrawer>
-    <PlanDrawer title="升学规划"><PlanForm/></PlanDrawer>
-    <RecordDrawer title="跟踪记录"><RecordForm/></RecordDrawer>
+    <StudyUpDetailDrawer ref="studyUpDetailDrawerRef" :detail-obj="dataObj.detailObj"
+                         @refresh="handleRefresh"/>
+    <Drawer title="搜索">
+      <QueryForm/>
+    </Drawer>
+    <SelectDrawer title="选择目标院校">
+      <SelectForm/>
+    </SelectDrawer>
+    <PlanDrawer title="升学规划">
+      <PlanForm/>
+    </PlanDrawer>
+    <RecordDrawer title="跟踪记录">
+      <RecordForm/>
+    </RecordDrawer>
     <Grid>
       <template #table-title>
         <ElTag
@@ -370,45 +450,72 @@ onUnmounted(() => {
       </template>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
+          <!-- 新增工具栏按钮：选择、规划 -->
+          <IconButton content="选择" icon-name="Select" @click="handleToolbarSelect"/>
+          <IconButton content="规划" icon-name="Edit" @click="handleToolbarPlan"/>
           <IconButton content="导出" icon-name="download" @click="handleExport"/>
           <IconButton content="筛选" icon-name="search" @click="handleSerachShow"/>
           <IconButton content="重置" icon-name="Refresh" @click="handleReset"/>
-          <IconButton :content="props.arrowShow ? '展开' : '收缩'" :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
+          <IconButton :content="props.arrowShow ? '展开' : '收缩'"
+                      :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'" @click="arrowChange"/>
           <span style="width: 30px; display: inline-block;"></span>
         </div>
       </template>
 
       <template #studentId="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.studentId }}</el-text>
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+          {{ row.studentId }}
+        </el-text>
       </template>
       <template #schoolName="{ row }">
-        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">{{ row.schoolName || '-' }}</el-text>
+        <el-text @click="handleOpenDetail(row)" type="primary" style="cursor: pointer;">
+          {{ row.schoolName || '-' }}
+        </el-text>
       </template>
       <template #schoolType="{ row }">
-        <el-text @click="handleFilterTagClick('schoolType', row.schoolType)" type="primary" style="cursor: pointer;">{{ row.schoolType || '-' }}</el-text>
+        <el-text @click="handleFilterTagClick('schoolType', row.schoolType)" type="primary"
+                 style="cursor: pointer;">{{ row.schoolType || '-' }}
+        </el-text>
       </template>
       <template #planContent="{ row }">
-        <el-text>{{ row.planContent?.substring(0, 50) || '-' }}{{ row.planContent?.length > 50 ? '...' : '' }}</el-text>
+        <el-text>{{
+            row.planContent?.substring(0, 50) || '-'
+          }}{{ row.planContent?.length > 50 ? '...' : '' }}
+        </el-text>
       </template>
       <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)" @click="handleFilterTagClick('status', row.status)" style="cursor: pointer">{{ row.status }}</el-tag>
+        <el-tag :type="getStatusType(row.status)"
+                @click="handleFilterTagClick('status', row.status)" style="cursor: pointer">
+          {{ row.status }}
+        </el-tag>
       </template>
       <template #creator="{ row }">
-        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary" style="cursor: pointer">{{ row.creator || '-' }}</el-text>
+        <el-text @click="handleFilterTagClick('creator', row.creator)" type="primary"
+                 style="cursor: pointer">{{ row.creator || '-' }}
+        </el-text>
       </template>
       <template #createTime="{ row }">
         <el-text>{{ formatTimestamp(row.createTime) }}</el-text>
       </template>
-      <template #planTime="{ row }"><el-text>{{ formatTimestamp(row.planTime) }}</el-text></template>
-      <template #recordTime="{ row }"><el-text>{{ formatTimestamp(row.recordTime) }}</el-text></template>
-      <template #updateTime="{ row }"><el-text>{{ formatTimestamp(row.updateTime) }}</el-text></template>
+      <template #planTime="{ row }">
+        <el-text>{{ formatTimestamp(row.planTime) }}</el-text>
+      </template>
+      <template #recordTime="{ row }">
+        <el-text>{{ formatTimestamp(row.recordTime) }}</el-text>
+      </template>
+      <template #updateTime="{ row }">
+        <el-text>{{ formatTimestamp(row.updateTime) }}</el-text>
+      </template>
 
       <template #actions="{ row }">
         <div class="table-toolbar-tools">
           <IconButton content="详情" icon-name="View" @click="handleOpenDetail(row)"/>
-          <IconButton v-if="row.status === '待规划'" content="选择" icon-name="Select" @click="handleSelect(row)"/>
-          <IconButton v-if="row.status === '待规划'" content="规划" icon-name="Edit" @click="handlePlan(row)"/>
-          <IconButton v-if="row.status === '已规划'" content="记录" icon-name="Checked" @click="handleRecord(row)"/>
+          <IconButton v-if="row.status === '待规划'" content="选择" icon-name="Select"
+                      @click="handleSelect(row)"/>
+          <IconButton v-if="row.status === '待规划'" content="规划" icon-name="Edit"
+                      @click="handlePlan(row)"/>
+          <IconButton v-if="row.status === '已规划'" content="记录" icon-name="Checked"
+                      @click="handleRecord(row)"/>
         </div>
       </template>
     </Grid>

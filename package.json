@@ -67,6 +67,7 @@
     "@changesets/cli": "catalog:",
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",
+    "@types/qrcode": "catalog:",
     "@vben/commitlint-config": "workspace:*",
     "@vben/eslint-config": "workspace:*",
     "@vben/prettier-config": "workspace:*",
@@ -122,5 +123,8 @@
       "canvas",
       "node-gyp"
     ]
+  },
+  "dependencies": {
+    "qrcode": "catalog:"
   }
 }

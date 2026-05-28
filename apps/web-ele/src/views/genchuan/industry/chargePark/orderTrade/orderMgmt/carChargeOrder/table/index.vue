@@ -930,7 +930,7 @@ const alarmColumns = [
           />
           <IconButton
             content="开票"
-            v-if="row.status === 'completed' && row.invoiceStatus !== 'invoiced'"
+            v-if="(row.status === 'paid' || row.status === 'completed') && row.invoiceStatus !== 'invoiced'"
             icon-name="Document"
             @click="handleInvoice(row)"
           />

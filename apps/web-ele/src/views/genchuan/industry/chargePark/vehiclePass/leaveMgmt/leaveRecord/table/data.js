@@ -110,6 +110,26 @@ export function useSearchFormSchema() {
       },
     },
     {
+      fieldName: 'leaveTimeHour',
+      label: '离场小时',
+      component: 'TimePicker',
+      componentProps: {
+        placeholder: '请选择离场小时',
+        format: 'HH:mm',
+        valueFormat: 'HH:mm',
+      },
+    },
+    {
+      fieldName: 'parkDuration',
+      label: '停车时长',
+      component: 'InputNumber',
+      componentProps: {
+        placeholder: '请输入停车时长（分钟）',
+        min: 0,
+        style: { width: '100%' },
+      },
+    },
+    {
       fieldName: 'status',
       label: '记录状态',
       component: 'Select',
@@ -135,10 +155,11 @@ export function useSearchFormSchema() {
       label: '修正日志',
       component: 'Select',
       componentProps: {
-        placeholder: '请选择是否修正',
+        placeholder: '请选择修正状态',
         options: [
-          { label: '是', value: true },
-          { label: '否', value: false },
+          { label: '未修正', value: 0 },
+          { label: '已修正', value: 1 },
+          { label: '已确认', value: 2 },
         ],
       },
     },
@@ -199,55 +220,16 @@ export function useCreateFormSchema() {
   ];
 }
 
-/** 编辑表单配置 */
+/** 编辑表单配置（仅编辑备注） */
 export function useUpdateFormSchema() {
   return [
-    {
-      fieldName: 'plateNo',
-      label: '车牌',
-      component: 'Input',
-      componentProps: {
-        placeholder: '请输入车牌',
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'enterTime',
-      label: '入场时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择入场时间',
-        type: 'datetime',
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'leaveTime',
-      label: '离场时间',
-      component: 'DatePicker',
-      componentProps: {
-        placeholder: '请选择离场时间',
-        type: 'datetime',
-      },
-      rules: 'required',
-    },
-    {
-      fieldName: 'stationId',
-      label: '场站',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择场站',
-        options: [],
-      },
-      rules: 'required',
-    },
     {
       fieldName: 'remark',
       label: '备注',
       component: 'Textarea',
       componentProps: {
         placeholder: '请输入备注',
-        rows: 3,
+        rows: 5,
       },
     },
   ];
@@ -294,6 +276,14 @@ export function useCorrectFormSchema() {
         options: [],
       },
       rules: 'required',
+    },
+    {
+      fieldName: 'proofImage',
+      label: '佐证图片',
+      component: 'Input',
+      componentProps: {
+        placeholder: '请输入佐证图片地址（多张图片用逗号分隔）',
+      },
     },
     {
       fieldName: 'remark',
@@ -441,4 +431,5 @@ export const detailFields = [
   { key: 'creator', label: '创建人' },
   { key: 'createTime', label: '创建时间', formatter: formatTime },
   { key: 'remark', label: '备注' },
+  { key: 'modifyLogs', label: '修改日志', type: 'logs' },
 ];

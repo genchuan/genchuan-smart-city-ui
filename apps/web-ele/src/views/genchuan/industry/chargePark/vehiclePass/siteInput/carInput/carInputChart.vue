@@ -50,7 +50,7 @@ async function loadChartData() {
     if (res?.cardData) {
       cards[0].value = res.cardData.inputCount || 0;
       cards[1].value = res.cardData.auditPassRate
-        ? `${res.cardData.auditPassRate}%`
+        ? `${Number(res.cardData.auditPassRate).toFixed(2)}%`
         : '0%';
     }
 
@@ -118,7 +118,12 @@ function initPieChart() {
       const clickedDate = params.name;
       window.dispatchEvent(
         new CustomEvent('filterByChart:carInput', {
-          detail: { createTimeRange: [clickedDate, clickedDate] },
+          detail: {
+            inputTime: [
+              `${clickedDate} 00:00:00`,
+              `${clickedDate} 23:59:59`,
+            ],
+          },
         }),
       );
     }

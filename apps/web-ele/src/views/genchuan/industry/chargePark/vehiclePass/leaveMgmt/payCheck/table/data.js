@@ -1,5 +1,6 @@
 import { requestClient } from '#/api/request';
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
+import { getSimpleUserList } from '#/api/system/user';
 
 /** 获取场站列表 */
 let stationOptionsCache = null;
@@ -19,6 +20,28 @@ export async function getStationOptions() {
     return [];
   } catch (error) {
     console.error('获取场站列表失败:', error);
+    return [];
+  }
+}
+
+/** 获取用户列表 */
+let userOptionsCache = null;
+export async function getUserOptions() {
+  if (userOptionsCache) {
+    return userOptionsCache;
+  }
+  try {
+    const response = await getSimpleUserList();
+    if (response && Array.isArray(response)) {
+      userOptionsCache = response.map(item => ({
+        label: item.nickname || item.username,
+        value: item.id,
+      }));
+      return userOptionsCache;
+    }
+    return [];
+  } catch (error) {
+    console.error('获取用户列表失败:', error);
     return [];
   }
 }
@@ -113,11 +136,20 @@ export function useSearchFormSchema() {
       },
     },
     {
-      fieldName: 'stationName',
+      fieldName: 'stationId',
       label: '场站',
       component: 'Select',
       componentProps: {
         placeholder: '请选择场站',
+        options: [],
+      },
+    },
+    {
+      fieldName: 'checkUserId',
+      label: '核验人',
+      component: 'Select',
+      componentProps: {
+        placeholder: '请选择核验人',
         options: [],
       },
     },

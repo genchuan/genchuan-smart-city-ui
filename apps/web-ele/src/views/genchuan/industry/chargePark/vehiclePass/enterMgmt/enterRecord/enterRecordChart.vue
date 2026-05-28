@@ -102,16 +102,15 @@ function initLineChart() {
 
   // 添加点击事件
   lineChartInstance.on('click', (params) => {
-    const clickDate = new Date(params.name);
-    const startTime = new Date(clickDate.setHours(0, 0, 0, 0))
-      .getTime()
-      .toString();
-    const endTime = new Date(clickDate.setHours(23, 59, 59, 999))
-      .getTime()
-      .toString();
+    const clickedDate = params.name;
     window.dispatchEvent(
       new CustomEvent('filterByChart:enterRecord', {
-        detail: { startTime, endTime },
+        detail: {
+          enterTime: [
+            `${clickedDate} 00:00:00`,
+            `${clickedDate} 23:59:59`,
+          ],
+        },
       }),
     );
   });
@@ -152,20 +151,9 @@ function initBarChart() {
 
   // 添加点击事件
   barChartInstance.on('click', (params) => {
-    const today = new Date();
-    const todayStart = new Date(today.setHours(0, 0, 0, 0))
-      .getTime()
-      .toString();
-    const todayEnd = new Date(today.setHours(23, 59, 59, 999))
-      .getTime()
-      .toString();
     window.dispatchEvent(
       new CustomEvent('filterByChart:enterRecord', {
-        detail: {
-          startTime: todayStart,
-          endTime: todayEnd,
-          enterTimeHour: params.name,
-        },
+        detail: { enterTimeHour: params.name },
       }),
     );
   });
@@ -178,14 +166,13 @@ function initCharts() {
 
 function handleCardClick(key) {
   const today = new Date();
-  const todayStart = new Date(today.setHours(0, 0, 0, 0)).getTime().toString();
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999))
-    .getTime()
-    .toString();
+  const pad = (n) => String(n).padStart(2, '0');
+  const dateStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  const enterTime = [`${dateStr} 00:00:00`, `${dateStr} 23:59:59`];
 
   const filterMap = {
-    todayEnterCount: { startTime: todayStart, endTime: todayEnd },
-    enterPeak: { startTime: todayStart, endTime: todayEnd, overTime: true },
+    todayEnterCount: { enterTime },
+    enterPeak: { enterTime },
   };
 
   const filterParams = filterMap[key];
