@@ -766,11 +766,11 @@ watch(
             icon-name="Plus"
             @click="handleCreateConfig"
           />
-          <IconButton
+          <!-- <IconButton
             content="搜索"
             icon-name="search"
             @click="handleSearchShow"
-          />
+          /> -->
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
             :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"
