@@ -119,7 +119,7 @@ const [CreateForm, createFormApi] = useVbenForm({
   layout: 'horizontal',
   schema: computed(() => {
     const schema = useCreateFormSchema();
-    const stationField = schema.find((f) => f.fieldName === 'stationName');
+    const stationField = schema.find((f) => f.fieldName === 'stationId');
     if (stationField) {
       stationField.componentProps.options = stationOptions.value;
     }

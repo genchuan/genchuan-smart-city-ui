@@ -13,7 +13,7 @@ export async function getStationOptions() {
     if (response && Array.isArray(response)) {
       stationOptionsCache = response.map(item => ({
         label: item.stationName,
-        value: item.stationId,
+        value: item.stationName,
       }));
       return stationOptionsCache;
     }

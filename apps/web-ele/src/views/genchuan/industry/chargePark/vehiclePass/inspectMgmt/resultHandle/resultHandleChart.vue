@@ -171,10 +171,10 @@ function handleCardClick(key) {
       }),
     );
   } else if (key === 'violationRectifyRate') {
-    // 违规整改率：筛选已完成且已整改的记录
+    // 违规整改率：筛选已整改状态的记录
     window.dispatchEvent(
       new CustomEvent('filterByChart:resultHandle', {
-        detail: { status: '已完成', rectifyStatus: '已整改', filterKey: 'violationRectifyRate' },
+        detail: { rectifyStatus: '已整改', filterKey: 'violationRectifyRate' },
       }),
     );
   }

@@ -2,26 +2,21 @@ import { requestClient } from '#/api/request';
 import { getExecuteUserSimpleList } from '#/api/genchuan/industry/chargePark/vehiclePass/inspectMgmt/inspectTask';
 import { createTimeFormatter, formatTime } from '../../../utils/timeFormatter';
 
-/** 获取场站列表 */
+/** 获取片区列表（模拟数据） */
 let stationOptionsCache = null;
 export async function getStationOptions() {
   if (stationOptionsCache) {
     return stationOptionsCache;
   }
-  try {
-    const response = await requestClient.get('/vehiclepass/in-park-status/simple-list');
-    if (response && Array.isArray(response)) {
-      stationOptionsCache = response.map(item => ({
-        label: item.stationName,
-        value: item.stationId,
-      }));
-      return stationOptionsCache;
-    }
-    return [];
-  } catch (error) {
-    console.error('获取场站列表失败:', error);
-    return [];
-  }
+  // TODO: 替换为真实接口
+  stationOptionsCache = [
+    { label: '芗城区', value: 1 },
+    { label: '龙文区', value: 2 },
+    { label: '龙海区', value: 3 },
+    { label: '长泰区', value: 4 },
+    { label: '漳浦县', value: 5 },
+  ];
+  return stationOptionsCache;
 }
 
 /** 获取执行人列表 */
