@@ -1,4 +1,4 @@
-<script setup>import { reactive, ref, computed, watch } from 'vue';
+<script setup>import { reactive, ref, computed, watch, onMounted } from 'vue';
 import { useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart } from '@vben/utils';
 import { ElMessage, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElDialog } from 'element-plus';
@@ -6,6 +6,9 @@ import screenfull from 'screenfull';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getSplitRatePage, exportSplitRateExcel, createSplitRate, updateSplitRate, deleteSplitRate, enableSplitRate, disableSplitRate } from '#/api/genchuan/industry/chargePark/orderTrade/splitSettle/index.js';
 import { formatTimestamp } from '#/utils';
+import {   
+  getAgentPayRulePage,
+} from '#/api/genchuan/industry/chargePark/orderTrade/agentPay/index.js';
 import { confirm } from '@vben/common-ui';
 import { useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
@@ -37,10 +40,26 @@ const searchFormData = reactive({
   status: '',
 });
 const searchFormRef = ref(null);
+// 合作方选项列表
+const partnerOptions = ref([]);
+
+// 加载合作方列表
+const loadPartnerOptions = async () => {
+  try {
+    const res = await getAgentPayRulePage({ pageNo: 1, pageSize: 100 });
+    partnerOptions.value = res.list.map(item => ({
+      label: item.name || `规则${item.id}`,
+      value: item.id,
+    }));
+  } catch (error) {
+    console.error('加载合作方列表失败:', error);
+  }
+};
+
 // 表单数据
 const formData = reactive({
-  id: 0,
-  partnerId: 0,
+  id: '',
+  partnerId: '',
   splitMode: '',
   rateValue: 0,
   status: '',
@@ -50,6 +69,9 @@ const formData = reactive({
 });
 // 表单规则
 const rules = {
+  partnerId: [
+    { required: true, message: '合作方不能为空', trigger: 'change' },
+  ],
   splitMode: [
     { required: true, message: '分账方式不能为空', trigger: 'blur' },
   ],
@@ -77,6 +99,7 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   },
   async onOpenChange(isOpen) {
     if (isOpen) {
+      await loadPartnerOptions();
       const data = formDrawerApi.getData();
       if (data?.id) {
         // 编辑模式
@@ -98,8 +121,8 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
 });
 // 重置表单
 function resetForm() {
-  formData.id = 0;
-  formData.partnerId = 0;
+  formData.id = '';
+  formData.partnerId = '';
   formData.splitMode = '';
   formData.rateValue = 0;
   formData.status = '';
@@ -352,6 +375,11 @@ watch(
   },
   { deep: true }
 );
+
+// 组件挂载时加载合作方选项
+onMounted(() => {
+  loadPartnerOptions();
+});
 </script>
 
 <template>
@@ -359,6 +387,16 @@ watch(
     <!-- 表单抽屉 -->
     <FormDrawer :title="formTitle">
       <ElForm ref="formRef" :model="formData" :rules="rules" label-width="100px" class="common-form">
+        <ElFormItem label="合作方" prop="partnerId">
+          <ElSelect v-model="formData.partnerId" placeholder="请选择合作方" class="w-full">
+            <ElOption
+              v-for="item in partnerOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </ElSelect>
+        </ElFormItem>
         <ElFormItem label="分账方式" prop="splitMode">
           <ElSelect v-model="formData.splitMode" placeholder="请选择分账方式" class="w-full">
             <ElOption label="固定比例" value="fixed" />
