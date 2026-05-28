@@ -251,7 +251,7 @@ const activeFilters = computed(() => {
   }
   if (obj.areaId) {
     const areaName = labels.areaId || areaMap[obj.areaId] || obj.areaId;
-    filters.push({ label: `场站：${areaName}`, field: 'areaId' });
+    filters.push({ label: `片区：${areaName}`, field: 'areaId' });
   }
   if (obj.queryUserId) {
     const userName = labels.queryUserId || userMap[obj.queryUserId] || obj.queryUserId;
@@ -397,7 +397,7 @@ function onSubmit(values) {
   searchSchema.forEach((field) => {
     if (field.component === 'Select' && values[field.fieldName]) {
       const option = field.componentProps.options?.find(
-        (opt) => opt.value === values[field.fieldName]
+        (opt) => String(opt.value) === String(values[field.fieldName])
       );
       if (option) {
         labels[field.fieldName] = option.label;

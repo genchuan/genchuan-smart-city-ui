@@ -365,13 +365,23 @@ function onSubmit(values) {
   searchSchema.forEach((field) => {
     if (field.component === 'Select' && newParams[field.fieldName]) {
       const option = field.componentProps.options?.find(
-        (opt) => opt.value === newParams[field.fieldName]
+        (opt) => String(opt.value) === String(newParams[field.fieldName])
       );
       if (option) {
         labels[field.fieldName] = option.label;
       }
     }
   });
+
+  // 片区标签从 stationOptions 获取
+  if (newParams.areaId) {
+    const areaOption = stationOptions.value.find(
+      (opt) => String(opt.value) === String(newParams.areaId)
+    );
+    if (areaOption) {
+      labels.areaId = areaOption.label;
+    }
+  }
 
   dataObj.filterLabels = { ...dataObj.filterLabels, ...labels };
   isSearching = true;

@@ -423,6 +423,7 @@ const dataObj = reactive({
   list: [],
   searchParams: {},
   filterLabels: {},
+  chartFilterFields: [],
 });
 
 let isSearching = false;
@@ -447,8 +448,12 @@ const activeFilters = computed(() => {
     const statusLabel = labels.status || obj.status;
     filters.push({ label: `状态：${statusLabel}`, field: 'status' });
   }
+  if (obj.rectifyStatus) {
+    const rectifyStatusLabel = labels.rectifyStatus || obj.rectifyStatus;
+    filters.push({ label: `整改状态：${rectifyStatusLabel}`, field: 'rectifyStatus' });
+  }
   if (obj.areaId) {
-    const station = stationOptions.value.find((s) => s.value === obj.areaId);
+    const station = stationOptions.value.find((s) => String(s.value) === String(obj.areaId));
     const stationLabel = station ? station.label : obj.areaId;
     filters.push({ label: `片区：${stationLabel}`, field: 'areaId' });
   }
@@ -468,12 +473,32 @@ const activeFilters = computed(() => {
 
 const handleClearField = (fieldName) => {
   const next = { ...dataObj.searchParams };
-  delete next[fieldName];
+  
+  // 如果清除的字段是通过图表点击添加的，则同时清除所有图表点击添加的字段
+  const chartFields = dataObj.chartFilterFields || [];
+  if (chartFields.includes(fieldName)) {
+    chartFields.forEach(field => {
+      delete next[field];
+    });
+    dataObj.chartFilterFields = [];
+  } else {
+    delete next[fieldName];
+  }
+  
   dataObj.searchParams = next;
   dataObj.currentPage = 1;
 
   const nextLabels = { ...dataObj.filterLabels };
-  delete nextLabels[fieldName];
+  
+  // 同时清除对应的标签
+  if (chartFields.includes(fieldName)) {
+    chartFields.forEach(field => {
+      delete nextLabels[field];
+    });
+  } else {
+    delete nextLabels[fieldName];
+  }
+  
   dataObj.filterLabels = nextLabels;
 
   gridApi.query();
@@ -487,10 +512,16 @@ const handleClearAllFilters = () => {
 };
 
 // 字段点击筛选
-const handleFieldFilter = (field, value) => {
+const handleFieldFilter = (field, value, label) => {
   Object.assign(dataObj.searchParams, {
     [field]: value,
   });
+  
+  // 如果提供了标签名，则保存标签
+  if (label) {
+    dataObj.filterLabels[field] = label;
+  }
+  
   dataObj.currentPage = 1;
   isSearching = true;
   handleRefresh();
@@ -518,9 +549,9 @@ const getTableData = async (pageObj) => {
         );
       }
 
-      // 移除空值参数
+      // 移除空值参数和前端内部字段
       Object.keys(params).forEach(key => {
-        if (params[key] === null || params[key] === undefined || params[key] === '') {
+        if (params[key] === null || params[key] === undefined || params[key] === '' || key === 'filterKey') {
           delete params[key];
         }
       });
@@ -634,13 +665,23 @@ function onSubmit(values) {
   searchSchema.forEach((field) => {
     if (field.component === 'Select' && values[field.fieldName]) {
       const option = field.componentProps.options?.find(
-        (opt) => opt.value === values[field.fieldName]
+        (opt) => String(opt.value) === String(values[field.fieldName])
       );
       if (option) {
         labels[field.fieldName] = option.label;
       }
     }
   });
+
+  // 片区标签从 stationOptions 获取
+  if (values.areaId) {
+    const areaOption = stationOptions.value.find(
+      (opt) => String(opt.value) === String(values.areaId)
+    );
+    if (areaOption) {
+      labels.areaId = areaOption.label;
+    }
+  }
 
   dataObj.filterLabels = labels;
   isSearching = true;
@@ -745,6 +786,11 @@ const handleFullShow = () => {
 // 处理图表卡片点击筛选
 const handleFilterByChart = (event) => {
   const filterParams = event.detail;
+  
+  // 记录通过图表点击添加的字段（排除 filterKey）
+  const chartFields = Object.keys(filterParams).filter(key => key !== 'filterKey');
+  dataObj.chartFilterFields = chartFields;
+  
   dataObj.searchParams = { ...dataObj.searchParams, ...filterParams };
   handleRefresh();
   ElMessage.success('已应用图表筛选');
@@ -1004,7 +1050,7 @@ const getActionButtons = (row) => {
       </template>
       <template #handleUserName="{ row }">
         <el-text
-          @click="handleFieldFilter('handleUserId', row.handleUserName)"
+          @click="handleFieldFilter('handleUserId', row.handleUserId, row.handleUserName)"
           class="common-align"
           style="cursor: pointer; color: #409eff"
         >

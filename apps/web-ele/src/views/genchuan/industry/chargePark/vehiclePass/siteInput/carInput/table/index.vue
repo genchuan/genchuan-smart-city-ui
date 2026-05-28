@@ -292,8 +292,10 @@ const activeFilters = computed(() => {
     const statusLabel = labels.status || obj.status;
     filters.push({ label: `审核状态：${statusLabel}`, field: 'status' });
   }
-  if (obj.areaName) {
-    filters.push({ label: `片区：${obj.areaName}`, field: 'areaName' });
+  if (obj.areaId) {
+    const station = stationOptions.value.find((s) => String(s.value) === String(obj.areaId));
+    const stationLabel = station ? station.label : obj.areaId;
+    filters.push({ label: `片区：${stationLabel}`, field: 'areaId' });
   }
   if (obj.inputUserName) {
     filters.push({ label: `录入人：${obj.inputUserName}`, field: 'inputUserName' });
@@ -444,13 +446,23 @@ function onSubmit(values) {
   searchSchema.forEach((field) => {
     if (field.component === 'Select' && values[field.fieldName]) {
       const option = field.componentProps.options?.find(
-        (opt) => opt.value === values[field.fieldName]
+        (opt) => String(opt.value) === String(values[field.fieldName])
       );
       if (option) {
         labels[field.fieldName] = option.label;
       }
     }
   });
+
+  // 片区标签从 stationOptions 获取
+  if (values.areaId) {
+    const areaOption = stationOptions.value.find(
+      (opt) => String(opt.value) === String(values.areaId)
+    );
+    if (areaOption) {
+      labels.areaId = areaOption.label;
+    }
+  }
 
   dataObj.filterLabels = labels;
   isSearching = true;

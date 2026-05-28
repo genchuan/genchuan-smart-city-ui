@@ -40,6 +40,7 @@ import {
   dataList,
   detailFields,
   getExecutorOptions,
+  getStationOptions,
   textObj,
   useGridColumns,
   useSearchFormSchema,
@@ -62,12 +63,21 @@ const props = defineProps({
 const USE_REAL_API = true;
 
 const executorOptions = ref([]);
+const stationOptions = ref([]);
 
 async function loadExecutorOptions() {
   try {
     executorOptions.value = await getExecutorOptions();
   } catch (error) {
     console.error('Failed to load executor options:', error);
+  }
+}
+
+async function loadStationOptions() {
+  try {
+    stationOptions.value = await getStationOptions();
+  } catch (error) {
+    console.error('Failed to load station options:', error);
   }
 }
 
@@ -104,7 +114,7 @@ const [Form, formApi] = useVbenForm({
     if (stationField) {
       stationField.componentProps.options = stationOptions.value;
     }
-    const areaField = schema.find((f) => f.fieldName === 'areaName');
+    const areaField = schema.find((f) => f.fieldName === 'areaId');
     if (areaField) {
       areaField.componentProps.options = stationOptions.value;
     }
@@ -297,8 +307,10 @@ const activeFilters = computed(() => {
     const statusLabel = labels.status || obj.status;
     filters.push({ label: `任务状态：${statusLabel}`, field: 'status' });
   }
-  if (obj.areaName) {
-    filters.push({ label: `片区：${obj.areaName}`, field: 'areaName' });
+  if (obj.areaId) {
+    const station = stationOptions.value.find((s) => String(s.value) === String(obj.areaId));
+    const stationLabel = station ? station.label : obj.areaId;
+    filters.push({ label: `片区：${stationLabel}`, field: 'areaId' });
   }
   if (obj.executeUserName) {
     filters.push({ label: `执行人：${obj.executeUserName}`, field: 'executeUserName' });
@@ -445,6 +457,11 @@ const [SearchForm] = useVbenForm({
       return { ...v };
     });
 
+    const areaField = schema.find((f) => f.fieldName === 'areaId');
+    if (areaField) {
+      areaField.componentProps.options = stationOptions.value;
+    }
+
     return schema;
   }),
   showCollapseButton: true,
@@ -462,13 +479,23 @@ function onSubmit(values) {
   searchSchema.forEach((field) => {
     if (field.component === 'Select' && values[field.fieldName]) {
       const option = field.componentProps.options?.find(
-        (opt) => opt.value === values[field.fieldName]
+        (opt) => String(opt.value) === String(values[field.fieldName])
       );
       if (option) {
         labels[field.fieldName] = option.label;
       }
     }
   });
+
+  // 片区标签从 stationOptions 获取
+  if (values.areaId) {
+    const areaOption = stationOptions.value.find(
+      (opt) => String(opt.value) === String(values.areaId)
+    );
+    if (areaOption) {
+      labels.areaId = areaOption.label;
+    }
+  }
 
   dataObj.filterLabels = labels;
   // 清除用户名映射，因为搜索表单提交时没有用户名
@@ -595,6 +622,7 @@ const handleFilterByChart = (event) => {
 
 onMounted(() => {
   loadExecutorOptions();
+  loadStationOptions();
   window.addEventListener('filterByChart:inspectTask', handleFilterByChart);
 });
 
@@ -1034,14 +1062,14 @@ const getActionButtons = (row) => {
 };
 
 // 字段点击筛选
-const handleFieldFilter = (field, value, userName = '') => {
+const handleFieldFilter = (field, value, label = '') => {
   Object.assign(dataObj.searchParams, {
     [field]: value,
   });
 
-  // 更新用户名映射
-  if (field === 'executeUserId' && userName) {
-    userNameMap.value.executeUserId = userName;
+  // 如果提供了标签名，则保存标签
+  if (label) {
+    dataObj.filterLabels[field] = label;
   }
 
   dataObj.currentPage = 1;
@@ -1171,7 +1199,7 @@ const handleFieldFilter = (field, value, userName = '') => {
       </template>
       <template #areaName="{ row }">
         <el-text
-          @click="handleFieldFilter('areaName', row.areaName, row.areaName)"
+          @click="handleFieldFilter('areaId', row.areaId)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
