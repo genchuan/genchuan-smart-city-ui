@@ -61,10 +61,7 @@ async function tabChange(tabName) {
 
 <template>
   <div class="common-index station-op-report-page">
-    <StationOpReportStats
-      v-if="showStats"
-      :report-cycle="activeReportCycle || '全部'"
-    />
+    <StationOpReportStats v-if="showStats" :report-cycle="activeReportCycle" />
 
     <el-tabs
       v-model="activeName"

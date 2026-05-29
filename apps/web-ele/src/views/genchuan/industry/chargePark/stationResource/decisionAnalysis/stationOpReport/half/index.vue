@@ -71,6 +71,14 @@ function currentReportPeriod() {
   return reportPeriodMap[REPORT_TYPE] || REPORT_TYPE;
 }
 
+function normalizeReportCycle(value) {
+  return value === '全部' ? '' : value || '';
+}
+
+function getReportCycleParams(value = currentReportPeriod()) {
+  return { reportCycle: normalizeReportCycle(value) };
+}
+
 function normalizeOptions(options = []) {
   return options.map((item) => {
     if (typeof item === 'object' && item !== null) {
@@ -287,9 +295,7 @@ const [Grid, gridApi] = useVbenVxeGrid({
           return await pageApi.getStationOpReportPage({
             pageNo: page.currentPage,
             pageSize: page.pageSize,
-            ...(currentReportPeriod()
-              ? { reportCycle: currentReportPeriod() }
-              : {}),
+            ...getReportCycleParams(),
             ...appliedQuery.value,
           });
         },
@@ -337,7 +343,7 @@ async function handleOpenSearch() {
   await nextTick();
   await syncQueryForm({
     ...appliedQuery.value,
-    ...(currentReportPeriod() ? { reportCycle: currentReportPeriod() } : {}),
+    ...getReportCycleParams(),
   });
 }
 
@@ -412,7 +418,7 @@ async function handleExport(extraParams = {}, isRowExport = false) {
   }
 
   const blob = await pageApi.exportStationOpReport({
-    ...(currentReportPeriod() ? { reportCycle: currentReportPeriod() } : {}),
+    ...getReportCycleParams(),
     ...appliedQuery.value,
     ...extraParams,
   });
@@ -544,6 +550,17 @@ function getDrillValue(column, row) {
   return value;
 }
 
+function getDrillRowCountValue(column, row) {
+  if (column.drillCountField) {
+    return row?.[column.drillCountField];
+  }
+  if (column.field === 'revenue') {
+    return row?.orderCount ?? row?.totalOrderCount ?? row?.revenue;
+  }
+  const field = column.drillValueField || column.field;
+  return row?.[field];
+}
+
 function getDrillFilterPatch(column, row) {
   const field = column.drillField || column.field;
   const candidates = [
@@ -589,7 +606,10 @@ async function handleCellDrill(column, row) {
       drillLabel: column.drillLabel || column.label,
       drillName: row?.[pageConfig.nameField] || row?.reportCycle,
       drillValue: getDrillValue(column, row),
-      reportCycle: row?.reportCycle || currentReportPeriod(),
+      drillCountValue: getDrillRowCountValue(column, row),
+      reportCycle: normalizeReportCycle(
+        row?.reportCycle || currentReportPeriod(),
+      ),
       reportId: row?.id,
       row,
     });
@@ -605,8 +625,9 @@ function handleFullScreen() {
 function handleStatsFilter(type, value) {
   if (type !== 'reportCycle') return;
   const nextQuery = { ...appliedQuery.value };
-  if (value) {
-    nextQuery.reportCycle = value;
+  const reportCycle = normalizeReportCycle(value);
+  if (reportCycle) {
+    nextQuery.reportCycle = reportCycle;
   } else {
     delete nextQuery.reportCycle;
   }

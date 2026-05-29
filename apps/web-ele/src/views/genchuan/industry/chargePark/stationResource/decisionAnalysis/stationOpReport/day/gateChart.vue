@@ -47,6 +47,10 @@ function currentReportPeriod() {
   return reportPeriodMap[REPORT_TYPE] || REPORT_TYPE;
 }
 
+function normalizeReportCycle(value) {
+  return value === '全部' ? '' : value || '';
+}
+
 function hasChartContent(data = {}) {
   return Boolean(
     Object.keys(data.cardData || {}).length > 0 ||
@@ -130,7 +134,7 @@ function mergeChartData(list) {
 
 async function loadAllCycleChart() {
   const response = await pageApi.getStationOpReportChart({
-    reportCycle: '全部',
+    reportCycle: '',
   });
   if (hasChartContent(response)) return response;
 
@@ -697,12 +701,12 @@ const firstChartUsesBar = computed(() => !hasMap.value && firstBarPanel.value);
 async function loadChart() {
   loading.value = true;
   try {
-    const reportCycle = currentReportPeriod();
+    const reportCycle = normalizeReportCycle(currentReportPeriod());
     chartData.value =
-      reportCycle === '全部'
+      reportCycle === ''
         ? await loadAllCycleChart()
         : ((await pageApi.getStationOpReportChart({
-            ...(reportCycle ? { reportCycle } : {}),
+            reportCycle,
           })) ?? {});
   } finally {
     loading.value = false;
@@ -720,9 +724,22 @@ watch(
 
 function openDrillDown(info) {
   drillDownDrawerRef.value?.open({
-    reportCycle: currentReportPeriod() || '全部',
     ...info,
+    reportCycle: normalizeReportCycle(
+      info.reportCycle ?? currentReportPeriod(),
+    ),
   });
+}
+
+function getCardDrillCount(card) {
+  if (card.key === 'revenue') {
+    return (
+      chartData.value?.cardData?.orderCount ??
+      chartData.value?.cardData?.totalOrderCount ??
+      card.value
+    );
+  }
+  return card.value;
 }
 
 function handleCardClick(card) {
@@ -732,6 +749,7 @@ function handleCardClick(card) {
     drillLabel: card.title,
     drillName: card.title,
     drillValue: card.value,
+    drillCountValue: getCardDrillCount(card),
   });
 }
 
