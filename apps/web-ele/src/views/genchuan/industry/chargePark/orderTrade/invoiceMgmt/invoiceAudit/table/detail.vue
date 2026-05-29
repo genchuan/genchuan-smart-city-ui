@@ -66,17 +66,15 @@ defineExpose({
         <div class="detail-row-left">主键ID:</div>
         <div class="detail-row-right">{{ detailObj.id || '-' }}</div>
       </div>
- 
 
       <div class="detail-card-row">
         <div class="detail-row-left">关联发票编号:</div>
         <div class="detail-row-right">{{ detailObj.invoiceNo || '-' }}</div>
       </div>
 
-       
       <div class="detail-card-row">
-        <div class="detail-row-left">申请人名称:</div>
-        <div class="detail-row-right">{{ detailObj.applicantName || '-' }}</div>
+        <div class="detail-row-left">申请人:</div>
+        <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
       </div>
 
       <div class="detail-card-row">
@@ -91,7 +89,7 @@ defineExpose({
             {{ getStatusLabel(detailObj.status) }}
           </el-tag>
         </div>
-      </div> 
+      </div>
       <div class="detail-card-row">
         <div class="detail-row-left">审核人名称:</div>
         <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
@@ -106,7 +104,7 @@ defineExpose({
         <div class="detail-row-left">审核结果:</div>
         <div class="detail-row-right">{{ detailObj.auditResult || '-' }}</div>
       </div>
- 
+
       <div class="detail-card-row">
         <div class="detail-row-left">创建者:</div>
         <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>

@@ -1,8 +1,8 @@
-﻿<script setup>
+<script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
-import { isEmpty } from '@vben/utils';
+import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
 
 import { ElLoading, ElMessage } from 'element-plus';
 import screenfull from 'screenfull';
@@ -14,6 +14,7 @@ import {
   getSpaceQueryPage,
   getSpaceQueryLocation,
   getSpaceQuery,
+  exportSpaceQuery,
 } from '#/api/genchuan/industry/chargePark/vehiclePass/siteInput/spaceQuery';
 import DetailDrawer from '#/genchuan-components/DetailDrawer.vue';
 import { $t } from '#/locales';
@@ -127,8 +128,35 @@ function handleRefresh() {
 }
 
 async function handleExport() {
-  // Note: spaceQuery module doesn't have export API
-  exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+  const loadingInstance = ElLoading.service({
+    text: '导出中...',
+  });
+
+  try {
+    if (USE_REAL_API) {
+      const res = await exportSpaceQuery(dataObj.searchParams);
+      await downloadFileFromBlobPart({
+        fileName: `${textObj.excelName || '泊位查询数据'}`,
+        source: res,
+      });
+      ElMessage.success({
+        message: '导出成功！文件已开始下载',
+        duration: 3000,
+      });
+    } else {
+      exportToExcel(dataObj.apilist, textObj.excelName, textObj.excelAllName);
+      ElMessage.success({
+        message: '导出成功！',
+        duration: 3000,
+      });
+    }
+  } catch (error) {
+    const errorMessage = error.message || '未知错误';
+    ElMessage.error(`导出失败：${errorMessage}`);
+    console.error(error);
+  } finally {
+    loadingInstance.close();
+  }
 }
 
 function handleCreate() {
@@ -223,7 +251,7 @@ const activeFilters = computed(() => {
   }
   if (obj.areaId) {
     const areaName = labels.areaId || areaMap[obj.areaId] || obj.areaId;
-    filters.push({ label: `场站：${areaName}`, field: 'areaId' });
+    filters.push({ label: `片区：${areaName}`, field: 'areaId' });
   }
   if (obj.queryUserId) {
     const userName = labels.queryUserId || userMap[obj.queryUserId] || obj.queryUserId;
@@ -338,7 +366,19 @@ const [SearchForm] = useVbenForm({
   },
   handleSubmit: onSubmit,
   layout: 'horizontal',
-  schema: useSearchFormSchema(),
+  schema: computed(() => {
+    const schema = useSearchFormSchema().map((v) => {
+      delete v.rules;
+      return { ...v };
+    });
+
+    const areaField = schema.find((f) => f.fieldName === 'areaId');
+    if (areaField) {
+      areaField.componentProps.options = stationOptions.value;
+    }
+
+    return schema;
+  }),
   showCollapseButton: true,
   submitButtonOptions: {
     content: '查询',
@@ -357,7 +397,7 @@ function onSubmit(values) {
   searchSchema.forEach((field) => {
     if (field.component === 'Select' && values[field.fieldName]) {
       const option = field.componentProps.options?.find(
-        (opt) => opt.value === values[field.fieldName]
+        (opt) => String(opt.value) === String(values[field.fieldName])
       );
       if (option) {
         labels[field.fieldName] = option.label;
@@ -677,18 +717,18 @@ onUnmounted(() => {
         <div class="common-toolbar-tools">
           <IconButton
             content="搜索"
-            icon-name="search"
+            icon-name="Search"
             @click="handleSerachShow"
           />
           <IconButton
             v-if="activeFilters.length > 0"
             content="重置"
-            icon-name="RefreshLeft"
+            icon-name="Refresh"
             @click="handleResetFilters"
           />
           <IconButton
             content="导出"
-            icon-name="download"
+            icon-name="Download"
             @click="handleExport"
           />
           <IconButton

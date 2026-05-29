@@ -5,8 +5,8 @@ import { useVbenDrawer } from '@vben/common-ui';
 // 逃费识别状态映射
 const statusMap = {
   pending: { label: '待识别', type: 'warning' },
-  identified: { label: '已识别', type: 'success' },
-  marked: { label: '已标记（非逃费）', type: 'info' },
+  identified: { label: '已标记', type: 'success' },
+  marked: { label: '已标记', type: 'success' },
 };
 
 // 获取状态标签
@@ -92,14 +92,10 @@ defineExpose({
         <div class="detail-row-right">{{ detailObj.stationName || '-' }}</div>
       </div>
 
+ 
 
       <div class="detail-card-row">
-        <div class="detail-row-left">创建者:</div>
-        <div class="detail-row-right">{{ detailObj.creator || '-' }}</div>
-      </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新者:</div>
+        <div class="detail-row-left">识别人:</div>
         <div class="detail-row-right">{{ detailObj.updater || '-' }}</div>
       </div>
 
@@ -107,11 +103,7 @@ defineExpose({
         <div class="detail-row-left">创建时间:</div>
         <div class="detail-row-right">{{ detailObj.createTime || '-' }}</div>
       </div>
-
-      <div class="detail-card-row">
-        <div class="detail-row-left">更新时间:</div>
-        <div class="detail-row-right">{{ detailObj.updateTime || '-' }}</div>
-      </div>
+ 
     </div>
   </DetailDrawer>
 </template>

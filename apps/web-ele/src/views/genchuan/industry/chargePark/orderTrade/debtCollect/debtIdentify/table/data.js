@@ -104,15 +104,15 @@ export function useGridColumns() {
       minWidth: 140,
       sortable: true,
     },
-    {
-      field: 'creator',
-      title: '创建者',
-      minWidth: 120,
-      sortable: true,
-    },
+    // {
+    //   field: 'creator',
+    //   title: '创建者',
+    //   minWidth: 120,
+    //   sortable: true,
+    // },
     {
       field: 'updater',
-      title: '更新者',
+      title: '识别人',
       minWidth: 120,
       sortable: true,
     },
@@ -123,13 +123,13 @@ export function useGridColumns() {
       sortable: true,
       customRender: ({ text }) => text || '-',
     },
-    {
-      field: 'updateTime',
-      title: '更新时间',
-      minWidth: 220,
-      sortable: true,
-      customRender: ({ text }) => text || '-',
-    },
+    // {
+    //   field: 'updateTime',
+    //   title: '更新时间',
+    //   minWidth: 220,
+    //   sortable: true,
+    //   customRender: ({ text }) => text || '-',
+    // },
     {
       title: '操作',
       width: 150,

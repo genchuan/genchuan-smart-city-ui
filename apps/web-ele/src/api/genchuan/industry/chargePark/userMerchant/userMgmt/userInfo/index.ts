@@ -22,6 +22,11 @@ export type UserInfoVO = {
   walletBalance?: number;
 };
 
+export type UserInfoSimpleVO = Pick<
+  UserInfoVO,
+  'id' | 'nickname' | 'phone' | 'userType'
+>;
+
 export type UserInfoCreateReqVO = {
   carCount?: number;
   loginTime?: string;
@@ -142,6 +147,12 @@ export const UserInfoApi = {
       {
         params: { id },
       },
+    );
+  },
+
+  getUserInfoSimpleList: async () => {
+    return await requestClient.get<UserInfoSimpleVO[]>(
+      '/usermerchant/user-info/list-simple',
     );
   },
 

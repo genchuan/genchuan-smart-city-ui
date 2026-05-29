@@ -522,15 +522,6 @@ watch(
     <Grid>
       <template #table-title>
         <div class="tabel-tabs">
-          <el-alert
-            v-if="drillDownInfo"
-            :title="`图表下钻筛选：${drillDownInfo.label}`"
-            type="warning"
-            show-icon
-            closable
-            style="margin-bottom: 8px;"
-            @close="handleResetFilters"
-          />
           <div
             v-if="activeFilters.length"
             style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;"
@@ -588,7 +579,7 @@ watch(
           />
           <IconButton
             content="筛选"
-            icon-name="Filter"
+            icon-name="Search"
             @click="handleSerachShow"
           />
           <IconButton

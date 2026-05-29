@@ -16,7 +16,7 @@ import { getRangePickerDefaultProps } from '#/utils';
 
 const QUERY_TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
 
-export type MerchantRechargeStatus = '已取消' | '已支付' | '待支付';
+export type MerchantRechargeStatus = '已取消' | '已支付' | '已生效' | '待支付';
 
 export interface RechargeLog {
   content: string;
@@ -75,6 +75,7 @@ export const payChannelOptions = ['微信', '支付宝', '银行转账', '平台
 export const rechargeStatusOptions: MerchantRechargeStatus[] = [
   '待支付',
   '已支付',
+  '已生效',
   '已取消',
 ];
 
@@ -165,6 +166,9 @@ export const detailFields = [
         case '已支付': {
           return 'primary';
         }
+        case '已生效': {
+          return 'success';
+        }
         case '待支付': {
           return 'warning';
         }
@@ -219,11 +223,11 @@ export function formatApiTime(value?: null | number | string) {
 export function normalizeRechargeStatus(status: null | string = '待支付') {
   const currentStatus = status || '待支付';
 
-  if (currentStatus === '已生效') {
-    return '已支付' as MerchantRechargeStatus;
-  }
-
   return currentStatus as MerchantRechargeStatus;
+}
+
+function isRechargeSuccessStatus(status: MerchantRechargeStatus) {
+  return status === '已支付' || status === '已生效';
 }
 
 /**
@@ -472,10 +476,10 @@ export function buildStatsData(recharges: MerchantRechargeRow[]) {
   });
 
   const totalAmount = recharges
-    .filter((item) => item.status === '已支付')
+    .filter((item) => isRechargeSuccessStatus(item.status))
     .reduce((total, item) => total + item.amount, 0);
-  const successCount = recharges.filter(
-    (item) => item.status === '已支付',
+  const successCount = recharges.filter((item) =>
+    isRechargeSuccessStatus(item.status),
   ).length;
   const successRate =
     recharges.length === 0

@@ -28,6 +28,7 @@ const tableRef = ref<null | TableInstance>(null);
 const showStats = ref(true);
 const statsDataSource = ref(buildTopStatsDataFromApi());
 const DEFAULT_CHART_REPORT_CYCLE = '月报';
+const currentChartParams = ref<UserOpReportChartReqVO>();
 
 const reportCycleTabs = [
   { label: '全部', value: '' },
@@ -154,9 +155,9 @@ const toggleStats = async () => {
 /** 加载统计数据 */
 async function loadStats(params?: Partial<UserOpReportChartReqVO> | string) {
   try {
-    const data = await UserOpReportApi.getUserOpReportChart(
-      buildChartParams(params),
-    );
+    const chartParams = buildChartParams(params);
+    const data = await UserOpReportApi.getUserOpReportChart(chartParams);
+    currentChartParams.value = chartParams;
     statsDataSource.value = buildTopStatsDataFromApi(data);
   } catch (error) {
     statsDataSource.value = buildTopStatsDataFromApi();
@@ -177,7 +178,9 @@ function openDrillDown(info: {
 }) {
   drillDownDialogRef.value?.open({
     ...info,
-    reportCycle: getChartReportCycle(),
+    reportCycle: currentChartParams.value?.reportCycle || getChartReportCycle(),
+    statEndTime: currentChartParams.value?.statEndTime,
+    statStartTime: currentChartParams.value?.statStartTime,
   });
 }
 

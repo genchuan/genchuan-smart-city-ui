@@ -11,6 +11,10 @@ export function useFormSchema() {
       labelWidth: 120,
       isEdit: true,
       isHidden: true,
+      dependencies: {
+        show: (values) => !!values.id,
+        triggerFields: ['id'],
+      },
     },
     {
       fieldName: 'name',
@@ -92,16 +96,16 @@ export function useFormSchema() {
       component: 'Select',
       componentProps: {
         placeholder: '请选择状态',
-        options: [ 
+        options: [
           { label: '已禁用', value: 'disabled' },
           { label: '已生效', value: 'enabled' },
-          { label: '待生效', value: 'pending' }, 
+          { label: '待生效', value: 'pending' },
         ],
       },
       labelWidth: 120,
       isSearch: true,
       isEdit: true,
-    }, 
+    },
     {
       fieldName: 'startTime',
       label: '开始时间',

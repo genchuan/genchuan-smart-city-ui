@@ -15,20 +15,35 @@ const statusMap = {
 const filterParams = reactive({
   status: null,
   category: null,
+  taxBody: null,
 });
 
 const hasActiveFilters = computed(() => {
-  return filterParams.status || filterParams.category;
+  return filterParams.status || filterParams.category || filterParams.taxBody;
 });
 
 const handleFilterChange = (params) => {
-  filterParams.status = params.status || null;
-  filterParams.category = params.category || null;
+  filterParams.status = params.status !== undefined ? params.status : null;
+  filterParams.category = params.category !== undefined ? params.category : null;
+  filterParams.taxBody = params.taxBody !== undefined ? params.taxBody : null;
+};
+
+const clearCategoryFilter = () => {
+  filterParams.category = null;
+};
+
+const clearTaxBodyFilter = () => {
+  filterParams.taxBody = null;
+};
+
+const clearStatusFilter = () => {
+  filterParams.status = null;
 };
 
 const clearFilter = () => {
   filterParams.status = null;
   filterParams.category = null;
+  filterParams.taxBody = null;
 };
 
 const changeArrowStatus = () => {
@@ -63,15 +78,23 @@ const secondShow = ref(false);
       <el-tag
         v-if="filterParams.category"
         closable
-        @close="clearFilter"
+        @close="clearCategoryFilter"
         type="primary"
       >
         开票类目: {{ filterParams.category }}
       </el-tag>
       <el-tag
-        v-else-if="filterParams.status"
+        v-if="filterParams.taxBody"
         closable
-        @close="clearFilter"
+        @close="clearTaxBodyFilter"
+        type="success"
+      >
+        开票主体: {{ filterParams.taxBody }}
+      </el-tag>
+      <el-tag
+        v-if="filterParams.status"
+        closable
+        @close="clearStatusFilter"
         type="warning"
       >
         状态: {{ statusMap[filterParams.status]?.label || filterParams.status }}
@@ -109,13 +132,15 @@ const secondShow = ref(false);
             <span>{{ item.label }}</span>
           </div>
         </template>
-        <component
+       <component
           :is="item.components"
           :second-show="item.secondShow"
           :key="item.label"
           :arrow-show="item.arrowShow"
           :filter-params="filterParams"
           @arrow-change="arrowChange"
+          @clear-filters="clearFilter"
+          @filter-change="handleFilterChange"
         />
       </el-tab-pane>
     </el-tabs>
@@ -124,9 +149,18 @@ const secondShow = ref(false);
 
 <style scoped lang="scss">
 .filter-tags {
-  padding: 0;
-  margin: 0;
-  min-height: 0;
-  height: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 16px;
+  border-radius: 8px;
+  
+  .el-tag {
+    cursor: pointer;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
 }
 </style>

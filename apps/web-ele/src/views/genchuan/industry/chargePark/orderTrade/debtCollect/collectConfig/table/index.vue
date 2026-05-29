@@ -329,12 +329,7 @@ const openEn = async () => {
 // 追缴配置状态映射
 const statusMap = {
   inactive: { label: '未生效', type: 'info' },
-  active: { label: '已生效', type: 'success' },
-  disabled: { label: '已禁用', type: 'danger' },
-  enabled: { label: '已启用', type: 'success' },
-  pending: { label: '待推送', type: 'warning' },
-  collecting: { label: '追缴中', type: 'primary' },
-  completed: { label: '已完成', type: 'success' },
+  active: { label: '已生效', type: 'success' }, 
 };
 
 // 追缴方式映射
@@ -629,10 +624,8 @@ watch(
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="createForm.status" placeholder="请选择状态">
-            <el-option label="未生效" value="inactive" />
             <el-option label="已生效" value="active" />
-            <el-option label="已禁用" value="disabled" />
-            <el-option label="已启用" value="enabled" />
+            <el-option label="未生效" value="inactive" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注">
@@ -676,9 +669,7 @@ watch(
           <el-input v-model.number="updateForm.pushFrequency" type="number" />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="updateForm.status" placeholder="请选择状态">
-            <el-option label="启用" value="enabled" />
-            <el-option label="禁用" value="disabled" />
+          <el-select v-model="updateForm.status" placeholder="请选择状态"> 
             <el-option label="已生效" value="active" />
             <el-option label="未生效" value="inactive" />
           </el-select>
@@ -775,11 +766,11 @@ watch(
             icon-name="Plus"
             @click="handleCreateConfig"
           />
-          <IconButton
+          <!-- <IconButton
             content="搜索"
             icon-name="search"
             @click="handleSearchShow"
-          />
+          /> -->
           <IconButton
             :content="props.arrowShow ? '展开' : '收缩'"
             :icon-name="props.arrowShow ? 'ArrowUp' : 'ArrowDown'"

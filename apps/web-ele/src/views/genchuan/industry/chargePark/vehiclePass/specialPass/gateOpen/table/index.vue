@@ -395,13 +395,11 @@ const activeFilters = computed(() => {
   if (obj.auditStatus) {
     filters.push({ label: `审批状态：${obj.auditStatus}`, field: 'auditStatus' });
   }
-  if (obj.applyUserId !== undefined && obj.applyUserId !== null && obj.applyUserId !== '') {
-    const label = userNameMap.value.applyUserId || obj.applyUserId;
-    filters.push({ label: `申请人：${label}`, field: 'applyUserId' });
+  if (obj.applyUserName) {
+    filters.push({ label: `申请人：${obj.applyUserName}`, field: 'applyUserName' });
   }
-  if (obj.auditUserId !== undefined && obj.auditUserId !== null && obj.auditUserId !== '') {
-    const label = userNameMap.value.auditUserId || obj.auditUserId;
-    filters.push({ label: `执行人：${label}`, field: 'auditUserId' });
+  if (obj.auditUserName) {
+    filters.push({ label: `审批人：${obj.auditUserName}`, field: 'auditUserName' });
   }
 
   return filters;
@@ -433,13 +431,10 @@ const getTableData = async (pageObj) => {
   // 使用真实API
   if (USE_REAL_API) {
     try {
-      // 过滤掉 API 不需要的字段
-      const { applyUserName, auditUserName, ...apiParams } = dataObj.searchParams;
-
       const params = {
         pageNo: isSearching ? 1 : page.currentPage,
         pageSize: page.pageSize,
-        ...apiParams,
+        ...dataObj.searchParams,
       };
 
       if (isSearching) {
@@ -766,7 +761,7 @@ const handleFieldFilter = (field, value, userName = '') => {
           />
           <IconButton
             content="筛选"
-            icon-name="Filter"
+            icon-name="Search"
             @click="handleSerachShow"
           />
           <IconButton
@@ -797,13 +792,15 @@ const handleFieldFilter = (field, value, userName = '') => {
       </template>
       <template #applyUserName="{ row }">
         <el-text
-          @click="handleFieldFilter('applyUserId', row.applyUserId, row.applyUserName)"
+          v-if="row.applyUserName"
+          @click="handleFieldFilter('applyUserName', row.applyUserName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
           {{ row.applyUserName }}
         </el-text>
+        <span v-else>-</span>
       </template>
       <template #status="{ row }">
         <el-tag
@@ -819,13 +816,15 @@ const handleFieldFilter = (field, value, userName = '') => {
       </template>
       <template #auditUserName="{ row }">
         <el-text
-          @click="handleFieldFilter('auditUserId', row.auditUserId, row.auditUserName)"
+          v-if="row.auditUserName"
+          @click="handleFieldFilter('auditUserName', row.auditUserName)"
           class="common-align"
           type="primary"
           style="cursor: pointer"
         >
           {{ row.auditUserName }}
         </el-text>
+        <span v-else>-</span>
       </template>
       <template #updateTime="{ row }">
         <span>{{ formatTime(row.updateTime) }}</span>

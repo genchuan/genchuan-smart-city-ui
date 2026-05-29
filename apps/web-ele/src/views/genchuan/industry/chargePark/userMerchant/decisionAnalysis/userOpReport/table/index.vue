@@ -389,6 +389,8 @@ function handleOpenDrillDown(info: {
   drillName?: string;
   drillType: string;
   drillValue?: number | string;
+  statEndTime?: string;
+  statStartTime?: string;
 }) {
   drillDownDialogRef.value?.open(info);
 }
@@ -396,11 +398,14 @@ function handleOpenDrillDown(info: {
 function handleReportFieldDrill(
   drillType: string,
   drillValue: number | string,
+  row: UserOpReportRow,
 ) {
   handleOpenDrillDown({
     drillName: String(drillValue || '-'),
     drillType,
     drillValue,
+    statEndTime: row.statEndTime,
+    statStartTime: row.statStartTime,
   });
 }
 
@@ -502,7 +507,7 @@ async function handleConfirmGenerate() {
       <template #newUserCount="{ row }">
         <span
           class="drill-cell"
-          @click="handleReportFieldDrill('newUserCount', row.newUserCount)"
+          @click="handleReportFieldDrill('newUserCount', row.newUserCount, row)"
         >
           {{ row.newUserCount }}
         </span>
@@ -511,7 +516,7 @@ async function handleConfirmGenerate() {
       <template #bindCarCount="{ row }">
         <span
           class="drill-cell"
-          @click="handleReportFieldDrill('bindCarCount', row.bindCarCount)"
+          @click="handleReportFieldDrill('bindCarCount', row.bindCarCount, row)"
         >
           {{ row.bindCarCount }}
         </span>
@@ -520,7 +525,9 @@ async function handleConfirmGenerate() {
       <template #plateAuthCount="{ row }">
         <span
           class="drill-cell"
-          @click="handleReportFieldDrill('plateAuthCount', row.plateAuthCount)"
+          @click="
+            handleReportFieldDrill('plateAuthCount', row.plateAuthCount, row)
+          "
         >
           {{ row.plateAuthCount }}
         </span>
@@ -530,7 +537,11 @@ async function handleConfirmGenerate() {
         <span
           class="drill-cell"
           @click="
-            handleReportFieldDrill('newMerchantCount', row.newMerchantCount)
+            handleReportFieldDrill(
+              'newMerchantCount',
+              row.newMerchantCount,
+              row,
+            )
           "
         >
           {{ row.newMerchantCount }}
@@ -541,7 +552,11 @@ async function handleConfirmGenerate() {
         <span
           class="drill-cell"
           @click="
-            handleReportFieldDrill('linkMerchantCount', row.linkMerchantCount)
+            handleReportFieldDrill(
+              'linkMerchantCount',
+              row.linkMerchantCount,
+              row,
+            )
           "
         >
           {{ row.linkMerchantCount }}
@@ -551,7 +566,9 @@ async function handleConfirmGenerate() {
       <template #rechargeAmount="{ row }">
         <span
           class="drill-cell"
-          @click="handleReportFieldDrill('rechargeAmount', row.rechargeAmount)"
+          @click="
+            handleReportFieldDrill('rechargeAmount', row.rechargeAmount, row)
+          "
         >
           {{ formatAmount(row.rechargeAmount) }}
         </span>
@@ -561,7 +578,7 @@ async function handleConfirmGenerate() {
         <span
           class="drill-cell"
           @click="
-            handleReportFieldDrill('sendCouponCount', row.sendCouponCount)
+            handleReportFieldDrill('sendCouponCount', row.sendCouponCount, row)
           "
         >
           {{ row.sendCouponCount }}
@@ -571,7 +588,9 @@ async function handleConfirmGenerate() {
       <template #newGroupCount="{ row }">
         <span
           class="drill-cell"
-          @click="handleReportFieldDrill('newGroupCount', row.newGroupCount)"
+          @click="
+            handleReportFieldDrill('newGroupCount', row.newGroupCount, row)
+          "
         >
           {{ row.newGroupCount }}
         </span>
@@ -580,7 +599,9 @@ async function handleConfirmGenerate() {
       <template #newMemberCount="{ row }">
         <span
           class="drill-cell"
-          @click="handleReportFieldDrill('newMemberCount', row.newMemberCount)"
+          @click="
+            handleReportFieldDrill('newMemberCount', row.newMemberCount, row)
+          "
         >
           {{ row.newMemberCount }}
         </span>
@@ -589,7 +610,9 @@ async function handleConfirmGenerate() {
       <template #avgCreditScore="{ row }">
         <span
           class="drill-cell"
-          @click="handleReportFieldDrill('avgCreditScore', row.avgCreditScore)"
+          @click="
+            handleReportFieldDrill('avgCreditScore', row.avgCreditScore, row)
+          "
         >
           {{ row.avgCreditScore }}
         </span>

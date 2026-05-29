@@ -768,11 +768,11 @@ watch(
             icon-name="Edit"
             @click="handleEditRow(row)"
           /> -->
-          <IconButton
+          <!-- <IconButton
             content="删除"
             icon-name="Delete"
             @click="handleDelete(row)"
-          />
+          /> -->
           <IconButton
             content="支付"
             v-if="row.status === 'pending_pay'"
