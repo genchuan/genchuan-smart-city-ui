@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, reactive, ref, watch, onMounted } from 'vue';
 
 import { confirm, useVbenDrawer } from '@vben/common-ui';
 import { downloadFileFromBlobPart, isEmpty } from '@vben/utils';
@@ -25,6 +25,7 @@ import { formatTimestamp } from '#/utils';
 import { downloadLocalTemplate } from '#/utils/genchuan/down';
 import enDetailDrawer from '#/views/genchuan/industry/marketsupervision/brightkitchensmartsupervision/rectificationnoticereviewmanagemen/table/enDetail.vue';
 
+import { getSimpleUserList } from '#/api/system/user';
 import { useFormSchema, useGridColumns } from './data';
 import ParkDetailDrawer from './detail.vue';
 
@@ -392,22 +393,45 @@ const handlePushSubmit = async () => {
   }
 };
 
+// 用户选项列表
+const userOptions = ref([]);
+
+// 加载用户列表
+const loadUserOptions = async () => {
+  try {
+    const res = await getSimpleUserList();
+    userOptions.value = res.map(item => ({
+      label: item.nickname || item.username,
+      value: item.id,
+    }));
+  } catch (error) {
+    console.error('加载用户列表失败:', error);
+  }
+};
+
 // 转移弹窗
 const transferDialogVisible = ref(false);
 const transferForm = reactive({
   id: '',
+  transferUserId: null,
   remark: '',
 });
 
 // 打开转移弹窗
-const handleTransfer = (row) => {
+const handleTransfer = async (row) => {
+  await loadUserOptions();
   transferForm.id = row.id;
+  transferForm.transferUserId = null;
   transferForm.remark = '';
   transferDialogVisible.value = true;
 };
 
 // 提交转移
 const handleTransferSubmit = async () => {
+  if (!transferForm.transferUserId) {
+    ElMessage.error('请选择接收人');
+    return;
+  }
   try {
     await transferDebtRecordCollectTrack(transferForm);
     ElMessage.success('转移成功');
@@ -624,6 +648,20 @@ watch(
       <el-form :model="transferForm" label-width="80px">
         <el-form-item label="记录ID">
           <el-input v-model="transferForm.id" disabled />
+        </el-form-item>
+        <el-form-item label="接收人" required>
+          <el-select
+            v-model="transferForm.transferUserId"
+            placeholder="请选择接收人"
+            class="w-full"
+          >
+            <el-option
+              v-for="item in userOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="备注">
           <el-input
