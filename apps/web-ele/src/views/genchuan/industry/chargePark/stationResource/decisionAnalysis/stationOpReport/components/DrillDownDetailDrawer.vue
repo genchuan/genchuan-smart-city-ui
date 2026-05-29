@@ -6,6 +6,7 @@ import { useVbenDrawer } from '@vben/common-ui';
 import { ElTag } from 'element-plus';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import * as pageApi from '#/api/genchuan/industry/chargePark/stationResource/decisionAnalysis/stationOpReport/index.js';
 
 import { formatDateTime } from '../table/data.js';
 
@@ -15,10 +16,15 @@ const drillInfo = reactive({
   drillLabel: '',
   drillName: '',
   drillValue: '',
+  drillCountValue: '',
   reportCycle: '',
   reportId: '',
   row: {},
 });
+
+function normalizeReportCycle(value) {
+  return value === '全部' ? '' : value || '';
+}
 
 const metricMetaMap = {
   totalAreaCount: { label: '总片区数', category: 'area' },
@@ -40,6 +46,20 @@ const metricMetaMap = {
   trendLine: { label: '周期订单及业务趋势', category: 'trend' },
   mapStation: { label: '地图场站', category: 'station' },
 };
+
+const apiDrillMetrics = new Set([
+  'availableSpaceCount',
+  'coverStationCount',
+  'depositOrderCount',
+  'effectiveRuleCount',
+  'normalOperateCount',
+  'orderCount',
+  'recoveryRate',
+  'revenue',
+  'totalAreaCount',
+  'totalSpaceCount',
+  'totalStationCount',
+]);
 
 const statusTypeMap = {
   正常: 'success',
@@ -106,6 +126,17 @@ function getMetricLabel() {
   return drillInfo.drillLabel || getMetricMeta().label;
 }
 
+function getApiMetricLabel() {
+  return metricMetaMap[drillInfo.drillType]?.label || getMetricLabel();
+}
+
+function normalizeCountValue(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0) return null;
+  return Math.floor(number);
+}
+
 function withCommon(columns) {
   return [
     { type: 'seq', title: '序号', width: 60 },
@@ -144,6 +175,36 @@ function normalizeMapRow(row = {}) {
   return Object.fromEntries(
     Object.entries(row).map(([key, value]) => [key, formatMapCellValue(value)]),
   );
+}
+
+function normalizeDrillRow(row = {}, index = 0) {
+  if (!isPlainObject(row)) {
+    return {
+      id: `${drillInfo.drillType || 'drill'}-${index + 1}`,
+      value: row,
+    };
+  }
+  return {
+    id:
+      row.id ||
+      row.orderId ||
+      row.orderNo ||
+      row.stationId ||
+      row.stationNo ||
+      `${drillInfo.drillType || 'drill'}-${index + 1}`,
+    ...normalizeMapRow(row),
+  };
+}
+
+function normalizeDrillResponse(response = {}) {
+  const data =
+    response?.data && isPlainObject(response.data) ? response.data : response;
+  const list = Array.isArray(data?.list) ? data.list : [];
+  return {
+    list: list.map((item, index) => normalizeDrillRow(item, index)),
+    metricName: data?.metricName,
+    total: normalizeCountValue(data?.total) ?? list.length,
+  };
 }
 
 function createMapColumns(row = {}) {
@@ -276,20 +337,35 @@ function getDrillRowCount(sourceRow) {
     return 1;
   }
 
-  const directValue = Number(drillInfo.drillValue);
-  if (Number.isFinite(directValue) && directValue > 0) {
-    return Math.min(Math.floor(directValue), 500);
+  const directCountValue = normalizeCountValue(drillInfo.drillCountValue);
+  if (directCountValue !== null) {
+    return directCountValue;
   }
 
-  const metricValue = Number(sourceRow?.[drillInfo.drillType]);
+  if (drillInfo.drillType === 'revenue') {
+    const revenueCount = normalizeCountValue(
+      sourceRow?.orderCount ?? sourceRow?.totalOrderCount,
+    );
+    if (revenueCount !== null) {
+      return revenueCount;
+    }
+    return normalizeCountValue(drillInfo.drillValue) === 0 ? 0 : 12;
+  }
+
+  const directValue = normalizeCountValue(drillInfo.drillValue);
+  if (directValue !== null) {
+    return directValue;
+  }
+
+  const metricValue = normalizeCountValue(sourceRow?.[drillInfo.drillType]);
   if (Number.isFinite(metricValue) && metricValue > 0) {
-    return Math.min(Math.floor(metricValue), 500);
+    return metricValue;
   }
 
   return 12;
 }
 
-function createRows() {
+function createRows(start = 0, end) {
   const category = getMetricMeta().category;
   const sourceRow = drillInfo.row || {};
   if (drillInfo.source === 'map') {
@@ -303,8 +379,12 @@ function createRows() {
   const name = drillInfo.drillName || drillInfo.drillValue || getMetricLabel();
   const baseTime = sourceRow.generateTime || Date.now();
   const rowCount = getDrillRowCount(sourceRow);
+  const realStart = Math.max(0, start);
+  const realEnd = Math.min(end ?? rowCount, rowCount);
+  const length = Math.max(0, realEnd - realStart);
 
-  return Array.from({ length: rowCount }, (_, index) => {
+  return Array.from({ length }, (_, offset) => {
+    const index = realStart + offset;
     const no = index + 1;
     const baseName = getBaseName(index);
     const stationName = sourceRow.stationName || `${baseName}充停一体场站${no}`;
@@ -425,12 +505,36 @@ function createRows() {
 }
 
 async function getDrillData({ page }) {
-  const list = createRows();
   const start = (page.currentPage - 1) * page.pageSize;
   const end = page.currentPage * page.pageSize;
+  if (apiDrillMetrics.has(drillInfo.drillType)) {
+    try {
+      const response = await pageApi.getStationOpReportDrillDown({
+        metric: getApiMetricLabel(),
+        pageNo: page.currentPage,
+        pageSize: page.pageSize,
+        reportCycle: normalizeReportCycle(drillInfo.reportCycle),
+      });
+      const data = normalizeDrillResponse(response);
+      if (data.metricName) {
+        drillInfo.drillLabel = data.metricName;
+        drawerApi.setState({
+          title: drawerTitle.value,
+        });
+      }
+      return {
+        total: data.total,
+        list: data.list,
+      };
+    } catch {
+      // 接口未联通时保留本地兜底，避免钻取抽屉空白。
+    }
+  }
+
+  const total = getDrillRowCount(drillInfo.row || {});
   return {
-    total: list.length,
-    list: list.slice(start, end),
+    total,
+    list: createRows(start, end),
   };
 }
 
@@ -470,7 +574,8 @@ async function open(info = {}) {
     drillLabel: info.drillLabel || info.label || '',
     drillName: info.drillName || info.name || '',
     drillValue: info.drillValue ?? info.value ?? '',
-    reportCycle: info.reportCycle || '',
+    drillCountValue: info.drillCountValue ?? info.countValue ?? '',
+    reportCycle: normalizeReportCycle(info.reportCycle),
     reportId: info.reportId || '',
     row: info.row || {},
   });

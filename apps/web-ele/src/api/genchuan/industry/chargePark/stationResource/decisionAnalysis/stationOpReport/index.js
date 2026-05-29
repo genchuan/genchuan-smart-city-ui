@@ -19,6 +19,10 @@ export function getStationOpReportChart(params) {
   return requestClient.get(`${baseUrl}/chart`, { params });
 }
 
+export function getStationOpReportDrillDown(params) {
+  return requestClient.get(`${baseUrl}/drill-down`, { params });
+}
+
 export function generateStationOpReport(data) {
   return requestClient.post(`${baseUrl}/create`, data);
 }
