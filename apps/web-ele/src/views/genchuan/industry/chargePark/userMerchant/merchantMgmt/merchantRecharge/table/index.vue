@@ -214,6 +214,9 @@ function getStatusTagType(status: MerchantRechargeRow['status']) {
     case '已支付': {
       return 'primary';
     }
+    case '已生效': {
+      return 'success';
+    }
     case '待支付': {
       return 'warning';
     }
@@ -221,6 +224,10 @@ function getStatusTagType(status: MerchantRechargeRow['status']) {
       return 'info';
     }
   }
+}
+
+function canConfirmRecharge(row: MerchantRechargeRow) {
+  return row.status === '已支付' && row.confirmTime === '-';
 }
 
 /** 加载商户下拉 */
@@ -850,7 +857,7 @@ async function handleRemoveFilterTag(tag: ActiveFilterTag) {
             @click="handleOpenPay(row)"
           />
           <IconButton
-            v-if="row.status === '已支付'"
+            v-if="canConfirmRecharge(row)"
             content="确认"
             icon-name="Check"
             @click="handleConfirm(row)"

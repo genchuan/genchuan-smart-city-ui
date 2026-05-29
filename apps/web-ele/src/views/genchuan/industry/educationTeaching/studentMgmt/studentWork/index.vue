@@ -1,6 +1,6 @@
 <script setup>
-import {ref, computed, nextTick} from 'vue';
-import {ElMessage} from 'element-plus';
+import { ref, computed, nextTick } from 'vue';
+import { ElMessage } from 'element-plus';
 import workHome from './workHome/index.vue';
 import workHomeChart from './workHome/components/chart.vue';
 import studentInfo from './studentInfo/index.vue';
@@ -216,22 +216,11 @@ const onWorkHomeCardClick = async (status) => {
       activeName.value = '资助系统';
       return;
     case 'unhandledViolate':
+      // 只跳转到违纪管理标签页，筛选由自定义事件完成
       activeName.value = '违纪管理';
-      setTimeout(() => {
-        if (violateMgmtRef.value) {
-          violateMgmtRef.value.clearFilters();
-          violateMgmtRef.value.handleFilterTagClick('status', '待审批');
-        }
-      }, 100);
       return;
     case 'unhandledWarn':
       activeName.value = '违纪管理';
-      setTimeout(() => {
-        if (violateMgmtRef.value) {
-          violateMgmtRef.value.clearFilters();
-          violateMgmtRef.value.handleFilterTagClick('status', '已预警');
-        }
-      }, 100);
       return;
     default:
       break;
@@ -398,7 +387,7 @@ const onViolateCardSelect = async (status) => {
     case 'pending':
       violateMgmtRef.value.handleFilterTagClick('status', '待审批');
       break;
-    case 'warn':
+    case 'warned':
       violateMgmtRef.value.handleFilterTagClick('status', '已预警');
       break;
     default:

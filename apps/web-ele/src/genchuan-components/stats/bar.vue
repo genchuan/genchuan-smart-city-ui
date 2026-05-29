@@ -1,18 +1,18 @@
 <script setup>
-import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import {nextTick, onMounted, onUnmounted, ref, watch} from 'vue';
 
 import * as echarts from 'echarts';
 
 // 仅保留核心必选配置
 const props = defineProps({
   // 图表标题
-  title: { type: String, default: '数据统计' },
+  title: {type: String, default: '数据统计'},
   // X轴类目（如区域/类型）
-  xData: { type: Array, required: true },
+  xData: {type: Array, required: true},
   // 数据系列（[{name: '名称', data: [数值]}]）
-  seriesData: { type: Array, required: true },
+  seriesData: {type: Array, required: true},
   // Y轴名称
-  yName: { type: String, default: '' },
+  yName: {type: String, default: ''},
 });
 
 const chartRef = ref(null);
@@ -61,11 +61,28 @@ const initChart = async () => {
     // 3. 创建新实例（包裹try-catch避免初始化异常）
     chartInstance = echarts.init(chartRef.value);
 
+    // ===== 核心改动：根据系列数量动态生成颜色 =====
+    // 预置色板（用于多系列时自动分配不同颜色）
+    const colorPalette = ['#4a90e2', '#FF6B6B', '#FFD166', '#06D6A0', '#9B59B6', '#F39C12'];
+    let colorArray;
+    if (props.seriesData.length === 1) {
+      // 只有一个系列时：所有柱子使用同一种颜色（取色板第一个）
+      colorArray = ['#4a90e2'];
+    } else {
+      // 多个系列时：按系列数量从色板中取色（不足则循环）
+      colorArray = props.seriesData.map((_, idx) => colorPalette[idx % colorPalette.length]);
+    }
+    // ===== 改动结束 =====
+
     // 核心配置
     const option = {
-      title: { text: props.title, left: 'center', textStyle: { fontSize: 15, fontWeight: 300, color: '#6E7E91' }, },
-      tooltip: { trigger: 'axis' },
-      legend: { top: 30, left: 'center', textStyle: { fontSize: 12, color: '#6E7E91' }, },
+      title: {
+        text: props.title,
+        left: 'center',
+        textStyle: {fontSize: 15, fontWeight: 300, color: '#6E7E91'},
+      },
+      tooltip: {trigger: 'axis'},
+      legend: {top: 30, left: 'center', textStyle: {fontSize: 12, color: '#6E7E91'},},
       grid: {
         left: '3%',
         right: '4%',
@@ -120,11 +137,12 @@ const initChart = async () => {
           },
         },
       },
-      color: ['#4a90e2'],
+      // 将动态生成的 colorArray 赋值给 color
+      color: colorArray,
       series: props.seriesData.map((seriesItem) => ({
         name: seriesItem.name,
         type: 'bar',
-        data: seriesItem.data.map((value, idx) => ({ value })),
+        data: seriesItem.data.map((value, idx) => ({value})),
         label: {
           show: true,
           position: 'top',
@@ -162,7 +180,7 @@ watch(
       initChart();
     }
   },
-  { deep: true, immediate: false }, // 关闭immediate，避免挂载前触发
+  {deep: true, immediate: false}, // 关闭immediate，避免挂载前触发
 );
 
 // 窗口自适应（防抖+实例有效性校验）
@@ -194,5 +212,6 @@ onUnmounted(() => {
 
 <template>
   <!-- 简单柱状图容器：强制设置基础宽高，避免尺寸为0 -->
-  <div ref="chartRef" style="min-width: 200px !important; max-width: 100%; height: 330px; background-color: hsl(var(--card)); border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);"></div>
+  <div ref="chartRef"
+       style="min-width: 200px !important; max-width: 100%; height: 330px; background-color: hsl(var(--card)); border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);"></div>
 </template>

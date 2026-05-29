@@ -3,7 +3,7 @@ import {reactive, onMounted, ref, computed} from 'vue';
 import {ElMessage, ElSelect, ElOption, ElDatePicker} from 'element-plus';
 import Indicator from '#/genchuan-components/stats/indicatorClick.vue';
 import Pie from '#/genchuan-components/stats/pieClick.vue';
-import Bar from '#/genchuan-components/stats/barClick.vue';
+import Bar from '#/genchuan-components/stats/bar.vue';
 import {
   getStudentInfoChart,
   getStudentInfoDistribution,

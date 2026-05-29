@@ -110,11 +110,13 @@ function initPieChart() {
   // 添加点击事件
   pieChartInstance.on('click', (params) => {
     const clickDate = new Date(params.name);
-    const startTime = new Date(clickDate.setHours(0, 0, 0, 0)).getTime().toString();
-    const endTime = new Date(clickDate.setHours(23, 59, 59, 999)).getTime().toString();
+    const pad = (n) => String(n).padStart(2, '0');
+    const dateStr = `${clickDate.getFullYear()}-${pad(clickDate.getMonth() + 1)}-${pad(clickDate.getDate())}`;
+    const startTime = `${dateStr} 00:00:00`;
+    const endTime = `${dateStr} 23:59:59`;
     window.dispatchEvent(
       new CustomEvent('filterByChart:inspectTask', {
-        detail: { startTime, endTime },
+        detail: { dispatchTime: [startTime, endTime] },
       }),
     );
   });

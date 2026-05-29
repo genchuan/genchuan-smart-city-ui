@@ -68,11 +68,11 @@ export function getColumnsByStatus(status) {
     { field: 'punishType', title: '处分类型', minWidth: 120, sortable: true, slots: { default: 'punishType' } },
     { field: 'violateTime', title: '违纪时间', minWidth: 180, sortable: true, slots: { default: 'violateTime' } },
     { field: 'violateReason', title: '违纪原因', minWidth: 180, sortable: true, },
+    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
     { field: 'auditUser', title: '审批人', minWidth: 120, sortable: true, },
     { field: 'auditTime', title: '审批时间', minWidth: 180, sortable: true, slots: { default: 'auditTime' } },
     { field: 'pushTime', title: '推送时间', minWidth: 180, sortable: true, slots: { default: 'pushTime' } },
     { field: 'warnTime', title: '预警时间', minWidth: 180, sortable: true, slots: { default: 'warnTime' } },
-    { field: 'status', title: '状态', minWidth: 100, sortable: true, slots: { default: 'status' } },
     { field: 'createTime', title: '创建时间', minWidth: 180, sortable: true, slots: { default: 'createTime' } },
     { field: 'updateTime', title: '更新时间', minWidth: 180, sortable: true, slots: { default: 'updateTime' } },
   ];

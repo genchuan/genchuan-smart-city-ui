@@ -50,7 +50,7 @@ async function loadChartData() {
     if (res?.cardData) {
       cards[0].value = res.cardData.inputCount || 0;
       cards[1].value = res.cardData.auditPassRate
-        ? `${res.cardData.auditPassRate}%`
+        ? `${Number(res.cardData.auditPassRate).toFixed(2)}%`
         : '0%';
     }
 
