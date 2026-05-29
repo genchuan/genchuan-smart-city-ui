@@ -100,7 +100,7 @@ catalog:
   cross-env: ^7.0.3
   crypto-js: ^4.2.0
   cspell: ^8.19.4
-  cssnano: 7.1.2
+  cssnano: 8.0.0
   cz-git: ^1.11.2
   czg: ^1.11.1
   dayjs: ^1.11.13
