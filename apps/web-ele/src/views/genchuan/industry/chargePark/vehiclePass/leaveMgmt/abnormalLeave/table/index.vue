@@ -865,7 +865,7 @@ const handleFieldFilter = (field, value) => {
           />
           <IconButton
             content="筛选"
-            icon-name="Filter"
+            icon-name="Search"
             @click="handleSerachShow"
           />
           <IconButton

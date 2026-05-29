@@ -173,8 +173,10 @@ function initTrendChart() {
     const clickedDate = params.name;
     let startTime, endTime;
     if (/\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}$/.test(clickedDate)) {
+      // 处理小时范围，例如 "2026-05-19 10:00" 变成 "2026-05-19 10:00:00" 到 "2026-05-19 10:59:59"
       startTime = `${clickedDate}:00`;
-      endTime = `${clickedDate}:59`;
+      // 把 "2026-05-19 10:00" 变成 "2026-05-19 10:59:59"
+      endTime = `${clickedDate.replace(/\d{2}$/, '59')}:59`;
     } else {
       startTime = `${clickedDate} 00:00:00`;
       endTime = `${clickedDate} 23:59:59`;
