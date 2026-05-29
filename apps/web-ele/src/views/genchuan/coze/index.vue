@@ -3,9 +3,9 @@ import { onMounted } from 'vue';
 
 onMounted(() => {
   // 打开新标签页并自动登录
-  const loginUrl = 'https://code.coze.cn/w/7612587257039683647/projects';
-  const username = '2121259922';
-  const password = 'genchuan123!';
+  const loginUrl = 'https://code.coze.cn/';
+  const username = 'user';
+  const password = 'password';
 
   // 创建登录表单并提交到新窗口
   const form = document.createElement('form');
