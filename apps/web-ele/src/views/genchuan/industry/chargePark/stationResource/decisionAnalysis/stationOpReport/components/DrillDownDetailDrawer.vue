@@ -62,19 +62,137 @@ const apiDrillMetrics = new Set([
 ]);
 
 const statusTypeMap = {
-  正常: 'success',
-  可用: 'success',
-  启用: 'success',
-  已支付: 'success',
-  已完成: 'success',
-  生成成功: 'success',
+  paid: 'success',
+  不可用: 'danger',
+  停用: 'danger',
+  占用: 'warning',
   待处理: 'warning',
   待支付: 'warning',
-  追缴中: 'warning',
+  已完成: 'success',
+  已支付: 'success',
+  已生效: 'success',
+  已禁用: 'danger',
   异常: 'danger',
-  停用: 'danger',
-  不可用: 'danger',
+  正常: 'success',
   生成失败: 'danger',
+  生成成功: 'success',
+  可用: 'success',
+  启用: 'success',
+  空闲: 'success',
+  追缴中: 'warning',
+};
+
+const metricColumnsMap = {
+  availableSpaceCount: [
+    { field: 'stationName', title: '场站名称', minWidth: 180 },
+    { field: 'spaceNo', title: '车位编号', minWidth: 130 },
+    { field: 'type', title: '车位类型', minWidth: 120 },
+    { field: 'deviceType', title: '设备类型', minWidth: 120 },
+    { field: 'realStatus', title: '实时状态', minWidth: 110 },
+    { field: 'location', title: '位置', minWidth: 120 },
+    { field: 'remark', title: '备注', minWidth: 180 },
+  ],
+  coverStationCount: [
+    { field: 'name', title: '场站名称', minWidth: 180 },
+    { field: 'stationNo', title: '场站编号', minWidth: 150 },
+    { field: 'areaName', title: '所属片区', minWidth: 150 },
+    { field: 'type', title: '场站类型', minWidth: 120 },
+    { field: 'operateType', title: '运营类型', minWidth: 130 },
+    { field: 'spaceTotal', title: '车位总数', minWidth: 110 },
+    { field: 'address', title: '地址', minWidth: 220 },
+    { field: 'status', title: '状态', minWidth: 100 },
+    { field: 'remark', title: '备注', minWidth: 180 },
+  ],
+  depositOrderCount: [
+    { field: 'stationName', title: '场站名称', minWidth: 180 },
+    { field: 'depositOrderCount', title: '押金订单量', minWidth: 120 },
+    { field: 'stationId', title: '场站ID', minWidth: 100 },
+    { field: 'status', title: '状态', minWidth: 100 },
+    { field: 'createTime', title: '创建时间', minWidth: 170 },
+    { field: 'remark', title: '备注', minWidth: 180 },
+  ],
+  effectiveRuleCount: [
+    { field: 'ruleName', title: '规则名称', minWidth: 180 },
+    { field: 'ruleType', title: '规则类型', minWidth: 120 },
+    { field: 'stationId', title: '场站ID', minWidth: 100 },
+    { field: 'status', title: '状态', minWidth: 100 },
+    { field: 'createTime', title: '创建时间', minWidth: 170 },
+  ],
+  normalOperateCount: [
+    { field: 'name', title: '场站名称', minWidth: 180 },
+    { field: 'stationNo', title: '场站编号', minWidth: 150 },
+    { field: 'areaName', title: '所属片区', minWidth: 150 },
+    { field: 'type', title: '场站类型', minWidth: 120 },
+    { field: 'operateType', title: '运营类型', minWidth: 130 },
+    { field: 'spaceTotal', title: '车位总数', minWidth: 110 },
+    { field: 'address', title: '地址', minWidth: 220 },
+    { field: 'status', title: '状态', minWidth: 100 },
+    { field: 'remark', title: '备注', minWidth: 180 },
+  ],
+  orderCount: [
+    { field: 'orderNo', title: '订单编号', minWidth: 180 },
+    { field: 'stationName', title: '场站名称', minWidth: 180 },
+    { field: 'plateNo', title: '车牌号', minWidth: 120 },
+    { field: 'orderType', title: '订单类型', minWidth: 120 },
+    { field: 'amount', title: '订单金额', minWidth: 110 },
+    { field: 'discountAmount', title: '优惠金额', minWidth: 110 },
+    { field: 'payMethod', title: '支付方式', minWidth: 120 },
+    { field: 'status', title: '状态', minWidth: 100 },
+    { field: 'createTime', title: '下单时间', minWidth: 170 },
+    { field: 'payTime', title: '支付时间', minWidth: 170 },
+  ],
+  recoveryRate: [
+    { field: 'stationName', title: '场站名称', minWidth: 180 },
+    { field: 'recoveryRate', title: '追缴完成率', minWidth: 120 },
+    { field: 'progress', title: '进度', minWidth: 100 },
+    { field: 'range', title: '范围', minWidth: 130 },
+    { field: 'type', title: '类型', minWidth: 120 },
+    { field: 'status', title: '状态', minWidth: 100 },
+    { field: 'createTime', title: '创建时间', minWidth: 170 },
+    { field: 'remark', title: '备注', minWidth: 180 },
+  ],
+  revenue: [
+    { field: 'orderNo', title: '订单编号', minWidth: 180 },
+    { field: 'stationName', title: '场站名称', minWidth: 180 },
+    { field: 'plateNo', title: '车牌号', minWidth: 120 },
+    { field: 'orderType', title: '订单类型', minWidth: 120 },
+    { field: 'amount', title: '订单金额', minWidth: 110 },
+    { field: 'discountAmount', title: '优惠金额', minWidth: 110 },
+    { field: 'payMethod', title: '支付方式', minWidth: 120 },
+    { field: 'status', title: '状态', minWidth: 100 },
+    { field: 'createTime', title: '下单时间', minWidth: 170 },
+    { field: 'payTime', title: '支付时间', minWidth: 170 },
+  ],
+  totalAreaCount: [
+    { field: 'name', title: '片区名称', minWidth: 180 },
+    { field: 'areaNo', title: '片区编号', minWidth: 160 },
+    { field: 'district', title: '行政区', minWidth: 120 },
+    { field: 'stationCount', title: '场站数', minWidth: 100 },
+    { field: 'phone', title: '联系电话', minWidth: 130 },
+    { field: 'address', title: '地址', minWidth: 220 },
+    { field: 'status', title: '状态', minWidth: 100 },
+    { field: 'remark', title: '备注', minWidth: 180 },
+  ],
+  totalSpaceCount: [
+    { field: 'stationName', title: '场站名称', minWidth: 180 },
+    { field: 'spaceNo', title: '车位编号', minWidth: 130 },
+    { field: 'type', title: '车位类型', minWidth: 120 },
+    { field: 'deviceType', title: '设备类型', minWidth: 120 },
+    { field: 'realStatus', title: '实时状态', minWidth: 110 },
+    { field: 'location', title: '位置', minWidth: 120 },
+    { field: 'remark', title: '备注', minWidth: 180 },
+  ],
+  totalStationCount: [
+    { field: 'name', title: '场站名称', minWidth: 180 },
+    { field: 'stationNo', title: '场站编号', minWidth: 150 },
+    { field: 'areaName', title: '所属片区', minWidth: 150 },
+    { field: 'type', title: '场站类型', minWidth: 120 },
+    { field: 'operateType', title: '运营类型', minWidth: 130 },
+    { field: 'spaceTotal', title: '车位总数', minWidth: 110 },
+    { field: 'address', title: '地址', minWidth: 220 },
+    { field: 'status', title: '状态', minWidth: 100 },
+    { field: 'remark', title: '备注', minWidth: 180 },
+  ],
 };
 
 const mapFieldLabelMap = {
@@ -145,6 +263,7 @@ function withCommon(columns) {
         [
           'generateStatus',
           'payStatus',
+          'realStatus',
           'spaceStatus',
           'stationStatus',
           'status',
@@ -164,8 +283,20 @@ function isPlainObject(value) {
   return value && typeof value === 'object' && !Array.isArray(value);
 }
 
-function formatMapCellValue(value) {
+function shouldFormatDateTime(key, value) {
+  if (!key.endsWith('Time')) return false;
+  if (value === undefined || value === null || value === '') return false;
+  if (value instanceof Date) return true;
+  if (typeof value === 'number') return true;
+  return (
+    typeof value === 'string' &&
+    /^\d+$|^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(value)
+  );
+}
+
+function formatMapCellValue(key, value) {
   if (value === undefined || value === null || value === '') return '';
+  if (shouldFormatDateTime(key, value)) return formatDateTime(value);
   if (Array.isArray(value)) return value.join('、');
   if (isPlainObject(value)) return JSON.stringify(value);
   return value;
@@ -173,7 +304,10 @@ function formatMapCellValue(value) {
 
 function normalizeMapRow(row = {}) {
   return Object.fromEntries(
-    Object.entries(row).map(([key, value]) => [key, formatMapCellValue(value)]),
+    Object.entries(row).map(([key, value]) => [
+      key,
+      formatMapCellValue(key, value),
+    ]),
   );
 }
 
@@ -238,6 +372,9 @@ function createMapColumns(row = {}) {
 function getGridColumns() {
   if (drillInfo.source === 'map') {
     return withCommon(createMapColumns(drillInfo.row));
+  }
+  if (drillInfo.source === 'card' && metricColumnsMap[drillInfo.drillType]) {
+    return withCommon(metricColumnsMap[drillInfo.drillType]);
   }
   const category = getMetricMeta().category;
   const columnsMap = {
