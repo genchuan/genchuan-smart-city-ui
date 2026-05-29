@@ -63,7 +63,11 @@ export function getStudentArchiveDetail(params) {
 
 // 批量导入（待实现）
 export function importStudentArchive(file) {
-  return Promise.reject(new Error('接口待实现'));
+  const formData = new FormData();
+  formData.append('file', file);
+  return requestClient.post('/smartcampus/student-archive/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 }
 
 // ==================== 图表接口（真实后端） ====================

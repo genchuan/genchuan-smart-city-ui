@@ -88,22 +88,6 @@ export function useApplyFormSchema(isEdit = false) {
       labelWidth: '100',
     },
     {
-      fieldName: 'status',
-      label: '状态',
-      component: 'Select',
-      componentProps: {
-        placeholder: '请选择状态',
-        options: [
-          { label: '待确认', value: '待确认' },
-          { label: '待办理', value: '待办理' },
-          { label: '已离校', value: '已离校' },
-        ],
-      },
-      rules: 'required',
-      defaultValue: '待确认',
-      labelWidth: '100',
-    },
-    {
       fieldName: 'remark',
       label: '备注',
       component: 'Input',

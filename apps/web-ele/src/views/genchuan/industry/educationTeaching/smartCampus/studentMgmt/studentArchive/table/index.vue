@@ -37,6 +37,11 @@ const [Drawer, drawerApi] = useVbenDrawer({ modal: false, footer: false, onCance
 const [ArchiveDrawer, archiveDrawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => archiveDrawerApi.close() });
 const [AuditDrawer, auditDrawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => auditDrawerApi.close() });
 const [MaintainDrawer, maintainDrawerApi] = useVbenDrawer({ modal: false, footer: false, onCancel: () => maintainDrawerApi.close() });
+const [ImportDrawer, importDrawerApi] = useVbenDrawer({
+  modal: false,
+  footer: false,
+  onCancel: () => importDrawerApi.close(),
+});
 
 const dataObj = reactive({
   totalShow: false,
@@ -62,6 +67,7 @@ const isEditMode = ref(false);
 const currentEditId = ref(null);
 const currentAuditIds = ref([]);
 const currentMaintainRow = ref(null);
+const importFile = ref(null);
 
 // 时间戳格式化
 const formatTimestamp = (timestamp) => {
@@ -120,7 +126,6 @@ const getTableData = async ({ page }) => {
   try {
     const merged = { ...searchParams.value, ...tagFilters.value };
     const params = { ...merged, pageNo: page.currentPage, pageSize: page.pageSize };
-    // 处理建档时间范围
     if (params.archiveTime && Array.isArray(params.archiveTime) && params.archiveTime.length === 2) {
       params.archiveTimeStart = params.archiveTime[0];
       params.archiveTimeEnd = params.archiveTime[1];
@@ -188,9 +193,84 @@ async function handleExport() {
   finally { loading.close(); }
 }
 
-// 批量导入（后端未实现）
+// 批量导入（打开抽屉）
 function handleImport() {
-  ElMessage.info('批量导入功能后端接口待实现');
+  importFile.value = null;
+  importDrawerApi.open();
+}
+
+// 导入文件选择
+function handleImportFileChange(file) {
+  importFile.value = file.raw;
+}
+
+// 移除已选文件
+function removeImportFile() {
+  importFile.value = null;
+}
+
+// 执行导入
+async function confirmImport() {
+  if (!importFile.value) {
+    ElMessage.warning('请先选择Excel文件');
+    return;
+  }
+  const loading = ElLoading.service({ text: '导入中...' });
+  try {
+    const res = await importStudentArchive(importFile.value);
+
+    // 兼容两种返回格式：
+    // 1. 完整响应：{ code: 0, msg: '成功', data: { successCount, errorCount, ... } }
+    // 2. 拦截器解构后：{ successCount, errorCount, ... }
+    let successCount = 0;
+    let errorCount = 0;
+    let errorList = [];
+    let isSuccess = false;
+
+    if (res.code !== undefined) {
+      // 完整响应格式
+      if (res.code === 0) {
+        isSuccess = true;
+        successCount = res.data?.successCount || 0;
+        errorCount = res.data?.errorCount || 0;
+        errorList = res.data?.errorList || [];
+      } else {
+        ElMessage.error(res.msg || '导入失败');
+        return;
+      }
+    } else {
+      // 假设是解构后的 data 对象
+      if (res.successCount !== undefined || res.errorCount !== undefined) {
+        isSuccess = true;
+        successCount = res.successCount || 0;
+        errorCount = res.errorCount || 0;
+        errorList = res.errorList || [];
+      } else {
+        ElMessage.error('导入失败：返回数据格式异常');
+        return;
+      }
+    }
+
+    if (isSuccess) {
+      if (errorCount > 0) {
+        let errorMsg = `导入完成：成功 ${successCount} 条，失败 ${errorCount} 条。`;
+        if (errorList.length > 0) {
+          const firstError = errorList[0];
+          errorMsg += ` 例如：${firstError.reason || '数据格式错误'}`;
+        }
+        ElMessage.warning(errorMsg);
+      } else {
+        ElMessage.success(`导入成功：${successCount} 条`);
+      }
+      handleRefresh();
+      importDrawerApi.close();
+    }
+  } catch (error) {
+    console.error('导入失败', error);
+    ElMessage.error('导入失败，请重试');
+  } finally {
+    loading.close();
+  }
 }
 
 // 新增
@@ -198,7 +278,6 @@ function handleCreate() {
   isEditMode.value = false;
   currentEditId.value = null;
   archiveFormApi.resetForm();
-  // 设置默认值：建档时间为当前时间戳，学籍状态为在籍(0)，流程状态为待审核(0)
   archiveFormApi.setValues({
     archiveTime: Date.now(),
     status: '0',
@@ -298,7 +377,7 @@ const [ArchiveForm, archiveFormApi] = useVbenForm({
   submitButtonOptions: { content: '保存' },
 });
 
-// 审核表单（修正：使用 processStatus 字段）
+// 审核表单
 const [AuditForm, auditFormApi] = useVbenForm({
   collapsed: false,
   commonConfig: { componentProps: { class: 'w-full' }, formItemClass: 'col-span-2', labelWidth: 100 },
@@ -427,6 +506,30 @@ onUnmounted(() => { window.removeEventListener('student-archive-chart-filter', h
     <AuditDrawer title="审核"><AuditForm /></AuditDrawer>
     <MaintainDrawer title="学籍状态维护"><MaintainForm /></MaintainDrawer>
 
+    <!-- 批量导入抽屉 -->
+    <ImportDrawer title="批量导入学籍档案">
+      <div class="batch-import">
+        <el-upload
+          class="upload-demo"
+          action="#"
+          :on-change="handleImportFileChange"
+          :auto-upload="false"
+          :show-file-list="false"
+          accept=".xlsx,.xls"
+        >
+          <el-button type="primary" icon="UploadFilled">选择Excel文件</el-button>
+        </el-upload>
+        <div v-if="importFile" class="file-info">
+          {{ importFile.name }}
+          <el-button link @click="removeImportFile">移除</el-button>
+        </div>
+        <div class="dialog-footer">
+          <el-button @click="importDrawerApi.close">取消</el-button>
+          <el-button type="primary" @click="confirmImport">开始导入</el-button>
+        </div>
+      </div>
+    </ImportDrawer>
+
     <Grid>
       <template #table-title>
         <ElTag
@@ -511,3 +614,27 @@ onUnmounted(() => { window.removeEventListener('student-archive-chart-filter', h
     </Grid>
   </div>
 </template>
+
+<style scoped>
+.batch-import {
+  padding: 20px;
+}
+.upload-demo {
+  margin-bottom: 20px;
+}
+.file-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  margin: 10px 0;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+}
+.dialog-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 30px;
+}
+</style>
