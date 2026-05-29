@@ -351,8 +351,8 @@ const openEn = async () => {
 // 逃费识别状态映射
 const statusMap = {
   pending: { label: '待识别', type: 'warning' },
-  identified: { label: '已识别', type: 'success' },
-  marked: { label: '已标记（非逃费）', type: 'info' },
+  identified: { label: '已标记', type: 'success' },
+  marked: { label: '已标记', type: 'success' },
 };
 
 // 获取状态标签

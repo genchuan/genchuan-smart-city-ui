@@ -746,6 +746,7 @@ const alarmColumns = [
 
 .table-toolbar-tools {
   display: flex;
+  justify-content: center;
   gap: 4px;
 }
 

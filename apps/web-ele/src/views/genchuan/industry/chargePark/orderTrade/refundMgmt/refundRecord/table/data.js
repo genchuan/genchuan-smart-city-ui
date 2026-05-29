@@ -59,10 +59,11 @@ export function useGridColumns() {
       slots: { default: 'recordNo' },
     },
     {
-      field: 'applyId',
-      title: '关联退款申请ID',
+      field: 'applyNo',
+      title: '关联申请编号',
       minWidth: 160,
       sortable: true,
+      slots: { default: 'applyNo' },
     },
     {
       field: 'orderId',

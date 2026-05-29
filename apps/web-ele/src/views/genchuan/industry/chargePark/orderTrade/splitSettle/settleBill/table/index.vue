@@ -501,7 +501,7 @@ watch(
     <Grid>
       <template #toolbar-tools>
         <div class="common-toolbar-tools">
-          <IconButton content="新增" icon-name="Plus" @click="handleCreate" />
+          <!-- <IconButton content="新增" icon-name="Plus" @click="handleCreate" /> -->
           <IconButton content="批量审核" icon-name="CircleCheck" :disabled="checkedIds.length === 0" @click="handleBatchAudit" />
           <IconButton content="导出EXCEL" icon-name="download" @click="handleExport" />
           <IconButton content="搜索" icon-name="search" @click="handleSerachShow" />

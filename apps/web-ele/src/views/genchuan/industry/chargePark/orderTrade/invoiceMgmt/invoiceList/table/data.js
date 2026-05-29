@@ -47,11 +47,10 @@ export function useGridColumns() {
       slots: { default: 'status' },
     },
     {
-      field: 'operatorName',
+      field: 'creator',
       title: '操作人',
       minWidth: 120,
       sortable: true,
-      slots: { default: 'operatorName' },
     },
     {
       field: 'pushTime',

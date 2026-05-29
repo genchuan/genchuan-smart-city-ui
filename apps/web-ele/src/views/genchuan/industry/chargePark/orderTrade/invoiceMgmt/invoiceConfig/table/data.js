@@ -13,6 +13,7 @@ export function useGridColumns() {
       title: '开票类目',
       minWidth: 160,
       sortable: true,
+      slots: { default: 'category' },
     },
     {
       field: 'taxRate',
@@ -25,6 +26,7 @@ export function useGridColumns() {
       title: '开票主体',
       minWidth: 160,
       sortable: true,
+      slots: { default: 'taxBody' },
     },
     {
       field: 'status',

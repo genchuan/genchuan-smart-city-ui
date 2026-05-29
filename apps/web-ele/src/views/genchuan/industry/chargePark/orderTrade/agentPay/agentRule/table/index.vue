@@ -900,11 +900,11 @@ onMounted(() => {
             icon-name="Close"
             @click="handleDisable(row)"
           />
-          <IconButton
+          <!-- <IconButton
             content="删除"
             icon-name="Delete"
             @click="handleDelete(row)"
-          />
+          /> -->
         </div>
       </template>
       <template #bottom>
